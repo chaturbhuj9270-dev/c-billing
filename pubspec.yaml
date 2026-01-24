@@ -1,0 +1,61 @@
+name: c_billing
+description: "A new Flutter project."
+
+publish_to: 'none' 
+
+version: 1.0.0+1
+ 
+environment:
+  sdk: ^3.10.1
+
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+  flutter_bloc: ^8.1.2
+  bloc: ^8.1.0
+  get_it: ^8.2.0
+  http: ^0.13.6
+  firebase_core: ^3.3.0
+  firebase_auth: ^5.1.4
+  cloud_firestore: ^5.2.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^6.0.0
+  flutter_native_splash: ^2.4.7
+  flutter_launcher_icons: ^0.14.4
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/splash.png
+    - assets/images/logo.png
+    - assets/images/logo_without_bg.png
+    - assets/images/chaturbhujlogo.png
+    - assets/images/billhand.png
+  fonts:
+    - family: Literata
+      fonts:
+        - asset: assets/fonts/Literata-Regular.ttf
+        - asset: assets/fonts/Literata-Bold.ttf
+
+# Configuration for native splash to avoid white screen before Flutter loads
+flutter_native_splash:
+  image: assets/images/splash.png
+  color: "#FFFFFF"
+  android: true
+  ios: true
+  android_gravity: fill
+  ios_content_mode: scaleToFill
+
+# Launcher icon configuration (generates app icons from a single image)
+flutter_icons:
+  android: true
+  ios: true
+  image_path: assets/images/logo.png
