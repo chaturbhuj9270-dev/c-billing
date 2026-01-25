@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../../customer/presentation/pages/customer_page.dart';
 import '../../../../core/services/session_manager.dart';
 import '../../../../core/services/credentials_manager.dart';
+import 'flyout_menu.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -82,7 +83,7 @@ class _DashboardPageState extends State<DashboardPage> {
     _resetSessionTimer(); // Reset timer on every rebuild (user interaction)
 
     return Scaffold(
-      backgroundColor: const Color(0xFFE6EDE7),
+      backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 2,
@@ -109,14 +110,40 @@ class _DashboardPageState extends State<DashboardPage> {
           ],
         ),
         actions: [
-          PopupMenuButton(
-            itemBuilder: (context) => [
-              PopupMenuItem(
-                child: const Text('Logout'),
-                onTap: _logout,
-              ),
-            ],
-            icon: const Icon(Icons.menu, color: Color(0xFF1B4D3E)),
+          GestureDetector(
+            onTap: () {
+              showGeneralDialog(
+                context: context,
+                barrierDismissible: true,
+                barrierColor: Colors.black54,
+                barrierLabel: 'Flyout Menu',
+                transitionDuration: const Duration(milliseconds: 300),
+                pageBuilder: (context, animation, secondaryAnimation) {
+                  return const SizedBox.expand(
+                    child: FlyoutMenu(),
+                  );
+                },
+                transitionBuilder: (context, animation, secondaryAnimation, child) {
+                  return SlideTransition(
+                    position: Tween<Offset>(
+                      begin: const Offset(-1, 0),
+                      end: Offset.zero,
+                    ).animate(animation),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: SizedBox(
+                        width: MediaQuery.of(context).size.width * 0.75,
+                        child: child,
+                      ),
+                    ),
+                  );
+                },
+              );
+            },
+            child: const Padding(
+              padding: EdgeInsets.only(right: 16.0),
+              child: Icon(Icons.menu, color: Color(0xFF1B4D3E)),
+            ),
           ),
         ],
       ),

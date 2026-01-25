@@ -441,7 +441,7 @@ class _SignupPageState extends State<SignupPage> with SingleTickerProviderStateM
     print('[DEBUG] SignupPage build() called - OTP Sent: $_otpSent, OTP Verified: $_otpVerified');
     final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: const Color(0xFFE6EDE7),
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(

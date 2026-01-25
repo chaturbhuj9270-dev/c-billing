@@ -520,7 +520,7 @@ class _CustomerPageState extends State<CustomerPage> {
     _sessionManager.resetSession(); // Reset session timer on user activity
     print('[DEBUG] CustomerPage build() called');
     return Scaffold(
-      backgroundColor: const Color(0xFFE6EDE7),
+      backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 2,

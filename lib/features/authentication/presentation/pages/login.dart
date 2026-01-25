@@ -110,7 +110,7 @@ class _LoginPageV2State extends State<LoginPageV2> with SingleTickerProviderStat
     final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFE6EDE7),
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
