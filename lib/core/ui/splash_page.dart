@@ -7,7 +7,7 @@ import '../../features/authentication/presentation/pages/login.dart';
 class SplashPage extends StatefulWidget {
   final Duration duration;
 
-  const SplashPage({super.key, this.duration = const Duration(seconds: 2)});
+  const SplashPage({super.key, this.duration = const Duration(seconds: 4)});
 
   @override
   State<SplashPage> createState() => _SplashPageState();
@@ -53,12 +53,11 @@ class _SplashPageState extends State<SplashPage> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // C Logo
+                  // Logo image
                   Container(
                     width: 110,
                     height: 110,
                     decoration: BoxDecoration(
-                      color: const Color(0xFF1B4D3E),
                       borderRadius: BorderRadius.circular(28),
                       boxShadow: [
                         BoxShadow(
@@ -68,16 +67,11 @@ class _SplashPageState extends State<SplashPage> {
                         ),
                       ],
                     ),
-                    child: const Center(
-                      child: Text(
-                        'C',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 65,
-                          fontWeight: FontWeight.w300,
-                          fontFamily: 'Literata',
-                          letterSpacing: 2,
-                        ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(28),
+                      child: Image.asset(
+                        'assets/images/logo.png',
+                        fit: BoxFit.cover,
                       ),
                     ),
                   ),

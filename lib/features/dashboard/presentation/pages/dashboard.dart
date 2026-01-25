@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../../../customer/presentation/pages/customer_page.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -18,22 +19,91 @@ class _DashboardPageState extends State<DashboardPage> {
     });
   }
 
+  void _navigateToPage(int index) {
+    switch (index) {
+      case 0:
+        // Dashboard - already on it
+        break;
+      case 1:
+        // Navigate to Customers
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const CustomerPage()),
+        );
+        break;
+      case 2:
+        // Availability - not implemented yet
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Availability page coming soon')),
+        );
+        break;
+      case 3:
+        // Bills - not implemented yet
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Bills page coming soon')),
+        );
+        break;
+      case 4:
+        // Purchases - not implemented yet
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Purchases page coming soon')),
+        );
+        break;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
 
     return Scaffold(
       backgroundColor: const Color(0xFFE6EDE7),
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 2,
+        title: Row(
+          children: [
+            // Logo image
+            Image.asset(
+              'assets/images/logo.png',
+              width: 40,
+              height: 40,
+              fit: BoxFit.contain,
+            ),
+            const SizedBox(width: 12),
+            // App name
+            const Text(
+              'C-Billing',
+              style: TextStyle(
+                color: Color(0xFF1B4D3E),
+                fontSize: 22,
+                fontWeight: FontWeight.w700,
+                fontFamily: 'Literata',
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          PopupMenuButton(
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                child: const Text('Logout'),
+                onTap: _logout,
+              ),
+            ],
+            icon: const Icon(Icons.menu, color: Color(0xFF1B4D3E)),
+          ),
+        ],
+      ),
       body: SingleChildScrollView(
         child: SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
               children: [
-                // Top header with logout
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                // Sales & Profit Analysis header
+                const Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Sales & Profit Analysis',
                       style: TextStyle(
                         color: Color(0xFF1B4D3E),
@@ -41,15 +111,6 @@ class _DashboardPageState extends State<DashboardPage> {
                         fontWeight: FontWeight.w700,
                         fontFamily: 'Literata',
                       ),
-                    ),
-                    PopupMenuButton(
-                      itemBuilder: (context) => [
-                        PopupMenuItem(
-                          child: const Text('Logout'),
-                          onTap: _logout,
-                        ),
-                      ],
-                      icon: const Icon(Icons.more_vert, color: Color(0xFF1B4D3E)),
                     ),
                   ],
                 ),
@@ -352,10 +413,12 @@ class _DashboardPageState extends State<DashboardPage> {
           ),
         ),
       ),
+    ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         onTap: (index) {
           setState(() => _selectedIndex = index);
+          _navigateToPage(index);
         },
         backgroundColor: Colors.white,
         selectedItemColor: const Color(0xFF1B4D3E),
@@ -364,6 +427,10 @@ class _DashboardPageState extends State<DashboardPage> {
           BottomNavigationBarItem(
             icon: Icon(Icons.dashboard),
             label: 'Dashboard',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.people),
+            label: 'Customers',
           ),
           BottomNavigationBarItem(
             icon: Badge(
