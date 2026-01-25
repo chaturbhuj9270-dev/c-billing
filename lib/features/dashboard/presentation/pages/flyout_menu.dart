@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../../core/services/session_manager.dart';
 import '../../../../core/services/credentials_manager.dart';
+import 'profile_page.dart';
 
 class FlyoutMenu extends StatefulWidget {
   const FlyoutMenu({super.key});
@@ -84,8 +85,8 @@ class _FlyoutMenuState extends State<FlyoutMenu> with SingleTickerProviderStateM
         );
         break;
       case 'Profile':
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Profile page coming soon')),
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const ProfilePage()),
         );
         break;
       case 'Settings':
@@ -107,18 +108,9 @@ class _FlyoutMenuState extends State<FlyoutMenu> with SingleTickerProviderStateM
           children: [
             Column(
               children: [
-                // User Profile Section with gradient background
+                // User Profile Section - Navigation bar style (white background with teal text)
                 Container(
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        Color(0xFF1B4D3E),
-                        Color(0xFF2A6B56),
-                      ],
-                    ),
-                  ),
+                  color: Colors.white,
                   padding: const EdgeInsets.symmetric(
                     horizontal: 24,
                     vertical: 24,
@@ -134,7 +126,7 @@ class _FlyoutMenuState extends State<FlyoutMenu> with SingleTickerProviderStateM
                             onTap: () => Navigator.pop(context),
                             child: const Icon(
                               Icons.close,
-                              color: Colors.white,
+                              color: Color(0xFF1B4D3E),
                               size: 24,
                             ),
                           ),
@@ -153,9 +145,9 @@ class _FlyoutMenuState extends State<FlyoutMenu> with SingleTickerProviderStateM
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.2),
-                              blurRadius: 10,
-                              offset: const Offset(0, 4),
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
                             ),
                           ],
                         ),
@@ -179,31 +171,37 @@ class _FlyoutMenuState extends State<FlyoutMenu> with SingleTickerProviderStateM
                         ),
                       ),
                       const SizedBox(height: 16),
-                      // User Name
+                      // User Name - Teal color matching app theme
                       Text(
                         _userName,
                         style: const TextStyle(
-                          color: Colors.white,
+                          color: Color(0xFF1B4D3E),
                           fontSize: 20,
                           fontWeight: FontWeight.w700,
                           fontFamily: 'Literata',
                         ),
                       ),
                       const SizedBox(height: 4),
-                      // User Email
+                      // User Email - Subtle gray
                       Text(
                         _userEmail,
                         style: const TextStyle(
-                          color: Color(0xFFB3E5FC),
+                          color: Color(0xFF757575),
                           fontSize: 14,
                           fontWeight: FontWeight.w400,
                           fontFamily: 'Literata',
                         ),
                       ),
+                      const SizedBox(height: 20),
+                      // Divider
+                      Container(
+                        height: 1,
+                        color: const Color(0xFFEEEEEE),
+                      ),
                     ],
                   ),
                 ),
-                // Menu Items
+                // Menu Items - Page background style
                 Expanded(
                   child: ListView(
                     padding: const EdgeInsets.symmetric(
