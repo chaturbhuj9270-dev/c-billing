@@ -3,6 +3,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:ui';
 
 import '../../../dashboard/presentation/pages/dashboard.dart';
+import '../../../../core/services/session_manager.dart';
+import '../../../../core/services/credentials_manager.dart';
 import 'signup.dart';
 
 class LoginPageV2 extends StatefulWidget {
@@ -60,8 +62,37 @@ class _LoginPageV2State extends State<LoginPageV2> with SingleTickerProviderStat
     
     FirebaseAuth.instance.signInWithEmailAndPassword(email: emailOrPhone, password: password).then((cred) {
       print('[DEBUG] Login successful for user: ${cred.user?.uid}');
+      
+      // Initialize session with 2-hour timeout
+      final sessionManager = SessionManager();
+      sessionManager.initializeSession(cred.user!, () {
+        print('[CRITICAL] Session expired - logging out user');
+        FirebaseAuth.instance.signOut().then((_) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Session expired. Please login again.'))
+            );
+            Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
+          }
+        });
+      });
+      
+      // Save credentials for persistent login
+      final credentialsManager = CredentialsManager();
+      credentialsManager.saveCredentials(
+        email: emailOrPhone,
+        password: password,
+        userId: cred.user!.uid,
+      ).then((_) {
+        print('[DEBUG] User credentials saved for persistent login');
+      }).catchError((e) {
+        print('[ERROR] Failed to save credentials: $e');
+      });
+      
       setState(() => _loading = false);
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Login successful')));
+      print('[DEBUG] Session timeout set for 2 hours');
+      
       // Navigate to dashboard
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (_) => const DashboardPage()),

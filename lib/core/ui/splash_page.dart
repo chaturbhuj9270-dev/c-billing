@@ -1,8 +1,11 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 import '../../features/authentication/presentation/pages/login.dart';
+import '../../features/dashboard/presentation/pages/dashboard.dart';
+import '../services/credentials_manager.dart';
 
 class SplashPage extends StatefulWidget {
   final Duration duration;
@@ -15,17 +18,100 @@ class SplashPage extends StatefulWidget {
 
 class _SplashPageState extends State<SplashPage> {
   Timer? _timer;
+  late CredentialsManager _credentialsManager;
 
   @override
   void initState() {
     super.initState();
-    _timer = Timer(widget.duration, _goNext);
+    _credentialsManager = CredentialsManager();
+    _initializeApp();
   }
 
-  void _goNext() {
-    Navigator.of(
-      context,
-    ).pushReplacement(MaterialPageRoute(builder: (_) => const LoginPageV2()));
+  Future<void> _initializeApp() async {
+    try {
+      // Initialize credentials manager
+      await _credentialsManager.init();
+      print('[DEBUG] Splash page - checking for stored credentials');
+
+      // Check if user has valid stored credentials
+      if (_credentialsManager.isLoggedIn()) {
+        print('[DEBUG] Stored credentials found, attempting auto-login');
+
+        // Check if Firebase user is already authenticated
+        final currentUser = FirebaseAuth.instance.currentUser;
+        if (currentUser != null) {
+          print('[DEBUG] Firebase user already authenticated: ${currentUser.uid}');
+          // Go directly to dashboard
+          _goToDashboard();
+          return;
+        }
+
+        // Try to auto-login with stored credentials
+        await _attemptAutoLogin();
+      } else {
+        print('[DEBUG] No stored credentials found, going to login');
+        // Proceed normally to login after splash duration
+        _timer = Timer(widget.duration, _goToLogin);
+      }
+    } catch (e) {
+      print('[ERROR] Error during initialization: $e');
+      _timer = Timer(widget.duration, _goToLogin);
+    }
+  }
+
+  Future<void> _attemptAutoLogin() async {
+    try {
+      final credentials = _credentialsManager.getStoredCredentials();
+      
+      if (credentials == null) {
+        print('[DEBUG] Stored credentials are invalid');
+        _timer = Timer(const Duration(seconds: 1), _goToLogin);
+        return;
+      }
+
+      final email = credentials['email'] as String;
+      final password = credentials['password'] as String;
+
+      print('[DEBUG] Attempting auto-login with email: ***');
+
+      // Attempt Firebase login with stored credentials
+      final userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+
+      if (userCredential.user != null) {
+        print('[DEBUG] Auto-login successful for: ${userCredential.user!.uid}');
+        _goToDashboard();
+      } else {
+        print('[ERROR] Auto-login failed: user is null');
+        _goToLogin();
+      }
+    } on FirebaseAuthException catch (e) {
+      print('[ERROR] Auto-login failed: ${e.code} - ${e.message}');
+      // Clear invalid credentials
+      await _credentialsManager.clearCredentials();
+      _timer = Timer(const Duration(seconds: 1), _goToLogin);
+    } catch (e) {
+      print('[ERROR] Unexpected error during auto-login: $e');
+      _timer = Timer(const Duration(seconds: 1), _goToLogin);
+    }
+  }
+
+  void _goToLogin() {
+    if (mounted) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const LoginPageV2()),
+      );
+    }
+  }
+
+  void _goToDashboard() {
+    if (mounted) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const DashboardPage()),
+      );
+    }
   }
 
   @override

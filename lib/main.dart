@@ -3,11 +3,15 @@ import 'package:firebase_core/firebase_core.dart';
 
 import 'core/di/injection.dart' as di;
 import 'core/ui/splash_page.dart';
+import 'core/services/credentials_manager.dart';
 import 'firebase_options.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await di.init();
+  
+  // Initialize CredentialsManager early
+  await CredentialsManager().init();
   
   try {
     await Firebase.initializeApp(

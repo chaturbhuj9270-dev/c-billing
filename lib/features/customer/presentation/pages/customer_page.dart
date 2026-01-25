@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../../../core/services/session_manager.dart';
 
 class CustomerPage extends StatefulWidget {
   const CustomerPage({super.key});
@@ -26,11 +27,13 @@ class _CustomerPageState extends State<CustomerPage> {
 
   final _auth = FirebaseAuth.instance;
   late final FirebaseFirestore _firestore;
+  late SessionManager _sessionManager;
 
   @override
   void initState() {
     super.initState();
     _firestore = FirebaseFirestore.instance;
+    _sessionManager = SessionManager();
     _checkUserAuthentication();
     _loadCustomers();
     _filterController.addListener(_filterCustomers);
@@ -514,6 +517,7 @@ class _CustomerPageState extends State<CustomerPage> {
 
   @override
   Widget build(BuildContext context) {
+    _sessionManager.resetSession(); // Reset session timer on user activity
     print('[DEBUG] CustomerPage build() called');
     return Scaffold(
       backgroundColor: const Color(0xFFE6EDE7),

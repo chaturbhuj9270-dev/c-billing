@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:ui';
+import '../../../../core/services/session_manager.dart';
 
 class SignupPage extends StatefulWidget {
   const SignupPage({super.key});
@@ -397,6 +398,21 @@ class _SignupPageState extends State<SignupPage> with SingleTickerProviderStateM
           'createdAt': FieldValue.serverTimestamp(),
         });
         print('[DEBUG] Firestore write successful for UID: ${currentUser.uid}');
+        
+        // Initialize session for new user
+        final sessionManager = SessionManager();
+        sessionManager.initializeSession(currentUser, () {
+          print('[CRITICAL] Session expired - logging out user');
+          FirebaseAuth.instance.signOut().then((_) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Session expired. Please login again.'))
+              );
+              Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
+            }
+          });
+        });
+        print('[DEBUG] Session initialized with 2-hour timeout');
         
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(

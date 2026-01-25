@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../customer/presentation/pages/customer_page.dart';
+import '../../../../core/services/session_manager.dart';
+import '../../../../core/services/credentials_manager.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -12,14 +14,38 @@ class DashboardPage extends StatefulWidget {
 class _DashboardPageState extends State<DashboardPage> {
   int _selectedIndex = 0;
   final _auth = FirebaseAuth.instance;
+  late SessionManager _sessionManager;
+  late CredentialsManager _credentialsManager;
+
+  @override
+  void initState() {
+    super.initState();
+    _sessionManager = SessionManager();
+    _credentialsManager = CredentialsManager();
+  }
 
   void _logout() {
-    _auth.signOut().then((_) {
-      Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
+    _sessionManager.endSession();
+    _credentialsManager.clearCredentials().then((_) {
+      print('[DEBUG] User logged out - credentials cleared');
+      _auth.signOut().then((_) {
+        Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
+      });
+    }).catchError((e) {
+      print('[ERROR] Error during logout: $e');
+      _auth.signOut().then((_) {
+        Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
+      });
     });
   }
 
+  void _resetSessionTimer() {
+    _sessionManager.resetSession();
+    print('[DEBUG] Session reset from dashboard activity');
+  }
+
   void _navigateToPage(int index) {
+    _resetSessionTimer(); // Reset timer on navigation
     switch (index) {
       case 0:
         // Dashboard - already on it
@@ -53,6 +79,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
   @override
   Widget build(BuildContext context) {
+    _resetSessionTimer(); // Reset timer on every rebuild (user interaction)
 
     return Scaffold(
       backgroundColor: const Color(0xFFE6EDE7),
