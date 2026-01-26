@@ -3,6 +3,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../../../core/services/session_manager.dart';
 import '../../../../core/services/credentials_manager.dart';
 import 'profile_page.dart';
+import '../../../supplier/presentation/pages/supplier_page.dart';
+import '../../../customer/presentation/pages/customer_page.dart';
 
 class FlyoutMenu extends StatefulWidget {
   const FlyoutMenu({super.key});
@@ -75,8 +77,13 @@ class _FlyoutMenuState extends State<FlyoutMenu> with SingleTickerProviderStateM
         );
         break;
       case 'Clients':
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Clients page coming soon')),
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const CustomerPage()),
+        );
+        break;
+      case 'Suppliers':
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const SupplierPage()),
         );
         break;
       case 'Reports':
@@ -223,6 +230,11 @@ class _FlyoutMenuState extends State<FlyoutMenu> with SingleTickerProviderStateM
                         icon: Icons.people_outline,
                         label: 'Clients',
                         onTap: () => _navigateToPage('Clients'),
+                      ),
+                      _buildMenuItem(
+                        icon: Icons.business_outlined,
+                        label: 'Suppliers',
+                        onTap: () => _navigateToPage('Suppliers'),
                       ),
                       _buildMenuItem(
                         icon: Icons.bar_chart_outlined,

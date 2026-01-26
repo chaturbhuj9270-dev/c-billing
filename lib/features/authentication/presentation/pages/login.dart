@@ -136,7 +136,7 @@ class _LoginPageV2State extends State<LoginPageV2> with SingleTickerProviderStat
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          'The backbone of your business',
+                          'The backbone our your business',
                           style: theme.textTheme.bodyMedium?.copyWith(
                             color: Colors.black45,
                             fontWeight: FontWeight.w400,
