@@ -5,6 +5,7 @@ import '../../../../core/services/credentials_manager.dart';
 import 'profile_page.dart';
 import '../../../supplier/presentation/pages/supplier_page.dart';
 import '../../../customer/presentation/pages/customer_page.dart';
+import '../../../shop/presentation/pages/shop_details_page.dart';
 
 class FlyoutMenu extends StatefulWidget {
   const FlyoutMenu({super.key});
@@ -84,6 +85,11 @@ class _FlyoutMenuState extends State<FlyoutMenu> with SingleTickerProviderStateM
       case 'Suppliers':
         Navigator.of(context).push(
           MaterialPageRoute(builder: (_) => const SupplierPage()),
+        );
+        break;
+      case 'ShopDetails':
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const ShopDetailsPage()),
         );
         break;
       case 'Reports':
@@ -235,6 +241,11 @@ class _FlyoutMenuState extends State<FlyoutMenu> with SingleTickerProviderStateM
                         icon: Icons.business_outlined,
                         label: 'Suppliers',
                         onTap: () => _navigateToPage('Suppliers'),
+                      ),
+                      _buildMenuItem(
+                        icon: Icons.storefront_outlined,
+                        label: 'Shop Details',
+                        onTap: () => _navigateToPage('ShopDetails'),
                       ),
                       _buildMenuItem(
                         icon: Icons.bar_chart_outlined,
