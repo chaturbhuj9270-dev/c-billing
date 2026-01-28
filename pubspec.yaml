@@ -35,6 +35,7 @@ flutter:
 
   assets:
     - assets/images/logo.png
+    - assets/images/google.png
   fonts:
     - family: Literata
       fonts:

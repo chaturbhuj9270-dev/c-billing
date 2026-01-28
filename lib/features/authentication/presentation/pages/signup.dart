@@ -151,32 +151,73 @@ class _SignupPageState extends State<SignupPage> with SingleTickerProviderStateM
             child: Column(
               children: [
                 const SizedBox(height: 20),
-                // Header
+                // Logo image outside card
                 SlideTransition(
                   position: _offsetAnimation,
                   child: FadeTransition(
                     opacity: _opacityAnimation,
-                    child: Column(
-                      children: [
-                        Text(
-                          'Create Account',
-                          style: theme.textTheme.headlineMedium?.copyWith(
-                            fontWeight: FontWeight.w800,
-                            color: const Color(0xFF0C3314),
-                            letterSpacing: 0.5,
-                            fontSize: 28,
+                    child: Container(
+                      width: 100,
+                      height: 100,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 15,
+                            offset: const Offset(0, 4),
                           ),
+                        ],
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(20),
+                        child: Image.asset(
+                          'assets/images/logo.png',
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              color: const Color(0xFF0C3314),
+                              child: const Icon(
+                                Icons.receipt_long,
+                                size: 50,
+                                color: Colors.white,
+                              ),
+                            );
+                          },
                         ),
-                        const SizedBox(height: 6),
-                        Text(
-                          'Join us to get started',
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: Colors.black45,
-                            fontWeight: FontWeight.w400,
-                            fontSize: 14,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                // Header outside card
+                SlideTransition(
+                  position: _offsetAnimation,
+                  child: FadeTransition(
+                    opacity: _opacityAnimation,
+                    child: Center(
+                      child: Column(
+                        children: [
+                          Text(
+                            'Create Account',
+                            style: theme.textTheme.headlineMedium?.copyWith(
+                              fontWeight: FontWeight.w800,
+                              color: const Color(0xFF0C3314),
+                              letterSpacing: 0.5,
+                              fontSize: 24,
+                            ),
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: 4),
+                          Text(
+                            'Join us to get started',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: Colors.black45,
+                              fontWeight: FontWeight.w400,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -194,18 +235,30 @@ class _SignupPageState extends State<SignupPage> with SingleTickerProviderStateM
                           width: double.infinity,
                           padding: const EdgeInsets.all(32.0),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.90),
+                            color: const Color(0xFFE8E8E4),
                             borderRadius: BorderRadius.circular(28),
                             border: Border.all(
-                              color: Colors.white.withOpacity(0.4),
+                              color: Colors.grey.withOpacity(0.3),
                               width: 1.5,
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: const Color(0xFF0C3314).withOpacity(0.08),
-                                blurRadius: 30,
+                                color: const Color(0xFF0C3314).withOpacity(0.2),
+                                blurRadius: 40,
                                 offset: const Offset(0, 15),
-                                spreadRadius: 2,
+                                spreadRadius: 3,
+                              ),
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 20,
+                                offset: const Offset(0, 8),
+                                spreadRadius: 1,
+                              ),
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.05),
+                                blurRadius: 10,
+                                offset: const Offset(0, 3),
+                                spreadRadius: 0,
                               ),
                             ],
                           ),
@@ -391,7 +444,7 @@ class _SignupPageState extends State<SignupPage> with SingleTickerProviderStateM
       print('[DEBUG] Building input field: $label');
       return Container(
       decoration: BoxDecoration(
-        color: Colors.grey.withOpacity(0.05),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: Colors.grey.withOpacity(0.2),

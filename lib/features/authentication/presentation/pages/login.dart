@@ -117,38 +117,78 @@ class _LoginPageV2State extends State<LoginPageV2> with SingleTickerProviderStat
             padding: const EdgeInsets.symmetric(horizontal: 24.0),
             child: Column(
               children: [
-                const SizedBox(height: 20),
-                // Branding text
+                const SizedBox(height: 40),
+                // Logo image outside card
                 SlideTransition(
                   position: _offsetAnimation,
                   child: FadeTransition(
                     opacity: _opacityAnimation,
-                    child: Column(
-                      children: [
-                        Text(
-                          'C-BILLING',
-                          style: theme.textTheme.headlineMedium?.copyWith(
-                            fontWeight: FontWeight.w800,
-                            color: const Color(0xFF0C3314),
-                            letterSpacing: 1.2,
-                            fontSize: 32,
+                    child: Container(
+                      width: 70,
+                      height: 70,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 15,
+                            offset: const Offset(0, 4),
                           ),
+                        ],
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(20),
+                        child: Image.asset(
+                          'assets/images/logo.png',
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              color: const Color(0xFF0C3314),
+                              child: const Icon(
+                                Icons.receipt_long,
+                                size: 50,
+                                color: Colors.white,
+                              ),
+                            );
+                          },
                         ),
-                        const SizedBox(height: 6),
-                        Text(
-                          'The backbone our your business',
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: Colors.black45,
-                            fontWeight: FontWeight.w400,
-                            fontSize: 14,
-                            fontStyle: FontStyle.italic,
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
                 ),
-                const SizedBox(height: 48),
+                // Branding text outside card
+                SlideTransition(
+                  position: _offsetAnimation,
+                  child: FadeTransition(
+                    opacity: _opacityAnimation,
+                    child: Center(
+                      child: Column(
+                        children: [
+                          Text(
+                            'C-BILLING',
+                            style: theme.textTheme.headlineMedium?.copyWith(
+                              fontWeight: FontWeight.w800,
+                              color: const Color(0xFF0C3314),
+                              letterSpacing: 1.2,
+                              fontSize: 26,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'The backbone of your business',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: Colors.black45,
+                              fontWeight: FontWeight.w400,
+                              fontSize: 12,
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
                 // Login form card with glass effect
                 SlideTransition(
                   position: _offsetAnimation,
@@ -160,20 +200,32 @@ class _LoginPageV2State extends State<LoginPageV2> with SingleTickerProviderStat
                         filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                         child: Container(
                           width: double.infinity,
-                          padding: const EdgeInsets.all(32.0),
+                          padding: const EdgeInsets.all(20.0),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.90),
+                            color: Color(0xFFE8E8E4),
                             borderRadius: BorderRadius.circular(28),
                             border: Border.all(
-                              color: Colors.white.withOpacity(0.4),
+                              color: Colors.grey.withOpacity(0.3),
                               width: 1.5,
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: const Color(0xFF0C3314).withOpacity(0.08),
-                                blurRadius: 30,
+                                color: const Color(0xFF0C3314).withOpacity(0.2),
+                                blurRadius: 40,
                                 offset: const Offset(0, 15),
-                                spreadRadius: 2,
+                                spreadRadius: 3,
+                              ),
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 20,
+                                offset: const Offset(0, 8),
+                                spreadRadius: 1,
+                              ),
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.05),
+                                blurRadius: 10,
+                                offset: const Offset(0, 3),
+                                spreadRadius: 0,
                               ),
                             ],
                           ),
@@ -181,28 +233,11 @@ class _LoginPageV2State extends State<LoginPageV2> with SingleTickerProviderStat
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Text(
-                                'Welcome Back',
-                                style: theme.textTheme.headlineSmall?.copyWith(
-                                  fontWeight: FontWeight.w800,
-                                  color: const Color(0xFF1A1A1A),
-                                  fontSize: 26,
-                                ),
-                              ),
-                              const SizedBox(height: 6),
-                              Text(
-                                'Sign in to your account',
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  color: Colors.black54,
-                                  fontWeight: FontWeight.w500,
-                                  fontSize: 13,
-                                ),
-                              ),
-                              const SizedBox(height: 32),
+                              const SizedBox(height: 28),
                               // Email or Phone field
                               Container(
                                 decoration: BoxDecoration(
-                                  color: Colors.grey.withOpacity(0.05),
+                                  color: Colors.white,
                                   borderRadius: BorderRadius.circular(16),
                                   border: Border.all(
                                     color: Colors.grey.withOpacity(0.2),
@@ -243,7 +278,7 @@ class _LoginPageV2State extends State<LoginPageV2> with SingleTickerProviderStat
                               // Password field
                               Container(
                                 decoration: BoxDecoration(
-                                  color: Colors.grey.withOpacity(0.05),
+                                  color: Colors.white,
                                   borderRadius: BorderRadius.circular(16),
                                   border: Border.all(
                                     color: Colors.grey.withOpacity(0.2),
@@ -366,7 +401,7 @@ class _LoginPageV2State extends State<LoginPageV2> with SingleTickerProviderStat
                               OutlinedButton.icon(
                                 onPressed: () {},
                                 icon: Image.asset(
-                                  'assets/logo/logo.png',
+                                  'assets/images/google.png',
                                   width: 20,
                                   height: 20,
                                   errorBuilder: (context, error, stackTrace) {
