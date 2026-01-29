@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/services/session_manager.dart';
 import '../../../../core/services/credentials_manager.dart';
+import '../../../../core/services/user_management_service.dart';
+import '../../../../core/services/role_permission_service.dart';
+import '../../../../core/services/shop_access_service.dart';
 import 'profile_page.dart';
 import '../../../supplier/presentation/pages/supplier_page.dart';
 import '../../../customer/presentation/pages/customer_page.dart';
 import '../../../shop/presentation/pages/shop_details_page.dart';
+import '../../../shop/presentation/pages/shop_admin_panel.dart';
 
 class FlyoutMenu extends StatefulWidget {
   const FlyoutMenu({super.key});
@@ -67,6 +73,88 @@ class _FlyoutMenuState extends State<FlyoutMenu> with SingleTickerProviderStateM
     });
   }
 
+  void _navigateToShopAdmin() {
+    Navigator.pop(context);
+    
+    // Fetch user's shop ID from Firestore
+    if (_currentUser == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('User not logged in')),
+        );
+      }
+      return;
+    }
+
+    FirebaseFirestore.instance
+        .collection('users')
+        .doc(_currentUser!.uid)
+        .get()
+        .then((userDoc) {
+      if (!mounted) return; // Check if widget is still mounted
+      
+      if (!userDoc.exists) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('User profile not found')),
+        );
+        return;
+      }
+
+      final shopId = userDoc.data()?['shopId'] as String?;
+      if (shopId == null || shopId.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Shop not found for this user')),
+        );
+        return;
+      }
+
+      try {
+        // Navigate to Shop Admin Panel with BLoC
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) {
+              try {
+                return BlocProvider(
+                  create: (context) => ShopManagementBloc(
+                    userManagementService: UserManagementService(),
+                    rolePermissionService: RolePermissionService(),
+                    shopAccessService: ShopAccessService(),
+                    currentUserId: _currentUser!.uid,
+                  ),
+                  child: ShopAdminPanelPage(
+                    shopId: shopId,
+                    currentUserId: _currentUser!.uid,
+                  ),
+                );
+              } catch (e) {
+                print('[ERROR] Error creating BLoC: $e');
+                return Scaffold(
+                  appBar: AppBar(title: const Text('Error')),
+                  body: Center(
+                    child: Text('Error loading admin panel: ${e.toString()}'),
+                  ),
+                );
+              }
+            },
+          ),
+        );
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Navigation error: ${e.toString()}')),
+          );
+        }
+      }
+    }).catchError((e) {
+      if (mounted) {
+        print('[ERROR] Error loading shop: $e');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error loading shop: ${e.toString()}')),
+        );
+      }
+    });
+  }
+
   void _navigateToPage(String pageName) {
     Navigator.pop(context);
     switch (pageName) {
@@ -91,6 +179,9 @@ class _FlyoutMenuState extends State<FlyoutMenu> with SingleTickerProviderStateM
         Navigator.of(context).push(
           MaterialPageRoute(builder: (_) => const ShopDetailsPage()),
         );
+        break;
+      case 'ShopAdmin':
+        _navigateToShopAdmin();
         break;
       case 'Reports':
         ScaffoldMessenger.of(context).showSnackBar(
@@ -246,6 +337,11 @@ class _FlyoutMenuState extends State<FlyoutMenu> with SingleTickerProviderStateM
                         icon: Icons.storefront_outlined,
                         label: 'Shop Details',
                         onTap: () => _navigateToPage('ShopDetails'),
+                      ),
+                      _buildMenuItem(
+                        icon: Icons.admin_panel_settings,
+                        label: 'Shop Admin',
+                        onTap: () => _navigateToPage('ShopAdmin'),
                       ),
                       _buildMenuItem(
                         icon: Icons.bar_chart_outlined,
