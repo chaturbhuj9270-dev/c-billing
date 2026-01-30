@@ -161,13 +161,19 @@ class _SignupPageState extends State<SignupPage> with SingleTickerProviderStateM
               child: Column(
                 children: [
                   const SizedBox(height: 40),
-                  // Branding
+                  // Branding - Logo and C-BILLING text
                   SlideTransition(
                     position: _offsetAnimation,
                     child: FadeTransition(
                       opacity: _opacityAnimation,
                       child: Column(
                         children: [
+                          Image.asset(
+                            'assets/images/logo.png',
+                            width: 80,
+                            height: 80,
+                          ),
+                          const SizedBox(height: 20),
                           Text(
                             'C-BILLING',
                             style: TextStyle(

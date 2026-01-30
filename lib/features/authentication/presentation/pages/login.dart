@@ -127,14 +127,18 @@ class _LoginPageV2State extends State<LoginPageV2> with SingleTickerProviderStat
               padding: const EdgeInsets.symmetric(horizontal: 24.0),
               child: Column(
                 children: [
-                  const SizedBox(height: 50),
-                  // App Branding - C-BILLING text
                   SlideTransition(
                     position: _offsetAnimation,
                     child: FadeTransition(
                       opacity: _opacityAnimation,
                       child: Column(
                         children: [
+                          Image.asset(
+                            'assets/images/logo.png',
+                            width: 80,
+                            height: 80,
+                          ),
+                          const SizedBox(height: 5),
                           Text(
                             'C-BILLING',
                             style: TextStyle(
@@ -440,6 +444,7 @@ class _LoginPageV2State extends State<LoginPageV2> with SingleTickerProviderStat
                     ),
                   ),
                   const SizedBox(height: 30),
+                  const SizedBox(height: 40),
                   // Sign up link
                   SlideTransition(
                     position: _offsetAnimation,
