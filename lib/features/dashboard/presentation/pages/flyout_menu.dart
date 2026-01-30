@@ -319,31 +319,15 @@ class _CurvedHeaderClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
     Path path = Path();
-    path.lineTo(0, size.height - 40);
+    path.lineTo(0, size.height - 60);
     
-    // Create a zigzag/wave pattern
-    double waveWidth = size.width / 4;
-    double waveHeight = 25;
-    
-    // First wave up
-    path.lineTo(waveWidth * 0.5, size.height - 40 - waveHeight);
-    // First wave down
-    path.lineTo(waveWidth, size.height - 40);
-    
-    // Second wave up
-    path.lineTo(waveWidth * 1.5, size.height - 40 - waveHeight);
-    // Second wave down
-    path.lineTo(waveWidth * 2, size.height - 40);
-    
-    // Third wave up
-    path.lineTo(waveWidth * 2.5, size.height - 40 - waveHeight);
-    // Third wave down
-    path.lineTo(waveWidth * 3, size.height - 40);
-    
-    // Fourth wave up
-    path.lineTo(waveWidth * 3.5, size.height - 40 - waveHeight);
-    // Fourth wave down
-    path.lineTo(size.width, size.height - 40);
+    // Create a smooth curved bottom
+    path.quadraticBezierTo(
+      size.width / 3,
+      size.height+30,
+      size.width,
+      size.height - 20 ,
+    );
     
     path.lineTo(size.width, 0);
     path.close();
