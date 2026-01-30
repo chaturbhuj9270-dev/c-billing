@@ -82,16 +82,6 @@ class _FlyoutMenuState extends State<FlyoutMenu> with SingleTickerProviderStateM
           MaterialPageRoute(builder: (_) => const CustomerPage()),
         );
         break;
-      case 'Suppliers':
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const SupplierPage()),
-        );
-        break;
-      case 'ShopDetails':
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const ShopDetailsPage()),
-        );
-        break;
       case 'Reports':
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Reports page coming soon')),
@@ -121,53 +111,43 @@ class _FlyoutMenuState extends State<FlyoutMenu> with SingleTickerProviderStateM
           children: [
             Column(
               children: [
-                // User Profile Section - Navigation bar style (white background with teal text)
-                Container(
-                  color: Colors.white,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 24,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      // Close button
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          GestureDetector(
-                            onTap: () => Navigator.pop(context),
-                            child: const Icon(
-                              Icons.close,
-                              color: Color(0xFF1B4D3E),
-                              size: 24,
+                // User Profile Section - Dark green header with curved bottom, full width
+                ClipPath(
+                  clipper: _CurvedHeaderClipper(),
+                  child: Container(
+                    width: double.infinity,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFF1B4D3E),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 32,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        // Profile Avatar with white border
+                        Container(
+                          width: 100,
+                          height: 100,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: Colors.white,
+                              width: 5,
                             ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.2),
+                                blurRadius: 12,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                      const SizedBox(height: 20),
-                      // Profile Avatar with green accent
-                      Container(
-                        width: 90,
-                        height: 90,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: const Color(0xFF4CAF50),
-                            width: 4,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
                         child: Container(
                           decoration: const BoxDecoration(
                             shape: BoxShape.circle,
-                            color: Color(0xFFE8F5E9),
+                            color: Color(0xFF1B5E20),
                           ),
                           child: Center(
                             child: Text(
@@ -175,46 +155,42 @@ class _FlyoutMenuState extends State<FlyoutMenu> with SingleTickerProviderStateM
                                   ? _userName[0].toUpperCase()
                                   : 'U',
                               style: const TextStyle(
-                                fontSize: 40,
+                                fontSize: 44,
                                 fontWeight: FontWeight.bold,
-                                color: Color(0xFF1B4D3E),
+                                color: Colors.white,
                               ),
                             ),
                           ),
                         ),
                       ),
                       const SizedBox(height: 16),
-                      // User Name - Teal color matching app theme
+                      // User Name - White
                       Text(
                         _userName,
                         style: const TextStyle(
-                          color: Color(0xFF1B4D3E),
-                          fontSize: 20,
+                          color: Colors.white,
+                          fontSize: 22,
                           fontWeight: FontWeight.w700,
                           fontFamily: 'Literata',
                         ),
                       ),
-                      const SizedBox(height: 4),
-                      // User Email - Subtle gray
+                      const SizedBox(height: 6),
+                      // User Email - Green
                       Text(
                         _userEmail,
                         style: const TextStyle(
-                          color: Color(0xFF757575),
+                          color: Color(0xFF81C784),
                           fontSize: 14,
-                          fontWeight: FontWeight.w400,
+                          fontWeight: FontWeight.w500,
                           fontFamily: 'Literata',
                         ),
                       ),
                       const SizedBox(height: 20),
-                      // Divider
-                      Container(
-                        height: 1,
-                        color: const Color(0xFFEEEEEE),
-                      ),
                     ],
                   ),
+                  ),
                 ),
-                // Menu Items - Page background style
+                // Menu Items
                 Expanded(
                   child: ListView(
                     padding: const EdgeInsets.symmetric(
@@ -223,42 +199,32 @@ class _FlyoutMenuState extends State<FlyoutMenu> with SingleTickerProviderStateM
                     ),
                     children: [
                       _buildMenuItem(
-                        icon: Icons.home_outlined,
+                        icon: Icons.home,
                         label: 'Home',
                         onTap: () => _navigateToPage('Home'),
                       ),
                       _buildMenuItem(
-                        icon: Icons.receipt_outlined,
+                        icon: Icons.receipt,
                         label: 'Invoices',
                         onTap: () => _navigateToPage('Invoices'),
                       ),
                       _buildMenuItem(
-                        icon: Icons.people_outline,
+                        icon: Icons.people,
                         label: 'Clients',
                         onTap: () => _navigateToPage('Clients'),
                       ),
                       _buildMenuItem(
-                        icon: Icons.business_outlined,
-                        label: 'Suppliers',
-                        onTap: () => _navigateToPage('Suppliers'),
-                      ),
-                      _buildMenuItem(
-                        icon: Icons.storefront_outlined,
-                        label: 'Shop Details',
-                        onTap: () => _navigateToPage('ShopDetails'),
-                      ),
-                      _buildMenuItem(
-                        icon: Icons.bar_chart_outlined,
+                        icon: Icons.bar_chart,
                         label: 'Reports',
                         onTap: () => _navigateToPage('Reports'),
                       ),
                       _buildMenuItem(
-                        icon: Icons.person_outline,
+                        icon: Icons.person,
                         label: 'Profile',
                         onTap: () => _navigateToPage('Profile'),
                       ),
                       _buildMenuItem(
-                        icon: Icons.settings_outlined,
+                        icon: Icons.settings,
                         label: 'Settings',
                         onTap: () => _navigateToPage('Settings'),
                       ),
@@ -274,38 +240,25 @@ class _FlyoutMenuState extends State<FlyoutMenu> with SingleTickerProviderStateM
                   ),
                   child: GestureDetector(
                     onTap: _logout,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 14,
-                      ),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: const Color(0xFFEF5350),
-                          width: 2,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.exit_to_app,
+                          color: Color(0xFFD32F2F),
+                          size: 24,
                         ),
-                      ),
-                      child: const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.logout,
-                            color: Color(0xFFEF5350),
-                            size: 20,
+                        const SizedBox(width: 12),
+                        Text(
+                          'Logout',
+                          style: const TextStyle(
+                            color: Color(0xFFD32F2F),
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            fontFamily: 'Literata',
                           ),
-                          SizedBox(width: 12),
-                          Text(
-                            'Logout',
-                            style: TextStyle(
-                              color: Color(0xFFEF5350),
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              fontFamily: 'Literata',
-                            ),
-                          ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -327,50 +280,77 @@ class _FlyoutMenuState extends State<FlyoutMenu> with SingleTickerProviderStateM
       child: Container(
         padding: const EdgeInsets.symmetric(
           horizontal: 24,
-          vertical: 16,
+          vertical: 18,
         ),
         decoration: BoxDecoration(
           color: Colors.white,
           border: Border(
             bottom: BorderSide(
-              color: const Color(0xFFEEEEEE),
+              color: Colors.grey[200]!,
               width: 1,
             ),
           ),
         ),
         child: Row(
           children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: const Color(0xFFE8F5E9),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(
-                icon,
-                color: const Color(0xFF1B4D3E),
-                size: 24,
-              ),
+            Icon(
+              icon,
+              color: const Color(0xFF1B5E20),
+              size: 24,
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: 20),
             Text(
               label,
               style: const TextStyle(
-                color: Color(0xFF1B4D3E),
+                color: Color(0xFF333333),
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
                 fontFamily: 'Literata',
               ),
             ),
-            const Spacer(),
-            const Icon(
-              Icons.chevron_right,
-              color: Color(0xFFBDBDBD),
-              size: 24,
-            ),
           ],
         ),
       ),
     );
+  }
 }
+
+class _CurvedHeaderClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    Path path = Path();
+    path.lineTo(0, size.height - 40);
+    
+    // Create a zigzag/wave pattern
+    double waveWidth = size.width / 4;
+    double waveHeight = 25;
+    
+    // First wave up
+    path.lineTo(waveWidth * 0.5, size.height - 40 - waveHeight);
+    // First wave down
+    path.lineTo(waveWidth, size.height - 40);
+    
+    // Second wave up
+    path.lineTo(waveWidth * 1.5, size.height - 40 - waveHeight);
+    // Second wave down
+    path.lineTo(waveWidth * 2, size.height - 40);
+    
+    // Third wave up
+    path.lineTo(waveWidth * 2.5, size.height - 40 - waveHeight);
+    // Third wave down
+    path.lineTo(waveWidth * 3, size.height - 40);
+    
+    // Fourth wave up
+    path.lineTo(waveWidth * 3.5, size.height - 40 - waveHeight);
+    // Fourth wave down
+    path.lineTo(size.width, size.height - 40);
+    
+    path.lineTo(size.width, 0);
+    path.close();
+    
+    return path;
+  }
+
+  @override
+  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
 }
