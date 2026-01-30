@@ -12,17 +12,42 @@ class DashboardPage extends StatefulWidget {
   State<DashboardPage> createState() => _DashboardPageState();
 }
 
-class _DashboardPageState extends State<DashboardPage> {
+class _DashboardPageState extends State<DashboardPage> with SingleTickerProviderStateMixin {
   int _selectedIndex = 0;
   final _auth = FirebaseAuth.instance;
   late SessionManager _sessionManager;
   late CredentialsManager _credentialsManager;
+  late AnimationController _animController;
+  late Animation<Offset> _offsetAnimation;
+  late Animation<double> _opacityAnimation;
 
   @override
   void initState() {
     super.initState();
     _sessionManager = SessionManager();
     _credentialsManager = CredentialsManager();
+    
+    // Initialize animations
+    _animController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    );
+    
+    _offsetAnimation = Tween<Offset>(begin: const Offset(0, 0.2), end: Offset.zero)
+        .animate(CurvedAnimation(parent: _animController, curve: Curves.easeOut));
+    
+    _opacityAnimation = Tween<double>(begin: 0.0, end: 1.0)
+        .animate(CurvedAnimation(parent: _animController, curve: Curves.easeIn));
+    
+    Future.delayed(const Duration(milliseconds: 100), () {
+      if (mounted) _animController.forward();
+    });
+  }
+  
+  @override
+  void dispose() {
+    _animController.dispose();
+    super.dispose();
   }
 
   void _logout() {
@@ -151,8 +176,12 @@ class _DashboardPageState extends State<DashboardPage> {
         child: SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(16.0),
-            child: Column(
-              children: [
+            child: SlideTransition(
+              position: _offsetAnimation,
+              child: FadeTransition(
+                opacity: _opacityAnimation,
+                child: Column(
+                  children: [
                 // Sales & Profit Analysis header
                 const Row(
                   mainAxisAlignment: MainAxisAlignment.start,
@@ -462,13 +491,15 @@ class _DashboardPageState extends State<DashboardPage> {
                   ],
                 ),
               ),
-              const SizedBox(height: 20),
-            ],
+            const SizedBox(height: 20),
+          ],
+              ),
+            ),
           ),
         ),
       ),
     ),
-      bottomNavigationBar: BottomNavigationBar(
+    bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         onTap: (index) {
           setState(() => _selectedIndex = index);
@@ -479,7 +510,7 @@ class _DashboardPageState extends State<DashboardPage> {
         unselectedItemColor: Colors.grey[400],
         items: const [
           BottomNavigationBarItem(
-            icon: Icon(Icons.dashboard),
+            icon: Icon(Icons.home),
             label: 'Dashboard',
           ),
           BottomNavigationBarItem(
@@ -515,71 +546,88 @@ class _DashboardPageState extends State<DashboardPage> {
     required IconData icon,
     bool isFullWidth = false,
   }) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: backgroundColor,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {},
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: iconColor.withOpacity(0.2),
-          width: 1,
+        child: TweenAnimationBuilder<double>(
+          tween: Tween<double>(begin: 1.0, end: 1.0),
+          duration: const Duration(milliseconds: 300),
+          builder: (context, value, child) {
+            return Transform.scale(
+              scale: value,
+              child: child,
+            );
+          },
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: backgroundColor,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: iconColor.withOpacity(0.2),
+                width: 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      title,
+                      style: TextStyle(
+                        color: iconColor.withOpacity(0.7),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        fontFamily: 'Literata',
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.5),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(icon, color: iconColor, size: 16),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  amount,
+                  style: TextStyle(
+                    color: iconColor,
+                    fontSize: 28,
+                    fontWeight: FontWeight.w700,
+                    fontFamily: 'Literata',
+                  ),
+                ),
+                if (subtitle.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      color: iconColor.withOpacity(0.6),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w400,
+                      fontFamily: 'Literata',
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                title,
-                style: TextStyle(
-                  color: iconColor.withOpacity(0.7),
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  fontFamily: 'Literata',
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.5),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(icon, color: iconColor, size: 16),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            amount,
-            style: TextStyle(
-              color: iconColor,
-              fontSize: 28,
-              fontWeight: FontWeight.w700,
-              fontFamily: 'Literata',
-            ),
-          ),
-          if (subtitle.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Text(
-              subtitle,
-              style: TextStyle(
-                color: iconColor.withOpacity(0.6),
-                fontSize: 12,
-                fontWeight: FontWeight.w400,
-                fontFamily: 'Literata',
-              ),
-            ),
-          ],
-        ],
       ),
     );
   }
