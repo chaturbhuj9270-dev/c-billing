@@ -878,334 +878,338 @@ class _SupplierPageState extends State<SupplierPage> {
   }
 
   @override
+  @override
   Widget build(BuildContext context) {
+    _sessionManager.resetSession(); // Reset session timer on user activity
     return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 2,
-        leading: GestureDetector(
-          onTap: () => Navigator.pop(context),
-          child: const Icon(
-            Icons.arrow_back,
-            color: Color(0xFF1B4D3E),
+      backgroundColor: const Color(0xFFF8F9FA),
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(125),
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Color(0xFF1B4D3E), Color(0xFF0F3B2F)],
+            ),
+            boxShadow: [
+              BoxShadow(color: const Color(0xFF1B4D3E).withOpacity(0.2), blurRadius: 12, offset: const Offset(0, 4)),
+            ],
           ),
-        ),
-        title: const Text(
-          'Suppliers',
-          style: TextStyle(
-            color: Color(0xFF1B4D3E),
-            fontSize: 22,
-            fontWeight: FontWeight.w700,
-            fontFamily: 'Literata',
+          child: SafeArea(
+            bottom: false,
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 40,
+                        height: 40,
+                        margin: const EdgeInsets.only(left: 16),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(Icons.business_outlined, color: Colors.white, size: 22),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Text(
+                              'My Suppliers',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 22,
+                                fontWeight: FontWeight.w700,
+                                fontFamily: 'Literata',
+                                height: 1.2,
+                              ),
+                            ),
+                            Text(
+                              'Manage your vendors',
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.7),
+                                fontSize: 11,
+                                fontFamily: 'Literata',
+                                height: 1.2,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      // Sort Icon Button
+                      PopupMenuButton<String>(
+                        icon: Icon(Icons.sort, color: Colors.white.withOpacity(0.9), size: 20),
+                        onSelected: (value) {
+                          setState(() {
+                            _sortBy = value;
+                            _filterAndSortSuppliers();
+                          });
+                        },
+                        itemBuilder: (BuildContext context) => [
+                          const PopupMenuItem(
+                            value: 'name',
+                            child: Row(
+                              children: [
+                                Icon(Icons.sort_by_alpha, size: 18, color: Color(0xFF1B4D3E)),
+                                SizedBox(width: 12),
+                                Text('Name'),
+                              ],
+                            ),
+                          ),
+                          const PopupMenuItem(
+                            value: 'date',
+                            child: Row(
+                              children: [
+                                Icon(Icons.schedule, size: 18, color: Color(0xFF1B4D3E)),
+                                SizedBox(width: 12),
+                                Text('Date'),
+                              ],
+                            ),
+                          ),
+                          const PopupMenuItem(
+                            value: 'contact',
+                            child: Row(
+                              children: [
+                                Icon(Icons.phone, size: 18, color: Color(0xFF1B4D3E)),
+                                SizedBox(width: 12),
+                                Text('Contact'),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      // Filter Icon Button
+                      Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: _showCompanyFilterBottomSheet,
+                          borderRadius: BorderRadius.circular(8),
+                          child: Padding(
+                            padding: const EdgeInsets.all(8),
+                            child: Icon(Icons.business, color: Colors.white.withOpacity(0.9), size: 20),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                    ],
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 16, right: 16, top: 8),
+                    child: SizedBox(
+                      height: 44,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.12),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.white.withOpacity(0.2), width: 1.5),
+                        ),
+                        child: Center(
+                          child: TextField(
+                            controller: _filterController,
+                            textAlignVertical: TextAlignVertical.center,
+                            style: const TextStyle(color: Colors.white, fontFamily: 'Literata', fontSize: 14, height: 1),
+                            decoration: InputDecoration(
+                              hintText: 'Search suppliers...',
+                              hintStyle: TextStyle(color: Colors.white.withOpacity(0.5), fontFamily: 'Literata', fontSize: 14),
+                              prefixIcon: Icon(Icons.search_rounded, color: Colors.white.withOpacity(0.7), size: 20),
+                              border: InputBorder.none,
+                              isDense: true,
+                              contentPadding: const EdgeInsets.fromLTRB(0, 0, 12, 0),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
       ),
-      body: Column(
-        children: [
-          // Search Bar with Sort and Filter Icons
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Row(
-              children: [
-                // Search Input (expanded)
-                Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
+      floatingActionButton: Container(
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFF1B4D3E), Color(0xFF0F3B2F)],
+          ),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF1B4D3E).withOpacity(0.4),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: FloatingActionButton(
+          onPressed: _showAddSupplierBottomSheet,
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          child: const Icon(Icons.add, color: Colors.white),
+        ),
+      ),
+      body: _filteredSuppliers.isEmpty
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 100,
+                    height: 100,
                     decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
+                      color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Icon(Icons.business_outlined, size: 50, color: const Color(0xFF1B4D3E).withOpacity(0.3)),
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    _suppliers.isEmpty ? 'No suppliers yet' : 'No results found',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Colors.grey[700], fontFamily: 'Literata'),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    _suppliers.isEmpty ? 'Create your first supplier to get started' : 'Try a different search',
+                    style: TextStyle(fontSize: 14, color: Colors.grey[500], fontFamily: 'Literata'),
+                  ),
+                ],
+              ),
+            )
+          : ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: _filteredSuppliers.length,
+              itemBuilder: (context, index) {
+                final supplier = _filteredSuppliers[index];
+                return _buildSupplierCard(supplier);
+              },
+            ),
+    );
+  }
+
+  Widget _buildSupplierCard(Map<String, dynamic> supplier) {
+    final fullName = '${supplier['firstName'] ?? ''} ${supplier['lastName'] ?? ''}'.trim();
+    final contact = supplier['contact'] ?? 'N/A';
+    final address = supplier['address'] ?? 'N/A';
+    final companies = List<String>.from(supplier['companies'] ?? []);
+
+    final accentColors = [const Color(0xFF1B4D3E), const Color(0xFF0F3B2F), const Color(0xFF2C6F5E), const Color(0xFF1A5E52)];
+    final cardIndex = _filteredSuppliers.indexOf(supplier);
+    final accentColor = accentColors[cardIndex % accentColors.length];
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(color: accentColor.withOpacity(0.15), blurRadius: 16, offset: const Offset(0, 6)),
+          BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 8, offset: const Offset(0, 2)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Top Row: Avatar + Details + Menu
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  color: accentColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: accentColor.withOpacity(0.3), width: 2),
+                ),
+                child: Center(
+                  child: Icon(Icons.person, size: 32, color: accentColor),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(fullName, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Color(0xFF1B4D3E), fontFamily: 'Literata'), maxLines: 1, overflow: TextOverflow.ellipsis),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        Icon(Icons.phone_outlined, size: 14, color: Colors.grey[600]),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(contact, style: TextStyle(fontSize: 12, color: Colors.grey[700], fontFamily: 'Literata'), maxLines: 1, overflow: TextOverflow.ellipsis),
                         ),
                       ],
                     ),
-                    child: TextField(
-                      controller: _filterController,
-                      decoration: InputDecoration(
-                        hintText: 'Search by name or mobile...',
-                        hintStyle: TextStyle(color: Colors.grey[400]),
-                        prefixIcon: Icon(Icons.search, color: Colors.grey[600]),
-                        border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(vertical: 14),
-                      ),
-                      style: const TextStyle(fontSize: 14),
-                    ),
-                  ),
+                  ],
                 ),
-                const SizedBox(width: 12),
-                // Sort Icon Button
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: PopupMenuButton<String>(
-                    icon: const Icon(Icons.sort, color: Color(0xFF1B4D3E)),
-                    onSelected: (value) {
-                      setState(() {
-                        _sortBy = value;
-                        _filterAndSortSuppliers();
-                      });
-                    },
-                    itemBuilder: (BuildContext context) => [
-                      const PopupMenuItem(
-                        value: 'name',
-                        child: Row(
-                          children: [
-                            Icon(Icons.sort_by_alpha, size: 18, color: Color(0xFF1B4D3E)),
-                            SizedBox(width: 12),
-                            Text('Name'),
-                          ],
-                        ),
-                      ),
-                      const PopupMenuItem(
-                        value: 'date',
-                        child: Row(
-                          children: [
-                            Icon(Icons.schedule, size: 18, color: Color(0xFF1B4D3E)),
-                            SizedBox(width: 12),
-                            Text('Date'),
-                          ],
-                        ),
-                      ),
-                      const PopupMenuItem(
-                        value: 'contact',
-                        child: Row(
-                          children: [
-                            Icon(Icons.phone, size: 18, color: Color(0xFF1B4D3E)),
-                            SizedBox(width: 12),
-                            Text('Contact'),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 8),
-                // Filter Icon Button (Company)
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: _showCompanyFilterBottomSheet,
-                      borderRadius: BorderRadius.circular(12),
-                      child: Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: Icon(
-                          Icons.business,
-                          color: Color(0xFF1B4D3E),
-                          size: 24,
-                        ),
-                      ),
+              ),
+              PopupMenuButton(
+                color: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                elevation: 8,
+                itemBuilder: (context) => [
+                  PopupMenuItem(
+                    child: Row(
+                      children: [Icon(Icons.edit_outlined, color: accentColor, size: 18), const SizedBox(width: 8), const Text('Edit')],
                     ),
+                    onTap: () => Future.delayed(const Duration(milliseconds: 100), () => _showEditSupplierBottomSheet(supplier)),
                   ),
+                  PopupMenuItem(
+                    child: Row(
+                      children: [const Icon(Icons.delete_outline, color: Colors.red, size: 18), const SizedBox(width: 8), const Text('Delete', style: TextStyle(color: Colors.red))],
+                    ),
+                    onTap: () => _deleteSupplier(),
+                  ),
+                ],
+                icon: Icon(Icons.more_vert, color: accentColor, size: 20),
+              ),
+            ],
+          ),
+          if (address != 'N/A') ...[
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Icon(Icons.location_on_outlined, size: 14, color: Colors.grey[600]),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(address, style: TextStyle(fontSize: 12, color: Colors.grey[600], fontFamily: 'Literata'), maxLines: 2, overflow: TextOverflow.ellipsis),
                 ),
               ],
             ),
-          ),
-          // Suppliers List
-          Expanded(
-            child: _filteredSuppliers.isEmpty
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.person_outline,
-                          size: 64,
-                          color: Colors.grey.withValues(alpha: 0.5),
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          _suppliers.isEmpty
-                              ? 'No suppliers yet'
-                              : 'No results found',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            color: Color(0xFFBDBDBD),
-                            fontFamily: 'Literata',
-                          ),
-                        ),
-                      ],
-                    ),
-                  )
-                : ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    itemCount: _filteredSuppliers.length,
-                    itemBuilder: (context, index) {
-                      final supplier = _filteredSuppliers[index];
-                      final fullName =
-                          '${supplier['firstName'] ?? ''} ${supplier['lastName'] ?? ''}'
-                              .trim();
-                      final companies =
-                          List<String>.from(supplier['companies'] ?? []);
-                      return GestureDetector(
-                        onTap: () =>
-                            _showEditSupplierBottomSheet(supplier),
-                        child: Container(
-                          margin: const EdgeInsets.only(bottom: 12),
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.grey[200]!),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.03),
-                                blurRadius: 4,
-                                offset: const Offset(0, 1),
-                              ),
-                            ],
-                          ),
-                          child: Column(
-                            crossAxisAlignment:
-                                CrossAxisAlignment.start,
-                            children: [
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Expanded(
-                                      child: Text(
-                                        fullName,
-                                        style: const TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w700,
-                                          color: Color(0xFF1B4D3E),
-                                          fontFamily: 'Literata',
-                                        ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 12,
-                                        vertical: 6,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFFE8F5E9),
-                                        borderRadius:
-                                            BorderRadius.circular(16),
-                                      ),
-                                      child: const Text(
-                                        'Supplier',
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w600,
-                                          color: Color(0xFF1B4D3E),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 8),
-                                Row(
-                                  children: [
-                                    const Icon(
-                                      Icons.phone_outlined,
-                                      size: 16,
-                                      color: Color(0xFF757575),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Expanded(
-                                      child: Text(
-                                        supplier['contact'] ?? 'N/A',
-                                        style: const TextStyle(
-                                          fontSize: 14,
-                                          color: Color(0xFF757575),
-                                        ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 8),
-                                Row(
-                                  children: [
-                                    const Icon(
-                                      Icons.location_on_outlined,
-                                      size: 16,
-                                      color: Color(0xFF757575),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Expanded(
-                                      child: Text(
-                                        supplier['address'] ?? 'N/A',
-                                        style: const TextStyle(
-                                          fontSize: 14,
-                                          color: Color(0xFF757575),
-                                        ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                if (companies.isNotEmpty) ...[
-                                  const SizedBox(height: 12),
-                                  Wrap(
-                                    spacing: 6,
-                                    runSpacing: 6,
-                                    children: companies.map((company) {
-                                      return Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 8,
-                                          vertical: 4,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: const Color(0xFFE8F5E9),
-                                          borderRadius:
-                                              BorderRadius.circular(12),
-                                        ),
-                                        child: Text(
-                                          company,
-                                          style: const TextStyle(
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.w600,
-                                            color: Color(0xFF1B4D3E),
-                                          ),
-                                        ),
-                                      );
-                                    }).toList(),
-                                  ),
-                                ],
-                            ],
-                          ),
-                        ),
-                      );
-                    },
+          ],
+          if (companies.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: companies.map((company) {
+                return Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: accentColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: accentColor.withOpacity(0.3), width: 1),
                   ),
-          ),
+                  child: Text(
+                    company,
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: accentColor, fontFamily: 'Literata'),
+                  ),
+                );
+              }).toList(),
+            ),
+          ],
         ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _showAddSupplierBottomSheet,
-        backgroundColor: const Color(0xFF1B4D3E),
-        child: const Icon(Icons.add, color: Colors.white),
       ),
     );
   }

@@ -5,8 +5,8 @@ import '../../../../core/services/credentials_manager.dart';
 import 'profile_page.dart';
 import '../../../supplier/presentation/pages/supplier_page.dart';
 import '../../../customer/presentation/pages/customer_page.dart';
-import '../../../shop/presentation/pages/shop_details_page.dart';
 import '../../../product/presentation/pages/product_page.dart';
+import '../../../company/presentation/pages/company_page.dart';
 
 class FlyoutMenu extends StatefulWidget {
   const FlyoutMenu({super.key});
@@ -81,6 +81,16 @@ class _FlyoutMenuState extends State<FlyoutMenu> with SingleTickerProviderStateM
       case 'Clients':
         Navigator.of(context).push(
           MaterialPageRoute(builder: (_) => const CustomerPage()),
+        );
+        break;
+      case 'Suppliers':
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const SupplierPage()),
+        );
+        break;
+      case 'Companies':
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const CompanyPage()),
         );
         break;
       case 'Products':
@@ -218,6 +228,16 @@ class _FlyoutMenuState extends State<FlyoutMenu> with SingleTickerProviderStateM
                         icon: Icons.people,
                         label: 'Clients',
                         onTap: () => _navigateToPage('Clients'),
+                      ),
+                      _buildMenuItem(
+                        icon: Icons.business,
+                        label: 'Suppliers',
+                        onTap: () => _navigateToPage('Suppliers'),
+                      ),
+                      _buildMenuItem(
+                        icon: Icons.apartment,
+                        label: 'Companies',
+                        onTap: () => _navigateToPage('Companies'),
                       ),
                       _buildMenuItem(
                         icon: Icons.shopping_bag,
