@@ -381,28 +381,35 @@ class _CustomerPageState extends State<CustomerPage> {
         print('[DEBUG] Updating existing customer: $_editingCustomerId');
         await customersCollection.doc(_editingCustomerId).update(customerData);
         print('[DEBUG] Customer updated successfully');
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Customer updated successfully'),
-            backgroundColor: Colors.green,
-          ),
-        );
+        _clearForm();
+        _loadCustomers();
+        if (mounted) {
+          Navigator.pop(context);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Customer updated successfully'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
       } else {
         // Create new customer
         print('[DEBUG] Creating new customer');
         customerData['createdAt'] = FieldValue.serverTimestamp();
         final docRef = await customersCollection.add(customerData);
         print('[DEBUG] Customer added successfully with ID: ${docRef.id}');
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Customer added successfully'),
-            backgroundColor: Colors.green,
-          ),
-        );
+        _clearForm();
+        _loadCustomers();
+        if (mounted) {
+          Navigator.pop(context);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Customer added successfully'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
       }
-
-      _clearForm();
-      _loadCustomers();
     } catch (e) {
       print('[ERROR] Failed to save customer: $e');
       print('[ERROR] Error type: ${e.runtimeType}');
