@@ -29,6 +29,12 @@ class _DashboardPageState extends State<DashboardPage>
   late List<Animation<Offset>> _slideAnimations;
   late List<Animation<double>> _scaleAnimations;
 
+  // Welcome snackbar animation
+  AnimationController? _welcomeController;
+  Animation<Offset>? _welcomeSlideAnimation;
+  Animation<double>? _welcomeFadeAnimation;
+  bool _showWelcome = true;
+
   @override
   void initState() {
     super.initState();
@@ -84,11 +90,46 @@ class _DashboardPageState extends State<DashboardPage>
       );
     });
 
+    // Welcome snackbar animation
+    _welcomeController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 200),
+    );
+    _welcomeSlideAnimation = Tween<Offset>(
+      begin: const Offset(0, 1),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _welcomeController!,
+      curve: Curves.easeOutCubic,
+    ));
+    _welcomeFadeAnimation = Tween<double>(begin: 0, end: 1).animate(
+      CurvedAnimation(parent: _welcomeController!, curve: Curves.easeOut),
+    );
+
     // Start animations
     Future.delayed(const Duration(milliseconds: 100), () {
       if (mounted) {
         _mainAnimController.forward();
         _staggerController.forward();
+      }
+    });
+
+    // Show welcome snackbar after a delay, then hide after 5 seconds
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (mounted) {
+        _welcomeController?.forward();
+        // Auto-hide after 5 seconds
+        Future.delayed(const Duration(seconds: 5), () {
+          if (mounted) {
+            _welcomeController?.reverse().then((_) {
+              if (mounted) {
+                setState(() {
+                  _showWelcome = false;
+                });
+              }
+            });
+          }
+        });
       }
     });
   }
@@ -97,6 +138,7 @@ class _DashboardPageState extends State<DashboardPage>
   void dispose() {
     _mainAnimController.dispose();
     _staggerController.dispose();
+    _welcomeController?.dispose();
     super.dispose();
   }
 
@@ -166,30 +208,32 @@ class _DashboardPageState extends State<DashboardPage>
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFB),
-      body: NestedScrollView(
-        physics: const BouncingScrollPhysics(),
-        headerSliverBuilder: (context, innerBoxIsScrolled) {
-          return [
-            // Pinned Gradient Header
-            SliverAppBar(
-              expandedHeight: 0,
-              collapsedHeight: 100,
-              pinned: true,
-              floating: false,
-              backgroundColor: const Color(0xFF1B4D3E),
-              automaticallyImplyLeading: false,
-              flexibleSpace: _buildGradientHeader(),
-            ),
-          ];
-        },
-        body: FadeTransition(
-          opacity: _fadeAnimation,
-          child: SingleChildScrollView(
+      body: Stack(
+        children: [
+          NestedScrollView(
             physics: const BouncingScrollPhysics(),
-            padding: const EdgeInsets.all(20.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+            headerSliverBuilder: (context, innerBoxIsScrolled) {
+              return [
+                // Pinned Gradient Header
+                SliverAppBar(
+                  expandedHeight: 0,
+                  collapsedHeight: 100,
+                  pinned: true,
+                  floating: false,
+                  backgroundColor: const Color(0xFF1B4D3E),
+                  automaticallyImplyLeading: false,
+                  flexibleSpace: _buildGradientHeader(),
+                ),
+              ];
+            },
+            body: FadeTransition(
+              opacity: _fadeAnimation,
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.all(20.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                 // Sales & Profit Analysis Section
                 _buildAnimatedCard(
                   index: 0,
@@ -263,15 +307,27 @@ class _DashboardPageState extends State<DashboardPage>
                 // Payments Card
                 _buildAnimatedCard(index: 5, child: _buildPaymentsCard()),
                 const SizedBox(height: 24),
-
-                // Welcome message
-                _buildAnimatedCard(index: 5, child: const WelcomeCard()),
-                const SizedBox(height: 24),
               ],
             ),
           ),
         ),
       ),
+      // Welcome snackbar overlay
+      if (_showWelcome && _welcomeSlideAnimation != null && _welcomeFadeAnimation != null)
+        Positioned(
+          left: 16,
+          right: 16,
+          bottom: 16,
+          child: SlideTransition(
+            position: _welcomeSlideAnimation!,
+            child: FadeTransition(
+              opacity: _welcomeFadeAnimation!,
+              child: const WelcomeCard(),
+            ),
+          ),
+        ),
+    ],
+  ),
       bottomNavigationBar: _buildBottomNavBar(),
     );
   }
