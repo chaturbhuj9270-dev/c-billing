@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../../customer/presentation/pages/customer_page.dart';
 import '../../../../core/services/session_manager.dart';
 import '../../../../core/services/credentials_manager.dart';
+import '../../../../common_widgets/welcome_card.dart';
 import 'flyout_menu.dart';
 
 class DashboardPage extends StatefulWidget {
@@ -171,7 +172,7 @@ class _DashboardPageState extends State<DashboardPage>
           return [
             // Pinned Gradient Header
             SliverAppBar(
-              expandedHeight: 220,
+              expandedHeight: 0,
               collapsedHeight: 100,
               pinned: true,
               floating: false,
@@ -261,6 +262,10 @@ class _DashboardPageState extends State<DashboardPage>
 
                 // Payments Card
                 _buildAnimatedCard(index: 5, child: _buildPaymentsCard()),
+                const SizedBox(height: 24),
+
+                // Welcome message
+                _buildAnimatedCard(index: 5, child: const WelcomeCard()),
                 const SizedBox(height: 24),
               ],
             ),
@@ -365,76 +370,6 @@ class _DashboardPageState extends State<DashboardPage>
                     ),
                   ),
                 ],
-              ),
-              const SizedBox(height: 24),
-              // Welcome message with glassmorphism
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      Colors.white.withOpacity(0.15),
-                      Colors.white.withOpacity(0.05),
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: Colors.white.withOpacity(0.2)),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 56,
-                      height: 56,
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFF4CAF50), Color(0xFF2E7D32)],
-                        ),
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFF4CAF50).withOpacity(0.4),
-                            blurRadius: 12,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: const Icon(
-                        Icons.waving_hand_rounded,
-                        color: Colors.white,
-                        size: 28,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Good Morning!',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 20,
-                              fontWeight: FontWeight.w700,
-                              fontFamily: 'Literata',
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Your business is doing great today',
-                            style: TextStyle(
-                              color: Colors.white.withOpacity(0.75),
-                              fontSize: 13,
-                              fontFamily: 'Literata',
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
               ),
             ],
           ),
