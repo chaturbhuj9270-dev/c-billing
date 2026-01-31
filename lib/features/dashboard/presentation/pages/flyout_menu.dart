@@ -203,7 +203,7 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
     return SlideTransition(
       position: _slideAnimation,
       child: Container(
-        width: MediaQuery.of(context).size.width * 0.85,
+        width: MediaQuery.of(context).size.width * 0.95,
         decoration: BoxDecoration(
           color: Colors.white,
           boxShadow: [
@@ -273,12 +273,12 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
       child: SafeArea(
         bottom: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(24, 28, 24, 36),
+          padding: const EdgeInsets.fromLTRB(24, 0, 24, 12),
           child: Column(
             children: [
               // Profile Section with glassmorphism
               Container(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
@@ -291,12 +291,12 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
                   borderRadius: BorderRadius.circular(24),
                   border: Border.all(color: Colors.white.withOpacity(0.2)),
                 ),
-                child: Row(
+                child: Column(
                   children: [
-                    // Avatar with gradient border
+                    // Avatar with gradient border - centered at top
                     Container(
-                      width: 80,
-                      height: 80,
+                      width: 90,
+                      height: 90,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         gradient: const LinearGradient(
@@ -312,8 +312,8 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
                       ),
                       child: Center(
                         child: Container(
-                          width: 72,
-                          height: 72,
+                          width: 82,
+                          height: 82,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             color: const Color(0xFF1B4D3E),
@@ -328,7 +328,7 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
                                   ? _userName[0].toUpperCase()
                                   : 'U',
                               style: const TextStyle(
-                                fontSize: 34,
+                                fontSize: 38,
                                 fontWeight: FontWeight.bold,
                                 color: Colors.white,
                                 fontFamily: 'Literata',
@@ -338,53 +338,48 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
                         ),
                       ),
                     ),
-                    const SizedBox(width: 20),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                    const SizedBox(height: 16),
+                    // User name - full width, centered
+                    Text(
+                      _userName,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 22,
+                        fontWeight: FontWeight.w700,
+                        fontFamily: 'Literata',
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 12),
+                    // Pro Account badge
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF4CAF50).withOpacity(0.3),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: const Color(0xFF4CAF50).withOpacity(0.5),
+                        ),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text(
-                            _userName,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 22,
-                              fontWeight: FontWeight.w700,
-                              fontFamily: 'Literata',
-                            ),
-                            overflow: TextOverflow.ellipsis,
+                          Icon(
+                            Icons.verified_rounded,
+                            color: Color(0xFF81C784),
+                            size: 16,
                           ),
-                          const SizedBox(height: 12),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF4CAF50).withOpacity(0.3),
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(
-                                color: const Color(0xFF4CAF50).withOpacity(0.5),
-                              ),
-                            ),
-                            child: const Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.verified_rounded,
-                                  color: Color(0xFF81C784),
-                                  size: 16,
-                                ),
-                                SizedBox(width: 6),
-                                Text(
-                                  'Pro Account',
-                                  style: TextStyle(
-                                    color: Color(0xFF81C784),
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                    fontFamily: 'Literata',
-                                  ),
-                                ),
-                              ],
+                          SizedBox(width: 6),
+                          Text(
+                            'Pro Account',
+                            style: TextStyle(
+                              color: Color(0xFF81C784),
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              fontFamily: 'Literata',
                             ),
                           ),
                         ],
