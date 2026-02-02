@@ -531,18 +531,18 @@ class _DashboardPageState extends State<DashboardPage>
     required IconData icon,
   }) {
     return ClipRRect(
-      borderRadius: BorderRadius.circular(24),
+      borderRadius: BorderRadius.circular(20),
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
         child: Container(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [Color(0xFF1B4D3E).withOpacity(0.7), Color(0xFF2E7D32).withOpacity(0.7)],
             ),
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(20),
             border: Border.all(color: Colors.white.withOpacity(0.18), width: 1.5),
             boxShadow: [
               BoxShadow(
@@ -562,38 +562,38 @@ class _DashboardPageState extends State<DashboardPage>
                     title,
                     style: TextStyle(
                       color: Colors.white.withOpacity(0.9),
-                      fontSize: 13,
+                      fontSize: 12,
                       fontWeight: FontWeight.w500,
                       fontFamily: 'Literata',
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.all(8),
+                    padding: const EdgeInsets.all(6),
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                    child: Icon(icon, color: Colors.white, size: 18),
+                    child: Icon(icon, color: Colors.white, size: 16),
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
               Text(
                 amount,
                 style: const TextStyle(
                   color: Colors.white,
-                  fontSize: 28,
+                  fontSize: 22,
                   fontWeight: FontWeight.w800,
                   fontFamily: 'Literata',
-                  letterSpacing: -1,
+                  letterSpacing: -0.5,
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 6),
               Text(
                 subtitle,
                 style: TextStyle(
                   color: Colors.white.withOpacity(0.8),
-                  fontSize: 11,
+                  fontSize: 10,
                   fontFamily: 'Literata',
                 ),
               ),
@@ -606,18 +606,18 @@ class _DashboardPageState extends State<DashboardPage>
 
   Widget _buildProfitCard() {
     return ClipRRect(
-      borderRadius: BorderRadius.circular(24),
+      borderRadius: BorderRadius.circular(20),
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
         child: Container(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [Color(0xFF1B4D3E).withOpacity(0.7), Color(0xFF2E7D32).withOpacity(0.7)],
             ),
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(20),
             border: Border.all(color: Colors.white.withOpacity(0.18), width: 1.5),
             boxShadow: [
               BoxShadow(
@@ -637,12 +637,12 @@ class _DashboardPageState extends State<DashboardPage>
                   children: [
                     Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
+                        horizontal: 10,
+                        vertical: 5,
                       ),
                       decoration: BoxDecoration(
                         color: Colors.white.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(16),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -650,14 +650,14 @@ class _DashboardPageState extends State<DashboardPage>
                           const Icon(
                             Icons.arrow_upward_rounded,
                             color: Colors.white,
-                            size: 16,
+                            size: 14,
                           ),
                           const SizedBox(width: 4),
                           Text(
                             '+28%',
                             style: TextStyle(
                               color: Colors.white.withOpacity(0.95),
-                              fontSize: 12,
+                              fontSize: 11,
                               fontWeight: FontWeight.w600,
                               fontFamily: 'Literata',
                             ),
@@ -667,15 +667,15 @@ class _DashboardPageState extends State<DashboardPage>
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
                 const Text(
                   '₹5.7 K',
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 40,
+                    fontSize: 32,
                     fontWeight: FontWeight.w800,
                     fontFamily: 'Literata',
-                    letterSpacing: -1.5,
+                    letterSpacing: -1,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -683,7 +683,7 @@ class _DashboardPageState extends State<DashboardPage>
                   'Net Profit This Month',
                   style: TextStyle(
                     color: Colors.white.withOpacity(0.85),
-                    fontSize: 14,
+                    fontSize: 12,
                     fontFamily: 'Literata',
                   ),
                 ),
@@ -691,16 +691,16 @@ class _DashboardPageState extends State<DashboardPage>
             ),
           ),
           Container(
-            width: 80,
-            height: 80,
+            width: 70,
+            height: 70,
             decoration: BoxDecoration(
               color: Colors.white.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(16),
             ),
             child: const Icon(
               Icons.trending_up_rounded,
               color: Colors.white,
-              size: 40,
+              size: 36,
             ),
           ),
             ],
