@@ -342,7 +342,7 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
                                   ? _userName[0].toUpperCase()
                                   : 'U',
                               style: const TextStyle(
-                                fontSize: 35,
+                                fontSize: 22,
                                 fontWeight: FontWeight.bold,
                                 color: Colors.white,
                                 fontFamily: 'Literata',
