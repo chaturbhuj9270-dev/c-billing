@@ -199,10 +199,21 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
                       opacity: _opacityAnimation,
                       child: Column(
                         children: [
-                          Image.asset(
-                            'assets/images/logo.png',
-                            width: 70,
-                            height: 70,
+                          Container(
+                            decoration: BoxDecoration(
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(0xFF1B4D3E).withValues(alpha: 0.25),
+                                  blurRadius: 24,
+                                  offset: const Offset(0, 12),
+                                ),
+                              ],
+                            ),
+                            child: Image.asset(
+                              'assets/images/logo.png',
+                              width: 70,
+                              height: 70,
+                            ),
                           ),
                           const SizedBox(height: 12),
                           const Text(

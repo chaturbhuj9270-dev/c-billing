@@ -165,10 +165,21 @@ class _LoginPageV2State extends State<LoginPageV2> with TickerProviderStateMixin
                       opacity: _opacityAnimation,
                       child: Column(
                         children: [
-                          Image.asset(
-                            'assets/images/logo.png',
-                            width: 80,
-                            height: 80,
+                          Container(
+                            decoration: BoxDecoration(
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(0xFF1B4D3E).withValues(alpha: 0.25),
+                                  blurRadius: 24,
+                                  offset: const Offset(0, 12),
+                                ),
+                              ],
+                            ),
+                            child: Image.asset(
+                              'assets/images/logo.png',
+                              width: 80,
+                              height: 80,
+                            ),
                           ),
                           const SizedBox(height: 5),
                           Text(
