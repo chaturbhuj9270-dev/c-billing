@@ -712,10 +712,10 @@ class _DashboardPageState extends State<DashboardPage>
 
   Widget _buildInventoryCard() {
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.06),
@@ -734,15 +734,15 @@ class _DashboardPageState extends State<DashboardPage>
                 'Stock Overview',
                 style: TextStyle(
                   color: Color(0xFF1B4D3E),
-                  fontSize: 16,
+                  fontSize: 14,
                   fontWeight: FontWeight.w700,
                   fontFamily: 'Literata',
                 ),
               ),
               Container(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
+                  horizontal: 10,
+                  vertical: 5,
                 ),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
@@ -751,13 +751,13 @@ class _DashboardPageState extends State<DashboardPage>
                       const Color(0xFFFF5722).withOpacity(0.15),
                     ],
                   ),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(10),
                 ),
                 child: const Text(
                   '3 Available',
                   style: TextStyle(
                     color: Color(0xFFE65100),
-                    fontSize: 12,
+                    fontSize: 11,
                     fontWeight: FontWeight.w600,
                     fontFamily: 'Literata',
                   ),
@@ -765,7 +765,7 @@ class _DashboardPageState extends State<DashboardPage>
               ),
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
           Row(
             children: [
               Expanded(
@@ -802,36 +802,36 @@ class _DashboardPageState extends State<DashboardPage>
     required IconData icon,
   }) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [color.withOpacity(0.08), color.withOpacity(0.04)],
         ),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(color: color.withOpacity(0.1)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: color, size: 22),
-          const SizedBox(height: 12),
+          Icon(icon, color: color, size: 18),
+          const SizedBox(height: 10),
           Text(
             value,
             style: TextStyle(
               color: color,
-              fontSize: 24,
+              fontSize: 20,
               fontWeight: FontWeight.w800,
               fontFamily: 'Literata',
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 3),
           Text(
             '$title $subtitle',
             style: TextStyle(
               color: color.withOpacity(0.7),
-              fontSize: 11,
+              fontSize: 10,
               fontFamily: 'Literata',
             ),
           ),

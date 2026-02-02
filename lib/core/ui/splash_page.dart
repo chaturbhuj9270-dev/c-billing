@@ -243,7 +243,7 @@ class _SplashPageState extends State<SplashPage> {
                           ),
                         ),
                         const TextSpan(
-                          text: 'CHATURBHUJ SOFTWARE',
+                          text: 'CHATURBHUJ SOLUTIONS',
                           style: TextStyle(
                             color: Color(0xFF1B4D3E),
                             fontSize: 9.5,
