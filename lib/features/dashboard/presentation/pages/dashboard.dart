@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:ui';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../customer/presentation/pages/customer_page.dart';
 import '../../../../core/services/session_manager.dart';
@@ -529,89 +530,105 @@ class _DashboardPageState extends State<DashboardPage>
     required Gradient gradient,
     required IconData icon,
   }) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: gradient,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: (gradient as LinearGradient).colors.first.withOpacity(0.4),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                title,
-                style: TextStyle(
-                  color: Colors.white.withOpacity(0.9),
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  fontFamily: 'Literata',
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(icon, color: Colors.white, size: 18),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(24),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Color(0xFF1B4D3E).withOpacity(0.7), Color(0xFF2E7D32).withOpacity(0.7)],
+            ),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: Colors.white.withOpacity(0.18), width: 1.5),
+            boxShadow: [
+              BoxShadow(
+                color: Color(0xFF1B4D3E).withOpacity(0.18),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          Text(
-            amount,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 28,
-              fontWeight: FontWeight.w800,
-              fontFamily: 'Literata',
-              letterSpacing: -1,
-            ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.9),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      fontFamily: 'Literata',
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(icon, color: Colors.white, size: 18),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Text(
+                amount,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 28,
+                  fontWeight: FontWeight.w800,
+                  fontFamily: 'Literata',
+                  letterSpacing: -1,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                subtitle,
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.8),
+                  fontSize: 11,
+                  fontFamily: 'Literata',
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 8),
-          Text(
-            subtitle,
-            style: TextStyle(
-              color: Colors.white.withOpacity(0.8),
-              fontSize: 11,
-              fontFamily: 'Literata',
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
 
   Widget _buildProfitCard() {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFF11998e), Color(0xFF38ef7d)],
-        ),
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF11998e).withOpacity(0.4),
-            blurRadius: 24,
-            offset: const Offset(0, 10),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(24),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Color(0xFF1B4D3E).withOpacity(0.7), Color(0xFF2E7D32).withOpacity(0.7)],
+            ),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: Colors.white.withOpacity(0.18), width: 1.5),
+            boxShadow: [
+              BoxShadow(
+                color: Color(0xFF1B4D3E).withOpacity(0.18),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
+              ),
+            ],
           ),
-        ],
-      ),
-      child: Row(
-        children: [
+          child: Row(
+            children: [
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -686,7 +703,9 @@ class _DashboardPageState extends State<DashboardPage>
               size: 40,
             ),
           ),
-        ],
+            ],
+          ),
+        ),
       ),
     );
   }
