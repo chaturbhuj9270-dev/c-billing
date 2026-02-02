@@ -287,7 +287,7 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
       child: SafeArea(
         bottom: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(24, 0, 24, 12),
+          padding: const EdgeInsets.fromLTRB(10, 0, 10, 12),
           child: Column(
             children: [
               // Profile Section with glassmorphism
@@ -305,12 +305,12 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
                   borderRadius: BorderRadius.circular(24),
                   border: Border.all(color: Colors.white.withOpacity(0.2)),
                 ),
-                child: Column(
+                child: Row(
                   children: [
                     // Avatar with gradient border - centered at top
                     Container(
-                      width: 90,
-                      height: 90,
+                      width: 60,
+                      height: 60,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         gradient: const LinearGradient(
@@ -342,7 +342,7 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
                                   ? _userName[0].toUpperCase()
                                   : 'U',
                               style: const TextStyle(
-                                fontSize: 38,
+                                fontSize: 35,
                                 fontWeight: FontWeight.bold,
                                 color: Colors.white,
                                 fontFamily: 'Literata',
@@ -352,8 +352,11 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 16),
-                    // User name - full width, centered
+                    const SizedBox(height: 16,
+                    width: 20,),
+                    Column(
+                      children: [
+                        // User name - full width, centered
                     Text(
                       _userName,
                       style: const TextStyle(
@@ -399,7 +402,10 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
                         ],
                       ),
                     ),
-                  ],
+            
+                      ],
+                    )
+                    ],
                 ),
               ),
             ],
