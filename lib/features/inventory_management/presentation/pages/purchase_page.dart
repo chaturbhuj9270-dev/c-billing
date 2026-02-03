@@ -15,9 +15,12 @@ class PurchasePage extends StatefulWidget {
   State<PurchasePage> createState() => _PurchasePageState();
 }
 
-class _PurchasePageState extends State<PurchasePage> {
+class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderStateMixin {
   late InventoryService _inventoryService;
   late FirebaseFirestore _firestore;
+  late AnimationController _animController;
+  late Animation<Offset> _offsetAnimation;
+  late Animation<double> _opacityAnimation;
 
   Product? _selectedProduct;
   Map<String, dynamic>? _selectedSupplier;
@@ -59,6 +62,18 @@ class _PurchasePageState extends State<PurchasePage> {
       stockRepository: FirebaseStockRepository(firestore: _firestore),
       purchaseRepository: FirebasePurchaseRepository(firestore: _firestore),
     );
+    
+    // Initialize animations
+    _animController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 700),
+    );
+    _offsetAnimation = Tween<Offset>(begin: const Offset(0, 0.08), end: Offset.zero)
+        .animate(CurvedAnimation(parent: _animController, curve: Curves.easeOut));
+    _opacityAnimation = Tween<double>(begin: 0.0, end: 1.0)
+        .animate(CurvedAnimation(parent: _animController, curve: Curves.easeIn));
+    Future.delayed(const Duration(milliseconds: 150), () => _animController.forward());
+    
     _loadProducts();
     _loadSuppliers();
     _loadCompanies();
@@ -765,6 +780,7 @@ class _PurchasePageState extends State<PurchasePage> {
 
   @override
   void dispose() {
+    _animController.dispose();
     _quantityController.dispose();
     _priceController.dispose();
     _notesController.dispose();
@@ -1227,41 +1243,105 @@ class _PurchasePageState extends State<PurchasePage> {
         title: const Text('Purchase Management'),
         backgroundColor: const Color(0xFF1B4D3E),
       ),
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFE6EDE7),
       floatingActionButton: FloatingActionButton(
         onPressed: _showAddOptionsBottomSheet,
         backgroundColor: const Color(0xFF1B4D3E),
         child: const Icon(Icons.add_rounded),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Product Selection Header with Add Button
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24.0),
+            child: Column(
               children: [
-                const Text(
-                  'Select Product',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    fontFamily: 'Literata',
+                const SizedBox(height: 20),
+                // Header with animation
+                SlideTransition(
+                  position: _offsetAnimation,
+                  child: FadeTransition(
+                    opacity: _opacityAnimation,
+                    child: Column(
+                      children: [
+                        Text(
+                          'Purchase Records',
+                          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                            fontWeight: FontWeight.w800,
+                            color: const Color(0xFF1B4D3E),
+                            letterSpacing: 0.5,
+                            fontSize: 28,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          'Track and manage your purchases',
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: Colors.black45,
+                            fontWeight: FontWeight.w400,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-                ElevatedButton.icon(
-                  onPressed: _addNewProduct,
-                  icon: const Icon(Icons.add_rounded, size: 18),
-                  label: const Text('Add Product'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF1B4D3E),
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
+                const SizedBox(height: 40),
+                // Glassy content card with animation
+                SlideTransition(
+                  position: _offsetAnimation,
+                  child: FadeTransition(
+                    opacity: _opacityAnimation,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(28),
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(32.0),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.90),
+                            borderRadius: BorderRadius.circular(28),
+                            border: Border.all(
+                              color: Colors.white.withOpacity(0.4),
+                              width: 1.5,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFF1B4D3E).withOpacity(0.08),
+                                blurRadius: 30,
+                                offset: const Offset(0, 15),
+                                spreadRadius: 2,
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              // Product Selection Header with Add Button
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  const Text(
+                                    'Select Product',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w700,
+                                      fontFamily: 'Literata',
+                                    ),
+                                  ),
+                                  ElevatedButton.icon(
+                                    onPressed: _addNewProduct,
+                                    icon: const Icon(Icons.add_rounded, size: 18),
+                                    label: const Text('Add Product'),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: const Color(0xFF1B4D3E),
+                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
             GestureDetector(
               onTap: _showProductSelectionBottomSheet,
               child: Container(
@@ -1713,9 +1793,18 @@ class _PurchasePageState extends State<PurchasePage> {
                       ),
               ),
             ),
-          ],
+            ],
+          ),
         ),
       ),
+      ),
+      ),
+    ),
+      ],
+    ),
+    ),
+    ),
+    ),
     );
   }
 }
