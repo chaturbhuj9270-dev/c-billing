@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:ui';
 import 'package:c_billing/core/services/inventory_service.dart';
 import '../../data/repositories/firebase_product_repository.dart';
@@ -19,11 +20,18 @@ class _PurchasePageState extends State<PurchasePage> {
   late FirebaseFirestore _firestore;
 
   Product? _selectedProduct;
+  Map<String, dynamic>? _selectedSupplier;
+  Map<String, dynamic>? _selectedCompany;
+  DateTime? _productionDate;
+  DateTime? _expiryDate;
+  
   final _quantityController = TextEditingController();
   final _priceController = TextEditingController();
   final _notesController = TextEditingController();
   bool _isLoading = false;
   List<Product> _products = [];
+  List<Map<String, dynamic>> _suppliers = [];
+  List<Map<String, dynamic>> _companies = [];
 
   @override
   void initState() {
@@ -35,6 +43,8 @@ class _PurchasePageState extends State<PurchasePage> {
       purchaseRepository: FirebasePurchaseRepository(firestore: _firestore),
     );
     _loadProducts();
+    _loadSuppliers();
+    _loadCompanies();
   }
 
   Future<void> _loadProducts() async {
@@ -47,6 +57,64 @@ class _PurchasePageState extends State<PurchasePage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error loading products: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _loadSuppliers() async {
+    try {
+      final currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser == null) return;
+
+      final snapshot = await _firestore
+          .collection('users')
+          .doc(currentUser.uid)
+          .collection('suppliers')
+          .get();
+
+      setState(() {
+        _suppliers = snapshot.docs
+            .map((doc) => {
+                  'id': doc.id,
+                  'firstName': doc['firstName'] ?? '',
+                  'lastName': doc['lastName'] ?? '',
+                  'fullName': '${doc['firstName'] ?? ''} ${doc['lastName'] ?? ''}'.trim(),
+                })
+            .toList();
+      });
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error loading suppliers: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _loadCompanies() async {
+    try {
+      final currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser == null) return;
+
+      final snapshot = await _firestore
+          .collection('users')
+          .doc(currentUser.uid)
+          .collection('companies')
+          .get();
+
+      setState(() {
+        _companies = snapshot.docs
+            .map((doc) => {
+                  'id': doc.id,
+                  'companyName': doc['companyName'] ?? '',
+                })
+            .toList();
+      });
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error loading companies: $e')),
         );
       }
     }
@@ -245,6 +313,41 @@ class _PurchasePageState extends State<PurchasePage> {
       return;
     }
 
+    if (_selectedSupplier == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select a supplier')),
+      );
+      return;
+    }
+
+    if (_selectedCompany == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select a company')),
+      );
+      return;
+    }
+
+    if (_productionDate == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select a production date')),
+      );
+      return;
+    }
+
+    if (_expiryDate == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select an expiry date')),
+      );
+      return;
+    }
+
+    if (_expiryDate!.isBefore(_productionDate!)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Expiry date must be after production date')),
+      );
+      return;
+    }
+
     final quantity = int.tryParse(_quantityController.text);
     final price = double.tryParse(_priceController.text);
 
@@ -265,6 +368,31 @@ class _PurchasePageState extends State<PurchasePage> {
     setState(() => _isLoading = true);
 
     try {
+      // Save purchase to Firestore with supplier and company info
+      final currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser == null) throw Exception('User not authenticated');
+
+      await _firestore
+          .collection('users')
+          .doc(currentUser.uid)
+          .collection('purchases')
+          .add({
+            'productId': _selectedProduct!.id,
+            'productName': _selectedProduct!.name,
+            'supplierId': _selectedSupplier!['id'],
+            'supplierName': _selectedSupplier!['fullName'],
+            'companyId': _selectedCompany!['id'],
+            'companyName': _selectedCompany!['companyName'],
+            'quantity': quantity,
+            'purchasePrice': price,
+            'totalAmount': quantity * price,
+            'productionDate': _productionDate,
+            'expiryDate': _expiryDate,
+            'notes': _notesController.text.isNotEmpty ? _notesController.text : null,
+            'createdAt': FieldValue.serverTimestamp(),
+          });
+
+      // Also process through inventory service for stock update
       await _inventoryService.processPurchase(
         productId: _selectedProduct!.id,
         quantity: quantity,
@@ -283,6 +411,10 @@ class _PurchasePageState extends State<PurchasePage> {
         // Reset form
         setState(() {
           _selectedProduct = null;
+          _selectedSupplier = null;
+          _selectedCompany = null;
+          _productionDate = null;
+          _expiryDate = null;
           _quantityController.clear();
           _priceController.clear();
           _notesController.clear();
@@ -423,6 +555,184 @@ class _PurchasePageState extends State<PurchasePage> {
                 ),
               ),
             ],
+            const SizedBox(height: 28),
+
+            // Supplier Selection
+            const Text(
+              'Select Supplier',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                fontFamily: 'Literata',
+              ),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey[300]!),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: DropdownButton<Map<String, dynamic>>(
+                isExpanded: true,
+                underline: const SizedBox(),
+                value: _selectedSupplier,
+                hint: const Text('Choose a supplier'),
+                items: _suppliers.map((supplier) {
+                  return DropdownMenuItem(
+                    value: supplier,
+                    child: Text(
+                      supplier['fullName'] ?? 'Unknown Supplier',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  );
+                }).toList(),
+                onChanged: (supplier) {
+                  setState(() {
+                    _selectedSupplier = supplier;
+                  });
+                },
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // Company Selection
+            const Text(
+              'Select Company',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                fontFamily: 'Literata',
+              ),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey[300]!),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: DropdownButton<Map<String, dynamic>>(
+                isExpanded: true,
+                underline: const SizedBox(),
+                value: _selectedCompany,
+                hint: const Text('Choose a company'),
+                items: _companies.map((company) {
+                  return DropdownMenuItem(
+                    value: company,
+                    child: Text(
+                      company['companyName'] ?? 'Unknown Company',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  );
+                }).toList(),
+                onChanged: (company) {
+                  setState(() {
+                    _selectedCompany = company;
+                  });
+                },
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // Production Date Picker
+            const Text(
+              'Production Date',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                fontFamily: 'Literata',
+              ),
+            ),
+            const SizedBox(height: 12),
+            GestureDetector(
+              onTap: () async {
+                final selectedDate = await showDatePicker(
+                  context: context,
+                  initialDate: _productionDate ?? DateTime.now(),
+                  firstDate: DateTime(2000),
+                  lastDate: DateTime.now(),
+                );
+                if (selectedDate != null) {
+                  setState(() {
+                    _productionDate = selectedDate;
+                  });
+                }
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey[300]!),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      _productionDate == null
+                          ? 'Select production date'
+                          : '${_productionDate!.day}/${_productionDate!.month}/${_productionDate!.year}',
+                      style: TextStyle(
+                        color: _productionDate == null ? Colors.grey[600] : Colors.black,
+                        fontFamily: 'Literata',
+                      ),
+                    ),
+                    Icon(Icons.calendar_today, color: Colors.grey[600]),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // Expiry Date Picker
+            const Text(
+              'Expiry Date',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                fontFamily: 'Literata',
+              ),
+            ),
+            const SizedBox(height: 12),
+            GestureDetector(
+              onTap: () async {
+                final selectedDate = await showDatePicker(
+                  context: context,
+                  initialDate: _expiryDate ?? DateTime.now().add(const Duration(days: 30)),
+                  firstDate: DateTime.now(),
+                  lastDate: DateTime(2100),
+                );
+                if (selectedDate != null) {
+                  setState(() {
+                    _expiryDate = selectedDate;
+                  });
+                }
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey[300]!),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      _expiryDate == null
+                          ? 'Select expiry date'
+                          : '${_expiryDate!.day}/${_expiryDate!.month}/${_expiryDate!.year}',
+                      style: TextStyle(
+                        color: _expiryDate == null ? Colors.grey[600] : Colors.black,
+                        fontFamily: 'Literata',
+                      ),
+                    ),
+                    Icon(Icons.calendar_today, color: Colors.grey[600]),
+                  ],
+                ),
+              ),
+            ),
             const SizedBox(height: 28),
 
             // Quantity Input
