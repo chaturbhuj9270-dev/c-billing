@@ -274,125 +274,60 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
       child: SafeArea(
         bottom: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(10, 0, 10, 12),
-          child: Column(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+          child: Row(
             children: [
-              // Profile Section with glassmorphism
+              // Profile Avatar
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+                width: 50,
+                height: 50,
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      Colors.white.withOpacity(0.15),
-                      Colors.white.withOpacity(0.05),
-                    ],
+                  shape: BoxShape.circle,
+                  color: Colors.white.withOpacity(0.15),
+                  border: Border.all(
+                    color: Colors.white.withOpacity(0.3),
+                    width: 2,
                   ),
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: Colors.white.withOpacity(0.2)),
                 ),
-                child: Row(
-                  children: [
-                    // Avatar with gradient border - centered at top
-                    Container(
-                      width: 30,
-                      height: 30,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFF4CAF50), Color(0xFF81C784)],
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFF4CAF50).withOpacity(0.4),
-                            blurRadius: 16,
-                            offset: const Offset(0, 6),
-                          ),
-                        ],
-                      ),
-                      child: Center(
-                        child: Container(
-                          width: 41,
-                          height: 41,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: const Color(0xFF1B4D3E),
-                            border: Border.all(
-                              color: Colors.white.withOpacity(0.3),
-                              width: 2,
-                            ),
-                          ),
-                          child: Center(
-                            child: Text(
-                              _userName.isNotEmpty
-                                  ? _userName[0].toUpperCase()
-                                  : 'U',
-                              style: const TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                                fontFamily: 'Literata',
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
+                child: Center(
+                  child: Text(
+                    _userName.isNotEmpty
+                        ? _userName[0].toUpperCase()
+                        : 'U',
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      fontFamily: 'Literata',
                     ),
-                    const SizedBox(height: 16,
-                    width: 16,),
-                    Column(
-                      children: [
-                        // User name - full width, centered
+                  ),
+                ),
+              ),
+              const SizedBox(width: 14),
+              // User name
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                     Text(
                       _userName,
                       style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 16,
+                        fontSize: 18,
                         fontWeight: FontWeight.w700,
                         fontFamily: 'Literata',
                       ),
-                      textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: 8),
-                    // Pro Account badge
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF4CAF50).withOpacity(0.3),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: const Color(0xFF4CAF50).withOpacity(0.5),
-                        ),
-                      ),
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.verified_rounded,
-                            color: Color(0xFF81C784),
-                            size: 12,
-                          ),
-                          SizedBox(width: 4),
-                          Text(
-                            'Pro Account',
-                            style: TextStyle(
-                              color: Color(0xFF81C784),
-                              fontSize: 10,
-                              fontWeight: FontWeight.w600,
-                              fontFamily: 'Literata',
-                            ),
-                          ),
-                        ],
+                    const SizedBox(height: 4),
+                    Text(
+                      'Welcome back!',
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.7),
+                        fontSize: 13,
+                        fontFamily: 'Literata',
                       ),
                     ),
-            
-                      ],
-                    )
-                    ],
+                  ],
                 ),
               ),
             ],
@@ -489,7 +424,7 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
 
   Widget _buildBottomSection() {
     return Container(
-      padding: const EdgeInsets.fromLTRB(18, 18, 18, 28),
+      padding: const EdgeInsets.fromLTRB(18, 12, 18, 20),
       decoration: BoxDecoration(
         color: Colors.white,
         boxShadow: [
@@ -504,94 +439,12 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
         top: false,
         child: Column(
           children: [
-            // App version info
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF8FAFB),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 46,
-                    height: 46,
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF1B4D3E), Color(0xFF2E7D32)],
-                      ),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(10),
-                      child: Image.asset(
-                        'assets/images/logo.png',
-                        width: 28,
-                        height: 28,
-                        fit: BoxFit.contain,
-                        errorBuilder: (_, __, ___) => const Icon(
-                          Icons.business,
-                          color: Colors.white,
-                          size: 22,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'C-Billing',
-                          style: TextStyle(
-                            color: Color(0xFF1B4D3E),
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            fontFamily: 'Literata',
-                          ),
-                        ),
-                        Text(
-                          'Version 1.0.0',
-                          style: TextStyle(
-                            color: Colors.grey[500],
-                            fontSize: 12,
-                            fontFamily: 'Literata',
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 5,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF4CAF50).withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Text(
-                      'Latest',
-                      style: TextStyle(
-                        color: Color(0xFF4CAF50),
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        fontFamily: 'Literata',
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 18),
-
             // Logout Button
             GestureDetector(
               onTap: _logout,
               child: Container(
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 16),
+                padding: const EdgeInsets.symmetric(vertical: 14),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
@@ -599,7 +452,7 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
                       const Color(0xFFD32F2F).withOpacity(0.05),
                     ],
                   ),
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(14),
                   border: Border.all(
                     color: const Color(0xFFD32F2F).withOpacity(0.2),
                   ),
@@ -610,20 +463,30 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
                     Icon(
                       Icons.logout_rounded,
                       color: Color(0xFFD32F2F),
-                      size: 24,
+                      size: 22,
                     ),
-                    SizedBox(width: 12),
+                    SizedBox(width: 10),
                     Text(
                       'Logout',
                       style: TextStyle(
                         color: Color(0xFFD32F2F),
-                        fontSize: 16,
+                        fontSize: 15,
                         fontWeight: FontWeight.w600,
                         fontFamily: 'Literata',
                       ),
                     ),
                   ],
                 ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            // Version number only
+            Text(
+              'Version 1.0.0',
+              style: TextStyle(
+                color: Colors.grey[400],
+                fontSize: 12,
+                fontFamily: 'Literata',
               ),
             ),
           ],
