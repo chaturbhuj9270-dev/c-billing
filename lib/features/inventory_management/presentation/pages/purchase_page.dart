@@ -139,7 +139,6 @@ class _PurchasePageState extends State<PurchasePage> {
 
   Future<void> _addNewProduct() async {
     final nameController = TextEditingController();
-    final companyNameController = TextEditingController();
     final categoryController = TextEditingController();
     final purchasePriceController = TextEditingController();
     final salesPriceController = TextEditingController();
@@ -173,23 +172,6 @@ class _PurchasePageState extends State<PurchasePage> {
                   controller: nameController,
                   decoration: InputDecoration(
                     labelText: 'Product Name',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: Color(0xFF1B4D3E),
-                        width: 2,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: companyNameController,
-                  decoration: InputDecoration(
-                    labelText: 'Company Name',
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -274,7 +256,7 @@ class _PurchasePageState extends State<PurchasePage> {
                 try {
                   await _inventoryService.createProduct(
                     name: nameController.text,
-                    companyName: companyNameController.text,
+                    companyName: '',
                     category: categoryController.text,
                     purchasePrice: double.parse(purchasePriceController.text),
                     salesPrice: double.parse(salesPriceController.text),
