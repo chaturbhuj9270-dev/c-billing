@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:c_billing/core/services/inventory_service.dart';
 import '../../data/repositories/firebase_product_repository.dart';
@@ -16,6 +17,7 @@ class ProductManagementPage extends StatefulWidget {
 class _ProductManagementPageState extends State<ProductManagementPage> {
   late InventoryService _inventoryService;
   late FirebaseFirestore _firestore;
+  final _auth = FirebaseAuth.instance;
   List<Product> _products = [];
   bool _isLoading = false;
 
@@ -24,21 +26,42 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
     super.initState();
     _firestore = FirebaseFirestore.instance;
     _inventoryService = InventoryService(
-      productRepository: FirebaseProductRepository(firestore: _firestore),
-      stockRepository: FirebaseStockRepository(firestore: _firestore),
-      purchaseRepository: FirebasePurchaseRepository(firestore: _firestore),
+      productRepository: FirebaseProductRepository(firestore: _firestore, auth: _auth),
+      stockRepository: FirebaseStockRepository(firestore: _firestore, auth: _auth),
+      purchaseRepository: FirebasePurchaseRepository(firestore: _firestore, auth: _auth),
     );
+    _checkUserAuthentication();
     _loadProducts();
   }
 
+  void _checkUserAuthentication() {
+    final currentUser = _auth.currentUser;
+    if (currentUser == null) {
+      print('[ERROR] No authenticated user - redirecting to login');
+      Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+    } else {
+      print('[DEBUG] User authenticated: ${currentUser.uid}');
+    }
+  }
+
   Future<void> _loadProducts() async {
-    setState(() => _isLoading = true);
     try {
+      print('[DEBUG] Loading products...');
+      final currentUser = _auth.currentUser;
+      if (currentUser == null) {
+        print('[ERROR] No authenticated user - cannot load products');
+        return;
+      }
+      
+      print('[DEBUG] Fetching products for user: ${currentUser.uid}');
+      setState(() => _isLoading = true);
       final products = await _inventoryService.getAllProducts();
+      print('[DEBUG] Loaded ${products.length} products');
       setState(() {
         _products = products;
       });
     } catch (e) {
+      print('[ERROR] Failed to load products: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error loading products: $e')),

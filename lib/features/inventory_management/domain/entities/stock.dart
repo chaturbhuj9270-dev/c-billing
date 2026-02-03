@@ -40,18 +40,36 @@ class Stock {
 
   // Factory constructor to create from JSON
   factory Stock.fromJson(Map<String, dynamic> json) {
-    return Stock(
-      id: json['id'] as String,
-      productId: json['productId'] as String,
-      quantityIn: json['quantityIn'] as int? ?? 0,
-      quantityOut: json['quantityOut'] as int? ?? 0,
-      balanceQuantity: json['balanceQuantity'] as int,
-      referenceType: ReferenceTypeExtension.fromString(
-        json['referenceType'] as String,
-      ),
-      referenceId: json['referenceId'] as String,
-      createdAt: DateTime.parse(json['createdAt'] as String),
-    );
+    try {
+      return Stock(
+        id: (json['id'] ?? '') as String,
+        productId: (json['productId'] ?? '') as String,
+        quantityIn: (json['quantityIn'] ?? 0) as int,
+        quantityOut: (json['quantityOut'] ?? 0) as int,
+        balanceQuantity: (json['balanceQuantity'] ?? 0) as int,
+        referenceType: ReferenceTypeExtension.fromString(
+          (json['referenceType'] ?? 'ADJUSTMENT') as String,
+        ),
+        referenceId: (json['referenceId'] ?? '') as String,
+        createdAt: json['createdAt'] != null
+            ? DateTime.parse(json['createdAt'] as String)
+            : DateTime.now(),
+      );
+    } catch (e) {
+      print('[ERROR] Failed to parse Stock from JSON: $json');
+      print('[ERROR] Error details: $e');
+      // Return a default stock entry
+      return Stock(
+        id: json['id']?.toString() ?? '',
+        productId: json['productId']?.toString() ?? '',
+        quantityIn: 0,
+        quantityOut: 0,
+        balanceQuantity: 0,
+        referenceType: ReferenceType.ADJUSTMENT,
+        referenceId: '',
+        createdAt: DateTime.now(),
+      );
+    }
   }
 
   // Convert to JSON

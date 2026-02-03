@@ -1,0 +1,54 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Allow authenticated users to read/write their own data
+    match /users/{userId} {
+      allow read, write: if request.auth.uid == userId;
+      
+      // User's customers subcollection
+      match /customers/{document=**} {
+        allow read, write: if request.auth.uid == userId;
+      }
+      
+      // User's suppliers subcollection
+      match /suppliers/{document=**} {
+        allow read, write: if request.auth.uid == userId;
+      }
+      
+      // User's companies subcollection
+      match /companies/{document=**} {
+        allow read, write: if request.auth.uid == userId;
+      }
+      
+      // User's products subcollection (for inventory management)
+      match /products/{document=**} {
+        allow read, write: if request.auth.uid == userId;
+      }
+      
+      // User's stock subcollection (for inventory tracking)
+      match /stock/{document=**} {
+        allow read, write: if request.auth.uid == userId;
+      }
+      
+      // User's purchases subcollection (for purchase orders)
+      match /purchases/{document=**} {
+        allow read, write: if request.auth.uid == userId;
+      }
+      
+      // User's invoices subcollection
+      match /invoices/{document=**} {
+        allow read, write: if request.auth.uid == userId;
+      }
+      
+      // User's profile document
+      match /profile/{document=**} {
+        allow read, write: if request.auth.uid == userId;
+      }
+    }
+    
+    // Deny all other access
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

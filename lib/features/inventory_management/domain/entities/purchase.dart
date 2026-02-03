@@ -21,16 +21,36 @@ class Purchase {
 
   // Factory constructor to create from JSON
   factory Purchase.fromJson(Map<String, dynamic> json) {
-    return Purchase(
-      id: json['id'] as String,
-      productId: json['productId'] as String,
-      quantity: json['quantity'] as int,
-      purchasePrice: (json['purchasePrice'] as num).toDouble(),
-      totalAmount: (json['totalAmount'] as num).toDouble(),
-      notes: json['notes'] as String?,
-      createdAt: DateTime.parse(json['createdAt'] as String),
-      updatedAt: DateTime.parse(json['updatedAt'] as String),
-    );
+    try {
+      return Purchase(
+        id: (json['id'] ?? '') as String,
+        productId: (json['productId'] ?? '') as String,
+        quantity: (json['quantity'] ?? 0) as int,
+        purchasePrice: ((json['purchasePrice'] ?? 0) as num).toDouble(),
+        totalAmount: ((json['totalAmount'] ?? 0) as num).toDouble(),
+        notes: json['notes'] as String?,
+        createdAt: json['createdAt'] != null
+            ? DateTime.parse(json['createdAt'] as String)
+            : DateTime.now(),
+        updatedAt: json['updatedAt'] != null
+            ? DateTime.parse(json['updatedAt'] as String)
+            : DateTime.now(),
+      );
+    } catch (e) {
+      print('[ERROR] Failed to parse Purchase from JSON: $json');
+      print('[ERROR] Error details: $e');
+      // Return a default purchase entry
+      return Purchase(
+        id: json['id']?.toString() ?? '',
+        productId: json['productId']?.toString() ?? '',
+        quantity: 0,
+        purchasePrice: 0.0,
+        totalAmount: 0.0,
+        notes: null,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      );
+    }
   }
 
   // Convert to JSON
