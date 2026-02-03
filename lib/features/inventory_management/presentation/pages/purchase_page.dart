@@ -1239,10 +1239,6 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Purchase Management'),
-        backgroundColor: const Color(0xFF1B4D3E),
-      ),
       backgroundColor: const Color(0xFFE6EDE7),
       floatingActionButton: FloatingActionButton(
         onPressed: _showAddOptionsBottomSheet,
@@ -1318,28 +1314,14 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              // Product Selection Header with Add Button
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  const Text(
-                                    'Select Product',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w700,
-                                      fontFamily: 'Literata',
-                                    ),
-                                  ),
-                                  ElevatedButton.icon(
-                                    onPressed: _addNewProduct,
-                                    icon: const Icon(Icons.add_rounded, size: 18),
-                                    label: const Text('Add Product'),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: const Color(0xFF1B4D3E),
-                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                    ),
-                                  ),
-                                ],
+                              // Product Selection Header
+                              const Text(
+                                'Select Product',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                  fontFamily: 'Literata',
+                                ),
                               ),
                               const SizedBox(height: 12),
             GestureDetector(
