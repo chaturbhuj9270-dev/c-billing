@@ -981,9 +981,19 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text(
-          'Add New Supplier',
+      builder: (context) => BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: AlertDialog(
+          backgroundColor: Colors.white.withValues(alpha: 0.95),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+            side: BorderSide(
+              color: Colors.white.withValues(alpha: 0.3),
+              width: 1.5,
+            ),
+          ),
+          title: const Text(
+            'Add New Supplier',
           style: TextStyle(
             fontFamily: 'Literata',
             fontWeight: FontWeight.w700,
@@ -1080,6 +1090,7 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
           ),
         ],
       ),
+      ),
     );
   }
 
@@ -1146,9 +1157,19 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text(
-          'Add New Company',
+      builder: (context) => BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: AlertDialog(
+          backgroundColor: Colors.white.withValues(alpha: 0.95),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+            side: BorderSide(
+              color: Colors.white.withValues(alpha: 0.3),
+              width: 1.5,
+            ),
+          ),
+          title: const Text(
+            'Add New Company',
           style: TextStyle(
             fontFamily: 'Literata',
             fontWeight: FontWeight.w700,
@@ -1227,6 +1248,7 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
             child: const Text('Add Company'),
           ),
         ],
+      ),
       ),
     );
   }
