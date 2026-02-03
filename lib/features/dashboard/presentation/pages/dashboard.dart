@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../customer/presentation/pages/customer_page.dart';
+import '../../../supplier/presentation/pages/supplier_page.dart';
+import '../../../company/presentation/pages/company_page.dart';
+import '../../../inventory_management/presentation/pages/purchase_page.dart';
+import '../../../inventory_management/presentation/pages/product_management_page.dart';
 import '../../../../core/services/session_manager.dart';
 import '../../../../core/services/credentials_manager.dart';
 import '../../../../common_widgets/welcome_card.dart';
@@ -1129,6 +1133,27 @@ class _DashboardPageState extends State<DashboardPage>
                 label: 'Purchases',
                 color: const Color(0xFF00BCD4),
               ),
+              const SizedBox(width: 16),
+              _buildQuickStatCard(
+                icon: Icons.apartment_rounded,
+                value: '5',
+                label: 'Companies',
+                color: const Color(0xFF7B68EE),
+              ),
+              const SizedBox(width: 16),
+              _buildQuickStatCard(
+                icon: Icons.warehouse_rounded,
+                value: '12',
+                label: 'Inventory',
+                color: const Color(0xFF4DB8A8),
+              ),
+              const SizedBox(width: 16),
+              _buildQuickStatCard(
+                icon: Icons.bar_chart_rounded,
+                value: '3',
+                label: 'Reports',
+                color: const Color(0xFF4A90E2),
+              ),
             ],
           ),
         ),
@@ -1157,18 +1182,33 @@ class _DashboardPageState extends State<DashboardPage>
             );
             break;
           case 'Products':
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Products page coming soon')),
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const ProductManagementPage()),
             );
             break;
           case 'Suppliers':
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Suppliers page coming soon')),
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const SupplierPage()),
             );
             break;
           case 'Purchases':
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const PurchasePage()),
+            );
+            break;
+          case 'Companies':
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const CompanyPage()),
+            );
+            break;
+          case 'Inventory':
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const ProductManagementPage()),
+            );
+            break;
+          case 'Reports':
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Purchases page coming soon')),
+              const SnackBar(content: Text('Reports page coming soon')),
             );
             break;
         }

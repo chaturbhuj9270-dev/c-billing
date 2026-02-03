@@ -33,14 +33,6 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
 
   // Menu items with icons and colors
   final List<_MenuItem> _menuItems = [
-    _MenuItem(icon: Icons.home_rounded, label: 'Home', route: 'Home', color: const Color(0xFF1B4D3E)),
-    _MenuItem(icon: Icons.receipt_long_rounded, label: 'Invoices', route: 'Invoices', color: const Color(0xFF667eea)),
-    _MenuItem(icon: Icons.people_rounded, label: 'Clients', route: 'Clients', color: const Color(0xFF4CAF50)),
-    _MenuItem(icon: Icons.local_shipping_rounded, label: 'Suppliers', route: 'Suppliers', color: const Color(0xFFFF6B6B)),
-    _MenuItem(icon: Icons.apartment_rounded, label: 'Companies', route: 'Companies', color: const Color(0xFF7B68EE)),
-    _MenuItem(icon: Icons.shopping_cart_rounded, label: 'Purchases', route: 'Purchases', color: const Color(0xFF00BCD4)),
-    _MenuItem(icon: Icons.warehouse_rounded, label: 'Inventory', route: 'Inventory', color: const Color(0xFF4DB8A8)),
-    _MenuItem(icon: Icons.bar_chart_rounded, label: 'Reports', route: 'Reports', color: const Color(0xFF4A90E2)),
     _MenuItem(icon: Icons.person_rounded, label: 'Profile', route: 'Profile', color: const Color(0xFF2E7D32)),
     _MenuItem(icon: Icons.settings_rounded, label: 'Settings', route: 'Settings', color: const Color(0xFF78909C)),
   ];
