@@ -28,10 +28,27 @@ class _PurchasePageState extends State<PurchasePage> {
   final _quantityController = TextEditingController();
   final _priceController = TextEditingController();
   final _notesController = TextEditingController();
+  final _productSearchController = TextEditingController();
+  final _supplierSearchController = TextEditingController();
+  final _companySearchController = TextEditingController();
+  
+  // For adding new supplier/company
+  final _newSupplierFirstNameController = TextEditingController();
+  final _newSupplierLastNameController = TextEditingController();
+  final _newSupplierContactController = TextEditingController();
+  final _newSupplierAddressController = TextEditingController();
+  
+  final _newCompanyNameController = TextEditingController();
+  final _newCompanyContactController = TextEditingController();
+  final _newCompanyAddressController = TextEditingController();
+  
   bool _isLoading = false;
   List<Product> _products = [];
+  List<Product> _filteredProducts = [];
   List<Map<String, dynamic>> _suppliers = [];
+  List<Map<String, dynamic>> _filteredSuppliers = [];
   List<Map<String, dynamic>> _companies = [];
+  List<Map<String, dynamic>> _filteredCompanies = [];
 
   @override
   void initState() {
@@ -300,6 +317,326 @@ class _PurchasePageState extends State<PurchasePage> {
     );
   }
 
+  void _filterProducts(String query) {
+    setState(() {
+      if (query.isEmpty) {
+        _filteredProducts = _products;
+      } else {
+        _filteredProducts = _products
+            .where((product) =>
+                product.name.toLowerCase().contains(query.toLowerCase()) ||
+                product.companyName.toLowerCase().contains(query.toLowerCase()) ||
+                product.category.toLowerCase().contains(query.toLowerCase()))
+            .toList();
+      }
+    });
+  }
+
+  void _filterSuppliers(String query) {
+    setState(() {
+      if (query.isEmpty) {
+        _filteredSuppliers = _suppliers;
+      } else {
+        _filteredSuppliers = _suppliers
+            .where((supplier) =>
+                supplier['fullName'].toLowerCase().contains(query.toLowerCase()) ||
+                supplier['firstName'].toLowerCase().contains(query.toLowerCase()) ||
+                supplier['lastName'].toLowerCase().contains(query.toLowerCase()))
+            .toList();
+      }
+    });
+  }
+
+  void _filterCompanies(String query) {
+    setState(() {
+      if (query.isEmpty) {
+        _filteredCompanies = _companies;
+      } else {
+        _filteredCompanies = _companies
+            .where((company) =>
+                company['companyName'].toLowerCase().contains(query.toLowerCase()))
+            .toList();
+      }
+    });
+  }
+
+  void _showProductSelectionBottomSheet() {
+    _productSearchController.clear();
+    _filteredProducts = _products;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) => Container(
+          padding: const EdgeInsets.all(16),
+          height: MediaQuery.of(context).size.height * 0.75,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Select Product',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  fontFamily: 'Literata',
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: _productSearchController,
+                decoration: InputDecoration(
+                  hintText: 'Search by product name, company, or category',
+                  prefixIcon: const Icon(Icons.search_rounded),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                ),
+                onChanged: (query) {
+                  _filterProducts(query);
+                  setModalState(() {});
+                },
+              ),
+              const SizedBox(height: 16),
+              Expanded(
+                child: _filteredProducts.isEmpty
+                    ? Center(
+                        child: Text(
+                          _productSearchController.text.isEmpty
+                              ? 'No products available'
+                              : 'No products found',
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 14,
+                          ),
+                        ),
+                      )
+                    : ListView.builder(
+                        itemCount: _filteredProducts.length,
+                        itemBuilder: (context, index) {
+                          final product = _filteredProducts[index];
+                          return ListTile(
+                            leading: const Icon(Icons.inventory_2_rounded,
+                                color: Color(0xFF1B4D3E)),
+                            title: Text(
+                              product.name,
+                              style: const TextStyle(
+                                fontFamily: 'Literata',
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            subtitle: Text(
+                              '${product.companyName} • Stock: ${product.currentStock}',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                            trailing: Text(
+                              '₹${product.purchasePrice}',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF1B4D3E),
+                              ),
+                            ),
+                            onTap: () {
+                              setState(() {
+                                _selectedProduct = product;
+                                _priceController.text =
+                                    product.purchasePrice.toString();
+                              });
+                              Navigator.pop(context);
+                            },
+                          );
+                        },
+                      ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showSupplierSelectionBottomSheet() {
+    _supplierSearchController.clear();
+    _filteredSuppliers = _suppliers;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) => Container(
+          padding: const EdgeInsets.all(16),
+          height: MediaQuery.of(context).size.height * 0.75,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Select Supplier',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  fontFamily: 'Literata',
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: _supplierSearchController,
+                decoration: InputDecoration(
+                  hintText: 'Search by supplier name or contact',
+                  prefixIcon: const Icon(Icons.search_rounded),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                ),
+                onChanged: (query) {
+                  _filterSuppliers(query);
+                  setModalState(() {});
+                },
+              ),
+              const SizedBox(height: 16),
+              Expanded(
+                child: _filteredSuppliers.isEmpty
+                    ? Center(
+                        child: Text(
+                          _supplierSearchController.text.isEmpty
+                              ? 'No suppliers available'
+                              : 'No suppliers found',
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 14,
+                          ),
+                        ),
+                      )
+                    : ListView.builder(
+                        itemCount: _filteredSuppliers.length,
+                        itemBuilder: (context, index) {
+                          final supplier = _filteredSuppliers[index];
+                          return ListTile(
+                            leading: const Icon(Icons.person_rounded,
+                                color: Color(0xFF1B4D3E)),
+                            title: Text(
+                              supplier['fullName'],
+                              style: const TextStyle(
+                                fontFamily: 'Literata',
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            onTap: () {
+                              setState(() {
+                                _selectedSupplier = supplier;
+                              });
+                              Navigator.pop(context);
+                            },
+                          );
+                        },
+                      ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showCompanySelectionBottomSheet() {
+    _companySearchController.clear();
+    _filteredCompanies = _companies;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) => Container(
+          padding: const EdgeInsets.all(16),
+          height: MediaQuery.of(context).size.height * 0.75,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Select Company',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  fontFamily: 'Literata',
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: _companySearchController,
+                decoration: InputDecoration(
+                  hintText: 'Search by company name',
+                  prefixIcon: const Icon(Icons.search_rounded),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                ),
+                onChanged: (query) {
+                  _filterCompanies(query);
+                  setModalState(() {});
+                },
+              ),
+              const SizedBox(height: 16),
+              Expanded(
+                child: _filteredCompanies.isEmpty
+                    ? Center(
+                        child: Text(
+                          _companySearchController.text.isEmpty
+                              ? 'No companies available'
+                              : 'No companies found',
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 14,
+                          ),
+                        ),
+                      )
+                    : ListView.builder(
+                        itemCount: _filteredCompanies.length,
+                        itemBuilder: (context, index) {
+                          final company = _filteredCompanies[index];
+                          return ListTile(
+                            leading: const Icon(Icons.business_rounded,
+                                color: Color(0xFF1B4D3E)),
+                            title: Text(
+                              company['companyName'],
+                              style: const TextStyle(
+                                fontFamily: 'Literata',
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            onTap: () {
+                              setState(() {
+                                _selectedCompany = company;
+                              });
+                              Navigator.pop(context);
+                            },
+                          );
+                        },
+                      ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   void _calculateTotal() {
     // Total is calculated and displayed in the UI
     setState(() {});
@@ -439,7 +776,456 @@ class _PurchasePageState extends State<PurchasePage> {
     _quantityController.dispose();
     _priceController.dispose();
     _notesController.dispose();
+    _productSearchController.dispose();
+    _supplierSearchController.dispose();
+    _companySearchController.dispose();
+    _newSupplierFirstNameController.dispose();
+    _newSupplierLastNameController.dispose();
+    _newSupplierContactController.dispose();
+    _newSupplierAddressController.dispose();
+    _newCompanyNameController.dispose();
+    _newCompanyContactController.dispose();
+    _newCompanyAddressController.dispose();
     super.dispose();
+  }
+
+  void _showAddOptionsBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Add New Items',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                fontFamily: 'Literata',
+                color: Color(0xFF1B4D3E),
+              ),
+            ),
+            const SizedBox(height: 24),
+            // Add Product
+            _buildAddOptionTile(
+              icon: Icons.inventory_2_rounded,
+              title: 'Add Product',
+              subtitle: 'Create a new product',
+              color: const Color(0xFFf093fb),
+              onTap: () {
+                Navigator.pop(context);
+                _addNewProduct();
+              },
+            ),
+            const SizedBox(height: 12),
+            // Add Supplier
+            _buildAddOptionTile(
+              icon: Icons.person_add_rounded,
+              title: 'Add Supplier',
+              subtitle: 'Add a new supplier',
+              color: const Color(0xFFFF6B6B),
+              onTap: () {
+                Navigator.pop(context);
+                _showAddSupplierDialog();
+              },
+            ),
+            const SizedBox(height: 12),
+            // Add Company
+            _buildAddOptionTile(
+              icon: Icons.business_rounded,
+              title: 'Add Company',
+              subtitle: 'Add a new company',
+              color: const Color(0xFF7B68EE),
+              onTap: () {
+                Navigator.pop(context);
+                _showAddCompanyDialog();
+              },
+            ),
+            const SizedBox(height: 24),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAddOptionTile({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            border: Border.all(color: color.withOpacity(0.2)),
+            borderRadius: BorderRadius.circular(14),
+            color: color.withOpacity(0.05),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: color, size: 24),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        fontFamily: 'Literata',
+                        color: Colors.black87,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontFamily: 'Literata',
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(Icons.arrow_forward_ios_rounded,
+                  size: 16, color: Colors.grey[400]),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showAddSupplierDialog() {
+    _newSupplierFirstNameController.clear();
+    _newSupplierLastNameController.clear();
+    _newSupplierContactController.clear();
+    _newSupplierAddressController.clear();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text(
+          'Add New Supplier',
+          style: TextStyle(
+            fontFamily: 'Literata',
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF1B4D3E),
+          ),
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: _newSupplierFirstNameController,
+                decoration: InputDecoration(
+                  labelText: 'First Name',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(
+                      color: Color(0xFF1B4D3E),
+                      width: 2,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _newSupplierLastNameController,
+                decoration: InputDecoration(
+                  labelText: 'Last Name',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(
+                      color: Color(0xFF1B4D3E),
+                      width: 2,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _newSupplierContactController,
+                keyboardType: TextInputType.phone,
+                decoration: InputDecoration(
+                  labelText: 'Contact Number',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(
+                      color: Color(0xFF1B4D3E),
+                      width: 2,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _newSupplierAddressController,
+                maxLines: 3,
+                decoration: InputDecoration(
+                  labelText: 'Address',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(
+                      color: Color(0xFF1B4D3E),
+                      width: 2,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF1B4D3E),
+            ),
+            onPressed: () => _saveNewSupplier(context),
+            child: const Text('Add Supplier'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _saveNewSupplier(BuildContext context) async {
+    final firstName = _newSupplierFirstNameController.text.trim();
+    final lastName = _newSupplierLastNameController.text.trim();
+    final contact = _newSupplierContactController.text.trim();
+
+    if (firstName.isEmpty || lastName.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('First name and last name are required')),
+      );
+      return;
+    }
+
+    try {
+      final currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser == null) throw Exception('User not authenticated');
+
+      final supplierId = _firestore
+          .collection('users')
+          .doc(currentUser.uid)
+          .collection('suppliers')
+          .doc()
+          .id;
+
+      await _firestore
+          .collection('users')
+          .doc(currentUser.uid)
+          .collection('suppliers')
+          .doc(supplierId)
+          .set({
+            'id': supplierId,
+            'firstName': firstName,
+            'lastName': lastName,
+            'contact': contact,
+            'address': _newSupplierAddressController.text.trim(),
+            'createdAt': FieldValue.serverTimestamp(),
+          });
+
+      if (mounted) {
+        Navigator.pop(context);
+        await _loadSuppliers();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Supplier added successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error adding supplier: $e')),
+        );
+      }
+    }
+  }
+
+  void _showAddCompanyDialog() {
+    _newCompanyNameController.clear();
+    _newCompanyContactController.clear();
+    _newCompanyAddressController.clear();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text(
+          'Add New Company',
+          style: TextStyle(
+            fontFamily: 'Literata',
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF1B4D3E),
+          ),
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: _newCompanyNameController,
+                decoration: InputDecoration(
+                  labelText: 'Company Name',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(
+                      color: Color(0xFF1B4D3E),
+                      width: 2,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _newCompanyContactController,
+                keyboardType: TextInputType.phone,
+                decoration: InputDecoration(
+                  labelText: 'Contact Number',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(
+                      color: Color(0xFF1B4D3E),
+                      width: 2,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _newCompanyAddressController,
+                maxLines: 3,
+                decoration: InputDecoration(
+                  labelText: 'Address',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(
+                      color: Color(0xFF1B4D3E),
+                      width: 2,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF1B4D3E),
+            ),
+            onPressed: () => _saveNewCompany(context),
+            child: const Text('Add Company'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _saveNewCompany(BuildContext context) async {
+    final companyName = _newCompanyNameController.text.trim();
+
+    if (companyName.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Company name is required')),
+      );
+      return;
+    }
+
+    try {
+      final currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser == null) throw Exception('User not authenticated');
+
+      final companyId = _firestore
+          .collection('users')
+          .doc(currentUser.uid)
+          .collection('companies')
+          .doc()
+          .id;
+
+      await _firestore
+          .collection('users')
+          .doc(currentUser.uid)
+          .collection('companies')
+          .doc(companyId)
+          .set({
+            'id': companyId,
+            'companyName': companyName,
+            'contact': _newCompanyContactController.text.trim(),
+            'address': _newCompanyAddressController.text.trim(),
+            'createdAt': FieldValue.serverTimestamp(),
+          });
+
+      if (mounted) {
+        Navigator.pop(context);
+        await _loadCompanies();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Company added successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error adding company: $e')),
+        );
+      }
+    }
   }
 
   @override
@@ -450,6 +1236,11 @@ class _PurchasePageState extends State<PurchasePage> {
         backgroundColor: const Color(0xFF1B4D3E),
       ),
       backgroundColor: Colors.white,
+      floatingActionButton: FloatingActionButton(
+        onPressed: _showAddOptionsBottomSheet,
+        backgroundColor: const Color(0xFF1B4D3E),
+        child: const Icon(Icons.add_rounded),
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -479,35 +1270,64 @@ class _PurchasePageState extends State<PurchasePage> {
               ],
             ),
             const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey[300]!),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: DropdownButton<Product>(
-                isExpanded: true,
-                underline: const SizedBox(),
-                value: _selectedProduct,
-                hint: const Text('Choose a product'),
-                items: _products.map((product) {
-                  return DropdownMenuItem(
-                    value: product,
-                    child: Text(
-                      '${product.name} (Stock: ${product.currentStock})',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+            GestureDetector(
+              onTap: _showProductSelectionBottomSheet,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                decoration: BoxDecoration(
+                  border: Border.all(
+                    color: _selectedProduct != null
+                        ? const Color(0xFF1B4D3E)
+                        : Colors.grey[300]!,
+                    width: _selectedProduct != null ? 2 : 1,
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                  color: _selectedProduct != null
+                      ? const Color(0xFF1B4D3E).withValues(alpha: 0.05)
+                      : Colors.white,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _selectedProduct?.name ?? 'Select a product',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              fontFamily: 'Literata',
+                              color: _selectedProduct != null
+                                  ? Colors.black87
+                                  : Colors.grey[500],
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          if (_selectedProduct != null)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 4),
+                              child: Text(
+                                'Stock: ${_selectedProduct!.currentStock}',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
                     ),
-                  );
-                }).toList(),
-                onChanged: (product) {
-                  setState(() {
-                    _selectedProduct = product;
-                    if (product != null) {
-                      _priceController.text = product.purchasePrice.toString();
-                    }
-                  });
-                },
+                    const SizedBox(width: 12),
+                    Icon(
+                      Icons.arrow_forward_ios_rounded,
+                      size: 16,
+                      color: Colors.grey[400],
+                    ),
+                  ],
+                ),
               ),
             ),
             if (_selectedProduct != null) ...[
@@ -567,32 +1387,48 @@ class _PurchasePageState extends State<PurchasePage> {
               ),
             ),
             const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey[300]!),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: DropdownButton<Map<String, dynamic>>(
-                isExpanded: true,
-                underline: const SizedBox(),
-                value: _selectedSupplier,
-                hint: const Text('Choose a supplier'),
-                items: _suppliers.map((supplier) {
-                  return DropdownMenuItem(
-                    value: supplier,
-                    child: Text(
-                      supplier['fullName'] ?? 'Unknown Supplier',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+            GestureDetector(
+              onTap: _showSupplierSelectionBottomSheet,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                decoration: BoxDecoration(
+                  border: Border.all(
+                    color: _selectedSupplier != null
+                        ? const Color(0xFF1B4D3E)
+                        : Colors.grey[300]!,
+                    width: _selectedSupplier != null ? 2 : 1,
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                  color: _selectedSupplier != null
+                      ? const Color(0xFF1B4D3E).withValues(alpha: 0.05)
+                      : Colors.white,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        _selectedSupplier?['fullName'] ?? 'Select a supplier',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          fontFamily: 'Literata',
+                          color: _selectedSupplier != null
+                              ? Colors.black87
+                              : Colors.grey[500],
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
-                  );
-                }).toList(),
-                onChanged: (supplier) {
-                  setState(() {
-                    _selectedSupplier = supplier;
-                  });
-                },
+                    const SizedBox(width: 12),
+                    Icon(
+                      Icons.arrow_forward_ios_rounded,
+                      size: 16,
+                      color: Colors.grey[400],
+                    ),
+                  ],
+                ),
               ),
             ),
             const SizedBox(height: 20),
@@ -607,32 +1443,48 @@ class _PurchasePageState extends State<PurchasePage> {
               ),
             ),
             const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey[300]!),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: DropdownButton<Map<String, dynamic>>(
-                isExpanded: true,
-                underline: const SizedBox(),
-                value: _selectedCompany,
-                hint: const Text('Choose a company'),
-                items: _companies.map((company) {
-                  return DropdownMenuItem(
-                    value: company,
-                    child: Text(
-                      company['companyName'] ?? 'Unknown Company',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+            GestureDetector(
+              onTap: _showCompanySelectionBottomSheet,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                decoration: BoxDecoration(
+                  border: Border.all(
+                    color: _selectedCompany != null
+                        ? const Color(0xFF1B4D3E)
+                        : Colors.grey[300]!,
+                    width: _selectedCompany != null ? 2 : 1,
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                  color: _selectedCompany != null
+                      ? const Color(0xFF1B4D3E).withValues(alpha: 0.05)
+                      : Colors.white,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        _selectedCompany?['companyName'] ?? 'Select a company',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          fontFamily: 'Literata',
+                          color: _selectedCompany != null
+                              ? Colors.black87
+                              : Colors.grey[500],
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
-                  );
-                }).toList(),
-                onChanged: (company) {
-                  setState(() {
-                    _selectedCompany = company;
-                  });
-                },
+                    const SizedBox(width: 12),
+                    Icon(
+                      Icons.arrow_forward_ios_rounded,
+                      size: 16,
+                      color: Colors.grey[400],
+                    ),
+                  ],
+                ),
               ),
             ),
             const SizedBox(height: 20),
