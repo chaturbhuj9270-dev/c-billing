@@ -1086,7 +1086,12 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
               backgroundColor: const Color(0xFF1B4D3E),
             ),
             onPressed: () => _saveNewSupplier(context),
-            child: const Text('Add Supplier'),
+            child: const Text(
+              'Add Supplier',
+              style: TextStyle(
+                color: Colors.white,
+              ),
+            ),
           ),
         ],
       ),
@@ -1245,7 +1250,12 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
               backgroundColor: const Color(0xFF1B4D3E),
             ),
             onPressed: () => _saveNewCompany(context),
-            child: const Text('Add Company'),
+            child: const Text(
+              'Add Company',
+              style: TextStyle(
+                color: Colors.white,
+              ),
+            ),
           ),
         ],
       ),
