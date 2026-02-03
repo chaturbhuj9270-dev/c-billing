@@ -25,7 +25,6 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
 
   // Filter variables
   String _filterName = '';
-  String _filterCompany = '';
   String _filterCategory = '';
   double? _filterMinPrice;
   double? _filterMaxPrice;
@@ -92,12 +91,6 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
         return false;
       }
 
-      // Company filter (case-insensitive)
-      if (_filterCompany.isNotEmpty &&
-          !product.companyName.toLowerCase().contains(_filterCompany.toLowerCase())) {
-        return false;
-      }
-
       // Category filter (case-insensitive)
       if (_filterCategory.isNotEmpty &&
           !product.category.toLowerCase().contains(_filterCategory.toLowerCase())) {
@@ -127,7 +120,6 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
   void _clearFilters() {
     setState(() {
       _filterName = '';
-      _filterCompany = '';
       _filterCategory = '';
       _filterMinPrice = null;
       _filterMaxPrice = null;
@@ -149,14 +141,7 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
 
   void _showEditProductDialog(Product product) {
     final nameController = TextEditingController(text: product.name);
-    final companyNameController = TextEditingController(text: product.companyName);
     final categoryController = TextEditingController(text: product.category);
-    final purchasePriceController =
-        TextEditingController(text: product.purchasePrice.toString());
-    final salesPriceController =
-        TextEditingController(text: product.salesPrice.toString());
-    final currentStockController =
-        TextEditingController(text: product.currentStock.toString());
 
     showDialog(
       context: context,
@@ -201,23 +186,6 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                 ),
                 const SizedBox(height: 12),
                 TextField(
-                  controller: companyNameController,
-                  decoration: InputDecoration(
-                    labelText: 'Company Name',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: Color(0xFF1B4D3E),
-                        width: 2,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
                   controller: categoryController,
                   decoration: InputDecoration(
                     labelText: 'Category',
@@ -234,55 +202,61 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                   ),
                 ),
                 const SizedBox(height: 12),
+                // Purchase Price - Read Only (Updated from Purchase Page)
                 TextField(
-                  controller: purchasePriceController,
-                  keyboardType: TextInputType.number,
+                  controller: TextEditingController(text: product.purchasePrice.toString()),
+                  enabled: false,
                   decoration: InputDecoration(
-                    labelText: 'Purchase Price',
+                    labelText: 'Purchase Price (Read-Only)',
+                    hintText: 'Updated from Purchase Page',
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    focusedBorder: OutlineInputBorder(
+                    disabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: Color(0xFF1B4D3E),
-                        width: 2,
+                      borderSide: BorderSide(
+                        color: Colors.grey[300]!,
+                        width: 1,
                       ),
                     ),
                   ),
                 ),
                 const SizedBox(height: 12),
+                // Sales Price - Read Only (Updated from Purchase Page)
                 TextField(
-                  controller: salesPriceController,
-                  keyboardType: TextInputType.number,
+                  controller: TextEditingController(text: product.salesPrice.toString()),
+                  enabled: false,
                   decoration: InputDecoration(
-                    labelText: 'Sales Price',
+                    labelText: 'Sales Price (Read-Only)',
+                    hintText: 'Updated from Purchase Page',
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    focusedBorder: OutlineInputBorder(
+                    disabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: Color(0xFF1B4D3E),
-                        width: 2,
+                      borderSide: BorderSide(
+                        color: Colors.grey[300]!,
+                        width: 1,
                       ),
                     ),
                   ),
                 ),
                 const SizedBox(height: 12),
+                // Current Stock - Read Only
                 TextField(
-                  controller: currentStockController,
-                  keyboardType: TextInputType.number,
+                  controller: TextEditingController(text: product.currentStock.toString()),
+                  enabled: false,
                   decoration: InputDecoration(
-                    labelText: 'Current Stock',
+                    labelText: 'Current Stock (Read-Only)',
+                    hintText: 'Updated from Purchase Page',
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    focusedBorder: OutlineInputBorder(
+                    disabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: Color(0xFF1B4D3E),
-                        width: 2,
+                      borderSide: BorderSide(
+                        color: Colors.grey[300]!,
+                        width: 1,
                       ),
                     ),
                   ),
@@ -306,11 +280,11 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                 try {
                   final updatedProduct = product.copyWith(
                     name: nameController.text,
-                    companyName: companyNameController.text,
+                    companyName: product.companyName,
                     category: categoryController.text,
-                    purchasePrice: double.parse(purchasePriceController.text),
-                    salesPrice: double.parse(salesPriceController.text),
-                    currentStock: int.parse(currentStockController.text),
+                    purchasePrice: product.purchasePrice,
+                    salesPrice: product.salesPrice,
+                    currentStock: product.currentStock,
                     updatedAt: DateTime.now(),
                   );
 
@@ -387,7 +361,6 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
 
   void _showFilterDialog() {
     final nameController = TextEditingController(text: _filterName);
-    final companyController = TextEditingController(text: _filterCompany);
     final minPriceController = TextEditingController(text: _filterMinPrice?.toString() ?? '');
     final maxPriceController = TextEditingController(text: _filterMaxPrice?.toString() ?? '');
     final minStockController = TextEditingController(text: _filterMinStock?.toString() ?? '');
@@ -436,24 +409,6 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                         ),
                       ),
                       prefixIcon: const Icon(Icons.search),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: companyController,
-                    decoration: InputDecoration(
-                      labelText: 'Company Name',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(
-                          color: Color(0xFF1B4D3E),
-                          width: 2,
-                        ),
-                      ),
-                      prefixIcon: const Icon(Icons.business),
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -628,7 +583,6 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
               onPressed: () {
                 this.setState(() {
                   _filterName = nameController.text;
-                  _filterCompany = companyController.text;
                   _filterCategory = selectedCategory ?? '';
                   _filterMinPrice = double.tryParse(minPriceController.text);
                   _filterMaxPrice = double.tryParse(maxPriceController.text);
@@ -658,7 +612,6 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
 
   void _showAddProductDialog() {
     final nameController = TextEditingController();
-    final companyNameController = TextEditingController();
     final categoryController = TextEditingController();
     final purchasePriceController = TextEditingController();
     final salesPriceController = TextEditingController();
@@ -693,23 +646,6 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                   controller: nameController,
                   decoration: InputDecoration(
                     labelText: 'Product Name',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: Color(0xFF1B4D3E),
-                        width: 2,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: companyNameController,
-                  decoration: InputDecoration(
-                    labelText: 'Company Name',
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -812,7 +748,7 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                 try {
                   await _inventoryService.createProduct(
                     name: nameController.text,
-                    companyName: companyNameController.text,
+                    companyName: '',
                     category: categoryController.text,
                     purchasePrice: double.parse(purchasePriceController.text),
                     salesPrice: double.parse(salesPriceController.text),
@@ -874,7 +810,6 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                   children: [
                     const Icon(Icons.filter_list_rounded),
                     if (_filterName.isNotEmpty ||
-                        _filterCompany.isNotEmpty ||
                         _filterCategory.isNotEmpty ||
                         _filterMinPrice != null ||
                         _filterMaxPrice != null ||
@@ -1002,31 +937,6 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                                       fontFamily: 'Literata',
                                       fontSize: 12,
                                     ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 12),
-                            Row(
-                              children: [
-                                Text(
-                                  'Company: ',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.grey[600],
-                                    fontFamily: 'Literata',
-                                  ),
-                                ),
-                                Expanded(
-                                  child: Text(
-                                    product.companyName,
-                                    style: const TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w500,
-                                      fontFamily: 'Literata',
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
                               ],

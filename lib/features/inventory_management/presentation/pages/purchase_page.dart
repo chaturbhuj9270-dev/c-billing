@@ -737,6 +737,16 @@ class _PurchasePageState extends State<PurchasePage> {
         notes: _notesController.text.isNotEmpty ? _notesController.text : null,
       );
 
+      // Update product's purchase price (rate) in products collection
+      await _firestore
+          .collection('users')
+          .doc(currentUser.uid)
+          .collection('products')
+          .doc(_selectedProduct!.id)
+          .update({
+            'purchasePrice': price,
+          });
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
