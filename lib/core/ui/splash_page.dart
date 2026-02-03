@@ -257,7 +257,7 @@ class _SplashPageState extends State<SplashPage> {
                   ),
                   const SizedBox(height: 4),
                   const Text(
-                    'Newasa +91 9270788949',
+                    'Newasa +91 9970662978',
                     style: TextStyle(
                       color: Color(0xFF1B4D3E),
                       fontSize: 9.5,
