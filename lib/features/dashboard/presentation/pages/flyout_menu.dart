@@ -264,67 +264,128 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
   Widget _buildHeader() {
     return Container(
       width: double.infinity,
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [Color(0xFF1B4D3E), Color(0xFF0F3B2F), Color(0xFF134E3A)],
         ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF1B4D3E).withOpacity(0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: SafeArea(
         bottom: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+          padding: const EdgeInsets.fromLTRB(24, 20, 24, 28),
           child: Row(
             children: [
-              // Profile Avatar
+              // Premium Profile Avatar with ring
               Container(
-                width: 50,
-                height: 50,
+                padding: const EdgeInsets.all(3),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Colors.white.withOpacity(0.15),
-                  border: Border.all(
-                    color: Colors.white.withOpacity(0.3),
-                    width: 2,
+                  gradient: const LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Color(0xFF4CAF50),
+                      Color(0xFF81C784),
+                      Color(0xFF4CAF50),
+                    ],
                   ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF4CAF50).withOpacity(0.4),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
-                child: Center(
-                  child: Text(
-                    _userName.isNotEmpty
-                        ? _userName[0].toUpperCase()
-                        : 'U',
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                      fontFamily: 'Literata',
+                child: Container(
+                  width: 52,
+                  height: 52,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: const Color(0xFF1B4D3E),
+                    border: Border.all(
+                      color: const Color(0xFF1B4D3E),
+                      width: 3,
+                    ),
+                  ),
+                  child: Center(
+                    child: Text(
+                      _userName.isNotEmpty
+                          ? _userName[0].toUpperCase()
+                          : 'U',
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                        fontFamily: 'Literata',
+                        decoration: TextDecoration.none,
+                      ),
                     ),
                   ),
                 ),
               ),
-              const SizedBox(width: 14),
-              // User name
+              const SizedBox(width: 16),
+              // User Info
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
                       _userName,
                       style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 18,
+                        fontSize: 20,
                         fontWeight: FontWeight.w700,
                         fontFamily: 'Literata',
+                        letterSpacing: 0.3,
+                        decoration: TextDecoration.none,
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Welcome back!',
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.7),
-                        fontSize: 13,
-                        fontFamily: 'Literata',
+                    const SizedBox(height: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 6,
+                            height: 6,
+                            decoration: const BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Color(0xFF4CAF50),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          const Text(
+                            'Online',
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w500,
+                              fontFamily: 'Literata',
+                              decoration: TextDecoration.none,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
@@ -395,6 +456,7 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
                   fontSize: 16,
                   fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                   fontFamily: 'Literata',
+                  decoration: TextDecoration.none,
                 ),
               ),
             ),
@@ -473,6 +535,7 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
                         fontFamily: 'Literata',
+                        decoration: TextDecoration.none,
                       ),
                     ),
                   ],
@@ -487,6 +550,7 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
                 color: Colors.grey[400],
                 fontSize: 12,
                 fontFamily: 'Literata',
+                decoration: TextDecoration.none,
               ),
             ),
           ],
