@@ -1,6 +1,7 @@
 class Product {
   final String id;
   final String name;
+  final String companyName;
   final String category;
   final double purchasePrice;
   final double salesPrice;
@@ -11,6 +12,7 @@ class Product {
   Product({
     required this.id,
     required this.name,
+    required this.companyName,
     required this.category,
     required this.purchasePrice,
     required this.salesPrice,
@@ -25,6 +27,7 @@ class Product {
       return Product(
         id: (json['id'] ?? '') as String,
         name: (json['name'] ?? '') as String,
+        companyName: (json['companyName'] ?? '') as String,
         category: (json['category'] ?? '') as String,
         purchasePrice: ((json['purchasePrice'] ?? 0) as num).toDouble(),
         salesPrice: ((json['salesPrice'] ?? 0) as num).toDouble(),
@@ -43,6 +46,7 @@ class Product {
       return Product(
         id: json['id']?.toString() ?? '',
         name: json['name']?.toString() ?? 'Unknown Product',
+        companyName: json['companyName']?.toString() ?? '',
         category: json['category']?.toString() ?? 'Uncategorized',
         purchasePrice: 0.0,
         salesPrice: 0.0,
@@ -58,6 +62,7 @@ class Product {
     return {
       'id': id,
       'name': name,
+      'companyName': companyName,
       'category': category,
       'purchasePrice': purchasePrice,
       'salesPrice': salesPrice,
@@ -71,6 +76,7 @@ class Product {
   Product copyWith({
     String? id,
     String? name,
+    String? companyName,
     String? category,
     double? purchasePrice,
     double? salesPrice,
@@ -81,6 +87,7 @@ class Product {
     return Product(
       id: id ?? this.id,
       name: name ?? this.name,
+      companyName: companyName ?? this.companyName,
       category: category ?? this.category,
       purchasePrice: purchasePrice ?? this.purchasePrice,
       salesPrice: salesPrice ?? this.salesPrice,

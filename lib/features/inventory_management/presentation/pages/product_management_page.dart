@@ -72,8 +72,172 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
     }
   }
 
+  void _showEditProductDialog(Product product) {
+    final nameController = TextEditingController(text: product.name);
+    final companyNameController = TextEditingController(text: product.companyName);
+    final categoryController = TextEditingController(text: product.category);
+    final purchasePriceController =
+        TextEditingController(text: product.purchasePrice.toString());
+    final salesPriceController =
+        TextEditingController(text: product.salesPrice.toString());
+    final currentStockController =
+        TextEditingController(text: product.currentStock.toString());
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Edit Product'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameController,
+                decoration: InputDecoration(
+                  labelText: 'Product Name',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: companyNameController,
+                decoration: InputDecoration(
+                  labelText: 'Company Name',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: categoryController,
+                decoration: InputDecoration(
+                  labelText: 'Category',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: purchasePriceController,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  labelText: 'Purchase Price',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: salesPriceController,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  labelText: 'Sales Price',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: currentStockController,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  labelText: 'Current Stock',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              try {
+                final updatedProduct = product.copyWith(
+                  name: nameController.text,
+                  companyName: companyNameController.text,
+                  category: categoryController.text,
+                  purchasePrice: double.parse(purchasePriceController.text),
+                  salesPrice: double.parse(salesPriceController.text),
+                  currentStock: int.parse(currentStockController.text),
+                  updatedAt: DateTime.now(),
+                );
+
+                await _inventoryService.updateProduct(updatedProduct);
+                if (mounted) {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Product updated successfully')),
+                  );
+                  _loadProducts();
+                }
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Error: $e')),
+                );
+              }
+            },
+            child: const Text('Update'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _deleteProduct(Product product) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Product'),
+        content: Text(
+          'Are you sure you want to delete "${product.name}"?\n\nThis action cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              try {
+                await _inventoryService.deleteProduct(product.id);
+                if (mounted) {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Product deleted successfully')),
+                  );
+                  _loadProducts();
+                }
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Error: $e')),
+                );
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _showAddProductDialog() {
     final nameController = TextEditingController();
+    final companyNameController = TextEditingController();
     final categoryController = TextEditingController();
     final purchasePriceController = TextEditingController();
     final salesPriceController = TextEditingController();
@@ -91,6 +255,16 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                 controller: nameController,
                 decoration: InputDecoration(
                   labelText: 'Product Name',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: companyNameController,
+                decoration: InputDecoration(
+                  labelText: 'Company Name',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -152,6 +326,7 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
               try {
                 await _inventoryService.createProduct(
                   name: nameController.text,
+                  companyName: companyNameController.text,
                   category: categoryController.text,
                   purchasePrice: double.parse(purchasePriceController.text),
                   salesPrice: double.parse(salesPriceController.text),
@@ -184,6 +359,7 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
         title: const Text('Product Management'),
         backgroundColor: const Color(0xFF1B4D3E),
       ),
+      backgroundColor: Colors.white,
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _products.isEmpty
@@ -257,7 +433,33 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                                           : Colors.green,
                                       fontWeight: FontWeight.w600,
                                       fontFamily: 'Literata',
+                                      fontSize: 12,
                                     ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            Row(
+                              children: [
+                                Text(
+                                  'Company: ',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey[600],
+                                    fontFamily: 'Literata',
+                                  ),
+                                ),
+                                Expanded(
+                                  child: Text(
+                                    product.companyName,
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w500,
+                                      fontFamily: 'Literata',
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
                               ],
@@ -389,6 +591,31 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                                 ],
                               ),
                             ),
+                            const SizedBox(height: 12),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                IconButton(
+                                  onPressed: () =>
+                                      _showEditProductDialog(product),
+                                  icon: const Icon(Icons.edit),
+                                  color: Colors.blue,
+                                  iconSize: 20,
+                                  padding: const EdgeInsets.all(4),
+                                  constraints: const BoxConstraints(),
+                                ),
+                                const SizedBox(width: 4),
+                                IconButton(
+                                  onPressed: () =>
+                                      _deleteProduct(product),
+                                  icon: const Icon(Icons.delete),
+                                  color: Colors.red,
+                                  iconSize: 20,
+                                  padding: const EdgeInsets.all(4),
+                                  constraints: const BoxConstraints(),
+                                ),
+                              ],
+                            ),
                           ],
                         ),
                       ),
@@ -398,7 +625,11 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
       floatingActionButton: FloatingActionButton(
         onPressed: _showAddProductDialog,
         backgroundColor: const Color(0xFF1B4D3E),
-        child: const Icon(Icons.add_rounded),
+        elevation: 8,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: const Icon(Icons.add_rounded, size: 28),
       ),
     );
   }

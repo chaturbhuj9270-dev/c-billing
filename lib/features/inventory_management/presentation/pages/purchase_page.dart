@@ -53,6 +53,7 @@ class _PurchasePageState extends State<PurchasePage> {
 
   Future<void> _addNewProduct() async {
     final nameController = TextEditingController();
+    final companyNameController = TextEditingController();
     final categoryController = TextEditingController();
     final purchasePriceController = TextEditingController();
     final salesPriceController = TextEditingController();
@@ -69,6 +70,16 @@ class _PurchasePageState extends State<PurchasePage> {
                 controller: nameController,
                 decoration: InputDecoration(
                   labelText: 'Product Name',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: companyNameController,
+                decoration: InputDecoration(
+                  labelText: 'Company Name',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -119,6 +130,7 @@ class _PurchasePageState extends State<PurchasePage> {
               try {
                 await _inventoryService.createProduct(
                   name: nameController.text,
+                  companyName: companyNameController.text,
                   category: categoryController.text,
                   purchasePrice: double.parse(purchasePriceController.text),
                   salesPrice: double.parse(salesPriceController.text),
@@ -236,6 +248,7 @@ class _PurchasePageState extends State<PurchasePage> {
         title: const Text('Purchase Management'),
         backgroundColor: const Color(0xFF1B4D3E),
       ),
+      backgroundColor: Colors.white,
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(

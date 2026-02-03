@@ -270,6 +270,7 @@ class InventoryService {
   /// Create a new product
   Future<String> createProduct({
     required String name,
+    required String companyName,
     required String category,
     required double purchasePrice,
     required double salesPrice,
@@ -278,6 +279,7 @@ class InventoryService {
     try {
       // Validate inputs
       if (name.isEmpty) throw Exception('Product name cannot be empty');
+      if (companyName.isEmpty) throw Exception('Company name cannot be empty');
       if (category.isEmpty) throw Exception('Category cannot be empty');
       if (purchasePrice < 0) throw Exception('Purchase price cannot be negative');
       if (salesPrice < 0) throw Exception('Sales price cannot be negative');
@@ -287,6 +289,7 @@ class InventoryService {
       final product = Product(
         id: '',
         name: name,
+        companyName: companyName,
         category: category,
         purchasePrice: purchasePrice,
         salesPrice: salesPrice,
@@ -328,6 +331,15 @@ class InventoryService {
       await _productRepository.updateProduct(updatedProduct);
     } catch (e) {
       throw Exception('Failed to update product: $e');
+    }
+  }
+
+  /// Delete product
+  Future<void> deleteProduct(String productId) async {
+    try {
+      await _productRepository.deleteProduct(productId);
+    } catch (e) {
+      throw Exception('Failed to delete product: $e');
     }
   }
 
