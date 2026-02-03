@@ -226,12 +226,6 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
             // Gradient Header with Profile
             _buildHeader(),
 
-            // Quick Stats Bar
-            FadeTransition(
-              opacity: _fadeAnimation,
-              child: _buildQuickStats(),
-            ),
-
             // Menu Items
             Expanded(
               child: FadeTransition(
@@ -302,8 +296,8 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
                   children: [
                     // Avatar with gradient border - centered at top
                     Container(
-                      width: 60,
-                      height: 60,
+                      width: 30,
+                      height: 30,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         gradient: const LinearGradient(
@@ -319,14 +313,14 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
                       ),
                       child: Center(
                         child: Container(
-                          width: 82,
-                          height: 82,
+                          width: 41,
+                          height: 41,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             color: const Color(0xFF1B4D3E),
                             border: Border.all(
                               color: Colors.white.withOpacity(0.3),
-                              width: 3,
+                              width: 2,
                             ),
                           ),
                           child: Center(
@@ -335,7 +329,7 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
                                   ? _userName[0].toUpperCase()
                                   : 'U',
                               style: const TextStyle(
-                                fontSize: 22,
+                                fontSize: 14,
                                 fontWeight: FontWeight.bold,
                                 color: Colors.white,
                                 fontFamily: 'Literata',
@@ -346,7 +340,7 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
                       ),
                     ),
                     const SizedBox(height: 16,
-                    width: 20,),
+                    width: 16,),
                     Column(
                       children: [
                         // User name - full width, centered
@@ -354,22 +348,22 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
                       _userName,
                       style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 22,
+                        fontSize: 16,
                         fontWeight: FontWeight.w700,
                         fontFamily: 'Literata',
                       ),
                       textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 8),
                     // Pro Account badge
                     Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
+                        horizontal: 10,
+                        vertical: 4,
                       ),
                       decoration: BoxDecoration(
                         color: const Color(0xFF4CAF50).withOpacity(0.3),
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(16),
                         border: Border.all(
                           color: const Color(0xFF4CAF50).withOpacity(0.5),
                         ),
@@ -380,14 +374,14 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
                           Icon(
                             Icons.verified_rounded,
                             color: Color(0xFF81C784),
-                            size: 16,
+                            size: 12,
                           ),
-                          SizedBox(width: 6),
+                          SizedBox(width: 4),
                           Text(
                             'Pro Account',
                             style: TextStyle(
                               color: Color(0xFF81C784),
-                              fontSize: 13,
+                              fontSize: 10,
                               fontWeight: FontWeight.w600,
                               fontFamily: 'Literata',
                             ),
@@ -405,95 +399,6 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildQuickStats() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFB),
-        border: Border(
-          bottom: BorderSide(
-            color: Colors.grey.withOpacity(0.15),
-            width: 1,
-          ),
-        ),
-      ),
-      child: Row(
-        children: [
-          _buildStatItem(
-            icon: Icons.receipt_long_rounded,
-            value: '24',
-            label: 'Invoices',
-            color: const Color(0xFF667eea),
-          ),
-          _buildStatDivider(),
-          _buildStatItem(
-            icon: Icons.people_rounded,
-            value: '156',
-            label: 'Clients',
-            color: const Color(0xFF4CAF50),
-          ),
-          _buildStatDivider(),
-          _buildStatItem(
-            icon: Icons.inventory_2_rounded,
-            value: '89',
-            label: 'Products',
-            color: const Color(0xFFf093fb),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatItem({
-    required IconData icon,
-    required String value,
-    required String label,
-    required Color color,
-  }) {
-    return Expanded(
-      child: Column(
-        children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Icon(icon, color: color, size: 24),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            value,
-            style: const TextStyle(
-              color: Color(0xFF1B4D3E),
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
-              fontFamily: 'Literata',
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: TextStyle(
-              color: Colors.grey[600],
-              fontSize: 12,
-              fontFamily: 'Literata',
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatDivider() {
-    return Container(
-      width: 1,
-      height: 60,
-      color: Colors.grey.withOpacity(0.2),
     );
   }
 

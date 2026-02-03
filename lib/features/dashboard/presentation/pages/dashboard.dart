@@ -235,6 +235,10 @@ class _DashboardPageState extends State<DashboardPage>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                // Quick Stats Section (Horizontal Scrollable)
+                _buildQuickStatsSection(),
+                const SizedBox(height: 28),
+
                 // Sales & Profit Analysis Section
                 _buildAnimatedCard(
                   index: 0,
@@ -1092,6 +1096,150 @@ class _DashboardPageState extends State<DashboardPage>
                 ),
               ),
             ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuickStatsSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 16),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          physics: const BouncingScrollPhysics(),
+          child: Row(
+            children: [
+              _buildQuickStatCard(
+                icon: Icons.receipt_long_rounded,
+                value: '24',
+                label: 'Invoices',
+                color: const Color(0xFF667eea),
+              ),
+              const SizedBox(width: 16),
+              _buildQuickStatCard(
+                icon: Icons.people_rounded,
+                value: '156',
+                label: 'Clients',
+                color: const Color(0xFF4CAF50),
+              ),
+              const SizedBox(width: 16),
+              _buildQuickStatCard(
+                icon: Icons.inventory_2_rounded,
+                value: '89',
+                label: 'Products',
+                color: const Color(0xFFf093fb),
+              ),
+              const SizedBox(width: 16),
+              _buildQuickStatCard(
+                icon: Icons.local_shipping_rounded,
+                value: '12',
+                label: 'Suppliers',
+                color: const Color(0xFFFF6B6B),
+              ),
+              const SizedBox(width: 16),
+              _buildQuickStatCard(
+                icon: Icons.shopping_cart_rounded,
+                value: '8',
+                label: 'Purchases',
+                color: const Color(0xFF00BCD4),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildQuickStatCard({
+    required IconData icon,
+    required String value,
+    required String label,
+    required Color color,
+  }) {
+    return GestureDetector(
+      onTap: () {
+        // Navigate to related page based on label
+        switch (label) {
+          case 'Invoices':
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Invoices page coming soon')),
+            );
+            break;
+          case 'Clients':
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const CustomerPage()),
+            );
+            break;
+          case 'Products':
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Products page coming soon')),
+            );
+            break;
+          case 'Suppliers':
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Suppliers page coming soon')),
+            );
+            break;
+          case 'Purchases':
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Purchases page coming soon')),
+            );
+            break;
+        }
+      },
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: color.withOpacity(0.2),
+            width: 1.5,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: color.withOpacity(0.1),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, color: color, size: 20),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              value,
+              style: TextStyle(
+                color: color,
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
+                fontFamily: 'Literata',
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                color: Colors.grey[600],
+                fontSize: 11,
+                fontFamily: 'Literata',
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ],
         ),
       ),
