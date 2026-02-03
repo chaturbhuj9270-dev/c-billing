@@ -1367,7 +1367,7 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0),
+            padding: const EdgeInsets.symmetric(horizontal: 10.0,vertical: 20.0),
             child: Column(
               children: [
                 const SizedBox(height: 20),
@@ -1412,10 +1412,10 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
                         filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                         child: Container(
                           width: double.infinity,
-                          padding: const EdgeInsets.all(32.0),
+                          padding: const EdgeInsets.symmetric(horizontal: 5.0, vertical: 20.0),
                           decoration: BoxDecoration(
                             color: Colors.white.withOpacity(0.90),
-                            borderRadius: BorderRadius.circular(28),
+                            borderRadius: BorderRadius.circular(10),
                             border: Border.all(
                               color: Colors.white.withOpacity(0.4),
                               width: 1.5,
