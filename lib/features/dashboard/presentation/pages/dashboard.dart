@@ -276,7 +276,7 @@ class _DashboardPageState extends State<DashboardPage>
                           gradient: const LinearGradient(
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
-                            colors: [Color(0xFFf093fb), Color(0xFFf5576c)],
+                            colors: [Color(0xFF757575), Color(0xFF424242)],
                           ),
                           icon: Icons.shopping_bag_rounded,
                         ),
@@ -538,15 +538,18 @@ class _DashboardPageState extends State<DashboardPage>
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [Color(0xFF1B4D3E).withOpacity(0.7), Color(0xFF2E7D32).withOpacity(0.7)],
+              begin: (gradient as LinearGradient).begin,
+              end: (gradient).end,
+              colors: [
+                (gradient).colors[0].withValues(alpha: 0.7),
+                (gradient).colors[1].withValues(alpha: 0.7),
+              ],
             ),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.white.withOpacity(0.18), width: 1.5),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.2), width: 1.5),
             boxShadow: [
               BoxShadow(
-                color: Color(0xFF1B4D3E).withOpacity(0.18),
+                color: Colors.black.withValues(alpha: 0.1),
                 blurRadius: 20,
                 offset: const Offset(0, 8),
               ),
@@ -561,7 +564,7 @@ class _DashboardPageState extends State<DashboardPage>
                   Text(
                     title,
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.9),
+                      color: Colors.white.withValues(alpha: 0.9),
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
                       fontFamily: 'Literata',
@@ -570,7 +573,7 @@ class _DashboardPageState extends State<DashboardPage>
                   Container(
                     padding: const EdgeInsets.all(6),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
+                      color: Colors.white.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Icon(icon, color: Colors.white, size: 16),
@@ -592,7 +595,7 @@ class _DashboardPageState extends State<DashboardPage>
               Text(
                 subtitle,
                 style: TextStyle(
-                  color: Colors.white.withOpacity(0.8),
+                  color: Colors.white.withValues(alpha: 0.8),
                   fontSize: 10,
                   fontFamily: 'Literata',
                 ),
@@ -615,13 +618,13 @@ class _DashboardPageState extends State<DashboardPage>
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [Color(0xFF1B4D3E).withOpacity(0.7), Color(0xFF2E7D32).withOpacity(0.7)],
+              colors: [const Color(0xFF4CAF50).withValues(alpha: 0.7), const Color(0xFF2E7D32).withValues(alpha: 0.7)],
             ),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.white.withOpacity(0.18), width: 1.5),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.2), width: 1.5),
             boxShadow: [
               BoxShadow(
-                color: Color(0xFF1B4D3E).withOpacity(0.18),
+                color: Colors.black.withValues(alpha: 0.1),
                 blurRadius: 20,
                 offset: const Offset(0, 8),
               ),
@@ -629,80 +632,80 @@ class _DashboardPageState extends State<DashboardPage>
           ),
           child: Row(
             children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 5,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(
-                            Icons.arrow_upward_rounded,
-                            color: Colors.white,
-                            size: 14,
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 5,
                           ),
-                          const SizedBox(width: 4),
-                          Text(
-                            '+28%',
-                            style: TextStyle(
-                              color: Colors.white.withOpacity(0.95),
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              fontFamily: 'Literata',
-                            ),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(16),
                           ),
-                        ],
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.arrow_upward_rounded,
+                                color: Colors.white,
+                                size: 14,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                '+28%',
+                                style: TextStyle(
+                                  color: Colors.white.withValues(alpha: 0.95),
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  fontFamily: 'Literata',
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      '₹5.7 K',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 32,
+                        fontWeight: FontWeight.w800,
+                        fontFamily: 'Literata',
+                        letterSpacing: -1,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Net Profit This Month',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.85),
+                        fontSize: 12,
+                        fontFamily: 'Literata',
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
-                const Text(
-                  '₹5.7 K',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 32,
-                    fontWeight: FontWeight.w800,
-                    fontFamily: 'Literata',
-                    letterSpacing: -1,
-                  ),
+              ),
+              Container(
+                width: 70,
+                height: 70,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(16),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  'Net Profit This Month',
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.85),
-                    fontSize: 12,
-                    fontFamily: 'Literata',
-                  ),
+                child: const Icon(
+                  Icons.trending_up_rounded,
+                  color: Colors.white,
+                  size: 36,
                 ),
-              ],
-            ),
-          ),
-          Container(
-            width: 70,
-            height: 70,
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: const Icon(
-              Icons.trending_up_rounded,
-              color: Colors.white,
-              size: 36,
-            ),
-          ),
+              ),
             ],
           ),
         ),
