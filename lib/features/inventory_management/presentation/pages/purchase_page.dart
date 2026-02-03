@@ -374,7 +374,7 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
           child: ClipRRect(
             borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
             child: Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 12),
               height: MediaQuery.of(context).size.height * 0.75,
               decoration: BoxDecoration(
                 color: Colors.white.withOpacity(0.92),
@@ -1657,6 +1657,26 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
                   initialDate: _productionDate ?? DateTime.now(),
                   firstDate: DateTime(2000),
                   lastDate: DateTime.now(),
+                  builder: (context, child) {
+                    return Theme(
+                      data: Theme.of(context).copyWith(
+                        colorScheme: ColorScheme.light(
+                          primary: const Color(0xFF1B4D3E),
+                          onPrimary: Colors.white,
+                          surface: Colors.white,
+                          onSurface: Colors.black,
+                          secondary: const Color(0xFF1B4D3E),
+                          onSecondary: Colors.white,
+                        ),
+                        useMaterial3: true,
+                        buttonTheme: ButtonThemeData(
+                          buttonColor: const Color(0xFF1B4D3E),
+                          textTheme: ButtonTextTheme.primary,
+                        ),
+                      ),
+                      child: child!,
+                    );
+                  },
                 );
                 if (selectedDate != null) {
                   setState(() {
@@ -1706,6 +1726,26 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
                   initialDate: _expiryDate ?? DateTime.now().add(const Duration(days: 30)),
                   firstDate: DateTime.now(),
                   lastDate: DateTime(2100),
+                  builder: (context, child) {
+                    return Theme(
+                      data: Theme.of(context).copyWith(
+                        colorScheme: ColorScheme.light(
+                          primary: const Color(0xFF1B4D3E),
+                          onPrimary: Colors.white,
+                          surface: Colors.white,
+                          onSurface: Colors.black,
+                          secondary: const Color(0xFF1B4D3E),
+                          onSecondary: Colors.white,
+                        ),
+                        useMaterial3: true,
+                        buttonTheme: ButtonThemeData(
+                          buttonColor: const Color(0xFF1B4D3E),
+                          textTheme: ButtonTextTheme.primary,
+                        ),
+                      ),
+                      child: child!,
+                    );
+                  },
                 );
                 if (selectedDate != null) {
                   setState(() {
