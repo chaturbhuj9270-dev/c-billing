@@ -711,85 +711,93 @@ class _DashboardPageState extends State<DashboardPage>
   }
 
   Widget _buildInventoryCard() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.06),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Stock Overview',
-                style: TextStyle(
-                  color: Color(0xFF1B4D3E),
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  fontFamily: 'Literata',
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 5,
-                ),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      const Color(0xFFFF9800).withOpacity(0.15),
-                      const Color(0xFFFF5722).withOpacity(0.15),
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Text(
-                  '3 Available',
-                  style: TextStyle(
-                    color: Color(0xFFE65100),
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    fontFamily: 'Literata',
-                  ),
-                ),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(20),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Colors.white.withValues(alpha: 0.15),
+                Colors.white.withValues(alpha: 0.05),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.2),
+              width: 1.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.1),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: _buildMiniMetric(
-                  title: 'Total Quantity',
-                  value: '426',
-                  subtitle: 'items',
-                  color: const Color(0xFF1B4D3E),
-                  icon: Icons.inventory_2_outlined,
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Stock Overview',
+                    style: TextStyle(
+                      color: Color(0xFF1B4D3E),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      fontFamily: 'Literata',
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 5,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Color(0xFF1B4D3E).withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Text(
+                      '3 Available',
+                      style: TextStyle(
+                        color: Color(0xFF1B4D3E),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        fontFamily: 'Literata',
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _buildMiniMetric(
-                  title: 'Stock Value',
-                  value: '₹1.3 L',
-                  subtitle: 'worth',
-                  color: const Color(0xFF1565C0),
-                  icon: Icons.account_balance_wallet_outlined,
-                ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildGlassMiniMetric(
+                      title: 'Total Quantity',
+                      value: '426',
+                      subtitle: 'items',
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: _buildGlassMiniMetric(
+                      title: 'Stock Value',
+                      value: '₹1.3 L',
+                      subtitle: 'worth',
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -840,97 +848,158 @@ class _DashboardPageState extends State<DashboardPage>
     );
   }
 
-  Widget _buildPaymentsCard() {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            const Color(0xFF4A90E2).withOpacity(0.1),
-            const Color(0xFF7B68EE).withOpacity(0.05),
-          ],
+  Widget _buildGlassMiniMetric({
+    required String title,
+    required String value,
+    required String subtitle,
+  }) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Colors.white.withValues(alpha: 0.15),
+                Colors.white.withValues(alpha: 0.05),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.2),
+              width: 1,
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                value,
+                style: const TextStyle(
+                  color: Color(0xFF1B4D3E),
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  fontFamily: 'Literata',
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                '$title $subtitle',
+                style: TextStyle(
+                  color: Color(0xFF1B4D3E).withValues(alpha: 0.6),
+                  fontSize: 10,
+                  fontFamily: 'Literata',
+                ),
+              ),
+            ],
+          ),
         ),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFF4A90E2).withOpacity(0.2)),
       ),
-      child: Row(
-        children: [
-          Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF4A90E2), Color(0xFF7B68EE)],
-              ),
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF4A90E2).withOpacity(0.3),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
-                ),
+    );
+  }
+
+  Widget _buildPaymentsCard() {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(20),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Colors.white.withValues(alpha: 0.15),
+                Colors.white.withValues(alpha: 0.05),
               ],
             ),
-            child: const Icon(
-              Icons.payments_outlined,
-              color: Colors.white,
-              size: 26,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.2),
+              width: 1.5,
             ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.1),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
+              ),
+            ],
           ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Upcoming Payments',
-                  style: TextStyle(
-                    color: Color(0xFF0D47A1),
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    fontFamily: 'Literata',
+          child: Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF4A90E2), Color(0xFF7B68EE)],
                   ),
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF4A90E2).withValues(alpha: 0.3),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  'Manage your finances',
+                child: const Icon(
+                  Icons.payments_outlined,
+                  color: Colors.white,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Upcoming Payments',
+                      style: TextStyle(
+                        color: Color(0xFF1B4D3E),
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        fontFamily: 'Literata',
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Manage your finances',
+                      style: TextStyle(
+                        color: Color(0xFF1B4D3E).withValues(alpha: 0.6),
+                        fontSize: 12,
+                        fontFamily: 'Literata',
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Color(0xFF1B4D3E).withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Text(
+                  '1 Due',
                   style: TextStyle(
-                    color: const Color(0xFF0D47A1).withOpacity(0.6),
+                    color: Color(0xFF1B4D3E),
                     fontSize: 12,
+                    fontWeight: FontWeight.w600,
                     fontFamily: 'Literata',
                   ),
                 ),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF4CAF50), Color(0xFF2E7D32)],
               ),
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF4CAF50).withOpacity(0.3),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: const Text(
-              '1 Due',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                fontFamily: 'Literata',
-              ),
-            ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
