@@ -176,7 +176,7 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
             style: TextStyle(
               fontFamily: 'Literata',
               fontWeight: FontWeight.w700,
-              color: Color(0xFF1B4D3E),
+              color: Color(0xFFD946A6),
             ),
           ),
           content: SingleChildScrollView(
@@ -193,7 +193,7 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: const BorderSide(
-                        color: Color(0xFF1B4D3E),
+                        color: Color(0xFFD946A6),
                         width: 2,
                       ),
                     ),
@@ -210,7 +210,7 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: const BorderSide(
-                        color: Color(0xFF1B4D3E),
+                        color: Color(0xFFD946A6),
                         width: 2,
                       ),
                     ),
@@ -228,7 +228,7 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: const BorderSide(
-                        color: Color(0xFF1B4D3E),
+                        color: Color(0xFFD946A6),
                         width: 2,
                       ),
                     ),
@@ -246,7 +246,7 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: const BorderSide(
-                        color: Color(0xFF1B4D3E),
+                        color: Color(0xFFD946A6),
                         width: 2,
                       ),
                     ),
@@ -298,7 +298,7 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
                 }
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF1B4D3E),
+                backgroundColor: const Color(0xFFD946A6),
               ),
               child: const Text(
                 'Add Product',
@@ -419,7 +419,7 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
                           final product = _filteredProducts[index];
                           return ListTile(
                             leading: const Icon(Icons.inventory_2_rounded,
-                                color: Color(0xFF1B4D3E)),
+                                color: Color(0xFFD946A6)),
                             title: Text(
                               product.name,
                               style: const TextStyle(
@@ -438,7 +438,7 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
                               '₹${product.purchasePrice}',
                               style: const TextStyle(
                                 fontWeight: FontWeight.w600,
-                                color: Color(0xFF1B4D3E),
+                                color: Color(0xFFD946A6),
                               ),
                             ),
                             onTap: () {
@@ -522,7 +522,7 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
                           final supplier = _filteredSuppliers[index];
                           return ListTile(
                             leading: const Icon(Icons.person_rounded,
-                                color: Color(0xFF1B4D3E)),
+                                color: Color(0xFFD946A6)),
                             title: Text(
                               supplier['fullName'],
                               style: const TextStyle(
@@ -609,7 +609,7 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
                           final company = _filteredCompanies[index];
                           return ListTile(
                             leading: const Icon(Icons.business_rounded,
-                                color: Color(0xFF1B4D3E)),
+                                color: Color(0xFFD946A6)),
                             title: Text(
                               company['companyName'],
                               style: const TextStyle(
@@ -815,7 +815,7 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
                 fontSize: 20,
                 fontWeight: FontWeight.w700,
                 fontFamily: 'Literata',
-                color: Color(0xFF1B4D3E),
+                color: Color(0xFFD946A6),
               ),
             ),
             const SizedBox(height: 24),
@@ -939,7 +939,7 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
           style: TextStyle(
             fontFamily: 'Literata',
             fontWeight: FontWeight.w700,
-            color: Color(0xFF1B4D3E),
+            color: Color(0xFFD946A6),
           ),
         ),
         content: SingleChildScrollView(
@@ -956,7 +956,7 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: const BorderSide(
-                      color: Color(0xFF1B4D3E),
+                      color: Color(0xFFD946A6),
                       width: 2,
                     ),
                   ),
@@ -973,7 +973,7 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: const BorderSide(
-                      color: Color(0xFF1B4D3E),
+                      color: Color(0xFFD946A6),
                       width: 2,
                     ),
                   ),
@@ -991,7 +991,7 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: const BorderSide(
-                      color: Color(0xFF1B4D3E),
+                      color: Color(0xFFD946A6),
                       width: 2,
                     ),
                   ),
@@ -1009,7 +1009,7 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: const BorderSide(
-                      color: Color(0xFF1B4D3E),
+                      color: Color(0xFFD946A6),
                       width: 2,
                     ),
                   ),
@@ -1025,7 +1025,7 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF1B4D3E),
+              backgroundColor: const Color(0xFFD946A6),
             ),
             onPressed: () => _saveNewSupplier(context),
             child: const Text('Add Supplier'),
@@ -1104,7 +1104,7 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
           style: TextStyle(
             fontFamily: 'Literata',
             fontWeight: FontWeight.w700,
-            color: Color(0xFF1B4D3E),
+            color: Color(0xFFD946A6),
           ),
         ),
         content: SingleChildScrollView(
@@ -1121,7 +1121,7 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: const BorderSide(
-                      color: Color(0xFF1B4D3E),
+                      color: Color(0xFFD946A6),
                       width: 2,
                     ),
                   ),
@@ -1139,7 +1139,7 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: const BorderSide(
-                      color: Color(0xFF1B4D3E),
+                      color: Color(0xFFD946A6),
                       width: 2,
                     ),
                   ),
@@ -1157,7 +1157,7 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: const BorderSide(
-                      color: Color(0xFF1B4D3E),
+                      color: Color(0xFFD946A6),
                       width: 2,
                     ),
                   ),
@@ -1173,7 +1173,7 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF1B4D3E),
+              backgroundColor: const Color(0xFFD946A6),
             ),
             onPressed: () => _saveNewCompany(context),
             child: const Text('Add Company'),
@@ -1239,11 +1239,60 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFE6EDE7),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _showAddOptionsBottomSheet,
-        backgroundColor: const Color(0xFF1B4D3E),
-        child: const Icon(Icons.add_rounded),
+      backgroundColor: const Color(0xFFFCE7F3),
+      floatingActionButton: ClipRRect(
+        borderRadius: BorderRadius.circular(22),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Container(
+            width: 70,
+            height: 70,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(22),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  const Color(0xFFD946A6).withOpacity(0.4),
+                  const Color(0xFFD946A6).withOpacity(0.2),
+                ],
+              ),
+              border: Border.all(
+                color: Colors.white.withOpacity(0.3),
+                width: 1.5,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFFD946A6).withOpacity(0.25),
+                  blurRadius: 25,
+                  offset: const Offset(0, 10),
+                  spreadRadius: 2,
+                ),
+                BoxShadow(
+                  color: Colors.white.withOpacity(0.1),
+                  blurRadius: 10,
+                  offset: const Offset(-5, -5),
+                ),
+              ],
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: _showAddOptionsBottomSheet,
+                splashColor: Colors.white.withOpacity(0.2),
+                highlightColor: Colors.white.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(22),
+                child: Center(
+                  child: Icon(
+                    Icons.add_rounded,
+                    size: 36,
+                    color: Colors.white.withOpacity(0.95),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -1263,7 +1312,7 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
                           'Purchase Records',
                           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                             fontWeight: FontWeight.w800,
-                            color: const Color(0xFF1B4D3E),
+                            color: const Color(0xFFD946A6),
                             letterSpacing: 0.5,
                             fontSize: 28,
                           ),
@@ -1303,7 +1352,7 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: const Color(0xFF1B4D3E).withOpacity(0.08),
+                                color: const Color(0xFFD946A6).withOpacity(0.08),
                                 blurRadius: 30,
                                 offset: const Offset(0, 15),
                                 spreadRadius: 2,
@@ -1331,13 +1380,13 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
                 decoration: BoxDecoration(
                   border: Border.all(
                     color: _selectedProduct != null
-                        ? const Color(0xFF1B4D3E)
+                        ? const Color(0xFFD946A6)
                         : Colors.grey[300]!,
                     width: _selectedProduct != null ? 2 : 1,
                   ),
                   borderRadius: BorderRadius.circular(12),
                   color: _selectedProduct != null
-                      ? const Color(0xFF1B4D3E).withValues(alpha: 0.05)
+                      ? const Color(0xFFD946A6).withValues(alpha: 0.05)
                       : Colors.white,
                 ),
                 child: Row(
@@ -1448,13 +1497,13 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
                 decoration: BoxDecoration(
                   border: Border.all(
                     color: _selectedSupplier != null
-                        ? const Color(0xFF1B4D3E)
+                        ? const Color(0xFFD946A6)
                         : Colors.grey[300]!,
                     width: _selectedSupplier != null ? 2 : 1,
                   ),
                   borderRadius: BorderRadius.circular(12),
                   color: _selectedSupplier != null
-                      ? const Color(0xFF1B4D3E).withValues(alpha: 0.05)
+                      ? const Color(0xFFD946A6).withValues(alpha: 0.05)
                       : Colors.white,
                 ),
                 child: Row(
@@ -1504,13 +1553,13 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
                 decoration: BoxDecoration(
                   border: Border.all(
                     color: _selectedCompany != null
-                        ? const Color(0xFF1B4D3E)
+                        ? const Color(0xFFD946A6)
                         : Colors.grey[300]!,
                     width: _selectedCompany != null ? 2 : 1,
                   ),
                   borderRadius: BorderRadius.circular(12),
                   color: _selectedCompany != null
-                      ? const Color(0xFF1B4D3E).withValues(alpha: 0.05)
+                      ? const Color(0xFFD946A6).withValues(alpha: 0.05)
                       : Colors.white,
                 ),
                 child: Row(
@@ -1750,7 +1799,7 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
               child: ElevatedButton(
                 onPressed: _isLoading ? null : _processPurchase,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF1B4D3E),
+                  backgroundColor: const Color(0xFFD946A6),
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   disabledBackgroundColor: Colors.grey[400],
                 ),
