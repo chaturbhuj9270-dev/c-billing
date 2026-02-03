@@ -176,7 +176,7 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
             style: TextStyle(
               fontFamily: 'Literata',
               fontWeight: FontWeight.w700,
-              color: Color(0xFFD946A6),
+              color: Color(0xFF1B4D3E),
             ),
           ),
           content: SingleChildScrollView(
@@ -193,7 +193,7 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: const BorderSide(
-                        color: Color(0xFFD946A6),
+                        color: Color(0xFF1B4D3E),
                         width: 2,
                       ),
                     ),
@@ -210,7 +210,7 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: const BorderSide(
-                        color: Color(0xFFD946A6),
+                        color: Color(0xFF1B4D3E),
                         width: 2,
                       ),
                     ),
@@ -228,7 +228,7 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: const BorderSide(
-                        color: Color(0xFFD946A6),
+                        color: Color(0xFF1B4D3E),
                         width: 2,
                       ),
                     ),
@@ -246,7 +246,7 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: const BorderSide(
-                        color: Color(0xFFD946A6),
+                        color: Color(0xFF1B4D3E),
                         width: 2,
                       ),
                     ),
@@ -298,7 +298,7 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
                 }
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFD946A6),
+                backgroundColor: const Color(0xFF1B4D3E),
               ),
               child: const Text(
                 'Add Product',
@@ -364,96 +364,112 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      backgroundColor: Colors.transparent,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
       builder: (context) => StatefulBuilder(
-        builder: (context, setModalState) => Container(
-          padding: const EdgeInsets.all(16),
-          height: MediaQuery.of(context).size.height * 0.75,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Select Product',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  fontFamily: 'Literata',
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: _productSearchController,
-                decoration: InputDecoration(
-                  hintText: 'Search by product name, company, or category',
-                  prefixIcon: const Icon(Icons.search_rounded),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+        builder: (context, setModalState) => BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+          child: ClipRRect(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              height: MediaQuery.of(context).size.height * 0.75,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.92),
+                border: Border(
+                  top: BorderSide(
+                    color: Colors.white.withOpacity(0.5),
+                    width: 1.5,
                   ),
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 ),
-                onChanged: (query) {
-                  _filterProducts(query);
-                  setModalState(() {});
-                },
               ),
-              const SizedBox(height: 16),
-              Expanded(
-                child: _filteredProducts.isEmpty
-                    ? Center(
-                        child: Text(
-                          _productSearchController.text.isEmpty
-                              ? 'No products available'
-                              : 'No products found',
-                          style: TextStyle(
-                            color: Colors.grey[600],
-                            fontSize: 14,
-                          ),
-                        ),
-                      )
-                    : ListView.builder(
-                        itemCount: _filteredProducts.length,
-                        itemBuilder: (context, index) {
-                          final product = _filteredProducts[index];
-                          return ListTile(
-                            leading: const Icon(Icons.inventory_2_rounded,
-                                color: Color(0xFFD946A6)),
-                            title: Text(
-                              product.name,
-                              style: const TextStyle(
-                                fontFamily: 'Literata',
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            subtitle: Text(
-                              '${product.companyName} • Stock: ${product.currentStock}',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey[600],
-                              ),
-                            ),
-                            trailing: Text(
-                              '₹${product.purchasePrice}',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFFD946A6),
-                              ),
-                            ),
-                            onTap: () {
-                              setState(() {
-                                _selectedProduct = product;
-                                _priceController.text =
-                                    product.purchasePrice.toString();
-                              });
-                              Navigator.pop(context);
-                            },
-                          );
-                        },
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Select Product',
+                    style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                      fontFamily: 'Literata',
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: _productSearchController,
+                    decoration: InputDecoration(
+                      hintText: 'Search by product name, company, or category',
+                      prefixIcon: const Icon(Icons.search_rounded),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
                       ),
+                      contentPadding:
+                          const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    ),
+                    onChanged: (query) {
+                      _filterProducts(query);
+                      setModalState(() {});
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  Expanded(
+                    child: _filteredProducts.isEmpty
+                        ? Center(
+                            child: Text(
+                              _productSearchController.text.isEmpty
+                                  ? 'No products available'
+                                  : 'No products found',
+                              style: TextStyle(
+                                color: Colors.grey[600],
+                                fontSize: 14,
+                              ),
+                            ),
+                          )
+                        : ListView.builder(
+                            itemCount: _filteredProducts.length,
+                            itemBuilder: (context, index) {
+                              final product = _filteredProducts[index];
+                              return ListTile(
+                                leading: const Icon(Icons.inventory_2_rounded,
+                                    color: Color(0xFF1B4D3E)),
+                                title: Text(
+                                  product.name,
+                                  style: const TextStyle(
+                                    fontFamily: 'Literata',
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                subtitle: Text(
+                                  '${product.companyName} • Stock: ${product.currentStock}',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey[600],
+                                  ),
+                                ),
+                                trailing: Text(
+                                  '₹${product.purchasePrice}',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    color: Color(0xFF1B4D3E),
+                                  ),
+                                ),
+                                onTap: () {
+                                  setState(() {
+                                    _selectedProduct = product;
+                                    _priceController.text =
+                                        product.purchasePrice.toString();
+                                  });
+                                  Navigator.pop(context);
+                                },
+                              );
+                            },
+                          ),
               ),
             ],
+          ),
+            ),
           ),
         ),
       ),
@@ -467,80 +483,96 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      backgroundColor: Colors.transparent,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
       builder: (context) => StatefulBuilder(
-        builder: (context, setModalState) => Container(
-          padding: const EdgeInsets.all(16),
-          height: MediaQuery.of(context).size.height * 0.75,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Select Supplier',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  fontFamily: 'Literata',
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: _supplierSearchController,
-                decoration: InputDecoration(
-                  hintText: 'Search by supplier name or contact',
-                  prefixIcon: const Icon(Icons.search_rounded),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+        builder: (context, setModalState) => BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+          child: ClipRRect(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              height: MediaQuery.of(context).size.height * 0.75,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.92),
+                border: Border(
+                  top: BorderSide(
+                    color: Colors.white.withOpacity(0.5),
+                    width: 1.5,
                   ),
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 ),
-                onChanged: (query) {
-                  _filterSuppliers(query);
-                  setModalState(() {});
-                },
               ),
-              const SizedBox(height: 16),
-              Expanded(
-                child: _filteredSuppliers.isEmpty
-                    ? Center(
-                        child: Text(
-                          _supplierSearchController.text.isEmpty
-                              ? 'No suppliers available'
-                              : 'No suppliers found',
-                          style: TextStyle(
-                            color: Colors.grey[600],
-                            fontSize: 14,
-                          ),
-                        ),
-                      )
-                    : ListView.builder(
-                        itemCount: _filteredSuppliers.length,
-                        itemBuilder: (context, index) {
-                          final supplier = _filteredSuppliers[index];
-                          return ListTile(
-                            leading: const Icon(Icons.person_rounded,
-                                color: Color(0xFFD946A6)),
-                            title: Text(
-                              supplier['fullName'],
-                              style: const TextStyle(
-                                fontFamily: 'Literata',
-                                fontWeight: FontWeight.w600,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                  const Text(
+                    'Select Supplier',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      fontFamily: 'Literata',
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: _supplierSearchController,
+                    decoration: InputDecoration(
+                      hintText: 'Search by supplier name or contact',
+                      prefixIcon: const Icon(Icons.search_rounded),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      contentPadding:
+                          const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    ),
+                    onChanged: (query) {
+                      _filterSuppliers(query);
+                      setModalState(() {});
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  Expanded(
+                    child: _filteredSuppliers.isEmpty
+                        ? Center(
+                            child: Text(
+                              _supplierSearchController.text.isEmpty
+                                  ? 'No suppliers available'
+                                  : 'No suppliers found',
+                              style: TextStyle(
+                                color: Colors.grey[600],
+                                fontSize: 14,
                               ),
                             ),
-                            onTap: () {
-                              setState(() {
-                                _selectedSupplier = supplier;
-                              });
-                              Navigator.pop(context);
+                          )
+                        : ListView.builder(
+                            itemCount: _filteredSuppliers.length,
+                            itemBuilder: (context, index) {
+                              final supplier = _filteredSuppliers[index];
+                              return ListTile(
+                                leading: const Icon(Icons.person_rounded,
+                                    color: Color(0xFF1B4D3E)),
+                                title: Text(
+                                  supplier['fullName'],
+                                  style: const TextStyle(
+                                    fontFamily: 'Literata',
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                onTap: () {
+                                  setState(() {
+                                    _selectedSupplier = supplier;
+                                  });
+                                  Navigator.pop(context);
+                                },
+                              );
                             },
-                          );
-                        },
-                      ),
+                          ),
               ),
             ],
+          ),
+            ),
           ),
         ),
       ),
@@ -554,80 +586,96 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      backgroundColor: Colors.transparent,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
       builder: (context) => StatefulBuilder(
-        builder: (context, setModalState) => Container(
-          padding: const EdgeInsets.all(16),
-          height: MediaQuery.of(context).size.height * 0.75,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Select Company',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  fontFamily: 'Literata',
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: _companySearchController,
-                decoration: InputDecoration(
-                  hintText: 'Search by company name',
-                  prefixIcon: const Icon(Icons.search_rounded),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+        builder: (context, setModalState) => BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+          child: ClipRRect(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              height: MediaQuery.of(context).size.height * 0.75,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.92),
+                border: Border(
+                  top: BorderSide(
+                    color: Colors.white.withOpacity(0.5),
+                    width: 1.5,
                   ),
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 ),
-                onChanged: (query) {
-                  _filterCompanies(query);
-                  setModalState(() {});
-                },
               ),
-              const SizedBox(height: 16),
-              Expanded(
-                child: _filteredCompanies.isEmpty
-                    ? Center(
-                        child: Text(
-                          _companySearchController.text.isEmpty
-                              ? 'No companies available'
-                              : 'No companies found',
-                          style: TextStyle(
-                            color: Colors.grey[600],
-                            fontSize: 14,
-                          ),
-                        ),
-                      )
-                    : ListView.builder(
-                        itemCount: _filteredCompanies.length,
-                        itemBuilder: (context, index) {
-                          final company = _filteredCompanies[index];
-                          return ListTile(
-                            leading: const Icon(Icons.business_rounded,
-                                color: Color(0xFFD946A6)),
-                            title: Text(
-                              company['companyName'],
-                              style: const TextStyle(
-                                fontFamily: 'Literata',
-                                fontWeight: FontWeight.w600,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                  const Text(
+                    'Select Company',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      fontFamily: 'Literata',
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: _companySearchController,
+                    decoration: InputDecoration(
+                      hintText: 'Search by company name',
+                      prefixIcon: const Icon(Icons.search_rounded),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      contentPadding:
+                          const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    ),
+                    onChanged: (query) {
+                      _filterCompanies(query);
+                      setModalState(() {});
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  Expanded(
+                    child: _filteredCompanies.isEmpty
+                        ? Center(
+                            child: Text(
+                              _companySearchController.text.isEmpty
+                                  ? 'No companies available'
+                                  : 'No companies found',
+                              style: TextStyle(
+                                color: Colors.grey[600],
+                                fontSize: 14,
                               ),
                             ),
-                            onTap: () {
-                              setState(() {
-                                _selectedCompany = company;
-                              });
-                              Navigator.pop(context);
+                          )
+                        : ListView.builder(
+                            itemCount: _filteredCompanies.length,
+                            itemBuilder: (context, index) {
+                              final company = _filteredCompanies[index];
+                              return ListTile(
+                                leading: const Icon(Icons.business_rounded,
+                                    color: Color(0xFF1B4D3E)),
+                                title: Text(
+                                  company['companyName'],
+                                  style: const TextStyle(
+                                    fontFamily: 'Literata',
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                onTap: () {
+                                  setState(() {
+                                    _selectedCompany = company;
+                                  });
+                                  Navigator.pop(context);
+                                },
+                              );
                             },
-                          );
-                        },
-                      ),
-              ),
+                          ),
+                  ),
             ],
+          ),
+            ),
           ),
         ),
       ),
@@ -815,7 +863,7 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
                 fontSize: 20,
                 fontWeight: FontWeight.w700,
                 fontFamily: 'Literata',
-                color: Color(0xFFD946A6),
+                color: Color(0xFF1B4D3E),
               ),
             ),
             const SizedBox(height: 24),
@@ -939,7 +987,7 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
           style: TextStyle(
             fontFamily: 'Literata',
             fontWeight: FontWeight.w700,
-            color: Color(0xFFD946A6),
+            color: Color(0xFF1B4D3E),
           ),
         ),
         content: SingleChildScrollView(
@@ -956,7 +1004,7 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: const BorderSide(
-                      color: Color(0xFFD946A6),
+                      color: Color(0xFF1B4D3E),
                       width: 2,
                     ),
                   ),
@@ -973,7 +1021,7 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: const BorderSide(
-                      color: Color(0xFFD946A6),
+                      color: Color(0xFF1B4D3E),
                       width: 2,
                     ),
                   ),
@@ -991,7 +1039,7 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: const BorderSide(
-                      color: Color(0xFFD946A6),
+                      color: Color(0xFF1B4D3E),
                       width: 2,
                     ),
                   ),
@@ -1009,7 +1057,7 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: const BorderSide(
-                      color: Color(0xFFD946A6),
+                      color: Color(0xFF1B4D3E),
                       width: 2,
                     ),
                   ),
@@ -1025,7 +1073,7 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFD946A6),
+              backgroundColor: const Color(0xFF1B4D3E),
             ),
             onPressed: () => _saveNewSupplier(context),
             child: const Text('Add Supplier'),
@@ -1104,7 +1152,7 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
           style: TextStyle(
             fontFamily: 'Literata',
             fontWeight: FontWeight.w700,
-            color: Color(0xFFD946A6),
+            color: Color(0xFF1B4D3E),
           ),
         ),
         content: SingleChildScrollView(
@@ -1121,7 +1169,7 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: const BorderSide(
-                      color: Color(0xFFD946A6),
+                      color: Color(0xFF1B4D3E),
                       width: 2,
                     ),
                   ),
@@ -1139,7 +1187,7 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: const BorderSide(
-                      color: Color(0xFFD946A6),
+                      color: Color(0xFF1B4D3E),
                       width: 2,
                     ),
                   ),
@@ -1157,7 +1205,7 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: const BorderSide(
-                      color: Color(0xFFD946A6),
+                      color: Color(0xFF1B4D3E),
                       width: 2,
                     ),
                   ),
@@ -1173,7 +1221,7 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFD946A6),
+              backgroundColor: const Color(0xFF1B4D3E),
             ),
             onPressed: () => _saveNewCompany(context),
             child: const Text('Add Company'),
@@ -1239,7 +1287,7 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFCE7F3),
+      backgroundColor: const Color(0xFFE6EDE7),
       floatingActionButton: ClipRRect(
         borderRadius: BorderRadius.circular(22),
         child: BackdropFilter(
@@ -1253,8 +1301,8 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  const Color(0xFFD946A6).withOpacity(0.4),
-                  const Color(0xFFD946A6).withOpacity(0.2),
+                  const Color(0xFF1B4D3E).withOpacity(0.4),
+                  const Color(0xFF1B4D3E).withOpacity(0.2),
                 ],
               ),
               border: Border.all(
@@ -1263,7 +1311,7 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
               ),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFFD946A6).withOpacity(0.25),
+                  color: const Color(0xFF1B4D3E).withOpacity(0.25),
                   blurRadius: 25,
                   offset: const Offset(0, 10),
                   spreadRadius: 2,
@@ -1312,7 +1360,7 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
                           'Purchase Records',
                           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                             fontWeight: FontWeight.w800,
-                            color: const Color(0xFFD946A6),
+                            color: const Color(0xFF1B4D3E),
                             letterSpacing: 0.5,
                             fontSize: 28,
                           ),
@@ -1352,7 +1400,7 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: const Color(0xFFD946A6).withOpacity(0.08),
+                                color: const Color(0xFF1B4D3E).withOpacity(0.08),
                                 blurRadius: 30,
                                 offset: const Offset(0, 15),
                                 spreadRadius: 2,
@@ -1380,13 +1428,13 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
                 decoration: BoxDecoration(
                   border: Border.all(
                     color: _selectedProduct != null
-                        ? const Color(0xFFD946A6)
+                        ? const Color(0xFF1B4D3E)
                         : Colors.grey[300]!,
                     width: _selectedProduct != null ? 2 : 1,
                   ),
                   borderRadius: BorderRadius.circular(12),
                   color: _selectedProduct != null
-                      ? const Color(0xFFD946A6).withValues(alpha: 0.05)
+                      ? const Color(0xFF1B4D3E).withValues(alpha: 0.05)
                       : Colors.white,
                 ),
                 child: Row(
@@ -1497,13 +1545,13 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
                 decoration: BoxDecoration(
                   border: Border.all(
                     color: _selectedSupplier != null
-                        ? const Color(0xFFD946A6)
+                        ? const Color(0xFF1B4D3E)
                         : Colors.grey[300]!,
                     width: _selectedSupplier != null ? 2 : 1,
                   ),
                   borderRadius: BorderRadius.circular(12),
                   color: _selectedSupplier != null
-                      ? const Color(0xFFD946A6).withValues(alpha: 0.05)
+                      ? const Color(0xFF1B4D3E).withValues(alpha: 0.05)
                       : Colors.white,
                 ),
                 child: Row(
@@ -1553,13 +1601,13 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
                 decoration: BoxDecoration(
                   border: Border.all(
                     color: _selectedCompany != null
-                        ? const Color(0xFFD946A6)
+                        ? const Color(0xFF1B4D3E)
                         : Colors.grey[300]!,
                     width: _selectedCompany != null ? 2 : 1,
                   ),
                   borderRadius: BorderRadius.circular(12),
                   color: _selectedCompany != null
-                      ? const Color(0xFFD946A6).withValues(alpha: 0.05)
+                      ? const Color(0xFF1B4D3E).withValues(alpha: 0.05)
                       : Colors.white,
                 ),
                 child: Row(
@@ -1799,7 +1847,7 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
               child: ElevatedButton(
                 onPressed: _isLoading ? null : _processPurchase,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFD946A6),
+                  backgroundColor: const Color(0xFF1B4D3E),
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   disabledBackgroundColor: Colors.grey[400],
                 ),
