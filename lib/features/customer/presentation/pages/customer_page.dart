@@ -104,7 +104,7 @@ class _CustomerPageState extends State<CustomerPage> {
         print('[ERROR] CRITICAL: Permission denied when reading customers - security rules issue');
       }
       
-      if (mounted) {
+      if (mounted && context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error loading customers: $e'),
@@ -287,6 +287,7 @@ class _CustomerPageState extends State<CustomerPage> {
                             color: Colors.white,
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
+                            fontFamily: 'Literata',
                           ),
                         ),
                 ),
@@ -313,6 +314,7 @@ class _CustomerPageState extends State<CustomerPage> {
                         color: Color(0xFF1B4D3E),
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
+                        fontFamily: 'Literata',
                       ),
                     ),
                   ),
@@ -349,9 +351,11 @@ class _CustomerPageState extends State<CustomerPage> {
       final currentUser = _auth.currentUser;
       if (currentUser == null) {
         print('[ERROR] No authenticated user found');
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('User not authenticated')),
-        );
+        if (mounted && context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('User not authenticated')),
+          );
+        }
         return;
       }
 
@@ -383,14 +387,16 @@ class _CustomerPageState extends State<CustomerPage> {
         print('[DEBUG] Customer updated successfully');
         _clearForm();
         _loadCustomers();
-        if (mounted) {
+        if (mounted && context.mounted) {
           Navigator.pop(context);
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Customer updated successfully'),
-              backgroundColor: Colors.green,
-            ),
-          );
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Customer updated successfully'),
+                backgroundColor: Colors.green,
+              ),
+            );
+          }
         }
       } else {
         // Create new customer
@@ -400,14 +406,16 @@ class _CustomerPageState extends State<CustomerPage> {
         print('[DEBUG] Customer added successfully with ID: ${docRef.id}');
         _clearForm();
         _loadCustomers();
-        if (mounted) {
+        if (mounted && context.mounted) {
           Navigator.pop(context);
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Customer added successfully'),
-              backgroundColor: Colors.green,
-            ),
-          );
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Customer added successfully'),
+                backgroundColor: Colors.green,
+              ),
+            );
+          }
         }
       }
     } catch (e) {
@@ -423,7 +431,7 @@ class _CustomerPageState extends State<CustomerPage> {
         print('[ERROR] CRITICAL: Firestore permission denied - security rules issue');
       }
       
-      if (mounted) {
+      if (mounted && context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(errorMsg),
@@ -443,17 +451,43 @@ class _CustomerPageState extends State<CustomerPage> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete Customer'),
-        content: const Text('Are you sure you want to delete this customer?'),
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        title: const Text(
+          'Delete Customer',
+          style: TextStyle(
+            fontFamily: 'Literata',
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF1B4D3E),
+          ),
+        ),
+        content: const Text(
+          'Are you sure you want to delete this customer?',
+          style: TextStyle(fontFamily: 'Literata'),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancel'),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(
+                fontFamily: 'Literata',
+                color: Colors.grey,
+              ),
+            ),
           ),
           ElevatedButton(
             onPressed: () => Navigator.of(ctx).pop(true),
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Delete'),
+            child: const Text(
+              'Delete',
+              style: TextStyle(
+                fontFamily: 'Literata',
+                color: Colors.white,
+              ),
+            ),
           ),
         ],
       ),
@@ -481,7 +515,7 @@ class _CustomerPageState extends State<CustomerPage> {
           .delete();
 
       print('[DEBUG] Customer deleted successfully');
-      if (mounted) {
+      if (mounted && context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Customer deleted successfully'),
@@ -499,7 +533,7 @@ class _CustomerPageState extends State<CustomerPage> {
         print('[ERROR] CRITICAL: Permission denied when deleting - security rules issue');
       }
       
-      if (mounted) {
+      if (mounted && context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error deleting customer: $e'),
