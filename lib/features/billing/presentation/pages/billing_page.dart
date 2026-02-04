@@ -226,78 +226,130 @@ class _BillingPageState extends State<BillingPage> {
 
   Widget _buildSliverAppBar() {
     return SliverAppBar(
-      expandedHeight: 100,
+      expandedHeight: 0,
       floating: true,
       pinned: true,
-      backgroundColor: const Color(0xFF1B4D3E),
-      leading: IconButton(
-        icon: const Icon(Icons.arrow_back, color: Colors.white),
-        onPressed: () {
-          if (_billItems.isNotEmpty) {
-            showDialog(
-              context: context,
-              builder: (ctx) => AlertDialog(
-                title: const Text(
-                  'Discard Bill?',
-                  style: TextStyle(fontFamily: 'Literata'),
-                ),
-                content: const Text(
-                  'You have unsaved items.',
-                  style: TextStyle(fontFamily: 'Literata'),
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(ctx),
-                    child: const Text('Cancel'),
-                  ),
-                  TextButton(
-                    onPressed: () {
-                      Navigator.pop(ctx);
-                      Navigator.pop(context);
-                    },
-                    child: const Text(
-                      'Discard',
-                      style: TextStyle(color: Colors.red),
-                    ),
-                  ),
-                ],
-              ),
-            );
-          } else {
-            Navigator.pop(context);
-          }
-        },
-      ),
-      flexibleSpace: FlexibleSpaceBar(
-        title: const Text(
-          'Create Bill',
-          style: TextStyle(
-            fontFamily: 'Literata',
-            fontWeight: FontWeight.w700,
-            fontSize: 18,
-          ),
-        ),
-        background: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      automaticallyImplyLeading: false,
+      flexibleSpace: PreferredSize(
+        preferredSize: const Size.fromHeight(70),
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [Color(0xFF1B4D3E), Color(0xFF2D6A4F)],
+              colors: [Color(0xFF1B4D3E), Color(0xFF0F3B2F)],
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF1B4D3E).withOpacity(0.2),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: SafeArea(
+            bottom: false,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Row(
+                children: [
+                  GestureDetector(
+                    onTap: () {
+                      if (_billItems.isNotEmpty) {
+                        showDialog(
+                          context: context,
+                          builder: (ctx) => AlertDialog(
+                            title: const Text(
+                              'Discard Bill?',
+                              style: TextStyle(fontFamily: 'Literata'),
+                            ),
+                            content: const Text(
+                              'You have unsaved items.',
+                              style: TextStyle(fontFamily: 'Literata'),
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(ctx),
+                                child: const Text('Cancel'),
+                              ),
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.pop(ctx);
+                                  Navigator.pop(context);
+                                },
+                                child: const Text(
+                                  'Discard',
+                                  style: TextStyle(color: Colors.red),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      } else {
+                        Navigator.pop(context);
+                      }
+                    },
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(
+                        Icons.arrow_back,
+                        color: Colors.white,
+                        size: 22,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text(
+                          'Create Bill',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 22,
+                            fontWeight: FontWeight.w700,
+                            fontFamily: 'Literata',
+                            height: 1.2,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (_billItems.isNotEmpty)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        '${_billItems.length} items',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          fontFamily: 'Literata',
+                        ),
+                      ),
+                    ),
+                ],
+              ),
             ),
           ),
         ),
       ),
-      actions: [
-        if (_billItems.isNotEmpty)
-          TextButton.icon(
-            onPressed: _clearBill,
-            icon: const Icon(Icons.clear_all, color: Colors.white70, size: 20),
-            label: const Text(
-              'Clear',
-              style: TextStyle(color: Colors.white70, fontSize: 12),
-            ),
-          ),
-      ],
     );
   }
 
@@ -830,90 +882,16 @@ class _BillingPageState extends State<BillingPage> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => DraggableScrollableSheet(
-        initialChildSize: 0.6,
-        maxChildSize: 0.9,
-        minChildSize: 0.4,
-        builder: (_, controller) => Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          child: Column(
-            children: [
-              const SizedBox(height: 12),
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              const Padding(
-                padding: EdgeInsets.all(20),
-                child: Text(
-                  'Select Customer',
-                  style: TextStyle(
-                    fontFamily: 'Literata',
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF1B4D3E),
-                  ),
-                ),
-              ),
-              Expanded(
-                child: ListView.builder(
-                  controller: controller,
-                  itemCount: _customers.length,
-                  itemBuilder: (context, index) {
-                    final customer = _customers[index];
-                    return ListTile(
-                      leading: CircleAvatar(
-                        backgroundColor: const Color(0xFF1B4D3E),
-                        child: Text(
-                          (customer['fullName'] as String).isNotEmpty
-                              ? (customer['fullName'] as String)[0]
-                                    .toUpperCase()
-                              : '?',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                      title: Text(
-                        customer['fullName'],
-                        style: const TextStyle(
-                          fontFamily: 'Literata',
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      subtitle: Text(
-                        customer['contact'] ?? '',
-                        style: TextStyle(
-                          fontFamily: 'Literata',
-                          color: Colors.grey[600],
-                          fontSize: 12,
-                        ),
-                      ),
-                      onTap: () {
-                        setState(() {
-                          _selectedCustomer = customer;
-                          _customerNameController.text =
-                              customer['fullName'] ?? '';
-                          _customerContactController.text =
-                              customer['contact'] ?? '';
-                        });
-                        Navigator.pop(ctx);
-                      },
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
-        ),
+      builder: (ctx) => _CustomerPickerBottomSheet(
+        customers: _customers,
+        onCustomerSelected: (customer) {
+          setState(() {
+            _selectedCustomer = customer;
+            _customerNameController.text = customer['fullName'] ?? '';
+            _customerContactController.text = customer['contact'] ?? '';
+          });
+          Navigator.pop(ctx);
+        },
       ),
     );
   }
@@ -1421,6 +1399,275 @@ class _AddItemsBottomSheetState extends State<_AddItemsBottomSheet> {
         child: Container(
           padding: const EdgeInsets.all(6),
           child: Icon(icon, size: 18, color: const Color(0xFF1B4D3E)),
+        ),
+      ),
+    );
+  }
+}
+
+/// Bottom sheet widget for customer selection with search
+class _CustomerPickerBottomSheet extends StatefulWidget {
+  final List<Map<String, dynamic>> customers;
+  final Function(Map<String, dynamic> customer) onCustomerSelected;
+
+  const _CustomerPickerBottomSheet({
+    required this.customers,
+    required this.onCustomerSelected,
+  });
+
+  @override
+  State<_CustomerPickerBottomSheet> createState() =>
+      _CustomerPickerBottomSheetState();
+}
+
+class _CustomerPickerBottomSheetState
+    extends State<_CustomerPickerBottomSheet> {
+  late List<Map<String, dynamic>> _filteredCustomers;
+  final _searchController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _filteredCustomers = widget.customers;
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _filterCustomers(String query) {
+    setState(() {
+      if (query.isEmpty) {
+        _filteredCustomers = widget.customers;
+      } else {
+        final lowerQuery = query.toLowerCase();
+        _filteredCustomers = widget.customers
+            .where(
+              (c) =>
+                  (c['fullName'] as String).toLowerCase().contains(
+                    lowerQuery,
+                  ) ||
+                  (c['contact'] as String).toLowerCase().contains(lowerQuery),
+            )
+            .toList();
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return DraggableScrollableSheet(
+      initialChildSize: 0.6,
+      maxChildSize: 0.9,
+      minChildSize: 0.4,
+      builder: (_, controller) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          children: [
+            // Handle bar
+            const SizedBox(height: 12),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            // Header
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(
+                      Icons.person_outline,
+                      color: Color(0xFF1B4D3E),
+                      size: 22,
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Select Customer',
+                          style: TextStyle(
+                            fontFamily: 'Literata',
+                            fontSize: 20,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF1B4D3E),
+                          ),
+                        ),
+                        Text(
+                          'Choose from existing customers',
+                          style: TextStyle(
+                            fontFamily: 'Literata',
+                            fontSize: 12,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // Search bar
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: TextField(
+                controller: _searchController,
+                onChanged: _filterCustomers,
+                style: const TextStyle(fontFamily: 'Literata', fontSize: 14),
+                decoration: InputDecoration(
+                  hintText: 'Search by name or phone...',
+                  hintStyle: TextStyle(color: Colors.grey[500]),
+                  prefixIcon: const Icon(
+                    Icons.search,
+                    color: Color(0xFF1B4D3E),
+                  ),
+                  suffixIcon: _searchController.text.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.clear, size: 20),
+                          onPressed: () {
+                            _searchController.clear();
+                            _filterCustomers('');
+                          },
+                        )
+                      : null,
+                  filled: true,
+                  fillColor: const Color(0xFFF5F5F5),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            // Customers list
+            Expanded(
+              child: _filteredCustomers.isEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.person_outline,
+                            size: 48,
+                            color: Colors.grey[400],
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            'No customers found',
+                            style: TextStyle(
+                              fontFamily: 'Literata',
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : ListView.builder(
+                      controller: controller,
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      itemCount: _filteredCustomers.length,
+                      itemBuilder: (context, index) {
+                        final customer = _filteredCustomers[index];
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: Colors.grey[200]!,
+                              width: 1,
+                            ),
+                          ),
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(12),
+                              onTap: () => widget.onCustomerSelected(customer),
+                              child: Padding(
+                                padding: const EdgeInsets.all(12),
+                                child: Row(
+                                  children: [
+                                    CircleAvatar(
+                                      backgroundColor: const Color(0xFF1B4D3E),
+                                      child: Text(
+                                        (customer['fullName'] as String)
+                                                .isNotEmpty
+                                            ? (customer['fullName']
+                                                      as String)[0]
+                                                  .toUpperCase()
+                                            : '?',
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 16,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            customer['fullName'] ?? '',
+                                            style: const TextStyle(
+                                              fontFamily: 'Literata',
+                                              fontWeight: FontWeight.w600,
+                                              fontSize: 15,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            customer['contact'] ?? '',
+                                            style: TextStyle(
+                                              fontFamily: 'Literata',
+                                              color: Colors.grey[600],
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Icon(
+                                      Icons.chevron_right,
+                                      color: Colors.grey[400],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+            ),
+          ],
         ),
       ),
     );
