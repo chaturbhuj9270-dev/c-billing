@@ -15,6 +15,8 @@ import '../../../../core/services/credentials_manager.dart';
 import '../../../../common_widgets/welcome_card.dart';
 import 'flyout_menu.dart';
 
+enum DashboardFilter { today, thisWeek, thisMonth, thisYear, custom, all }
+
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
 
@@ -29,6 +31,11 @@ class _DashboardPageState extends State<DashboardPage>
   final _firestore = FirebaseFirestore.instance;
   late SessionManager _sessionManager;
   late CredentialsManager _credentialsManager;
+
+  // Filter
+  DashboardFilter _selectedFilter = DashboardFilter.thisMonth;
+  DateTime? _customStartDate;
+  DateTime? _customEndDate;
 
   // Dashboard data
   bool _isLoading = true;
@@ -175,6 +182,72 @@ class _DashboardPageState extends State<DashboardPage>
     super.dispose();
   }
 
+  // Get date range based on selected filter
+  Map<String, DateTime?> _getDateRange() {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
+    switch (_selectedFilter) {
+      case DashboardFilter.today:
+        return {
+          'start': today,
+          'end': DateTime(now.year, now.month, now.day, 23, 59, 59),
+        };
+      case DashboardFilter.thisWeek:
+        final startOfWeek = today.subtract(Duration(days: today.weekday - 1));
+        final endOfWeek = startOfWeek.add(
+          const Duration(days: 6, hours: 23, minutes: 59, seconds: 59),
+        );
+        return {'start': startOfWeek, 'end': endOfWeek};
+      case DashboardFilter.thisMonth:
+        return {
+          'start': DateTime(now.year, now.month, 1),
+          'end': DateTime(now.year, now.month + 1, 0, 23, 59, 59),
+        };
+      case DashboardFilter.thisYear:
+        return {
+          'start': DateTime(now.year, 1, 1),
+          'end': DateTime(now.year, 12, 31, 23, 59, 59),
+        };
+      case DashboardFilter.custom:
+        return {
+          'start': _customStartDate,
+          'end': _customEndDate != null
+              ? DateTime(
+                  _customEndDate!.year,
+                  _customEndDate!.month,
+                  _customEndDate!.day,
+                  23,
+                  59,
+                  59,
+                )
+              : null,
+        };
+      case DashboardFilter.all:
+        return {'start': null, 'end': null};
+    }
+  }
+
+  String _getFilterLabel() {
+    switch (_selectedFilter) {
+      case DashboardFilter.today:
+        return 'Today';
+      case DashboardFilter.thisWeek:
+        return 'This Week';
+      case DashboardFilter.thisMonth:
+        return DateFormat('MMMM yyyy').format(DateTime.now());
+      case DashboardFilter.thisYear:
+        return 'Year ${DateTime.now().year}';
+      case DashboardFilter.custom:
+        if (_customStartDate != null && _customEndDate != null) {
+          return '${DateFormat('dd MMM').format(_customStartDate!)} - ${DateFormat('dd MMM').format(_customEndDate!)}';
+        }
+        return 'Custom Range';
+      case DashboardFilter.all:
+        return 'All Time';
+    }
+  }
+
   Future<void> _loadDashboardData() async {
     try {
       // Get current user
@@ -191,10 +264,10 @@ class _DashboardPageState extends State<DashboardPage>
       // Get user's data collection reference
       final userRef = _firestore.collection('users').doc(userId);
 
-      // Get current month date range
-      final now = DateTime.now();
-      final startOfMonth = DateTime(now.year, now.month, 1);
-      final endOfMonth = DateTime(now.year, now.month + 1, 0, 23, 59, 59);
+      // Get date range based on filter
+      final dateRange = _getDateRange();
+      final startDate = dateRange['start'];
+      final endDate = dateRange['end'];
 
       // Load counts from Firestore in parallel (under users/{userId}/)
       final countFutures = await Future.wait([
@@ -210,30 +283,35 @@ class _DashboardPageState extends State<DashboardPage>
         '[DEBUG] Counts: bills=${countFutures[0].count}, customers=${countFutures[1].count}, products=${countFutures[2].count}',
       );
 
-      // Get all bills for this month
-      final billsSnapshot = await userRef
-          .collection('bills')
-          .where(
-            'billDate',
-            isGreaterThanOrEqualTo: Timestamp.fromDate(startOfMonth),
-          )
-          .where(
-            'billDate',
-            isLessThanOrEqualTo: Timestamp.fromDate(endOfMonth),
-          )
-          .get();
+      // Get all bills for the selected period
+      Query billsQuery = userRef.collection('bills');
+      if (startDate != null) {
+        billsQuery = billsQuery.where(
+          'billDate',
+          isGreaterThanOrEqualTo: Timestamp.fromDate(startDate),
+        );
+      }
+      if (endDate != null) {
+        billsQuery = billsQuery.where(
+          'billDate',
+          isLessThanOrEqualTo: Timestamp.fromDate(endDate),
+        );
+      }
+      final billsSnapshot = await billsQuery.get();
 
-      print('[DEBUG] Bills this month: ${billsSnapshot.docs.length}');
+      print('[DEBUG] Bills for period: ${billsSnapshot.docs.length}');
 
       // Calculate sales data from bills
       double totalSalesAmount = 0;
       int totalItemsSold = 0;
       for (var doc in billsSnapshot.docs) {
-        final data = doc.data();
-        totalSalesAmount += (data['totalAmount'] as num?)?.toDouble() ?? 0;
-        final items = data['items'] as List<dynamic>? ?? [];
-        for (var item in items) {
-          totalItemsSold += (item['quantity'] as num?)?.toInt() ?? 0;
+        final data = doc.data() as Map<String, dynamic>?;
+        if (data != null) {
+          totalSalesAmount += (data['totalAmount'] as num?)?.toDouble() ?? 0;
+          final items = data['items'] as List<dynamic>? ?? [];
+          for (var item in items) {
+            totalItemsSold += (item['quantity'] as num?)?.toInt() ?? 0;
+          }
         }
       }
 
@@ -241,26 +319,31 @@ class _DashboardPageState extends State<DashboardPage>
         '[DEBUG] Total sales: $totalSalesAmount, Items sold: $totalItemsSold',
       );
 
-      // Get purchases for this month
-      final purchasesSnapshot = await userRef
-          .collection('purchases')
-          .where(
-            'createdAt',
-            isGreaterThanOrEqualTo: Timestamp.fromDate(startOfMonth),
-          )
-          .where(
-            'createdAt',
-            isLessThanOrEqualTo: Timestamp.fromDate(endOfMonth),
-          )
-          .get();
+      // Get purchases for the selected period
+      Query purchasesQuery = userRef.collection('purchases');
+      if (startDate != null) {
+        purchasesQuery = purchasesQuery.where(
+          'createdAt',
+          isGreaterThanOrEqualTo: Timestamp.fromDate(startDate),
+        );
+      }
+      if (endDate != null) {
+        purchasesQuery = purchasesQuery.where(
+          'createdAt',
+          isLessThanOrEqualTo: Timestamp.fromDate(endDate),
+        );
+      }
+      final purchasesSnapshot = await purchasesQuery.get();
 
       // Calculate purchase data
       double totalPurchaseAmount = 0;
       int totalPurchaseQty = 0;
       for (var doc in purchasesSnapshot.docs) {
-        final data = doc.data();
-        totalPurchaseAmount += (data['totalAmount'] as num?)?.toDouble() ?? 0;
-        totalPurchaseQty += (data['quantity'] as num?)?.toInt() ?? 0;
+        final data = doc.data() as Map<String, dynamic>?;
+        if (data != null) {
+          totalPurchaseAmount += (data['totalAmount'] as num?)?.toDouble() ?? 0;
+          totalPurchaseQty += (data['quantity'] as num?)?.toInt() ?? 0;
+        }
       }
 
       print(
@@ -439,6 +522,10 @@ class _DashboardPageState extends State<DashboardPage>
                     children: [
                       // Quick Stats Section (Horizontal Scrollable)
                       _buildQuickStatsSection(),
+                      const SizedBox(height: 20),
+
+                      // Filter Section
+                      _buildFilterSection(),
                       const SizedBox(height: 28),
 
                       // Sales & Profit Analysis Section
@@ -446,9 +533,7 @@ class _DashboardPageState extends State<DashboardPage>
                         index: 0,
                         child: _buildSectionHeader(
                           title: 'Sales & Profit Analysis',
-                          subtitle: DateFormat(
-                            'MMMM yyyy',
-                          ).format(DateTime.now()),
+                          subtitle: _getFilterLabel(),
                           icon: Icons.analytics_outlined,
                         ),
                       ),
@@ -1316,6 +1401,191 @@ class _DashboardPageState extends State<DashboardPage>
         ),
       ),
     );
+  }
+
+  Widget _buildFilterSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(
+              Icons.filter_list_rounded,
+              color: const Color(0xFF1B4D3E),
+              size: 18,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              'Filter by Period',
+              style: TextStyle(
+                color: const Color(0xFF1B4D3E),
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                fontFamily: 'Literata',
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          physics: const BouncingScrollPhysics(),
+          child: Row(
+            children: [
+              _buildFilterChip(
+                DashboardFilter.today,
+                'Today',
+                Icons.today_rounded,
+              ),
+              const SizedBox(width: 8),
+              _buildFilterChip(
+                DashboardFilter.thisWeek,
+                'This Week',
+                Icons.date_range_rounded,
+              ),
+              const SizedBox(width: 8),
+              _buildFilterChip(
+                DashboardFilter.thisMonth,
+                'This Month',
+                Icons.calendar_month_rounded,
+              ),
+              const SizedBox(width: 8),
+              _buildFilterChip(
+                DashboardFilter.thisYear,
+                'This Year',
+                Icons.calendar_today_rounded,
+              ),
+              const SizedBox(width: 8),
+              _buildFilterChip(
+                DashboardFilter.custom,
+                'Custom',
+                Icons.edit_calendar_rounded,
+              ),
+              const SizedBox(width: 8),
+              _buildFilterChip(
+                DashboardFilter.all,
+                'All Time',
+                Icons.all_inclusive_rounded,
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFilterChip(DashboardFilter filter, String label, IconData icon) {
+    final isSelected = _selectedFilter == filter;
+    return GestureDetector(
+      onTap: () async {
+        if (filter == DashboardFilter.custom) {
+          await _showCustomDateRangePicker();
+        } else {
+          setState(() {
+            _selectedFilter = filter;
+            _isLoading = true;
+          });
+          await _loadDashboardData();
+        }
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          gradient: isSelected
+              ? const LinearGradient(
+                  colors: [Color(0xFF1B4D3E), Color(0xFF2E7D32)],
+                )
+              : null,
+          color: isSelected ? null : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected
+                ? Colors.transparent
+                : const Color(0xFF1B4D3E).withOpacity(0.2),
+            width: 1.5,
+          ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: const Color(0xFF1B4D3E).withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 3),
+                  ),
+                ]
+              : [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.04),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 16,
+              color: isSelected ? Colors.white : const Color(0xFF1B4D3E),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                color: isSelected ? Colors.white : const Color(0xFF1B4D3E),
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                fontFamily: 'Literata',
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showCustomDateRangePicker() async {
+    final now = DateTime.now();
+    final initialDateRange = DateTimeRange(
+      start: _customStartDate ?? now.subtract(const Duration(days: 30)),
+      end: _customEndDate ?? now,
+    );
+
+    final picked = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(2020),
+      lastDate: now,
+      initialDateRange: initialDateRange,
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: Color(0xFF1B4D3E),
+              onPrimary: Colors.white,
+              surface: Colors.white,
+              onSurface: Color(0xFF1B4D3E),
+            ),
+            textButtonTheme: TextButtonThemeData(
+              style: TextButton.styleFrom(
+                foregroundColor: const Color(0xFF1B4D3E),
+              ),
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null) {
+      setState(() {
+        _customStartDate = picked.start;
+        _customEndDate = picked.end;
+        _selectedFilter = DashboardFilter.custom;
+        _isLoading = true;
+      });
+      await _loadDashboardData();
+    }
   }
 
   Widget _buildQuickStatsSection() {
