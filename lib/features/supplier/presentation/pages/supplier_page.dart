@@ -17,7 +17,6 @@ class _SupplierPageState extends State<SupplierPage> {
   final _lastNameController = TextEditingController();
   final _contactController = TextEditingController();
   final _addressController = TextEditingController();
-  final _filterController = TextEditingController();
 
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
@@ -30,6 +29,7 @@ class _SupplierPageState extends State<SupplierPage> {
   String _sortBy = 'name'; // 'name', 'date', 'contact'
   bool _isSortAscending = true; // Toggle for ascending/descending
   Timer? _filterDebounceTimer; // Debounce timer for search
+  bool _isNavigatingAway = false; // Flag to prevent setState after navigation
 
   final _auth = FirebaseAuth.instance;
   late final FirebaseFirestore _firestore;
@@ -42,54 +42,20 @@ class _SupplierPageState extends State<SupplierPage> {
     _sessionManager = SessionManager();
     _checkUserAuthentication();
     _loadSuppliers();
-    _filterController.addListener(_filterSuppliers);
   }
 
   @override
   void dispose() {
+    _isNavigatingAway = true; // Signal async operations to stop
     _filterDebounceTimer?.cancel();
-    _filterController.removeListener(_filterSuppliers);
-    _filterController.dispose();
     _firstNameController.dispose();
     _middleNameController.dispose();
     _lastNameController.dispose();
     _contactController.dispose();
     _addressController.dispose();
-    _filterController.dispose();
     super.dispose();
   }
 
-  void _filterSuppliers() {
-    // Cancel previous timer
-    _filterDebounceTimer?.cancel();
-    
-    // Create new timer with 300ms debounce
-    _filterDebounceTimer = Timer(const Duration(milliseconds: 300), () {
-      setState(() {
-        _applyFiltering();
-      });
-    });
-  }
-
-  void _applyFiltering() {
-    final query = _filterController.text.toLowerCase();
-    
-    // Filter by search query
-    List<Map<String, dynamic>> filtered = _suppliers.where((supplier) {
-      if (query.isEmpty) return true;
-      
-      final firstName = (supplier['firstName'] ?? '').toString().toLowerCase();
-      final lastName = (supplier['lastName'] ?? '').toString().toLowerCase();
-      final contact = (supplier['contact'] ?? '').toString().toLowerCase();
-      
-      return firstName.contains(query) ||
-          lastName.contains(query) ||
-          contact.contains(query);
-    }).toList();
-
-    _filteredSuppliers = filtered;
-    _applySorting();
-  }
 
   void _applySorting() {
     // Sort by selected option
@@ -139,7 +105,8 @@ class _SupplierPageState extends State<SupplierPage> {
 
   void _filterAndSortSuppliers() {
     setState(() {
-      _applyFiltering();
+      _filteredSuppliers = List.from(_suppliers);
+      _applySorting();
     });
   }
 
@@ -165,7 +132,7 @@ class _SupplierPageState extends State<SupplierPage> {
           .orderBy('createdAt', descending: true)
           .get();
 
-      if (!mounted) return;
+      if (!mounted || _isNavigatingAway) return;
 
       setState(() {
         _suppliers = snapshot.docs
@@ -629,7 +596,13 @@ class _SupplierPageState extends State<SupplierPage> {
               child: Row(
                 children: [
                   GestureDetector(
-                    onTap: () => Navigator.of(context).pop(),
+                    onTap: () {
+                      _isNavigatingAway = true;
+                      // Close any open bottom sheets first
+                      if (Navigator.of(context).canPop()) {
+                        Navigator.of(context).pop();
+                      }
+                    },
                     child: Icon(Icons.arrow_back_rounded, color: Colors.white.withOpacity(0.9), size: 24),
                   ),
                   const SizedBox(width: 12),
@@ -715,7 +688,6 @@ class _SupplierPageState extends State<SupplierPage> {
                       children: [
                         Expanded(
                           child: TextField(
-                            controller: _filterController,
                             style: const TextStyle(
                               fontSize: 14,
                               fontFamily: 'Literata',
@@ -728,23 +700,11 @@ class _SupplierPageState extends State<SupplierPage> {
                                 fontFamily: 'Literata',
                               ),
                               prefixIcon: Icon(Icons.search_rounded, color: Colors.grey[600], size: 20),
-                              suffixIcon: _filterController.text.isNotEmpty
-                                  ? GestureDetector(
-                                      onTap: () {
-                                        _filterController.clear();
-                                        _filterSuppliers();
-                                      },
-                                      child: Icon(Icons.close, color: Colors.grey[600], size: 18),
-                                    )
-                                  : null,
                               border: InputBorder.none,
                               contentPadding: const EdgeInsets.symmetric(vertical: 12),
                               isDense: true,
                             ),
-                            onChanged: (_) {
-                              setState(() {}); // Update UI for suffix icon
-                              _filterSuppliers();
-                            },
+                            onChanged: (_) {},
                           ),
                         ),
                       ],
