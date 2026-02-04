@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:async';
 import '../../../../core/services/session_manager.dart';
 
 class CustomerPage extends StatefulWidget {
@@ -24,6 +25,7 @@ class _CustomerPageState extends State<CustomerPage> {
   String? _editingCustomerId;
   List<Map<String, dynamic>> _customers = [];
   List<Map<String, dynamic>> _filteredCustomers = [];
+  Timer? _filterDebounceTimer;
 
   final _auth = FirebaseAuth.instance;
   late final FirebaseFirestore _firestore;
@@ -40,25 +42,31 @@ class _CustomerPageState extends State<CustomerPage> {
   }
 
   void _filterCustomers() {
-    print('[DEBUG] Filtering customers with query: ${_filterController.text}');
-    final query = _filterController.text.toLowerCase();
+    // Cancel previous timer
+    _filterDebounceTimer?.cancel();
     
-    setState(() {
-      if (query.isEmpty) {
-        _filteredCustomers = _customers;
-      } else {
-        _filteredCustomers = _customers.where((customer) {
-          final firstName = (customer['firstName'] ?? '').toString().toLowerCase();
-          final lastName = (customer['lastName'] ?? '').toString().toLowerCase();
-          final contact = (customer['contact'] ?? '').toString().toLowerCase();
-          
-          return firstName.contains(query) ||
-              lastName.contains(query) ||
-              contact.contains(query);
-        }).toList();
-      }
+    // Debounce filter operations (300ms delay)
+    _filterDebounceTimer = Timer(const Duration(milliseconds: 300), () {
+      print('[DEBUG] Filtering customers with query: ${_filterController.text}');
+      final query = _filterController.text.toLowerCase();
+      
+      setState(() {
+        if (query.isEmpty) {
+          _filteredCustomers = _customers;
+        } else {
+          _filteredCustomers = _customers.where((customer) {
+            final firstName = (customer['firstName'] ?? '').toString().toLowerCase();
+            final lastName = (customer['lastName'] ?? '').toString().toLowerCase();
+            final contact = (customer['contact'] ?? '').toString().toLowerCase();
+            
+            return firstName.contains(query) ||
+                lastName.contains(query) ||
+                contact.contains(query);
+          }).toList();
+        }
+      });
+      print('[DEBUG] Filtered results: ${_filteredCustomers.length} of ${_customers.length}');
     });
-    print('[DEBUG] Filtered results: ${_filteredCustomers.length} of ${_customers.length}');
   }
 
   void _checkUserAuthentication() {
@@ -70,10 +78,12 @@ class _CustomerPageState extends State<CustomerPage> {
 
   Future<void> _loadCustomers() async {
     try {
+      setState(() => _isLoading = true);
       print('[DEBUG] Loading customers...');
       final currentUser = _auth.currentUser;
       if (currentUser == null) {
         print('[ERROR] No authenticated user - cannot load customers');
+        setState(() => _isLoading = false);
         return;
       }
 
@@ -86,22 +96,29 @@ class _CustomerPageState extends State<CustomerPage> {
           .get();
 
       print('[DEBUG] Loaded ${snapshot.docs.length} customers');
-      setState(() {
-        _customers = snapshot.docs
-            .map((doc) => {
-                  'id': doc.id,
-                  ...doc.data(),
-                })
-            .toList();
-        // Update filtered list
-        _filterCustomers();
-      });
+      if (mounted) {
+        setState(() {
+          _customers = snapshot.docs
+              .map((doc) => {
+                    'id': doc.id,
+                    ...doc.data(),
+                  })
+              .toList();
+          // Update filtered list
+          _filterCustomers();
+          _isLoading = false;
+        });
+      }
     } catch (e) {
       print('[ERROR] Failed to load customers: $e');
       print('[ERROR] Error type: ${e.runtimeType}');
       
       if (e.toString().contains('permission-denied')) {
         print('[ERROR] CRITICAL: Permission denied when reading customers - security rules issue');
+      }
+      
+      if (mounted) {
+        setState(() => _isLoading = false);
       }
       
       if (mounted && context.mounted) {
@@ -547,6 +564,7 @@ class _CustomerPageState extends State<CustomerPage> {
 
   @override
   void dispose() {
+    _filterDebounceTimer?.cancel();
     _firstNameController.dispose();
     _middleNameController.dispose();
     _lastNameController.dispose();
@@ -716,7 +734,9 @@ class _CustomerPageState extends State<CustomerPage> {
               itemCount: _filteredCustomers.length,
               itemBuilder: (context, index) {
                 final customer = _filteredCustomers[index];
-                return _buildCustomerCard(customer);
+                return RepaintBoundary(
+                  child: _buildCustomerCard(customer),
+                );
               },
             ),
     );
@@ -794,9 +814,9 @@ class _CustomerPageState extends State<CustomerPage> {
       final address = customer['address'] ?? 'N/A';
       print('[DEBUG] Customer details - Name: $fullName, Contact: $contact, Address: $address');
 
-      final accentColors = [const Color(0xFF1B4D3E), const Color(0xFF0F3B2F), const Color(0xFF2C6F5E), const Color(0xFF1A5E52)];
-      final index = _filteredCustomers.indexOf(customer);
-      final accentColor = accentColors[index % accentColors.length];
+      // Use customer ID hash instead of indexOf for better performance
+      const accentColors = [Color(0xFF1B4D3E), Color(0xFF0F3B2F), Color(0xFF2C6F5E), Color(0xFF1A5E52)];
+      final accentColor = accentColors[(customer['id'].hashCode.abs()) % accentColors.length];
 
       return Container(
         margin: const EdgeInsets.only(bottom: 16),
