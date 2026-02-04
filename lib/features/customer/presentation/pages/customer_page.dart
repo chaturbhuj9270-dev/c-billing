@@ -26,6 +26,7 @@ class _CustomerPageState extends State<CustomerPage> {
   List<Map<String, dynamic>> _customers = [];
   List<Map<String, dynamic>> _filteredCustomers = [];
   Timer? _filterDebounceTimer;
+  bool _isSortAscending = true; // Track sort order
 
   final _auth = FirebaseAuth.instance;
   late final FirebaseFirestore _firestore;
@@ -64,8 +65,31 @@ class _CustomerPageState extends State<CustomerPage> {
                 contact.contains(query);
           }).toList();
         }
+        
+        // Apply sorting
+        _applySorting();
       });
       print('[DEBUG] Filtered results: ${_filteredCustomers.length} of ${_customers.length}');
+    });
+  }
+
+  void _applySorting() {
+    _filteredCustomers.sort((a, b) {
+      final nameA = '${a['firstName'] ?? ''} ${a['lastName'] ?? ''}'.trim().toLowerCase();
+      final nameB = '${b['firstName'] ?? ''} ${b['lastName'] ?? ''}'.trim().toLowerCase();
+      
+      if (_isSortAscending) {
+        return nameA.compareTo(nameB);
+      } else {
+        return nameB.compareTo(nameA);
+      }
+    });
+  }
+
+  void _toggleSort() {
+    setState(() {
+      _isSortAscending = !_isSortAscending;
+      _applySorting();
     });
   }
 
@@ -272,6 +296,7 @@ class _CustomerPageState extends State<CustomerPage> {
             controller: _addressController,
             icon: Icons.location_on_outlined,
             maxLines: 3,
+            isRequired: true,
           ),
           const SizedBox(height: 24),
           // Buttons
@@ -700,66 +725,103 @@ class _CustomerPageState extends State<CustomerPage> {
             )
           : Column(
               children: [
-                // Search bar outside navbar
+                // Search bar outside navbar with sort button
                 Padding(
                   padding: const EdgeInsets.all(16),
-                  child: SizedBox(
-                    height: 44,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.grey[300]!, width: 1.5),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Center(
-                        child: TextField(
-                          controller: _filterController,
-                          textAlignVertical: TextAlignVertical.center,
-                          style: const TextStyle(
-                            color: Colors.black87,
-                            fontFamily: 'Literata',
-                            fontSize: 14,
-                            height: 1,
-                          ),
-                          decoration: InputDecoration(
-                            hintText: 'Search customers...',
-                            hintStyle: TextStyle(
-                              color: Colors.grey[500],
-                              fontFamily: 'Literata',
-                              fontSize: 14,
+                  child: Row(
+                    children: [
+                      // Search field
+                      Expanded(
+                        child: SizedBox(
+                          height: 44,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.grey[300]!, width: 1.5),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.05),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
                             ),
-                            prefixIcon: Icon(
-                              Icons.search_rounded,
-                              color: Colors.grey[600],
-                              size: 20,
+                            child: Center(
+                              child: TextField(
+                                controller: _filterController,
+                                textAlignVertical: TextAlignVertical.center,
+                                style: const TextStyle(
+                                  color: Colors.black87,
+                                  fontFamily: 'Literata',
+                                  fontSize: 14,
+                                  height: 1,
+                                ),
+                                decoration: InputDecoration(
+                                  hintText: 'Search customers...',
+                                  hintStyle: TextStyle(
+                                    color: Colors.grey[500],
+                                    fontFamily: 'Literata',
+                                    fontSize: 14,
+                                  ),
+                                  prefixIcon: Icon(
+                                    Icons.search_rounded,
+                                    color: Colors.grey[600],
+                                    size: 20,
+                                  ),
+                                  suffixIcon: _filterController.text.isNotEmpty
+                                      ? GestureDetector(
+                                          onTap: () {
+                                            _filterController.clear();
+                                            _filterCustomers();
+                                          },
+                                          child: Icon(
+                                            Icons.close,
+                                            color: Colors.grey[600],
+                                            size: 20,
+                                          ),
+                                        )
+                                      : null,
+                                  border: InputBorder.none,
+                                  isDense: true,
+                                  contentPadding: const EdgeInsets.fromLTRB(0, 0, 12, 0),
+                                ),
+                              ),
                             ),
-                            suffixIcon: _filterController.text.isNotEmpty
-                                ? GestureDetector(
-                                    onTap: () {
-                                      _filterController.clear();
-                                      _filterCustomers();
-                                    },
-                                    child: Icon(
-                                      Icons.close,
-                                      color: Colors.grey[600],
-                                      size: 20,
-                                    ),
-                                  )
-                                : null,
-                            border: InputBorder.none,
-                            isDense: true,
-                            contentPadding: const EdgeInsets.fromLTRB(0, 0, 12, 0),
                           ),
                         ),
                       ),
-                    ),
+                      const SizedBox(width: 12),
+                      // Sort button
+                      GestureDetector(
+                        onTap: _toggleSort,
+                        child: Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.grey[300]!, width: 1.5),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.05),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Center(
+                            child: Icon(
+                              _isSortAscending
+                                  ? Icons.arrow_upward_rounded
+                                  : Icons.arrow_downward_rounded,
+                              color: const Color(0xFF1B4D3E),
+                              size: 20,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 // Customer list
@@ -848,98 +910,236 @@ class _CustomerPageState extends State<CustomerPage> {
     try {
       print('[DEBUG] Building customer card for customer ID: ${customer['id']}');
       final fullName = '${customer['firstName']} ${customer['middleName']} ${customer['lastName']}'.trim();
+      final firstName = customer['firstName'] ?? '';
       final contact = customer['contact'] ?? 'N/A';
       final address = customer['address'] ?? 'N/A';
-      print('[DEBUG] Customer details - Name: $fullName, Contact: $contact, Address: $address');
 
       // Use customer ID hash instead of indexOf for better performance
       const accentColors = [Color(0xFF1B4D3E), Color(0xFF0F3B2F), Color(0xFF2C6F5E), Color(0xFF1A5E52)];
       final accentColor = accentColors[(customer['id'].hashCode.abs()) % accentColors.length];
+      
+      // Get initials for avatar
+      final initials = '${firstName.isNotEmpty ? firstName[0].toUpperCase() : 'C'}';
 
-      return Container(
-        margin: const EdgeInsets.only(bottom: 16),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(color: accentColor.withOpacity(0.15), blurRadius: 16, offset: const Offset(0, 6)),
-            BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 8, offset: const Offset(0, 2)),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Top Row: Avatar + Details + Menu
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: 60,
-                  height: 60,
-                  decoration: BoxDecoration(
-                    color: accentColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: accentColor.withOpacity(0.3), width: 2),
-                  ),
-                  child: Center(
-                    child: Icon(Icons.person, size: 32, color: accentColor),
-                  ),
+      return GestureDetector(
+        onTap: () => _showEditCustomerBottomSheet(customer),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 14),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                // Subtle bottom shadow for depth
+                BoxShadow(
+                  color: accentColor.withOpacity(0.12),
+                  blurRadius: 20,
+                  offset: const Offset(0, 8),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(fullName, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Color(0xFF1B4D3E), fontFamily: 'Literata'), maxLines: 1, overflow: TextOverflow.ellipsis),
-                      const SizedBox(height: 6),
-                      Row(
-                        children: [
-                          Icon(Icons.phone_outlined, size: 14, color: Colors.grey[600]),
-                          const SizedBox(width: 6),
-                          Expanded(
-                            child: Text(contact, style: TextStyle(fontSize: 12, color: Colors.grey[700], fontFamily: 'Literata'), maxLines: 1, overflow: TextOverflow.ellipsis),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                PopupMenuButton(
-                  color: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  elevation: 8,
-                  itemBuilder: (context) => [
-                    PopupMenuItem(
-                      child: Row(
-                        children: [Icon(Icons.edit_outlined, color: accentColor, size: 18), const SizedBox(width: 8), const Text('Edit')],
-                      ),
-                      onTap: () => Future.delayed(const Duration(milliseconds: 100), () => _showEditCustomerBottomSheet(customer)),
-                    ),
-                    PopupMenuItem(
-                      child: Row(
-                        children: [const Icon(Icons.delete_outline, color: Colors.red, size: 18), const SizedBox(width: 8), const Text('Delete', style: TextStyle(color: Colors.red))],
-                      ),
-                      onTap: () => _deleteCustomer(customer['id']),
-                    ),
-                  ],
-                  icon: Icon(Icons.more_vert, color: accentColor, size: 20),
+                // Subtle top shadow for elevation
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.04),
+                  blurRadius: 10,
+                  offset: const Offset(0, 2),
                 ),
               ],
             ),
-            if (address != 'N/A') ...[
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Icon(Icons.location_on_outlined, size: 14, color: Colors.grey[600]),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: Text(address, style: TextStyle(fontSize: 12, color: Colors.grey[600], fontFamily: 'Literata'), maxLines: 2, overflow: TextOverflow.ellipsis),
+            child: Column(
+              children: [
+                // Card content
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
+                  child: Column(
+                    children: [
+                      // Avatar + Name + Actions row
+                      Row(
+                        children: [
+                          // Circular avatar with initials
+                          Container(
+                            width: 52,
+                            height: 52,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  accentColor,
+                                  accentColor.withOpacity(0.7),
+                                ],
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: accentColor.withOpacity(0.3),
+                                  blurRadius: 12,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: Center(
+                              child: Text(
+                                initials,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w700,
+                                  fontFamily: 'Literata',
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          // Name and contact
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  fullName,
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                    fontFamily: 'Literata',
+                                    color: Color(0xFF1B4D3E),
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: 6),
+                                Row(
+                                  children: [
+                                    Icon(
+                                      Icons.phone_outlined,
+                                      size: 13,
+                                      color: Colors.grey[500],
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Expanded(
+                                      child: Text(
+                                        contact,
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          color: Colors.grey[600],
+                                          fontFamily: 'Literata',
+                                          height: 1.2,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          // Action buttons in compact layout
+                          PopupMenuButton(
+                            color: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            elevation: 6,
+                            constraints: const BoxConstraints(minWidth: 140),
+                            itemBuilder: (context) => [
+                              PopupMenuItem(
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.edit_outlined,
+                                      color: accentColor,
+                                      size: 18,
+                                    ),
+                                    const SizedBox(width: 10),
+                                    const Text(
+                                      'Edit',
+                                      style: TextStyle(
+                                        fontFamily: 'Literata',
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                onTap: () => Future.delayed(
+                                  const Duration(milliseconds: 100),
+                                  () => _showEditCustomerBottomSheet(customer),
+                                ),
+                              ),
+                              PopupMenuItem(
+                                child: Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.delete_outline,
+                                      color: Colors.red,
+                                      size: 18,
+                                    ),
+                                    const SizedBox(width: 10),
+                                    const Text(
+                                      'Delete',
+                                      style: TextStyle(
+                                        color: Colors.red,
+                                        fontFamily: 'Literata',
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                onTap: () => _deleteCustomer(customer['id']),
+                              ),
+                            ],
+                            icon: Icon(
+                              Icons.more_vert_rounded,
+                              color: Colors.grey[600],
+                              size: 20,
+                            ),
+                          ),
+                        ],
+                      ),
+                      // Address row - only if present
+                      if (address != 'N/A') ...[
+                        const SizedBox(height: 12),
+                        Container(
+                          padding: const EdgeInsets.fromLTRB(0, 10, 0, 10),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[50],
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 10),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Icon(
+                                  Icons.location_on_rounded,
+                                  size: 14,
+                                  color: accentColor.withOpacity(0.7),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    address,
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey[700],
+                                      fontFamily: 'Literata',
+                                      height: 1.3,
+                                    ),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
-                ],
-              ),
-            ],
-          ],
+                ),
+              ],
+            ),
+          ),
         ),
       );
     } catch (e) {
