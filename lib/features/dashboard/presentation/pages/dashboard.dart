@@ -12,7 +12,6 @@ import '../../../billing/presentation/pages/billing_page.dart';
 import '../../../billing/presentation/pages/bills_list_page.dart';
 import '../../../../core/services/session_manager.dart';
 import '../../../../core/services/credentials_manager.dart';
-import '../../../../core/services/dashboard_inventory_service.dart';
 import '../../../../common_widgets/welcome_card.dart';
 import 'flyout_menu.dart';
 
@@ -30,7 +29,6 @@ class _DashboardPageState extends State<DashboardPage>
   final _firestore = FirebaseFirestore.instance;
   late SessionManager _sessionManager;
   late CredentialsManager _credentialsManager;
-  late DashboardInventoryService _dashboardService;
 
   // Dashboard data
   bool _isLoading = true;
@@ -72,7 +70,6 @@ class _DashboardPageState extends State<DashboardPage>
     super.initState();
     _sessionManager = SessionManager();
     _credentialsManager = CredentialsManager();
-    _dashboardService = DashboardInventoryService();
 
     // Load dashboard data
     _loadDashboardData();
@@ -186,20 +183,16 @@ class _DashboardPageState extends State<DashboardPage>
       final endOfMonth = DateTime(now.year, now.month + 1, 0, 23, 59, 59);
 
       // Load counts from Firestore in parallel
-      final futures = await Future.wait([
+      final countFutures = await Future.wait([
         _firestore.collection('bills').count().get(),
         _firestore.collection('customers').count().get(),
         _firestore.collection('products').count().get(),
         _firestore.collection('suppliers').count().get(),
         _firestore.collection('purchases').count().get(),
         _firestore.collection('companies').count().get(),
-        _dashboardService.getDashboardSummary(
-          startDate: startOfMonth,
-          endDate: endOfMonth,
-        ),
       ]);
 
-      // Get bills for this month to calculate items sold
+      // Get all bills for this month
       final billsSnapshot = await _firestore
           .collection('bills')
           .where(
@@ -212,55 +205,86 @@ class _DashboardPageState extends State<DashboardPage>
           )
           .get();
 
+      // Calculate sales data from bills
+      double totalSalesAmount = 0;
       int totalItemsSold = 0;
       for (var doc in billsSnapshot.docs) {
-        final items = doc.data()['items'] as List<dynamic>? ?? [];
+        final data = doc.data();
+        totalSalesAmount += (data['totalAmount'] as num?)?.toDouble() ?? 0;
+        final items = data['items'] as List<dynamic>? ?? [];
         for (var item in items) {
           totalItemsSold += (item['quantity'] as num?)?.toInt() ?? 0;
         }
       }
 
-      final dashboardSummary = futures[6] as Map<String, dynamic>;
+      // Get purchases for this month
+      final purchasesSnapshot = await _firestore
+          .collection('purchases')
+          .where(
+            'createdAt',
+            isGreaterThanOrEqualTo: Timestamp.fromDate(startOfMonth),
+          )
+          .where(
+            'createdAt',
+            isLessThanOrEqualTo: Timestamp.fromDate(endOfMonth),
+          )
+          .get();
+
+      // Calculate purchase data
+      double totalPurchaseAmount = 0;
+      int totalPurchaseQty = 0;
+      for (var doc in purchasesSnapshot.docs) {
+        final data = doc.data();
+        totalPurchaseAmount += (data['totalAmount'] as num?)?.toDouble() ?? 0;
+        totalPurchaseQty += (data['quantity'] as num?)?.toInt() ?? 0;
+      }
+
+      // Get products for stock value calculation
+      final productsSnapshot = await _firestore.collection('products').get();
+      double stockValue = 0;
+      int lowStockCount = 0;
+      for (var doc in productsSnapshot.docs) {
+        final data = doc.data();
+        final currentStock = (data['currentStock'] as num?)?.toInt() ?? 0;
+        final purchasePrice = (data['purchasePrice'] as num?)?.toDouble() ?? 0;
+        stockValue += currentStock * purchasePrice;
+        if (currentStock < 10 && currentStock > 0) {
+          lowStockCount++;
+        }
+      }
+
+      // Calculate profit
+      final profit = totalSalesAmount - totalPurchaseAmount;
 
       if (mounted) {
         setState(() {
-          _invoicesCount = (futures[0] as AggregateQuerySnapshot).count ?? 0;
-          _clientsCount = (futures[1] as AggregateQuerySnapshot).count ?? 0;
-          _productsCount = (futures[2] as AggregateQuerySnapshot).count ?? 0;
-          _suppliersCount = (futures[3] as AggregateQuerySnapshot).count ?? 0;
-          _purchasesCount = (futures[4] as AggregateQuerySnapshot).count ?? 0;
-          _companiesCount = (futures[5] as AggregateQuerySnapshot).count ?? 0;
+          _invoicesCount = countFutures[0].count ?? 0;
+          _clientsCount = countFutures[1].count ?? 0;
+          _productsCount = countFutures[2].count ?? 0;
+          _suppliersCount = countFutures[3].count ?? 0;
+          _purchasesCount = countFutures[4].count ?? 0;
+          _companiesCount = countFutures[5].count ?? 0;
           _inventoryCount = _productsCount;
 
           // Sales data
-          _totalSales =
-              (dashboardSummary['totalSales']['amount'] as num?)?.toDouble() ??
-              0;
+          _totalSales = totalSalesAmount;
           _totalBillsCount = billsSnapshot.docs.length;
           _totalItemsSold = totalItemsSold;
 
           // Purchase data
-          _totalPurchases =
-              (dashboardSummary['totalPurchases']['amount'] as num?)
-                  ?.toDouble() ??
-              0;
-          _purchaseOrders = _purchasesCount;
-          _purchaseQty =
-              (dashboardSummary['totalPurchases']['quantity'] as num?)
-                  ?.toInt() ??
-              0;
+          _totalPurchases = totalPurchaseAmount;
+          _purchaseOrders = purchasesSnapshot.docs.length;
+          _purchaseQty = totalPurchaseQty;
 
           // Profit data
-          _profit = (dashboardSummary['profit'] as num?)?.toDouble() ?? 0;
+          _profit = profit;
           _profitPercentage = _totalSales > 0
               ? (_profit / _totalSales) * 100
               : 0;
 
           // Stock data
-          _stockValue =
-              (dashboardSummary['currentStockValue'] as num?)?.toDouble() ?? 0;
-          _lowStockCount =
-              (dashboardSummary['lowStockProductsCount'] as num?)?.toInt() ?? 0;
+          _stockValue = stockValue;
+          _lowStockCount = lowStockCount;
 
           _isLoading = false;
         });
