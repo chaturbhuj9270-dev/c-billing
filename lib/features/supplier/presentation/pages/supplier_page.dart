@@ -17,15 +17,12 @@ class _SupplierPageState extends State<SupplierPage> {
   final _lastNameController = TextEditingController();
   final _contactController = TextEditingController();
   final _addressController = TextEditingController();
-  final _companyController = TextEditingController();
   final _filterController = TextEditingController();
-  final _companyFilterController = TextEditingController();
 
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
   bool _isEditing = false;
   String? _editingSupplierId;
-  List<String> _companies = [];
   List<Map<String, dynamic>> _suppliers = [];
   List<Map<String, dynamic>> _filteredSuppliers = [];
   
@@ -33,8 +30,6 @@ class _SupplierPageState extends State<SupplierPage> {
   String _sortBy = 'name'; // 'name', 'date', 'contact'
   bool _isSortAscending = true; // Toggle for ascending/descending
   Timer? _filterDebounceTimer; // Debounce timer for search
-  Set<String> _selectedCompanyFilters = {}; // Multiple company selection
-  Set<String> _allCompanies = {};
 
   final _auth = FirebaseAuth.instance;
   late final FirebaseFirestore _firestore;
@@ -60,17 +55,8 @@ class _SupplierPageState extends State<SupplierPage> {
     _lastNameController.dispose();
     _contactController.dispose();
     _addressController.dispose();
-    _companyController.dispose();
-    _companyFilterController.dispose();
+    _filterController.dispose();
     super.dispose();
-  }
-
-  void _updateAllCompanies() {
-    _allCompanies = {};
-    for (var supplier in _suppliers) {
-      final companies = List<String>.from(supplier['companies'] ?? []);
-      _allCompanies.addAll(companies);
-    }
   }
 
   void _filterSuppliers() {
@@ -100,14 +86,6 @@ class _SupplierPageState extends State<SupplierPage> {
           lastName.contains(query) ||
           contact.contains(query);
     }).toList();
-
-    // Filter by company (multiple selection)
-    if (_selectedCompanyFilters.isNotEmpty) {
-      filtered = filtered.where((supplier) {
-        final companies = List<String>.from(supplier['companies'] ?? []);
-        return companies.any((company) => _selectedCompanyFilters.contains(company));
-      }).toList();
-    }
 
     _filteredSuppliers = filtered;
     _applySorting();
@@ -194,7 +172,6 @@ class _SupplierPageState extends State<SupplierPage> {
                   ...doc.data(),
                 })
             .toList();
-        _updateAllCompanies();
         _filterAndSortSuppliers();
       });
     } catch (e) {
@@ -219,8 +196,6 @@ class _SupplierPageState extends State<SupplierPage> {
       _lastNameController.clear();
       _contactController.clear();
       _addressController.clear();
-      _companyController.clear();
-      _companies.clear();
       _editingSupplierId = null;
       _isEditing = false;
     });
@@ -286,191 +261,6 @@ class _SupplierPageState extends State<SupplierPage> {
     );
   }
 
-  void _showCompanyFilterBottomSheet() {
-    _companyFilterController.clear();
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(20),
-            topRight: Radius.circular(20),
-          ),
-        ),
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Filter by Companies',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF1B4D3E),
-                        fontFamily: 'Literata',
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: () => Navigator.pop(ctx),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                // Search field
-                TextField(
-                  controller: _companyFilterController,
-                  decoration: InputDecoration(
-                    hintText: 'Search companies...',
-                    hintStyle: TextStyle(color: Colors.grey[400]),
-                    prefixIcon: Icon(Icons.search, color: Colors.grey[600]),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey[300]!),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey[300]!),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: Color(0xFF1B4D3E),
-                        width: 2,
-                      ),
-                    ),
-                    filled: true,
-                    fillColor: Colors.grey[50],
-                  ),
-                  onChanged: (value) => setState(() {}),
-                ),
-                const SizedBox(height: 16),
-                // Company list with checkboxes
-                StatefulBuilder(
-                  builder: (ctx, setStateLocal) {
-                    final query = _companyFilterController.text.toLowerCase();
-                    final filteredCompanies = _allCompanies
-                        .where((company) =>
-                            company.toLowerCase().contains(query))
-                        .toList()
-                        ..sort();
-
-                    return Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (filteredCompanies.isEmpty)
-                          Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 24),
-                            child: Text(
-                              'No companies found',
-                              style: TextStyle(
-                                color: Colors.grey[600],
-                                fontSize: 14,
-                              ),
-                            ),
-                          )
-                        else
-                          ...filteredCompanies.map((company) {
-                            final isSelected =
-                                _selectedCompanyFilters.contains(company);
-                            return CheckboxListTile(
-                              contentPadding: EdgeInsets.zero,
-                              title: Text(
-                                company,
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  color: Color(0xFF1B4D3E),
-                                ),
-                              ),
-                              value: isSelected,
-                              onChanged: (bool? value) {
-                                setState(() {
-                                  if (value == true) {
-                                    _selectedCompanyFilters.add(company);
-                                  } else {
-                                    _selectedCompanyFilters.remove(company);
-                                  }
-                                  _filterAndSortSuppliers();
-                                });
-                                setStateLocal(() {});
-                              },
-                              activeColor: const Color(0xFF1B4D3E),
-                              checkColor: Colors.white,
-                            );
-                          }).toList(),
-                      ],
-                    );
-                  },
-                ),
-                const SizedBox(height: 20),
-                // Clear All button
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton(
-                    onPressed: _selectedCompanyFilters.isEmpty
-                        ? null
-                        : () {
-                            setState(() {
-                              _selectedCompanyFilters.clear();
-                              _filterAndSortSuppliers();
-                            });
-                            Navigator.pop(ctx);
-                          },
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: const Text(
-                      'Clear All',
-                      style: TextStyle(
-                        color: Color(0xFF1B4D3E),
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                // Done button
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () => Navigator.pop(ctx),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF1B4D3E),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: const Text(
-                      'Done',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
   Widget _buildSupplierForm({VoidCallback? onClose}) {
     return Form(
       key: _formKey,
@@ -540,102 +330,6 @@ class _SupplierPageState extends State<SupplierPage> {
             maxLines: 3,
             isRequired: true,
           ),
-          const SizedBox(height: 16),
-          // Companies Section
-          Text(
-            'Companies *',
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF1B4D3E),
-              fontFamily: 'Literata',
-            ),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _companyController,
-                  decoration: InputDecoration(
-                    hintText: 'Enter company name',
-                    hintStyle: TextStyle(color: Colors.grey[400]),
-                    prefixIcon: Icon(
-                      Icons.business_outlined,
-                      color: Colors.grey[600],
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey[300]!),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey[300]!),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: Color(0xFF1B4D3E),
-                        width: 2,
-                      ),
-                    ),
-                    filled: true,
-                    fillColor: Colors.grey[50],
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              ElevatedButton(
-                onPressed: _addCompany,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF1B4D3E),
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: const Icon(Icons.add, color: Colors.white),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          // Companies List
-          if (_companies.isNotEmpty)
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: _companies.map((company) {
-                return Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFE8F5E9),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        company,
-                        style: const TextStyle(
-                          color: Color(0xFF1B4D3E),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      GestureDetector(
-                        onTap: () => _removeCompany(company),
-                        child: const Icon(
-                          Icons.close,
-                          color: Color(0xFF1B4D3E),
-                          size: 16,
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              }).toList(),
-            ),
           const SizedBox(height: 24),
           // Buttons
           Row(
@@ -771,46 +465,18 @@ class _SupplierPageState extends State<SupplierPage> {
     );
   }
 
-  void _addCompany() {
-    if (_companyController.text.isNotEmpty) {
-      setState(() {
-        _companies.add(_companyController.text);
-        _companyController.clear();
-      });
-    }
-  }
-
-  void _removeCompany(String company) {
-    setState(() {
-      _companies.remove(company);
-    });
-  }
-
   void _editSupplier(Map<String, dynamic> supplier) {
     _firstNameController.text = supplier['firstName'] ?? '';
     _middleNameController.text = supplier['middleName'] ?? '';
     _lastNameController.text = supplier['lastName'] ?? '';
     _contactController.text = supplier['contact'] ?? '';
     _addressController.text = supplier['address'] ?? '';
-    _companies = List<String>.from(supplier['companies'] ?? []);
     _editingSupplierId = supplier['id'];
     _isEditing = true;
   }
 
   Future<void> _saveSupplier() async {
     if (!_formKey.currentState!.validate()) {
-      return;
-    }
-
-    if (_companies.isEmpty) {
-      if (mounted && context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Please add at least one company'),
-            backgroundColor: Colors.orange,
-          ),
-        );
-      }
       return;
     }
 
@@ -834,7 +500,6 @@ class _SupplierPageState extends State<SupplierPage> {
           'lastName': _lastNameController.text,
           'contact': _contactController.text,
           'address': _addressController.text,
-          'companies': _companies,
           'updatedAt': FieldValue.serverTimestamp(),
         });
         print('[DEBUG] Supplier updated: $_editingSupplierId');
@@ -845,7 +510,6 @@ class _SupplierPageState extends State<SupplierPage> {
           'lastName': _lastNameController.text,
           'contact': _contactController.text,
           'address': _addressController.text,
-          'companies': _companies,
           'createdAt': FieldValue.serverTimestamp(),
           'updatedAt': FieldValue.serverTimestamp(),
         });
@@ -865,7 +529,6 @@ class _SupplierPageState extends State<SupplierPage> {
       }
 
       _loadSuppliers();
-      _updateAllCompanies();
     } catch (e) {
       print('[ERROR] Error saving supplier: $e');
       if (mounted && context.mounted) {
@@ -910,7 +573,6 @@ class _SupplierPageState extends State<SupplierPage> {
       }
 
       _loadSuppliers();
-      _updateAllCompanies();
     } catch (e) {
       print('[ERROR] Error deleting supplier: $e');
       if (mounted && context.mounted) {
@@ -1108,37 +770,6 @@ class _SupplierPageState extends State<SupplierPage> {
                   ),
                 ),
                 const SizedBox(width: 8),
-                // Filter by company button
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.grey[300]!, width: 1),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.04),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: _showCompanyFilterBottomSheet,
-                      borderRadius: BorderRadius.circular(11),
-                      child: Center(
-                        child: Icon(
-                          Icons.business_outlined,
-                          color: const Color(0xFF1B4D3E),
-                          size: 20,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
               ],
             ),
           ),
@@ -1192,7 +823,6 @@ class _SupplierPageState extends State<SupplierPage> {
     final firstName = supplier['firstName'] ?? '';
     final contact = supplier['contact'] ?? 'N/A';
     final address = supplier['address'] ?? 'N/A';
-    final companies = List<String>.from(supplier['companies'] ?? []);
     final supplierId = supplier['id'] ?? '';
 
     final accentColors = [const Color(0xFF1B4D3E), const Color(0xFF0F3B2F), const Color(0xFF2C6F5E), const Color(0xFF1A5E52)];
@@ -1351,33 +981,6 @@ class _SupplierPageState extends State<SupplierPage> {
                         ),
                       ],
                     ),
-                  ),
-                ],
-                // Companies section
-                if (companies.isNotEmpty) ...[
-                  const SizedBox(height: 12),
-                  Wrap(
-                    spacing: 6,
-                    runSpacing: 6,
-                    children: companies.map((company) {
-                      return Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: accentColor.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: accentColor.withOpacity(0.3), width: 1),
-                        ),
-                        child: Text(
-                          company,
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            color: accentColor,
-                            fontFamily: 'Literata',
-                          ),
-                        ),
-                      );
-                    }).toList(),
                   ),
                 ],
               ],
