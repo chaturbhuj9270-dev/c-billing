@@ -177,23 +177,41 @@ class _DashboardPageState extends State<DashboardPage>
 
   Future<void> _loadDashboardData() async {
     try {
+      // Get current user
+      final currentUser = _auth.currentUser;
+      if (currentUser == null) {
+        print('[DEBUG] No authenticated user - cannot load dashboard data');
+        if (mounted) setState(() => _isLoading = false);
+        return;
+      }
+
+      final userId = currentUser.uid;
+      print('[DEBUG] Loading dashboard data for user: $userId');
+
+      // Get user's data collection reference
+      final userRef = _firestore.collection('users').doc(userId);
+
       // Get current month date range
       final now = DateTime.now();
       final startOfMonth = DateTime(now.year, now.month, 1);
       final endOfMonth = DateTime(now.year, now.month + 1, 0, 23, 59, 59);
 
-      // Load counts from Firestore in parallel
+      // Load counts from Firestore in parallel (under users/{userId}/)
       final countFutures = await Future.wait([
-        _firestore.collection('bills').count().get(),
-        _firestore.collection('customers').count().get(),
-        _firestore.collection('products').count().get(),
-        _firestore.collection('suppliers').count().get(),
-        _firestore.collection('purchases').count().get(),
-        _firestore.collection('companies').count().get(),
+        userRef.collection('bills').count().get(),
+        userRef.collection('customers').count().get(),
+        userRef.collection('products').count().get(),
+        userRef.collection('suppliers').count().get(),
+        userRef.collection('purchases').count().get(),
+        userRef.collection('companies').count().get(),
       ]);
 
+      print(
+        '[DEBUG] Counts: bills=${countFutures[0].count}, customers=${countFutures[1].count}, products=${countFutures[2].count}',
+      );
+
       // Get all bills for this month
-      final billsSnapshot = await _firestore
+      final billsSnapshot = await userRef
           .collection('bills')
           .where(
             'billDate',
@@ -204,6 +222,8 @@ class _DashboardPageState extends State<DashboardPage>
             isLessThanOrEqualTo: Timestamp.fromDate(endOfMonth),
           )
           .get();
+
+      print('[DEBUG] Bills this month: ${billsSnapshot.docs.length}');
 
       // Calculate sales data from bills
       double totalSalesAmount = 0;
@@ -217,8 +237,12 @@ class _DashboardPageState extends State<DashboardPage>
         }
       }
 
+      print(
+        '[DEBUG] Total sales: $totalSalesAmount, Items sold: $totalItemsSold',
+      );
+
       // Get purchases for this month
-      final purchasesSnapshot = await _firestore
+      final purchasesSnapshot = await userRef
           .collection('purchases')
           .where(
             'createdAt',
@@ -239,8 +263,12 @@ class _DashboardPageState extends State<DashboardPage>
         totalPurchaseQty += (data['quantity'] as num?)?.toInt() ?? 0;
       }
 
+      print(
+        '[DEBUG] Total purchases: $totalPurchaseAmount, Purchase qty: $totalPurchaseQty',
+      );
+
       // Get products for stock value calculation
-      final productsSnapshot = await _firestore.collection('products').get();
+      final productsSnapshot = await userRef.collection('products').get();
       double stockValue = 0;
       int lowStockCount = 0;
       for (var doc in productsSnapshot.docs) {
@@ -252,6 +280,8 @@ class _DashboardPageState extends State<DashboardPage>
           lowStockCount++;
         }
       }
+
+      print('[DEBUG] Stock value: $stockValue, Low stock: $lowStockCount');
 
       // Calculate profit
       final profit = totalSalesAmount - totalPurchaseAmount;
@@ -289,8 +319,10 @@ class _DashboardPageState extends State<DashboardPage>
           _isLoading = false;
         });
       }
+
+      print('[DEBUG] Dashboard data loaded successfully!');
     } catch (e) {
-      print('Error loading dashboard data: $e');
+      print('[ERROR] Error loading dashboard data: $e');
       if (mounted) {
         setState(() {
           _isLoading = false;
