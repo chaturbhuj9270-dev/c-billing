@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -15,7 +16,6 @@ class _CompanyPageState extends State<CompanyPage> {
   final _supplierSearchController = TextEditingController();
   final _contactController = TextEditingController();
   final _addressController = TextEditingController();
-  final _filterController = TextEditingController();
 
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
@@ -27,6 +27,9 @@ class _CompanyPageState extends State<CompanyPage> {
   List<Map<String, dynamic>> _filteredCompanies = [];
   List<Map<String, dynamic>> _suppliers = [];
   List<Map<String, dynamic>> _filteredSuppliers = [];
+  bool _isSortAscending = true;
+  Timer? _filterDebounceTimer;
+  bool _isNavigatingAway = false;
 
   final _auth = FirebaseAuth.instance;
   late final FirebaseFirestore _firestore;
@@ -40,30 +43,33 @@ class _CompanyPageState extends State<CompanyPage> {
     _checkUserAuthentication();
     _loadSuppliers();
     _loadCompanies();
-    _filterController.addListener(_filterCompanies);
     _supplierSearchController.addListener(_filterSuppliers);
   }
 
-  void _filterCompanies() {
-    print('[DEBUG] Filtering companies with query: ${_filterController.text}');
-    final query = _filterController.text.toLowerCase();
-    
+  void _toggleSort() {
     setState(() {
-      if (query.isEmpty) {
-        _filteredCompanies = _companies;
+      _isSortAscending = !_isSortAscending;
+      _applyCompanySorting();
+    });
+  }
+
+  void _applyCompanySorting() {
+    _filteredCompanies.sort((a, b) {
+      final nameA = (a['companyName'] ?? '').toString().toLowerCase();
+      final nameB = (b['companyName'] ?? '').toString().toLowerCase();
+      if (_isSortAscending) {
+        return nameA.compareTo(nameB);
       } else {
-        _filteredCompanies = _companies.where((company) {
-          final name = (company['companyName'] ?? '').toString().toLowerCase();
-          final contact = (company['contact'] ?? '').toString().toLowerCase();
-          final contactPerson = (company['contactPerson'] ?? '').toString().toLowerCase();
-          
-          return name.contains(query) ||
-              contact.contains(query) ||
-              contactPerson.contains(query);
-        }).toList();
+        return nameB.compareTo(nameA);
       }
     });
-    print('[DEBUG] Filtered results: ${_filteredCompanies.length} of ${_companies.length}');
+  }
+
+  void _filterAndSortCompanies() {
+    setState(() {
+      _filteredCompanies = List.from(_companies);
+      _applyCompanySorting();
+    });
   }
 
   void _filterSuppliers() {
@@ -166,15 +172,17 @@ class _CompanyPageState extends State<CompanyPage> {
           .get();
 
       print('[DEBUG] Loaded ${snapshot.docs.length} companies');
-      setState(() {
-        _companies = snapshot.docs
-            .map((doc) => {
-                  'id': doc.id,
-                  ...doc.data(),
-                })
-            .toList();
-        _filterCompanies();
-      });
+      if (mounted && !_isNavigatingAway) {
+        setState(() {
+          _companies = snapshot.docs
+              .map((doc) => {
+                    'id': doc.id,
+                    ...doc.data(),
+                  })
+              .toList();
+          _filterAndSortCompanies();
+        });
+      }
     } catch (e) {
       print('[ERROR] Failed to load companies: $e');
       print('[ERROR] Error type: ${e.runtimeType}');
@@ -806,11 +814,12 @@ class _CompanyPageState extends State<CompanyPage> {
 
   @override
   void dispose() {
+    _isNavigatingAway = true;
+    _filterDebounceTimer?.cancel();
     _companyNameController.dispose();
     _supplierSearchController.dispose();
     _contactController.dispose();
     _addressController.dispose();
-    _filterController.dispose();
     super.dispose();
   }
 
@@ -821,7 +830,7 @@ class _CompanyPageState extends State<CompanyPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
       appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(125),
+        preferredSize: const Size.fromHeight(70),
         child: Container(
           decoration: BoxDecoration(
             gradient: const LinearGradient(
@@ -836,78 +845,50 @@ class _CompanyPageState extends State<CompanyPage> {
           child: SafeArea(
             bottom: false,
             child: Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Row(
                 children: [
-                  Row(
-                    children: [
-                      Container(
-                        width: 40,
-                        height: 40,
-                        margin: const EdgeInsets.only(left: 16),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: const Icon(Icons.business_outlined, color: Colors.white, size: 22),
+                  GestureDetector(
+                    onTap: () {
+                      _isNavigatingAway = true;
+                      Navigator.pop(context);
+                    },
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(10),
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Text(
-                              'My Companies',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 22,
-                                fontWeight: FontWeight.w700,
-                                fontFamily: 'Literata',
-                                height: 1.2,
-                              ),
-                            ),
-                            Text(
-                              'Manage your businesses',
-                              style: TextStyle(
-                                color: Colors.white.withOpacity(0.7),
-                                fontSize: 11,
-                                fontFamily: 'Literata',
-                                height: 1.2,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+                      child: const Icon(Icons.arrow_back, color: Colors.white, size: 22),
+                    ),
                   ),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 16, right: 16, top: 8),
-                    child: SizedBox(
-                      height: 44,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.12),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.white.withOpacity(0.2), width: 1.5),
-                        ),
-                        child: Center(
-                          child: TextField(
-                            controller: _filterController,
-                            textAlignVertical: TextAlignVertical.center,
-                            style: const TextStyle(color: Colors.white, fontFamily: 'Literata', fontSize: 14, height: 1),
-                            decoration: InputDecoration(
-                              hintText: 'Search companies...',
-                              hintStyle: TextStyle(color: Colors.white.withOpacity(0.5), fontFamily: 'Literata', fontSize: 14),
-                              prefixIcon: Icon(Icons.search_rounded, color: Colors.white.withOpacity(0.7), size: 20),
-                              border: InputBorder.none,
-                              isDense: true,
-                              contentPadding: const EdgeInsets.fromLTRB(0, 0, 12, 0),
-                            ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text(
+                          'My Companies',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 22,
+                            fontWeight: FontWeight.w700,
+                            fontFamily: 'Literata',
+                            height: 1.2,
                           ),
                         ),
-                      ),
+                        Text(
+                          'Manage your businesses',
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.7),
+                            fontSize: 11,
+                            fontFamily: 'Literata',
+                            height: 1.2,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -942,41 +923,132 @@ class _CompanyPageState extends State<CompanyPage> {
           child: const Icon(Icons.add, color: Colors.white),
         ),
       ),
-      body: _filteredCompanies.isEmpty
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    width: 100,
-                    height: 100,
+      body: Column(
+        children: [
+          // Search bar + Sort button
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    height: 44,
                     decoration: BoxDecoration(
-                      color: const Color(0xFF1B4D3E).withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(20),
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.grey[300]!, width: 1),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.04),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
                     ),
-                    child: Icon(Icons.business_outlined, size: 50, color: const Color(0xFF1B4D3E).withOpacity(0.3)),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontFamily: 'Literata',
+                              color: Color(0xFF1B4D3E),
+                            ),
+                            decoration: InputDecoration(
+                              hintText: 'Search companies...',
+                              hintStyle: TextStyle(
+                                color: Colors.grey[400],
+                                fontFamily: 'Literata',
+                              ),
+                              prefixIcon: Icon(Icons.search_rounded, color: Colors.grey[600], size: 20),
+                              border: InputBorder.none,
+                              contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                              isDense: true,
+                            ),
+                            onChanged: (_) {},
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  const SizedBox(height: 20),
-                  Text(
-                    _companies.isEmpty ? 'No companies yet' : 'No results found',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Colors.grey[700], fontFamily: 'Literata'),
+                ),
+                const SizedBox(width: 8),
+                // Sort button
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey[300]!, width: 1),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.04),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    _companies.isEmpty ? 'Create your first company to get started' : 'Try a different search',
-                    style: TextStyle(fontSize: 14, color: Colors.grey[500], fontFamily: 'Literata'),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: _toggleSort,
+                      borderRadius: BorderRadius.circular(11),
+                      child: Center(
+                        child: Icon(
+                          _isSortAscending ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded,
+                          color: const Color(0xFF1B4D3E),
+                          size: 20,
+                        ),
+                      ),
+                    ),
                   ),
-                ],
-              ),
-            )
-          : ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: _filteredCompanies.length,
-              itemBuilder: (context, index) {
-                final company = _filteredCompanies[index];
-                return _buildCompanyCard(company);
-              },
+                ),
+              ],
             ),
+          ),
+          // List or empty state
+          Expanded(
+            child: _filteredCompanies.isEmpty
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          width: 100,
+                          height: 100,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Icon(Icons.business_outlined, size: 50, color: const Color(0xFF1B4D3E).withOpacity(0.3)),
+                        ),
+                        const SizedBox(height: 20),
+                        Text(
+                          _companies.isEmpty ? 'No companies yet' : 'No results found',
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Colors.grey[700], fontFamily: 'Literata'),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          _companies.isEmpty ? 'Create your first company to get started' : 'Try a different search',
+                          style: TextStyle(fontSize: 14, color: Colors.grey[500], fontFamily: 'Literata'),
+                        ),
+                      ],
+                    ),
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    itemCount: _filteredCompanies.length,
+                    itemBuilder: (context, index) {
+                      final company = _filteredCompanies[index];
+                      return RepaintBoundary(
+                        child: _buildCompanyCard(company),
+                      );
+                    },
+                  ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -985,108 +1057,193 @@ class _CompanyPageState extends State<CompanyPage> {
     final contactPerson = company['contactPerson'] ?? 'N/A';
     final contact = company['contact'] ?? 'N/A';
     final address = company['address'] ?? 'N/A';
+    final companyId = company['id'] ?? '';
 
-    final accentColors = [const Color(0xFF1B4D3E), const Color(0xFF0F3B2F), const Color(0xFF2C6F5E), const Color(0xFF1A5E52)];
-    final cardIndex = _filteredCompanies.indexOf(company);
-    final accentColor = accentColors[cardIndex % accentColors.length];
+    const accentColors = [Color(0xFF1B4D3E), Color(0xFF0F3B2F), Color(0xFF2C6F5E), Color(0xFF1A5E52)];
+    final accentColor = accentColors[(companyId.hashCode.abs()) % accentColors.length];
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(color: accentColor.withOpacity(0.15), blurRadius: 16, offset: const Offset(0, 6)),
-          BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 8, offset: const Offset(0, 2)),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Top Row: Avatar + Details + Menu
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 60,
-                height: 60,
-                decoration: BoxDecoration(
-                  color: accentColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: accentColor.withOpacity(0.3), width: 2),
-                ),
-                child: Center(
-                  child: Icon(Icons.business, size: 32, color: accentColor),
-                ),
+    // Get first letter for avatar
+    final initials = companyName.isNotEmpty ? companyName[0].toUpperCase() : 'C';
+
+    return GestureDetector(
+      onTap: () => _showEditCompanyBottomSheet(company),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.04),
+                blurRadius: 10,
+                offset: const Offset(0, 2),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(companyName, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Color(0xFF1B4D3E), fontFamily: 'Literata'), maxLines: 1, overflow: TextOverflow.ellipsis),
-                    const SizedBox(height: 6),
-                    if (contactPerson != 'N/A')
-                      Row(
-                        children: [
-                          Icon(Icons.person_outlined, size: 14, color: Colors.grey[600]),
-                          const SizedBox(width: 6),
-                          Expanded(
-                            child: Text(contactPerson, style: TextStyle(fontSize: 12, color: Colors.grey[700], fontFamily: 'Literata'), maxLines: 1, overflow: TextOverflow.ellipsis),
-                          ),
-                        ],
-                      ),
-                  ],
-                ),
-              ),
-              PopupMenuButton(
-                color: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                elevation: 8,
-                itemBuilder: (context) => [
-                  PopupMenuItem(
-                    child: Row(
-                      children: [Icon(Icons.edit_outlined, color: accentColor, size: 18), const SizedBox(width: 8), const Text('Edit')],
-                    ),
-                    onTap: () => Future.delayed(const Duration(milliseconds: 100), () => _showEditCompanyBottomSheet(company)),
-                  ),
-                  PopupMenuItem(
-                    child: Row(
-                      children: [const Icon(Icons.delete_outline, color: Colors.red, size: 18), const SizedBox(width: 8), const Text('Delete', style: TextStyle(color: Colors.red))],
-                    ),
-                    onTap: () => _deleteCompany(company['id']),
-                  ),
-                ],
-                icon: Icon(Icons.more_vert, color: accentColor, size: 20),
+              BoxShadow(
+                color: Colors.black.withOpacity(0.12),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
               ),
             ],
           ),
-          if (contact != 'N/A') ...[
-            const SizedBox(height: 12),
-            Row(
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.phone_outlined, size: 14, color: Colors.grey[600]),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Text(contact, style: TextStyle(fontSize: 12, color: Colors.grey[600], fontFamily: 'Literata'), maxLines: 1, overflow: TextOverflow.ellipsis),
+                // Top Row: Avatar + Details + Menu
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Circular gradient avatar
+                    Container(
+                      width: 52,
+                      height: 52,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [accentColor, accentColor.withOpacity(0.7)],
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: accentColor.withOpacity(0.3),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Center(
+                        child: Text(
+                          initials,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 22,
+                            fontWeight: FontWeight.w700,
+                            fontFamily: 'Literata',
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            companyName,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF1B4D3E),
+                              fontFamily: 'Literata',
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 6),
+                          if (contactPerson != 'N/A')
+                            Row(
+                              children: [
+                                Icon(Icons.person_outlined, size: 13, color: Colors.grey[600]),
+                                const SizedBox(width: 6),
+                                Expanded(
+                                  child: Text(
+                                    contactPerson,
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey[700],
+                                      fontFamily: 'Literata',
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                        ],
+                      ),
+                    ),
+                    PopupMenuButton(
+                      color: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      elevation: 8,
+                      itemBuilder: (context) => [
+                        PopupMenuItem(
+                          child: Row(
+                            children: [Icon(Icons.edit_outlined, color: accentColor, size: 18), const SizedBox(width: 8), const Text('Edit')],
+                          ),
+                          onTap: () => Future.delayed(const Duration(milliseconds: 100), () => _showEditCompanyBottomSheet(company)),
+                        ),
+                        PopupMenuItem(
+                          child: Row(
+                            children: [const Icon(Icons.delete_outline, color: Colors.red, size: 18), const SizedBox(width: 8), const Text('Delete', style: TextStyle(color: Colors.red))],
+                          ),
+                          onTap: () => _deleteCompany(company['id']),
+                        ),
+                      ],
+                      icon: Icon(Icons.more_vert, color: accentColor, size: 20),
+                    ),
+                  ],
                 ),
+                // Contact section
+                if (contact != 'N/A') ...[
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Icon(Icons.phone_outlined, size: 13, color: Colors.grey[600]),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          contact,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[700],
+                            fontFamily: 'Literata',
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+                // Address section - only show if address exists
+                if (address != 'N/A') ...[
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[50],
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(Icons.location_on_outlined, size: 13, color: Colors.grey[600]),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            address,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[700],
+                              fontFamily: 'Literata',
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ],
             ),
-          ],
-          if (address != 'N/A') ...[
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                Icon(Icons.location_on_outlined, size: 14, color: Colors.grey[600]),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Text(address, style: TextStyle(fontSize: 12, color: Colors.grey[600], fontFamily: 'Literata'), maxLines: 2, overflow: TextOverflow.ellipsis),
-                ),
-              ],
-            ),
-          ],
-        ],
+          ),
+        ),
       ),
     );
   }
