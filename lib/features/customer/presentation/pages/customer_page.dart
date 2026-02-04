@@ -581,7 +581,7 @@ class _CustomerPageState extends State<CustomerPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
       appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(125),
+        preferredSize: const Size.fromHeight(70),
         child: Container(
           decoration: BoxDecoration(
             gradient: const LinearGradient(
@@ -596,78 +596,47 @@ class _CustomerPageState extends State<CustomerPage> {
           child: SafeArea(
             bottom: false,
             child: Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Row(
                 children: [
-                  Row(
-                    children: [
-                      Container(
-                        width: 40,
-                        height: 40,
-                        margin: const EdgeInsets.only(left: 16),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: const Icon(Icons.people_outline, color: Colors.white, size: 22),
+                  GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(10),
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Text(
-                              'My Customers',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 22,
-                                fontWeight: FontWeight.w700,
-                                fontFamily: 'Literata',
-                                height: 1.2,
-                              ),
-                            ),
-                            Text(
-                              'Manage your clients',
-                              style: TextStyle(
-                                color: Colors.white.withOpacity(0.7),
-                                fontSize: 11,
-                                fontFamily: 'Literata',
-                                height: 1.2,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+                      child: const Icon(Icons.arrow_back, color: Colors.white, size: 22),
+                    ),
                   ),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 16, right: 16, top: 8),
-                    child: SizedBox(
-                      height: 44,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.12),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.white.withOpacity(0.2), width: 1.5),
-                        ),
-                        child: Center(
-                          child: TextField(
-                            controller: _filterController,
-                            textAlignVertical: TextAlignVertical.center,
-                            style: const TextStyle(color: Colors.white, fontFamily: 'Literata', fontSize: 14, height: 1),
-                            decoration: InputDecoration(
-                              hintText: 'Search customers...',
-                              hintStyle: TextStyle(color: Colors.white.withOpacity(0.5), fontFamily: 'Literata', fontSize: 14),
-                              prefixIcon: Icon(Icons.search_rounded, color: Colors.white.withOpacity(0.7), size: 20),
-                              border: InputBorder.none,
-                              isDense: true,
-                              contentPadding: const EdgeInsets.fromLTRB(0, 0, 12, 0),
-                            ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text(
+                          'My Customers',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 22,
+                            fontWeight: FontWeight.w700,
+                            fontFamily: 'Literata',
+                            height: 1.2,
                           ),
                         ),
-                      ),
+                        Text(
+                          'Manage your clients',
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.7),
+                            fontSize: 11,
+                            fontFamily: 'Literata',
+                            height: 1.2,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -729,15 +698,84 @@ class _CustomerPageState extends State<CustomerPage> {
                 ],
               ),
             )
-          : ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: _filteredCustomers.length,
-              itemBuilder: (context, index) {
-                final customer = _filteredCustomers[index];
-                return RepaintBoundary(
-                  child: _buildCustomerCard(customer),
-                );
-              },
+          : Column(
+              children: [
+                // Search bar outside navbar
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: SizedBox(
+                    height: 44,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.grey[300]!, width: 1.5),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Center(
+                        child: TextField(
+                          controller: _filterController,
+                          textAlignVertical: TextAlignVertical.center,
+                          style: const TextStyle(
+                            color: Colors.black87,
+                            fontFamily: 'Literata',
+                            fontSize: 14,
+                            height: 1,
+                          ),
+                          decoration: InputDecoration(
+                            hintText: 'Search customers...',
+                            hintStyle: TextStyle(
+                              color: Colors.grey[500],
+                              fontFamily: 'Literata',
+                              fontSize: 14,
+                            ),
+                            prefixIcon: Icon(
+                              Icons.search_rounded,
+                              color: Colors.grey[600],
+                              size: 20,
+                            ),
+                            suffixIcon: _filterController.text.isNotEmpty
+                                ? GestureDetector(
+                                    onTap: () {
+                                      _filterController.clear();
+                                      _filterCustomers();
+                                    },
+                                    child: Icon(
+                                      Icons.close,
+                                      color: Colors.grey[600],
+                                      size: 20,
+                                    ),
+                                  )
+                                : null,
+                            border: InputBorder.none,
+                            isDense: true,
+                            contentPadding: const EdgeInsets.fromLTRB(0, 0, 12, 0),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                // Customer list
+                Expanded(
+                  child: ListView.builder(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: _filteredCustomers.length,
+                    itemBuilder: (context, index) {
+                      final customer = _filteredCustomers[index];
+                      return RepaintBoundary(
+                        child: _buildCustomerCard(customer),
+                      );
+                    },
+                  ),
+                ),
+              ],
             ),
     );
   }
