@@ -158,10 +158,14 @@ class _SplashPageState extends State<SplashPage> {
             userId: userId,
             onSuccess: () {
               print('[DEBUG] Biometric authentication successful');
+              // First pop the bottom sheet, then navigate
+              Navigator.pop(context);
               _navigateToDashboard();
             },
             onCancel: () {
               print('[DEBUG] Biometric skipped by user');
+              // First pop the bottom sheet, then navigate
+              Navigator.pop(context);
               _navigateToDashboard();
             },
           ),

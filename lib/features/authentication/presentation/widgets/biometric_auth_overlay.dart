@@ -37,8 +37,9 @@ class _BiometricAuthOverlayState extends State<BiometricAuthOverlay> {
     );
 
     if (result && mounted) {
+      // Immediately call onSuccess (which closes sheet and navigates)
+      // Don't wait for state to update to BiometricAuthenticated
       widget.onSuccess();
-      Navigator.pop(context);
     }
   }
 
@@ -87,14 +88,13 @@ class _BiometricAuthOverlayState extends State<BiometricAuthOverlay> {
                       const SizedBox(height: 24),
                       if (state is BiometricAuthenticating) ...[
                         _buildAuthenticatingContent(),
-                      ] else if (state is BiometricAuthenticated) ...[
-                        _buildSuccessContent(),
                       ] else if (state is BiometricAuthFailed) ...[
                         _buildErrorContent(state.message),
                       ] else if (state is BiometricAuthCancelled) ...[
                         _buildCancelledContent(),
                       ] else ...[
                         // Initial/Available state - show unlock prompt
+                        // Note: BiometricAuthenticated state never reaches here - navigation happens in _authenticateUser()
                         _buildInitialContent(),
                       ],
                       const SizedBox(height: 16),
@@ -283,49 +283,6 @@ class _BiometricAuthOverlayState extends State<BiometricAuthOverlay> {
                 fontFamily: 'Literata',
               ),
             ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSuccessContent() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Container(
-          width: 80,
-          height: 80,
-          decoration: BoxDecoration(
-            color: const Color(0xFF4CAF50).withOpacity(0.1),
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: const Center(
-            child: Icon(
-              Icons.check_circle,
-              color: Color(0xFF4CAF50),
-              size: 40,
-            ),
-          ),
-        ),
-        const SizedBox(height: 16),
-        const Text(
-          'Authentication Successful',
-          style: TextStyle(
-            color: Color(0xFF4CAF50),
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-            fontFamily: 'Literata',
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          'You have been verified successfully',
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            color: Colors.grey[600],
-            fontSize: 13,
-            fontFamily: 'Literata',
           ),
         ),
       ],
