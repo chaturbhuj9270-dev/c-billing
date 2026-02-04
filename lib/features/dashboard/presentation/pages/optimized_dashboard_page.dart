@@ -10,7 +10,6 @@ import '../../../inventory_management/presentation/pages/product_management_page
 import '../../../billing/presentation/pages/billing_page.dart';
 import '../../../billing/presentation/pages/bills_list_page.dart';
 import '../../../../core/services/session_manager.dart';
-import '../../../../common_widgets/welcome_card.dart';
 import '../../domain/entities/dashboard_summary.dart';
 import '../../domain/repositories/dashboard_repository_interface.dart';
 import '../../data/repositories/dashboard_repository_impl.dart';
@@ -54,12 +53,6 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
 
-  // Welcome snackbar
-  AnimationController? _welcomeController;
-  Animation<Offset>? _welcomeSlideAnimation;
-  Animation<double>? _welcomeFadeAnimation;
-  bool _showWelcome = true;
-
   @override
   void initState() {
     super.initState();
@@ -75,47 +68,11 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
       curve: Curves.easeOut,
     );
     _fadeController.forward();
-
-    // Welcome animation
-    _setupWelcomeAnimation();
-  }
-
-  void _setupWelcomeAnimation() {
-    _welcomeController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 200),
-    );
-    _welcomeSlideAnimation = Tween<Offset>(
-      begin: const Offset(0, 1),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _welcomeController!,
-      curve: Curves.easeOutCubic,
-    ));
-    _welcomeFadeAnimation = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(parent: _welcomeController!, curve: Curves.easeOut),
-    );
-
-    Future.delayed(const Duration(milliseconds: 500), () {
-      if (mounted) {
-        _welcomeController?.forward();
-        Future.delayed(const Duration(seconds: 5), () {
-          if (mounted) {
-            _welcomeController?.reverse().then((_) {
-              if (mounted) {
-                setState(() => _showWelcome = false);
-              }
-            });
-          }
-        });
-      }
-    });
   }
 
   @override
   void dispose() {
     _fadeController.dispose();
-    _welcomeController?.dispose();
     super.dispose();
   }
 
@@ -159,7 +116,6 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
               },
             ),
           ),
-          _buildWelcomeOverlay(),
         ],
       ),
       bottomNavigationBar: _buildBottomNavBar(),
@@ -312,27 +268,6 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
       return '₹${(amount / 1000).toStringAsFixed(1)} K';
     }
     return '₹${amount.toStringAsFixed(0)}';
-  }
-
-  Widget _buildWelcomeOverlay() {
-    if (!_showWelcome ||
-        _welcomeSlideAnimation == null ||
-        _welcomeFadeAnimation == null) {
-      return const SizedBox.shrink();
-    }
-
-    return Positioned(
-      left: 16,
-      right: 16,
-      bottom: 16,
-      child: SlideTransition(
-        position: _welcomeSlideAnimation!,
-        child: FadeTransition(
-          opacity: _welcomeFadeAnimation!,
-          child: const WelcomeCard(),
-        ),
-      ),
-    );
   }
 
   Widget _buildGradientHeader() {
