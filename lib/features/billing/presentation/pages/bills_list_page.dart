@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:ui';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'package:c_billing/core/services/billing_service.dart';
@@ -1046,164 +1047,224 @@ class _BillDetailsDialog extends StatelessWidget {
     final dateFormat = DateFormat('dd MMM yyyy, hh:mm a');
 
     return Dialog(
-      backgroundColor: Colors.white,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      child: Container(
-        width: 400,
-        constraints: const BoxConstraints(maxHeight: 600),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Header
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: const BoxDecoration(
-                color: Color(0xFF1B4D3E),
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(20),
-                  topRight: Radius.circular(20),
-                ),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.receipt_long, color: Colors.white),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Bill Details',
-                          style: TextStyle(
-                            fontFamily: 'Literata',
-                            fontWeight: FontWeight.w700,
-                            fontSize: 18,
-                            color: Colors.white,
-                          ),
-                        ),
-                        Text(
-                          bill.billNumber,
-                          style: TextStyle(
-                            fontFamily: 'Literata',
-                            fontSize: 12,
-                            color: Colors.white.withOpacity(0.8),
-                          ),
-                        ),
-                      ],
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
+      child: Stack(
+        children: [
+          // Glassy background
+          Container(color: Colors.black.withOpacity(0.3)),
+          // Main content
+          Scaffold(
+            backgroundColor: Colors.transparent,
+            appBar: AppBar(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              leading: IconButton(
+                icon: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: Colors.white.withOpacity(0.3),
+                      width: 1,
                     ),
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.close, color: Colors.white),
-                    onPressed: () => Navigator.pop(context),
+                  child: const Icon(Icons.arrow_back, color: Colors.white),
+                ),
+                onPressed: () => Navigator.pop(context),
+              ),
+              title: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Bill Details',
+                    style: TextStyle(
+                      fontFamily: 'Literata',
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
+                  ),
+                  Text(
+                    bill.billNumber,
+                    style: TextStyle(
+                      fontFamily: 'Literata',
+                      fontSize: 12,
+                      color: Colors.white.withOpacity(0.7),
+                    ),
                   ),
                 ],
               ),
+              centerTitle: false,
             ),
-            // Content
-            Flexible(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Date
+            body: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Date card
+                  _buildGlassyCard(
                     _buildDetailRow(
                       'Date',
                       dateFormat.format(bill.billDate),
                       Icons.calendar_today,
                     ),
-                    const SizedBox(height: 12),
-                    // Customer info
-                    if (bill.hasCustomerInfo) ...[
-                      _buildDetailRow(
-                        'Customer',
-                        bill.customerName ?? 'N/A',
-                        Icons.person,
+                  ),
+                  const SizedBox(height: 12),
+                  // Customer info section
+                  if (bill.hasCustomerInfo) ...[
+                    _buildGlassyCard(
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildDetailRow(
+                            'Customer',
+                            bill.customerName ?? 'N/A',
+                            Icons.person,
+                          ),
+                          if (bill.customerContact != null) ...[
+                            const SizedBox(height: 12),
+                            Container(
+                              height: 1,
+                              color: Colors.white.withOpacity(0.1),
+                            ),
+                            const SizedBox(height: 12),
+                            _buildDetailRow(
+                              'Contact',
+                              bill.customerContact!,
+                              Icons.phone,
+                            ),
+                          ],
+                        ],
                       ),
-                      if (bill.customerContact != null) ...[
-                        const SizedBox(height: 8),
-                        _buildDetailRow(
-                          'Contact',
-                          bill.customerContact!,
-                          Icons.phone,
-                        ),
-                      ],
-                      const SizedBox(height: 12),
-                    ],
-                    const Divider(),
-                    const SizedBox(height: 12),
-                    // Items header
-                    const Text(
-                      'Items',
-                      style: TextStyle(
-                        fontFamily: 'Literata',
-                        fontWeight: FontWeight.w700,
-                        fontSize: 16,
-                        color: Color(0xFF1B4D3E),
-                      ),
                     ),
                     const SizedBox(height: 12),
-                    // Items list
-                    ...bill.items.map((item) => _buildItemRow(item)),
-                    const SizedBox(height: 12),
-                    const Divider(),
-                    const SizedBox(height: 12),
-                    // Notes
-                    if (bill.notes != null && bill.notes!.isNotEmpty) ...[
-                      _buildDetailRow('Notes', bill.notes!, Icons.note),
-                      const SizedBox(height: 12),
-                      const Divider(),
-                      const SizedBox(height: 12),
-                    ],
-                    // Totals
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          'Total Quantity:',
-                          style: TextStyle(
-                            fontFamily: 'Literata',
-                            fontSize: 14,
-                          ),
-                        ),
-                        Text(
-                          '${bill.totalQuantity} items',
-                          style: const TextStyle(
-                            fontFamily: 'Literata',
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          'Total Amount:',
-                          style: TextStyle(
-                            fontFamily: 'Literata',
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
-                            color: Color(0xFF1B4D3E),
-                          ),
-                        ),
-                        Text(
-                          '₹${bill.totalAmount.toStringAsFixed(2)}',
-                          style: const TextStyle(
-                            fontFamily: 'Literata',
-                            fontSize: 24,
-                            fontWeight: FontWeight.w700,
-                            color: Color(0xFF1B4D3E),
-                          ),
-                        ),
-                      ],
-                    ),
                   ],
-                ),
+                  // Items section
+                  _buildGlassyCard(
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Items',
+                          style: TextStyle(
+                            fontFamily: 'Literata',
+                            fontWeight: FontWeight.w700,
+                            fontSize: 16,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        ...bill.items.map(
+                          (item) => Column(
+                            children: [
+                              _buildItemRow(item),
+                              if (bill.items.last != item) ...[
+                                const SizedBox(height: 8),
+                              ],
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  // Notes section
+                  if (bill.notes != null && bill.notes!.isNotEmpty) ...[
+                    _buildGlassyCard(
+                      _buildDetailRow('Notes', bill.notes!, Icons.note),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+                  // Totals section
+                  _buildGlassyCard(
+                    Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Total Quantity:',
+                              style: TextStyle(
+                                fontFamily: 'Literata',
+                                fontSize: 14,
+                                color: Colors.white.withOpacity(0.8),
+                              ),
+                            ),
+                            Text(
+                              '${bill.totalQuantity} items',
+                              style: const TextStyle(
+                                fontFamily: 'Literata',
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Container(
+                          height: 1,
+                          color: Colors.white.withOpacity(0.1),
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Total Amount:',
+                              style: TextStyle(
+                                fontFamily: 'Literata',
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white.withOpacity(0.9),
+                              ),
+                            ),
+                            Text(
+                              '₹${bill.totalAmount.toStringAsFixed(2)}',
+                              style: const TextStyle(
+                                fontFamily: 'Literata',
+                                fontSize: 22,
+                                fontWeight: FontWeight.w800,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                ],
               ),
             ),
-          ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGlassyCard(Widget child) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withOpacity(0.2), width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(14),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: child,
         ),
       ),
     );
@@ -1212,14 +1273,14 @@ class _BillDetailsDialog extends StatelessWidget {
   Widget _buildDetailRow(String label, String value, IconData icon) {
     return Row(
       children: [
-        Icon(icon, size: 18, color: Colors.grey[600]),
+        Icon(icon, size: 18, color: Colors.white.withOpacity(0.7)),
         const SizedBox(width: 8),
         Text(
           '$label: ',
           style: TextStyle(
             fontFamily: 'Literata',
             fontSize: 14,
-            color: Colors.grey[600],
+            color: Colors.white.withOpacity(0.7),
           ),
         ),
         Expanded(
@@ -1229,6 +1290,7 @@ class _BillDetailsDialog extends StatelessWidget {
               fontFamily: 'Literata',
               fontSize: 14,
               fontWeight: FontWeight.w500,
+              color: Colors.white,
             ),
           ),
         ),
@@ -1238,11 +1300,11 @@ class _BillDetailsDialog extends StatelessWidget {
 
   Widget _buildItemRow(item) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF5F6F8),
-        borderRadius: BorderRadius.circular(8),
+        color: Colors.white.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.white.withOpacity(0.1), width: 1),
       ),
       child: Row(
         children: [
@@ -1255,6 +1317,7 @@ class _BillDetailsDialog extends StatelessWidget {
                   style: const TextStyle(
                     fontFamily: 'Literata',
                     fontWeight: FontWeight.w600,
+                    color: Colors.white,
                   ),
                 ),
                 Text(
@@ -1262,7 +1325,7 @@ class _BillDetailsDialog extends StatelessWidget {
                   style: TextStyle(
                     fontFamily: 'Literata',
                     fontSize: 12,
-                    color: Colors.grey[600],
+                    color: Colors.white.withOpacity(0.6),
                   ),
                 ),
               ],
@@ -1273,7 +1336,7 @@ class _BillDetailsDialog extends StatelessWidget {
             style: const TextStyle(
               fontFamily: 'Literata',
               fontWeight: FontWeight.w700,
-              color: Color(0xFF1B4D3E),
+              color: Colors.white,
             ),
           ),
         ],
