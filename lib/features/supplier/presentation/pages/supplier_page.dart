@@ -165,6 +165,8 @@ class _SupplierPageState extends State<SupplierPage> {
           .orderBy('createdAt', descending: true)
           .get();
 
+      if (!mounted) return;
+
       setState(() {
         _suppliers = snapshot.docs
             .map((doc) => {
@@ -190,15 +192,19 @@ class _SupplierPageState extends State<SupplierPage> {
   }
 
   void _clearForm() {
-    setState(() {
-      _firstNameController.clear();
-      _middleNameController.clear();
-      _lastNameController.clear();
-      _contactController.clear();
-      _addressController.clear();
-      _editingSupplierId = null;
-      _isEditing = false;
-    });
+    try {
+      setState(() {
+        _firstNameController.clear();
+        _middleNameController.clear();
+        _lastNameController.clear();
+        _contactController.clear();
+        _addressController.clear();
+        _editingSupplierId = null;
+        _isEditing = false;
+      });
+    } catch (e) {
+      print('[ERROR] Error clearing form: $e');
+    }
   }
 
   void _showAddSupplierBottomSheet() {
@@ -466,11 +472,15 @@ class _SupplierPageState extends State<SupplierPage> {
   }
 
   void _editSupplier(Map<String, dynamic> supplier) {
-    _firstNameController.text = supplier['firstName'] ?? '';
-    _middleNameController.text = supplier['middleName'] ?? '';
-    _lastNameController.text = supplier['lastName'] ?? '';
-    _contactController.text = supplier['contact'] ?? '';
-    _addressController.text = supplier['address'] ?? '';
+    try {
+      _firstNameController.text = supplier['firstName'] ?? '';
+      _middleNameController.text = supplier['middleName'] ?? '';
+      _lastNameController.text = supplier['lastName'] ?? '';
+      _contactController.text = supplier['contact'] ?? '';
+      _addressController.text = supplier['address'] ?? '';
+    } catch (e) {
+      print('[ERROR] Error setting controller text: $e');
+    }
     _editingSupplierId = supplier['id'];
     _isEditing = true;
   }
@@ -528,7 +538,9 @@ class _SupplierPageState extends State<SupplierPage> {
         );
       }
 
-      _loadSuppliers();
+      if (mounted) {
+        _loadSuppliers();
+      }
     } catch (e) {
       print('[ERROR] Error saving supplier: $e');
       if (mounted && context.mounted) {
@@ -572,7 +584,9 @@ class _SupplierPageState extends State<SupplierPage> {
         );
       }
 
-      _loadSuppliers();
+      if (mounted) {
+        _loadSuppliers();
+      }
     } catch (e) {
       print('[ERROR] Error deleting supplier: $e');
       if (mounted && context.mounted) {
