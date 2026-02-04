@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:ui';
 
-import '../../../dashboard/presentation/pages/dashboard.dart';
+import '../../../dashboard/presentation/pages/dashboard_page.dart';
 import '../../../../core/services/session_manager.dart';
 import '../../../../core/services/credentials_manager.dart';
 import 'signup.dart';

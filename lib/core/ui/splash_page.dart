@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import '../../features/authentication/presentation/pages/login.dart';
-import '../../features/dashboard/presentation/pages/dashboard.dart';
+import '../../features/dashboard/presentation/pages/dashboard_page.dart';
 import '../services/credentials_manager.dart';
 
 class SplashPage extends StatefulWidget {
