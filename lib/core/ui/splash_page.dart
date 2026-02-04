@@ -2,9 +2,13 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../features/authentication/presentation/pages/login.dart';
+import '../../features/authentication/presentation/widgets/biometric_auth_overlay.dart';
+import '../../features/authentication/presentation/cubit/biometric_cubit.dart';
 import '../../features/dashboard/presentation/pages/dashboard_page.dart';
+import '../../core/services/biometric_service.dart';
 import '../services/credentials_manager.dart';
 
 class SplashPage extends StatefulWidget {
@@ -108,8 +112,84 @@ class _SplashPageState extends State<SplashPage> {
 
   void _goToDashboard() {
     if (mounted) {
+      // Don't auto-show biometric - user will tap "Unlock Now" button
+      // Just stay on splash screen
+      print('[DEBUG] User logged in, showing splash with Unlock Now button');
+    }
+  }
+
+  Future<void> _checkBiometricAndProceed(String userId) async {
+    try {
+      final biometricService = BiometricService.instance;
+      
+      // Check if device supports biometrics
+      final canUseBiometrics = await biometricService.canUseBiometrics();
+      
+      if (canUseBiometrics && mounted) {
+        print('[DEBUG] Device supports biometric, showing overlay');
+        // Show biometric overlay regardless of previous preference
+        // User can skip by cancelling
+        _showBiometricOverlay(userId);
+      } else {
+        print('[DEBUG] Device does not support biometric, going directly to dashboard');
+        _navigateToDashboard();
+      }
+    } catch (e) {
+      print('[ERROR] Error checking biometric: $e');
+      _navigateToDashboard();
+    }
+  }
+
+  void _showBiometricOverlay(String userId) {
+    showModalBottomSheet(
+      context: context,
+      isDismissible: false,
+      enableDrag: false,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      useSafeArea: true,
+      builder: (BuildContext bottomSheetContext) {
+        return BlocProvider<BiometricCubit>(
+          create: (context) => BiometricCubit(
+            biometricService: BiometricService.instance,
+            userId: userId,
+          )..checkBiometricAvailability(),
+          child: BiometricAuthOverlay(
+            userId: userId,
+            onSuccess: () {
+              print('[DEBUG] Biometric authentication successful');
+              _navigateToDashboard();
+            },
+            onCancel: () {
+              print('[DEBUG] Biometric skipped by user');
+              _navigateToDashboard();
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  void _navigateToDashboard() {
+    if (mounted) {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (_) => const DashboardPage()),
+      );
+    }
+  }
+
+  void _showUnlockBiometric() {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser != null) {
+      print('[DEBUG] Unlock Now tapped, showing biometric overlay');
+      _showBiometricOverlay(currentUser.uid);
+    } else {
+      print('[ERROR] No current user found');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please log in first'),
+          backgroundColor: Colors.red,
+        ),
       );
     }
   }
@@ -189,6 +269,42 @@ class _SplashPageState extends State<SplashPage> {
                         fontFamily: 'Literata',
                         letterSpacing: 2,
                         height: 1.7,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 40),
+                  
+                  // Unlock Now Button
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 40),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: _showUnlockBiometric,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF1B4D3E),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          elevation: 4,
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.lock_open, size: 20),
+                            const SizedBox(width: 8),
+                            const Text(
+                              'Unlock Now',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                fontFamily: 'Literata',
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
