@@ -21,11 +21,9 @@ class _BillingPageState extends State<BillingPage> {
   final _customerNameController = TextEditingController();
   final _customerContactController = TextEditingController();
   final _notesController = TextEditingController();
-  final _productSearchController = TextEditingController();
 
   List<BillItem> _billItems = [];
   List<Product> _products = [];
-  List<Product> _filteredProducts = [];
   bool _isLoading = false;
   bool _isSavingBill = false;
 
@@ -50,7 +48,6 @@ class _BillingPageState extends State<BillingPage> {
     _customerNameController.dispose();
     _customerContactController.dispose();
     _notesController.dispose();
-    _productSearchController.dispose();
     super.dispose();
   }
 
@@ -60,7 +57,6 @@ class _BillingPageState extends State<BillingPage> {
       final products = await _billingService.getAvailableProducts();
       setState(() {
         _products = products;
-        _filteredProducts = products;
         _isLoading = false;
       });
     } catch (e) {
@@ -94,352 +90,46 @@ class _BillingPageState extends State<BillingPage> {
     }
   }
 
-  void _filterProducts(String query) {
-    setState(() {
-      if (query.isEmpty) {
-        _filteredProducts = _products;
-      } else {
-        final lowerQuery = query.toLowerCase();
-        _filteredProducts = _products
-            .where(
-              (p) =>
-                  p.name.toLowerCase().contains(lowerQuery) ||
-                  p.companyName.toLowerCase().contains(lowerQuery) ||
-                  p.category.toLowerCase().contains(lowerQuery),
-            )
-            .toList();
-      }
-    });
-  }
-
-  void _addProductToBill(Product product) {
-    final existingIndex = _billItems.indexWhere(
-      (item) => item.productId == product.id,
-    );
-    _showQuantityDialog(product, existingIndex);
-  }
-
-  void _showQuantityDialog(Product product, int existingIndex) {
-    final qtyController = TextEditingController(
-      text: existingIndex != -1
-          ? _billItems[existingIndex].quantity.toString()
-          : '1',
-    );
-    final priceController = TextEditingController(
-      text: existingIndex != -1
-          ? _billItems[existingIndex].sellingPrice.toString()
-          : product.salesPrice.toString(),
-    );
-
+  void _showAddItemsPopup() {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => Container(
-        padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Handle bar
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(2),
-                  ),
+      builder: (ctx) => _AddItemsBottomSheet(
+        products: _products,
+        billItems: _billItems,
+        onItemAdded: (product, quantity, price) {
+          final existingIndex = _billItems.indexWhere(
+            (item) => item.productId == product.id,
+          );
+          setState(() {
+            if (existingIndex != -1) {
+              _billItems[existingIndex] = BillItem.create(
+                productId: product.id,
+                productName: product.name,
+                sellingPrice: price,
+                quantity: quantity,
+              );
+            } else {
+              _billItems.add(
+                BillItem.create(
+                  productId: product.id,
+                  productName: product.name,
+                  sellingPrice: price,
+                  quantity: quantity,
                 ),
-              ),
-              const SizedBox(height: 20),
-              // Title
-              Text(
-                existingIndex != -1 ? 'Update Item' : 'Add to Bill',
-                style: const TextStyle(
-                  fontFamily: 'Literata',
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF1B4D3E),
-                ),
-              ),
-              const SizedBox(height: 16),
-              // Product info card
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1B4D3E).withOpacity(0.05),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 48,
-                      height: 48,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF1B4D3E).withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Icon(
-                        Icons.inventory_2,
-                        color: Color(0xFF1B4D3E),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            product.name,
-                            style: const TextStyle(
-                              fontFamily: 'Literata',
-                              fontWeight: FontWeight.w600,
-                              fontSize: 15,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            '${product.companyName} • Stock: ${product.currentStock}',
-                            style: TextStyle(
-                              fontFamily: 'Literata',
-                              fontSize: 12,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Text(
-                      '₹${product.salesPrice.toStringAsFixed(0)}',
-                      style: const TextStyle(
-                        fontFamily: 'Literata',
-                        fontWeight: FontWeight.w700,
-                        fontSize: 16,
-                        color: Color(0xFF1B4D3E),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 20),
-              // Input fields
-              Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Quantity',
-                          style: TextStyle(
-                            fontFamily: 'Literata',
-                            fontWeight: FontWeight.w600,
-                            fontSize: 13,
-                            color: Color(0xFF1B4D3E),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        TextField(
-                          controller: qtyController,
-                          keyboardType: TextInputType.number,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontFamily: 'Literata',
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                          ),
-                          decoration: InputDecoration(
-                            contentPadding: const EdgeInsets.symmetric(
-                              vertical: 14,
-                              horizontal: 12,
-                            ),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(color: Colors.grey[300]!),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(
-                                color: Color(0xFF1B4D3E),
-                                width: 2,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Price (₹)',
-                          style: TextStyle(
-                            fontFamily: 'Literata',
-                            fontWeight: FontWeight.w600,
-                            fontSize: 13,
-                            color: Color(0xFF1B4D3E),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        TextField(
-                          controller: priceController,
-                          keyboardType: TextInputType.number,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontFamily: 'Literata',
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                          ),
-                          decoration: InputDecoration(
-                            contentPadding: const EdgeInsets.symmetric(
-                              vertical: 14,
-                              horizontal: 12,
-                            ),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(color: Colors.grey[300]!),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(
-                                color: Color(0xFF1B4D3E),
-                                width: 2,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-              // Action buttons
-              Row(
-                children: [
-                  if (existingIndex != -1)
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: () {
-                          setState(() => _billItems.removeAt(existingIndex));
-                          Navigator.pop(ctx);
-                        },
-                        icon: const Icon(
-                          Icons.delete_outline,
-                          color: Colors.red,
-                          size: 20,
-                        ),
-                        label: const Text(
-                          'Remove',
-                          style: TextStyle(
-                            fontFamily: 'Literata',
-                            color: Colors.red,
-                          ),
-                        ),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          side: const BorderSide(color: Colors.red),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                      ),
-                    ),
-                  if (existingIndex != -1) const SizedBox(width: 12),
-                  Expanded(
-                    flex: existingIndex != -1 ? 1 : 2,
-                    child: ElevatedButton.icon(
-                      onPressed: () => _handleAddItem(
-                        product,
-                        qtyController,
-                        priceController,
-                        existingIndex,
-                        ctx,
-                      ),
-                      icon: Icon(
-                        existingIndex != -1 ? Icons.check : Icons.add,
-                        size: 20,
-                      ),
-                      label: Text(
-                        existingIndex != -1 ? 'Update' : 'Add to Bill',
-                        style: const TextStyle(
-                          fontFamily: 'Literata',
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF1B4D3E),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
+              );
+            }
+          });
+        },
+        onItemRemoved: (productId) {
+          setState(() {
+            _billItems.removeWhere((item) => item.productId == productId);
+          });
+        },
+        showSnackbar: _showSnackbar,
       ),
     );
-  }
-
-  void _handleAddItem(
-    Product product,
-    TextEditingController qtyCtrl,
-    TextEditingController priceCtrl,
-    int existingIndex,
-    BuildContext ctx,
-  ) {
-    final quantity = int.tryParse(qtyCtrl.text) ?? 0;
-    final price = double.tryParse(priceCtrl.text) ?? product.salesPrice;
-
-    if (quantity <= 0) {
-      _showSnackbar('Quantity must be greater than 0', isError: true);
-      return;
-    }
-
-    if (quantity > product.currentStock) {
-      _showSnackbar(
-        'Only ${product.currentStock} units available',
-        isError: true,
-      );
-      return;
-    }
-
-    setState(() {
-      if (existingIndex != -1) {
-        _billItems[existingIndex] = BillItem.create(
-          productId: product.id,
-          productName: product.name,
-          sellingPrice: price,
-          quantity: quantity,
-        );
-      } else {
-        _billItems.add(
-          BillItem.create(
-            productId: product.id,
-            productName: product.name,
-            sellingPrice: price,
-            quantity: quantity,
-          ),
-        );
-      }
-    });
-
-    Navigator.pop(ctx);
   }
 
   double get _totalAmount =>
@@ -496,8 +186,6 @@ class _BillingPageState extends State<BillingPage> {
       _customerContactController.clear();
       _notesController.clear();
       _selectedCustomer = null;
-      _productSearchController.clear();
-      _filteredProducts = _products;
     });
   }
 
@@ -526,8 +214,7 @@ class _BillingPageState extends State<BillingPage> {
               slivers: [
                 _buildSliverAppBar(),
                 SliverToBoxAdapter(child: _buildCustomerSection()),
-                SliverToBoxAdapter(child: _buildProductsHeader()),
-                _buildProductsList(),
+                SliverToBoxAdapter(child: _buildAddItemsButton()),
                 if (_billItems.isNotEmpty)
                   SliverToBoxAdapter(child: _buildBillItemsSection()),
                 const SliverToBoxAdapter(child: SizedBox(height: 100)),
@@ -774,256 +461,28 @@ class _BillingPageState extends State<BillingPage> {
     );
   }
 
-  Widget _buildProductsHeader() {
+  Widget _buildAddItemsButton() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-      child: Column(
-        children: [
-          // Search bar
-          TextField(
-            controller: _productSearchController,
-            onChanged: _filterProducts,
-            style: const TextStyle(fontFamily: 'Literata', fontSize: 14),
-            decoration: InputDecoration(
-              hintText: 'Search products...',
-              hintStyle: TextStyle(color: Colors.grey[500]),
-              prefixIcon: const Icon(Icons.search, color: Color(0xFF1B4D3E)),
-              filled: true,
-              fillColor: Colors.white,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 14,
-              ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide.none,
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(
-                  color: Color(0xFF1B4D3E),
-                  width: 1.5,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Products',
-                style: TextStyle(
-                  fontFamily: 'Literata',
-                  fontWeight: FontWeight.w700,
-                  fontSize: 16,
-                  color: Color(0xFF1B4D3E),
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1B4D3E).withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  '${_filteredProducts.length} items',
-                  style: const TextStyle(
-                    fontFamily: 'Literata',
-                    fontSize: 12,
-                    color: Color(0xFF1B4D3E),
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildProductsList() {
-    if (_filteredProducts.isEmpty) {
-      return SliverToBoxAdapter(
-        child: Container(
-          height: 200,
-          alignment: Alignment.center,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.inventory_2_outlined,
-                size: 48,
-                color: Colors.grey[400],
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'No products found',
-                style: TextStyle(
-                  fontFamily: 'Literata',
-                  color: Colors.grey[600],
-                ),
-              ),
-            ],
+      padding: const EdgeInsets.all(16),
+      child: ElevatedButton.icon(
+        onPressed: _showAddItemsPopup,
+        icon: const Icon(Icons.add_shopping_cart, size: 20),
+        label: const Text(
+          'Add Items to Bill',
+          style: TextStyle(
+            fontFamily: 'Literata',
+            fontWeight: FontWeight.w600,
+            fontSize: 15,
           ),
         ),
-      );
-    }
-
-    return SliverList(
-      delegate: SliverChildBuilderDelegate((context, index) {
-        final product = _filteredProducts[index];
-        final isInBill = _billItems.any((item) => item.productId == product.id);
-        return _buildProductTile(product, isInBill);
-      }, childCount: _filteredProducts.length),
-    );
-  }
-
-  Widget _buildProductTile(Product product, bool isInBill) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      decoration: BoxDecoration(
-        color: isInBill ? const Color(0xFFE8F5E9) : Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isInBill ? const Color(0xFF1B4D3E) : Colors.transparent,
-          width: 1.5,
-        ),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(12),
-          onTap: () => _addProductToBill(product),
-          child: Padding(
-            padding: const EdgeInsets.all(14),
-            child: Row(
-              children: [
-                // Product icon with stock badge
-                Stack(
-                  children: [
-                    Container(
-                      width: 48,
-                      height: 48,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF1B4D3E).withOpacity(0.08),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Icon(
-                        Icons.inventory_2,
-                        color: Color(0xFF1B4D3E),
-                        size: 22,
-                      ),
-                    ),
-                    if (isInBill)
-                      Positioned(
-                        right: -2,
-                        top: -2,
-                        child: Container(
-                          padding: const EdgeInsets.all(3),
-                          decoration: const BoxDecoration(
-                            color: Color(0xFF1B4D3E),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.check,
-                            color: Colors.white,
-                            size: 10,
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-                const SizedBox(width: 14),
-                // Product details
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        product.name,
-                        style: TextStyle(
-                          fontFamily: 'Literata',
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14,
-                          color: isInBill
-                              ? const Color(0xFF1B4D3E)
-                              : Colors.black87,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 3),
-                      Text(
-                        '${product.companyName} • ${product.category}',
-                        style: TextStyle(
-                          fontFamily: 'Literata',
-                          fontSize: 11,
-                          color: Colors.grey[600],
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 8),
-                // Price and stock
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      '₹${product.salesPrice.toStringAsFixed(0)}',
-                      style: const TextStyle(
-                        fontFamily: 'Literata',
-                        fontWeight: FontWeight.w700,
-                        fontSize: 14,
-                        color: Color(0xFF1B4D3E),
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: product.currentStock > 10
-                            ? Colors.green[50]
-                            : product.currentStock > 0
-                            ? Colors.orange[50]
-                            : Colors.red[50],
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        '${product.currentStock} left',
-                        style: TextStyle(
-                          fontFamily: 'Literata',
-                          fontSize: 10,
-                          fontWeight: FontWeight.w600,
-                          color: product.currentStock > 10
-                              ? Colors.green[700]
-                              : product.currentStock > 0
-                              ? Colors.orange[700]
-                              : Colors.red[700],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(width: 8),
-                Icon(
-                  Icons.add_circle,
-                  color: const Color(0xFF1B4D3E).withOpacity(0.7),
-                  size: 24,
-                ),
-              ],
-            ),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFF1B4D3E),
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
           ),
+          elevation: 0,
         ),
       ),
     );
@@ -1103,6 +562,20 @@ class _BillingPageState extends State<BillingPage> {
             separatorBuilder: (_, __) => const Divider(height: 1),
             itemBuilder: (context, index) {
               final item = _billItems[index];
+              final product = _products.firstWhere(
+                (p) => p.id == item.productId,
+                orElse: () => Product(
+                  id: item.productId,
+                  name: item.productName,
+                  companyName: '',
+                  category: '',
+                  purchasePrice: 0,
+                  salesPrice: item.sellingPrice,
+                  currentStock: 999,
+                  createdAt: DateTime.now(),
+                  updatedAt: DateTime.now(),
+                ),
+              );
               return Dismissible(
                 key: Key('${item.productId}_$index'),
                 direction: DismissDirection.endToStart,
@@ -1113,62 +586,131 @@ class _BillingPageState extends State<BillingPage> {
                   child: const Icon(Icons.delete, color: Colors.white),
                 ),
                 onDismissed: (_) => setState(() => _billItems.removeAt(index)),
-                child: ListTile(
-                  contentPadding: const EdgeInsets.symmetric(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
                     horizontal: 16,
-                    vertical: 4,
+                    vertical: 10,
                   ),
-                  title: Text(
-                    item.productName,
-                    style: const TextStyle(
-                      fontFamily: 'Literata',
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14,
-                    ),
-                  ),
-                  subtitle: Text(
-                    '₹${item.sellingPrice.toStringAsFixed(0)} × ${item.quantity}',
-                    style: TextStyle(
-                      fontFamily: 'Literata',
-                      fontSize: 12,
-                      color: Colors.grey[600],
-                    ),
-                  ),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
+                  child: Row(
                     children: [
-                      Text(
-                        '₹${item.subtotal.toStringAsFixed(0)}',
-                        style: const TextStyle(
-                          fontFamily: 'Literata',
-                          fontWeight: FontWeight.w700,
-                          fontSize: 14,
-                          color: Color(0xFF1B4D3E),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              item.productName,
+                              style: const TextStyle(
+                                fontFamily: 'Literata',
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              '₹${item.sellingPrice.toStringAsFixed(0)} each',
+                              style: TextStyle(
+                                fontFamily: 'Literata',
+                                fontSize: 12,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      // Quantity controls
+                      Container(
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF5F5F5),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            _buildQtyButton(
+                              icon: Icons.remove,
+                              onPressed: () {
+                                if (item.quantity > 1) {
+                                  setState(() {
+                                    _billItems[index] = BillItem.create(
+                                      productId: item.productId,
+                                      productName: item.productName,
+                                      sellingPrice: item.sellingPrice,
+                                      quantity: item.quantity - 1,
+                                    );
+                                  });
+                                } else {
+                                  setState(() => _billItems.removeAt(index));
+                                }
+                              },
+                            ),
+                            Container(
+                              constraints: const BoxConstraints(minWidth: 36),
+                              alignment: Alignment.center,
+                              child: Text(
+                                '${item.quantity}',
+                                style: const TextStyle(
+                                  fontFamily: 'Literata',
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ),
+                            _buildQtyButton(
+                              icon: Icons.add,
+                              onPressed: () {
+                                if (item.quantity < product.currentStock) {
+                                  setState(() {
+                                    _billItems[index] = BillItem.create(
+                                      productId: item.productId,
+                                      productName: item.productName,
+                                      sellingPrice: item.sellingPrice,
+                                      quantity: item.quantity + 1,
+                                    );
+                                  });
+                                } else {
+                                  _showSnackbar(
+                                    'Max stock: ${product.currentStock}',
+                                    isError: true,
+                                  );
+                                }
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      // Subtotal
+                      SizedBox(
+                        width: 65,
+                        child: Text(
+                          '₹${item.subtotal.toStringAsFixed(0)}',
+                          style: const TextStyle(
+                            fontFamily: 'Literata',
+                            fontWeight: FontWeight.w700,
+                            fontSize: 14,
+                            color: Color(0xFF1B4D3E),
+                          ),
+                          textAlign: TextAlign.right,
                         ),
                       ),
                       const SizedBox(width: 8),
-                      GestureDetector(
-                        onTap: () {
-                          final product = _products.firstWhere(
-                            (p) => p.id == item.productId,
-                            orElse: () => Product(
-                              id: item.productId,
-                              name: item.productName,
-                              companyName: '',
-                              category: '',
-                              purchasePrice: 0,
-                              salesPrice: item.sellingPrice,
-                              currentStock: 999,
-                              createdAt: DateTime.now(),
-                              updatedAt: DateTime.now(),
+                      // Delete button
+                      Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(8),
+                          onTap: () =>
+                              setState(() => _billItems.removeAt(index)),
+                          child: Container(
+                            padding: const EdgeInsets.all(8),
+                            child: Icon(
+                              Icons.delete_outline,
+                              size: 20,
+                              color: Colors.red[600],
                             ),
-                          );
-                          _showQuantityDialog(product, index);
-                        },
-                        child: const Icon(
-                          Icons.edit,
-                          size: 18,
-                          color: Color(0xFF1B4D3E),
+                          ),
                         ),
                       ),
                     ],
@@ -1266,6 +808,23 @@ class _BillingPageState extends State<BillingPage> {
     );
   }
 
+  Widget _buildQtyButton({
+    required IconData icon,
+    required VoidCallback onPressed,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(6),
+        onTap: onPressed,
+        child: Container(
+          padding: const EdgeInsets.all(6),
+          child: Icon(icon, size: 18, color: const Color(0xFF1B4D3E)),
+        ),
+      ),
+    );
+  }
+
   void _showCustomerPicker() {
     showModalBottomSheet(
       context: context,
@@ -1354,6 +913,514 @@ class _BillingPageState extends State<BillingPage> {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Bottom sheet widget for adding multiple items to the bill
+class _AddItemsBottomSheet extends StatefulWidget {
+  final List<Product> products;
+  final List<BillItem> billItems;
+  final Function(Product product, int quantity, double price) onItemAdded;
+  final Function(String productId) onItemRemoved;
+  final Function(String message, {bool isError}) showSnackbar;
+
+  const _AddItemsBottomSheet({
+    required this.products,
+    required this.billItems,
+    required this.onItemAdded,
+    required this.onItemRemoved,
+    required this.showSnackbar,
+  });
+
+  @override
+  State<_AddItemsBottomSheet> createState() => _AddItemsBottomSheetState();
+}
+
+class _AddItemsBottomSheetState extends State<_AddItemsBottomSheet> {
+  late List<Product> _filteredProducts;
+  final _searchController = TextEditingController();
+
+  // Track quantities for each product in this session
+  Map<String, int> _quantities = {};
+  Map<String, double> _prices = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _filteredProducts = widget.products;
+    // Initialize with existing bill items
+    for (final item in widget.billItems) {
+      _quantities[item.productId] = item.quantity;
+      _prices[item.productId] = item.sellingPrice;
+    }
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _filterProducts(String query) {
+    setState(() {
+      if (query.isEmpty) {
+        _filteredProducts = widget.products;
+      } else {
+        final lowerQuery = query.toLowerCase();
+        _filteredProducts = widget.products
+            .where(
+              (p) =>
+                  p.name.toLowerCase().contains(lowerQuery) ||
+                  p.companyName.toLowerCase().contains(lowerQuery) ||
+                  p.category.toLowerCase().contains(lowerQuery),
+            )
+            .toList();
+      }
+    });
+  }
+
+  void _incrementQuantity(Product product) {
+    final currentQty = _quantities[product.id] ?? 0;
+    if (currentQty < product.currentStock) {
+      setState(() {
+        _quantities[product.id] = currentQty + 1;
+        _prices[product.id] ??= product.salesPrice;
+      });
+      widget.onItemAdded(
+        product,
+        _quantities[product.id]!,
+        _prices[product.id]!,
+      );
+    } else {
+      widget.showSnackbar('Max stock: ${product.currentStock}', isError: true);
+    }
+  }
+
+  void _decrementQuantity(Product product) {
+    final currentQty = _quantities[product.id] ?? 0;
+    if (currentQty > 1) {
+      setState(() {
+        _quantities[product.id] = currentQty - 1;
+      });
+      widget.onItemAdded(
+        product,
+        _quantities[product.id]!,
+        _prices[product.id]!,
+      );
+    } else if (currentQty == 1) {
+      setState(() {
+        _quantities.remove(product.id);
+        _prices.remove(product.id);
+      });
+      widget.onItemRemoved(product.id);
+    }
+  }
+
+  int get _totalItems => _quantities.values.fold(0, (sum, qty) => sum + qty);
+
+  @override
+  Widget build(BuildContext context) {
+    return DraggableScrollableSheet(
+      initialChildSize: 0.85,
+      maxChildSize: 0.95,
+      minChildSize: 0.5,
+      builder: (_, controller) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          children: [
+            // Handle bar
+            const SizedBox(height: 12),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            // Header
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(
+                      Icons.add_shopping_cart,
+                      color: Color(0xFF1B4D3E),
+                      size: 22,
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Add Items',
+                          style: TextStyle(
+                            fontFamily: 'Literata',
+                            fontSize: 20,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF1B4D3E),
+                          ),
+                        ),
+                        Text(
+                          'Tap + to add multiple items',
+                          style: TextStyle(
+                            fontFamily: 'Literata',
+                            fontSize: 12,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (_totalItems > 0)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1B4D3E),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        '$_totalItems items',
+                        style: const TextStyle(
+                          fontFamily: 'Literata',
+                          fontSize: 13,
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            // Search bar
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: TextField(
+                controller: _searchController,
+                onChanged: _filterProducts,
+                style: const TextStyle(fontFamily: 'Literata', fontSize: 14),
+                decoration: InputDecoration(
+                  hintText: 'Search products...',
+                  hintStyle: TextStyle(color: Colors.grey[500]),
+                  prefixIcon: const Icon(
+                    Icons.search,
+                    color: Color(0xFF1B4D3E),
+                  ),
+                  suffixIcon: _searchController.text.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.clear, size: 20),
+                          onPressed: () {
+                            _searchController.clear();
+                            _filterProducts('');
+                          },
+                        )
+                      : null,
+                  filled: true,
+                  fillColor: const Color(0xFFF5F5F5),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            // Products list
+            Expanded(
+              child: _filteredProducts.isEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.inventory_2_outlined,
+                            size: 48,
+                            color: Colors.grey[400],
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            'No products found',
+                            style: TextStyle(
+                              fontFamily: 'Literata',
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : ListView.builder(
+                      controller: controller,
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      itemCount: _filteredProducts.length,
+                      itemBuilder: (context, index) {
+                        final product = _filteredProducts[index];
+                        final qty = _quantities[product.id] ?? 0;
+                        final isAdded = qty > 0;
+
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 8),
+                          decoration: BoxDecoration(
+                            color: isAdded
+                                ? const Color(0xFFE8F5E9)
+                                : Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: isAdded
+                                  ? const Color(0xFF1B4D3E)
+                                  : Colors.grey[200]!,
+                              width: isAdded ? 1.5 : 1,
+                            ),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Row(
+                              children: [
+                                // Product icon
+                                Container(
+                                  width: 44,
+                                  height: 44,
+                                  decoration: BoxDecoration(
+                                    color: const Color(
+                                      0xFF1B4D3E,
+                                    ).withOpacity(0.08),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: const Icon(
+                                    Icons.inventory_2,
+                                    color: Color(0xFF1B4D3E),
+                                    size: 20,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                // Product details
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        product.name,
+                                        style: const TextStyle(
+                                          fontFamily: 'Literata',
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 14,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Row(
+                                        children: [
+                                          Text(
+                                            '₹${product.salesPrice.toStringAsFixed(0)}',
+                                            style: const TextStyle(
+                                              fontFamily: 'Literata',
+                                              fontWeight: FontWeight.w700,
+                                              fontSize: 13,
+                                              color: Color(0xFF1B4D3E),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 6,
+                                              vertical: 2,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: product.currentStock > 10
+                                                  ? Colors.green[50]
+                                                  : product.currentStock > 0
+                                                  ? Colors.orange[50]
+                                                  : Colors.red[50],
+                                              borderRadius:
+                                                  BorderRadius.circular(4),
+                                            ),
+                                            child: Text(
+                                              '${product.currentStock} left',
+                                              style: TextStyle(
+                                                fontFamily: 'Literata',
+                                                fontSize: 10,
+                                                fontWeight: FontWeight.w600,
+                                                color: product.currentStock > 10
+                                                    ? Colors.green[700]
+                                                    : product.currentStock > 0
+                                                    ? Colors.orange[700]
+                                                    : Colors.red[700],
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                // Quantity controls
+                                if (isAdded)
+                                  Container(
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(
+                                        color: const Color(
+                                          0xFF1B4D3E,
+                                        ).withOpacity(0.3),
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        _buildControlButton(
+                                          icon: Icons.remove,
+                                          onTap: () =>
+                                              _decrementQuantity(product),
+                                        ),
+                                        Container(
+                                          constraints: const BoxConstraints(
+                                            minWidth: 32,
+                                          ),
+                                          alignment: Alignment.center,
+                                          child: Text(
+                                            '$qty',
+                                            style: const TextStyle(
+                                              fontFamily: 'Literata',
+                                              fontWeight: FontWeight.w700,
+                                              fontSize: 14,
+                                            ),
+                                          ),
+                                        ),
+                                        _buildControlButton(
+                                          icon: Icons.add,
+                                          onTap: () =>
+                                              _incrementQuantity(product),
+                                        ),
+                                      ],
+                                    ),
+                                  )
+                                else
+                                  Material(
+                                    color: const Color(0xFF1B4D3E),
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: InkWell(
+                                      borderRadius: BorderRadius.circular(8),
+                                      onTap: product.currentStock > 0
+                                          ? () => _incrementQuantity(product)
+                                          : null,
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 14,
+                                          vertical: 8,
+                                        ),
+                                        child: const Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(
+                                              Icons.add,
+                                              color: Colors.white,
+                                              size: 18,
+                                            ),
+                                            SizedBox(width: 4),
+                                            Text(
+                                              'Add',
+                                              style: TextStyle(
+                                                fontFamily: 'Literata',
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.w600,
+                                                fontSize: 13,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+            ),
+            // Done button
+            Container(
+              padding: EdgeInsets.only(
+                left: 20,
+                right: 20,
+                top: 16,
+                bottom: MediaQuery.of(context).padding.bottom + 16,
+              ),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, -2),
+                  ),
+                ],
+              ),
+              child: SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF1B4D3E),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: Text(
+                    _totalItems > 0 ? 'Done ($_totalItems items)' : 'Done',
+                    style: const TextStyle(
+                      fontFamily: 'Literata',
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildControlButton({
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(6),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.all(6),
+          child: Icon(icon, size: 18, color: const Color(0xFF1B4D3E)),
         ),
       ),
     );
