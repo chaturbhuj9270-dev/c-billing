@@ -30,6 +30,7 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
   
   final _quantityController = TextEditingController();
   final _priceController = TextEditingController();
+  final _salesPriceController = TextEditingController();
   final _notesController = TextEditingController();
   final _productSearchController = TextEditingController();
   final _supplierSearchController = TextEditingController();
@@ -157,19 +158,15 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
     final categoryController = TextEditingController();
     final purchasePriceController = TextEditingController();
     final salesPriceController = TextEditingController();
+    String selectedCompanyName = '';
 
     showDialog(
       context: context,
-      builder: (context) => BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: AlertDialog(
-          backgroundColor: Colors.white.withValues(alpha: 0.95),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          backgroundColor: Colors.white,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
-            side: BorderSide(
-              color: Colors.white.withValues(alpha: 0.3),
-              width: 1.5,
-            ),
           ),
           title: const Text(
             'Add New Product',
@@ -177,6 +174,7 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
               fontFamily: 'Literata',
               fontWeight: FontWeight.w700,
               color: Color(0xFF1B4D3E),
+              fontSize: 18,
             ),
           ),
           content: SingleChildScrollView(
@@ -185,8 +183,10 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
               children: [
                 TextField(
                   controller: nameController,
+                  onChanged: (_) => setDialogState(() {}),
                   decoration: InputDecoration(
                     labelText: 'Product Name',
+                    hintText: 'Enter product name',
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -214,6 +214,32 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
                         width: 2,
                       ),
                     ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                // Company selection dropdown
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey[300]!),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: DropdownButton<String>(
+                    isExpanded: true,
+                    underline: const SizedBox.shrink(),
+                    hint: const Text('Select Company'),
+                    value: selectedCompanyName.isEmpty ? null : selectedCompanyName,
+                    items: _companies.map((company) {
+                      return DropdownMenuItem<String>(
+                        value: company['companyName'] as String,
+                        child: Text(company['companyName'] as String),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      setDialogState(() {
+                        selectedCompanyName = value ?? '';
+                      });
+                    },
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -267,38 +293,53 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
               ),
             ),
             ElevatedButton(
-              onPressed: () async {
+              onPressed: nameController.text.trim().isEmpty
+                  ? null
+                  : () async {
+                final dialogContext = context;
                 try {
                   await _inventoryService.createProduct(
-                    name: nameController.text,
-                    companyName: '',
-                    category: categoryController.text,
+                    name: nameController.text.trim(),
+                    companyName: selectedCompanyName,
+                    category: categoryController.text.trim(),
                     purchasePrice: double.parse(purchasePriceController.text),
                     salesPrice: double.parse(salesPriceController.text),
                     initialStock: 0,
                   );
                   if (mounted) {
-                    Navigator.pop(context);
+                    if (dialogContext.mounted) {
+                      Navigator.pop(dialogContext);
+                    }
                     await _loadProducts();
                     // Select the newly added product (last one in list)
                     if (_products.isNotEmpty) {
                       setState(() {
                         _selectedProduct = _products.last;
                         _priceController.text = _selectedProduct!.purchasePrice.toString();
+                        _salesPriceController.text = _selectedProduct!.salesPrice.toString();
                       });
                     }
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Product added successfully')),
-                    );
+                    if (mounted) {
+                      ScaffoldMessenger.of(dialogContext).showSnackBar(
+                        const SnackBar(
+                          content: Text('Product added successfully'),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                    }
                   }
                 } catch (e) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Error: $e')),
-                  );
+                  if (mounted && dialogContext.mounted) {
+                    ScaffoldMessenger.of(dialogContext).showSnackBar(
+                      SnackBar(content: Text('Error: $e')),
+                    );
+                  }
                 }
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF1B4D3E),
+                backgroundColor: nameController.text.trim().isEmpty
+                    ? Colors.grey[400]
+                    : const Color(0xFF1B4D3E),
               ),
               child: const Text(
                 'Add Product',
@@ -732,6 +773,7 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
 
     final quantity = int.tryParse(_quantityController.text);
     final price = double.tryParse(_priceController.text);
+    final salesPrice = double.tryParse(_salesPriceController.text);
 
     if (quantity == null || quantity <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -743,6 +785,13 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
     if (price == null || price < 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please enter a valid purchase price')),
+      );
+      return;
+    }
+
+    if (salesPrice == null || salesPrice < 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter a valid sales price')),
       );
       return;
     }
@@ -767,6 +816,7 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
             'companyName': _selectedCompany!['companyName'],
             'quantity': quantity,
             'purchasePrice': price,
+            'salesPrice': salesPrice,
             'totalAmount': quantity * price,
             'productionDate': _productionDate,
             'expiryDate': _expiryDate,
@@ -790,6 +840,7 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
           .doc(_selectedProduct!.id)
           .update({
             'purchasePrice': price,
+            'salesPrice': salesPrice,
           });
 
       if (mounted) {
@@ -809,6 +860,7 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
           _expiryDate = null;
           _quantityController.clear();
           _priceController.clear();
+          _salesPriceController.clear();
           _notesController.clear();
         });
 
@@ -831,6 +883,7 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
     _animController.dispose();
     _quantityController.dispose();
     _priceController.dispose();
+    _salesPriceController.dispose();
     _notesController.dispose();
     _productSearchController.dispose();
     _supplierSearchController.dispose();
@@ -917,15 +970,16 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
     required VoidCallback onTap,
   }) {
     return Material(
+      color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(14),
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            border: Border.all(color: color.withOpacity(0.2)),
+            border: Border.all(color: color.withValues(alpha: 0.2)),
             borderRadius: BorderRadius.circular(14),
-            color: color.withOpacity(0.05),
+            color: color.withValues(alpha: 0.05),
           ),
           child: Row(
             children: [
@@ -933,7 +987,7 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.15),
+                  color: color.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(icon, color: color, size: 24),
@@ -964,8 +1018,11 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
                   ],
                 ),
               ),
-              Icon(Icons.arrow_forward_ios_rounded,
-                  size: 16, color: Colors.grey[400]),
+              Icon(
+                Icons.arrow_forward_ios_rounded,
+                size: 16,
+                color: Colors.grey[400],
+              ),
             ],
           ),
         ),
@@ -981,120 +1038,146 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
 
     showDialog(
       context: context,
-      builder: (context) => BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: AlertDialog(
-          backgroundColor: Colors.white.withValues(alpha: 0.95),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          backgroundColor: Colors.white,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
-            side: BorderSide(
-              color: Colors.white.withValues(alpha: 0.3),
-              width: 1.5,
-            ),
           ),
           title: const Text(
             'Add New Supplier',
-          style: TextStyle(
-            fontFamily: 'Literata',
-            fontWeight: FontWeight.w700,
-            color: Color(0xFF1B4D3E),
-          ),
-        ),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: _newSupplierFirstNameController,
-                decoration: InputDecoration(
-                  labelText: 'First Name',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(
-                      color: Color(0xFF1B4D3E),
-                      width: 2,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: _newSupplierLastNameController,
-                decoration: InputDecoration(
-                  labelText: 'Last Name',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(
-                      color: Color(0xFF1B4D3E),
-                      width: 2,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: _newSupplierContactController,
-                keyboardType: TextInputType.phone,
-                decoration: InputDecoration(
-                  labelText: 'Contact Number',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(
-                      color: Color(0xFF1B4D3E),
-                      width: 2,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: _newSupplierAddressController,
-                maxLines: 3,
-                decoration: InputDecoration(
-                  labelText: 'Address',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(
-                      color: Color(0xFF1B4D3E),
-                      width: 2,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF1B4D3E),
-            ),
-            onPressed: () => _saveNewSupplier(context),
-            child: const Text(
-              'Add Supplier',
-              style: TextStyle(
-                color: Colors.white,
-              ),
+            style: TextStyle(
+              fontFamily: 'Literata',
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF1B4D3E),
+              fontSize: 18,
             ),
           ),
-        ],
-      ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: _newSupplierFirstNameController,
+                  onChanged: (_) => setDialogState(() {}),
+                  decoration: InputDecoration(
+                    labelText: 'First Name',
+                    hintText: 'Enter first name',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(
+                        color: Color(0xFF1B4D3E),
+                        width: 2,
+                      ),
+                    ),
+                    errorBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(
+                        color: Colors.red,
+                        width: 2,
+                      ),
+                    ),
+                    errorText: _newSupplierFirstNameController.text.isEmpty
+                        ? 'First name cannot be empty'
+                        : null,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _newSupplierLastNameController,
+                  onChanged: (_) => setDialogState(() {}),
+                  decoration: InputDecoration(
+                    labelText: 'Last Name',
+                    hintText: 'Enter last name',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(
+                        color: Color(0xFF1B4D3E),
+                        width: 2,
+                      ),
+                    ),
+                    errorBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(
+                        color: Colors.red,
+                        width: 2,
+                      ),
+                    ),
+                    errorText: _newSupplierLastNameController.text.isEmpty
+                        ? 'Last name cannot be empty'
+                        : null,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _newSupplierContactController,
+                  keyboardType: TextInputType.phone,
+                  decoration: InputDecoration(
+                    labelText: 'Contact Number',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(
+                        color: Color(0xFF1B4D3E),
+                        width: 2,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _newSupplierAddressController,
+                  maxLines: 3,
+                  decoration: InputDecoration(
+                    labelText: 'Address',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(
+                        color: Color(0xFF1B4D3E),
+                        width: 2,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: (_newSupplierFirstNameController.text.trim().isEmpty ||
+                        _newSupplierLastNameController.text.trim().isEmpty)
+                    ? Colors.grey[400]
+                    : const Color(0xFF1B4D3E),
+              ),
+              onPressed: (_newSupplierFirstNameController.text.trim().isEmpty ||
+                      _newSupplierLastNameController.text.trim().isEmpty)
+                  ? null
+                  : () => _saveNewSupplier(context),
+              child: const Text(
+                'Add Supplier',
+                style: TextStyle(
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1105,9 +1188,11 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
     final contact = _newSupplierContactController.text.trim();
 
     if (firstName.isEmpty || lastName.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('First name and last name are required')),
-      );
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('First name and last name are required')),
+        );
+      }
       return;
     }
 
@@ -1136,7 +1221,7 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
             'createdAt': FieldValue.serverTimestamp(),
           });
 
-      if (mounted) {
+      if (mounted && context.mounted) {
         Navigator.pop(context);
         await _loadSuppliers();
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1162,114 +1247,129 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
 
     showDialog(
       context: context,
-      builder: (context) => BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: AlertDialog(
-          backgroundColor: Colors.white.withValues(alpha: 0.95),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          backgroundColor: Colors.white,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
-            side: BorderSide(
-              color: Colors.white.withValues(alpha: 0.3),
-              width: 1.5,
-            ),
           ),
           title: const Text(
             'Add New Company',
-          style: TextStyle(
-            fontFamily: 'Literata',
-            fontWeight: FontWeight.w700,
-            color: Color(0xFF1B4D3E),
-          ),
-        ),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: _newCompanyNameController,
-                decoration: InputDecoration(
-                  labelText: 'Company Name',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(
-                      color: Color(0xFF1B4D3E),
-                      width: 2,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: _newCompanyContactController,
-                keyboardType: TextInputType.phone,
-                decoration: InputDecoration(
-                  labelText: 'Contact Number',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(
-                      color: Color(0xFF1B4D3E),
-                      width: 2,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: _newCompanyAddressController,
-                maxLines: 3,
-                decoration: InputDecoration(
-                  labelText: 'Address',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(
-                      color: Color(0xFF1B4D3E),
-                      width: 2,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF1B4D3E),
-            ),
-            onPressed: () => _saveNewCompany(context),
-            child: const Text(
-              'Add Company',
-              style: TextStyle(
-                color: Colors.white,
-              ),
+            style: TextStyle(
+              fontFamily: 'Literata',
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF1B4D3E),
+              fontSize: 18,
             ),
           ),
-        ],
-      ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: _newCompanyNameController,
+                  onChanged: (_) => setDialogState(() {}),
+                  decoration: InputDecoration(
+                    labelText: 'Company Name',
+                    hintText: 'Enter company name',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(
+                        color: Color(0xFF1B4D3E),
+                        width: 2,
+                      ),
+                    ),
+                    errorBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(
+                        color: Colors.red,
+                        width: 2,
+                      ),
+                    ),
+                    errorText: _newCompanyNameController.text.isEmpty 
+                        ? 'Company name cannot be empty'
+                        : null,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _newCompanyContactController,
+                  keyboardType: TextInputType.phone,
+                  decoration: InputDecoration(
+                    labelText: 'Contact Number',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(
+                        color: Color(0xFF1B4D3E),
+                        width: 2,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _newCompanyAddressController,
+                  maxLines: 3,
+                  decoration: InputDecoration(
+                    labelText: 'Address',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(
+                        color: Color(0xFF1B4D3E),
+                        width: 2,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _newCompanyNameController.text.trim().isEmpty
+                    ? Colors.grey[400]
+                    : const Color(0xFF1B4D3E),
+              ),
+              onPressed: _newCompanyNameController.text.trim().isEmpty
+                  ? null
+                  : () => _saveNewCompany(context),
+              child: const Text(
+                'Add Company',
+                style: TextStyle(
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Future<void> _saveNewCompany(BuildContext context) async {
     final companyName = _newCompanyNameController.text.trim();
+    final companyContext = context;
 
     if (companyName.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Company name is required')),
-      );
+      if (companyContext.mounted) {
+        ScaffoldMessenger.of(companyContext).showSnackBar(
+          const SnackBar(content: Text('Company name is required')),
+        );
+      }
       return;
     }
 
@@ -1297,19 +1397,21 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
             'createdAt': FieldValue.serverTimestamp(),
           });
 
-      if (mounted) {
-        Navigator.pop(context);
+      if (mounted && companyContext.mounted) {
+        Navigator.pop(companyContext);
         await _loadCompanies();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Company added successfully'),
-            backgroundColor: Colors.green,
-          ),
-        );
+        if (companyContext.mounted) {
+          ScaffoldMessenger.of(companyContext).showSnackBar(
+            const SnackBar(
+              content: Text('Company added successfully'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+      if (mounted && companyContext.mounted) {
+        ScaffoldMessenger.of(companyContext).showSnackBar(
           SnackBar(content: Text('Error adding company: $e')),
         );
       }
@@ -1377,82 +1479,80 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10.0,vertical: 20.0),
+            padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
             child: Column(
               children: [
                 const SizedBox(height: 20),
-                // Header with animation
+                // Header with back button
                 SlideTransition(
                   position: _offsetAnimation,
                   child: FadeTransition(
                     opacity: _opacityAnimation,
-                    child: Column(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          'Purchase Records',
-                          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                            fontWeight: FontWeight.w800,
-                            color: const Color(0xFF1B4D3E),
-                            letterSpacing: 0.5,
-                            fontSize: 28,
+                        // Back button (icon only)
+                        GestureDetector(
+                          onTap: () => Navigator.pop(context),
+                          child: const Icon(
+                            Icons.arrow_back_ios_rounded,
+                            size: 22,
+                            color: Color(0xFF1B4D3E),
                           ),
                         ),
-                        const SizedBox(height: 6),
-                        Text(
-                          'Track and manage your purchases',
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Colors.black45,
-                            fontWeight: FontWeight.w400,
-                            fontSize: 14,
+                        // Header text
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Text(
+                                'Purchase Records',
+                                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                                  fontWeight: FontWeight.w800,
+                                  color: const Color(0xFF1B4D3E),
+                                  letterSpacing: 0.5,
+                                  fontSize: 24,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Track and manage your purchases',
+                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                  color: Colors.black45,
+                                  fontWeight: FontWeight.w400,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
                           ),
+                        ),
+                        // Spacer to balance layout
+                        SizedBox(
+                          width: 22,
                         ),
                       ],
                     ),
                   ),
                 ),
                 const SizedBox(height: 40),
-                // Glassy content card with animation
+                // Form content with animation
                 SlideTransition(
                   position: _offsetAnimation,
                   child: FadeTransition(
                     opacity: _opacityAnimation,
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(28),
-                      child: BackdropFilter(
-                        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                        child: Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(horizontal: 5.0, vertical: 20.0),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.90),
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(
-                              color: Colors.white.withOpacity(0.4),
-                              width: 1.5,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: const Color(0xFF1B4D3E).withOpacity(0.08),
-                                blurRadius: 30,
-                                offset: const Offset(0, 15),
-                                spreadRadius: 2,
-                              ),
-                            ],
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Product Selection
+                        const Text(
+                          'Select Product',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            fontFamily: 'Literata',
                           ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              // Product Selection Header
-                              const Text(
-                                'Select Product',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w700,
-                                  fontFamily: 'Literata',
-                                ),
-                              ),
-                              const SizedBox(height: 12),
+                        ),
+                        const SizedBox(height: 12),
             GestureDetector(
               onTap: _showProductSelectionBottomSheet,
               child: Container(
@@ -1514,51 +1614,40 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
               ),
             ),
             if (_selectedProduct != null) ...[
-              const SizedBox(height: 20),
+              const SizedBox(height: 12),
               Container(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.blue.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.blue.withValues(alpha: 0.3)),
+                  color: Colors.green.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.green.withValues(alpha: 0.2)),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                child: Row(
                   children: [
-                    Text(
-                      _selectedProduct!.name,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        fontFamily: 'Literata',
-                      ),
+                    Icon(
+                      Icons.check_circle_rounded,
+                      color: Colors.green[600],
+                      size: 18,
                     ),
-                    const SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Category: ${_selectedProduct!.category}',
-                          style: TextStyle(
-                            color: Colors.grey[600],
-                            fontFamily: 'Literata',
-                          ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        '${_selectedProduct!.name} (${_selectedProduct!.category})',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          fontFamily: 'Literata',
+                          color: Colors.green[700],
                         ),
-                        Text(
-                          'Current Stock: ${_selectedProduct!.currentStock}',
-                          style: TextStyle(
-                            color: Colors.grey[600],
-                            fontFamily: 'Literata',
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                   ],
                 ),
               ),
             ],
-            const SizedBox(height: 28),
+            const SizedBox(height: 24),
 
             // Supplier Selection
             const Text(
@@ -1849,7 +1938,30 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
               keyboardType: TextInputType.number,
               onChanged: (_) => _calculateTotal(),
               decoration: InputDecoration(
-                hintText: 'Enter price',
+                hintText: 'Enter purchase price',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                prefixIcon: const Icon(Icons.currency_rupee_rounded),
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // Sales Price Input
+            const Text(
+              'Sales Price per Unit',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                fontFamily: 'Literata',
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _salesPriceController,
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(
+                hintText: 'Enter sales price',
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -1913,49 +2025,47 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
             ),
             const SizedBox(height: 28),
 
-            // Submit Button
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _isLoading ? null : _processPurchase,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF1B4D3E),
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  disabledBackgroundColor: Colors.grey[400],
+                        // Submit Button
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: _isLoading ? null : _processPurchase,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF1B4D3E),
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              disabledBackgroundColor: Colors.grey[400],
+                            ),
+                            child: _isLoading
+                                ? const SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor:
+                                          AlwaysStoppedAnimation<Color>(Colors.white),
+                                    ),
+                                  )
+                                : const Text(
+                                    'Record Purchase',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w700,
+                                      fontFamily: 'Literata',
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                      ],
+                    ),
+                  ),
                 ),
-                child: _isLoading
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor:
-                              AlwaysStoppedAnimation<Color>(Colors.white),
-                        ),
-                      )
-                    : const Text(
-                        'Record Purchase',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          fontFamily: 'Literata',
-                          color: Colors.white,
-                        ),
-                      ),
-              ),
+              ],
             ),
-            ],
           ),
         ),
       ),
-      ),
-      ),
-    ),
-      ],
-    ),
-    ),
-    ),
-    ),
     );
   }
 }
