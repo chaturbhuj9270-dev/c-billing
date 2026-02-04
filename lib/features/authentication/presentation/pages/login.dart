@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:ui';
 
-import '../../../dashboard/presentation/pages/dashboard_page.dart';
+import '../../../dashboard/presentation/pages/optimized_dashboard_page.dart';
 import '../../../../core/services/session_manager.dart';
 import '../../../../core/services/credentials_manager.dart';
 import 'signup.dart';
@@ -126,7 +126,7 @@ class _LoginPageV2State extends State<LoginPageV2> with TickerProviderStateMixin
       
       // Navigate to dashboard
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const DashboardPage()),
+        MaterialPageRoute(builder: (_) => const OptimizedDashboardPage()),
       );
     }).catchError((e) {
       print('[ERROR] Login failed: $e');

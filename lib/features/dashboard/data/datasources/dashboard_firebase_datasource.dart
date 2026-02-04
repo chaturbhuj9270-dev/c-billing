@@ -1,0 +1,299 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../../domain/entities/dashboard_summary.dart';
+import '../../domain/repositories/dashboard_repository_interface.dart';
+
+/// Firebase datasource for dashboard data
+/// Optimized for minimal reads using parallel queries and Firestore caching
+class DashboardFirebaseDataSource {
+  final FirebaseFirestore _firestore;
+  final FirebaseAuth _auth;
+
+  DashboardFirebaseDataSource({
+    FirebaseFirestore? firestore,
+    FirebaseAuth? auth,
+  })  : _firestore = firestore ?? FirebaseFirestore.instance,
+        _auth = auth ?? FirebaseAuth.instance;
+
+  /// Get current user ID
+  String? get _userId => _auth.currentUser?.uid;
+
+  /// Get user's document reference
+  DocumentReference? get _userRef {
+    final userId = _userId;
+    if (userId == null) return null;
+    return _firestore.collection('users').doc(userId);
+  }
+
+  /// Fetch dashboard data from Firebase
+  /// Uses parallel queries for maximum performance
+  /// Leverages Firestore's built-in cache with Source.serverAndCache
+  Future<DashboardSummary> fetchDashboardData({
+    required DashboardParams params,
+    bool forceNetwork = false,
+  }) async {
+    final userRef = _userRef;
+    if (userRef == null) {
+      throw Exception('User not authenticated');
+    }
+
+    final stopwatch = Stopwatch()..start();
+    final (startDate, endDate) = params.getDateRange();
+
+    // Use cache source unless forced to network
+    // Note: AggregateSource only supports server, but regular queries support cache
+    final source = forceNetwork ? Source.server : Source.serverAndCache;
+
+    try {
+      // Execute ALL queries in parallel for maximum speed
+      final results = await Future.wait([
+        // Count aggregations (0-5) - always from server but very fast
+        userRef.collection('bills').count().get(),
+        userRef.collection('customers').count().get(),
+        userRef.collection('products').count().get(),
+        userRef.collection('suppliers').count().get(),
+        userRef.collection('purchases').count().get(),
+        userRef.collection('companies').count().get(),
+        // Data queries with date filtering (6-8) - can use cache
+        _getBillsForPeriod(userRef, startDate, endDate, source),
+        _getPurchasesForPeriod(userRef, startDate, endDate, source),
+        _getProductsSnapshot(userRef, source),
+      ]);
+
+      // Extract count results
+      final invoicesCount = (results[0] as AggregateQuerySnapshot).count ?? 0;
+      final clientsCount = (results[1] as AggregateQuerySnapshot).count ?? 0;
+      final productsCount = (results[2] as AggregateQuerySnapshot).count ?? 0;
+      final suppliersCount = (results[3] as AggregateQuerySnapshot).count ?? 0;
+      final purchasesCount = (results[4] as AggregateQuerySnapshot).count ?? 0;
+      final companiesCount = (results[5] as AggregateQuerySnapshot).count ?? 0;
+
+      // Extract query results
+      final billsSnapshot = results[6] as QuerySnapshot;
+      final purchasesSnapshot = results[7] as QuerySnapshot;
+      final productsSnapshot = results[8] as QuerySnapshot;
+
+      // Calculate metrics in a single pass
+      final salesMetrics = _calculateSalesMetrics(billsSnapshot);
+      final purchaseMetrics = _calculatePurchaseMetrics(purchasesSnapshot);
+      final stockMetrics = _calculateStockMetrics(productsSnapshot);
+
+      // Calculate profit
+      final profit = salesMetrics.totalAmount - purchaseMetrics.totalAmount;
+      final profitPercentage = salesMetrics.totalAmount > 0
+          ? (profit / salesMetrics.totalAmount) * 100
+          : 0.0;
+
+      stopwatch.stop();
+      print(
+        '[DashboardFirebaseDataSource] Data loaded in ${stopwatch.elapsedMilliseconds}ms',
+      );
+
+      return DashboardSummary(
+        invoicesCount: invoicesCount,
+        clientsCount: clientsCount,
+        productsCount: productsCount,
+        suppliersCount: suppliersCount,
+        purchasesCount: purchasesCount,
+        companiesCount: companiesCount,
+        totalSales: salesMetrics.totalAmount,
+        totalBillsCount: salesMetrics.count,
+        totalItemsSold: salesMetrics.itemCount,
+        totalPurchases: purchaseMetrics.totalAmount,
+        purchaseOrders: purchaseMetrics.count,
+        purchaseQty: purchaseMetrics.itemCount,
+        profit: profit,
+        profitPercentage: profitPercentage,
+        stockValue: stockMetrics.stockValue,
+        lowStockCount: stockMetrics.lowStockCount,
+        lastUpdated: DateTime.now(),
+        isFromCache: false,
+      );
+    } catch (e) {
+      print('[DashboardFirebaseDataSource] Error: $e');
+      rethrow;
+    }
+  }
+
+  /// Stream dashboard data using Firestore snapshots for real-time updates
+  Stream<DashboardSummary> watchDashboardData({required DashboardParams params}) async* {
+    final userRef = _userRef;
+    if (userRef == null) {
+      throw Exception('User not authenticated');
+    }
+
+    // First emit cached data if available (handled by repository)
+    // Then stream real-time updates
+
+    // For simplicity, we'll poll every 30 seconds
+    // In production, consider using Firestore snapshots for specific collections
+    while (true) {
+      try {
+        yield await fetchDashboardData(params: params);
+        await Future.delayed(const Duration(seconds: 30));
+      } catch (e) {
+        print('[DashboardFirebaseDataSource] Stream error: $e');
+        await Future.delayed(const Duration(seconds: 5));
+      }
+    }
+  }
+
+  /// Get bills with optional date filtering
+  Future<QuerySnapshot> _getBillsForPeriod(
+    DocumentReference userRef,
+    DateTime? startDate,
+    DateTime? endDate,
+    Source source,
+  ) async {
+    Query query = userRef.collection('bills');
+
+    if (startDate != null) {
+      query = query.where(
+        'billDate',
+        isGreaterThanOrEqualTo: Timestamp.fromDate(startDate),
+      );
+    }
+    if (endDate != null) {
+      query = query.where(
+        'billDate',
+        isLessThanOrEqualTo: Timestamp.fromDate(endDate),
+      );
+    }
+
+    return query.get(GetOptions(source: source));
+  }
+
+  /// Get purchases with optional date filtering
+  Future<QuerySnapshot> _getPurchasesForPeriod(
+    DocumentReference userRef,
+    DateTime? startDate,
+    DateTime? endDate,
+    Source source,
+  ) async {
+    Query query = userRef.collection('purchases');
+
+    if (startDate != null) {
+      query = query.where(
+        'createdAt',
+        isGreaterThanOrEqualTo: Timestamp.fromDate(startDate),
+      );
+    }
+    if (endDate != null) {
+      query = query.where(
+        'createdAt',
+        isLessThanOrEqualTo: Timestamp.fromDate(endDate),
+      );
+    }
+
+    return query.get(GetOptions(source: source));
+  }
+
+  /// Get products snapshot
+  Future<QuerySnapshot> _getProductsSnapshot(
+    DocumentReference userRef,
+    Source source,
+  ) async {
+    return userRef.collection('products').get(GetOptions(source: source));
+  }
+
+  /// Calculate sales metrics from bills snapshot
+  _SalesMetrics _calculateSalesMetrics(QuerySnapshot billsSnapshot) {
+    double totalAmount = 0;
+    int itemCount = 0;
+
+    for (var doc in billsSnapshot.docs) {
+      final data = doc.data() as Map<String, dynamic>?;
+      if (data != null) {
+        totalAmount += (data['totalAmount'] as num?)?.toDouble() ?? 0;
+        final items = data['items'] as List<dynamic>? ?? [];
+        for (var item in items) {
+          itemCount += (item['quantity'] as num?)?.toInt() ?? 0;
+        }
+      }
+    }
+
+    return _SalesMetrics(
+      totalAmount: totalAmount,
+      count: billsSnapshot.docs.length,
+      itemCount: itemCount,
+    );
+  }
+
+  /// Calculate purchase metrics from purchases snapshot
+  _PurchaseMetrics _calculatePurchaseMetrics(QuerySnapshot purchasesSnapshot) {
+    double totalAmount = 0;
+    int itemCount = 0;
+
+    for (var doc in purchasesSnapshot.docs) {
+      final data = doc.data() as Map<String, dynamic>?;
+      if (data != null) {
+        totalAmount += (data['totalAmount'] as num?)?.toDouble() ?? 0;
+        itemCount += (data['quantity'] as num?)?.toInt() ?? 0;
+      }
+    }
+
+    return _PurchaseMetrics(
+      totalAmount: totalAmount,
+      count: purchasesSnapshot.docs.length,
+      itemCount: itemCount,
+    );
+  }
+
+  /// Calculate stock metrics from products snapshot
+  _StockMetrics _calculateStockMetrics(QuerySnapshot productsSnapshot) {
+    double stockValue = 0;
+    int lowStockCount = 0;
+
+    for (var doc in productsSnapshot.docs) {
+      final data = doc.data() as Map<String, dynamic>;
+      final currentStock = (data['currentStock'] as num?)?.toInt() ?? 0;
+      final purchasePrice = (data['purchasePrice'] as num?)?.toDouble() ?? 0;
+      stockValue += currentStock * purchasePrice;
+      if (currentStock < 10 && currentStock > 0) {
+        lowStockCount++;
+      }
+    }
+
+    return _StockMetrics(
+      stockValue: stockValue,
+      lowStockCount: lowStockCount,
+    );
+  }
+}
+
+/// Internal class for sales metrics calculation
+class _SalesMetrics {
+  final double totalAmount;
+  final int count;
+  final int itemCount;
+
+  _SalesMetrics({
+    required this.totalAmount,
+    required this.count,
+    required this.itemCount,
+  });
+}
+
+/// Internal class for purchase metrics calculation
+class _PurchaseMetrics {
+  final double totalAmount;
+  final int count;
+  final int itemCount;
+
+  _PurchaseMetrics({
+    required this.totalAmount,
+    required this.count,
+    required this.itemCount,
+  });
+}
+
+/// Internal class for stock metrics calculation
+class _StockMetrics {
+  final double stockValue;
+  final int lowStockCount;
+
+  _StockMetrics({
+    required this.stockValue,
+    required this.lowStockCount,
+  });
+}

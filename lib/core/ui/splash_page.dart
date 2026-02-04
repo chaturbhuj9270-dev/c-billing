@@ -7,7 +7,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../features/authentication/presentation/pages/login.dart';
 import '../../features/authentication/presentation/widgets/biometric_auth_overlay.dart';
 import '../../features/authentication/presentation/cubit/biometric_cubit.dart';
-import '../../features/dashboard/presentation/pages/dashboard_page.dart';
+import '../../features/dashboard/presentation/pages/optimized_dashboard_page.dart';
 import '../../core/services/biometric_service.dart';
 import '../services/credentials_manager.dart';
 
@@ -177,7 +177,7 @@ class _SplashPageState extends State<SplashPage> {
   void _navigateToDashboard() {
     if (mounted) {
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const DashboardPage()),
+        MaterialPageRoute(builder: (_) => const OptimizedDashboardPage()),
       );
     }
   }
