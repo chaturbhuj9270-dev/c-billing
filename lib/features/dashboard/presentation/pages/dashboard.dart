@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
 import '../../../customer/presentation/pages/customer_page.dart';
 import '../../../supplier/presentation/pages/supplier_page.dart';
 import '../../../company/presentation/pages/company_page.dart';
@@ -10,6 +12,7 @@ import '../../../billing/presentation/pages/billing_page.dart';
 import '../../../billing/presentation/pages/bills_list_page.dart';
 import '../../../../core/services/session_manager.dart';
 import '../../../../core/services/credentials_manager.dart';
+import '../../../../core/services/dashboard_inventory_service.dart';
 import '../../../../common_widgets/welcome_card.dart';
 import 'flyout_menu.dart';
 
@@ -24,8 +27,30 @@ class _DashboardPageState extends State<DashboardPage>
     with TickerProviderStateMixin {
   int _selectedIndex = 0;
   final _auth = FirebaseAuth.instance;
+  final _firestore = FirebaseFirestore.instance;
   late SessionManager _sessionManager;
   late CredentialsManager _credentialsManager;
+  late DashboardInventoryService _dashboardService;
+
+  // Dashboard data
+  bool _isLoading = true;
+  int _invoicesCount = 0;
+  int _clientsCount = 0;
+  int _productsCount = 0;
+  int _suppliersCount = 0;
+  int _purchasesCount = 0;
+  int _companiesCount = 0;
+  int _inventoryCount = 0;
+  double _totalSales = 0;
+  int _totalBillsCount = 0;
+  int _totalItemsSold = 0;
+  double _totalPurchases = 0;
+  int _purchaseOrders = 0;
+  int _purchaseQty = 0;
+  double _profit = 0;
+  double _profitPercentage = 0;
+  double _stockValue = 0;
+  int _lowStockCount = 0;
 
   // Main animation controller
   late AnimationController _mainAnimController;
@@ -47,6 +72,10 @@ class _DashboardPageState extends State<DashboardPage>
     super.initState();
     _sessionManager = SessionManager();
     _credentialsManager = CredentialsManager();
+    _dashboardService = DashboardInventoryService();
+
+    // Load dashboard data
+    _loadDashboardData();
 
     // Main fade animation
     _mainAnimController = AnimationController(
@@ -102,13 +131,13 @@ class _DashboardPageState extends State<DashboardPage>
       vsync: this,
       duration: const Duration(milliseconds: 200),
     );
-    _welcomeSlideAnimation = Tween<Offset>(
-      begin: const Offset(0, 1),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _welcomeController!,
-      curve: Curves.easeOutCubic,
-    ));
+    _welcomeSlideAnimation =
+        Tween<Offset>(begin: const Offset(0, 1), end: Offset.zero).animate(
+          CurvedAnimation(
+            parent: _welcomeController!,
+            curve: Curves.easeOutCubic,
+          ),
+        );
     _welcomeFadeAnimation = Tween<double>(begin: 0, end: 1).animate(
       CurvedAnimation(parent: _welcomeController!, curve: Curves.easeOut),
     );
@@ -147,6 +176,114 @@ class _DashboardPageState extends State<DashboardPage>
     _staggerController.dispose();
     _welcomeController?.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadDashboardData() async {
+    try {
+      // Get current month date range
+      final now = DateTime.now();
+      final startOfMonth = DateTime(now.year, now.month, 1);
+      final endOfMonth = DateTime(now.year, now.month + 1, 0, 23, 59, 59);
+
+      // Load counts from Firestore in parallel
+      final futures = await Future.wait([
+        _firestore.collection('bills').count().get(),
+        _firestore.collection('customers').count().get(),
+        _firestore.collection('products').count().get(),
+        _firestore.collection('suppliers').count().get(),
+        _firestore.collection('purchases').count().get(),
+        _firestore.collection('companies').count().get(),
+        _dashboardService.getDashboardSummary(
+          startDate: startOfMonth,
+          endDate: endOfMonth,
+        ),
+      ]);
+
+      // Get bills for this month to calculate items sold
+      final billsSnapshot = await _firestore
+          .collection('bills')
+          .where(
+            'billDate',
+            isGreaterThanOrEqualTo: Timestamp.fromDate(startOfMonth),
+          )
+          .where(
+            'billDate',
+            isLessThanOrEqualTo: Timestamp.fromDate(endOfMonth),
+          )
+          .get();
+
+      int totalItemsSold = 0;
+      for (var doc in billsSnapshot.docs) {
+        final items = doc.data()['items'] as List<dynamic>? ?? [];
+        for (var item in items) {
+          totalItemsSold += (item['quantity'] as num?)?.toInt() ?? 0;
+        }
+      }
+
+      final dashboardSummary = futures[6] as Map<String, dynamic>;
+
+      if (mounted) {
+        setState(() {
+          _invoicesCount = (futures[0] as AggregateQuerySnapshot).count ?? 0;
+          _clientsCount = (futures[1] as AggregateQuerySnapshot).count ?? 0;
+          _productsCount = (futures[2] as AggregateQuerySnapshot).count ?? 0;
+          _suppliersCount = (futures[3] as AggregateQuerySnapshot).count ?? 0;
+          _purchasesCount = (futures[4] as AggregateQuerySnapshot).count ?? 0;
+          _companiesCount = (futures[5] as AggregateQuerySnapshot).count ?? 0;
+          _inventoryCount = _productsCount;
+
+          // Sales data
+          _totalSales =
+              (dashboardSummary['totalSales']['amount'] as num?)?.toDouble() ??
+              0;
+          _totalBillsCount = billsSnapshot.docs.length;
+          _totalItemsSold = totalItemsSold;
+
+          // Purchase data
+          _totalPurchases =
+              (dashboardSummary['totalPurchases']['amount'] as num?)
+                  ?.toDouble() ??
+              0;
+          _purchaseOrders = _purchasesCount;
+          _purchaseQty =
+              (dashboardSummary['totalPurchases']['quantity'] as num?)
+                  ?.toInt() ??
+              0;
+
+          // Profit data
+          _profit = (dashboardSummary['profit'] as num?)?.toDouble() ?? 0;
+          _profitPercentage = _totalSales > 0
+              ? (_profit / _totalSales) * 100
+              : 0;
+
+          // Stock data
+          _stockValue =
+              (dashboardSummary['currentStockValue'] as num?)?.toDouble() ?? 0;
+          _lowStockCount =
+              (dashboardSummary['lowStockProductsCount'] as num?)?.toInt() ?? 0;
+
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      print('Error loading dashboard data: $e');
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  String _formatAmount(double amount) {
+    if (amount >= 10000000) {
+      return '₹${(amount / 10000000).toStringAsFixed(1)} Cr';
+    } else if (amount >= 100000) {
+      return '₹${(amount / 100000).toStringAsFixed(1)} L';
+    } else if (amount >= 1000) {
+      return '₹${(amount / 1000).toStringAsFixed(1)} K';
+    }
+    return '₹${amount.toStringAsFixed(0)}';
   }
 
   void _logout() {
@@ -196,9 +333,9 @@ class _DashboardPageState extends State<DashboardPage>
         break;
       case 3:
         // Navigate to Bills
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const BillingPage()),
-        );
+        Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (_) => const BillingPage()));
         break;
       case 4:
         // Navigate to Purchases
@@ -235,110 +372,129 @@ class _DashboardPageState extends State<DashboardPage>
             },
             body: FadeTransition(
               opacity: _fadeAnimation,
-              child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.all(20.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                // Quick Stats Section (Horizontal Scrollable)
-                _buildQuickStatsSection(),
-                const SizedBox(height: 28),
+              child: RefreshIndicator(
+                onRefresh: _loadDashboardData,
+                color: const Color(0xFF1B4D3E),
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  padding: const EdgeInsets.all(20.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Quick Stats Section (Horizontal Scrollable)
+                      _buildQuickStatsSection(),
+                      const SizedBox(height: 28),
 
-                // Sales & Profit Analysis Section
-                _buildAnimatedCard(
-                  index: 0,
-                  child: _buildSectionHeader(
-                    title: 'Sales & Profit Analysis',
-                    subtitle: 'January 2026',
-                    icon: Icons.analytics_outlined,
-                  ),
-                ),
-                const SizedBox(height: 20),
-
-                // Metric Cards Row
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildAnimatedCard(
-                        index: 1,
-                        child: _buildGradientMetricCard(
-                          title: 'Total Sales',
-                          amount: '₹20.4 K',
-                          subtitle: 'Bills: 7 • Items: 20',
-                          gradient: const LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [Color(0xFF667eea), Color(0xFF764ba2)],
-                          ),
-                          icon: Icons.trending_up_rounded,
+                      // Sales & Profit Analysis Section
+                      _buildAnimatedCard(
+                        index: 0,
+                        child: _buildSectionHeader(
+                          title: 'Sales & Profit Analysis',
+                          subtitle: DateFormat(
+                            'MMMM yyyy',
+                          ).format(DateTime.now()),
+                          icon: Icons.analytics_outlined,
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: _buildAnimatedCard(
-                        index: 2,
-                        child: _buildGradientMetricCard(
-                          title: 'Total Purchase',
-                          amount: '₹1.4 L',
-                          subtitle: 'Orders: 3 • Qty: 445',
-                          gradient: const LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [Color(0xFF757575), Color(0xFF424242)],
+                      const SizedBox(height: 20),
+
+                      // Metric Cards Row
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildAnimatedCard(
+                              index: 1,
+                              child: _buildGradientMetricCard(
+                                title: 'Total Sales',
+                                amount: _formatAmount(_totalSales),
+                                subtitle:
+                                    'Bills: $_totalBillsCount • Items: $_totalItemsSold',
+                                gradient: const LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: [
+                                    Color(0xFF667eea),
+                                    Color(0xFF764ba2),
+                                  ],
+                                ),
+                                icon: Icons.trending_up_rounded,
+                              ),
+                            ),
                           ),
-                          icon: Icons.shopping_bag_rounded,
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: _buildAnimatedCard(
+                              index: 2,
+                              child: _buildGradientMetricCard(
+                                title: 'Total Purchase',
+                                amount: _formatAmount(_totalPurchases),
+                                subtitle:
+                                    'Orders: $_purchaseOrders • Qty: $_purchaseQty',
+                                gradient: const LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: [
+                                    Color(0xFF757575),
+                                    Color(0xFF424242),
+                                  ],
+                                ),
+                                icon: Icons.shopping_bag_rounded,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Profit Card (Full Width)
+                      _buildAnimatedCard(index: 3, child: _buildProfitCard()),
+                      const SizedBox(height: 28),
+
+                      // Inventory Section Header
+                      _buildAnimatedCard(
+                        index: 4,
+                        child: _buildSectionHeader(
+                          title: 'Inventory & Payments',
+                          subtitle: 'Live status',
+                          icon: Icons.inventory_2_outlined,
                         ),
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
+                      const SizedBox(height: 20),
 
-                // Profit Card (Full Width)
-                _buildAnimatedCard(index: 3, child: _buildProfitCard()),
-                const SizedBox(height: 28),
+                      // Inventory Card
+                      _buildAnimatedCard(
+                        index: 5,
+                        child: _buildInventoryCard(),
+                      ),
+                      const SizedBox(height: 16),
 
-                // Inventory Section Header
-                _buildAnimatedCard(
-                  index: 4,
-                  child: _buildSectionHeader(
-                    title: 'Inventory & Payments',
-                    subtitle: 'Live status',
-                    icon: Icons.inventory_2_outlined,
+                      // Payments Card
+                      _buildAnimatedCard(index: 5, child: _buildPaymentsCard()),
+                      const SizedBox(height: 24),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 20),
-
-                // Inventory Card
-                _buildAnimatedCard(index: 5, child: _buildInventoryCard()),
-                const SizedBox(height: 16),
-
-                // Payments Card
-                _buildAnimatedCard(index: 5, child: _buildPaymentsCard()),
-                const SizedBox(height: 24),
-              ],
+              ),
             ),
           ),
-        ),
+          // Welcome snackbar overlay
+          if (_showWelcome &&
+              _welcomeSlideAnimation != null &&
+              _welcomeFadeAnimation != null)
+            Positioned(
+              left: 16,
+              right: 16,
+              bottom: 16,
+              child: SlideTransition(
+                position: _welcomeSlideAnimation!,
+                child: FadeTransition(
+                  opacity: _welcomeFadeAnimation!,
+                  child: const WelcomeCard(),
+                ),
+              ),
+            ),
+        ],
       ),
-      // Welcome snackbar overlay
-      if (_showWelcome && _welcomeSlideAnimation != null && _welcomeFadeAnimation != null)
-        Positioned(
-          left: 16,
-          right: 16,
-          bottom: 16,
-          child: SlideTransition(
-            position: _welcomeSlideAnimation!,
-            child: FadeTransition(
-              opacity: _welcomeFadeAnimation!,
-              child: const WelcomeCard(),
-            ),
-          ),
-        ),
-    ],
-  ),
       bottomNavigationBar: _buildBottomNavBar(),
     );
   }
@@ -540,7 +696,10 @@ class _DashboardPageState extends State<DashboardPage>
               ],
             ),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.2), width: 1.5),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.2),
+              width: 1.5,
+            ),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.1),
@@ -612,10 +771,16 @@ class _DashboardPageState extends State<DashboardPage>
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [const Color(0xFF4CAF50).withValues(alpha: 0.7), const Color(0xFF2E7D32).withValues(alpha: 0.7)],
+              colors: [
+                const Color(0xFF4CAF50).withValues(alpha: 0.7),
+                const Color(0xFF2E7D32).withValues(alpha: 0.7),
+              ],
             ),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.2), width: 1.5),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.2),
+              width: 1.5,
+            ),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.1),
@@ -644,14 +809,16 @@ class _DashboardPageState extends State<DashboardPage>
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(
-                                Icons.arrow_upward_rounded,
+                              Icon(
+                                _profitPercentage >= 0
+                                    ? Icons.arrow_upward_rounded
+                                    : Icons.arrow_downward_rounded,
                                 color: Colors.white,
                                 size: 14,
                               ),
                               const SizedBox(width: 4),
                               Text(
-                                '+28%',
+                                '${_profitPercentage >= 0 ? '+' : ''}${_profitPercentage.toStringAsFixed(0)}%',
                                 style: TextStyle(
                                   color: Colors.white.withValues(alpha: 0.95),
                                   fontSize: 11,
@@ -665,9 +832,9 @@ class _DashboardPageState extends State<DashboardPage>
                       ],
                     ),
                     const SizedBox(height: 12),
-                    const Text(
-                      '₹5.7 K',
-                      style: TextStyle(
+                    Text(
+                      _formatAmount(_profit),
+                      style: const TextStyle(
                         color: Colors.white,
                         fontSize: 32,
                         fontWeight: FontWeight.w800,
@@ -694,7 +861,7 @@ class _DashboardPageState extends State<DashboardPage>
                   color: Colors.white.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.trending_up_rounded,
                   color: Colors.white,
                   size: 36,
@@ -760,9 +927,9 @@ class _DashboardPageState extends State<DashboardPage>
                       color: Color(0xFF1B4D3E).withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Text(
-                      '3 Available',
-                      style: TextStyle(
+                    child: Text(
+                      '$_productsCount Products',
+                      style: const TextStyle(
                         color: Color(0xFF1B4D3E),
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
@@ -777,8 +944,8 @@ class _DashboardPageState extends State<DashboardPage>
                 children: [
                   Expanded(
                     child: _buildGlassMiniMetric(
-                      title: 'Total Quantity',
-                      value: '426',
+                      title: 'Low Stock',
+                      value: '$_lowStockCount',
                       subtitle: 'items',
                     ),
                   ),
@@ -786,7 +953,7 @@ class _DashboardPageState extends State<DashboardPage>
                   Expanded(
                     child: _buildGlassMiniMetric(
                       title: 'Stock Value',
-                      value: '₹1.3 L',
+                      value: _formatAmount(_stockValue),
                       subtitle: 'worth',
                     ),
                   ),
@@ -979,7 +1146,10 @@ class _DashboardPageState extends State<DashboardPage>
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: Color(0xFF1B4D3E).withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(10),
@@ -1103,57 +1273,57 @@ class _DashboardPageState extends State<DashboardPage>
             children: [
               _buildQuickStatCard(
                 icon: Icons.receipt_long_rounded,
-                value: '24',
+                value: _isLoading ? '...' : '$_invoicesCount',
                 label: 'Invoices',
                 color: const Color(0xFF667eea),
               ),
               const SizedBox(width: 16),
               _buildQuickStatCard(
                 icon: Icons.people_rounded,
-                value: '156',
+                value: _isLoading ? '...' : '$_clientsCount',
                 label: 'Clients',
                 color: const Color(0xFF4CAF50),
               ),
               const SizedBox(width: 16),
               _buildQuickStatCard(
                 icon: Icons.inventory_2_rounded,
-                value: '89',
+                value: _isLoading ? '...' : '$_productsCount',
                 label: 'Products',
                 color: const Color(0xFFf093fb),
               ),
               const SizedBox(width: 16),
               _buildQuickStatCard(
                 icon: Icons.local_shipping_rounded,
-                value: '12',
+                value: _isLoading ? '...' : '$_suppliersCount',
                 label: 'Suppliers',
                 color: const Color(0xFFFF6B6B),
               ),
               const SizedBox(width: 16),
               _buildQuickStatCard(
                 icon: Icons.shopping_cart_rounded,
-                value: '8',
+                value: _isLoading ? '...' : '$_purchasesCount',
                 label: 'Purchases',
                 color: const Color(0xFF00BCD4),
               ),
               const SizedBox(width: 16),
               _buildQuickStatCard(
                 icon: Icons.apartment_rounded,
-                value: '5',
+                value: _isLoading ? '...' : '$_companiesCount',
                 label: 'Companies',
                 color: const Color(0xFF7B68EE),
               ),
               const SizedBox(width: 16),
               _buildQuickStatCard(
                 icon: Icons.warehouse_rounded,
-                value: '12',
+                value: _isLoading ? '...' : '$_inventoryCount',
                 label: 'Inventory',
                 color: const Color(0xFF4DB8A8),
               ),
               const SizedBox(width: 16),
               _buildQuickStatCard(
                 icon: Icons.bar_chart_rounded,
-                value: '3',
-                label: 'Reports',
+                value: _isLoading ? '...' : '$_lowStockCount',
+                label: 'Low Stock',
                 color: const Color(0xFF4A90E2),
               ),
             ],
@@ -1174,14 +1344,14 @@ class _DashboardPageState extends State<DashboardPage>
         // Navigate to related page based on label
         switch (label) {
           case 'Invoices':
-            Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const BillsListPage()),
-            );
+            Navigator.of(
+              context,
+            ).push(MaterialPageRoute(builder: (_) => const BillsListPage()));
             break;
           case 'Clients':
-            Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const CustomerPage()),
-            );
+            Navigator.of(
+              context,
+            ).push(MaterialPageRoute(builder: (_) => const CustomerPage()));
             break;
           case 'Products':
             Navigator.of(context).push(
@@ -1189,28 +1359,28 @@ class _DashboardPageState extends State<DashboardPage>
             );
             break;
           case 'Suppliers':
-            Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const SupplierPage()),
-            );
+            Navigator.of(
+              context,
+            ).push(MaterialPageRoute(builder: (_) => const SupplierPage()));
             break;
           case 'Purchases':
-            Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const PurchasePage()),
-            );
+            Navigator.of(
+              context,
+            ).push(MaterialPageRoute(builder: (_) => const PurchasePage()));
             break;
           case 'Companies':
-            Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const CompanyPage()),
-            );
+            Navigator.of(
+              context,
+            ).push(MaterialPageRoute(builder: (_) => const CompanyPage()));
             break;
           case 'Inventory':
             Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => const ProductManagementPage()),
             );
             break;
-          case 'Reports':
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Reports page coming soon')),
+          case 'Low Stock':
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const ProductManagementPage()),
             );
             break;
         }
@@ -1220,10 +1390,7 @@ class _DashboardPageState extends State<DashboardPage>
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: color.withOpacity(0.2),
-            width: 1.5,
-          ),
+          border: Border.all(color: color.withOpacity(0.2), width: 1.5),
           boxShadow: [
             BoxShadow(
               color: color.withOpacity(0.1),
