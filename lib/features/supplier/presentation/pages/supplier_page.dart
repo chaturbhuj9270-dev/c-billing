@@ -17,6 +17,7 @@ class _SupplierPageState extends State<SupplierPage> {
   final _lastNameController = TextEditingController();
   final _contactController = TextEditingController();
   final _addressController = TextEditingController();
+  final _searchController = TextEditingController();
 
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
@@ -42,12 +43,14 @@ class _SupplierPageState extends State<SupplierPage> {
     _sessionManager = SessionManager();
     _checkUserAuthentication();
     _loadSuppliers();
+    _searchController.addListener(_filterAndSearchSuppliers);
   }
 
   @override
   void dispose() {
     _isNavigatingAway = true; // Signal async operations to stop
     _filterDebounceTimer?.cancel();
+    _searchController.dispose();
     _firstNameController.dispose();
     _middleNameController.dispose();
     _lastNameController.dispose();
@@ -100,6 +103,30 @@ class _SupplierPageState extends State<SupplierPage> {
     setState(() {
       _isSortAscending = !_isSortAscending;
       _applySorting();
+    });
+  }
+
+  void _filterAndSearchSuppliers() {
+    _filterDebounceTimer?.cancel();
+    _filterDebounceTimer = Timer(const Duration(milliseconds: 300), () {
+      setState(() {
+        final query = _searchController.text.toLowerCase();
+        if (query.isEmpty) {
+          _filteredSuppliers = List.from(_suppliers);
+        } else {
+          _filteredSuppliers = _suppliers.where((supplier) {
+            final firstName = (supplier['firstName'] ?? '').toString().toLowerCase();
+            final lastName = (supplier['lastName'] ?? '').toString().toLowerCase();
+            final contact = (supplier['contact'] ?? '').toString().toLowerCase();
+            final address = (supplier['address'] ?? '').toString().toLowerCase();
+            return firstName.contains(query) ||
+                lastName.contains(query) ||
+                contact.contains(query) ||
+                address.contains(query);
+          }).toList();
+        }
+        _applySorting();
+      });
     });
   }
 
@@ -688,6 +715,7 @@ class _SupplierPageState extends State<SupplierPage> {
                       children: [
                         Expanded(
                           child: TextField(
+                            controller: _searchController,
                             style: const TextStyle(
                               fontSize: 14,
                               fontFamily: 'Literata',
@@ -700,11 +728,21 @@ class _SupplierPageState extends State<SupplierPage> {
                                 fontFamily: 'Literata',
                               ),
                               prefixIcon: Icon(Icons.search_rounded, color: Colors.grey[600], size: 20),
+                              suffixIcon: _searchController.text.isNotEmpty
+                                  ? GestureDetector(
+                                      onTap: () {
+                                        _searchController.clear();
+                                      },
+                                      child: Icon(Icons.close, color: Colors.grey[600], size: 18),
+                                    )
+                                  : null,
                               border: InputBorder.none,
                               contentPadding: const EdgeInsets.symmetric(vertical: 12),
                               isDense: true,
                             ),
-                            onChanged: (_) {},
+                            onChanged: (_) {
+                              setState(() {});
+                            },
                           ),
                         ),
                       ],

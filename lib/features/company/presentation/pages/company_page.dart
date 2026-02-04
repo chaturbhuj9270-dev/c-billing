@@ -16,6 +16,7 @@ class _CompanyPageState extends State<CompanyPage> {
   final _supplierSearchController = TextEditingController();
   final _contactController = TextEditingController();
   final _addressController = TextEditingController();
+  final _searchController = TextEditingController();
 
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
@@ -44,12 +45,37 @@ class _CompanyPageState extends State<CompanyPage> {
     _loadSuppliers();
     _loadCompanies();
     _supplierSearchController.addListener(_filterSuppliers);
+    _searchController.addListener(_filterAndSearchCompanies);
   }
 
   void _toggleSort() {
     setState(() {
       _isSortAscending = !_isSortAscending;
       _applyCompanySorting();
+    });
+  }
+
+  void _filterAndSearchCompanies() {
+    _filterDebounceTimer?.cancel();
+    _filterDebounceTimer = Timer(const Duration(milliseconds: 300), () {
+      setState(() {
+        final query = _searchController.text.toLowerCase();
+        if (query.isEmpty) {
+          _filteredCompanies = List.from(_companies);
+        } else {
+          _filteredCompanies = _companies.where((company) {
+            final name = (company['companyName'] ?? '').toString().toLowerCase();
+            final contact = (company['contact'] ?? '').toString().toLowerCase();
+            final contactPerson = (company['contactPerson'] ?? '').toString().toLowerCase();
+            final address = (company['address'] ?? '').toString().toLowerCase();
+            return name.contains(query) ||
+                contact.contains(query) ||
+                contactPerson.contains(query) ||
+                address.contains(query);
+          }).toList();
+        }
+        _applyCompanySorting();
+      });
     });
   }
 
@@ -820,6 +846,7 @@ class _CompanyPageState extends State<CompanyPage> {
     _supplierSearchController.dispose();
     _contactController.dispose();
     _addressController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -949,6 +976,7 @@ class _CompanyPageState extends State<CompanyPage> {
                       children: [
                         Expanded(
                           child: TextField(
+                            controller: _searchController,
                             style: const TextStyle(
                               fontSize: 14,
                               fontFamily: 'Literata',
@@ -961,11 +989,21 @@ class _CompanyPageState extends State<CompanyPage> {
                                 fontFamily: 'Literata',
                               ),
                               prefixIcon: Icon(Icons.search_rounded, color: Colors.grey[600], size: 20),
+                              suffixIcon: _searchController.text.isNotEmpty
+                                  ? GestureDetector(
+                                      onTap: () {
+                                        _searchController.clear();
+                                      },
+                                      child: Icon(Icons.close, color: Colors.grey[600], size: 18),
+                                    )
+                                  : null,
                               border: InputBorder.none,
                               contentPadding: const EdgeInsets.symmetric(vertical: 12),
                               isDense: true,
                             ),
-                            onChanged: (_) {},
+                            onChanged: (_) {
+                              setState(() {});
+                            },
                           ),
                         ),
                       ],
