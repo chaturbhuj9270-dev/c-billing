@@ -183,26 +183,94 @@ class _BillsListPageState extends State<BillsListPage>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F6F8),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF1B4D3E),
-        title: const Text(
-          'Bills History',
-          style: TextStyle(
-            fontFamily: 'Literata',
-            fontWeight: FontWeight.w700,
-            color: Colors.white,
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(70),
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Color(0xFF1B4D3E), Color(0xFF0F3B2F)],
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF1B4D3E).withOpacity(0.2),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: SafeArea(
+            bottom: false,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Row(
+                children: [
+                  GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(
+                        Icons.arrow_back,
+                        color: Colors.white,
+                        size: 22,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text(
+                          'Bills History',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 22,
+                            fontWeight: FontWeight.w700,
+                            fontFamily: 'Literata',
+                            height: 1.2,
+                          ),
+                        ),
+                        Text(
+                          'View all transactions',
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.7),
+                            fontSize: 11,
+                            fontFamily: 'Literata',
+                            height: 1.2,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: _loadBills,
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(
+                        Icons.refresh,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh, color: Colors.white),
-            onPressed: _loadBills,
-          ),
-        ],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -233,7 +301,7 @@ class _BillsListPageState extends State<BillsListPage>
           Expanded(
             child: _buildStatCard(
               'Total Sales',
-              '₹${_totalSales.toStringAsFixed(2)}',
+              '₹${_formatAmount(_totalSales)}',
               Icons.currency_rupee,
               const Color(0xFF1B4D3E),
             ),
@@ -250,10 +318,10 @@ class _BillsListPageState extends State<BillsListPage>
           const SizedBox(width: 12),
           Expanded(
             child: _buildStatCard(
-              'Avg. Bill Value',
+              'Avg. Bill',
               _totalBillsCount > 0
-                  ? '₹${(_totalSales / _totalBillsCount).toStringAsFixed(2)}'
-                  : '₹0.00',
+                  ? '₹${_formatAmount(_totalSales / _totalBillsCount)}'
+                  : '₹0',
               Icons.analytics,
               const Color(0xFFFF9800),
             ),
@@ -263,6 +331,15 @@ class _BillsListPageState extends State<BillsListPage>
     );
   }
 
+  String _formatAmount(double amount) {
+    if (amount >= 100000) {
+      return '${(amount / 100000).toStringAsFixed(1)}L';
+    } else if (amount >= 1000) {
+      return '${(amount / 1000).toStringAsFixed(1)}K';
+    }
+    return amount.toStringAsFixed(0);
+  }
+
   Widget _buildStatCard(
     String title,
     String value,
@@ -270,51 +347,73 @@ class _BillsListPageState extends State<BillsListPage>
     Color color,
   ) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      constraints: const BoxConstraints(minHeight: 100),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Colors.white, Colors.white.withOpacity(0.95)],
+        ),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: color.withOpacity(0.15), width: 1.5),
         boxShadow: [
           BoxShadow(
+            color: color.withOpacity(0.12),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+            spreadRadius: 2,
+          ),
+          BoxShadow(
             color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(icon, color: color, size: 20),
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [color.withOpacity(0.2), color.withOpacity(0.08)],
               ),
-            ],
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: color.withOpacity(0.25), width: 1),
+            ),
+            child: Icon(icon, color: color, size: 18),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           Text(
             value,
             style: TextStyle(
               fontFamily: 'Literata',
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
+              fontSize: 18,
+              fontWeight: FontWeight.w900,
               color: color,
+              letterSpacing: -0.5,
+              height: 1.1,
             ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: 4),
           Text(
             title,
             style: TextStyle(
               fontFamily: 'Literata',
-              fontSize: 12,
-              color: Colors.grey[600],
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+              color: Colors.grey[700],
+              letterSpacing: 0.2,
             ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),
@@ -331,133 +430,175 @@ class _BillsListPageState extends State<BillsListPage>
             controller: _searchController,
             onChanged: _filterBills,
             decoration: InputDecoration(
-              hintText: 'Search bills by customer or ID...',
-              prefixIcon: const Icon(Icons.search, color: Color(0xFF1B4D3E)),
+              hintText: 'Search bills...',
+              hintStyle: TextStyle(
+                fontFamily: 'Literata',
+                fontSize: 14,
+                color: Colors.grey[500],
+              ),
+              prefixIcon: const Icon(
+                Icons.search,
+                color: Color(0xFF1B4D3E),
+                size: 20,
+              ),
               filled: true,
               fillColor: Colors.white,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 12,
+              ),
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(10),
                 borderSide: BorderSide.none,
               ),
               focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(10),
                 borderSide: const BorderSide(
                   color: Color(0xFF1B4D3E),
-                  width: 2,
+                  width: 1.5,
                 ),
               ),
             ),
+            style: const TextStyle(fontFamily: 'Literata', fontSize: 14),
           ),
-          const SizedBox(height: 12),
-          // Filter row
-          Row(
-            children: [
-              // Date filter button
-              GestureDetector(
-                onTap: _showDateFilterDialog,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: _startDate != null
-                        ? const Color(0xFF1B4D3E)
-                        : Colors.white,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: _startDate != null
-                          ? const Color(0xFF1B4D3E)
-                          : Colors.grey[300]!,
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.date_range,
-                        size: 18,
-                        color: _startDate != null
-                            ? Colors.white
-                            : Colors.grey[600],
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        _startDate != null
-                            ? '${DateFormat('dd/MM').format(_startDate!)} - ${DateFormat('dd/MM').format(_endDate!)}'
-                            : 'Date Filter',
-                        style: TextStyle(
-                          fontFamily: 'Literata',
-                          fontSize: 12,
-                          color: _startDate != null
-                              ? Colors.white
-                              : Colors.grey[600],
+          const SizedBox(height: 10),
+          // Filter row - responsive
+          LayoutBuilder(
+            builder: (context, constraints) {
+              return Row(
+                children: [
+                  // Date filter button - flexible
+                  Flexible(
+                    child: GestureDetector(
+                      onTap: _showDateFilterDialog,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 8,
                         ),
-                      ),
-                      if (_startDate != null) ...[
-                        const SizedBox(width: 4),
-                        GestureDetector(
-                          onTap: _clearDateFilter,
-                          child: const Icon(
-                            Icons.close,
-                            size: 16,
-                            color: Colors.white,
+                        decoration: BoxDecoration(
+                          color: _startDate != null
+                              ? const Color(0xFF1B4D3E)
+                              : Colors.white,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: _startDate != null
+                                ? const Color(0xFF1B4D3E)
+                                : Colors.grey[300]!,
                           ),
                         ),
-                      ],
-                    ],
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.date_range,
+                              size: 16,
+                              color: _startDate != null
+                                  ? Colors.white
+                                  : Colors.grey[600],
+                            ),
+                            const SizedBox(width: 4),
+                            Flexible(
+                              child: Text(
+                                _startDate != null
+                                    ? '${DateFormat('dd/MM').format(_startDate!)} - ${DateFormat('dd/MM').format(_endDate!)}'
+                                    : 'Date',
+                                style: TextStyle(
+                                  fontFamily: 'Literata',
+                                  fontSize: 11,
+                                  color: _startDate != null
+                                      ? Colors.white
+                                      : Colors.grey[600],
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
+                              ),
+                            ),
+                            if (_startDate != null) ...[
+                              const SizedBox(width: 2),
+                              GestureDetector(
+                                onTap: _clearDateFilter,
+                                child: const Icon(
+                                  Icons.close,
+                                  size: 14,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-              ),
-              const Spacer(),
-              // Sort dropdown
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.grey[300]!),
-                ),
-                child: DropdownButton<String>(
-                  value: _sortOrder,
-                  underline: const SizedBox.shrink(),
-                  icon: const Icon(Icons.sort, size: 18),
-                  items: const [
-                    DropdownMenuItem(
-                      value: 'newest',
-                      child: Text('Newest First'),
+                  const SizedBox(width: 8),
+                  // Sort dropdown - constrained
+                  Container(
+                    constraints: BoxConstraints(
+                      maxWidth: constraints.maxWidth * 0.45,
                     ),
-                    DropdownMenuItem(
-                      value: 'oldest',
-                      child: Text('Oldest First'),
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.grey[300]!),
                     ),
-                    DropdownMenuItem(
-                      value: 'highest',
-                      child: Text('Highest Amount'),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        value: _sortOrder,
+                        isDense: true,
+                        isExpanded: true,
+                        icon: const Icon(Icons.keyboard_arrow_down, size: 18),
+                        items: const [
+                          DropdownMenuItem(
+                            value: 'newest',
+                            child: Text(
+                              'Newest',
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          DropdownMenuItem(
+                            value: 'oldest',
+                            child: Text(
+                              'Oldest',
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          DropdownMenuItem(
+                            value: 'highest',
+                            child: Text(
+                              'Highest ₹',
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          DropdownMenuItem(
+                            value: 'lowest',
+                            child: Text(
+                              'Lowest ₹',
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                        onChanged: (value) {
+                          if (value != null) {
+                            setState(() {
+                              _sortOrder = value;
+                              _applySorting();
+                            });
+                          }
+                        },
+                        style: const TextStyle(
+                          fontFamily: 'Literata',
+                          fontSize: 12,
+                          color: Colors.black,
+                        ),
+                      ),
                     ),
-                    DropdownMenuItem(
-                      value: 'lowest',
-                      child: Text('Lowest Amount'),
-                    ),
-                  ],
-                  onChanged: (value) {
-                    if (value != null) {
-                      setState(() {
-                        _sortOrder = value;
-                        _applySorting();
-                      });
-                    }
-                  },
-                  style: const TextStyle(
-                    fontFamily: 'Literata',
-                    fontSize: 12,
-                    color: Colors.black,
                   ),
-                ),
-              ),
-            ],
+                ],
+              );
+            },
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
         ],
       ),
     );
@@ -513,31 +654,30 @@ class _BillsListPageState extends State<BillsListPage>
   }
 
   Widget _buildBillCard(Bill bill) {
-    final dateFormat = DateFormat('dd MMM yyyy, hh:mm a');
+    final dateFormat = DateFormat('dd MMM, hh:mm a');
 
     return GestureDetector(
       onTap: () => _showBillDetails(bill),
       child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
+        margin: const EdgeInsets.only(bottom: 10),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
             ),
           ],
         ),
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header row
+              // Header row - bill number and date
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Container(
                     padding: const EdgeInsets.symmetric(
@@ -546,60 +686,69 @@ class _BillsListPageState extends State<BillsListPage>
                     ),
                     decoration: BoxDecoration(
                       color: const Color(0xFF1B4D3E).withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
                       bill.billNumber,
                       style: const TextStyle(
                         fontFamily: 'Literata',
-                        fontSize: 12,
+                        fontSize: 11,
                         fontWeight: FontWeight.w600,
                         color: Color(0xFF1B4D3E),
                       ),
                     ),
                   ),
-                  Text(
-                    dateFormat.format(bill.billDate),
-                    style: TextStyle(
-                      fontFamily: 'Literata',
-                      fontSize: 12,
-                      color: Colors.grey[600],
+                  const Spacer(),
+                  Flexible(
+                    child: Text(
+                      dateFormat.format(bill.billDate),
+                      style: TextStyle(
+                        fontFamily: 'Literata',
+                        fontSize: 11,
+                        color: Colors.grey[600],
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
-              // Customer info
+              const SizedBox(height: 10),
+              // Customer info - responsive
               if (bill.hasCustomerInfo) ...[
                 Row(
                   children: [
                     Icon(
                       Icons.person_outline,
-                      size: 16,
+                      size: 14,
                       color: Colors.grey[600],
                     ),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: 4),
                     Expanded(
                       child: Text(
                         bill.customerName ?? 'Unknown',
                         style: const TextStyle(
                           fontFamily: 'Literata',
+                          fontSize: 13,
                           fontWeight: FontWeight.w600,
                         ),
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
                       ),
                     ),
                     if (bill.customerContact != null) ...[
+                      const SizedBox(width: 8),
                       Icon(
                         Icons.phone_outlined,
-                        size: 16,
-                        color: Colors.grey[600],
+                        size: 12,
+                        color: Colors.grey[500],
                       ),
-                      const SizedBox(width: 4),
+                      const SizedBox(width: 2),
                       Text(
                         bill.customerContact!,
                         style: TextStyle(
                           fontFamily: 'Literata',
-                          fontSize: 12,
+                          fontSize: 11,
                           color: Colors.grey[600],
                         ),
                       ),
@@ -608,25 +757,31 @@ class _BillsListPageState extends State<BillsListPage>
                 ),
                 const SizedBox(height: 8),
               ],
-              // Items and total
+              // Items count and total - responsive
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    '${bill.items.length} items • ${bill.totalQuantity} qty',
-                    style: TextStyle(
-                      fontFamily: 'Literata',
-                      fontSize: 12,
-                      color: Colors.grey[600],
+                  Expanded(
+                    child: Text(
+                      '${bill.items.length} items • ${bill.totalQuantity} qty',
+                      style: TextStyle(
+                        fontFamily: 'Literata',
+                        fontSize: 11,
+                        color: Colors.grey[600],
+                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  Text(
-                    '₹${bill.totalAmount.toStringAsFixed(2)}',
-                    style: const TextStyle(
-                      fontFamily: 'Literata',
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF1B4D3E),
+                  const SizedBox(width: 8),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      '₹${bill.totalAmount.toStringAsFixed(2)}',
+                      style: const TextStyle(
+                        fontFamily: 'Literata',
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF1B4D3E),
+                      ),
                     ),
                   ),
                 ],
