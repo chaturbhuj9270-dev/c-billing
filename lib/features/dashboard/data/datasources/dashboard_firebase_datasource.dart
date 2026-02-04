@@ -12,8 +12,8 @@ class DashboardFirebaseDataSource {
   DashboardFirebaseDataSource({
     FirebaseFirestore? firestore,
     FirebaseAuth? auth,
-  })  : _firestore = firestore ?? FirebaseFirestore.instance,
-        _auth = auth ?? FirebaseAuth.instance;
+  }) : _firestore = firestore ?? FirebaseFirestore.instance,
+       _auth = auth ?? FirebaseAuth.instance;
 
   /// Get current user ID
   String? get _userId => _auth.currentUser?.uid;
@@ -78,8 +78,8 @@ class DashboardFirebaseDataSource {
       final purchaseMetrics = _calculatePurchaseMetrics(purchasesSnapshot);
       final stockMetrics = _calculateStockMetrics(productsSnapshot);
 
-      // Calculate profit
-      final profit = salesMetrics.totalAmount - purchaseMetrics.totalAmount;
+      // Use profit calculated from sales (sale price after discount - purchase price)
+      final profit = salesMetrics.totalProfit;
       final profitPercentage = salesMetrics.totalAmount > 0
           ? (profit / salesMetrics.totalAmount) * 100
           : 0.0;
@@ -116,7 +116,9 @@ class DashboardFirebaseDataSource {
   }
 
   /// Stream dashboard data using Firestore snapshots for real-time updates
-  Stream<DashboardSummary> watchDashboardData({required DashboardParams params}) async* {
+  Stream<DashboardSummary> watchDashboardData({
+    required DashboardParams params,
+  }) async* {
     final userRef = _userRef;
     if (userRef == null) {
       throw Exception('User not authenticated');
@@ -197,17 +199,47 @@ class DashboardFirebaseDataSource {
   }
 
   /// Calculate sales metrics from bills snapshot
+  /// Uses finalAmount (after discount) for total sales
+  /// Calculates profit as: (selling price - purchase price) * quantity - discount portion
   _SalesMetrics _calculateSalesMetrics(QuerySnapshot billsSnapshot) {
-    double totalAmount = 0;
+    double totalAmount = 0; // Total after discounts (finalAmount)
+    double totalProfit = 0;
     int itemCount = 0;
 
     for (var doc in billsSnapshot.docs) {
       final data = doc.data() as Map<String, dynamic>?;
       if (data != null) {
-        totalAmount += (data['totalAmount'] as num?)?.toDouble() ?? 0;
+        // Use finalAmount if available (accounts for discounts), fallback to totalAmount
+        final finalAmount = (data['finalAmount'] as num?)?.toDouble();
+        final billTotalAmount = (data['totalAmount'] as num?)?.toDouble() ?? 0;
+        totalAmount += finalAmount ?? billTotalAmount;
+
+        // Calculate discount ratio for this bill
+        final discountAmount =
+            (data['discountAmount'] as num?)?.toDouble() ?? 0;
+        final discountRatio = billTotalAmount > 0
+            ? discountAmount / billTotalAmount
+            : 0.0;
+
+        // Process items to calculate profit
         final items = data['items'] as List<dynamic>? ?? [];
         for (var item in items) {
-          itemCount += (item['quantity'] as num?)?.toInt() ?? 0;
+          final quantity = (item['quantity'] as num?)?.toInt() ?? 0;
+          final sellingPrice = (item['sellingPrice'] as num?)?.toDouble() ?? 0;
+          final purchasePrice =
+              (item['purchasePrice'] as num?)?.toDouble() ?? 0;
+          final subtotal =
+              (item['subtotal'] as num?)?.toDouble() ??
+              (sellingPrice * quantity);
+
+          itemCount += quantity;
+
+          // Profit = (selling price - purchase price) * quantity - proportional discount
+          final itemRevenue = subtotal;
+          final itemCost = purchasePrice * quantity;
+          final itemDiscountPortion = itemRevenue * discountRatio;
+          final itemProfit = itemRevenue - itemDiscountPortion - itemCost;
+          totalProfit += itemProfit;
         }
       }
     }
@@ -216,6 +248,7 @@ class DashboardFirebaseDataSource {
       totalAmount: totalAmount,
       count: billsSnapshot.docs.length,
       itemCount: itemCount,
+      totalProfit: totalProfit,
     );
   }
 
@@ -254,10 +287,7 @@ class DashboardFirebaseDataSource {
       }
     }
 
-    return _StockMetrics(
-      stockValue: stockValue,
-      lowStockCount: lowStockCount,
-    );
+    return _StockMetrics(stockValue: stockValue, lowStockCount: lowStockCount);
   }
 }
 
@@ -266,11 +296,13 @@ class _SalesMetrics {
   final double totalAmount;
   final int count;
   final int itemCount;
+  final double totalProfit;
 
   _SalesMetrics({
     required this.totalAmount,
     required this.count,
     required this.itemCount,
+    required this.totalProfit,
   });
 }
 
@@ -292,8 +324,5 @@ class _StockMetrics {
   final double stockValue;
   final int lowStockCount;
 
-  _StockMetrics({
-    required this.stockValue,
-    required this.lowStockCount,
-  });
+  _StockMetrics({required this.stockValue, required this.lowStockCount});
 }

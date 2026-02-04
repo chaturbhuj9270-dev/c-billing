@@ -145,8 +145,9 @@ class BillingService {
       final result = await firestore.runTransaction<String>((
         transaction,
       ) async {
-        // Step 1: Verify and get current stock for all products
+        // Step 1: Verify and get current stock and purchase price for all products
         final productStocks = <String, int>{};
+        final productPurchasePrices = <String, double>{};
         final productRefs = <String, DocumentReference>{};
 
         for (final item in items) {
@@ -162,7 +163,10 @@ class BillingService {
             throw Exception('Product ${item.productName} not found');
           }
 
-          final currentStock = (productDoc.data()?['currentStock'] ?? 0) as int;
+          final data = productDoc.data();
+          final currentStock = (data?['currentStock'] ?? 0) as int;
+          final purchasePrice = ((data?['purchasePrice'] ?? 0) as num)
+              .toDouble();
 
           if (currentStock < item.quantity) {
             throw Exception(
@@ -171,6 +175,7 @@ class BillingService {
           }
 
           productStocks[item.productId] = currentStock;
+          productPurchasePrices[item.productId] = purchasePrice;
           productRefs[item.productId] = productRef;
         }
 
@@ -188,12 +193,13 @@ class BillingService {
         // Calculate final amount after discount
         final finalAmount = totalAmount - discountAmount;
 
-        // Update items with the bill ID
+        // Update items with the bill ID and purchase price for profit tracking
         final updatedItems = items
             .map(
               (item) => item.copyWith(
                 id: '${billRef.id}_${item.productId}',
                 billId: billRef.id,
+                purchasePrice: productPurchasePrices[item.productId] ?? 0.0,
               ),
             )
             .toList();

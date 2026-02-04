@@ -4,6 +4,8 @@ class BillItem {
   final String billId;
   final String productId;
   final String productName;
+  final double
+  purchasePrice; // Cost price at time of sale for profit calculation
   final double sellingPrice;
   final int quantity;
   final double subtotal;
@@ -13,10 +15,14 @@ class BillItem {
     required this.billId,
     required this.productId,
     required this.productName,
+    this.purchasePrice = 0.0,
     required this.sellingPrice,
     required this.quantity,
     required this.subtotal,
   });
+
+  /// Calculate profit for this item (before any bill-level discount)
+  double get itemProfit => (sellingPrice - purchasePrice) * quantity;
 
   /// Factory constructor to create from JSON (for Firebase)
   factory BillItem.fromJson(Map<String, dynamic> json) {
@@ -26,6 +32,7 @@ class BillItem {
         billId: (json['billId'] ?? '') as String,
         productId: (json['productId'] ?? '') as String,
         productName: (json['productName'] ?? '') as String,
+        purchasePrice: ((json['purchasePrice'] ?? 0) as num).toDouble(),
         sellingPrice: ((json['sellingPrice'] ?? 0) as num).toDouble(),
         quantity: (json['quantity'] ?? 0) as int,
         subtotal: ((json['subtotal'] ?? 0) as num).toDouble(),
@@ -38,6 +45,7 @@ class BillItem {
         billId: json['billId']?.toString() ?? '',
         productId: json['productId']?.toString() ?? '',
         productName: json['productName']?.toString() ?? 'Unknown Product',
+        purchasePrice: 0.0,
         sellingPrice: 0.0,
         quantity: 0,
         subtotal: 0.0,
@@ -52,6 +60,7 @@ class BillItem {
       'billId': billId,
       'productId': productId,
       'productName': productName,
+      'purchasePrice': purchasePrice,
       'sellingPrice': sellingPrice,
       'quantity': quantity,
       'subtotal': subtotal,
@@ -64,6 +73,7 @@ class BillItem {
     String? billId,
     String? productId,
     String? productName,
+    double? purchasePrice,
     double? sellingPrice,
     int? quantity,
     double? subtotal,
@@ -73,6 +83,7 @@ class BillItem {
       billId: billId ?? this.billId,
       productId: productId ?? this.productId,
       productName: productName ?? this.productName,
+      purchasePrice: purchasePrice ?? this.purchasePrice,
       sellingPrice: sellingPrice ?? this.sellingPrice,
       quantity: quantity ?? this.quantity,
       subtotal: subtotal ?? this.subtotal,
@@ -85,6 +96,7 @@ class BillItem {
     String billId = '',
     required String productId,
     required String productName,
+    double purchasePrice = 0.0,
     required double sellingPrice,
     required int quantity,
   }) {
@@ -93,6 +105,7 @@ class BillItem {
       billId: billId,
       productId: productId,
       productName: productName,
+      purchasePrice: purchasePrice,
       sellingPrice: sellingPrice,
       quantity: quantity,
       subtotal: sellingPrice * quantity,
