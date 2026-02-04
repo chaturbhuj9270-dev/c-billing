@@ -1236,9 +1236,9 @@ class _DashboardViewState extends State<_DashboardView>
       ),
       child: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               _buildNavItem(0, Icons.home_rounded, 'Home'),
               _buildNavItem(1, Icons.people_rounded, 'Clients'),
@@ -1267,8 +1267,8 @@ class _DashboardViewState extends State<_DashboardView>
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         padding: EdgeInsets.symmetric(
-          horizontal: isSelected ? 16 : 12,
-          vertical: 10,
+          horizontal: isSelected ? 12 : 8,
+          vertical: 8,
         ),
         decoration: BoxDecoration(
           gradient: isSelected

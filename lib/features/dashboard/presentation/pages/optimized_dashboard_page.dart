@@ -433,49 +433,61 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
   }
 
   Widget _buildQuickStatsSection(DashboardSummary data, bool isLoading) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      physics: const BouncingScrollPhysics(),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
+          _buildQuickStatItem(
+            icon: Icons.receipt_long_outlined,
+            value: '${data.invoicesCount}',
+            label: 'Invoices',
+            color: const Color(0xFF667eea),
+            isLoading: isLoading,
+            onTap: () => Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const BillsListPage())),
+          ),
+          const SizedBox(width: 12),
           _buildQuickStatItem(
             icon: Icons.people_outline,
             value: '${data.clientsCount}',
             label: 'Customers',
-            color: const Color(0xFF667eea),
+            color: const Color(0xFF4CAF50),
             isLoading: isLoading,
             onTap: () => Navigator.push(context,
                 MaterialPageRoute(builder: (_) => const CustomerPage())),
           ),
+          const SizedBox(width: 12),
           _buildQuickStatItem(
             icon: Icons.inventory_2_outlined,
             value: '${data.productsCount}',
             label: 'Products',
-            color: const Color(0xFF4CAF50),
+            color: const Color(0xFFf093fb),
             isLoading: isLoading,
             onTap: () => Navigator.push(context,
                 MaterialPageRoute(builder: (_) => const ProductManagementPage())),
           ),
+          const SizedBox(width: 12),
           _buildQuickStatItem(
             icon: Icons.local_shipping_outlined,
             value: '${data.suppliersCount}',
             label: 'Suppliers',
-            color: const Color(0xFFFF9800),
+            color: const Color(0xFFFF6B6B),
             isLoading: isLoading,
             onTap: () => Navigator.push(context,
                 MaterialPageRoute(builder: (_) => const SupplierPage())),
           ),
+          const SizedBox(width: 12),
+          _buildQuickStatItem(
+            icon: Icons.shopping_cart_outlined,
+            value: '${data.purchasesCount}',
+            label: 'Purchases',
+            color: const Color(0xFF00BCD4),
+            isLoading: isLoading,
+            onTap: () => Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const PurchasePage())),
+          ),
+          const SizedBox(width: 12),
           _buildQuickStatItem(
             icon: Icons.business_outlined,
             value: '${data.companiesCount}',
@@ -500,40 +512,75 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
   }) {
     return GestureDetector(
       onTap: onTap,
-      child: Column(
-        children: [
-          Container(
-            width: 44,
-            height: 44,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+          child: Container(
+            width: 90,
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  color.withValues(alpha: 0.15),
+                  color.withValues(alpha: 0.05),
+                ],
+              ),
               borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, color: color, size: 22),
-          ),
-          const SizedBox(height: 8),
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 200),
-            child: Text(
-              value,
-              key: ValueKey(value),
-              style: TextStyle(
-                color: const Color(0xFF1B4D3E),
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                fontFamily: 'Literata',
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.2),
+                width: 1,
               ),
             ),
-          ),
-          Text(
-            label,
-            style: TextStyle(
-              color: Colors.grey[600],
-              fontSize: 11,
-              fontFamily: 'Literata',
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: color.withValues(alpha: 0.3),
+                      width: 1,
+                    ),
+                  ),
+                  child: Icon(icon, color: color, size: 18),
+                ),
+                const SizedBox(height: 6),
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 200),
+                  child: Text(
+                    value,
+                    key: ValueKey(value),
+                    style: TextStyle(
+                      color: const Color(0xFF1B4D3E),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                      fontFamily: 'Literata',
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  label,
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: const Color(0xFF1B4D3E).withValues(alpha: 0.7),
+                    fontSize: 9,
+                    fontFamily: 'Literata',
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
             ),
           ),
-        ],
+        ),
       ),
     );
   }
@@ -1125,9 +1172,9 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
       ),
       child: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               _buildNavItem(0, Icons.dashboard_rounded, 'Dashboard'),
               _buildNavItem(1, Icons.people_rounded, 'Customers'),
@@ -1147,7 +1194,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
       onTap: () => _navigateToPage(index),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
           color: isSelected ? const Color(0xFF1B4D3E).withOpacity(0.1) : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
