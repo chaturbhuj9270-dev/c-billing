@@ -1,0 +1,345 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:c_billing/features/billing/domain/entities/bill.dart';
+import 'package:c_billing/features/billing/domain/entities/bill_item.dart';
+import 'package:c_billing/features/billing/data/repositories/firebase_bill_repository.dart';
+import 'package:c_billing/features/inventory_management/domain/entities/product.dart';
+import 'package:c_billing/features/inventory_management/domain/entities/stock.dart';
+import 'package:c_billing/features/inventory_management/domain/repositories/product_repository.dart';
+import 'package:c_billing/features/inventory_management/domain/repositories/stock_repository.dart';
+
+/// Result class for billing operations
+class BillingResult {
+  final bool success;
+  final String? billId;
+  final String? errorMessage;
+  final List<String>? failedProducts;
+
+  BillingResult({
+    required this.success,
+    this.billId,
+    this.errorMessage,
+    this.failedProducts,
+  });
+
+  factory BillingResult.success(String billId) {
+    return BillingResult(success: true, billId: billId);
+  }
+
+  factory BillingResult.failure(
+    String message, {
+    List<String>? failedProducts,
+  }) {
+    return BillingResult(
+      success: false,
+      errorMessage: message,
+      failedProducts: failedProducts,
+    );
+  }
+}
+
+/// Service class for handling billing operations with transaction support
+class BillingService {
+  final FirebaseBillRepository _billRepository;
+  final ProductRepository _productRepository;
+  final StockRepository _stockRepository;
+
+  BillingService({
+    required FirebaseBillRepository billRepository,
+    required ProductRepository productRepository,
+    required StockRepository stockRepository,
+  }) : _billRepository = billRepository,
+       _productRepository = productRepository,
+       _stockRepository = stockRepository;
+
+  /// Calculate subtotal for a bill item
+  double calculateSubtotal(double sellingPrice, int quantity) {
+    return sellingPrice * quantity;
+  }
+
+  /// Calculate total quantity from bill items
+  int calculateTotalQuantity(List<BillItem> items) {
+    return items.fold(0, (sum, item) => sum + item.quantity);
+  }
+
+  /// Calculate total amount from bill items
+  double calculateTotalAmount(List<BillItem> items) {
+    return items.fold(0.0, (sum, item) => sum + item.subtotal);
+  }
+
+  /// Validate stock availability for all items
+  Future<Map<String, String>> validateStock(List<BillItem> items) async {
+    final errors = <String, String>{};
+
+    for (final item in items) {
+      try {
+        final product = await _productRepository.getProductById(item.productId);
+        if (product == null) {
+          errors[item.productId] = 'Product "${item.productName}" not found';
+          continue;
+        }
+
+        if (product.currentStock < item.quantity) {
+          errors[item.productId] =
+              '${item.productName}: Insufficient stock. Available: ${product.currentStock}, Requested: ${item.quantity}';
+        }
+      } catch (e) {
+        errors[item.productId] =
+            'Error checking stock for ${item.productName}: $e';
+      }
+    }
+
+    return errors;
+  }
+
+  /// Get current stock for a product
+  Future<int> getProductStock(String productId) async {
+    final product = await _productRepository.getProductById(productId);
+    return product?.currentStock ?? 0;
+  }
+
+  /// Create a bill item from a product
+  BillItem createBillItem({
+    required Product product,
+    required int quantity,
+    double? customPrice,
+  }) {
+    final sellingPrice = customPrice ?? product.salesPrice;
+    return BillItem.create(
+      productId: product.id,
+      productName: product.name,
+      sellingPrice: sellingPrice,
+      quantity: quantity,
+    );
+  }
+
+  /// Process and save a bill with transaction support
+  /// This method ensures that either all operations succeed or all are rolled back
+  Future<BillingResult> processBill({
+    required List<BillItem> items,
+    String? customerId,
+    String? customerName,
+    String? customerContact,
+    String? notes,
+  }) async {
+    // Validate that there are items
+    if (items.isEmpty) {
+      return BillingResult.failure('Cannot create a bill with no items');
+    }
+
+    // Validate stock availability first
+    final stockErrors = await validateStock(items);
+    if (stockErrors.isNotEmpty) {
+      return BillingResult.failure(
+        'Stock validation failed',
+        failedProducts: stockErrors.values.toList(),
+      );
+    }
+
+    // Use Firestore transaction to ensure atomicity
+    try {
+      final firestore = _billRepository.firestore;
+      final userId = _billRepository.userId;
+
+      final result = await firestore.runTransaction<String>((
+        transaction,
+      ) async {
+        // Step 1: Verify and get current stock for all products
+        final productStocks = <String, int>{};
+        final productRefs = <String, DocumentReference>{};
+
+        for (final item in items) {
+          final productRef = firestore
+              .collection('users')
+              .doc(userId)
+              .collection('products')
+              .doc(item.productId);
+
+          final productDoc = await transaction.get(productRef);
+
+          if (!productDoc.exists) {
+            throw Exception('Product ${item.productName} not found');
+          }
+
+          final currentStock = (productDoc.data()?['currentStock'] ?? 0) as int;
+
+          if (currentStock < item.quantity) {
+            throw Exception(
+              '${item.productName}: Insufficient stock. Available: $currentStock, Requested: ${item.quantity}',
+            );
+          }
+
+          productStocks[item.productId] = currentStock;
+          productRefs[item.productId] = productRef;
+        }
+
+        // Step 2: Create the bill document
+        final now = DateTime.now();
+        final billRef = firestore
+            .collection('users')
+            .doc(userId)
+            .collection('bills')
+            .doc();
+
+        final totalQuantity = calculateTotalQuantity(items);
+        final totalAmount = calculateTotalAmount(items);
+
+        // Update items with the bill ID
+        final updatedItems = items
+            .map(
+              (item) => item.copyWith(
+                id: '${billRef.id}_${item.productId}',
+                billId: billRef.id,
+              ),
+            )
+            .toList();
+
+        final bill = Bill(
+          id: billRef.id,
+          customerId: customerId,
+          customerName: customerName,
+          customerContact: customerContact,
+          items: updatedItems,
+          totalQuantity: totalQuantity,
+          totalAmount: totalAmount,
+          billDate: now,
+          createdAt: now,
+          updatedAt: now,
+          notes: notes,
+        );
+
+        transaction.set(billRef, bill.toJson());
+
+        // Step 3: Update stock for each product and create stock entries
+        for (final item in items) {
+          final currentStock = productStocks[item.productId]!;
+          final newStock = currentStock - item.quantity;
+          final productRef = productRefs[item.productId]!;
+
+          // Update product stock
+          transaction.update(productRef, {
+            'currentStock': newStock,
+            'updatedAt': now.toIso8601String(),
+          });
+
+          // Create stock entry for the sale
+          final stockRef = firestore
+              .collection('users')
+              .doc(userId)
+              .collection('stock')
+              .doc();
+
+          final stockEntry = Stock(
+            id: stockRef.id,
+            productId: item.productId,
+            quantityIn: 0,
+            quantityOut: item.quantity,
+            balanceQuantity: newStock,
+            referenceType: ReferenceType.SALE,
+            referenceId: billRef.id,
+            createdAt: now,
+          );
+
+          transaction.set(stockRef, stockEntry.toJson());
+        }
+
+        return billRef.id;
+      });
+
+      return BillingResult.success(result);
+    } catch (e) {
+      print('[ERROR] Failed to process bill: $e');
+      return BillingResult.failure('Failed to process bill: ${e.toString()}');
+    }
+  }
+
+  /// Get all products for selection
+  Future<List<Product>> getAllProducts() async {
+    return await _productRepository.getAllProducts();
+  }
+
+  /// Get products with available stock
+  Future<List<Product>> getAvailableProducts() async {
+    final products = await _productRepository.getAllProducts();
+    return products.where((p) => p.currentStock > 0).toList();
+  }
+
+  /// Get all bills
+  Future<List<Bill>> getAllBills() async {
+    return await _billRepository.getAllBills();
+  }
+
+  /// Get today's bills
+  Future<List<Bill>> getTodaysBills() async {
+    return await _billRepository.getTodaysBills();
+  }
+
+  /// Get bill by ID
+  Future<Bill?> getBillById(String billId) async {
+    return await _billRepository.getBillById(billId);
+  }
+
+  /// Get bills by date range
+  Future<List<Bill>> getBillsByDateRange(
+    DateTime startDate,
+    DateTime endDate,
+  ) async {
+    return await _billRepository.getBillsByDateRange(startDate, endDate);
+  }
+
+  /// Search bills
+  Future<List<Bill>> searchBills(String query) async {
+    return await _billRepository.searchBills(query);
+  }
+
+  /// Get total sales amount
+  Future<double> getTotalSalesAmount({
+    DateTime? startDate,
+    DateTime? endDate,
+  }) async {
+    return await _billRepository.getTotalSalesAmount(
+      startDate: startDate,
+      endDate: endDate,
+    );
+  }
+
+  /// Get total bills count
+  Future<int> getTotalBillsCount({
+    DateTime? startDate,
+    DateTime? endDate,
+  }) async {
+    return await _billRepository.getTotalBillsCount(
+      startDate: startDate,
+      endDate: endDate,
+    );
+  }
+
+  /// Get daily sales summary
+  Future<Map<String, dynamic>> getDailySalesSummary() async {
+    final todaysBills = await getTodaysBills();
+    final totalAmount = todaysBills.fold(
+      0.0,
+      (sum, bill) => sum + bill.totalAmount,
+    );
+    final totalItems = todaysBills.fold(
+      0,
+      (sum, bill) => sum + bill.totalQuantity,
+    );
+
+    return {
+      'billCount': todaysBills.length,
+      'totalAmount': totalAmount,
+      'totalItems': totalItems,
+      'bills': todaysBills,
+    };
+  }
+
+  /// Get stock history for a product
+  Future<List<Stock>> getProductStockHistory(String productId) async {
+    return await _stockRepository.getStockByProductId(productId);
+  }
+
+  /// Get current stock balance for a product from stock repository
+  Future<int> getStockBalance(String productId) async {
+    return await _stockRepository.getCurrentBalance(productId);
+  }
+}

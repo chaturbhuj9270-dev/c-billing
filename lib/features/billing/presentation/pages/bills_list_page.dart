@@ -1,0 +1,1128 @@
+import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
+import 'package:c_billing/core/services/billing_service.dart';
+import 'package:c_billing/features/billing/data/repositories/firebase_bill_repository.dart';
+import 'package:c_billing/features/billing/domain/entities/bill.dart';
+import 'package:c_billing/features/inventory_management/data/repositories/firebase_product_repository.dart';
+import 'package:c_billing/features/inventory_management/data/repositories/firebase_stock_repository.dart';
+
+class BillsListPage extends StatefulWidget {
+  const BillsListPage({super.key});
+
+  @override
+  State<BillsListPage> createState() => _BillsListPageState();
+}
+
+class _BillsListPageState extends State<BillsListPage>
+    with SingleTickerProviderStateMixin {
+  late BillingService _billingService;
+  late FirebaseFirestore _firestore;
+  late AnimationController _animController;
+  late Animation<Offset> _offsetAnimation;
+  late Animation<double> _opacityAnimation;
+
+  List<Bill> _bills = [];
+  List<Bill> _filteredBills = [];
+  bool _isLoading = false;
+  final _searchController = TextEditingController();
+
+  // Filter options
+  DateTime? _startDate;
+  DateTime? _endDate;
+  String _sortOrder = 'newest';
+
+  // Stats
+  double _totalSales = 0.0;
+  int _totalBillsCount = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _firestore = FirebaseFirestore.instance;
+
+    _billingService = BillingService(
+      billRepository: FirebaseBillRepository(firestore: _firestore),
+      productRepository: FirebaseProductRepository(firestore: _firestore),
+      stockRepository: FirebaseStockRepository(firestore: _firestore),
+    );
+
+    // Initialize animations
+    _animController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 700),
+    );
+    _offsetAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.08),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _animController, curve: Curves.easeOut));
+    _opacityAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _animController, curve: Curves.easeIn));
+    Future.delayed(
+      const Duration(milliseconds: 150),
+      () => _animController.forward(),
+    );
+
+    _loadBills();
+  }
+
+  @override
+  void dispose() {
+    _animController.dispose();
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadBills() async {
+    try {
+      setState(() => _isLoading = true);
+
+      List<Bill> bills;
+      if (_startDate != null && _endDate != null) {
+        bills = await _billingService.getBillsByDateRange(
+          _startDate!,
+          _endDate!,
+        );
+      } else {
+        bills = await _billingService.getAllBills();
+      }
+
+      // Calculate stats
+      _totalSales = bills.fold(0.0, (sum, bill) => sum + bill.totalAmount);
+      _totalBillsCount = bills.length;
+
+      setState(() {
+        _bills = bills;
+        _filteredBills = bills;
+        _applySorting();
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() => _isLoading = false);
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error loading bills: $e')));
+      }
+    }
+  }
+
+  void _filterBills(String query) {
+    setState(() {
+      if (query.isEmpty) {
+        _filteredBills = _bills;
+      } else {
+        _filteredBills = _bills.where((bill) {
+          final customerName = bill.customerName?.toLowerCase() ?? '';
+          final customerContact = bill.customerContact?.toLowerCase() ?? '';
+          final billId = bill.id.toLowerCase();
+          final searchQuery = query.toLowerCase();
+
+          return customerName.contains(searchQuery) ||
+              customerContact.contains(searchQuery) ||
+              billId.contains(searchQuery);
+        }).toList();
+      }
+      _applySorting();
+    });
+  }
+
+  void _applySorting() {
+    _filteredBills.sort((a, b) {
+      switch (_sortOrder) {
+        case 'newest':
+          return b.billDate.compareTo(a.billDate);
+        case 'oldest':
+          return a.billDate.compareTo(b.billDate);
+        case 'highest':
+          return b.totalAmount.compareTo(a.totalAmount);
+        case 'lowest':
+          return a.totalAmount.compareTo(b.totalAmount);
+        default:
+          return b.billDate.compareTo(a.billDate);
+      }
+    });
+  }
+
+  void _showDateFilterDialog() async {
+    final result = await showDialog<Map<String, DateTime?>>(
+      context: context,
+      builder: (context) => _DateRangePickerDialog(
+        initialStartDate: _startDate,
+        initialEndDate: _endDate,
+      ),
+    );
+
+    if (result != null) {
+      setState(() {
+        _startDate = result['startDate'];
+        _endDate = result['endDate'];
+      });
+      _loadBills();
+    }
+  }
+
+  void _clearDateFilter() {
+    setState(() {
+      _startDate = null;
+      _endDate = null;
+    });
+    _loadBills();
+  }
+
+  void _showBillDetails(Bill bill) {
+    showDialog(
+      context: context,
+      builder: (context) => _BillDetailsDialog(bill: bill),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF5F6F8),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF1B4D3E),
+        title: const Text(
+          'Bills History',
+          style: TextStyle(
+            fontFamily: 'Literata',
+            fontWeight: FontWeight.w700,
+            color: Colors.white,
+          ),
+        ),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh, color: Colors.white),
+            onPressed: _loadBills,
+          ),
+        ],
+      ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : FadeTransition(
+              opacity: _opacityAnimation,
+              child: SlideTransition(
+                position: _offsetAnimation,
+                child: Column(
+                  children: [
+                    // Stats cards
+                    _buildStatsSection(),
+                    // Search and filter
+                    _buildSearchAndFilterSection(),
+                    // Bills list
+                    Expanded(child: _buildBillsList()),
+                  ],
+                ),
+              ),
+            ),
+    );
+  }
+
+  Widget _buildStatsSection() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        children: [
+          Expanded(
+            child: _buildStatCard(
+              'Total Sales',
+              '₹${_totalSales.toStringAsFixed(2)}',
+              Icons.currency_rupee,
+              const Color(0xFF1B4D3E),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: _buildStatCard(
+              'Total Bills',
+              '$_totalBillsCount',
+              Icons.receipt_long,
+              const Color(0xFF2196F3),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: _buildStatCard(
+              'Avg. Bill Value',
+              _totalBillsCount > 0
+                  ? '₹${(_totalSales / _totalBillsCount).toStringAsFixed(2)}'
+                  : '₹0.00',
+              Icons.analytics,
+              const Color(0xFFFF9800),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatCard(
+    String title,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(icon, color: color, size: 20),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            value,
+            style: TextStyle(
+              fontFamily: 'Literata',
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+              color: color,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            title,
+            style: TextStyle(
+              fontFamily: 'Literata',
+              fontSize: 12,
+              color: Colors.grey[600],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSearchAndFilterSection() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        children: [
+          // Search bar
+          TextField(
+            controller: _searchController,
+            onChanged: _filterBills,
+            decoration: InputDecoration(
+              hintText: 'Search bills by customer or ID...',
+              prefixIcon: const Icon(Icons.search, color: Color(0xFF1B4D3E)),
+              filled: true,
+              fillColor: Colors.white,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none,
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(
+                  color: Color(0xFF1B4D3E),
+                  width: 2,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          // Filter row
+          Row(
+            children: [
+              // Date filter button
+              GestureDetector(
+                onTap: _showDateFilterDialog,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: _startDate != null
+                        ? const Color(0xFF1B4D3E)
+                        : Colors.white,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: _startDate != null
+                          ? const Color(0xFF1B4D3E)
+                          : Colors.grey[300]!,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.date_range,
+                        size: 18,
+                        color: _startDate != null
+                            ? Colors.white
+                            : Colors.grey[600],
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        _startDate != null
+                            ? '${DateFormat('dd/MM').format(_startDate!)} - ${DateFormat('dd/MM').format(_endDate!)}'
+                            : 'Date Filter',
+                        style: TextStyle(
+                          fontFamily: 'Literata',
+                          fontSize: 12,
+                          color: _startDate != null
+                              ? Colors.white
+                              : Colors.grey[600],
+                        ),
+                      ),
+                      if (_startDate != null) ...[
+                        const SizedBox(width: 4),
+                        GestureDetector(
+                          onTap: _clearDateFilter,
+                          child: const Icon(
+                            Icons.close,
+                            size: 16,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+              const Spacer(),
+              // Sort dropdown
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.grey[300]!),
+                ),
+                child: DropdownButton<String>(
+                  value: _sortOrder,
+                  underline: const SizedBox.shrink(),
+                  icon: const Icon(Icons.sort, size: 18),
+                  items: const [
+                    DropdownMenuItem(
+                      value: 'newest',
+                      child: Text('Newest First'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'oldest',
+                      child: Text('Oldest First'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'highest',
+                      child: Text('Highest Amount'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'lowest',
+                      child: Text('Lowest Amount'),
+                    ),
+                  ],
+                  onChanged: (value) {
+                    if (value != null) {
+                      setState(() {
+                        _sortOrder = value;
+                        _applySorting();
+                      });
+                    }
+                  },
+                  style: const TextStyle(
+                    fontFamily: 'Literata',
+                    fontSize: 12,
+                    color: Colors.black,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBillsList() {
+    if (_filteredBills.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.receipt_long_outlined,
+              size: 64,
+              color: Colors.grey[400],
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'No bills found',
+              style: TextStyle(
+                fontFamily: 'Literata',
+                fontSize: 16,
+                color: Colors.grey[600],
+              ),
+            ),
+            if (_searchController.text.isNotEmpty || _startDate != null)
+              TextButton(
+                onPressed: () {
+                  _searchController.clear();
+                  _clearDateFilter();
+                },
+                child: const Text(
+                  'Clear filters',
+                  style: TextStyle(
+                    fontFamily: 'Literata',
+                    color: Color(0xFF1B4D3E),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      itemCount: _filteredBills.length,
+      itemBuilder: (context, index) {
+        final bill = _filteredBills[index];
+        return _buildBillCard(bill);
+      },
+    );
+  }
+
+  Widget _buildBillCard(Bill bill) {
+    final dateFormat = DateFormat('dd MMM yyyy, hh:mm a');
+
+    return GestureDetector(
+      onTap: () => _showBillDetails(bill),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header row
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      bill.billNumber,
+                      style: const TextStyle(
+                        fontFamily: 'Literata',
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF1B4D3E),
+                      ),
+                    ),
+                  ),
+                  Text(
+                    dateFormat.format(bill.billDate),
+                    style: TextStyle(
+                      fontFamily: 'Literata',
+                      fontSize: 12,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              // Customer info
+              if (bill.hasCustomerInfo) ...[
+                Row(
+                  children: [
+                    Icon(
+                      Icons.person_outline,
+                      size: 16,
+                      color: Colors.grey[600],
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        bill.customerName ?? 'Unknown',
+                        style: const TextStyle(
+                          fontFamily: 'Literata',
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    if (bill.customerContact != null) ...[
+                      Icon(
+                        Icons.phone_outlined,
+                        size: 16,
+                        color: Colors.grey[600],
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        bill.customerContact!,
+                        style: TextStyle(
+                          fontFamily: 'Literata',
+                          fontSize: 12,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: 8),
+              ],
+              // Items and total
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    '${bill.items.length} items • ${bill.totalQuantity} qty',
+                    style: TextStyle(
+                      fontFamily: 'Literata',
+                      fontSize: 12,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                  Text(
+                    '₹${bill.totalAmount.toStringAsFixed(2)}',
+                    style: const TextStyle(
+                      fontFamily: 'Literata',
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF1B4D3E),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DateRangePickerDialog extends StatefulWidget {
+  final DateTime? initialStartDate;
+  final DateTime? initialEndDate;
+
+  const _DateRangePickerDialog({this.initialStartDate, this.initialEndDate});
+
+  @override
+  State<_DateRangePickerDialog> createState() => _DateRangePickerDialogState();
+}
+
+class _DateRangePickerDialogState extends State<_DateRangePickerDialog> {
+  DateTime? _startDate;
+  DateTime? _endDate;
+
+  @override
+  void initState() {
+    super.initState();
+    _startDate = widget.initialStartDate;
+    _endDate = widget.initialEndDate;
+  }
+
+  Future<void> _selectStartDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _startDate ?? DateTime.now(),
+      firstDate: DateTime(2020),
+      lastDate: DateTime.now(),
+    );
+    if (picked != null) {
+      setState(() {
+        _startDate = picked;
+        if (_endDate != null && _endDate!.isBefore(picked)) {
+          _endDate = picked;
+        }
+      });
+    }
+  }
+
+  Future<void> _selectEndDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _endDate ?? DateTime.now(),
+      firstDate: _startDate ?? DateTime(2020),
+      lastDate: DateTime.now(),
+    );
+    if (picked != null) {
+      setState(() {
+        _endDate = DateTime(picked.year, picked.month, picked.day, 23, 59, 59);
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final dateFormat = DateFormat('dd MMM yyyy');
+
+    return AlertDialog(
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      title: const Text(
+        'Select Date Range',
+        style: TextStyle(
+          fontFamily: 'Literata',
+          fontWeight: FontWeight.w700,
+          color: Color(0xFF1B4D3E),
+          fontSize: 18,
+        ),
+      ),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Quick filters
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _buildQuickFilter('Today', () {
+                final now = DateTime.now();
+                setState(() {
+                  _startDate = DateTime(now.year, now.month, now.day);
+                  _endDate = DateTime(now.year, now.month, now.day, 23, 59, 59);
+                });
+              }),
+              _buildQuickFilter('This Week', () {
+                final now = DateTime.now();
+                final startOfWeek = now.subtract(
+                  Duration(days: now.weekday - 1),
+                );
+                setState(() {
+                  _startDate = DateTime(
+                    startOfWeek.year,
+                    startOfWeek.month,
+                    startOfWeek.day,
+                  );
+                  _endDate = DateTime(now.year, now.month, now.day, 23, 59, 59);
+                });
+              }),
+              _buildQuickFilter('This Month', () {
+                final now = DateTime.now();
+                setState(() {
+                  _startDate = DateTime(now.year, now.month, 1);
+                  _endDate = DateTime(now.year, now.month, now.day, 23, 59, 59);
+                });
+              }),
+            ],
+          ),
+          const SizedBox(height: 16),
+          const Divider(),
+          const SizedBox(height: 16),
+          // Date pickers
+          Row(
+            children: [
+              Expanded(
+                child: GestureDetector(
+                  onTap: _selectStartDate,
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey[300]!),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Start Date',
+                          style: TextStyle(
+                            fontFamily: 'Literata',
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          _startDate != null
+                              ? dateFormat.format(_startDate!)
+                              : 'Select',
+                          style: const TextStyle(
+                            fontFamily: 'Literata',
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 8),
+                child: Icon(Icons.arrow_forward, color: Colors.grey),
+              ),
+              Expanded(
+                child: GestureDetector(
+                  onTap: _selectEndDate,
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey[300]!),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'End Date',
+                          style: TextStyle(
+                            fontFamily: 'Literata',
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          _endDate != null
+                              ? dateFormat.format(_endDate!)
+                              : 'Select',
+                          style: const TextStyle(
+                            fontFamily: 'Literata',
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text(
+            'Cancel',
+            style: TextStyle(fontFamily: 'Literata', color: Colors.grey),
+          ),
+        ),
+        ElevatedButton(
+          onPressed: _startDate != null && _endDate != null
+              ? () {
+                  Navigator.pop(context, {
+                    'startDate': _startDate,
+                    'endDate': _endDate,
+                  });
+                }
+              : null,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF1B4D3E),
+          ),
+          child: const Text(
+            'Apply',
+            style: TextStyle(fontFamily: 'Literata', color: Colors.white),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildQuickFilter(String label, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: const Color(0xFF1B4D3E).withOpacity(0.1),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Text(
+          label,
+          style: const TextStyle(
+            fontFamily: 'Literata',
+            fontSize: 12,
+            color: Color(0xFF1B4D3E),
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _BillDetailsDialog extends StatelessWidget {
+  final Bill bill;
+
+  const _BillDetailsDialog({required this.bill});
+
+  @override
+  Widget build(BuildContext context) {
+    final dateFormat = DateFormat('dd MMM yyyy, hh:mm a');
+
+    return Dialog(
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Container(
+        width: 400,
+        constraints: const BoxConstraints(maxHeight: 600),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Header
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: const BoxDecoration(
+                color: Color(0xFF1B4D3E),
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(20),
+                  topRight: Radius.circular(20),
+                ),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.receipt_long, color: Colors.white),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Bill Details',
+                          style: TextStyle(
+                            fontFamily: 'Literata',
+                            fontWeight: FontWeight.w700,
+                            fontSize: 18,
+                            color: Colors.white,
+                          ),
+                        ),
+                        Text(
+                          bill.billNumber,
+                          style: TextStyle(
+                            fontFamily: 'Literata',
+                            fontSize: 12,
+                            color: Colors.white.withOpacity(0.8),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close, color: Colors.white),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+            ),
+            // Content
+            Flexible(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Date
+                    _buildDetailRow(
+                      'Date',
+                      dateFormat.format(bill.billDate),
+                      Icons.calendar_today,
+                    ),
+                    const SizedBox(height: 12),
+                    // Customer info
+                    if (bill.hasCustomerInfo) ...[
+                      _buildDetailRow(
+                        'Customer',
+                        bill.customerName ?? 'N/A',
+                        Icons.person,
+                      ),
+                      if (bill.customerContact != null) ...[
+                        const SizedBox(height: 8),
+                        _buildDetailRow(
+                          'Contact',
+                          bill.customerContact!,
+                          Icons.phone,
+                        ),
+                      ],
+                      const SizedBox(height: 12),
+                    ],
+                    const Divider(),
+                    const SizedBox(height: 12),
+                    // Items header
+                    const Text(
+                      'Items',
+                      style: TextStyle(
+                        fontFamily: 'Literata',
+                        fontWeight: FontWeight.w700,
+                        fontSize: 16,
+                        color: Color(0xFF1B4D3E),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    // Items list
+                    ...bill.items.map((item) => _buildItemRow(item)),
+                    const SizedBox(height: 12),
+                    const Divider(),
+                    const SizedBox(height: 12),
+                    // Notes
+                    if (bill.notes != null && bill.notes!.isNotEmpty) ...[
+                      _buildDetailRow('Notes', bill.notes!, Icons.note),
+                      const SizedBox(height: 12),
+                      const Divider(),
+                      const SizedBox(height: 12),
+                    ],
+                    // Totals
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Total Quantity:',
+                          style: TextStyle(
+                            fontFamily: 'Literata',
+                            fontSize: 14,
+                          ),
+                        ),
+                        Text(
+                          '${bill.totalQuantity} items',
+                          style: const TextStyle(
+                            fontFamily: 'Literata',
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Total Amount:',
+                          style: TextStyle(
+                            fontFamily: 'Literata',
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF1B4D3E),
+                          ),
+                        ),
+                        Text(
+                          '₹${bill.totalAmount.toStringAsFixed(2)}',
+                          style: const TextStyle(
+                            fontFamily: 'Literata',
+                            fontSize: 24,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF1B4D3E),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDetailRow(String label, String value, IconData icon) {
+    return Row(
+      children: [
+        Icon(icon, size: 18, color: Colors.grey[600]),
+        const SizedBox(width: 8),
+        Text(
+          '$label: ',
+          style: TextStyle(
+            fontFamily: 'Literata',
+            fontSize: 14,
+            color: Colors.grey[600],
+          ),
+        ),
+        Expanded(
+          child: Text(
+            value,
+            style: const TextStyle(
+              fontFamily: 'Literata',
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildItemRow(item) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF5F6F8),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  item.productName,
+                  style: const TextStyle(
+                    fontFamily: 'Literata',
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                Text(
+                  '₹${item.sellingPrice.toStringAsFixed(2)} × ${item.quantity}',
+                  style: TextStyle(
+                    fontFamily: 'Literata',
+                    fontSize: 12,
+                    color: Colors.grey[600],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Text(
+            '₹${item.subtotal.toStringAsFixed(2)}',
+            style: const TextStyle(
+              fontFamily: 'Literata',
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF1B4D3E),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

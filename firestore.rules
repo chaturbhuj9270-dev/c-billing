@@ -35,6 +35,11 @@ service cloud.firestore {
         allow read, write: if request.auth.uid == userId;
       }
       
+      // User's bills subcollection (for sales billing)
+      match /bills/{document=**} {
+        allow read, write: if request.auth.uid == userId;
+      }
+      
       // User's invoices subcollection
       match /invoices/{document=**} {
         allow read, write: if request.auth.uid == userId;

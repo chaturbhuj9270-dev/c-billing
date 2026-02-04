@@ -6,6 +6,8 @@ import '../../../supplier/presentation/pages/supplier_page.dart';
 import '../../../company/presentation/pages/company_page.dart';
 import '../../../inventory_management/presentation/pages/purchase_page.dart';
 import '../../../inventory_management/presentation/pages/product_management_page.dart';
+import '../../../billing/presentation/pages/billing_page.dart';
+import '../../../billing/presentation/pages/bills_list_page.dart';
 import '../../../../core/services/session_manager.dart';
 import '../../../../core/services/credentials_manager.dart';
 import '../../../../common_widgets/welcome_card.dart';
@@ -193,16 +195,16 @@ class _DashboardPageState extends State<DashboardPage>
         );
         break;
       case 3:
-        // Bills - not implemented yet
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Bills page coming soon')));
+        // Navigate to Bills
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const BillingPage()),
+        );
         break;
       case 4:
-        // Purchases - not implemented yet
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Purchases page coming soon')),
-        );
+        // Navigate to Purchases
+        Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (_) => const PurchasePage()));
         break;
     }
   }
@@ -1172,8 +1174,8 @@ class _DashboardPageState extends State<DashboardPage>
         // Navigate to related page based on label
         switch (label) {
           case 'Invoices':
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Invoices page coming soon')),
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const BillsListPage()),
             );
             break;
           case 'Clients':

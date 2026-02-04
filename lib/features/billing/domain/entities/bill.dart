@@ -1,0 +1,152 @@
+import 'bill_item.dart';
+
+/// Represents a sales bill containing multiple items sold to a customer
+class Bill {
+  final String id;
+  final String? customerId;
+  final String? customerName;
+  final String? customerContact;
+  final List<BillItem> items;
+  final int totalQuantity;
+  final double totalAmount;
+  final DateTime billDate;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  final String? notes;
+
+  Bill({
+    required this.id,
+    this.customerId,
+    this.customerName,
+    this.customerContact,
+    required this.items,
+    required this.totalQuantity,
+    required this.totalAmount,
+    required this.billDate,
+    required this.createdAt,
+    required this.updatedAt,
+    this.notes,
+  });
+
+  /// Factory constructor to create from JSON (for Firebase)
+  factory Bill.fromJson(Map<String, dynamic> json) {
+    try {
+      List<BillItem> billItems = [];
+      if (json['items'] != null) {
+        billItems = (json['items'] as List)
+            .map((item) => BillItem.fromJson(item as Map<String, dynamic>))
+            .toList();
+      }
+
+      return Bill(
+        id: (json['id'] ?? '') as String,
+        customerId: json['customerId'] as String?,
+        customerName: json['customerName'] as String?,
+        customerContact: json['customerContact'] as String?,
+        items: billItems,
+        totalQuantity: (json['totalQuantity'] ?? 0) as int,
+        totalAmount: ((json['totalAmount'] ?? 0) as num).toDouble(),
+        billDate: json['billDate'] != null
+            ? DateTime.parse(json['billDate'] as String)
+            : DateTime.now(),
+        createdAt: json['createdAt'] != null
+            ? DateTime.parse(json['createdAt'] as String)
+            : DateTime.now(),
+        updatedAt: json['updatedAt'] != null
+            ? DateTime.parse(json['updatedAt'] as String)
+            : DateTime.now(),
+        notes: json['notes'] as String?,
+      );
+    } catch (e) {
+      print('[ERROR] Failed to parse Bill from JSON: $json');
+      print('[ERROR] Error details: $e');
+      return Bill(
+        id: json['id']?.toString() ?? '',
+        customerId: null,
+        customerName: null,
+        customerContact: null,
+        items: [],
+        totalQuantity: 0,
+        totalAmount: 0.0,
+        billDate: DateTime.now(),
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+        notes: null,
+      );
+    }
+  }
+
+  /// Convert to JSON for Firebase
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'customerId': customerId,
+      'customerName': customerName,
+      'customerContact': customerContact,
+      'items': items.map((item) => item.toJson()).toList(),
+      'totalQuantity': totalQuantity,
+      'totalAmount': totalAmount,
+      'billDate': billDate.toIso8601String(),
+      'createdAt': createdAt.toIso8601String(),
+      'updatedAt': updatedAt.toIso8601String(),
+      'notes': notes,
+    };
+  }
+
+  /// Copy with modifications
+  Bill copyWith({
+    String? id,
+    String? customerId,
+    String? customerName,
+    String? customerContact,
+    List<BillItem>? items,
+    int? totalQuantity,
+    double? totalAmount,
+    DateTime? billDate,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    String? notes,
+  }) {
+    return Bill(
+      id: id ?? this.id,
+      customerId: customerId ?? this.customerId,
+      customerName: customerName ?? this.customerName,
+      customerContact: customerContact ?? this.customerContact,
+      items: items ?? this.items,
+      totalQuantity: totalQuantity ?? this.totalQuantity,
+      totalAmount: totalAmount ?? this.totalAmount,
+      billDate: billDate ?? this.billDate,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      notes: notes ?? this.notes,
+    );
+  }
+
+  /// Get a formatted bill number
+  String get billNumber {
+    final dateStr = billDate
+        .toIso8601String()
+        .substring(0, 10)
+        .replaceAll('-', '');
+    return 'BILL-$dateStr-${id.substring(0, id.length > 6 ? 6 : id.length).toUpperCase()}';
+  }
+
+  /// Check if bill has customer information
+  bool get hasCustomerInfo =>
+      (customerName != null && customerName!.isNotEmpty) ||
+      (customerContact != null && customerContact!.isNotEmpty);
+
+  @override
+  String toString() {
+    return 'Bill(id: $id, customer: $customerName, items: ${items.length}, total: $totalAmount)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is Bill && other.id == id;
+  }
+
+  @override
+  int get hashCode => id.hashCode;
+}
