@@ -895,8 +895,8 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: isProfitable
-                  ? [const Color(0xFF4CAF50).withValues(alpha: 0.7), const Color(0xFF2E7D32).withValues(alpha: 0.7)]
-                  : [const Color(0xFFE53935).withValues(alpha: 0.7), const Color(0xFFC62828).withValues(alpha: 0.7)],
+                  ? [const Color(0xFF1B4D3E).withValues(alpha: 0.7), const Color(0xFF2E7D32).withValues(alpha: 0.7)]
+                  : [const Color(0xFF1B4D3E).withValues(alpha: 0.7), const Color(0xFF2E7D32).withValues(alpha: 0.7)],
             ),
             borderRadius: BorderRadius.circular(20),
             border: Border.all(color: Colors.white.withValues(alpha: 0.2), width: 1.5),
@@ -1190,34 +1190,41 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
 
   Widget _buildNavItem(int index, IconData icon, String label) {
     final isSelected = _selectedIndex == index;
-    return GestureDetector(
-      onTap: () => _navigateToPage(index),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF1B4D3E).withOpacity(0.1) : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              color: isSelected ? const Color(0xFF1B4D3E) : Colors.grey[400],
-              size: 24,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: TextStyle(
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => _navigateToPage(index),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+          margin: const EdgeInsets.symmetric(horizontal: 2),
+          decoration: BoxDecoration(
+            color: isSelected ? const Color(0xFF1B4D3E).withOpacity(0.1) : Colors.transparent,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
                 color: isSelected ? const Color(0xFF1B4D3E) : Colors.grey[400],
-                fontSize: 10,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                fontFamily: 'Literata',
+                size: 20,
               ),
-            ),
-          ],
+              const SizedBox(height: 3),
+              Text(
+                label,
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: isSelected ? const Color(0xFF1B4D3E) : Colors.grey[400],
+                  fontSize: 8,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                  fontFamily: 'Literata',
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
