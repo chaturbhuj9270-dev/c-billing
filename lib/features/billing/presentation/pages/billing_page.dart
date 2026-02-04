@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'dart:ui';
 import 'package:c_billing/core/services/billing_service.dart';
 import 'package:c_billing/features/billing/data/repositories/firebase_bill_repository.dart';
 import 'package:c_billing/features/billing/domain/entities/bill_item.dart';
@@ -15,74 +14,43 @@ class BillingPage extends StatefulWidget {
   State<BillingPage> createState() => _BillingPageState();
 }
 
-class _BillingPageState extends State<BillingPage>
-    with SingleTickerProviderStateMixin {
+class _BillingPageState extends State<BillingPage> {
   late BillingService _billingService;
   late FirebaseFirestore _firestore;
-  late AnimationController _animController;
-  late Animation<Offset> _offsetAnimation;
-  late Animation<double> _opacityAnimation;
 
-  // Customer details controllers
   final _customerNameController = TextEditingController();
   final _customerContactController = TextEditingController();
   final _notesController = TextEditingController();
   final _productSearchController = TextEditingController();
 
-  // Bill items
   List<BillItem> _billItems = [];
   List<Product> _products = [];
   List<Product> _filteredProducts = [];
   bool _isLoading = false;
   bool _isSavingBill = false;
 
-  // Selected customer from existing customers
   Map<String, dynamic>? _selectedCustomer;
   List<Map<String, dynamic>> _customers = [];
-  List<Map<String, dynamic>> _filteredCustomers = [];
-  final _customerSearchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     _firestore = FirebaseFirestore.instance;
-
     _billingService = BillingService(
       billRepository: FirebaseBillRepository(firestore: _firestore),
       productRepository: FirebaseProductRepository(firestore: _firestore),
       stockRepository: FirebaseStockRepository(firestore: _firestore),
     );
-
-    // Initialize animations
-    _animController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 700),
-    );
-    _offsetAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.08),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(parent: _animController, curve: Curves.easeOut));
-    _opacityAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(parent: _animController, curve: Curves.easeIn));
-    Future.delayed(
-      const Duration(milliseconds: 150),
-      () => _animController.forward(),
-    );
-
     _loadProducts();
     _loadCustomers();
   }
 
   @override
   void dispose() {
-    _animController.dispose();
     _customerNameController.dispose();
     _customerContactController.dispose();
     _notesController.dispose();
     _productSearchController.dispose();
-    _customerSearchController.dispose();
     super.dispose();
   }
 
@@ -97,42 +65,32 @@ class _BillingPageState extends State<BillingPage>
       });
     } catch (e) {
       setState(() => _isLoading = false);
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error loading products: $e')));
-      }
+      _showSnackbar('Error loading products: $e', isError: true);
     }
   }
 
   Future<void> _loadCustomers() async {
     try {
-      // Get customers using the bill repository's user context
       final billRepo = FirebaseBillRepository(firestore: _firestore);
-      try {
-        final customersSnapshot = await _firestore
-            .collection('users')
-            .doc(billRepo.userId)
-            .collection('customers')
-            .get();
-
-        setState(() {
-          _customers = customersSnapshot.docs.map((doc) {
-            return {
-              'id': doc.id,
-              'firstName': doc['firstName'] ?? '',
-              'lastName': doc['lastName'] ?? '',
-              'contact': doc['contact'] ?? '',
-              'fullName': '${doc['firstName'] ?? ''} ${doc['lastName'] ?? ''}'
-                  .trim(),
-            };
-          }).toList();
-        });
-      } catch (e) {
-        print('[DEBUG] Error loading customers: $e');
-      }
+      final snapshot = await _firestore
+          .collection('users')
+          .doc(billRepo.userId)
+          .collection('customers')
+          .get();
+      setState(() {
+        _customers = snapshot.docs.map((doc) {
+          return {
+            'id': doc.id,
+            'firstName': doc['firstName'] ?? '',
+            'lastName': doc['lastName'] ?? '',
+            'contact': doc['contact'] ?? '',
+            'fullName': '${doc['firstName'] ?? ''} ${doc['lastName'] ?? ''}'
+                .trim(),
+          };
+        }).toList();
+      });
     } catch (e) {
-      print('[DEBUG] Error loading customers: $e');
+      debugPrint('[DEBUG] Error loading customers: $e');
     }
   }
 
@@ -141,34 +99,13 @@ class _BillingPageState extends State<BillingPage>
       if (query.isEmpty) {
         _filteredProducts = _products;
       } else {
+        final lowerQuery = query.toLowerCase();
         _filteredProducts = _products
             .where(
-              (product) =>
-                  product.name.toLowerCase().contains(query.toLowerCase()) ||
-                  product.companyName.toLowerCase().contains(
-                    query.toLowerCase(),
-                  ) ||
-                  product.category.toLowerCase().contains(query.toLowerCase()),
-            )
-            .toList();
-      }
-    });
-  }
-
-  void _filterCustomers(String query) {
-    setState(() {
-      if (query.isEmpty) {
-        _filteredCustomers = _customers;
-      } else {
-        _filteredCustomers = _customers
-            .where(
-              (customer) =>
-                  customer['fullName'].toLowerCase().contains(
-                    query.toLowerCase(),
-                  ) ||
-                  customer['contact'].toLowerCase().contains(
-                    query.toLowerCase(),
-                  ),
+              (p) =>
+                  p.name.toLowerCase().contains(lowerQuery) ||
+                  p.companyName.toLowerCase().contains(lowerQuery) ||
+                  p.category.toLowerCase().contains(lowerQuery),
             )
             .toList();
       }
@@ -176,22 +113,14 @@ class _BillingPageState extends State<BillingPage>
   }
 
   void _addProductToBill(Product product) {
-    // Check if product already exists in bill
     final existingIndex = _billItems.indexWhere(
       (item) => item.productId == product.id,
     );
-
-    if (existingIndex != -1) {
-      // Show quantity update dialog
-      _showQuantityDialog(product, existingIndex);
-    } else {
-      // Add new item with quantity 1
-      _showQuantityDialog(product, -1);
-    }
+    _showQuantityDialog(product, existingIndex);
   }
 
   void _showQuantityDialog(Product product, int existingIndex) {
-    final quantityController = TextEditingController(
+    final qtyController = TextEditingController(
       text: existingIndex != -1
           ? _billItems[existingIndex].quantity.toString()
           : '1',
@@ -202,174 +131,315 @@ class _BillingPageState extends State<BillingPage>
           : product.salesPrice.toString(),
     );
 
-    final maxStock =
-        product.currentStock -
-        _billItems
-            .where(
-              (item) => item.productId == product.id && existingIndex == -1,
-            )
-            .fold(0, (sum, item) => sum + item.quantity);
-
-    showDialog(
+    showModalBottomSheet(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text(
-          existingIndex != -1 ? 'Update Quantity' : 'Add to Bill',
-          style: const TextStyle(
-            fontFamily: 'Literata',
-            fontWeight: FontWeight.w700,
-            color: Color(0xFF1B4D3E),
-            fontSize: 18,
-          ),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
-        content: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                product.name,
-                style: const TextStyle(
-                  fontFamily: 'Literata',
-                  fontWeight: FontWeight.w600,
-                  fontSize: 16,
+              // Handle bar
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(2),
+                  ),
                 ),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 20),
+              // Title
               Text(
-                'Available Stock: ${product.currentStock}',
-                style: TextStyle(
+                existingIndex != -1 ? 'Update Item' : 'Add to Bill',
+                style: const TextStyle(
                   fontFamily: 'Literata',
-                  fontSize: 12,
-                  color: Colors.grey[600],
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF1B4D3E),
                 ),
               ),
               const SizedBox(height: 16),
-              TextField(
-                controller: quantityController,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  labelText: 'Quantity',
-                  helperText: 'Max: $maxStock',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(
-                      color: Color(0xFF1B4D3E),
-                      width: 2,
+              // Product info card
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1B4D3E).withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(
+                        Icons.inventory_2,
+                        color: Color(0xFF1B4D3E),
+                      ),
                     ),
-                  ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            product.name,
+                            style: const TextStyle(
+                              fontFamily: 'Literata',
+                              fontWeight: FontWeight.w600,
+                              fontSize: 15,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            '${product.companyName} • Stock: ${product.currentStock}',
+                            style: TextStyle(
+                              fontFamily: 'Literata',
+                              fontSize: 12,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Text(
+                      '₹${product.salesPrice.toStringAsFixed(0)}',
+                      style: const TextStyle(
+                        fontFamily: 'Literata',
+                        fontWeight: FontWeight.w700,
+                        fontSize: 16,
+                        color: Color(0xFF1B4D3E),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: priceController,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  labelText: 'Selling Price',
-                  prefixText: '₹ ',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(
-                      color: Color(0xFF1B4D3E),
-                      width: 2,
+              const SizedBox(height: 20),
+              // Input fields
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Quantity',
+                          style: TextStyle(
+                            fontFamily: 'Literata',
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13,
+                            color: Color(0xFF1B4D3E),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        TextField(
+                          controller: qtyController,
+                          keyboardType: TextInputType.number,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontFamily: 'Literata',
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          decoration: InputDecoration(
+                            contentPadding: const EdgeInsets.symmetric(
+                              vertical: 14,
+                              horizontal: 12,
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: Colors.grey[300]!),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(
+                                color: Color(0xFF1B4D3E),
+                                width: 2,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Price (₹)',
+                          style: TextStyle(
+                            fontFamily: 'Literata',
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13,
+                            color: Color(0xFF1B4D3E),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        TextField(
+                          controller: priceController,
+                          keyboardType: TextInputType.number,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontFamily: 'Literata',
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          decoration: InputDecoration(
+                            contentPadding: const EdgeInsets.symmetric(
+                              vertical: 14,
+                              horizontal: 12,
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: Colors.grey[300]!),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(
+                                color: Color(0xFF1B4D3E),
+                                width: 2,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              // Action buttons
+              Row(
+                children: [
+                  if (existingIndex != -1)
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          setState(() => _billItems.removeAt(existingIndex));
+                          Navigator.pop(ctx);
+                        },
+                        icon: const Icon(
+                          Icons.delete_outline,
+                          color: Colors.red,
+                          size: 20,
+                        ),
+                        label: const Text(
+                          'Remove',
+                          style: TextStyle(
+                            fontFamily: 'Literata',
+                            color: Colors.red,
+                          ),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          side: const BorderSide(color: Colors.red),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ),
+                  if (existingIndex != -1) const SizedBox(width: 12),
+                  Expanded(
+                    flex: existingIndex != -1 ? 1 : 2,
+                    child: ElevatedButton.icon(
+                      onPressed: () => _handleAddItem(
+                        product,
+                        qtyController,
+                        priceController,
+                        existingIndex,
+                        ctx,
+                      ),
+                      icon: Icon(
+                        existingIndex != -1 ? Icons.check : Icons.add,
+                        size: 20,
+                      ),
+                      label: Text(
+                        existingIndex != -1 ? 'Update' : 'Add to Bill',
+                        style: const TextStyle(
+                          fontFamily: 'Literata',
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF1B4D3E),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
         ),
-        actions: [
-          if (existingIndex != -1)
-            TextButton(
-              onPressed: () {
-                setState(() {
-                  _billItems.removeAt(existingIndex);
-                });
-                Navigator.pop(context);
-              },
-              child: const Text(
-                'Remove',
-                style: TextStyle(fontFamily: 'Literata', color: Colors.red),
-              ),
-            ),
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text(
-              'Cancel',
-              style: TextStyle(fontFamily: 'Literata', color: Colors.grey),
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              final quantity = int.tryParse(quantityController.text) ?? 0;
-              final price =
-                  double.tryParse(priceController.text) ?? product.salesPrice;
-
-              if (quantity <= 0) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Quantity must be greater than 0'),
-                  ),
-                );
-                return;
-              }
-
-              if (quantity > product.currentStock) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      'Quantity exceeds available stock (${product.currentStock})',
-                    ),
-                  ),
-                );
-                return;
-              }
-
-              setState(() {
-                if (existingIndex != -1) {
-                  _billItems[existingIndex] = BillItem.create(
-                    productId: product.id,
-                    productName: product.name,
-                    sellingPrice: price,
-                    quantity: quantity,
-                  );
-                } else {
-                  _billItems.add(
-                    BillItem.create(
-                      productId: product.id,
-                      productName: product.name,
-                      sellingPrice: price,
-                      quantity: quantity,
-                    ),
-                  );
-                }
-              });
-
-              Navigator.pop(context);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF1B4D3E),
-            ),
-            child: Text(
-              existingIndex != -1 ? 'Update' : 'Add',
-              style: const TextStyle(
-                fontFamily: 'Literata',
-                color: Colors.white,
-              ),
-            ),
-          ),
-        ],
       ),
     );
+  }
+
+  void _handleAddItem(
+    Product product,
+    TextEditingController qtyCtrl,
+    TextEditingController priceCtrl,
+    int existingIndex,
+    BuildContext ctx,
+  ) {
+    final quantity = int.tryParse(qtyCtrl.text) ?? 0;
+    final price = double.tryParse(priceCtrl.text) ?? product.salesPrice;
+
+    if (quantity <= 0) {
+      _showSnackbar('Quantity must be greater than 0', isError: true);
+      return;
+    }
+
+    if (quantity > product.currentStock) {
+      _showSnackbar(
+        'Only ${product.currentStock} units available',
+        isError: true,
+      );
+      return;
+    }
+
+    setState(() {
+      if (existingIndex != -1) {
+        _billItems[existingIndex] = BillItem.create(
+          productId: product.id,
+          productName: product.name,
+          sellingPrice: price,
+          quantity: quantity,
+        );
+      } else {
+        _billItems.add(
+          BillItem.create(
+            productId: product.id,
+            productName: product.name,
+            sellingPrice: price,
+            quantity: quantity,
+          ),
+        );
+      }
+    });
+
+    Navigator.pop(ctx);
   }
 
   double get _totalAmount =>
@@ -380,11 +450,7 @@ class _BillingPageState extends State<BillingPage>
 
   Future<void> _saveBill() async {
     if (_billItems.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please add at least one item to the bill'),
-        ),
-      );
+      _showSnackbar('Please add at least one item', isError: true);
       return;
     }
 
@@ -408,46 +474,18 @@ class _BillingPageState extends State<BillingPage>
       setState(() => _isSavingBill = false);
 
       if (result.success) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Bill saved successfully! Bill ID: ${result.billId}',
-              ),
-              backgroundColor: Colors.green,
-            ),
-          );
-          // Clear the form
-          _clearBill();
-          // Reload products to get updated stock
-          _loadProducts();
-        }
+        _showSnackbar('Bill saved successfully!');
+        _clearBill();
+        _loadProducts();
       } else {
-        if (mounted) {
-          String errorMessage = result.errorMessage ?? 'Unknown error occurred';
-          if (result.failedProducts != null &&
-              result.failedProducts!.isNotEmpty) {
-            errorMessage += '\n${result.failedProducts!.join('\n')}';
-          }
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(errorMessage),
-              backgroundColor: Colors.red,
-              duration: const Duration(seconds: 5),
-            ),
-          );
-        }
+        _showSnackbar(
+          result.errorMessage ?? 'Error saving bill',
+          isError: true,
+        );
       }
     } catch (e) {
       setState(() => _isSavingBill = false);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error saving bill: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      _showSnackbar('Error: $e', isError: true);
     }
   }
 
@@ -463,458 +501,594 @@ class _BillingPageState extends State<BillingPage>
     });
   }
 
+  void _showSnackbar(String message, {bool isError = false}) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message, style: const TextStyle(fontFamily: 'Literata')),
+        backgroundColor: isError ? Colors.red[600] : Colors.green[600],
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        margin: const EdgeInsets.all(16),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F6F8),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF1B4D3E),
+      backgroundColor: const Color(0xFFF8F9FA),
+      body: _isLoading
+          ? const Center(
+              child: CircularProgressIndicator(color: Color(0xFF1B4D3E)),
+            )
+          : CustomScrollView(
+              slivers: [
+                _buildSliverAppBar(),
+                SliverToBoxAdapter(child: _buildCustomerSection()),
+                SliverToBoxAdapter(child: _buildProductsHeader()),
+                _buildProductsList(),
+                if (_billItems.isNotEmpty)
+                  SliverToBoxAdapter(child: _buildBillItemsSection()),
+                const SliverToBoxAdapter(child: SizedBox(height: 100)),
+              ],
+            ),
+      bottomNavigationBar: _buildBottomBar(),
+    );
+  }
+
+  Widget _buildSliverAppBar() {
+    return SliverAppBar(
+      expandedHeight: 100,
+      floating: true,
+      pinned: true,
+      backgroundColor: const Color(0xFF1B4D3E),
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back, color: Colors.white),
+        onPressed: () {
+          if (_billItems.isNotEmpty) {
+            showDialog(
+              context: context,
+              builder: (ctx) => AlertDialog(
+                title: const Text(
+                  'Discard Bill?',
+                  style: TextStyle(fontFamily: 'Literata'),
+                ),
+                content: const Text(
+                  'You have unsaved items.',
+                  style: TextStyle(fontFamily: 'Literata'),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    child: const Text('Cancel'),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      Navigator.pop(context);
+                    },
+                    child: const Text(
+                      'Discard',
+                      style: TextStyle(color: Colors.red),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          } else {
+            Navigator.pop(context);
+          }
+        },
+      ),
+      flexibleSpace: FlexibleSpaceBar(
         title: const Text(
           'Create Bill',
           style: TextStyle(
             fontFamily: 'Literata',
             fontWeight: FontWeight.w700,
-            color: Colors.white,
+            fontSize: 18,
           ),
         ),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
+        background: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Color(0xFF1B4D3E), Color(0xFF2D6A4F)],
+            ),
+          ),
         ),
-        actions: [
-          if (_billItems.isNotEmpty)
-            TextButton.icon(
-              onPressed: _clearBill,
-              icon: const Icon(Icons.clear_all, color: Colors.white70),
-              label: const Text(
-                'Clear',
-                style: TextStyle(color: Colors.white70),
-              ),
-            ),
-        ],
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : FadeTransition(
-              opacity: _opacityAnimation,
-              child: SlideTransition(
-                position: _offsetAnimation,
-                child: Row(
-                  children: [
-                    // Left side - Product selection
-                    Expanded(flex: 3, child: _buildProductSelectionPanel()),
-                    // Right side - Bill summary
-                    Expanded(flex: 2, child: _buildBillSummaryPanel()),
-                  ],
-                ),
-              ),
+      actions: [
+        if (_billItems.isNotEmpty)
+          TextButton.icon(
+            onPressed: _clearBill,
+            icon: const Icon(Icons.clear_all, color: Colors.white70, size: 20),
+            label: const Text(
+              'Clear',
+              style: TextStyle(color: Colors.white70, fontSize: 12),
             ),
+          ),
+      ],
     );
   }
 
-  Widget _buildProductSelectionPanel() {
+  Widget _buildCustomerSection() {
     return Container(
       margin: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withOpacity(0.04),
             blurRadius: 10,
-            offset: const Offset(0, 4),
+            offset: const Offset(0, 2),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Search bar
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: TextField(
-              controller: _productSearchController,
-              onChanged: _filterProducts,
-              decoration: InputDecoration(
-                hintText: 'Search products...',
-                prefixIcon: const Icon(Icons.search, color: Color(0xFF1B4D3E)),
-                filled: true,
-                fillColor: const Color(0xFFF5F6F8),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
                 ),
-                focusedBorder: OutlineInputBorder(
+                child: const Icon(
+                  Icons.person_outline,
+                  color: Color(0xFF1B4D3E),
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Text(
+                'Customer (Optional)',
+                style: TextStyle(
+                  fontFamily: 'Literata',
+                  fontWeight: FontWeight.w600,
+                  fontSize: 15,
+                  color: Color(0xFF1B4D3E),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          if (_customers.isNotEmpty) ...[
+            GestureDetector(
+              onTap: _showCustomerPicker,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 12,
+                ),
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey[300]!),
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(
-                    color: Color(0xFF1B4D3E),
-                    width: 2,
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.search, color: Colors.grey[500], size: 20),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        _selectedCustomer != null
+                            ? _selectedCustomer!['fullName']
+                            : 'Search existing customer...',
+                        style: TextStyle(
+                          fontFamily: 'Literata',
+                          color: _selectedCustomer != null
+                              ? Colors.black87
+                              : Colors.grey[500],
+                        ),
+                      ),
+                    ),
+                    if (_selectedCustomer != null)
+                      GestureDetector(
+                        onTap: () => setState(() {
+                          _selectedCustomer = null;
+                          _customerNameController.clear();
+                          _customerContactController.clear();
+                        }),
+                        child: Icon(
+                          Icons.close,
+                          color: Colors.grey[500],
+                          size: 18,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _customerNameController,
+                  style: const TextStyle(fontFamily: 'Literata', fontSize: 14),
+                  decoration: InputDecoration(
+                    labelText: 'Name',
+                    labelStyle: TextStyle(
+                      color: Colors.grey[600],
+                      fontSize: 13,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 12,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey[300]!),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(
+                        color: Color(0xFF1B4D3E),
+                        width: 1.5,
+                      ),
+                    ),
                   ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: TextField(
+                  controller: _customerContactController,
+                  keyboardType: TextInputType.phone,
+                  style: const TextStyle(fontFamily: 'Literata', fontSize: 14),
+                  decoration: InputDecoration(
+                    labelText: 'Phone',
+                    labelStyle: TextStyle(
+                      color: Colors.grey[600],
+                      fontSize: 13,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 12,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey[300]!),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(
+                        color: Color(0xFF1B4D3E),
+                        width: 1.5,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProductsHeader() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+      child: Column(
+        children: [
+          // Search bar
+          TextField(
+            controller: _productSearchController,
+            onChanged: _filterProducts,
+            style: const TextStyle(fontFamily: 'Literata', fontSize: 14),
+            decoration: InputDecoration(
+              hintText: 'Search products...',
+              hintStyle: TextStyle(color: Colors.grey[500]),
+              prefixIcon: const Icon(Icons.search, color: Color(0xFF1B4D3E)),
+              filled: true,
+              fillColor: Colors.white,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 14,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none,
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(
+                  color: Color(0xFF1B4D3E),
+                  width: 1.5,
                 ),
               ),
             ),
           ),
-          // Products header
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'Available Products',
-                  style: TextStyle(
-                    fontFamily: 'Literata',
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF1B4D3E),
-                  ),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Products',
+                style: TextStyle(
+                  fontFamily: 'Literata',
+                  fontWeight: FontWeight.w700,
+                  fontSize: 16,
+                  color: Color(0xFF1B4D3E),
                 ),
-                Text(
-                  '${_filteredProducts.length} products',
-                  style: TextStyle(
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  '${_filteredProducts.length} items',
+                  style: const TextStyle(
                     fontFamily: 'Literata',
                     fontSize: 12,
-                    color: Colors.grey[600],
+                    color: Color(0xFF1B4D3E),
+                    fontWeight: FontWeight.w500,
                   ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProductsList() {
+    if (_filteredProducts.isEmpty) {
+      return SliverToBoxAdapter(
+        child: Container(
+          height: 200,
+          alignment: Alignment.center,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.inventory_2_outlined,
+                size: 48,
+                color: Colors.grey[400],
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'No products found',
+                style: TextStyle(
+                  fontFamily: 'Literata',
+                  color: Colors.grey[600],
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return SliverList(
+      delegate: SliverChildBuilderDelegate((context, index) {
+        final product = _filteredProducts[index];
+        final isInBill = _billItems.any((item) => item.productId == product.id);
+        return _buildProductTile(product, isInBill);
+      }, childCount: _filteredProducts.length),
+    );
+  }
+
+  Widget _buildProductTile(Product product, bool isInBill) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      decoration: BoxDecoration(
+        color: isInBill ? const Color(0xFFE8F5E9) : Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isInBill ? const Color(0xFF1B4D3E) : Colors.transparent,
+          width: 1.5,
+        ),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: () => _addProductToBill(product),
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Row(
+              children: [
+                // Product icon with stock badge
+                Stack(
+                  children: [
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1B4D3E).withOpacity(0.08),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(
+                        Icons.inventory_2,
+                        color: Color(0xFF1B4D3E),
+                        size: 22,
+                      ),
+                    ),
+                    if (isInBill)
+                      Positioned(
+                        right: -2,
+                        top: -2,
+                        child: Container(
+                          padding: const EdgeInsets.all(3),
+                          decoration: const BoxDecoration(
+                            color: Color(0xFF1B4D3E),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.check,
+                            color: Colors.white,
+                            size: 10,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(width: 14),
+                // Product details
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        product.name,
+                        style: TextStyle(
+                          fontFamily: 'Literata',
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                          color: isInBill
+                              ? const Color(0xFF1B4D3E)
+                              : Colors.black87,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        '${product.companyName} • ${product.category}',
+                        style: TextStyle(
+                          fontFamily: 'Literata',
+                          fontSize: 11,
+                          color: Colors.grey[600],
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                // Price and stock
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      '₹${product.salesPrice.toStringAsFixed(0)}',
+                      style: const TextStyle(
+                        fontFamily: 'Literata',
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
+                        color: Color(0xFF1B4D3E),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: product.currentStock > 10
+                            ? Colors.green[50]
+                            : product.currentStock > 0
+                            ? Colors.orange[50]
+                            : Colors.red[50],
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        '${product.currentStock} left',
+                        style: TextStyle(
+                          fontFamily: 'Literata',
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                          color: product.currentStock > 10
+                              ? Colors.green[700]
+                              : product.currentStock > 0
+                              ? Colors.orange[700]
+                              : Colors.red[700],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(width: 8),
+                Icon(
+                  Icons.add_circle,
+                  color: const Color(0xFF1B4D3E).withOpacity(0.7),
+                  size: 24,
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 8),
-          // Products grid
-          Expanded(
-            child: _filteredProducts.isEmpty
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.inventory_2_outlined,
-                          size: 64,
-                          color: Colors.grey[400],
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'No products found',
-                          style: TextStyle(
-                            fontFamily: 'Literata',
-                            fontSize: 16,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                      ],
-                    ),
-                  )
-                : GridView.builder(
-                    padding: const EdgeInsets.all(16),
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 3,
-                          childAspectRatio: 1.2,
-                          crossAxisSpacing: 12,
-                          mainAxisSpacing: 12,
-                        ),
-                    itemCount: _filteredProducts.length,
-                    itemBuilder: (context, index) {
-                      final product = _filteredProducts[index];
-                      final isInBill = _billItems.any(
-                        (item) => item.productId == product.id,
-                      );
-
-                      return _buildProductCard(product, isInBill);
-                    },
-                  ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildProductCard(Product product, bool isInBill) {
-    return GestureDetector(
-      onTap: () => _addProductToBill(product),
-      child: Container(
-        decoration: BoxDecoration(
-          color: isInBill ? const Color(0xFFE8F5E9) : Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isInBill ? const Color(0xFF1B4D3E) : Colors.grey[300]!,
-            width: isInBill ? 2 : 1,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.03),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Stack(
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Product name
-                  Text(
-                    product.name,
-                    style: const TextStyle(
-                      fontFamily: 'Literata',
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  // Company name
-                  Text(
-                    product.companyName,
-                    style: TextStyle(
-                      fontFamily: 'Literata',
-                      fontSize: 11,
-                      color: Colors.grey[600],
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const Spacer(),
-                  // Price and stock
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        '₹${product.salesPrice.toStringAsFixed(2)}',
-                        style: const TextStyle(
-                          fontFamily: 'Literata',
-                          fontWeight: FontWeight.w700,
-                          fontSize: 14,
-                          color: Color(0xFF1B4D3E),
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 6,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: product.currentStock > 10
-                              ? Colors.green[100]
-                              : product.currentStock > 0
-                              ? Colors.orange[100]
-                              : Colors.red[100],
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          'Stock: ${product.currentStock}',
-                          style: TextStyle(
-                            fontFamily: 'Literata',
-                            fontSize: 10,
-                            fontWeight: FontWeight.w500,
-                            color: product.currentStock > 10
-                                ? Colors.green[800]
-                                : product.currentStock > 0
-                                ? Colors.orange[800]
-                                : Colors.red[800],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            if (isInBill)
-              Positioned(
-                top: 4,
-                right: 4,
-                child: Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: const BoxDecoration(
-                    color: Color(0xFF1B4D3E),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.check, color: Colors.white, size: 12),
-                ),
-              ),
-          ],
         ),
       ),
     );
   }
 
-  Widget _buildBillSummaryPanel() {
+  Widget _buildBillItemsSection() {
     return Container(
-      margin: const EdgeInsets.only(top: 16, right: 16, bottom: 16),
+      margin: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withOpacity(0.04),
             blurRadius: 10,
-            offset: const Offset(0, 4),
+            offset: const Offset(0, 2),
           ),
         ],
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header
-          Container(
+          Padding(
             padding: const EdgeInsets.all(16),
-            decoration: const BoxDecoration(
-              color: Color(0xFF1B4D3E),
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(20),
-                topRight: Radius.circular(20),
-              ),
-            ),
             child: Row(
               children: [
-                const Icon(Icons.receipt_long, color: Colors.white),
-                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(
+                    Icons.receipt_long,
+                    color: Color(0xFF1B4D3E),
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 12),
                 const Text(
-                  'Bill Summary',
+                  'Bill Items',
                   style: TextStyle(
                     fontFamily: 'Literata',
-                    fontWeight: FontWeight.w700,
-                    fontSize: 18,
-                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 15,
+                    color: Color(0xFF1B4D3E),
                   ),
                 ),
                 const Spacer(),
                 Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
+                    horizontal: 10,
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
+                    color: const Color(0xFF1B4D3E),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
                     '${_billItems.length} items',
                     style: const TextStyle(
                       fontFamily: 'Literata',
+                      fontSize: 11,
                       color: Colors.white,
-                      fontSize: 12,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          // Customer details
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Customer Details (Optional)',
-                  style: TextStyle(
-                    fontFamily: 'Literata',
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF1B4D3E),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                // Select existing customer or enter new
-                if (_customers.isNotEmpty)
-                  GestureDetector(
-                    onTap: _showCustomerSelectionDialog,
-                    child: Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey[300]!),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.person_outline,
-                            color: Colors.grey[600],
-                            size: 20,
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              _selectedCustomer != null
-                                  ? _selectedCustomer!['fullName']
-                                  : 'Select existing customer',
-                              style: TextStyle(
-                                fontFamily: 'Literata',
-                                color: _selectedCustomer != null
-                                    ? Colors.black
-                                    : Colors.grey[600],
-                              ),
-                            ),
-                          ),
-                          if (_selectedCustomer != null)
-                            GestureDetector(
-                              onTap: () {
-                                setState(() {
-                                  _selectedCustomer = null;
-                                });
-                              },
-                              child: const Icon(Icons.clear, size: 18),
-                            )
-                          else
-                            const Icon(Icons.arrow_drop_down, size: 24),
-                        ],
-                      ),
-                    ),
-                  ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: _customerNameController,
-                  decoration: InputDecoration(
-                    labelText: 'Customer Name',
-                    prefixIcon: const Icon(
-                      Icons.person,
-                      color: Color(0xFF1B4D3E),
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: Color(0xFF1B4D3E),
-                        width: 2,
-                      ),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 12,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: _customerContactController,
-                  keyboardType: TextInputType.phone,
-                  decoration: InputDecoration(
-                    labelText: 'Contact Number',
-                    prefixIcon: const Icon(
-                      Icons.phone,
-                      color: Color(0xFF1B4D3E),
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: Color(0xFF1B4D3E),
-                        width: 2,
-                      ),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 12,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                 ),
@@ -922,166 +1096,169 @@ class _BillingPageState extends State<BillingPage>
             ),
           ),
           const Divider(height: 1),
-          // Bill items list
+          ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: _billItems.length,
+            separatorBuilder: (_, __) => const Divider(height: 1),
+            itemBuilder: (context, index) {
+              final item = _billItems[index];
+              return Dismissible(
+                key: Key('${item.productId}_$index'),
+                direction: DismissDirection.endToStart,
+                background: Container(
+                  alignment: Alignment.centerRight,
+                  padding: const EdgeInsets.only(right: 20),
+                  color: Colors.red[400],
+                  child: const Icon(Icons.delete, color: Colors.white),
+                ),
+                onDismissed: (_) => setState(() => _billItems.removeAt(index)),
+                child: ListTile(
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 4,
+                  ),
+                  title: Text(
+                    item.productName,
+                    style: const TextStyle(
+                      fontFamily: 'Literata',
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                    ),
+                  ),
+                  subtitle: Text(
+                    '₹${item.sellingPrice.toStringAsFixed(0)} × ${item.quantity}',
+                    style: TextStyle(
+                      fontFamily: 'Literata',
+                      fontSize: 12,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        '₹${item.subtotal.toStringAsFixed(0)}',
+                        style: const TextStyle(
+                          fontFamily: 'Literata',
+                          fontWeight: FontWeight.w700,
+                          fontSize: 14,
+                          color: Color(0xFF1B4D3E),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      GestureDetector(
+                        onTap: () {
+                          final product = _products.firstWhere(
+                            (p) => p.id == item.productId,
+                            orElse: () => Product(
+                              id: item.productId,
+                              name: item.productName,
+                              companyName: '',
+                              category: '',
+                              purchasePrice: 0,
+                              salesPrice: item.sellingPrice,
+                              currentStock: 999,
+                              createdAt: DateTime.now(),
+                              updatedAt: DateTime.now(),
+                            ),
+                          );
+                          _showQuantityDialog(product, index);
+                        },
+                        child: const Icon(
+                          Icons.edit,
+                          size: 18,
+                          color: Color(0xFF1B4D3E),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBottomBar() {
+    return Container(
+      padding: EdgeInsets.only(
+        left: 20,
+        right: 20,
+        top: 16,
+        bottom: MediaQuery.of(context).padding.bottom + 16,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 20,
+            offset: const Offset(0, -4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
           Expanded(
-            child: _billItems.isEmpty
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.add_shopping_cart,
-                          size: 48,
-                          color: Colors.grey[400],
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          'No items added',
-                          style: TextStyle(
-                            fontFamily: 'Literata',
-                            fontSize: 14,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Tap on products to add them',
-                          style: TextStyle(
-                            fontFamily: 'Literata',
-                            fontSize: 12,
-                            color: Colors.grey[500],
-                          ),
-                        ),
-                      ],
-                    ),
-                  )
-                : ListView.builder(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    itemCount: _billItems.length,
-                    itemBuilder: (context, index) {
-                      final item = _billItems[index];
-                      return _buildBillItemTile(item, index);
-                    },
-                  ),
-          ),
-          // Notes field
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: TextField(
-              controller: _notesController,
-              maxLines: 2,
-              decoration: InputDecoration(
-                labelText: 'Notes (Optional)',
-                prefixIcon: const Icon(Icons.note, color: Color(0xFF1B4D3E)),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(
-                    color: Color(0xFF1B4D3E),
-                    width: 2,
-                  ),
-                ),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 12,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          // Total section
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF5F6F8),
-              borderRadius: const BorderRadius.only(
-                bottomLeft: Radius.circular(20),
-                bottomRight: Radius.circular(20),
-              ),
-            ),
             child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Total Quantity:',
-                      style: TextStyle(fontFamily: 'Literata', fontSize: 14),
-                    ),
-                    Text(
-                      '$_totalQuantity items',
-                      style: const TextStyle(
-                        fontFamily: 'Literata',
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
+                Text(
+                  '$_totalQuantity items',
+                  style: TextStyle(
+                    fontFamily: 'Literata',
+                    fontSize: 12,
+                    color: Colors.grey[600],
+                  ),
                 ),
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Total Amount:',
-                      style: TextStyle(
-                        fontFamily: 'Literata',
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF1B4D3E),
-                      ),
-                    ),
-                    Text(
-                      '₹${_totalAmount.toStringAsFixed(2)}',
-                      style: const TextStyle(
-                        fontFamily: 'Literata',
-                        fontSize: 24,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF1B4D3E),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: _isSavingBill || _billItems.isEmpty
-                        ? null
-                        : _saveBill,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF1B4D3E),
-                      disabledBackgroundColor: Colors.grey[400],
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: _isSavingBill
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                Colors.white,
-                              ),
-                            ),
-                          )
-                        : const Text(
-                            'Save Bill',
-                            style: TextStyle(
-                              fontFamily: 'Literata',
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
-                            ),
-                          ),
+                const SizedBox(height: 2),
+                Text(
+                  '₹${_totalAmount.toStringAsFixed(2)}',
+                  style: const TextStyle(
+                    fontFamily: 'Literata',
+                    fontSize: 22,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF1B4D3E),
                   ),
                 ),
               ],
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: ElevatedButton(
+              onPressed: _isSavingBill || _billItems.isEmpty ? null : _saveBill,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF1B4D3E),
+                disabledBackgroundColor: Colors.grey[300],
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                elevation: 0,
+              ),
+              child: _isSavingBill
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation(Colors.white),
+                      ),
+                    )
+                  : const Text(
+                      'Save Bill',
+                      style: TextStyle(
+                        fontFamily: 'Literata',
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
             ),
           ),
         ],
@@ -1089,185 +1266,94 @@ class _BillingPageState extends State<BillingPage>
     );
   }
 
-  Widget _buildBillItemTile(BillItem item, int index) {
-    return Dismissible(
-      key: Key(item.productId + index.toString()),
-      direction: DismissDirection.endToStart,
-      background: Container(
-        alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 20),
-        color: Colors.red,
-        child: const Icon(Icons.delete, color: Colors.white),
-      ),
-      onDismissed: (_) {
-        setState(() {
-          _billItems.removeAt(index);
-        });
-      },
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-        title: Text(
-          item.productName,
-          style: const TextStyle(
-            fontFamily: 'Literata',
-            fontWeight: FontWeight.w600,
-            fontSize: 14,
-          ),
-        ),
-        subtitle: Text(
-          '₹${item.sellingPrice.toStringAsFixed(2)} × ${item.quantity}',
-          style: TextStyle(
-            fontFamily: 'Literata',
-            fontSize: 12,
-            color: Colors.grey[600],
-          ),
-        ),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              '₹${item.subtotal.toStringAsFixed(2)}',
-              style: const TextStyle(
-                fontFamily: 'Literata',
-                fontWeight: FontWeight.w700,
-                fontSize: 14,
-                color: Color(0xFF1B4D3E),
-              ),
-            ),
-            const SizedBox(width: 8),
-            GestureDetector(
-              onTap: () {
-                final product = _products.firstWhere(
-                  (p) => p.id == item.productId,
-                  orElse: () => Product(
-                    id: item.productId,
-                    name: item.productName,
-                    companyName: '',
-                    category: '',
-                    purchasePrice: 0,
-                    salesPrice: item.sellingPrice,
-                    currentStock: 999,
-                    createdAt: DateTime.now(),
-                    updatedAt: DateTime.now(),
-                  ),
-                );
-                _showQuantityDialog(product, index);
-              },
-              child: const Icon(Icons.edit, size: 18, color: Color(0xFF1B4D3E)),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showCustomerSelectionDialog() {
-    _customerSearchController.clear();
-    _filteredCustomers = _customers;
-
-    showDialog(
+  void _showCustomerPicker() {
+    showModalBottomSheet(
       context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => DraggableScrollableSheet(
+        initialChildSize: 0.6,
+        maxChildSize: 0.9,
+        minChildSize: 0.4,
+        builder: (_, controller) => Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
           ),
-          title: const Text(
-            'Select Customer',
-            style: TextStyle(
-              fontFamily: 'Literata',
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF1B4D3E),
-              fontSize: 18,
-            ),
-          ),
-          content: SizedBox(
-            width: 300,
-            height: 400,
-            child: Column(
-              children: [
-                TextField(
-                  controller: _customerSearchController,
-                  onChanged: (query) {
-                    setDialogState(() {
-                      _filterCustomers(query);
-                    });
-                  },
-                  decoration: InputDecoration(
-                    hintText: 'Search customers...',
-                    prefixIcon: const Icon(
-                      Icons.search,
-                      color: Color(0xFF1B4D3E),
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: Color(0xFF1B4D3E),
-                        width: 2,
-                      ),
-                    ),
-                  ),
+          child: Column(
+            children: [
+              const SizedBox(height: 12),
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
                 ),
-                const SizedBox(height: 12),
-                Expanded(
-                  child: ListView.builder(
-                    itemCount: _filteredCustomers.length,
-                    itemBuilder: (context, index) {
-                      final customer = _filteredCustomers[index];
-                      return ListTile(
-                        leading: CircleAvatar(
-                          backgroundColor: const Color(0xFF1B4D3E),
-                          child: Text(
-                            customer['fullName'].toString().isNotEmpty
-                                ? customer['fullName']
-                                      .toString()
-                                      .substring(0, 1)
-                                      .toUpperCase()
-                                : '?',
-                            style: const TextStyle(color: Colors.white),
-                          ),
-                        ),
-                        title: Text(
-                          customer['fullName'],
-                          style: const TextStyle(fontFamily: 'Literata'),
-                        ),
-                        subtitle: Text(
-                          customer['contact'] ?? '',
-                          style: TextStyle(
-                            fontFamily: 'Literata',
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                        onTap: () {
-                          setState(() {
-                            _selectedCustomer = customer;
-                            _customerNameController.text =
-                                customer['fullName'] ?? '';
-                            _customerContactController.text =
-                                customer['contact'] ?? '';
-                          });
-                          Navigator.pop(context);
-                        },
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text(
-                'Cancel',
-                style: TextStyle(fontFamily: 'Literata', color: Colors.grey),
               ),
-            ),
-          ],
+              const Padding(
+                padding: EdgeInsets.all(20),
+                child: Text(
+                  'Select Customer',
+                  style: TextStyle(
+                    fontFamily: 'Literata',
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF1B4D3E),
+                  ),
+                ),
+              ),
+              Expanded(
+                child: ListView.builder(
+                  controller: controller,
+                  itemCount: _customers.length,
+                  itemBuilder: (context, index) {
+                    final customer = _customers[index];
+                    return ListTile(
+                      leading: CircleAvatar(
+                        backgroundColor: const Color(0xFF1B4D3E),
+                        child: Text(
+                          (customer['fullName'] as String).isNotEmpty
+                              ? (customer['fullName'] as String)[0]
+                                    .toUpperCase()
+                              : '?',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      title: Text(
+                        customer['fullName'],
+                        style: const TextStyle(
+                          fontFamily: 'Literata',
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      subtitle: Text(
+                        customer['contact'] ?? '',
+                        style: TextStyle(
+                          fontFamily: 'Literata',
+                          color: Colors.grey[600],
+                          fontSize: 12,
+                        ),
+                      ),
+                      onTap: () {
+                        setState(() {
+                          _selectedCustomer = customer;
+                          _customerNameController.text =
+                              customer['fullName'] ?? '';
+                          _customerContactController.text =
+                              customer['contact'] ?? '';
+                        });
+                        Navigator.pop(ctx);
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
