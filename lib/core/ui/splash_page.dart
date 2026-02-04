@@ -2,11 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../features/authentication/presentation/pages/login.dart';
-import '../../features/authentication/presentation/widgets/biometric_auth_overlay.dart';
-import '../../features/authentication/presentation/cubit/biometric_cubit.dart';
 import '../../features/dashboard/presentation/pages/optimized_dashboard_page.dart';
 import '../../core/services/biometric_service.dart';
 import '../services/credentials_manager.dart';
@@ -118,60 +115,25 @@ class _SplashPageState extends State<SplashPage> {
     }
   }
 
-  Future<void> _checkBiometricAndProceed(String userId) async {
+  Future<void> _showFingerprintDialog(String userId) async {
     try {
       final biometricService = BiometricService.instance;
-      
-      // Check if device supports biometrics
-      final canUseBiometrics = await biometricService.canUseBiometrics();
-      
-      if (canUseBiometrics && mounted) {
-        print('[DEBUG] Device supports biometric, showing overlay');
-        // Show biometric overlay regardless of previous preference
-        // User can skip by cancelling
-        _showBiometricOverlay(userId);
+      final isAuthenticated = await biometricService.authenticate(
+        reason: 'Verify your identity to continue',
+        useErrorDialogs: true,
+      );
+
+      if (isAuthenticated && mounted) {
+        print('[DEBUG] Fingerprint authentication successful');
+        _navigateToDashboard();
       } else {
-        print('[DEBUG] Device does not support biometric, going directly to dashboard');
+        print('[DEBUG] Fingerprint authentication cancelled/failed');
         _navigateToDashboard();
       }
     } catch (e) {
-      print('[ERROR] Error checking biometric: $e');
+      print('[ERROR] Error during fingerprint authentication: $e');
       _navigateToDashboard();
     }
-  }
-
-  void _showBiometricOverlay(String userId) {
-    showModalBottomSheet(
-      context: context,
-      isDismissible: false,
-      enableDrag: false,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      useSafeArea: true,
-      builder: (BuildContext bottomSheetContext) {
-        return BlocProvider<BiometricCubit>(
-          create: (context) => BiometricCubit(
-            biometricService: BiometricService.instance,
-            userId: userId,
-          )..checkBiometricAvailability(),
-          child: BiometricAuthOverlay(
-            userId: userId,
-            onSuccess: () {
-              print('[DEBUG] Biometric authentication successful');
-              // First pop the bottom sheet, then navigate
-              Navigator.pop(context);
-              _navigateToDashboard();
-            },
-            onCancel: () {
-              print('[DEBUG] Biometric skipped by user');
-              // First pop the bottom sheet, then navigate
-              Navigator.pop(context);
-              _navigateToDashboard();
-            },
-          ),
-        );
-      },
-    );
   }
 
   void _navigateToDashboard() {
@@ -185,8 +147,8 @@ class _SplashPageState extends State<SplashPage> {
   void _showUnlockBiometric() {
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser != null) {
-      print('[DEBUG] Unlock Now tapped, showing biometric overlay');
-      _showBiometricOverlay(currentUser.uid);
+      print('[DEBUG] Unlock Now tapped, showing fingerprint dialog');
+      _showFingerprintDialog(currentUser.uid);
     } else {
       print('[ERROR] No current user found');
       ScaffoldMessenger.of(context).showSnackBar(
