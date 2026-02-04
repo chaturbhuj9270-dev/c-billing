@@ -21,11 +21,16 @@ class _BillingPageState extends State<BillingPage> {
   final _customerNameController = TextEditingController();
   final _customerContactController = TextEditingController();
   final _notesController = TextEditingController();
+  final _discountController = TextEditingController();
 
   List<BillItem> _billItems = [];
   List<Product> _products = [];
   bool _isLoading = false;
   bool _isSavingBill = false;
+
+  // Discount state
+  bool _isPercentageDiscount = true;
+  double _discountValue = 0.0;
 
   Map<String, dynamic>? _selectedCustomer;
   List<Map<String, dynamic>> _customers = [];
@@ -48,6 +53,7 @@ class _BillingPageState extends State<BillingPage> {
     _customerNameController.dispose();
     _customerContactController.dispose();
     _notesController.dispose();
+    _discountController.dispose();
     super.dispose();
   }
 
@@ -138,6 +144,25 @@ class _BillingPageState extends State<BillingPage> {
   int get _totalQuantity =>
       _billItems.fold(0, (sum, item) => sum + item.quantity);
 
+  double get _discountAmount {
+    if (_isPercentageDiscount) {
+      return (_totalAmount * _discountValue / 100);
+    }
+    return _discountValue;
+  }
+
+  double get _discountPercent {
+    if (_isPercentageDiscount) {
+      return _discountValue;
+    }
+    if (_totalAmount > 0) {
+      return (_discountValue / _totalAmount * 100);
+    }
+    return 0.0;
+  }
+
+  double get _finalAmount => _totalAmount - _discountAmount;
+
   Future<void> _saveBill() async {
     if (_billItems.isEmpty) {
       _showSnackbar('Please add at least one item', isError: true);
@@ -159,6 +184,8 @@ class _BillingPageState extends State<BillingPage> {
         notes: _notesController.text.trim().isNotEmpty
             ? _notesController.text.trim()
             : null,
+        discountAmount: _discountAmount,
+        discountPercent: _discountPercent,
       );
 
       setState(() => _isSavingBill = false);
@@ -185,6 +212,9 @@ class _BillingPageState extends State<BillingPage> {
       _customerNameController.clear();
       _customerContactController.clear();
       _notesController.clear();
+      _discountController.clear();
+      _discountValue = 0.0;
+      _isPercentageDiscount = true;
       _selectedCustomer = null;
     });
   }
@@ -217,6 +247,8 @@ class _BillingPageState extends State<BillingPage> {
                 SliverToBoxAdapter(child: _buildAddItemsButton()),
                 if (_billItems.isNotEmpty)
                   SliverToBoxAdapter(child: _buildBillItemsSection()),
+                if (_billItems.isNotEmpty)
+                  SliverToBoxAdapter(child: _buildDiscountSection()),
                 const SliverToBoxAdapter(child: SizedBox(height: 100)),
               ],
             ),
@@ -776,6 +808,330 @@ class _BillingPageState extends State<BillingPage> {
     );
   }
 
+  Widget _buildDiscountSection() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE8F5E9),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.discount_outlined,
+                  color: Color(0xFF1B4D3E),
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Text(
+                'Discount',
+                style: TextStyle(
+                  fontFamily: 'Literata',
+                  fontWeight: FontWeight.w600,
+                  fontSize: 15,
+                  color: Color(0xFF1B4D3E),
+                ),
+              ),
+              const Spacer(),
+              if (_discountAmount > 0)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.green[50],
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    '-₹${_discountAmount.toStringAsFixed(2)}',
+                    style: TextStyle(
+                      fontFamily: 'Literata',
+                      fontSize: 12,
+                      color: Colors.green[700],
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              // Discount type toggle
+              Container(
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF5F5F5),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _buildDiscountTypeButton(
+                      label: '%',
+                      isSelected: _isPercentageDiscount,
+                      onTap: () {
+                        setState(() {
+                          _isPercentageDiscount = true;
+                          _updateDiscount(_discountController.text);
+                        });
+                      },
+                    ),
+                    _buildDiscountTypeButton(
+                      label: '₹',
+                      isSelected: !_isPercentageDiscount,
+                      onTap: () {
+                        setState(() {
+                          _isPercentageDiscount = false;
+                          _updateDiscount(_discountController.text);
+                        });
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              // Discount input
+              Expanded(
+                child: TextField(
+                  controller: _discountController,
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  style: const TextStyle(fontFamily: 'Literata', fontSize: 14),
+                  onChanged: _updateDiscount,
+                  decoration: InputDecoration(
+                    hintText: _isPercentageDiscount
+                        ? 'Enter %'
+                        : 'Enter amount',
+                    hintStyle: TextStyle(color: Colors.grey[400], fontSize: 13),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 12,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey[300]!),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(
+                        color: Color(0xFF1B4D3E),
+                        width: 1.5,
+                      ),
+                    ),
+                    suffixIcon: _discountController.text.isNotEmpty
+                        ? IconButton(
+                            icon: Icon(
+                              Icons.clear,
+                              size: 18,
+                              color: Colors.grey[500],
+                            ),
+                            onPressed: () {
+                              _discountController.clear();
+                              _updateDiscount('');
+                            },
+                          )
+                        : null,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          // Quick discount buttons
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _buildQuickDiscountChip('5%', 5, true),
+              _buildQuickDiscountChip('10%', 10, true),
+              _buildQuickDiscountChip('15%', 15, true),
+              _buildQuickDiscountChip('20%', 20, true),
+            ],
+          ),
+          // Summary
+          if (_discountAmount > 0) ...[
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.green[50],
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Subtotal',
+                        style: TextStyle(
+                          fontFamily: 'Literata',
+                          fontSize: 13,
+                          color: Colors.grey[700],
+                        ),
+                      ),
+                      Text(
+                        '₹${_totalAmount.toStringAsFixed(2)}',
+                        style: const TextStyle(
+                          fontFamily: 'Literata',
+                          fontSize: 13,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Discount (${_discountPercent.toStringAsFixed(1)}%)',
+                        style: TextStyle(
+                          fontFamily: 'Literata',
+                          fontSize: 13,
+                          color: Colors.green[700],
+                        ),
+                      ),
+                      Text(
+                        '-₹${_discountAmount.toStringAsFixed(2)}',
+                        style: TextStyle(
+                          fontFamily: 'Literata',
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.green[700],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const Divider(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Final Total',
+                        style: TextStyle(
+                          fontFamily: 'Literata',
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF1B4D3E),
+                        ),
+                      ),
+                      Text(
+                        '₹${_finalAmount.toStringAsFixed(2)}',
+                        style: const TextStyle(
+                          fontFamily: 'Literata',
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF1B4D3E),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDiscountTypeButton({
+    required String label,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFF1B4D3E) : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontFamily: 'Literata',
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: isSelected ? Colors.white : Colors.grey[600],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuickDiscountChip(String label, double value, bool isPercent) {
+    final isSelected =
+        _isPercentageDiscount == isPercent && _discountValue == value;
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _isPercentageDiscount = isPercent;
+          _discountValue = value;
+          _discountController.text = value.toStringAsFixed(0);
+        });
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFF1B4D3E) : Colors.grey[100],
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected ? const Color(0xFF1B4D3E) : Colors.grey[300]!,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontFamily: 'Literata',
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+            color: isSelected ? Colors.white : Colors.grey[700],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _updateDiscount(String value) {
+    setState(() {
+      if (value.isEmpty) {
+        _discountValue = 0.0;
+      } else {
+        final parsed = double.tryParse(value) ?? 0.0;
+        if (_isPercentageDiscount) {
+          // Cap percentage at 100%
+          _discountValue = parsed.clamp(0.0, 100.0);
+        } else {
+          // Cap flat discount at total amount
+          _discountValue = parsed.clamp(0.0, _totalAmount);
+        }
+      }
+    });
+  }
+
   Widget _buildBottomBar() {
     return Container(
       padding: EdgeInsets.only(
@@ -810,15 +1166,59 @@ class _BillingPageState extends State<BillingPage> {
                   ),
                 ),
                 const SizedBox(height: 2),
-                Text(
-                  '₹${_totalAmount.toStringAsFixed(2)}',
-                  style: const TextStyle(
-                    fontFamily: 'Literata',
-                    fontSize: 22,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF1B4D3E),
+                if (_discountAmount > 0) ...[
+                  Text(
+                    '₹${_totalAmount.toStringAsFixed(2)}',
+                    style: TextStyle(
+                      fontFamily: 'Literata',
+                      fontSize: 13,
+                      color: Colors.grey[500],
+                      decoration: TextDecoration.lineThrough,
+                    ),
                   ),
-                ),
+                  Row(
+                    children: [
+                      Text(
+                        '₹${_finalAmount.toStringAsFixed(2)}',
+                        style: const TextStyle(
+                          fontFamily: 'Literata',
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF1B4D3E),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.green[50],
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          '-${_discountPercent.toStringAsFixed(0)}%',
+                          style: TextStyle(
+                            fontFamily: 'Literata',
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.green[700],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ] else
+                  Text(
+                    '₹${_totalAmount.toStringAsFixed(2)}',
+                    style: const TextStyle(
+                      fontFamily: 'Literata',
+                      fontSize: 22,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF1B4D3E),
+                    ),
+                  ),
               ],
             ),
           ),

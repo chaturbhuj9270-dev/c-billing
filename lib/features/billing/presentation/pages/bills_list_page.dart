@@ -90,8 +90,8 @@ class _BillsListPageState extends State<BillsListPage>
         bills = await _billingService.getAllBills();
       }
 
-      // Calculate stats
-      _totalSales = bills.fold(0.0, (sum, bill) => sum + bill.totalAmount);
+      // Calculate stats (use finalAmount to account for discounts)
+      _totalSales = bills.fold(0.0, (sum, bill) => sum + bill.finalAmount);
       _totalBillsCount = bills.length;
 
       setState(() {
@@ -773,10 +773,32 @@ class _BillsListPageState extends State<BillsListPage>
                     ),
                   ),
                   const SizedBox(width: 8),
+                  if (bill.discountAmount > 0) ...[
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.green[50],
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        '-${bill.discountPercent.toStringAsFixed(0)}%',
+                        style: TextStyle(
+                          fontFamily: 'Literata',
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.green[700],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                  ],
                   FittedBox(
                     fit: BoxFit.scaleDown,
                     child: Text(
-                      '₹${bill.totalAmount.toStringAsFixed(2)}',
+                      '₹${bill.finalAmount.toStringAsFixed(2)}',
                       style: const TextStyle(
                         fontFamily: 'Literata',
                         fontSize: 16,
@@ -1213,7 +1235,59 @@ class _BillDetailsDialog extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              'Total Amount:',
+                              'Subtotal:',
+                              style: TextStyle(
+                                fontFamily: 'Literata',
+                                fontSize: 14,
+                                color: Colors.white.withOpacity(0.8),
+                              ),
+                            ),
+                            Text(
+                              '₹${bill.totalAmount.toStringAsFixed(2)}',
+                              style: TextStyle(
+                                fontFamily: 'Literata',
+                                fontSize: 14,
+                                color: Colors.white.withOpacity(0.9),
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (bill.discountAmount > 0) ...[
+                          const SizedBox(height: 8),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Discount (${bill.discountPercent.toStringAsFixed(1)}%):',
+                                style: TextStyle(
+                                  fontFamily: 'Literata',
+                                  fontSize: 14,
+                                  color: Colors.greenAccent.withOpacity(0.9),
+                                ),
+                              ),
+                              Text(
+                                '-₹${bill.discountAmount.toStringAsFixed(2)}',
+                                style: TextStyle(
+                                  fontFamily: 'Literata',
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.greenAccent,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                        const SizedBox(height: 12),
+                        Container(
+                          height: 1,
+                          color: Colors.white.withOpacity(0.1),
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Final Amount:',
                               style: TextStyle(
                                 fontFamily: 'Literata',
                                 fontSize: 16,
@@ -1222,7 +1296,7 @@ class _BillDetailsDialog extends StatelessWidget {
                               ),
                             ),
                             Text(
-                              '₹${bill.totalAmount.toStringAsFixed(2)}',
+                              '₹${bill.finalAmount.toStringAsFixed(2)}',
                               style: const TextStyle(
                                 fontFamily: 'Literata',
                                 fontSize: 22,

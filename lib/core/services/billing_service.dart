@@ -120,6 +120,8 @@ class BillingService {
     String? customerName,
     String? customerContact,
     String? notes,
+    double discountAmount = 0.0,
+    double discountPercent = 0.0,
   }) async {
     // Validate that there are items
     if (items.isEmpty) {
@@ -183,6 +185,9 @@ class BillingService {
         final totalQuantity = calculateTotalQuantity(items);
         final totalAmount = calculateTotalAmount(items);
 
+        // Calculate final amount after discount
+        final finalAmount = totalAmount - discountAmount;
+
         // Update items with the bill ID
         final updatedItems = items
             .map(
@@ -201,6 +206,9 @@ class BillingService {
           items: updatedItems,
           totalQuantity: totalQuantity,
           totalAmount: totalAmount,
+          discountAmount: discountAmount,
+          discountPercent: discountPercent,
+          finalAmount: finalAmount,
           billDate: now,
           createdAt: now,
           updatedAt: now,

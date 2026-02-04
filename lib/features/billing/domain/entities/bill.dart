@@ -9,6 +9,9 @@ class Bill {
   final List<BillItem> items;
   final int totalQuantity;
   final double totalAmount;
+  final double discountAmount;
+  final double discountPercent;
+  final double finalAmount;
   final DateTime billDate;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -22,6 +25,9 @@ class Bill {
     required this.items,
     required this.totalQuantity,
     required this.totalAmount,
+    this.discountAmount = 0.0,
+    this.discountPercent = 0.0,
+    required this.finalAmount,
     required this.billDate,
     required this.createdAt,
     required this.updatedAt,
@@ -38,6 +44,13 @@ class Bill {
             .toList();
       }
 
+      final totalAmount = ((json['totalAmount'] ?? 0) as num).toDouble();
+      final discountAmount = ((json['discountAmount'] ?? 0) as num).toDouble();
+      final discountPercent = ((json['discountPercent'] ?? 0) as num)
+          .toDouble();
+      final finalAmount = ((json['finalAmount'] ?? totalAmount) as num)
+          .toDouble();
+
       return Bill(
         id: (json['id'] ?? '') as String,
         customerId: json['customerId'] as String?,
@@ -45,7 +58,10 @@ class Bill {
         customerContact: json['customerContact'] as String?,
         items: billItems,
         totalQuantity: (json['totalQuantity'] ?? 0) as int,
-        totalAmount: ((json['totalAmount'] ?? 0) as num).toDouble(),
+        totalAmount: totalAmount,
+        discountAmount: discountAmount,
+        discountPercent: discountPercent,
+        finalAmount: finalAmount,
         billDate: json['billDate'] != null
             ? DateTime.parse(json['billDate'] as String)
             : DateTime.now(),
@@ -68,6 +84,9 @@ class Bill {
         items: [],
         totalQuantity: 0,
         totalAmount: 0.0,
+        discountAmount: 0.0,
+        discountPercent: 0.0,
+        finalAmount: 0.0,
         billDate: DateTime.now(),
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
@@ -86,6 +105,9 @@ class Bill {
       'items': items.map((item) => item.toJson()).toList(),
       'totalQuantity': totalQuantity,
       'totalAmount': totalAmount,
+      'discountAmount': discountAmount,
+      'discountPercent': discountPercent,
+      'finalAmount': finalAmount,
       'billDate': billDate.toIso8601String(),
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
@@ -102,6 +124,9 @@ class Bill {
     List<BillItem>? items,
     int? totalQuantity,
     double? totalAmount,
+    double? discountAmount,
+    double? discountPercent,
+    double? finalAmount,
     DateTime? billDate,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -115,6 +140,9 @@ class Bill {
       items: items ?? this.items,
       totalQuantity: totalQuantity ?? this.totalQuantity,
       totalAmount: totalAmount ?? this.totalAmount,
+      discountAmount: discountAmount ?? this.discountAmount,
+      discountPercent: discountPercent ?? this.discountPercent,
+      finalAmount: finalAmount ?? this.finalAmount,
       billDate: billDate ?? this.billDate,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
