@@ -538,6 +538,7 @@ class _SupplierPageState extends State<SupplierPage> {
             controller: _addressController,
             icon: Icons.location_on_outlined,
             maxLines: 3,
+            isRequired: true,
           ),
           const SizedBox(height: 16),
           // Companies Section
