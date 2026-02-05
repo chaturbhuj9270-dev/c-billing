@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../core/services/session_manager.dart';
+import '../../data/datasources/company_cache_datasource.dart';
 
 class CompanyPage extends StatefulWidget {
   const CompanyPage({super.key});
@@ -31,6 +32,7 @@ class _CompanyPageState extends State<CompanyPage> {
   bool _isSortAscending = true;
   Timer? _filterDebounceTimer;
   bool _isNavigatingAway = false;
+  final _cacheDataSource = CompanyCacheDataSource();
 
   final _auth = FirebaseAuth.instance;
   late final FirebaseFirestore _firestore;
@@ -42,10 +44,33 @@ class _CompanyPageState extends State<CompanyPage> {
     _firestore = FirebaseFirestore.instance;
     _sessionManager = SessionManager();
     _checkUserAuthentication();
-    _loadSuppliers();
-    _loadCompanies();
+    _setupInitialData();
     _supplierSearchController.addListener(_filterSuppliers);
     _searchController.addListener(_filterAndSearchCompanies);
+  }
+
+  Future<void> _setupInitialData() async {
+    // Load from cache immediately for < 0.5s loading
+    final cachedCompanies = await _cacheDataSource.getCachedCompanies();
+    final cachedSuppliers = await _cacheDataSource.getCachedSuppliers();
+    
+    if (mounted) {
+      setState(() {
+        if (cachedCompanies != null) {
+          _companies = cachedCompanies;
+          _filterAndSortCompanies();
+        }
+        if (cachedSuppliers != null) {
+          _suppliers = cachedSuppliers;
+          _filteredSuppliers = _suppliers;
+        }
+      });
+      print('[DEBUG] Loaded from cache: ${_companies.length} companies, ${_suppliers.length} suppliers');
+    }
+
+    // Fetch from Firestore in background
+    _loadSuppliers();
+    _loadCompanies();
   }
 
   void _toggleSort() {
@@ -126,7 +151,7 @@ class _CompanyPageState extends State<CompanyPage> {
 
   Future<void> _loadSuppliers() async {
     try {
-      print('[DEBUG] Loading suppliers...');
+      print('[DEBUG] Loading suppliers from Firestore...');
       final currentUser = _auth.currentUser;
       if (currentUser == null) {
         print('[ERROR] No authenticated user - cannot load suppliers');
@@ -141,32 +166,25 @@ class _CompanyPageState extends State<CompanyPage> {
           .orderBy('firstName')
           .get();
 
-      print('[DEBUG] Loaded ${snapshot.docs.length} suppliers');
-      
-      // Log each supplier
-      for (var doc in snapshot.docs) {
-        print('[DEBUG] Supplier: ${doc.data()}');
-      }
+      print('[DEBUG] Loaded ${snapshot.docs.length} suppliers from Firestore');
+
+      final freshSuppliers = snapshot.docs
+          .map((doc) => {
+                'id': doc.id,
+                ...doc.data(),
+              })
+          .toList();
 
       if (mounted) {
         setState(() {
-          _suppliers = snapshot.docs
-              .map((doc) => {
-                    'id': doc.id,
-                    ...doc.data(),
-                  })
-              .toList();
+          _suppliers = freshSuppliers;
           _filteredSuppliers = _suppliers;
-          print('[DEBUG] Suppliers set in state: ${_suppliers.length}');
         });
+        // Save to cache for next time
+        _cacheDataSource.saveSuppliers(freshSuppliers);
       }
     } catch (e) {
       print('[ERROR] Failed to load suppliers: $e');
-      print('[ERROR] Error type: ${e.runtimeType}');
-      
-      if (e.toString().contains('permission-denied')) {
-        print('[ERROR] CRITICAL: Permission denied - check Firestore security rules');
-      }
       
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -182,7 +200,7 @@ class _CompanyPageState extends State<CompanyPage> {
 
   Future<void> _loadCompanies() async {
     try {
-      print('[DEBUG] Loading companies...');
+      print('[DEBUG] Loading companies from Firestore...');
       final currentUser = _auth.currentUser;
       if (currentUser == null) {
         print('[ERROR] No authenticated user - cannot load companies');
@@ -197,25 +215,25 @@ class _CompanyPageState extends State<CompanyPage> {
           .orderBy('createdAt', descending: true)
           .get();
 
-      print('[DEBUG] Loaded ${snapshot.docs.length} companies');
+      print('[DEBUG] Loaded ${snapshot.docs.length} companies from Firestore');
+      
+      final freshCompanies = snapshot.docs
+          .map((doc) => {
+                'id': doc.id,
+                ...doc.data(),
+              })
+          .toList();
+
       if (mounted && !_isNavigatingAway) {
         setState(() {
-          _companies = snapshot.docs
-              .map((doc) => {
-                    'id': doc.id,
-                    ...doc.data(),
-                  })
-              .toList();
+          _companies = freshCompanies;
           _filterAndSortCompanies();
         });
+        // Save to cache for next time
+        _cacheDataSource.saveCompanies(freshCompanies);
       }
     } catch (e) {
       print('[ERROR] Failed to load companies: $e');
-      print('[ERROR] Error type: ${e.runtimeType}');
-      
-      if (e.toString().contains('permission-denied')) {
-        print('[ERROR] CRITICAL: Permission denied when reading companies - security rules issue');
-      }
       
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -705,6 +723,19 @@ class _CompanyPageState extends State<CompanyPage> {
       print('[DEBUG] Company data: $companyData');
 
       if (_isEditing && _editingCompanyId != null) {
+        // Optimistic update
+        final index = _companies.indexWhere((c) => c['id'] == _editingCompanyId);
+        if (index != -1) {
+          setState(() {
+            _companies[index] = {
+              ..._companies[index],
+              ...companyData,
+            };
+            _filterAndSortCompanies();
+          });
+          _cacheDataSource.saveCompanies(_companies);
+        }
+
         // Update existing company
         print('[DEBUG] Updating existing company: $_editingCompanyId');
         await companiesCollection.doc(_editingCompanyId).update(companyData);
@@ -724,6 +755,19 @@ class _CompanyPageState extends State<CompanyPage> {
         // Create new company
         print('[DEBUG] Creating new company');
         companyData['createdAt'] = FieldValue.serverTimestamp();
+        
+        // Optimistic add
+        final tempId = 'temp_${DateTime.now().millisecondsSinceEpoch}';
+        final newCompany = {
+          'id': tempId,
+          ...companyData,
+        };
+        setState(() {
+          _companies.insert(0, newCompany);
+          _filterAndSortCompanies();
+        });
+        _cacheDataSource.saveCompanies(_companies);
+
         final docRef = await companiesCollection.add(companyData);
         print('[DEBUG] Company added successfully with ID: ${docRef.id}');
         _clearForm();
@@ -740,6 +784,8 @@ class _CompanyPageState extends State<CompanyPage> {
       }
     } catch (e) {
       print('[ERROR] Failed to save company: $e');
+      // Reload on error to revert optimistic update
+      _loadCompanies();
       print('[ERROR] Error type: ${e.runtimeType}');
       print('[ERROR] Full error: $e');
       
@@ -799,6 +845,13 @@ class _CompanyPageState extends State<CompanyPage> {
         return;
       }
 
+      // Optimistic delete
+      setState(() {
+        _companies.removeWhere((c) => c['id'] == companyId);
+        _filterAndSortCompanies();
+      });
+      _cacheDataSource.saveCompanies(_companies);
+
       print('[DEBUG] Deleting from path: users/${currentUser.uid}/companies/$companyId');
       await _firestore
           .collection('users')
@@ -816,10 +869,10 @@ class _CompanyPageState extends State<CompanyPage> {
           ),
         );
       }
-
-      _loadCompanies();
     } catch (e) {
       print('[ERROR] Failed to delete company: $e');
+      // Reload on error to revert optimistic delete
+      _loadCompanies();
       print('[ERROR] Error type: ${e.runtimeType}');
       
       if (e.toString().contains('permission-denied')) {
