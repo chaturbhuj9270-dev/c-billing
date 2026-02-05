@@ -10,7 +10,9 @@ import '../../data/datasources/purchase_cache_datasource.dart';
 import '../../domain/entities/product.dart';
 
 class PurchasePage extends StatefulWidget {
-  const PurchasePage({super.key});
+  final bool isEmbedded;
+  
+  const PurchasePage({super.key, this.isEmbedded = false});
 
   @override
   State<PurchasePage> createState() => _PurchasePageState();
@@ -1534,15 +1536,18 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        // Back button (icon only)
-                        GestureDetector(
-                          onTap: () => Navigator.pop(context),
-                          child: const Icon(
-                            Icons.arrow_back_ios_rounded,
-                            size: 22,
-                            color: Color(0xFF1B4D3E),
-                          ),
-                        ),
+                        // Back button (icon only) - only show if not embedded
+                        if (!widget.isEmbedded)
+                          GestureDetector(
+                            onTap: () => Navigator.pop(context),
+                            child: const Icon(
+                              Icons.arrow_back_ios_rounded,
+                              size: 22,
+                              color: Color(0xFF1B4D3E),
+                            ),
+                          )
+                        else
+                          const SizedBox(width: 22),
                         // Header text
                         Expanded(
                           child: Column(

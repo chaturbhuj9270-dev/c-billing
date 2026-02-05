@@ -454,35 +454,175 @@ class _DashboardPageState extends State<DashboardPage>
 
   void _navigateToPage(int index) {
     _resetSessionTimer(); // Reset timer on navigation
-    switch (index) {
+    // Content switching is handled by _buildBody() based on _selectedIndex
+    // No navigation needed - just update the state
+  }
+
+  /// Build the appropriate body content based on selected tab index
+  Widget _buildBody() {
+    switch (_selectedIndex) {
       case 0:
-        // Dashboard - already on it
-        break;
+        return _buildDashboardContent();
       case 1:
-        // Navigate to Customers
-        Navigator.of(
-          context,
-        ).push(MaterialPageRoute(builder: (_) => const CustomerPage()));
-        break;
+        return const CustomerPage(isEmbedded: true);
       case 2:
-        // Availability - not implemented yet
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Availability page coming soon')),
-        );
-        break;
+        return const ProductManagementPage(isEmbedded: true);
       case 3:
-        // Navigate to Bills
-        Navigator.of(
-          context,
-        ).push(MaterialPageRoute(builder: (_) => const BillingPage()));
-        break;
+        return const BillingPage(isEmbedded: true);
       case 4:
-        // Navigate to Purchases
-        Navigator.of(
-          context,
-        ).push(MaterialPageRoute(builder: (_) => const PurchasePage()));
-        break;
+        return const PurchasePage(isEmbedded: true);
+      default:
+        return _buildDashboardContent();
     }
+  }
+
+  /// Build the dashboard content (original dashboard body)
+  Widget _buildDashboardContent() {
+    return Stack(
+      children: [
+        NestedScrollView(
+          physics: const BouncingScrollPhysics(),
+          headerSliverBuilder: (context, innerBoxIsScrolled) {
+            return [
+              // Pinned Gradient Header
+              SliverAppBar(
+                expandedHeight: 0,
+                collapsedHeight: 100,
+                pinned: true,
+                floating: false,
+                backgroundColor: const Color(0xFF1B4D3E),
+                automaticallyImplyLeading: false,
+                flexibleSpace: _buildGradientHeader(),
+              ),
+            ];
+          },
+          body: FadeTransition(
+            opacity: _fadeAnimation,
+            child: RefreshIndicator(
+              onRefresh: _loadDashboardData,
+              color: const Color(0xFF1B4D3E),
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.all(20.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Quick Stats Section (Horizontal Scrollable)
+                    _buildQuickStatsSection(),
+                    const SizedBox(height: 20),
+
+                    // Filter Section
+                    _buildFilterSection(),
+                    const SizedBox(height: 28),
+
+                    // Sales & Profit Analysis Section
+                    _buildAnimatedCard(
+                      index: 0,
+                      child: _buildSectionHeader(
+                        title: 'Sales & Profit Analysis',
+                        subtitle: _getFilterLabel(),
+                        icon: Icons.analytics_outlined,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Metric Cards Row
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildAnimatedCard(
+                            index: 1,
+                            child: _buildGradientMetricCard(
+                              title: 'Total Sales',
+                              amount: _formatAmount(_totalSales),
+                              subtitle:
+                                  'Bills: $_totalBillsCount • Items: $_totalItemsSold',
+                              gradient: const LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  Color(0xFF667eea),
+                                  Color(0xFF764ba2),
+                                ],
+                              ),
+                              icon: Icons.trending_up_rounded,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: _buildAnimatedCard(
+                            index: 2,
+                            child: _buildGradientMetricCard(
+                              title: 'Total Purchase',
+                              amount: _formatAmount(_totalPurchases),
+                              subtitle:
+                                  'Orders: $_purchaseOrders • Qty: $_purchaseQty',
+                              gradient: const LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  Color(0xFF757575),
+                                  Color(0xFF424242),
+                                ],
+                              ),
+                              icon: Icons.shopping_bag_rounded,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Profit Card (Full Width)
+                    _buildAnimatedCard(index: 3, child: _buildProfitCard()),
+                    const SizedBox(height: 28),
+
+                    // Inventory Section Header
+                    _buildAnimatedCard(
+                      index: 4,
+                      child: _buildSectionHeader(
+                        title: 'Inventory & Payments',
+                        subtitle: 'Live status',
+                        icon: Icons.inventory_2_outlined,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Inventory Card
+                    _buildAnimatedCard(
+                      index: 5,
+                      child: _buildInventoryCard(),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Payments Card
+                    _buildAnimatedCard(index: 5, child: _buildPaymentsCard()),
+                    const SizedBox(height: 24),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+        // Welcome snackbar overlay
+        if (_showWelcome &&
+            _welcomeSlideAnimation != null &&
+            _welcomeFadeAnimation != null)
+          Positioned(
+            left: 16,
+            right: 16,
+            bottom: 16,
+            child: SlideTransition(
+              position: _welcomeSlideAnimation!,
+              child: FadeTransition(
+                opacity: _welcomeFadeAnimation!,
+                child: const WelcomeCard(),
+              ),
+            ),
+          ),
+      ],
+    );
   }
 
   @override
@@ -491,151 +631,7 @@ class _DashboardPageState extends State<DashboardPage>
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFB),
-      body: Stack(
-        children: [
-          NestedScrollView(
-            physics: const BouncingScrollPhysics(),
-            headerSliverBuilder: (context, innerBoxIsScrolled) {
-              return [
-                // Pinned Gradient Header
-                SliverAppBar(
-                  expandedHeight: 0,
-                  collapsedHeight: 100,
-                  pinned: true,
-                  floating: false,
-                  backgroundColor: const Color(0xFF1B4D3E),
-                  automaticallyImplyLeading: false,
-                  flexibleSpace: _buildGradientHeader(),
-                ),
-              ];
-            },
-            body: FadeTransition(
-              opacity: _fadeAnimation,
-              child: RefreshIndicator(
-                onRefresh: _loadDashboardData,
-                color: const Color(0xFF1B4D3E),
-                child: SingleChildScrollView(
-                  physics: const BouncingScrollPhysics(),
-                  padding: const EdgeInsets.all(20.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Quick Stats Section (Horizontal Scrollable)
-                      _buildQuickStatsSection(),
-                      const SizedBox(height: 20),
-
-                      // Filter Section
-                      _buildFilterSection(),
-                      const SizedBox(height: 28),
-
-                      // Sales & Profit Analysis Section
-                      _buildAnimatedCard(
-                        index: 0,
-                        child: _buildSectionHeader(
-                          title: 'Sales & Profit Analysis',
-                          subtitle: _getFilterLabel(),
-                          icon: Icons.analytics_outlined,
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-
-                      // Metric Cards Row
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _buildAnimatedCard(
-                              index: 1,
-                              child: _buildGradientMetricCard(
-                                title: 'Total Sales',
-                                amount: _formatAmount(_totalSales),
-                                subtitle:
-                                    'Bills: $_totalBillsCount • Items: $_totalItemsSold',
-                                gradient: const LinearGradient(
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                  colors: [
-                                    Color(0xFF667eea),
-                                    Color(0xFF764ba2),
-                                  ],
-                                ),
-                                icon: Icons.trending_up_rounded,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: _buildAnimatedCard(
-                              index: 2,
-                              child: _buildGradientMetricCard(
-                                title: 'Total Purchase',
-                                amount: _formatAmount(_totalPurchases),
-                                subtitle:
-                                    'Orders: $_purchaseOrders • Qty: $_purchaseQty',
-                                gradient: const LinearGradient(
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                  colors: [
-                                    Color(0xFF757575),
-                                    Color(0xFF424242),
-                                  ],
-                                ),
-                                icon: Icons.shopping_bag_rounded,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Profit Card (Full Width)
-                      _buildAnimatedCard(index: 3, child: _buildProfitCard()),
-                      const SizedBox(height: 28),
-
-                      // Inventory Section Header
-                      _buildAnimatedCard(
-                        index: 4,
-                        child: _buildSectionHeader(
-                          title: 'Inventory & Payments',
-                          subtitle: 'Live status',
-                          icon: Icons.inventory_2_outlined,
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-
-                      // Inventory Card
-                      _buildAnimatedCard(
-                        index: 5,
-                        child: _buildInventoryCard(),
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Payments Card
-                      _buildAnimatedCard(index: 5, child: _buildPaymentsCard()),
-                      const SizedBox(height: 24),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-          // Welcome snackbar overlay
-          if (_showWelcome &&
-              _welcomeSlideAnimation != null &&
-              _welcomeFadeAnimation != null)
-            Positioned(
-              left: 16,
-              right: 16,
-              bottom: 16,
-              child: SlideTransition(
-                position: _welcomeSlideAnimation!,
-                child: FadeTransition(
-                  opacity: _welcomeFadeAnimation!,
-                  child: const WelcomeCard(),
-                ),
-              ),
-            ),
-        ],
-      ),
+      body: _buildBody(),
       bottomNavigationBar: _buildBottomNavBar(),
     );
   }

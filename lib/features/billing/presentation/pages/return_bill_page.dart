@@ -1370,6 +1370,11 @@ class _ReturnConfirmationDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final itemsToReturnList = bill.items.where((item) {
+      final qty = returnQuantities[item.id] ?? 0;
+      return qty > 0;
+    }).toList();
+
     return AlertDialog(
       backgroundColor: Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -1401,173 +1406,201 @@ class _ReturnConfirmationDialog extends StatelessWidget {
           ),
         ],
       ),
-      content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Are you sure you want to return the selected items?',
-              style: TextStyle(
-                fontFamily: 'Literata',
-                fontSize: 14,
-                color: Colors.grey[700],
+      content: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.5,
+          maxWidth: MediaQuery.of(context).size.width * 0.9,
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Are you sure you want to return the selected items?',
+                style: TextStyle(
+                  fontFamily: 'Literata',
+                  fontSize: 14,
+                  color: Colors.grey[700],
+                ),
               ),
-            ),
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF5F6F8),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Bill Number:',
-                        style: TextStyle(
-                          fontFamily: 'Literata',
-                          fontSize: 12,
-                          color: Colors.grey[600],
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF5F6F8),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            'Bill Number:',
+                            style: TextStyle(
+                              fontFamily: 'Literata',
+                              fontSize: 12,
+                              color: Colors.grey[600],
+                            ),
+                          ),
                         ),
-                      ),
-                      Text(
-                        bill.billNumber,
-                        style: const TextStyle(
-                          fontFamily: 'Literata',
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
+                        Flexible(
+                          child: Text(
+                            bill.billNumber,
+                            style: const TextStyle(
+                              fontFamily: 'Literata',
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  const Divider(height: 1),
-                  const SizedBox(height: 8),
-                  // List of items being returned
-                  ...bill.items
-                      .where((item) {
-                        final qty = returnQuantities[item.id] ?? 0;
-                        return qty > 0;
-                      })
-                      .map((item) {
-                        final qty = returnQuantities[item.id] ?? 0;
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 6),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  item.productName,
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    const Divider(height: 1),
+                    const SizedBox(height: 8),
+                    // List of items being returned - constrained height
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxHeight: 150),
+                      child: ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: itemsToReturnList.length,
+                        itemBuilder: (context, index) {
+                          final item = itemsToReturnList[index];
+                          final qty = returnQuantities[item.id] ?? 0;
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 6),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  flex: 3,
+                                  child: Text(
+                                    item.productName,
+                                    style: const TextStyle(
+                                      fontFamily: 'Literata',
+                                      fontSize: 11,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                    maxLines: 1,
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '×$qty',
+                                  style: TextStyle(
+                                    fontFamily: 'Literata',
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.orange[700],
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  '₹${(item.sellingPrice * qty).toStringAsFixed(2)}',
                                   style: const TextStyle(
                                     fontFamily: 'Literata',
                                     fontSize: 11,
+                                    fontWeight: FontWeight.w600,
                                   ),
-                                  overflow: TextOverflow.ellipsis,
                                 ),
-                              ),
-                              Text(
-                                '×$qty',
-                                style: TextStyle(
-                                  fontFamily: 'Literata',
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.orange[700],
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                '₹${(item.sellingPrice * qty).toStringAsFixed(2)}',
-                                style: const TextStyle(
-                                  fontFamily: 'Literata',
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      }),
-                  const SizedBox(height: 8),
-                  const Divider(height: 1),
-                  const SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Items to return:',
-                        style: TextStyle(
-                          fontFamily: 'Literata',
-                          fontSize: 12,
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                      Text(
-                        '${_itemsToReturn.length} items ($_totalReturnQuantity qty)',
-                        style: const TextStyle(
-                          fontFamily: 'Literata',
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Refund Amount:',
-                        style: TextStyle(
-                          fontFamily: 'Literata',
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.orange[700],
-                        ),
-                      ),
-                      Text(
-                        '₹${totalRefundAmount.toStringAsFixed(2)}',
-                        style: TextStyle(
-                          fontFamily: 'Literata',
-                          fontSize: 16,
-                          fontWeight: FontWeight.w800,
-                          color: Colors.orange[700],
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: Colors.blue[50],
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.blue[200]!),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.info_outline, color: Colors.blue[700], size: 16),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'This will restore the items back to inventory.',
-                      style: TextStyle(
-                        fontFamily: 'Literata',
-                        fontSize: 11,
-                        color: Colors.blue[700],
+                              ],
+                            ),
+                          );
+                        },
                       ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 8),
+                    const Divider(height: 1),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            'Items to return:',
+                            style: TextStyle(
+                              fontFamily: 'Literata',
+                              fontSize: 12,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ),
+                        Flexible(
+                          child: Text(
+                            '${_itemsToReturn.length} items ($_totalReturnQuantity qty)',
+                            style: const TextStyle(
+                              fontFamily: 'Literata',
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            'Refund Amount:',
+                            style: TextStyle(
+                              fontFamily: 'Literata',
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.orange[700],
+                            ),
+                          ),
+                        ),
+                        Flexible(
+                          child: Text(
+                            '₹${totalRefundAmount.toStringAsFixed(2)}',
+                            style: TextStyle(
+                              fontFamily: 'Literata',
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.orange[700],
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.blue[50],
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.blue[200]!),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.info_outline, color: Colors.blue[700], size: 16),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'This will restore the items back to inventory.',
+                        style: TextStyle(
+                          fontFamily: 'Literata',
+                          fontSize: 11,
+                          color: Colors.blue[700],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
       actions: [

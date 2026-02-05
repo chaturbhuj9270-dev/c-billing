@@ -10,7 +10,9 @@ import '../../data/datasources/product_cache_datasource.dart';
 import '../../domain/entities/product.dart';
 
 class ProductManagementPage extends StatefulWidget {
-  const ProductManagementPage({super.key});
+  final bool isEmbedded;
+  
+  const ProductManagementPage({super.key, this.isEmbedded = false});
 
   @override
   State<ProductManagementPage> createState() => _ProductManagementPageState();
@@ -897,6 +899,7 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: !widget.isEmbedded,
         title: const Text(
           'Product Management',
           style: TextStyle(

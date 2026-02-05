@@ -6,7 +6,9 @@ import '../../../../core/services/session_manager.dart';
 import '../../data/datasources/customer_cache_datasource.dart';
 
 class CustomerPage extends StatefulWidget {
-  const CustomerPage({super.key});
+  final bool isEmbedded;
+  
+  const CustomerPage({super.key, this.isEmbedded = false});
 
   @override
   State<CustomerPage> createState() => _CustomerPageState();
@@ -685,19 +687,21 @@ class _CustomerPageState extends State<CustomerPage> {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: Row(
                 children: [
-                  GestureDetector(
-                    onTap: () => Navigator.pop(context),
-                    child: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(10),
+                  if (!widget.isEmbedded) ...[
+                    GestureDetector(
+                      onTap: () => Navigator.pop(context),
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(Icons.arrow_back, color: Colors.white, size: 22),
                       ),
-                      child: const Icon(Icons.arrow_back, color: Colors.white, size: 22),
                     ),
-                  ),
-                  const SizedBox(width: 12),
+                    const SizedBox(width: 12),
+                  ],
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,

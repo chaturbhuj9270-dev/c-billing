@@ -11,7 +11,9 @@ import 'package:c_billing/features/inventory_management/domain/entities/product.
 import 'package:c_billing/features/billing/data/datasources/bill_cache_datasource.dart';
 
 class BillingPage extends StatefulWidget {
-  const BillingPage({super.key});
+  final bool isEmbedded;
+  
+  const BillingPage({super.key, this.isEmbedded = false});
 
   @override
   State<BillingPage> createState() => _BillingPageState();
@@ -321,57 +323,59 @@ class _BillingPageState extends State<BillingPage> {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: Row(
                 children: [
-                  GestureDetector(
-                    onTap: () {
-                      if (_billItems.isNotEmpty) {
-                        showDialog(
-                          context: context,
-                          builder: (ctx) => AlertDialog(
-                            title: const Text(
-                              'Discard Bill?',
-                              style: TextStyle(fontFamily: 'Literata'),
-                            ),
-                            content: const Text(
-                              'You have unsaved items.',
-                              style: TextStyle(fontFamily: 'Literata'),
-                            ),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.pop(ctx),
-                                child: const Text('Cancel'),
+                  if (!widget.isEmbedded) ...[
+                    GestureDetector(
+                      onTap: () {
+                        if (_billItems.isNotEmpty) {
+                          showDialog(
+                            context: context,
+                            builder: (ctx) => AlertDialog(
+                              title: const Text(
+                                'Discard Bill?',
+                                style: TextStyle(fontFamily: 'Literata'),
                               ),
-                              TextButton(
-                                onPressed: () {
-                                  Navigator.pop(ctx);
-                                  Navigator.pop(context);
-                                },
-                                child: const Text(
-                                  'Discard',
-                                  style: TextStyle(color: Colors.red),
+                              content: const Text(
+                                'You have unsaved items.',
+                                style: TextStyle(fontFamily: 'Literata'),
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(ctx),
+                                  child: const Text('Cancel'),
                                 ),
-                              ),
-                            ],
-                          ),
-                        );
-                      } else {
-                        Navigator.pop(context);
-                      }
-                    },
-                    child: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Icon(
-                        Icons.arrow_back,
-                        color: Colors.white,
-                        size: 22,
+                                TextButton(
+                                  onPressed: () {
+                                    Navigator.pop(ctx);
+                                    Navigator.pop(context);
+                                  },
+                                  child: const Text(
+                                    'Discard',
+                                    style: TextStyle(color: Colors.red),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        } else {
+                          Navigator.pop(context);
+                        }
+                      },
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(
+                          Icons.arrow_back,
+                          color: Colors.white,
+                          size: 22,
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 12),
+                    const SizedBox(width: 12),
+                  ],
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
