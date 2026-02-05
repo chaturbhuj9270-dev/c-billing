@@ -1,3 +1,5 @@
+import 'dart:async' show unawaited;
+
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:c_billing/core/services/billing_service.dart';
@@ -6,6 +8,7 @@ import 'package:c_billing/features/billing/domain/entities/bill_item.dart';
 import 'package:c_billing/features/inventory_management/data/repositories/firebase_product_repository.dart';
 import 'package:c_billing/features/inventory_management/data/repositories/firebase_stock_repository.dart';
 import 'package:c_billing/features/inventory_management/domain/entities/product.dart';
+import 'package:c_billing/features/billing/data/datasources/bill_cache_datasource.dart';
 
 class BillingPage extends StatefulWidget {
   const BillingPage({super.key});
@@ -196,6 +199,9 @@ class _BillingPageState extends State<BillingPage> {
 
       if (result.success) {
         _showSnackbar('Bill saved successfully!');
+        // Clear bills list cache so it reloads fresh data next time
+        unawaited(BillCacheDataSource().clearCache());
+        
         // Keep a copy of items to update local stock
         final savedItems = List<BillItem>.from(_billItems);
         _clearBill();

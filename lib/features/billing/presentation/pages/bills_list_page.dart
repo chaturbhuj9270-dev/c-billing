@@ -7,6 +7,7 @@ import 'package:c_billing/features/billing/data/repositories/firebase_bill_repos
 import 'package:c_billing/features/billing/domain/entities/bill.dart';
 import 'package:c_billing/features/inventory_management/data/repositories/firebase_product_repository.dart';
 import 'package:c_billing/features/inventory_management/data/repositories/firebase_stock_repository.dart';
+import 'package:c_billing/features/billing/data/datasources/bill_cache_datasource.dart';
 
 class BillsListPage extends StatefulWidget {
   const BillsListPage({super.key});
@@ -22,6 +23,7 @@ class _BillsListPageState extends State<BillsListPage>
   late AnimationController _animController;
   late Animation<Offset> _offsetAnimation;
   late Animation<double> _opacityAnimation;
+  final _cacheDataSource = BillCacheDataSource();
 
   List<Bill> _bills = [];
   List<Bill> _filteredBills = [];
@@ -66,6 +68,24 @@ class _BillsListPageState extends State<BillsListPage>
       () => _animController.forward(),
     );
 
+    _setupInitialData();
+  }
+
+  Future<void> _setupInitialData() async {
+    // 1. Load from cache immediately
+    final cached = await _cacheDataSource.getCachedBills();
+    if (cached != null && mounted) {
+      setState(() {
+        _bills = cached;
+        _filteredBills = cached;
+        _totalSales = _bills.fold(0.0, (sum, bill) => sum + bill.finalAmount);
+        _totalBillsCount = _bills.length;
+        _applySorting();
+      });
+      print('[DEBUG] Loaded ${_bills.length} bills from cache');
+    }
+
+    // 2. Load from Firestore in background
     _loadBills();
   }
 
@@ -78,7 +98,9 @@ class _BillsListPageState extends State<BillsListPage>
 
   Future<void> _loadBills() async {
     try {
-      setState(() => _isLoading = true);
+      if (_bills.isEmpty) {
+        setState(() => _isLoading = true);
+      }
 
       List<Bill> bills;
       if (_startDate != null && _endDate != null) {
@@ -100,6 +122,9 @@ class _BillsListPageState extends State<BillsListPage>
         _applySorting();
         _isLoading = false;
       });
+
+      // Save to cache
+      _cacheDataSource.saveBills(bills);
     } catch (e) {
       setState(() => _isLoading = false);
       if (mounted) {
