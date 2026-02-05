@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:async';
 import '../../../../core/services/session_manager.dart';
+import '../../data/datasources/customer_cache_datasource.dart';
 
 class CustomerPage extends StatefulWidget {
   const CustomerPage({super.key});
@@ -31,6 +32,7 @@ class _CustomerPageState extends State<CustomerPage> {
   final _auth = FirebaseAuth.instance;
   late final FirebaseFirestore _firestore;
   late SessionManager _sessionManager;
+  final _cacheDataSource = CustomerCacheDataSource();
 
   @override
   void initState() {
@@ -38,8 +40,24 @@ class _CustomerPageState extends State<CustomerPage> {
     _firestore = FirebaseFirestore.instance;
     _sessionManager = SessionManager();
     _checkUserAuthentication();
-    _loadCustomers();
+    _setupInitialData();
     _filterController.addListener(_filterCustomers);
+  }
+
+  Future<void> _setupInitialData() async {
+    // 1. Load from cache immediately for < 0.5s loading
+    final cached = await _cacheDataSource.getCachedCustomers();
+    if (cached != null && mounted) {
+      setState(() {
+        _customers = cached;
+        _filteredCustomers = List.from(_customers);
+        _applySorting();
+      });
+      print('[DEBUG] Loaded ${_customers.length} customers from cache');
+    }
+
+    // 2. Fetch from Firestore in background
+    _loadCustomers();
   }
 
   void _filterCustomers() {
@@ -102,8 +120,12 @@ class _CustomerPageState extends State<CustomerPage> {
 
   Future<void> _loadCustomers() async {
     try {
-      setState(() => _isLoading = true);
-      print('[DEBUG] Loading customers...');
+      // Only show loader if we have no cached data
+      if (_customers.isEmpty) {
+        setState(() => _isLoading = true);
+      }
+      
+      print('[DEBUG] Loading customers from Firestore...');
       final currentUser = _auth.currentUser;
       if (currentUser == null) {
         print('[ERROR] No authenticated user - cannot load customers');
@@ -119,19 +141,24 @@ class _CustomerPageState extends State<CustomerPage> {
           .orderBy('createdAt', descending: true)
           .get();
 
-      print('[DEBUG] Loaded ${snapshot.docs.length} customers');
+      print('[DEBUG] Loaded ${snapshot.docs.length} customers from Firestore');
+      
+      final freshCustomers = snapshot.docs
+          .map((doc) => {
+                'id': doc.id,
+                ...doc.data(),
+              })
+          .toList();
+
       if (mounted) {
         setState(() {
-          _customers = snapshot.docs
-              .map((doc) => {
-                    'id': doc.id,
-                    ...doc.data(),
-                  })
-              .toList();
-          // Update filtered list
-          _filterCustomers();
+          _customers = freshCustomers;
+          _filterCustomers(); // This handles _filteredCustomers and sorting
           _isLoading = false;
         });
+        
+        // Save to cache for next time
+        _cacheDataSource.saveCustomers(freshCustomers);
       }
     } catch (e) {
       print('[ERROR] Failed to load customers: $e');
@@ -423,6 +450,19 @@ class _CustomerPageState extends State<CustomerPage> {
       print('[DEBUG] Customer data: $customerData');
 
       if (_isEditing && _editingCustomerId != null) {
+        // Optimistic update
+        final index = _customers.indexWhere((c) => c['id'] == _editingCustomerId);
+        if (index != -1) {
+          setState(() {
+            _customers[index] = {
+              ..._customers[index],
+              ...customerData,
+            };
+            _filterCustomers();
+          });
+          _cacheDataSource.saveCustomers(_customers);
+        }
+
         // Update existing customer
         print('[DEBUG] Updating existing customer: $_editingCustomerId');
         await customersCollection.doc(_editingCustomerId).update(customerData);
@@ -444,6 +484,19 @@ class _CustomerPageState extends State<CustomerPage> {
         // Create new customer
         print('[DEBUG] Creating new customer');
         customerData['createdAt'] = FieldValue.serverTimestamp();
+        
+        // Optimistic add
+        final tempId = 'temp_${DateTime.now().millisecondsSinceEpoch}';
+        final newCustomer = {
+          ...customerData,
+          'id': tempId,
+        };
+        setState(() {
+          _customers.insert(0, newCustomer);
+          _filterCustomers();
+        });
+        _cacheDataSource.saveCustomers(_customers);
+
         final docRef = await customersCollection.add(customerData);
         print('[DEBUG] Customer added successfully with ID: ${docRef.id}');
         _clearForm();
@@ -549,6 +602,14 @@ class _CustomerPageState extends State<CustomerPage> {
       }
 
       print('[DEBUG] Deleting from path: users/${currentUser.uid}/customers/$customerId');
+      
+      // Optimistic delete
+      setState(() {
+        _customers.removeWhere((c) => c['id'] == customerId);
+        _filterCustomers();
+      });
+      _cacheDataSource.saveCustomers(_customers);
+
       await _firestore
           .collection('users')
           .doc(currentUser.uid)
