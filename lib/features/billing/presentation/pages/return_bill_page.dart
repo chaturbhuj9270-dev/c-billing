@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
-import 'dart:ui';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'package:c_billing/core/services/billing_service.dart';
+import 'package:c_billing/core/printing/printing.dart';
 import 'package:c_billing/features/billing/data/repositories/firebase_bill_repository.dart';
 import 'package:c_billing/features/billing/domain/entities/bill.dart';
 import 'package:c_billing/features/inventory_management/data/repositories/firebase_product_repository.dart';
 import 'package:c_billing/features/inventory_management/data/repositories/firebase_stock_repository.dart';
+import 'package:c_billing/features/shop/data/repositories/shop_repository.dart';
+import 'package:c_billing/common_widgets/printer_selection_widget.dart';
 
 /// Return Bill Page for processing bill returns
 /// Allows searching by bill number or customer mobile and processing returns
@@ -25,6 +27,11 @@ class _ReturnBillPageState extends State<ReturnBillPage>
   late FirebaseFirestore _firestore;
   late AnimationController _animController;
   late Animation<double> _opacityAnimation;
+
+  // Printer service for bill printing
+  final PosPrinterService _printerService = PosPrinterService();
+  final ShopRepository _shopRepository = ShopRepository();
+  bool _isPrinting = false;
 
   final _searchController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
@@ -264,6 +271,84 @@ class _ReturnBillPageState extends State<ReturnBillPage>
     }
   }
 
+  /// Handle printing the bill
+  Future<void> _handlePrintBill() async {
+    if (_currentBill == null) return;
+
+    // Check if printer is connected
+    if (!_printerService.isConnected) {
+      final selectedPrinter = await PrinterSelectionWidget.show(context);
+      if (selectedPrinter == null) return;
+    }
+
+    setState(() => _isPrinting = true);
+
+    try {
+      // Get shop details
+      final shop = await _shopRepository.getShopDetails();
+
+      // Create print bill data from current bill
+      final printData = PrintBillData.fromBill(_currentBill!);
+
+      // Print the bill
+      final result = await _printerService.printBill(
+        billData: printData,
+        shopDetails: shop,
+      );
+
+      if (mounted) {
+        setState(() => _isPrinting = false);
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                Icon(
+                  result.success ? Icons.check_circle : Icons.error_outline,
+                  color: Colors.white,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    result.message ??
+                        (result.success
+                            ? 'Bill printed successfully!'
+                            : 'Failed to print bill'),
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: result.success ? Colors.green : Colors.red,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isPrinting = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.error_outline, color: Colors.white),
+                const SizedBox(width: 8),
+                Expanded(child: Text('Print error: $e')),
+              ],
+            ),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -367,6 +452,39 @@ class _ReturnBillPageState extends State<ReturnBillPage>
                     ],
                   ),
                 ),
+                // Print button - only show when bill is loaded
+                if (_currentBill != null) ...[
+                  GestureDetector(
+                    onTap: _isPrinting ? null : _handlePrintBill,
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      margin: const EdgeInsets.only(right: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: _isPrinting
+                          ? const Center(
+                              child: SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    Colors.white,
+                                  ),
+                                ),
+                              ),
+                            )
+                          : const Icon(
+                              Icons.print,
+                              color: Colors.white,
+                              size: 20,
+                            ),
+                    ),
+                  ),
+                ],
                 Container(
                   width: 40,
                   height: 40,
