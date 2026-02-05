@@ -43,16 +43,27 @@ class ReturnBillResult {
   final String? billId;
   final String? errorMessage;
   final Bill? bill;
+  final double? refundAmount;
 
   ReturnBillResult({
     required this.success,
     this.billId,
     this.errorMessage,
     this.bill,
+    this.refundAmount,
   });
 
-  factory ReturnBillResult.success(String billId, {Bill? bill}) {
-    return ReturnBillResult(success: true, billId: billId, bill: bill);
+  factory ReturnBillResult.success(
+    String billId, {
+    Bill? bill,
+    double? refundAmount,
+  }) {
+    return ReturnBillResult(
+      success: true,
+      billId: billId,
+      bill: bill,
+      refundAmount: refundAmount,
+    );
   }
 
   factory ReturnBillResult.failure(String message) {
@@ -66,9 +77,22 @@ class ReturnBillResult {
   factory ReturnBillResult.alreadyReturned() {
     return ReturnBillResult(
       success: false,
-      errorMessage: 'This bill has already been returned',
+      errorMessage: 'All items in this bill have already been returned',
     );
   }
+}
+
+/// Represents an item to be returned with specific quantity
+class ReturnItem {
+  final String productId;
+  final String itemId;
+  final int returnQuantity;
+
+  ReturnItem({
+    required this.productId,
+    required this.itemId,
+    required this.returnQuantity,
+  });
 }
 
 /// Service class for handling billing operations with transaction support
@@ -204,7 +228,7 @@ class BillingService {
             throw Exception('Product ${item.productName} not found');
           }
 
-          final data = productDoc.data() as Map<String, dynamic>?;
+          final data = productDoc.data();
           final currentStock = (data?['currentStock'] ?? 0) as int;
           final purchasePrice = ((data?['purchasePrice'] ?? 0) as num)
               .toDouble();
@@ -424,7 +448,8 @@ class BillingService {
         return ReturnBillResult.notFound();
       }
 
-      if (bill.returnStatus) {
+      // Check if bill is fully returned (all items returned completely)
+      if (bill.isFullyReturned) {
         return ReturnBillResult.alreadyReturned();
       }
 
@@ -457,20 +482,21 @@ class BillingService {
 
       if (exactMatch.isNotEmpty) {
         final bill = exactMatch.first;
-        if (bill.returnStatus) {
+        // Check if all items are fully returned
+        if (bill.isFullyReturned) {
           return ReturnBillResult.alreadyReturned();
         }
         return ReturnBillResult.success(bill.id, bill: bill);
       }
 
-      // If no exact match, check if any bill in results hasn't been returned
-      final unreturned = bills.where((b) => !b.returnStatus).toList();
-      if (unreturned.isEmpty) {
+      // If no exact match, check if any bill has returnable items
+      final returnable = bills.where((b) => b.hasReturnableItems).toList();
+      if (returnable.isEmpty) {
         return ReturnBillResult.alreadyReturned();
       }
 
-      // Return the first unreturned bill (most recent due to ordering)
-      final bill = unreturned.first;
+      // Return the first bill with returnable items (most recent due to ordering)
+      final bill = returnable.first;
       return ReturnBillResult.success(bill.id, bill: bill);
     } catch (e) {
       print('[ERROR] Failed to search bill for return: $e');
@@ -478,9 +504,14 @@ class BillingService {
     }
   }
 
-  /// Process a bill return with atomic transaction
-  /// This method ensures inventory is updated and bill is marked as returned atomically
-  Future<ReturnBillResult> processReturn({required String billId}) async {
+  /// Process a partial or full bill return with atomic transaction
+  /// This method ensures inventory is updated and item return quantities are updated atomically
+  /// @param billId - The ID of the bill to process return for
+  /// @param returnItems - Map of itemId to quantity to return. If null, returns all remaining quantities.
+  Future<ReturnBillResult> processReturn({
+    required String billId,
+    Map<String, int>? returnItems,
+  }) async {
     try {
       final firestore = _billRepository.firestore;
       final userId = _billRepository.userId;
@@ -488,7 +519,7 @@ class BillingService {
       final result = await firestore.runTransaction<Map<String, dynamic>>((
         transaction,
       ) async {
-        // Step 1: Get the bill and verify it's not already returned
+        // Step 1: Get the bill and verify it has returnable items
         final billRef = firestore
             .collection('users')
             .doc(userId)
@@ -504,14 +535,52 @@ class BillingService {
         final billData = billDoc.data() as Map<String, dynamic>;
         final bill = Bill.fromJson(billData);
 
-        if (bill.returnStatus) {
-          throw Exception('Bill has already been returned');
+        // Check if all items are already fully returned
+        if (bill.isFullyReturned) {
+          throw Exception('All items in this bill have already been returned');
         }
 
-        // Step 2: Get current stock for all products in the bill
+        // Step 2: Determine what quantities to return for each item
+        final itemsToReturn = <BillItem, int>{};
+        double totalRefundAmount = 0.0;
+
+        for (final item in bill.items) {
+          int quantityToReturn;
+
+          if (returnItems != null) {
+            // Partial return - use specified quantities
+            quantityToReturn = returnItems[item.id] ?? 0;
+          } else {
+            // Full return - return all remaining quantities
+            quantityToReturn = item.remainingQuantity;
+          }
+
+          // Validate quantity
+          if (quantityToReturn < 0) {
+            throw Exception(
+              'Return quantity cannot be negative for ${item.productName}',
+            );
+          }
+          if (quantityToReturn > item.remainingQuantity) {
+            throw Exception(
+              '${item.productName}: Cannot return $quantityToReturn units. Only ${item.remainingQuantity} available for return.',
+            );
+          }
+
+          if (quantityToReturn > 0) {
+            itemsToReturn[item] = quantityToReturn;
+            totalRefundAmount += item.sellingPrice * quantityToReturn;
+          }
+        }
+
+        if (itemsToReturn.isEmpty) {
+          throw Exception('No items selected for return');
+        }
+
+        // Step 3: Get current stock for all products being returned
         final productStocks = <String, int>{};
         final productRefsMap = <String, DocumentReference>{};
-        final uniqueProductIds = bill.items
+        final uniqueProductIds = itemsToReturn.keys
             .map((e) => e.productId)
             .toSet()
             .toList();
@@ -535,7 +604,7 @@ class BillingService {
         for (final productId in uniqueProductIds) {
           final productDoc = productDocsMap[productId]!;
           if (productDoc.exists) {
-            final data = productDoc.data() as Map<String, dynamic>?;
+            final data = productDoc.data();
             productStocks[productId] = (data?['currentStock'] ?? 0) as int;
           } else {
             // Product might have been deleted, still allow return
@@ -543,14 +612,16 @@ class BillingService {
           }
         }
 
-        // Step 3: Calculate new stock quantities (add back returned quantities)
+        // Step 4: Calculate new stock quantities (add back returned quantities)
         final productNewBalances = Map<String, int>.from(productStocks);
-        for (final item in bill.items) {
-          productNewBalances[item.productId] =
-              (productNewBalances[item.productId] ?? 0) + item.quantity;
+        for (final entry in itemsToReturn.entries) {
+          final productId = entry.key.productId;
+          final returnQty = entry.value;
+          productNewBalances[productId] =
+              (productNewBalances[productId] ?? 0) + returnQty;
         }
 
-        // Step 4: Update product stocks
+        // Step 5: Update product stocks
         final now = DateTime.now();
         for (final productId in uniqueProductIds) {
           final productRef = productRefsMap[productId]!;
@@ -564,8 +635,11 @@ class BillingService {
           }
         }
 
-        // Step 5: Create stock entries for each returned item
-        for (final item in bill.items) {
+        // Step 6: Create stock entries for each returned item
+        for (final entry in itemsToReturn.entries) {
+          final item = entry.key;
+          final returnQty = entry.value;
+
           final stockRef = firestore
               .collection('users')
               .doc(userId)
@@ -575,7 +649,7 @@ class BillingService {
           final stockEntry = Stock(
             id: stockRef.id,
             productId: item.productId,
-            quantityIn: item.quantity, // Return adds stock back
+            quantityIn: returnQty, // Return adds stock back
             quantityOut: 0,
             balanceQuantity: productNewBalances[item.productId]!,
             referenceType: ReferenceType.RETURN,
@@ -586,17 +660,45 @@ class BillingService {
           transaction.set(stockRef, stockEntry.toJson());
         }
 
-        // Step 6: Mark the bill as returned
+        // Step 7: Update bill items with new returned quantities
+        final updatedItems = bill.items.map((item) {
+          final returnQty = itemsToReturn[item] ?? 0;
+          if (returnQty > 0) {
+            return item
+                .copyWith(returnedQuantity: item.returnedQuantity + returnQty)
+                .toJson();
+          }
+          return item.toJson();
+        }).toList();
+
+        // Check if all items will be fully returned after this operation
+        final willBeFullyReturned = bill.items.every((item) {
+          final returnQty = itemsToReturn[item] ?? 0;
+          return (item.returnedQuantity + returnQty) >= item.quantity;
+        });
+
+        // Step 8: Update the bill
         transaction.update(billRef, {
-          'returnStatus': true,
-          'returnDate': now.toIso8601String(),
+          'items': updatedItems,
+          'returnStatus': willBeFullyReturned,
+          'returnDate': willBeFullyReturned
+              ? now.toIso8601String()
+              : bill.returnDate?.toIso8601String(),
           'updatedAt': now.toIso8601String(),
         });
 
-        return {'billId': billId, 'returnDate': now.toIso8601String()};
+        return {
+          'billId': billId,
+          'returnDate': now.toIso8601String(),
+          'refundAmount': totalRefundAmount,
+          'isFullyReturned': willBeFullyReturned,
+        };
       });
 
-      return ReturnBillResult.success(result['billId'] as String);
+      return ReturnBillResult.success(
+        result['billId'] as String,
+        refundAmount: result['refundAmount'] as double,
+      );
     } catch (e) {
       print('[ERROR] Failed to process return: $e');
       return ReturnBillResult.failure(

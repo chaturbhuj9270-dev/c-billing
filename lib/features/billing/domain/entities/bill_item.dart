@@ -9,6 +9,7 @@ class BillItem {
   final double sellingPrice;
   final int quantity;
   final double subtotal;
+  final int returnedQuantity; // Track how many units have been returned
 
   BillItem({
     required this.id,
@@ -19,10 +20,21 @@ class BillItem {
     required this.sellingPrice,
     required this.quantity,
     required this.subtotal,
+    this.returnedQuantity = 0,
   });
 
   /// Calculate profit for this item (before any bill-level discount)
   double get itemProfit => (sellingPrice - purchasePrice) * quantity;
+
+  /// Get remaining quantity that can still be returned
+  int get remainingQuantity => quantity - returnedQuantity;
+
+  /// Check if this item is fully returned
+  bool get isFullyReturned => returnedQuantity >= quantity;
+
+  /// Check if this item has been partially returned
+  bool get isPartiallyReturned =>
+      returnedQuantity > 0 && returnedQuantity < quantity;
 
   /// Factory constructor to create from JSON (for Firebase)
   factory BillItem.fromJson(Map<String, dynamic> json) {
@@ -36,6 +48,7 @@ class BillItem {
         sellingPrice: ((json['sellingPrice'] ?? 0) as num).toDouble(),
         quantity: (json['quantity'] ?? 0) as int,
         subtotal: ((json['subtotal'] ?? 0) as num).toDouble(),
+        returnedQuantity: (json['returnedQuantity'] ?? 0) as int,
       );
     } catch (e) {
       print('[ERROR] Failed to parse BillItem from JSON: $json');
@@ -49,6 +62,7 @@ class BillItem {
         sellingPrice: 0.0,
         quantity: 0,
         subtotal: 0.0,
+        returnedQuantity: 0,
       );
     }
   }
@@ -64,6 +78,7 @@ class BillItem {
       'sellingPrice': sellingPrice,
       'quantity': quantity,
       'subtotal': subtotal,
+      'returnedQuantity': returnedQuantity,
     };
   }
 
@@ -77,6 +92,7 @@ class BillItem {
     double? sellingPrice,
     int? quantity,
     double? subtotal,
+    int? returnedQuantity,
   }) {
     return BillItem(
       id: id ?? this.id,
@@ -87,6 +103,7 @@ class BillItem {
       sellingPrice: sellingPrice ?? this.sellingPrice,
       quantity: quantity ?? this.quantity,
       subtotal: subtotal ?? this.subtotal,
+      returnedQuantity: returnedQuantity ?? this.returnedQuantity,
     );
   }
 
@@ -99,6 +116,7 @@ class BillItem {
     double purchasePrice = 0.0,
     required double sellingPrice,
     required int quantity,
+    int returnedQuantity = 0,
   }) {
     return BillItem(
       id: id,
@@ -109,6 +127,7 @@ class BillItem {
       sellingPrice: sellingPrice,
       quantity: quantity,
       subtotal: sellingPrice * quantity,
+      returnedQuantity: returnedQuantity,
     );
   }
 

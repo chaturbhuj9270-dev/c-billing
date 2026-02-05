@@ -180,6 +180,26 @@ class Bill {
       (customerName != null && customerName!.isNotEmpty) ||
       (customerContact != null && customerContact!.isNotEmpty);
 
+  /// Check if all items in the bill are fully returned
+  bool get isFullyReturned => items.every((item) => item.isFullyReturned);
+
+  /// Check if any item has been partially or fully returned
+  bool get hasAnyReturns => items.any((item) => item.returnedQuantity > 0);
+
+  /// Check if there are any items that can still be returned
+  bool get hasReturnableItems =>
+      items.any((item) => item.remainingQuantity > 0);
+
+  /// Get total returned quantity across all items
+  int get totalReturnedQuantity =>
+      items.fold(0, (sum, item) => sum + item.returnedQuantity);
+
+  /// Get total refund amount based on returned quantities
+  double get totalReturnedAmount => items.fold(
+    0.0,
+    (sum, item) => sum + (item.sellingPrice * item.returnedQuantity),
+  );
+
   @override
   String toString() {
     return 'Bill(id: $id, customer: $customerName, items: ${items.length}, total: $totalAmount)';

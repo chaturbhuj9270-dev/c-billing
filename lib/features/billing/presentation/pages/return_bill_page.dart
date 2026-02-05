@@ -35,6 +35,9 @@ class _ReturnBillPageState extends State<ReturnBillPage>
   String? _errorMessage;
   String? _successMessage;
 
+  // Track return quantities for each item (itemId -> quantity to return)
+  Map<String, int> _returnQuantities = {};
+
   @override
   void initState() {
     super.initState();
@@ -65,6 +68,15 @@ class _ReturnBillPageState extends State<ReturnBillPage>
     if (widget.initialBill != null) {
       _currentBill = widget.initialBill;
       _searchController.text = widget.initialBill!.billNumber;
+      _initializeReturnQuantities(widget.initialBill!);
+    }
+  }
+
+  void _initializeReturnQuantities(Bill bill) {
+    _returnQuantities = {};
+    for (final item in bill.items) {
+      // Default to 0 - user selects what to return
+      _returnQuantities[item.id] = 0;
     }
   }
 
@@ -75,6 +87,25 @@ class _ReturnBillPageState extends State<ReturnBillPage>
     super.dispose();
   }
 
+  /// Get total quantity selected for return
+  int get _totalReturnQuantity {
+    return _returnQuantities.values.fold(0, (sum, qty) => sum + qty);
+  }
+
+  /// Get total refund amount based on selected quantities
+  double get _totalRefundAmount {
+    if (_currentBill == null) return 0.0;
+    double total = 0.0;
+    for (final item in _currentBill!.items) {
+      final returnQty = _returnQuantities[item.id] ?? 0;
+      total += item.sellingPrice * returnQty;
+    }
+    return total;
+  }
+
+  /// Check if any items are selected for return
+  bool get _hasItemsToReturn => _totalReturnQuantity > 0;
+
   Future<void> _searchBill() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -83,6 +114,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
       _errorMessage = null;
       _successMessage = null;
       _currentBill = null;
+      _returnQuantities = {};
     });
 
     try {
@@ -94,6 +126,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
           _isSearching = false;
           if (result.success && result.bill != null) {
             _currentBill = result.bill;
+            _initializeReturnQuantities(result.bill!);
           } else {
             _errorMessage = result.errorMessage ?? 'Bill not found';
           }
@@ -109,12 +142,40 @@ class _ReturnBillPageState extends State<ReturnBillPage>
     }
   }
 
-  Future<void> _showReturnConfirmationDialog() async {
+  void _updateReturnQuantity(String itemId, int quantity) {
+    setState(() {
+      _returnQuantities[itemId] = quantity;
+    });
+  }
+
+  void _selectAllItems() {
     if (_currentBill == null) return;
+    setState(() {
+      for (final item in _currentBill!.items) {
+        _returnQuantities[item.id] = item.remainingQuantity;
+      }
+    });
+  }
+
+  void _clearAllItems() {
+    if (_currentBill == null) return;
+    setState(() {
+      for (final item in _currentBill!.items) {
+        _returnQuantities[item.id] = 0;
+      }
+    });
+  }
+
+  Future<void> _showReturnConfirmationDialog() async {
+    if (_currentBill == null || !_hasItemsToReturn) return;
 
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => _ReturnConfirmationDialog(bill: _currentBill!),
+      builder: (context) => _ReturnConfirmationDialog(
+        bill: _currentBill!,
+        returnQuantities: _returnQuantities,
+        totalRefundAmount: _totalRefundAmount,
+      ),
     );
 
     if (confirmed == true) {
@@ -123,7 +184,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
   }
 
   Future<void> _processReturn() async {
-    if (_currentBill == null) return;
+    if (_currentBill == null || !_hasItemsToReturn) return;
 
     setState(() {
       _isProcessing = true;
@@ -133,17 +194,33 @@ class _ReturnBillPageState extends State<ReturnBillPage>
     try {
       final result = await _billingService.processReturn(
         billId: _currentBill!.id,
+        returnItems: _returnQuantities,
       );
 
       if (mounted) {
         if (result.success) {
+          final refundAmount = result.refundAmount ?? _totalRefundAmount;
           setState(() {
             _isProcessing = false;
-            _successMessage = 'Bill returned successfully!';
+            _successMessage =
+                'Return processed successfully! Refund: ₹${refundAmount.toStringAsFixed(2)}';
+
+            // Update local bill state
+            final updatedItems = _currentBill!.items.map((item) {
+              final returnQty = _returnQuantities[item.id] ?? 0;
+              return item.copyWith(
+                returnedQuantity: item.returnedQuantity + returnQty,
+              );
+            }).toList();
+
             _currentBill = _currentBill!.copyWith(
-              returnStatus: true,
+              items: updatedItems,
+              returnStatus: updatedItems.every((item) => item.isFullyReturned),
               returnDate: DateTime.now(),
             );
+
+            // Reset return quantities
+            _initializeReturnQuantities(_currentBill!);
           });
 
           // Show success snackbar
@@ -612,21 +689,76 @@ class _ReturnBillPageState extends State<ReturnBillPage>
           const Divider(height: 1),
           const SizedBox(height: 16),
 
-          // Items Section
-          const Text(
-            'Items',
-            style: TextStyle(
-              fontFamily: 'Literata',
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF1B4D3E),
-            ),
+          // Items Section Header with Select All/Clear All
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Select Items to Return',
+                style: TextStyle(
+                  fontFamily: 'Literata',
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF1B4D3E),
+                ),
+              ),
+              if (bill.hasReturnableItems)
+                Row(
+                  children: [
+                    GestureDetector(
+                      onTap: _selectAllItems,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: const Text(
+                          'Select All',
+                          style: TextStyle(
+                            fontFamily: 'Literata',
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF1B4D3E),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    GestureDetector(
+                      onTap: _clearAllItems,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.grey[200],
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          'Clear',
+                          style: TextStyle(
+                            fontFamily: 'Literata',
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.grey[700],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+            ],
           ),
           const SizedBox(height: 12),
           ...bill.items.map(
             (item) => Padding(
               padding: const EdgeInsets.only(bottom: 8),
-              child: _buildItemRow(item),
+              child: _buildItemRowWithQuantitySelector(item),
             ),
           ),
 
@@ -634,12 +766,75 @@ class _ReturnBillPageState extends State<ReturnBillPage>
           const Divider(height: 1),
           const SizedBox(height: 16),
 
-          // Totals
+          // Return Summary
+          if (_hasItemsToReturn) ...[
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.orange[50],
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.orange[200]!),
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Items to Return:',
+                        style: TextStyle(
+                          fontFamily: 'Literata',
+                          fontSize: 13,
+                          color: Colors.orange[800],
+                        ),
+                      ),
+                      Text(
+                        '$_totalReturnQuantity qty',
+                        style: TextStyle(
+                          fontFamily: 'Literata',
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.orange[800],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Refund Amount:',
+                        style: TextStyle(
+                          fontFamily: 'Literata',
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.orange[800],
+                        ),
+                      ),
+                      Text(
+                        '₹${_totalRefundAmount.toStringAsFixed(2)}',
+                        style: TextStyle(
+                          fontFamily: 'Literata',
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.orange[800],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
+
+          // Original Bill Totals
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Total Quantity:',
+                'Original Quantity:',
                 style: TextStyle(
                   fontFamily: 'Literata',
                   fontSize: 13,
@@ -809,48 +1004,234 @@ class _ReturnBillPageState extends State<ReturnBillPage>
     );
   }
 
-  Widget _buildItemRow(item) {
+  Widget _buildItemRowWithQuantitySelector(item) {
+    final int remainingQty = item.remainingQuantity;
+    final int returnQty = _returnQuantities[item.id] ?? 0;
+    final bool isFullyReturned = item.isFullyReturned;
+    final bool isPartiallyReturned = item.isPartiallyReturned;
+
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF5F6F8),
+        color: isFullyReturned
+            ? Colors.grey[200]
+            : returnQty > 0
+            ? Colors.orange[50]
+            : const Color(0xFFF5F6F8),
         borderRadius: BorderRadius.circular(10),
+        border: returnQty > 0
+            ? Border.all(color: Colors.orange[300]!, width: 1.5)
+            : null,
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            item.productName,
+                            style: TextStyle(
+                              fontFamily: 'Literata',
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: isFullyReturned
+                                  ? Colors.grey[500]
+                                  : Colors.black,
+                              decoration: isFullyReturned
+                                  ? TextDecoration.lineThrough
+                                  : null,
+                            ),
+                          ),
+                        ),
+                        if (isFullyReturned)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.grey[400],
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: const Text(
+                              'Returned',
+                              style: TextStyle(
+                                fontFamily: 'Literata',
+                                fontSize: 9,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        if (isPartiallyReturned && !isFullyReturned)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.orange[400],
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              '${item.returnedQuantity} returned',
+                              style: const TextStyle(
+                                fontFamily: 'Literata',
+                                fontSize: 9,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '₹${item.sellingPrice.toStringAsFixed(2)} × ${item.quantity} qty (${remainingQty} available)',
+                      style: TextStyle(
+                        fontFamily: 'Literata',
+                        fontSize: 11,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Text(
+                '₹${item.subtotal.toStringAsFixed(2)}',
+                style: TextStyle(
+                  fontFamily: 'Literata',
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: isFullyReturned
+                      ? Colors.grey[400]
+                      : const Color(0xFF1B4D3E),
+                ),
+              ),
+            ],
+          ),
+          if (!isFullyReturned) ...[
+            const SizedBox(height: 12),
+            Row(
               children: [
                 Text(
-                  item.productName,
-                  style: const TextStyle(
-                    fontFamily: 'Literata',
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  '₹${item.sellingPrice.toStringAsFixed(2)} × ${item.quantity}',
+                  'Return Qty:',
                   style: TextStyle(
                     fontFamily: 'Literata',
-                    fontSize: 11,
-                    color: Colors.grey[600],
+                    fontSize: 12,
+                    color: Colors.grey[700],
                   ),
                 ),
+                const SizedBox(width: 12),
+                // Decrease button
+                GestureDetector(
+                  onTap: returnQty > 0
+                      ? () => _updateReturnQuantity(item.id, returnQty - 1)
+                      : null,
+                  child: Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: returnQty > 0
+                          ? Colors.orange[100]
+                          : Colors.grey[200],
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      Icons.remove,
+                      size: 18,
+                      color: returnQty > 0
+                          ? Colors.orange[700]
+                          : Colors.grey[400],
+                    ),
+                  ),
+                ),
+                // Quantity display
+                Container(
+                  width: 50,
+                  alignment: Alignment.center,
+                  child: Text(
+                    '$returnQty',
+                    style: TextStyle(
+                      fontFamily: 'Literata',
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: returnQty > 0
+                          ? Colors.orange[700]
+                          : Colors.grey[600],
+                    ),
+                  ),
+                ),
+                // Increase button
+                GestureDetector(
+                  onTap: returnQty < remainingQty
+                      ? () => _updateReturnQuantity(item.id, returnQty + 1)
+                      : null,
+                  child: Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: returnQty < remainingQty
+                          ? Colors.orange[100]
+                          : Colors.grey[200],
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      Icons.add,
+                      size: 18,
+                      color: returnQty < remainingQty
+                          ? Colors.orange[700]
+                          : Colors.grey[400],
+                    ),
+                  ),
+                ),
+                const Spacer(),
+                // Quick action: Return all
+                if (remainingQty > 0)
+                  GestureDetector(
+                    onTap: () => _updateReturnQuantity(item.id, remainingQty),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.orange[100],
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        'All ($remainingQty)',
+                        style: TextStyle(
+                          fontFamily: 'Literata',
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.orange[700],
+                        ),
+                      ),
+                    ),
+                  ),
               ],
             ),
-          ),
-          Text(
-            '₹${item.subtotal.toStringAsFixed(2)}',
-            style: const TextStyle(
-              fontFamily: 'Literata',
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF1B4D3E),
-            ),
-          ),
+            if (returnQty > 0) ...[
+              const SizedBox(height: 8),
+              Text(
+                'Refund: ₹${(item.sellingPrice * returnQty).toStringAsFixed(2)}',
+                style: TextStyle(
+                  fontFamily: 'Literata',
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.orange[700],
+                ),
+              ),
+            ],
+          ],
         ],
       ),
     );
@@ -859,7 +1240,8 @@ class _ReturnBillPageState extends State<ReturnBillPage>
   Widget _buildReturnButton() {
     final bill = _currentBill!;
 
-    if (bill.returnStatus) {
+    // Check if all items are fully returned
+    if (bill.isFullyReturned) {
       return Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
@@ -872,7 +1254,33 @@ class _ReturnBillPageState extends State<ReturnBillPage>
             Icon(Icons.info_outline, color: Colors.grey[600], size: 20),
             const SizedBox(width: 8),
             Text(
-              'This bill has already been returned',
+              'All items have been returned',
+              style: TextStyle(
+                fontFamily: 'Literata',
+                fontSize: 14,
+                color: Colors.grey[600],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Check if no items selected
+    if (!_hasItemsToReturn) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.grey[100],
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.touch_app_outlined, color: Colors.grey[600], size: 20),
+            const SizedBox(width: 8),
+            Text(
+              'Select items to return',
               style: TextStyle(
                 fontFamily: 'Literata',
                 fontSize: 14,
@@ -943,8 +1351,22 @@ class _ReturnBillPageState extends State<ReturnBillPage>
 /// Confirmation Dialog for Return Bill
 class _ReturnConfirmationDialog extends StatelessWidget {
   final Bill bill;
+  final Map<String, int> returnQuantities;
+  final double totalRefundAmount;
 
-  const _ReturnConfirmationDialog({required this.bill});
+  const _ReturnConfirmationDialog({
+    required this.bill,
+    required this.returnQuantities,
+    required this.totalRefundAmount,
+  });
+
+  int get _totalReturnQuantity {
+    return returnQuantities.values.fold(0, (sum, qty) => sum + qty);
+  }
+
+  List<MapEntry<String, int>> get _itemsToReturn {
+    return returnQuantities.entries.where((e) => e.value > 0).toList();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -979,122 +1401,174 @@ class _ReturnConfirmationDialog extends StatelessWidget {
           ),
         ],
       ),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Are you sure you want to return this bill?',
-            style: TextStyle(
-              fontFamily: 'Literata',
-              fontSize: 14,
-              color: Colors.grey[700],
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Are you sure you want to return the selected items?',
+              style: TextStyle(
+                fontFamily: 'Literata',
+                fontSize: 14,
+                color: Colors.grey[700],
+              ),
             ),
-          ),
-          const SizedBox(height: 16),
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF5F6F8),
-              borderRadius: BorderRadius.circular(10),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF5F6F8),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Bill Number:',
+                        style: TextStyle(
+                          fontFamily: 'Literata',
+                          fontSize: 12,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                      Text(
+                        bill.billNumber,
+                        style: const TextStyle(
+                          fontFamily: 'Literata',
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  const Divider(height: 1),
+                  const SizedBox(height: 8),
+                  // List of items being returned
+                  ...bill.items
+                      .where((item) {
+                        final qty = returnQuantities[item.id] ?? 0;
+                        return qty > 0;
+                      })
+                      .map((item) {
+                        final qty = returnQuantities[item.id] ?? 0;
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 6),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  item.productName,
+                                  style: const TextStyle(
+                                    fontFamily: 'Literata',
+                                    fontSize: 11,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              Text(
+                                '×$qty',
+                                style: TextStyle(
+                                  fontFamily: 'Literata',
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.orange[700],
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                '₹${(item.sellingPrice * qty).toStringAsFixed(2)}',
+                                style: const TextStyle(
+                                  fontFamily: 'Literata',
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }),
+                  const SizedBox(height: 8),
+                  const Divider(height: 1),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Items to return:',
+                        style: TextStyle(
+                          fontFamily: 'Literata',
+                          fontSize: 12,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                      Text(
+                        '${_itemsToReturn.length} items ($_totalReturnQuantity qty)',
+                        style: const TextStyle(
+                          fontFamily: 'Literata',
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Refund Amount:',
+                        style: TextStyle(
+                          fontFamily: 'Literata',
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.orange[700],
+                        ),
+                      ),
+                      Text(
+                        '₹${totalRefundAmount.toStringAsFixed(2)}',
+                        style: TextStyle(
+                          fontFamily: 'Literata',
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.orange[700],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-            child: Column(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Bill Number:',
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.blue[50],
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.blue[200]!),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.info_outline, color: Colors.blue[700], size: 16),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'This will restore the items back to inventory.',
                       style: TextStyle(
                         fontFamily: 'Literata',
-                        fontSize: 12,
-                        color: Colors.grey[600],
+                        fontSize: 11,
+                        color: Colors.blue[700],
                       ),
-                    ),
-                    Text(
-                      bill.billNumber,
-                      style: const TextStyle(
-                        fontFamily: 'Literata',
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Amount:',
-                      style: TextStyle(
-                        fontFamily: 'Literata',
-                        fontSize: 12,
-                        color: Colors.grey[600],
-                      ),
-                    ),
-                    Text(
-                      '₹${bill.finalAmount.toStringAsFixed(2)}',
-                      style: const TextStyle(
-                        fontFamily: 'Literata',
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF1B4D3E),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Items to return:',
-                      style: TextStyle(
-                        fontFamily: 'Literata',
-                        fontSize: 12,
-                        color: Colors.grey[600],
-                      ),
-                    ),
-                    Text(
-                      '${bill.items.length} items (${bill.totalQuantity} qty)',
-                      style: const TextStyle(
-                        fontFamily: 'Literata',
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: Colors.blue[50],
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.blue[200]!),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.info_outline, color: Colors.blue[700], size: 16),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'This will restore the items back to inventory.',
-                    style: TextStyle(
-                      fontFamily: 'Literata',
-                      fontSize: 11,
-                      color: Colors.blue[700],
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
       actions: [
         TextButton(
