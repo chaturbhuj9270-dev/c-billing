@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../core/services/session_manager.dart';
+import '../../data/datasources/supplier_cache_datasource.dart';
 
 class SupplierPage extends StatefulWidget {
   const SupplierPage({super.key});
@@ -25,6 +26,7 @@ class _SupplierPageState extends State<SupplierPage> {
   String? _editingSupplierId;
   List<Map<String, dynamic>> _suppliers = [];
   List<Map<String, dynamic>> _filteredSuppliers = [];
+  final _cacheDataSource = SupplierCacheDataSource();
   
   // Search, sort, and filter variables
   String _sortBy = 'name'; // 'name', 'date', 'contact'
@@ -42,7 +44,7 @@ class _SupplierPageState extends State<SupplierPage> {
     _firestore = FirebaseFirestore.instance;
     _sessionManager = SessionManager();
     _checkUserAuthentication();
-    _loadSuppliers();
+    _setupInitialData();
     _searchController.addListener(_filterAndSearchSuppliers);
   }
 
@@ -144,11 +146,33 @@ class _SupplierPageState extends State<SupplierPage> {
     }
   }
 
+  Future<void> _setupInitialData() async {
+    // 1. Load from cache immediately for < 0.5s loading
+    final cached = await _cacheDataSource.getCachedSuppliers();
+    if (cached != null && mounted) {
+      setState(() {
+        _suppliers = cached;
+        _filterAndSortSuppliers();
+      });
+      print('[DEBUG] Loaded ${_suppliers.length} suppliers from cache');
+    }
+
+    // 2. Fetch from Firestore in background
+    _loadSuppliers();
+  }
+
   Future<void> _loadSuppliers() async {
     try {
+      // Only show loader if we have no cached data
+      if (_suppliers.isEmpty) {
+        setState(() => _isLoading = true);
+      }
+      
+      print('[DEBUG] Loading suppliers from Firestore...');
       final currentUser = _auth.currentUser;
       if (currentUser == null) {
         print('[ERROR] No authenticated user - cannot load suppliers');
+        setState(() => _isLoading = false);
         return;
       }
 
@@ -161,19 +185,26 @@ class _SupplierPageState extends State<SupplierPage> {
 
       if (!mounted || _isNavigatingAway) return;
 
+      final freshSuppliers = snapshot.docs
+          .map((doc) => {
+                'id': doc.id,
+                ...doc.data(),
+              })
+          .toList();
+
       setState(() {
-        _suppliers = snapshot.docs
-            .map((doc) => {
-                  'id': doc.id,
-                  ...doc.data(),
-                })
-            .toList();
+        _suppliers = freshSuppliers;
         _filterAndSortSuppliers();
+        _isLoading = false;
       });
+      
+      // Save to cache for next time
+      _cacheDataSource.saveSuppliers(freshSuppliers);
     } catch (e) {
       print('[ERROR] Failed to load suppliers: $e');
       
       if (mounted) {
+        setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error loading suppliers: $e'),
@@ -498,17 +529,32 @@ class _SupplierPageState extends State<SupplierPage> {
           .collection('suppliers');
 
       if (_isEditing) {
-        await suppliersRef.doc(_editingSupplierId).update({
+        final updatedData = {
           'firstName': _firstNameController.text,
           'middleName': _middleNameController.text,
           'lastName': _lastNameController.text,
           'contact': _contactController.text,
           'address': _addressController.text,
           'updatedAt': FieldValue.serverTimestamp(),
-        });
+        };
+
+        // Optimistic update
+        final index = _suppliers.indexWhere((s) => s['id'] == _editingSupplierId);
+        if (index != -1) {
+          setState(() {
+            _suppliers[index] = {
+              ..._suppliers[index],
+              ...updatedData,
+            };
+            _filterAndSortSuppliers();
+          });
+          _cacheDataSource.saveSuppliers(_suppliers);
+        }
+
+        await suppliersRef.doc(_editingSupplierId).update(updatedData);
         print('[DEBUG] Supplier updated: $_editingSupplierId');
       } else {
-        await suppliersRef.add({
+        final newData = {
           'firstName': _firstNameController.text,
           'middleName': _middleNameController.text,
           'lastName': _lastNameController.text,
@@ -516,7 +562,21 @@ class _SupplierPageState extends State<SupplierPage> {
           'address': _addressController.text,
           'createdAt': FieldValue.serverTimestamp(),
           'updatedAt': FieldValue.serverTimestamp(),
+        };
+
+        // Optimistic add
+        final tempId = 'temp_${DateTime.now().millisecondsSinceEpoch}';
+        final newSupplier = {
+          'id': tempId,
+          ...newData,
+        };
+        setState(() {
+          _suppliers.insert(0, newSupplier);
+          _filterAndSortSuppliers();
         });
+        _cacheDataSource.saveSuppliers(_suppliers);
+
+        await suppliersRef.add(newData);
         print('[DEBUG] New supplier added');
       }
 
@@ -533,10 +593,12 @@ class _SupplierPageState extends State<SupplierPage> {
       }
 
       if (mounted) {
-        _loadSuppliers();
+        _clearForm();
       }
     } catch (e) {
       print('[ERROR] Error saving supplier: $e');
+      // Reload on error to revert optimistic update
+      _loadSuppliers();
       if (mounted && context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -561,6 +623,13 @@ class _SupplierPageState extends State<SupplierPage> {
         throw Exception('User not authenticated');
       }
 
+      // Optimistic delete
+      setState(() {
+        _suppliers.removeWhere((s) => s['id'] == _editingSupplierId);
+        _filterAndSortSuppliers();
+      });
+      _cacheDataSource.saveSuppliers(_suppliers);
+
       await _firestore
           .collection('users')
           .doc(currentUser.uid)
@@ -579,10 +648,12 @@ class _SupplierPageState extends State<SupplierPage> {
       }
 
       if (mounted) {
-        _loadSuppliers();
+        _clearForm();
       }
     } catch (e) {
       print('[ERROR] Error deleting supplier: $e');
+      // Reload on error to revert optimistic delete
+      _loadSuppliers();
       if (mounted && context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

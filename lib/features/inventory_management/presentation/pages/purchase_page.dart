@@ -6,6 +6,7 @@ import 'package:c_billing/core/services/inventory_service.dart';
 import '../../data/repositories/firebase_product_repository.dart';
 import '../../data/repositories/firebase_stock_repository.dart';
 import '../../data/repositories/firebase_purchase_repository.dart';
+import '../../data/datasources/purchase_cache_datasource.dart';
 import '../../domain/entities/product.dart';
 
 class PurchasePage extends StatefulWidget {
@@ -21,6 +22,7 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
   late AnimationController _animController;
   late Animation<Offset> _offsetAnimation;
   late Animation<double> _opacityAnimation;
+  final _cacheDataSource = PurchaseCacheDataSource();
 
   Product? _selectedProduct;
   Map<String, dynamic>? _selectedSupplier;
@@ -75,6 +77,25 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
         .animate(CurvedAnimation(parent: _animController, curve: Curves.easeIn));
     Future.delayed(const Duration(milliseconds: 150), () => _animController.forward());
     
+    _setupInitialData();
+  }
+
+  Future<void> _setupInitialData() async {
+    // Load from cache immediately for < 0.5s loading
+    final cachedProducts = await _cacheDataSource.getCachedProducts();
+    final cachedSuppliers = await _cacheDataSource.getCachedSuppliers();
+    final cachedCompanies = await _cacheDataSource.getCachedCompanies();
+    
+    if (mounted) {
+      setState(() {
+        if (cachedProducts != null) _products = cachedProducts;
+        if (cachedSuppliers != null) _suppliers = cachedSuppliers;
+        if (cachedCompanies != null) _companies = cachedCompanies;
+      });
+      print('[DEBUG] Loaded from cache: ${_products.length} products, ${_suppliers.length} suppliers, ${_companies.length} companies');
+    }
+
+    // Fetch from Firestore in background
     _loadProducts();
     _loadSuppliers();
     _loadCompanies();
@@ -82,10 +103,16 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
 
   Future<void> _loadProducts() async {
     try {
+      print('[DEBUG] Loading products from Firestore...');
       final products = await _inventoryService.getAllProducts();
-      setState(() {
-        _products = products;
-      });
+      if (mounted) {
+        setState(() {
+          _products = products;
+        });
+        // Save to cache for next time
+        _cacheDataSource.saveProducts(products);
+        print('[DEBUG] Loaded ${products.length} products from Firestore');
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -97,6 +124,7 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
 
   Future<void> _loadSuppliers() async {
     try {
+      print('[DEBUG] Loading suppliers from Firestore...');
       final currentUser = FirebaseAuth.instance.currentUser;
       if (currentUser == null) return;
 
@@ -106,16 +134,23 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
           .collection('suppliers')
           .get();
 
-      setState(() {
-        _suppliers = snapshot.docs
-            .map((doc) => {
-                  'id': doc.id,
-                  'firstName': doc['firstName'] ?? '',
-                  'lastName': doc['lastName'] ?? '',
-                  'fullName': '${doc['firstName'] ?? ''} ${doc['lastName'] ?? ''}'.trim(),
-                })
-            .toList();
-      });
+      final freshSuppliers = snapshot.docs
+          .map((doc) => {
+                'id': doc.id,
+                'firstName': doc['firstName'] ?? '',
+                'lastName': doc['lastName'] ?? '',
+                'fullName': '${doc['firstName'] ?? ''} ${doc['lastName'] ?? ''}'.trim(),
+              })
+          .toList();
+
+      if (mounted) {
+        setState(() {
+          _suppliers = freshSuppliers;
+        });
+        // Save to cache for next time
+        _cacheDataSource.saveSuppliers(freshSuppliers);
+        print('[DEBUG] Loaded ${freshSuppliers.length} suppliers from Firestore');
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -127,6 +162,7 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
 
   Future<void> _loadCompanies() async {
     try {
+      print('[DEBUG] Loading companies from Firestore...');
       final currentUser = FirebaseAuth.instance.currentUser;
       if (currentUser == null) return;
 
@@ -136,14 +172,21 @@ class _PurchasePageState extends State<PurchasePage> with SingleTickerProviderSt
           .collection('companies')
           .get();
 
-      setState(() {
-        _companies = snapshot.docs
-            .map((doc) => {
-                  'id': doc.id,
-                  'companyName': doc['companyName'] ?? '',
-                })
-            .toList();
-      });
+      final freshCompanies = snapshot.docs
+          .map((doc) => {
+                'id': doc.id,
+                'companyName': doc['companyName'] ?? '',
+              })
+          .toList();
+
+      if (mounted) {
+        setState(() {
+          _companies = freshCompanies;
+        });
+        // Save to cache for next time
+        _cacheDataSource.saveCompanies(freshCompanies);
+        print('[DEBUG] Loaded ${freshCompanies.length} companies from Firestore');
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
