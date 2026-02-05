@@ -6,6 +6,7 @@ import 'package:c_billing/core/services/inventory_service.dart';
 import '../../data/repositories/firebase_product_repository.dart';
 import '../../data/repositories/firebase_stock_repository.dart';
 import '../../data/repositories/firebase_purchase_repository.dart';
+import '../../data/datasources/product_cache_datasource.dart';
 import '../../domain/entities/product.dart';
 
 class ProductManagementPage extends StatefulWidget {
@@ -19,9 +20,14 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
   late InventoryService _inventoryService;
   late FirebaseFirestore _firestore;
   final _auth = FirebaseAuth.instance;
+  final _cacheDataSource = ProductCacheDataSource();
   List<Product> _products = [];
   List<Product> _filteredProducts = [];
+  List<Product> _displayedProducts = [];
   bool _isLoading = false;
+  bool _isLoadingMore = false;
+  int _pageSize = 20;
+  late ScrollController _scrollController;
 
   // Filter variables
   String _filterName = '';
@@ -40,8 +46,42 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
       stockRepository: FirebaseStockRepository(firestore: _firestore, auth: _auth),
       purchaseRepository: FirebasePurchaseRepository(firestore: _firestore, auth: _auth),
     );
+    _scrollController = ScrollController();
+    _scrollController.addListener(_onScroll);
     _checkUserAuthentication();
-    _loadProducts();
+    _setupInitialData();
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 500) {
+      _loadMoreProducts();
+    }
+  }
+
+  void _loadMoreProducts() {
+    if (!_isLoadingMore && _displayedProducts.length < _filteredProducts.length) {
+      setState(() => _isLoadingMore = true);
+      Future.delayed(const Duration(milliseconds: 300), () {
+        if (mounted) {
+          final startIndex = _displayedProducts.length;
+          final endIndex =
+              (startIndex + _pageSize).clamp(0, _filteredProducts.length);
+          setState(() {
+            _displayedProducts.addAll(
+              _filteredProducts.sublist(startIndex, endIndex),
+            );
+            _isLoadingMore = false;
+          });
+        }
+      });
+    }
   }
 
   void _checkUserAuthentication() {
@@ -54,32 +94,59 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
     }
   }
 
+  Future<void> _setupInitialData() async {
+    // 1. Load from cache immediately for < 0.5s loading
+    final cached = await _cacheDataSource.getCachedProducts();
+    if (cached != null && mounted) {
+      setState(() {
+        _products = cached;
+        _applyFilters();
+        _displayedProducts = _filteredProducts.take(_pageSize).toList();
+      });
+      print('[DEBUG] Loaded ${_products.length} products from cache');
+    }
+
+    // 2. Fetch from Firestore in background
+    _loadProducts();
+  }
+
   Future<void> _loadProducts() async {
     try {
-      print('[DEBUG] Loading products...');
+      // Only show loader if we have no cached data
+      if (_products.isEmpty) {
+        setState(() => _isLoading = true);
+      }
+      
+      print('[DEBUG] Loading products from Firestore...');
       final currentUser = _auth.currentUser;
       if (currentUser == null) {
         print('[ERROR] No authenticated user - cannot load products');
+        setState(() => _isLoading = false);
         return;
       }
       
       print('[DEBUG] Fetching products for user: ${currentUser.uid}');
-      setState(() => _isLoading = true);
       final products = await _inventoryService.getAllProducts();
-      print('[DEBUG] Loaded ${products.length} products');
-      setState(() {
-        _products = products;
-        _applyFilters();
-      });
+      print('[DEBUG] Loaded ${products.length} products from Firestore');
+      
+      if (mounted) {
+        setState(() {
+          _products = products;
+          _applyFilters();
+          _displayedProducts = _filteredProducts.take(_pageSize).toList();
+          _isLoading = false;
+        });
+        // Save to cache for next time
+        _cacheDataSource.saveProducts(products);
+      }
     } catch (e) {
       print('[ERROR] Failed to load products: $e');
       if (mounted) {
+        setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error loading products: $e')),
         );
       }
-    } finally {
-      setState(() => _isLoading = false);
     }
   }
 
@@ -288,15 +355,27 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                     updatedAt: DateTime.now(),
                   );
 
+                  // Optimistic update
+                  final index = _products.indexWhere((p) => p.id == product.id);
+                  if (index != -1) {
+                    setState(() {
+                      _products[index] = updatedProduct;
+                      _applyFilters();
+                      _displayedProducts = _filteredProducts.take(_pageSize).toList();
+                    });
+                    _cacheDataSource.saveProducts(_products);
+                  }
+
                   await _inventoryService.updateProduct(updatedProduct);
                   if (mounted) {
                     Navigator.pop(context);
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text('Product updated successfully')),
                     );
-                    _loadProducts();
                   }
                 } catch (e) {
+                  // Reload on error to revert optimistic update
+                  _loadProducts();
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text('Error: $e')),
                   );
@@ -335,15 +414,24 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
           ElevatedButton(
             onPressed: () async {
               try {
+                // Optimistic delete
+                setState(() {
+                  _products.removeWhere((p) => p.id == product.id);
+                  _applyFilters();
+                  _displayedProducts = _filteredProducts.take(_pageSize).toList();
+                });
+                _cacheDataSource.saveProducts(_products);
+
                 await _inventoryService.deleteProduct(product.id);
                 if (mounted) {
                   Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Product deleted successfully')),
                   );
-                  _loadProducts();
                 }
               } catch (e) {
+                // Reload on error to revert optimistic delete
+                _loadProducts();
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text('Error: $e')),
                 );
@@ -746,6 +834,26 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
             ElevatedButton(
               onPressed: () async {
                 try {
+                  final newProduct = Product(
+                    id: 'temp_${DateTime.now().millisecondsSinceEpoch}',
+                    name: nameController.text,
+                    companyName: '',
+                    category: categoryController.text,
+                    purchasePrice: double.parse(purchasePriceController.text),
+                    salesPrice: double.parse(salesPriceController.text),
+                    currentStock: int.parse(initialStockController.text),
+                    createdAt: DateTime.now(),
+                    updatedAt: DateTime.now(),
+                  );
+
+                  // Optimistic add
+                  setState(() {
+                    _products.insert(0, newProduct);
+                    _applyFilters();
+                    _displayedProducts = _filteredProducts.take(_pageSize).toList();
+                  });
+                  _cacheDataSource.saveProducts(_products);
+
                   await _inventoryService.createProduct(
                     name: nameController.text,
                     companyName: '',
@@ -759,9 +867,10 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text('Product added successfully')),
                     );
-                    _loadProducts();
                   }
                 } catch (e) {
+                  // Reload on error to revert optimistic add
+                  _loadProducts();
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text('Error: $e')),
                   );
