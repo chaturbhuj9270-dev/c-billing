@@ -57,17 +57,21 @@ class _BillingPageState extends State<BillingPage> {
     super.dispose();
   }
 
-  Future<void> _loadProducts() async {
+  Future<void> _loadProducts({bool showLoader = true}) async {
     try {
-      setState(() => _isLoading = true);
+      if (showLoader) setState(() => _isLoading = true);
       final products = await _billingService.getAvailableProducts();
-      setState(() {
-        _products = products;
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _products = products;
+          if (showLoader) _isLoading = false;
+        });
+      }
     } catch (e) {
-      setState(() => _isLoading = false);
-      _showSnackbar('Error loading products: $e', isError: true);
+      if (mounted) {
+        setState(() => _isLoading = false);
+        _showSnackbar('Error loading products: $e', isError: true);
+      }
     }
   }
 
@@ -192,8 +196,15 @@ class _BillingPageState extends State<BillingPage> {
 
       if (result.success) {
         _showSnackbar('Bill saved successfully!');
+        // Keep a copy of items to update local stock
+        final savedItems = List<BillItem>.from(_billItems);
         _clearBill();
-        _loadProducts();
+        
+        // Optimization: Update local stock immediately instead of full reload from server
+        _updateLocalStock(savedItems);
+        
+        // Background reload to ensure sync without blocking UI
+        _loadProducts(showLoader: false);
       } else {
         _showSnackbar(
           result.errorMessage ?? 'Error saving bill',
@@ -204,6 +215,23 @@ class _BillingPageState extends State<BillingPage> {
       setState(() => _isSavingBill = false);
       _showSnackbar('Error: $e', isError: true);
     }
+  }
+
+  void _updateLocalStock(List<BillItem> savedItems) {
+    setState(() {
+      for (final item in savedItems) {
+        final index = _products.indexWhere((p) => p.id == item.productId);
+        if (index != -1) {
+          final p = _products[index];
+          final newStock = p.currentStock - item.quantity;
+          if (newStock > 0) {
+            _products[index] = p.copyWith(currentStock: newStock);
+          } else {
+            _products.removeAt(index);
+          }
+        }
+      }
+    });
   }
 
   void _clearBill() {

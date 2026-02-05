@@ -70,21 +70,22 @@ class BillingService {
   Future<Map<String, String>> validateStock(List<BillItem> items) async {
     final errors = <String, String>{};
 
-    for (final item in items) {
-      try {
-        final product = await _productRepository.getProductById(item.productId);
-        if (product == null) {
-          errors[item.productId] = 'Product "${item.productName}" not found';
-          continue;
-        }
+    // Optimization: Parallelize stock checks to avoid sequential network calls
+    final productFutures = items.map((item) => _productRepository.getProductById(item.productId));
+    final products = await Future.wait(productFutures);
 
-        if (product.currentStock < item.quantity) {
-          errors[item.productId] =
-              '${item.productName}: Insufficient stock. Available: ${product.currentStock}, Requested: ${item.quantity}';
-        }
-      } catch (e) {
+    for (int i = 0; i < items.length; i++) {
+      final item = items[i];
+      final product = products[i];
+
+      if (product == null) {
+        errors[item.productId] = 'Product "${item.productName}" not found';
+        continue;
+      }
+
+      if (product.currentStock < item.quantity) {
         errors[item.productId] =
-            'Error checking stock for ${item.productName}: $e';
+            '${item.productName}: Insufficient stock. Available: ${product.currentStock}, Requested: ${item.quantity}';
       }
     }
 
@@ -128,15 +129,6 @@ class BillingService {
       return BillingResult.failure('Cannot create a bill with no items');
     }
 
-    // Validate stock availability first
-    final stockErrors = await validateStock(items);
-    if (stockErrors.isNotEmpty) {
-      return BillingResult.failure(
-        'Stock validation failed',
-        failedProducts: stockErrors.values.toList(),
-      );
-    }
-
     // Use Firestore transaction to ensure atomicity
     try {
       final firestore = _billRepository.firestore;
@@ -145,28 +137,37 @@ class BillingService {
       final result = await firestore.runTransaction<String>((
         transaction,
       ) async {
-        // Step 1: Verify and get current stock and purchase price for all products
+        // Step 1: Verify and get current stock and purchase price for all products in parallel
         final productStocks = <String, int>{};
         final productPurchasePrices = <String, double>{};
-        final productRefs = <String, DocumentReference>{};
+        final productRefsMap = <String, DocumentReference>{};
 
-        for (final item in items) {
-          final productRef = firestore
+        // Get unique product IDs to avoid redundant fetches
+        final uniqueProductIds = items.map((e) => e.productId).toSet().toList();
+        
+        final productDocFutures = uniqueProductIds.map((productId) {
+          final ref = firestore
               .collection('users')
               .doc(userId)
               .collection('products')
-              .doc(item.productId);
+              .doc(productId);
+          productRefsMap[productId] = ref;
+          return transaction.get(ref);
+        }).toList();
 
-          final productDoc = await transaction.get(productRef);
+        final productSnapshots = await Future.wait(productDocFutures);
+        final productDocsMap = Map.fromIterables(uniqueProductIds, productSnapshots);
+
+        for (final item in items) {
+          final productDoc = productDocsMap[item.productId]!;
 
           if (!productDoc.exists) {
             throw Exception('Product ${item.productName} not found');
           }
 
-          final data = productDoc.data();
+          final data = productDoc.data() as Map<String, dynamic>?;
           final currentStock = (data?['currentStock'] ?? 0) as int;
-          final purchasePrice = ((data?['purchasePrice'] ?? 0) as num)
-              .toDouble();
+          final purchasePrice = ((data?['purchasePrice'] ?? 0) as num).toDouble();
 
           if (currentStock < item.quantity) {
             throw Exception(
@@ -174,9 +175,9 @@ class BillingService {
             );
           }
 
+          // Use the latest data for all items of this product
           productStocks[item.productId] = currentStock;
           productPurchasePrices[item.productId] = purchasePrice;
-          productRefs[item.productId] = productRef;
         }
 
         // Step 2: Create the bill document
@@ -224,18 +225,34 @@ class BillingService {
         transaction.set(billRef, bill.toJson());
 
         // Step 3: Update stock for each product and create stock entries
-        for (final item in items) {
-          final currentStock = productStocks[item.productId]!;
-          final newStock = currentStock - item.quantity;
-          final productRef = productRefs[item.productId]!;
+        // Track new balances for products that might appear multiple times in the bill
+        final productNewBalances = Map<String, int>.from(productStocks);
 
-          // Update product stock
+        for (final item in items) {
+          final currentBalance = productNewBalances[item.productId]!;
+          final newStock = currentBalance - item.quantity;
+          productNewBalances[item.productId] = newStock;
+          
+          final productRef = productRefsMap[item.productId]!;
+
+          // Update product stock with the final accumulated new balance
+          // Note: We'll set the update call outside this loop per unique product to be more efficient
+        }
+
+        // Apply product updates once per unique product
+        for (final productId in uniqueProductIds) {
+          final newStock = productNewBalances[productId]!;
+          final productRef = productRefsMap[productId]!;
+          
           transaction.update(productRef, {
             'currentStock': newStock,
             'updatedAt': now.toIso8601String(),
           });
+        }
 
-          // Create stock entry for the sale
+        // Still need individual stock entries for each line item (or summarized per bill)
+        // Usually stock history is per line item or per bill. Keeping it per line item as before.
+        for (final item in items) {
           final stockRef = firestore
               .collection('users')
               .doc(userId)
@@ -247,7 +264,7 @@ class BillingService {
             productId: item.productId,
             quantityIn: 0,
             quantityOut: item.quantity,
-            balanceQuantity: newStock,
+            balanceQuantity: productNewBalances[item.productId]!, // Note: this is the overall balance after all items
             referenceType: ReferenceType.SALE,
             referenceId: billRef.id,
             createdAt: now,
