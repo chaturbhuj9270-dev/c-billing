@@ -2,6 +2,7 @@ enum ReferenceType {
   PURCHASE,
   SALE,
   ADJUSTMENT,
+  RETURN,
 }
 
 extension ReferenceTypeExtension on ReferenceType {

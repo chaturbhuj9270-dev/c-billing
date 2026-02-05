@@ -8,6 +8,7 @@ import 'package:c_billing/features/billing/domain/entities/bill.dart';
 import 'package:c_billing/features/inventory_management/data/repositories/firebase_product_repository.dart';
 import 'package:c_billing/features/inventory_management/data/repositories/firebase_stock_repository.dart';
 import 'package:c_billing/features/billing/data/datasources/bill_cache_datasource.dart';
+import 'package:c_billing/features/billing/presentation/pages/return_bill_page.dart';
 
 class BillsListPage extends StatefulWidget {
   const BillsListPage({super.key});
@@ -201,7 +202,13 @@ class _BillsListPageState extends State<BillsListPage>
   void _showBillDetails(Bill bill) {
     showDialog(
       context: context,
-      builder: (context) => _BillDetailsDialog(bill: bill),
+      builder: (context) => _BillDetailsDialog(
+        bill: bill,
+        onBillReturned: () {
+          // Refresh the bills list after a return
+          _loadBills();
+        },
+      ),
     );
   }
 
@@ -1084,10 +1091,41 @@ class _DateRangePickerDialogState extends State<_DateRangePickerDialog> {
   }
 }
 
-class _BillDetailsDialog extends StatelessWidget {
+class _BillDetailsDialog extends StatefulWidget {
   final Bill bill;
+  final VoidCallback? onBillReturned;
 
-  const _BillDetailsDialog({required this.bill});
+  const _BillDetailsDialog({required this.bill, this.onBillReturned});
+
+  @override
+  State<_BillDetailsDialog> createState() => _BillDetailsDialogState();
+}
+
+class _BillDetailsDialogState extends State<_BillDetailsDialog> {
+  late Bill _bill;
+
+  @override
+  void initState() {
+    super.initState();
+    _bill = widget.bill;
+  }
+
+  void _navigateToReturnBill() async {
+    final result = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ReturnBillPage(initialBill: _bill),
+      ),
+    );
+
+    if (result == true && mounted) {
+      // Bill was returned successfully
+      setState(() {
+        _bill = _bill.copyWith(returnStatus: true, returnDate: DateTime.now());
+      });
+      widget.onBillReturned?.call();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1133,13 +1171,42 @@ class _BillDetailsDialog extends StatelessWidget {
                       color: Colors.white,
                     ),
                   ),
-                  Text(
-                    bill.billNumber,
-                    style: TextStyle(
-                      fontFamily: 'Literata',
-                      fontSize: 12,
-                      color: Colors.white.withOpacity(0.7),
-                    ),
+                  Row(
+                    children: [
+                      Text(
+                        _bill.billNumber,
+                        style: TextStyle(
+                          fontFamily: 'Literata',
+                          fontSize: 12,
+                          color: Colors.white.withOpacity(0.7),
+                        ),
+                      ),
+                      if (_bill.returnStatus) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.orange.withOpacity(0.3),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: Colors.orange.withOpacity(0.5),
+                            ),
+                          ),
+                          child: const Text(
+                            'Returned',
+                            style: TextStyle(
+                              fontFamily: 'Literata',
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.orange,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                 ],
               ),
@@ -1155,23 +1222,23 @@ class _BillDetailsDialog extends StatelessWidget {
                   _buildGlassyCard(
                     _buildDetailRow(
                       'Date',
-                      dateFormat.format(bill.billDate),
+                      dateFormat.format(_bill.billDate),
                       Icons.calendar_today,
                     ),
                   ),
                   const SizedBox(height: 12),
                   // Customer info section
-                  if (bill.hasCustomerInfo) ...[
+                  if (_bill.hasCustomerInfo) ...[
                     _buildGlassyCard(
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           _buildDetailRow(
                             'Customer',
-                            bill.customerName ?? 'N/A',
+                            _bill.customerName ?? 'N/A',
                             Icons.person,
                           ),
-                          if (bill.customerContact != null) ...[
+                          if (_bill.customerContact != null) ...[
                             const SizedBox(height: 12),
                             Container(
                               height: 1,
@@ -1180,7 +1247,7 @@ class _BillDetailsDialog extends StatelessWidget {
                             const SizedBox(height: 12),
                             _buildDetailRow(
                               'Contact',
-                              bill.customerContact!,
+                              _bill.customerContact!,
                               Icons.phone,
                             ),
                           ],
@@ -1204,11 +1271,11 @@ class _BillDetailsDialog extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 12),
-                        ...bill.items.map(
+                        ..._bill.items.map(
                           (item) => Column(
                             children: [
                               _buildItemRow(item),
-                              if (bill.items.last != item) ...[
+                              if (_bill.items.last != item) ...[
                                 const SizedBox(height: 8),
                               ],
                             ],
@@ -1219,9 +1286,9 @@ class _BillDetailsDialog extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   // Notes section
-                  if (bill.notes != null && bill.notes!.isNotEmpty) ...[
+                  if (_bill.notes != null && _bill.notes!.isNotEmpty) ...[
                     _buildGlassyCard(
-                      _buildDetailRow('Notes', bill.notes!, Icons.note),
+                      _buildDetailRow('Notes', _bill.notes!, Icons.note),
                     ),
                     const SizedBox(height: 12),
                   ],
@@ -1241,7 +1308,7 @@ class _BillDetailsDialog extends StatelessWidget {
                               ),
                             ),
                             Text(
-                              '${bill.totalQuantity} items',
+                              '${_bill.totalQuantity} items',
                               style: const TextStyle(
                                 fontFamily: 'Literata',
                                 fontWeight: FontWeight.w600,
@@ -1268,7 +1335,7 @@ class _BillDetailsDialog extends StatelessWidget {
                               ),
                             ),
                             Text(
-                              '₹${bill.totalAmount.toStringAsFixed(2)}',
+                              '₹${_bill.totalAmount.toStringAsFixed(2)}',
                               style: TextStyle(
                                 fontFamily: 'Literata',
                                 fontSize: 14,
@@ -1277,13 +1344,13 @@ class _BillDetailsDialog extends StatelessWidget {
                             ),
                           ],
                         ),
-                        if (bill.discountAmount > 0) ...[
+                        if (_bill.discountAmount > 0) ...[
                           const SizedBox(height: 8),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                'Discount (${bill.discountPercent.toStringAsFixed(1)}%):',
+                                'Discount (${_bill.discountPercent.toStringAsFixed(1)}%):',
                                 style: TextStyle(
                                   fontFamily: 'Literata',
                                   fontSize: 14,
@@ -1291,7 +1358,7 @@ class _BillDetailsDialog extends StatelessWidget {
                                 ),
                               ),
                               Text(
-                                '-₹${bill.discountAmount.toStringAsFixed(2)}',
+                                '-₹${_bill.discountAmount.toStringAsFixed(2)}',
                                 style: TextStyle(
                                   fontFamily: 'Literata',
                                   fontSize: 14,
@@ -1321,7 +1388,7 @@ class _BillDetailsDialog extends StatelessWidget {
                               ),
                             ),
                             Text(
-                              '₹${bill.finalAmount.toStringAsFixed(2)}',
+                              '₹${_bill.finalAmount.toStringAsFixed(2)}',
                               style: const TextStyle(
                                 fontFamily: 'Literata',
                                 fontSize: 22,
@@ -1334,6 +1401,12 @@ class _BillDetailsDialog extends StatelessWidget {
                       ],
                     ),
                   ),
+                  const SizedBox(height: 16),
+                  // Return Bill Button
+                  if (!_bill.returnStatus)
+                    _buildReturnBillButton()
+                  else
+                    _buildReturnedInfoCard(),
                   const SizedBox(height: 24),
                 ],
               ),
@@ -1436,6 +1509,88 @@ class _BillDetailsDialog extends StatelessWidget {
               fontFamily: 'Literata',
               fontWeight: FontWeight.w700,
               color: Colors.white,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildReturnBillButton() {
+    return GestureDetector(
+      onTap: _navigateToReturnBill,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Colors.orange.withOpacity(0.3),
+              Colors.orange.withOpacity(0.2),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: Colors.orange.withOpacity(0.4), width: 1.5),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.assignment_return, color: Colors.orange[300], size: 22),
+            const SizedBox(width: 10),
+            Text(
+              'Return This Bill',
+              style: TextStyle(
+                fontFamily: 'Literata',
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: Colors.orange[300],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildReturnedInfoCard() {
+    final dateFormat = DateFormat('dd MMM yyyy, hh:mm a');
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.orange.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.orange.withOpacity(0.3), width: 1.5),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.assignment_return, color: Colors.orange[300], size: 24),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Bill Returned',
+                  style: TextStyle(
+                    fontFamily: 'Literata',
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.orange[300],
+                  ),
+                ),
+                if (_bill.returnDate != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    dateFormat.format(_bill.returnDate!),
+                    style: TextStyle(
+                      fontFamily: 'Literata',
+                      fontSize: 12,
+                      color: Colors.orange[200],
+                    ),
+                  ),
+                ],
+              ],
             ),
           ),
         ],

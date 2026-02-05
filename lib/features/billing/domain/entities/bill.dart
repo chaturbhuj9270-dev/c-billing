@@ -16,6 +16,8 @@ class Bill {
   final DateTime createdAt;
   final DateTime updatedAt;
   final String? notes;
+  final bool returnStatus;
+  final DateTime? returnDate;
 
   Bill({
     required this.id,
@@ -32,6 +34,8 @@ class Bill {
     required this.createdAt,
     required this.updatedAt,
     this.notes,
+    this.returnStatus = false,
+    this.returnDate,
   });
 
   /// Factory constructor to create from JSON (for Firebase)
@@ -72,6 +76,10 @@ class Bill {
             ? DateTime.parse(json['updatedAt'] as String)
             : DateTime.now(),
         notes: json['notes'] as String?,
+        returnStatus: (json['returnStatus'] ?? false) as bool,
+        returnDate: json['returnDate'] != null
+            ? DateTime.parse(json['returnDate'] as String)
+            : null,
       );
     } catch (e) {
       print('[ERROR] Failed to parse Bill from JSON: $json');
@@ -91,6 +99,8 @@ class Bill {
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
         notes: null,
+        returnStatus: false,
+        returnDate: null,
       );
     }
   }
@@ -112,6 +122,8 @@ class Bill {
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
       'notes': notes,
+      'returnStatus': returnStatus,
+      'returnDate': returnDate?.toIso8601String(),
     };
   }
 
@@ -131,6 +143,8 @@ class Bill {
     DateTime? createdAt,
     DateTime? updatedAt,
     String? notes,
+    bool? returnStatus,
+    DateTime? returnDate,
   }) {
     return Bill(
       id: id ?? this.id,
@@ -147,6 +161,8 @@ class Bill {
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       notes: notes ?? this.notes,
+      returnStatus: returnStatus ?? this.returnStatus,
+      returnDate: returnDate ?? this.returnDate,
     );
   }
 
