@@ -12,6 +12,7 @@ import 'package:c_billing/features/billing/presentation/pages/return_bill_page.d
 import 'package:c_billing/core/printing/printing.dart';
 import 'package:c_billing/common_widgets/printer_selection_widget.dart';
 import 'package:c_billing/features/shop/data/repositories/shop_repository.dart';
+import 'package:c_billing/features/customer/data/repositories/customer_repository.dart';
 
 class BillsListPage extends StatefulWidget {
   const BillsListPage({super.key});
@@ -33,6 +34,7 @@ class _BillsListPageState extends State<BillsListPage>
   final _printerService = PosPrinterService();
   final _pdfService = PdfBillService();
   late ShopRepository _shopRepository;
+  late FirebaseCustomerRepository _customerRepository;
   String? _printingBillId; // Track which bill is being printed
 
   List<Bill> _bills = [];
@@ -54,6 +56,7 @@ class _BillsListPageState extends State<BillsListPage>
     super.initState();
     _firestore = FirebaseFirestore.instance;
     _shopRepository = ShopRepository(firestore: _firestore);
+    _customerRepository = FirebaseCustomerRepository(firestore: _firestore);
 
     _billingService = BillingService(
       billRepository: FirebaseBillRepository(firestore: _firestore),
@@ -108,6 +111,27 @@ class _BillsListPageState extends State<BillsListPage>
     super.dispose();
   }
 
+  /// Create PrintBillData with customer's total due amount
+  Future<PrintBillData> _createPrintBillData(Bill bill) async {
+    double? totalDueAmount;
+
+    // Get customer's total pending balance if customer ID exists
+    if (bill.customerId != null && bill.customerId!.isNotEmpty) {
+      try {
+        final customer = await _customerRepository.getCustomerById(
+          bill.customerId!,
+        );
+        if (customer != null) {
+          totalDueAmount = customer.currentPendingAmount;
+        }
+      } catch (e) {
+        print('[DEBUG] Error fetching customer pending balance: $e');
+      }
+    }
+
+    return PrintBillData.fromBill(bill, totalDueAmount: totalDueAmount);
+  }
+
   Future<void> _printBill(Bill bill) async {
     // Show bill preview dialog first
     final shouldPrint = await _showPrintPreviewDialog(bill);
@@ -140,7 +164,7 @@ class _BillsListPageState extends State<BillsListPage>
       final shop = await _shopRepository.getShopDetails();
 
       // Create print data from bill
-      final printData = PrintBillData.fromBill(bill);
+      final printData = await _createPrintBillData(bill);
 
       // Print the bill
       final printResult = await _printerService.printBill(
@@ -510,7 +534,7 @@ class _BillsListPageState extends State<BillsListPage>
       );
 
       final shop = await _shopRepository.getShopDetails();
-      final printData = PrintBillData.fromBill(bill);
+      final printData = await _createPrintBillData(bill);
 
       // Close loading indicator
       if (mounted) Navigator.pop(context);
@@ -545,7 +569,7 @@ class _BillsListPageState extends State<BillsListPage>
       );
 
       final shop = await _shopRepository.getShopDetails();
-      final printData = PrintBillData.fromBill(bill);
+      final printData = await _createPrintBillData(bill);
 
       final file = await _pdfService.savePdfToFile(
         billData: printData,

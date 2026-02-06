@@ -6,6 +6,7 @@ import 'package:c_billing/features/inventory_management/domain/entities/product.
 import 'package:c_billing/features/inventory_management/domain/entities/stock.dart';
 import 'package:c_billing/features/inventory_management/domain/repositories/product_repository.dart';
 import 'package:c_billing/features/inventory_management/domain/repositories/stock_repository.dart';
+import 'package:c_billing/core/services/customer_transaction_service.dart';
 
 /// Result class for billing operations
 class BillingResult {
@@ -100,14 +101,17 @@ class BillingService {
   final FirebaseBillRepository _billRepository;
   final ProductRepository _productRepository;
   final StockRepository _stockRepository;
+  final CustomerTransactionService? _customerTransactionService;
 
   BillingService({
     required FirebaseBillRepository billRepository,
     required ProductRepository productRepository,
     required StockRepository stockRepository,
+    CustomerTransactionService? customerTransactionService,
   }) : _billRepository = billRepository,
        _productRepository = productRepository,
-       _stockRepository = stockRepository;
+       _stockRepository = stockRepository,
+       _customerTransactionService = customerTransactionService;
 
   /// Calculate subtotal for a bill item
   double calculateSubtotal(double sellingPrice, int quantity) {
@@ -175,6 +179,9 @@ class BillingService {
 
   /// Process and save a bill with transaction support
   /// This method ensures that either all operations succeed or all are rolled back
+  ///
+  /// [paidAmount] - Amount paid upfront. If null, assumes full payment.
+  /// If paidAmount < finalAmount, the remaining is added to customer's pending balance.
   Future<BillingResult> processBill({
     required List<BillItem> items,
     String? customerId,
@@ -183,6 +190,7 @@ class BillingService {
     String? notes,
     double discountAmount = 0.0,
     double discountPercent = 0.0,
+    double? paidAmount,
   }) async {
     // Validate that there are items
     if (items.isEmpty) {
@@ -258,6 +266,18 @@ class BillingService {
         // Calculate final amount after discount
         final finalAmount = totalAmount - discountAmount;
 
+        // Calculate payment status
+        final actualPaidAmount = paidAmount ?? finalAmount;
+        final pendingAmount = finalAmount - actualPaidAmount;
+        PaymentStatus paymentStatus;
+        if (pendingAmount <= 0) {
+          paymentStatus = PaymentStatus.paid;
+        } else if (actualPaidAmount > 0) {
+          paymentStatus = PaymentStatus.partiallyPaid;
+        } else {
+          paymentStatus = PaymentStatus.pending;
+        }
+
         // Update items with the bill ID and purchase price for profit tracking
         final updatedItems = items
             .map(
@@ -284,6 +304,9 @@ class BillingService {
           createdAt: now,
           updatedAt: now,
           notes: notes,
+          paymentStatus: paymentStatus,
+          paidAmount: actualPaidAmount > 0 ? actualPaidAmount : 0,
+          pendingAmount: pendingAmount > 0 ? pendingAmount : 0,
         );
 
         transaction.set(billRef, bill.toJson());
@@ -339,6 +362,32 @@ class BillingService {
 
         return billRef.id;
       });
+
+      // After successful bill creation, update customer pending balance if applicable
+      if (customerId != null && _customerTransactionService != null) {
+        final billFinalAmount = calculateTotalAmount(items) - discountAmount;
+        final actualPaid = paidAmount ?? billFinalAmount;
+        final billPendingAmount = billFinalAmount - actualPaid;
+
+        if (billPendingAmount > 0) {
+          // Generate bill number for transaction record
+          final now = DateTime.now();
+          final dateStr = now
+              .toIso8601String()
+              .substring(0, 10)
+              .replaceAll('-', '');
+          final billNumber =
+              'BILL-$dateStr-${result.substring(0, result.length > 6 ? 6 : result.length).toUpperCase()}';
+
+          // Add bill amount to customer's pending balance
+          await _customerTransactionService.recordBillGenerated(
+            customerId: customerId,
+            billId: result,
+            billNumber: billNumber,
+            billAmount: billPendingAmount,
+          );
+        }
+      }
 
       return BillingResult.success(result);
     } catch (e) {

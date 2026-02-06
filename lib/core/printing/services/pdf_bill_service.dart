@@ -241,6 +241,91 @@ class PdfBillService {
           ],
         ),
 
+        // Payment Details Section
+        if (billData.hasPaymentInfo) ...[
+          pw.SizedBox(height: 12),
+          pw.Divider(thickness: 0.3),
+          pw.SizedBox(height: 8),
+
+          // Paid Amount
+          if (billData.paidAmount != null)
+            pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+              children: [
+                pw.Text('Paid Amount', style: const pw.TextStyle(fontSize: 10)),
+                pw.Text(
+                  'Rs. ${billData.paidAmount!.toStringAsFixed(2)}',
+                  style: pw.TextStyle(
+                    fontSize: 10,
+                    fontWeight: pw.FontWeight.bold,
+                    color: PdfColors.green700,
+                  ),
+                ),
+              ],
+            ),
+
+          // Pending Amount
+          if (billData.hasPendingAmount) ...[
+            pw.SizedBox(height: 4),
+            pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+              children: [
+                pw.Text(
+                  'Pending Amount',
+                  style: pw.TextStyle(
+                    fontSize: 10,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
+                ),
+                pw.Text(
+                  'Rs. ${billData.pendingAmount!.toStringAsFixed(2)}',
+                  style: pw.TextStyle(
+                    fontSize: 10,
+                    fontWeight: pw.FontWeight.bold,
+                    color: PdfColors.orange700,
+                  ),
+                ),
+              ],
+            ),
+          ],
+
+          // Total Due Amount
+          if (billData.totalDueAmount != null &&
+              billData.totalDueAmount! > 0) ...[
+            pw.SizedBox(height: 8),
+            pw.Divider(thickness: 0.3),
+            pw.SizedBox(height: 6),
+            pw.Container(
+              padding: const pw.EdgeInsets.all(8),
+              decoration: pw.BoxDecoration(
+                color: PdfColors.orange50,
+                border: pw.Border.all(color: PdfColors.orange200),
+                borderRadius: pw.BorderRadius.circular(4),
+              ),
+              child: pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [
+                  pw.Text(
+                    'TOTAL DUE',
+                    style: pw.TextStyle(
+                      fontSize: 11,
+                      fontWeight: pw.FontWeight.bold,
+                    ),
+                  ),
+                  pw.Text(
+                    'Rs. ${billData.totalDueAmount!.toStringAsFixed(2)}',
+                    style: pw.TextStyle(
+                      fontSize: 12,
+                      fontWeight: pw.FontWeight.bold,
+                      color: PdfColors.orange800,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
+
         pw.SizedBox(height: 16),
         pw.Divider(thickness: 0.3),
         pw.SizedBox(height: 8),

@@ -8,45 +8,45 @@ import '../../../features/shop/domain/entities/shop.dart';
 class EscPosCommands {
   // Initialize printer
   static final List<int> init = [0x1B, 0x40];
-  
+
   // Text alignment
   static final List<int> alignLeft = [0x1B, 0x61, 0x00];
   static final List<int> alignCenter = [0x1B, 0x61, 0x01];
   static final List<int> alignRight = [0x1B, 0x61, 0x02];
-  
+
   // Text formatting
   static final List<int> boldOn = [0x1B, 0x45, 0x01];
   static final List<int> boldOff = [0x1B, 0x45, 0x00];
   static final List<int> underlineOn = [0x1B, 0x2D, 0x01];
   static final List<int> underlineOff = [0x1B, 0x2D, 0x00];
-  
+
   // Text size - double height and width
   static final List<int> textNormal = [0x1D, 0x21, 0x00];
   static final List<int> textDoubleHeight = [0x1D, 0x21, 0x01];
   static final List<int> textDoubleWidth = [0x1D, 0x21, 0x10];
   static final List<int> textDoubleSize = [0x1D, 0x21, 0x11];
-  
+
   // Line feed
   static final List<int> lineFeed = [0x0A];
-  
+
   // Cut paper (full cut)
   static final List<int> cutPaper = [0x1D, 0x56, 0x00];
-  
+
   // Cut paper (partial cut)
   static final List<int> cutPaperPartial = [0x1D, 0x56, 0x01];
-  
+
   // Open cash drawer
   static final List<int> openDrawer = [0x1B, 0x70, 0x00, 0x19, 0xFA];
-  
+
   // Feed lines
   static List<int> feedLines(int lines) => [0x1B, 0x64, lines];
-  
+
   // Set character spacing
   static List<int> setCharSpacing(int n) => [0x1B, 0x20, n];
-  
+
   // Set line spacing
   static List<int> setLineSpacing(int n) => [0x1B, 0x33, n];
-  
+
   // Reset line spacing to default
   static final List<int> resetLineSpacing = [0x1B, 0x32];
 }
@@ -114,9 +114,15 @@ class EscPosBillFormatter {
   }
 
   /// Print a line of text with alignment
-  List<int> _printLine(String text, {bool center = false, bool right = false, bool bold = false, bool large = false}) {
+  List<int> _printLine(
+    String text, {
+    bool center = false,
+    bool right = false,
+    bool bold = false,
+    bool large = false,
+  }) {
     List<int> bytes = [];
-    
+
     if (center) {
       bytes.addAll(EscPosCommands.alignCenter);
     } else if (right) {
@@ -124,28 +130,28 @@ class EscPosBillFormatter {
     } else {
       bytes.addAll(EscPosCommands.alignLeft);
     }
-    
+
     if (bold) {
       bytes.addAll(EscPosCommands.boldOn);
     }
-    
+
     if (large) {
       bytes.addAll(EscPosCommands.textDoubleSize);
     }
-    
+
     bytes.addAll(_textToBytes(text));
     bytes.addAll(EscPosCommands.lineFeed);
-    
+
     if (large) {
       bytes.addAll(EscPosCommands.textNormal);
     }
-    
+
     if (bold) {
       bytes.addAll(EscPosCommands.boldOff);
     }
-    
+
     bytes.addAll(EscPosCommands.alignLeft);
-    
+
     return bytes;
   }
 
@@ -157,15 +163,15 @@ class EscPosBillFormatter {
   /// Print two columns (left and right aligned)
   List<int> _printTwoColumns(String left, String right, {bool bold = false}) {
     List<int> bytes = [];
-    
+
     if (bold) {
       bytes.addAll(EscPosCommands.boldOn);
     }
-    
+
     // Calculate spacing
     final totalLength = left.length + right.length;
     final spaces = _charsPerLine - totalLength;
-    
+
     String line;
     if (spaces > 0) {
       line = left + (' ' * spaces) + right;
@@ -174,24 +180,24 @@ class EscPosBillFormatter {
       final maxLeft = _charsPerLine - right.length - 1;
       line = left.substring(0, maxLeft.clamp(0, left.length)) + ' ' + right;
     }
-    
+
     bytes.addAll(_textToBytes(line));
     bytes.addAll(EscPosCommands.lineFeed);
-    
+
     if (bold) {
       bytes.addAll(EscPosCommands.boldOff);
     }
-    
+
     return bytes;
   }
 
   /// Print item row with name, qty, rate, amount
   List<int> _printItemRow(String name, String qty, String rate, String amount) {
     List<int> bytes = [];
-    
+
     // Column widths based on paper size
     int nameWidth, qtyWidth, rateWidth, amtWidth;
-    
+
     if (paperSize == PosPaperSize.mm58) {
       // 32 chars total: name=14, qty=4, rate=6, amt=8
       nameWidth = 14;
@@ -205,29 +211,29 @@ class EscPosBillFormatter {
       rateWidth = 9;
       amtWidth = 11;
     }
-    
+
     // Truncate or pad name
-    String namePart = name.length > nameWidth 
-        ? name.substring(0, nameWidth) 
+    String namePart = name.length > nameWidth
+        ? name.substring(0, nameWidth)
         : name.padRight(nameWidth);
-    
+
     // Right-align numeric columns
     String qtyPart = qty.padLeft(qtyWidth);
     String ratePart = rate.padLeft(rateWidth);
     String amtPart = amount.padLeft(amtWidth);
-    
+
     String line = namePart + qtyPart + ratePart + amtPart;
-    
+
     bytes.addAll(_textToBytes(line));
     bytes.addAll(EscPosCommands.lineFeed);
-    
+
     // If name was truncated, print the rest on next line
     if (name.length > nameWidth) {
       String remaining = name.substring(nameWidth);
       bytes.addAll(_textToBytes('  $remaining'));
       bytes.addAll(EscPosCommands.lineFeed);
     }
-    
+
     return bytes;
   }
 
@@ -236,12 +242,14 @@ class EscPosBillFormatter {
     List<int> bytes = [];
 
     // Shop Name - Center, Bold, Large
-    bytes.addAll(_printLine(
-      shop.shopName.toUpperCase(),
-      center: true,
-      bold: true,
-      large: true,
-    ));
+    bytes.addAll(
+      _printLine(
+        shop.shopName.toUpperCase(),
+        center: true,
+        bold: true,
+        large: true,
+      ),
+    );
 
     bytes.addAll(EscPosCommands.lineFeed);
 
@@ -293,10 +301,12 @@ class EscPosBillFormatter {
     bytes.addAll(_printLine('Bill No: ${billData.billNumber}', bold: true));
 
     // Date and Time
-    bytes.addAll(_printTwoColumns(
-      'Date: ${dateFormatter.format(billData.dateTime)}',
-      timeFormatter.format(billData.dateTime),
-    ));
+    bytes.addAll(
+      _printTwoColumns(
+        'Date: ${dateFormatter.format(billData.dateTime)}',
+        timeFormatter.format(billData.dateTime),
+      ),
+    );
 
     // Customer Info if available
     if (billData.customerName != null && billData.customerName!.isNotEmpty) {
@@ -324,12 +334,14 @@ class EscPosBillFormatter {
 
     // Print each item
     for (final item in billData.items) {
-      bytes.addAll(_printItemRow(
-        item.name,
-        item.quantity.toString(),
-        _formatAmount(item.rate),
-        _formatAmount(item.amount),
-      ));
+      bytes.addAll(
+        _printItemRow(
+          item.name,
+          item.quantity.toString(),
+          _formatAmount(item.rate),
+          _formatAmount(item.amount),
+        ),
+      );
     }
 
     bytes.addAll(_printDivider());
@@ -342,27 +354,27 @@ class EscPosBillFormatter {
     List<int> bytes = [];
 
     // Total Items
-    bytes.addAll(_printTwoColumns(
-      'Total Items:',
-      '${billData.totalQuantity} qty',
-    ));
+    bytes.addAll(
+      _printTwoColumns('Total Items:', '${billData.totalQuantity} qty'),
+    );
 
     // Subtotal
-    bytes.addAll(_printTwoColumns(
-      'Subtotal:',
-      'Rs.${_formatAmount(billData.subtotal)}',
-    ));
+    bytes.addAll(
+      _printTwoColumns('Subtotal:', 'Rs.${_formatAmount(billData.subtotal)}'),
+    );
 
     // Discount if applicable
     if (billData.hasDiscount) {
-      final discountLabel = billData.discountPercent != null &&
-              billData.discountPercent! > 0
+      final discountLabel =
+          billData.discountPercent != null && billData.discountPercent! > 0
           ? 'Discount (${billData.discountPercent!.toStringAsFixed(1)}%):'
           : 'Discount:';
-      bytes.addAll(_printTwoColumns(
-        discountLabel,
-        '-Rs.${_formatAmount(billData.discountAmount!)}',
-      ));
+      bytes.addAll(
+        _printTwoColumns(
+          discountLabel,
+          '-Rs.${_formatAmount(billData.discountAmount!)}',
+        ),
+      );
     }
 
     // Tax if applicable
@@ -370,10 +382,9 @@ class EscPosBillFormatter {
       final taxLabel = billData.taxPercent != null && billData.taxPercent! > 0
           ? 'Tax (${billData.taxPercent!.toStringAsFixed(1)}%):'
           : 'Tax:';
-      bytes.addAll(_printTwoColumns(
-        taxLabel,
-        'Rs.${_formatAmount(billData.taxAmount!)}',
-      ));
+      bytes.addAll(
+        _printTwoColumns(taxLabel, 'Rs.${_formatAmount(billData.taxAmount!)}'),
+      );
     }
 
     bytes.addAll(_printDivider(char: '='));
@@ -381,29 +392,77 @@ class EscPosBillFormatter {
     // Grand Total - Bold and larger
     bytes.addAll(EscPosCommands.boldOn);
     bytes.addAll(EscPosCommands.textDoubleHeight);
-    bytes.addAll(_printTwoColumns(
-      'GRAND TOTAL:',
-      'Rs.${_formatAmount(billData.grandTotal)}',
-      bold: true,
-    ));
+    bytes.addAll(
+      _printTwoColumns(
+        'GRAND TOTAL:',
+        'Rs.${_formatAmount(billData.grandTotal)}',
+        bold: true,
+      ),
+    );
     bytes.addAll(EscPosCommands.textNormal);
     bytes.addAll(EscPosCommands.boldOff);
 
     // Refund amount for return bills
     if (billData.isReturnBill && billData.refundAmount != null) {
       bytes.addAll(EscPosCommands.lineFeed);
-      bytes.addAll(_printTwoColumns(
-        'REFUND:',
-        'Rs.${_formatAmount(billData.refundAmount!)}',
-        bold: true,
-      ));
+      bytes.addAll(
+        _printTwoColumns(
+          'REFUND:',
+          'Rs.${_formatAmount(billData.refundAmount!)}',
+          bold: true,
+        ),
+      );
+    }
+
+    // Payment details section
+    if (billData.hasPaymentInfo) {
+      bytes.addAll(EscPosCommands.lineFeed);
+
+      // Paid Amount
+      if (billData.paidAmount != null) {
+        bytes.addAll(
+          _printTwoColumns(
+            'Paid Amount:',
+            'Rs.${_formatAmount(billData.paidAmount!)}',
+          ),
+        );
+      }
+
+      // Pending Amount for this bill
+      if (billData.hasPendingAmount) {
+        bytes.addAll(EscPosCommands.boldOn);
+        bytes.addAll(
+          _printTwoColumns(
+            'Pending Amount:',
+            'Rs.${_formatAmount(billData.pendingAmount!)}',
+            bold: true,
+          ),
+        );
+        bytes.addAll(EscPosCommands.boldOff);
+      }
+
+      // Total Due Amount (customer's running balance)
+      if (billData.totalDueAmount != null && billData.totalDueAmount! > 0) {
+        bytes.addAll(_printDivider(char: '-'));
+        bytes.addAll(EscPosCommands.boldOn);
+        bytes.addAll(
+          _printTwoColumns(
+            'TOTAL DUE:',
+            'Rs.${_formatAmount(billData.totalDueAmount!)}',
+            bold: true,
+          ),
+        );
+        bytes.addAll(EscPosCommands.boldOff);
+      }
     }
 
     bytes.addAll(_printDivider(char: '='));
 
     // Payment method if specified
     if (billData.paymentMethod != null && billData.paymentMethod!.isNotEmpty) {
-      bytes.addAll(_printLine('Payment: ${billData.paymentMethod}', center: true));
+      bytes.addAll(
+        _printLine('Payment: ${billData.paymentMethod}', center: true),
+      );
     }
 
     return bytes;
@@ -422,7 +481,9 @@ class EscPosBillFormatter {
     }
 
     // Thank you message
-    bytes.addAll(_printLine('Thank You for Your Business!', center: true, bold: true));
+    bytes.addAll(
+      _printLine('Thank You for Your Business!', center: true, bold: true),
+    );
     bytes.addAll(_printLine('Visit Again', center: true));
 
     return bytes;

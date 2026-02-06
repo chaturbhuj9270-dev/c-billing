@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'package:c_billing/core/services/billing_service.dart';
+import 'package:c_billing/core/services/customer_transaction_service.dart';
 import 'package:c_billing/features/billing/data/repositories/firebase_bill_repository.dart';
 import 'package:c_billing/features/billing/domain/entities/bill.dart';
 import 'package:c_billing/features/billing/domain/entities/bill_item.dart';
@@ -14,6 +15,8 @@ import 'package:c_billing/features/billing/data/datasources/bill_cache_datasourc
 import 'package:c_billing/core/printing/printing.dart';
 import 'package:c_billing/common_widgets/printer_selection_widget.dart';
 import 'package:c_billing/features/shop/data/repositories/shop_repository.dart';
+import 'package:c_billing/features/customer/data/repositories/customer_repository.dart';
+import 'package:c_billing/features/customer/data/repositories/customer_transaction_repository.dart';
 
 class BillingPage extends StatefulWidget {
   final bool isEmbedded;
@@ -28,6 +31,7 @@ class _BillingPageState extends State<BillingPage> {
   late BillingService _billingService;
   late FirebaseFirestore _firestore;
   late ShopRepository _shopRepository;
+  late FirebaseCustomerRepository _customerRepository;
 
   // Printing services
   final _printerService = PosPrinterService();
@@ -37,6 +41,7 @@ class _BillingPageState extends State<BillingPage> {
   final _customerContactController = TextEditingController();
   final _notesController = TextEditingController();
   final _discountController = TextEditingController();
+  final _receivedAmountController = TextEditingController();
 
   List<BillItem> _billItems = [];
   List<Product> _products = [];
@@ -47,6 +52,10 @@ class _BillingPageState extends State<BillingPage> {
   bool _isPercentageDiscount = true;
   double _discountValue = 0.0;
 
+  // Payment state
+  double _receivedAmount = 0.0;
+  bool _isFullPayment = true;
+
   Map<String, dynamic>? _selectedCustomer;
   List<Map<String, dynamic>> _customers = [];
 
@@ -55,10 +64,23 @@ class _BillingPageState extends State<BillingPage> {
     super.initState();
     _firestore = FirebaseFirestore.instance;
     _shopRepository = ShopRepository(firestore: _firestore);
+
+    // Initialize customer repository
+    _customerRepository = FirebaseCustomerRepository(firestore: _firestore);
+    final customerTransactionRepository = FirebaseCustomerTransactionRepository(
+      firestore: _firestore,
+    );
+    final customerTransactionService = CustomerTransactionService(
+      firestore: _firestore,
+      customerRepository: _customerRepository,
+      transactionRepository: customerTransactionRepository,
+    );
+
     _billingService = BillingService(
       billRepository: FirebaseBillRepository(firestore: _firestore),
       productRepository: FirebaseProductRepository(firestore: _firestore),
       stockRepository: FirebaseStockRepository(firestore: _firestore),
+      customerTransactionService: customerTransactionService,
     );
     _loadProducts();
     _loadCustomers();
@@ -70,6 +92,7 @@ class _BillingPageState extends State<BillingPage> {
     _customerContactController.dispose();
     _notesController.dispose();
     _discountController.dispose();
+    _receivedAmountController.dispose();
     _printerService.dispose();
     super.dispose();
   }
@@ -184,6 +207,12 @@ class _BillingPageState extends State<BillingPage> {
 
   double get _finalAmount => _totalAmount - _discountAmount;
 
+  // Computed pending amount based on received amount
+  double get _pendingAmount {
+    if (_isFullPayment) return 0.0;
+    return (_finalAmount - _receivedAmount).clamp(0.0, _finalAmount);
+  }
+
   Future<void> _saveBill() async {
     if (_billItems.isEmpty) {
       _showSnackbar('Please add at least one item', isError: true);
@@ -207,6 +236,7 @@ class _BillingPageState extends State<BillingPage> {
             : null,
         discountAmount: _discountAmount,
         discountPercent: _discountPercent,
+        paidAmount: _isFullPayment ? null : _receivedAmount,
       );
 
       setState(() => _isSavingBill = false);
@@ -274,10 +304,34 @@ class _BillingPageState extends State<BillingPage> {
       _customerContactController.clear();
       _notesController.clear();
       _discountController.clear();
+      _receivedAmountController.clear();
       _discountValue = 0.0;
       _isPercentageDiscount = true;
       _selectedCustomer = null;
+      _receivedAmount = 0.0;
+      _isFullPayment = true;
     });
+  }
+
+  /// Create PrintBillData with customer's total due amount
+  Future<PrintBillData> _createPrintBillData(Bill bill) async {
+    double? totalDueAmount;
+
+    // Get customer's total pending balance if customer ID exists
+    if (bill.customerId != null && bill.customerId!.isNotEmpty) {
+      try {
+        final customer = await _customerRepository.getCustomerById(
+          bill.customerId!,
+        );
+        if (customer != null) {
+          totalDueAmount = customer.currentPendingAmount;
+        }
+      } catch (e) {
+        print('[DEBUG] Error fetching customer pending balance: $e');
+      }
+    }
+
+    return PrintBillData.fromBill(bill, totalDueAmount: totalDueAmount);
   }
 
   void _showSnackbar(String message, {bool isError = false}) {
@@ -564,7 +618,7 @@ class _BillingPageState extends State<BillingPage> {
       );
 
       final shop = await _shopRepository.getShopDetails();
-      final printData = PrintBillData.fromBill(bill);
+      final printData = await _createPrintBillData(bill);
 
       if (mounted) Navigator.pop(context);
 
@@ -588,7 +642,7 @@ class _BillingPageState extends State<BillingPage> {
       );
 
       final shop = await _shopRepository.getShopDetails();
-      final printData = PrintBillData.fromBill(bill);
+      final printData = await _createPrintBillData(bill);
 
       final file = await _pdfService.savePdfToFile(
         billData: printData,
@@ -632,7 +686,7 @@ class _BillingPageState extends State<BillingPage> {
       }
 
       final shop = await _shopRepository.getShopDetails();
-      final printData = PrintBillData.fromBill(bill);
+      final printData = await _createPrintBillData(bill);
 
       final printResult = await _printerService.printBill(
         billData: printData,
@@ -672,6 +726,8 @@ class _BillingPageState extends State<BillingPage> {
                   SliverToBoxAdapter(child: _buildBillItemsSection()),
                 if (_billItems.isNotEmpty)
                   SliverToBoxAdapter(child: _buildDiscountSection()),
+                if (_billItems.isNotEmpty)
+                  SliverToBoxAdapter(child: _buildPaymentSection()),
                 const SliverToBoxAdapter(child: SizedBox(height: 100)),
               ],
             ),
@@ -1478,6 +1534,385 @@ class _BillingPageState extends State<BillingPage> {
           ],
         ],
       ),
+    );
+  }
+
+  Widget _buildPaymentSection() {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Section header
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.payments_outlined,
+                  color: Color(0xFF1B4D3E),
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Text(
+                'Payment',
+                style: TextStyle(
+                  fontFamily: 'Literata',
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF1B4D3E),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // Payment type toggle
+          Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: Colors.grey[100],
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: _buildPaymentTypeButton(
+                    label: 'Full Payment',
+                    isSelected: _isFullPayment,
+                    onTap: () {
+                      setState(() {
+                        _isFullPayment = true;
+                        _receivedAmount = _finalAmount;
+                        _receivedAmountController.text = _finalAmount
+                            .toStringAsFixed(2);
+                      });
+                    },
+                  ),
+                ),
+                Expanded(
+                  child: _buildPaymentTypeButton(
+                    label: 'Partial Payment',
+                    isSelected: !_isFullPayment,
+                    onTap: () {
+                      setState(() {
+                        _isFullPayment = false;
+                        _receivedAmount = 0.0;
+                        _receivedAmountController.clear();
+                      });
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Received amount input (only show for partial payment)
+          if (!_isFullPayment) ...[
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Received Amount',
+                        style: TextStyle(
+                          fontFamily: 'Literata',
+                          fontSize: 12,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.grey[50],
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: Colors.grey[200]!),
+                        ),
+                        child: TextField(
+                          controller: _receivedAmountController,
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
+                          style: const TextStyle(
+                            fontFamily: 'Literata',
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF1B4D3E),
+                          ),
+                          decoration: InputDecoration(
+                            prefixText: '₹ ',
+                            prefixStyle: TextStyle(
+                              fontFamily: 'Literata',
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.grey[600],
+                            ),
+                            hintText: '0.00',
+                            hintStyle: TextStyle(
+                              fontFamily: 'Literata',
+                              color: Colors.grey[400],
+                            ),
+                            border: InputBorder.none,
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 12,
+                            ),
+                          ),
+                          onChanged: (value) {
+                            final parsed = double.tryParse(value) ?? 0.0;
+                            setState(() {
+                              // Cap received amount at final amount
+                              _receivedAmount = parsed.clamp(0.0, _finalAmount);
+                            });
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Pending Amount',
+                        style: TextStyle(
+                          fontFamily: 'Literata',
+                          fontSize: 12,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 14,
+                        ),
+                        decoration: BoxDecoration(
+                          color: _pendingAmount > 0
+                              ? Colors.orange[50]
+                              : Colors.green[50],
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: _pendingAmount > 0
+                                ? Colors.orange[200]!
+                                : Colors.green[200]!,
+                          ),
+                        ),
+                        child: Text(
+                          '₹ ${_pendingAmount.toStringAsFixed(2)}',
+                          style: TextStyle(
+                            fontFamily: 'Literata',
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: _pendingAmount > 0
+                                ? Colors.orange[700]
+                                : Colors.green[700],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+
+            // Quick amount buttons
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _buildQuickAmountChip('25%', _finalAmount * 0.25),
+                _buildQuickAmountChip('50%', _finalAmount * 0.50),
+                _buildQuickAmountChip('75%', _finalAmount * 0.75),
+                _buildQuickAmountChip('Full', _finalAmount),
+              ],
+            ),
+          ],
+
+          // Customer requirement notice for pending payment
+          if (!_isFullPayment &&
+              _pendingAmount > 0 &&
+              _selectedCustomer == null) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.amber[50],
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.amber[200]!),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.info_outline, size: 18, color: Colors.amber[700]),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Select a customer to track pending balance',
+                      style: TextStyle(
+                        fontFamily: 'Literata',
+                        fontSize: 12,
+                        color: Colors.amber[800],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+
+          // Summary for partial payment
+          if (!_isFullPayment && _receivedAmount > 0) ...[
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1B4D3E).withOpacity(0.05),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Column(
+                children: [
+                  _buildPaymentSummaryRow(
+                    'Bill Total',
+                    '₹${_finalAmount.toStringAsFixed(2)}',
+                  ),
+                  const SizedBox(height: 6),
+                  _buildPaymentSummaryRow(
+                    'Received',
+                    '₹${_receivedAmount.toStringAsFixed(2)}',
+                    color: Colors.green[700],
+                  ),
+                  const Divider(height: 16),
+                  _buildPaymentSummaryRow(
+                    'Pending',
+                    '₹${_pendingAmount.toStringAsFixed(2)}',
+                    color: _pendingAmount > 0
+                        ? Colors.orange[700]
+                        : Colors.green[700],
+                    isBold: true,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPaymentTypeButton({
+    required String label,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFF1B4D3E) : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Center(
+          child: Text(
+            label,
+            style: TextStyle(
+              fontFamily: 'Literata',
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: isSelected ? Colors.white : Colors.grey[600],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuickAmountChip(String label, double amount) {
+    final isSelected = _receivedAmount == amount;
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _receivedAmount = amount;
+          _receivedAmountController.text = amount.toStringAsFixed(2);
+          if (amount >= _finalAmount) {
+            _isFullPayment = true;
+          }
+        });
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFF1B4D3E) : Colors.grey[100],
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected ? const Color(0xFF1B4D3E) : Colors.grey[300]!,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontFamily: 'Literata',
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+            color: isSelected ? Colors.white : Colors.grey[700],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPaymentSummaryRow(
+    String label,
+    String value, {
+    Color? color,
+    bool isBold = false,
+  }) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontFamily: 'Literata',
+            fontSize: 13,
+            fontWeight: isBold ? FontWeight.w700 : FontWeight.normal,
+            color: Colors.grey[700],
+          ),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            fontFamily: 'Literata',
+            fontSize: isBold ? 15 : 13,
+            fontWeight: isBold ? FontWeight.w700 : FontWeight.w600,
+            color: color ?? Colors.black87,
+          ),
+        ),
+      ],
     );
   }
 

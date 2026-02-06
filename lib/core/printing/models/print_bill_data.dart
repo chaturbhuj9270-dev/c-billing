@@ -23,12 +23,7 @@ class PrintBillItem {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'name': name,
-      'quantity': quantity,
-      'rate': rate,
-      'amount': amount,
-    };
+    return {'name': name, 'quantity': quantity, 'rate': rate, 'amount': amount};
   }
 }
 
@@ -50,6 +45,15 @@ class PrintBillData {
   final bool isReturnBill;
   final double? refundAmount;
 
+  /// Amount paid for this bill
+  final double? paidAmount;
+
+  /// Amount pending for this bill
+  final double? pendingAmount;
+
+  /// Customer's total due amount (running balance)
+  final double? totalDueAmount;
+
   const PrintBillData({
     required this.billNumber,
     required this.dateTime,
@@ -66,10 +70,22 @@ class PrintBillData {
     this.notes,
     this.isReturnBill = false,
     this.refundAmount,
+    this.paidAmount,
+    this.pendingAmount,
+    this.totalDueAmount,
   });
 
   /// Create from Bill entity
-  factory PrintBillData.fromBill(dynamic bill, {bool isReturn = false, double? refund}) {
+  factory PrintBillData.fromBill(
+    dynamic bill, {
+    bool isReturn = false,
+    double? refund,
+    double? totalDueAmount,
+  }) {
+    // Extract payment info from bill if available
+    final double? paidAmount = bill.paidAmount as double?;
+    final double? pendingAmount = bill.pendingAmount as double?;
+
     return PrintBillData(
       billNumber: bill.billNumber as String,
       dateTime: bill.billDate as DateTime,
@@ -85,6 +101,9 @@ class PrintBillData {
       notes: bill.notes as String?,
       isReturnBill: isReturn,
       refundAmount: refund,
+      paidAmount: paidAmount,
+      pendingAmount: pendingAmount,
+      totalDueAmount: totalDueAmount,
     );
   }
 
@@ -96,6 +115,12 @@ class PrintBillData {
 
   /// Check if tax is applied
   bool get hasTax => taxAmount != null && taxAmount! > 0;
+
+  /// Check if payment info is available
+  bool get hasPaymentInfo => paidAmount != null || pendingAmount != null;
+
+  /// Check if there's pending amount
+  bool get hasPendingAmount => pendingAmount != null && pendingAmount! > 0;
 
   Map<String, dynamic> toJson() {
     return {
@@ -114,6 +139,9 @@ class PrintBillData {
       'notes': notes,
       'isReturnBill': isReturnBill,
       'refundAmount': refundAmount,
+      'paidAmount': paidAmount,
+      'pendingAmount': pendingAmount,
+      'totalDueAmount': totalDueAmount,
     };
   }
 }

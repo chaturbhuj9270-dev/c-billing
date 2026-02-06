@@ -4,10 +4,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:async';
 import '../../../../core/services/session_manager.dart';
 import '../../data/datasources/customer_cache_datasource.dart';
+import 'customer_details_page.dart';
 
 class CustomerPage extends StatefulWidget {
   final bool isEmbedded;
-  
+
   const CustomerPage({super.key, this.isEmbedded = false});
 
   @override
@@ -65,39 +66,53 @@ class _CustomerPageState extends State<CustomerPage> {
   void _filterCustomers() {
     // Cancel previous timer
     _filterDebounceTimer?.cancel();
-    
+
     // Debounce filter operations (300ms delay)
     _filterDebounceTimer = Timer(const Duration(milliseconds: 300), () {
-      print('[DEBUG] Filtering customers with query: ${_filterController.text}');
+      print(
+        '[DEBUG] Filtering customers with query: ${_filterController.text}',
+      );
       final query = _filterController.text.toLowerCase();
-      
+
       setState(() {
         if (query.isEmpty) {
           _filteredCustomers = _customers;
         } else {
           _filteredCustomers = _customers.where((customer) {
-            final firstName = (customer['firstName'] ?? '').toString().toLowerCase();
-            final lastName = (customer['lastName'] ?? '').toString().toLowerCase();
-            final contact = (customer['contact'] ?? '').toString().toLowerCase();
-            
+            final firstName = (customer['firstName'] ?? '')
+                .toString()
+                .toLowerCase();
+            final lastName = (customer['lastName'] ?? '')
+                .toString()
+                .toLowerCase();
+            final contact = (customer['contact'] ?? '')
+                .toString()
+                .toLowerCase();
+
             return firstName.contains(query) ||
                 lastName.contains(query) ||
                 contact.contains(query);
           }).toList();
         }
-        
+
         // Apply sorting
         _applySorting();
       });
-      print('[DEBUG] Filtered results: ${_filteredCustomers.length} of ${_customers.length}');
+      print(
+        '[DEBUG] Filtered results: ${_filteredCustomers.length} of ${_customers.length}',
+      );
     });
   }
 
   void _applySorting() {
     _filteredCustomers.sort((a, b) {
-      final nameA = '${a['firstName'] ?? ''} ${a['lastName'] ?? ''}'.trim().toLowerCase();
-      final nameB = '${b['firstName'] ?? ''} ${b['lastName'] ?? ''}'.trim().toLowerCase();
-      
+      final nameA = '${a['firstName'] ?? ''} ${a['lastName'] ?? ''}'
+          .trim()
+          .toLowerCase();
+      final nameB = '${b['firstName'] ?? ''} ${b['lastName'] ?? ''}'
+          .trim()
+          .toLowerCase();
+
       if (_isSortAscending) {
         return nameA.compareTo(nameB);
       } else {
@@ -126,7 +141,7 @@ class _CustomerPageState extends State<CustomerPage> {
       if (_customers.isEmpty) {
         setState(() => _isLoading = true);
       }
-      
+
       print('[DEBUG] Loading customers from Firestore...');
       final currentUser = _auth.currentUser;
       if (currentUser == null) {
@@ -144,12 +159,9 @@ class _CustomerPageState extends State<CustomerPage> {
           .get();
 
       print('[DEBUG] Loaded ${snapshot.docs.length} customers from Firestore');
-      
+
       final freshCustomers = snapshot.docs
-          .map((doc) => {
-                'id': doc.id,
-                ...doc.data(),
-              })
+          .map((doc) => {'id': doc.id, ...doc.data()})
           .toList();
 
       if (mounted) {
@@ -158,22 +170,24 @@ class _CustomerPageState extends State<CustomerPage> {
           _filterCustomers(); // This handles _filteredCustomers and sorting
           _isLoading = false;
         });
-        
+
         // Save to cache for next time
         _cacheDataSource.saveCustomers(freshCustomers);
       }
     } catch (e) {
       print('[ERROR] Failed to load customers: $e');
       print('[ERROR] Error type: ${e.runtimeType}');
-      
+
       if (e.toString().contains('permission-denied')) {
-        print('[ERROR] CRITICAL: Permission denied when reading customers - security rules issue');
+        print(
+          '[ERROR] CRITICAL: Permission denied when reading customers - security rules issue',
+        );
       }
-      
+
       if (mounted) {
         setState(() => _isLoading = false);
       }
-      
+
       if (mounted && context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -226,6 +240,21 @@ class _CustomerPageState extends State<CustomerPage> {
     );
   }
 
+  /// Navigate to customer details page to view transactions and pending balance
+  void _navigateToCustomerDetails(Map<String, dynamic> customer) {
+    print('[DEBUG] Navigating to customer details for: ${customer['id']}');
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) =>
+            CustomerDetailsPage(customerId: customer['id'] as String),
+      ),
+    ).then((_) {
+      // Refresh customer list when returning from details page
+      _loadCustomers();
+    });
+  }
+
   void _showEditCustomerBottomSheet(Map<String, dynamic> customer) {
     print('[DEBUG] Opening edit customer bottom sheet for: ${customer['id']}');
     _editCustomer(customer);
@@ -249,9 +278,7 @@ class _CustomerPageState extends State<CustomerPage> {
               top: 20,
               bottom: MediaQuery.of(context).viewInsets.bottom + 20,
             ),
-            child: _buildCustomerForm(
-              onClose: () => Navigator.pop(ctx),
-            ),
+            child: _buildCustomerForm(onClose: () => Navigator.pop(ctx)),
           ),
         ),
       ),
@@ -453,13 +480,12 @@ class _CustomerPageState extends State<CustomerPage> {
 
       if (_isEditing && _editingCustomerId != null) {
         // Optimistic update
-        final index = _customers.indexWhere((c) => c['id'] == _editingCustomerId);
+        final index = _customers.indexWhere(
+          (c) => c['id'] == _editingCustomerId,
+        );
         if (index != -1) {
           setState(() {
-            _customers[index] = {
-              ..._customers[index],
-              ...customerData,
-            };
+            _customers[index] = {..._customers[index], ...customerData};
             _filterCustomers();
           });
           _cacheDataSource.saveCustomers(_customers);
@@ -486,13 +512,10 @@ class _CustomerPageState extends State<CustomerPage> {
         // Create new customer
         print('[DEBUG] Creating new customer');
         customerData['createdAt'] = FieldValue.serverTimestamp();
-        
+
         // Optimistic add
         final tempId = 'temp_${DateTime.now().millisecondsSinceEpoch}';
-        final newCustomer = {
-          ...customerData,
-          'id': tempId,
-        };
+        final newCustomer = {...customerData, 'id': tempId};
         setState(() {
           _customers.insert(0, newCustomer);
           _filterCustomers();
@@ -519,15 +542,18 @@ class _CustomerPageState extends State<CustomerPage> {
       print('[ERROR] Failed to save customer: $e');
       print('[ERROR] Error type: ${e.runtimeType}');
       print('[ERROR] Full error: $e');
-      
+
       String errorMsg = 'Error saving customer: ${e.toString()}';
-      
+
       // Handle permission denied error
       if (e.toString().contains('permission-denied')) {
-        errorMsg = 'Permission Denied - Firestore security rules are blocking write access.\n\nYou need to:\n1. Go to Firebase Console\n2. Go to Firestore Database\n3. Go to Rules tab\n4. Update rules to allow authenticated users to read/write their own data\n\nSee console logs for detailed error.';
-        print('[ERROR] CRITICAL: Firestore permission denied - security rules issue');
+        errorMsg =
+            'Permission Denied - Firestore security rules are blocking write access.\n\nYou need to:\n1. Go to Firebase Console\n2. Go to Firestore Database\n3. Go to Rules tab\n4. Update rules to allow authenticated users to read/write their own data\n\nSee console logs for detailed error.';
+        print(
+          '[ERROR] CRITICAL: Firestore permission denied - security rules issue',
+        );
       }
-      
+
       if (mounted && context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -549,9 +575,7 @@ class _CustomerPageState extends State<CustomerPage> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text(
           'Delete Customer',
           style: TextStyle(
@@ -569,10 +593,7 @@ class _CustomerPageState extends State<CustomerPage> {
             onPressed: () => Navigator.of(ctx).pop(false),
             child: const Text(
               'Cancel',
-              style: TextStyle(
-                fontFamily: 'Literata',
-                color: Colors.grey,
-              ),
+              style: TextStyle(fontFamily: 'Literata', color: Colors.grey),
             ),
           ),
           ElevatedButton(
@@ -580,10 +601,7 @@ class _CustomerPageState extends State<CustomerPage> {
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             child: const Text(
               'Delete',
-              style: TextStyle(
-                fontFamily: 'Literata',
-                color: Colors.white,
-              ),
+              style: TextStyle(fontFamily: 'Literata', color: Colors.white),
             ),
           ),
         ],
@@ -603,8 +621,10 @@ class _CustomerPageState extends State<CustomerPage> {
         return;
       }
 
-      print('[DEBUG] Deleting from path: users/${currentUser.uid}/customers/$customerId');
-      
+      print(
+        '[DEBUG] Deleting from path: users/${currentUser.uid}/customers/$customerId',
+      );
+
       // Optimistic delete
       setState(() {
         _customers.removeWhere((c) => c['id'] == customerId);
@@ -633,11 +653,13 @@ class _CustomerPageState extends State<CustomerPage> {
     } catch (e) {
       print('[ERROR] Failed to delete customer: $e');
       print('[ERROR] Error type: ${e.runtimeType}');
-      
+
       if (e.toString().contains('permission-denied')) {
-        print('[ERROR] CRITICAL: Permission denied when deleting - security rules issue');
+        print(
+          '[ERROR] CRITICAL: Permission denied when deleting - security rules issue',
+        );
       }
-      
+
       if (mounted && context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -678,7 +700,11 @@ class _CustomerPageState extends State<CustomerPage> {
               colors: [Color(0xFF1B4D3E), Color(0xFF0F3B2F)],
             ),
             boxShadow: [
-              BoxShadow(color: const Color(0xFF1B4D3E).withOpacity(0.2), blurRadius: 12, offset: const Offset(0, 4)),
+              BoxShadow(
+                color: const Color(0xFF1B4D3E).withOpacity(0.2),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
             ],
           ),
           child: SafeArea(
@@ -697,7 +723,11 @@ class _CustomerPageState extends State<CustomerPage> {
                           color: Colors.white.withOpacity(0.2),
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        child: const Icon(Icons.arrow_back, color: Colors.white, size: 22),
+                        child: const Icon(
+                          Icons.arrow_back,
+                          color: Colors.white,
+                          size: 22,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -773,17 +803,34 @@ class _CustomerPageState extends State<CustomerPage> {
                       color: const Color(0xFF1B4D3E).withOpacity(0.1),
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child: Icon(Icons.people_outline, size: 50, color: const Color(0xFF1B4D3E).withOpacity(0.3)),
+                    child: Icon(
+                      Icons.people_outline,
+                      size: 50,
+                      color: const Color(0xFF1B4D3E).withOpacity(0.3),
+                    ),
                   ),
                   const SizedBox(height: 20),
                   Text(
-                    _filterController.text.isEmpty ? 'No customers yet' : 'No results found',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Colors.grey[700], fontFamily: 'Literata'),
+                    _filterController.text.isEmpty
+                        ? 'No customers yet'
+                        : 'No results found',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey[700],
+                      fontFamily: 'Literata',
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    _filterController.text.isEmpty ? 'Create your first customer to get started' : 'Try a different search',
-                    style: TextStyle(fontSize: 14, color: Colors.grey[500], fontFamily: 'Literata'),
+                    _filterController.text.isEmpty
+                        ? 'Create your first customer to get started'
+                        : 'Try a different search',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey[500],
+                      fontFamily: 'Literata',
+                    ),
                   ),
                 ],
               ),
@@ -803,7 +850,10 @@ class _CustomerPageState extends State<CustomerPage> {
                             decoration: BoxDecoration(
                               color: Colors.white,
                               borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: Colors.grey[300]!, width: 1.5),
+                              border: Border.all(
+                                color: Colors.grey[300]!,
+                                width: 1.5,
+                              ),
                               boxShadow: [
                                 BoxShadow(
                                   color: Colors.black.withOpacity(0.05),
@@ -849,7 +899,12 @@ class _CustomerPageState extends State<CustomerPage> {
                                       : null,
                                   border: InputBorder.none,
                                   isDense: true,
-                                  contentPadding: const EdgeInsets.fromLTRB(0, 0, 12, 0),
+                                  contentPadding: const EdgeInsets.fromLTRB(
+                                    0,
+                                    0,
+                                    12,
+                                    0,
+                                  ),
                                 ),
                               ),
                             ),
@@ -866,7 +921,10 @@ class _CustomerPageState extends State<CustomerPage> {
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.grey[300]!, width: 1.5),
+                            border: Border.all(
+                              color: Colors.grey[300]!,
+                              width: 1.5,
+                            ),
                             boxShadow: [
                               BoxShadow(
                                 color: Colors.black.withOpacity(0.05),
@@ -925,34 +983,31 @@ class _CustomerPageState extends State<CustomerPage> {
           labelText: isRequired ? '$label *' : label,
           prefixIcon: Icon(icon, color: Colors.grey[600]),
           border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey[300]!),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey[300]!),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(
-            color: Color(0xFF1B4D3E),
-            width: 2,
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: Colors.grey[300]!),
           ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: Colors.grey[300]!),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Color(0xFF1B4D3E), width: 2),
+          ),
+          filled: true,
+          fillColor: Colors.grey[50],
         ),
-        filled: true,
-        fillColor: Colors.grey[50],
-      ),
-      validator: isRequired
-          ? (value) {
-              if (value == null || value.isEmpty) {
-                return '$label is required';
+        validator: isRequired
+            ? (value) {
+                if (value == null || value.isEmpty) {
+                  return '$label is required';
+                }
+                if (label == 'Contact Number' && value.length < 10) {
+                  return 'Enter a valid phone number';
+                }
+                return null;
               }
-              if (label == 'Contact Number' && value.length < 10) {
-                return 'Enter a valid phone number';
-              }
-              return null;
-            }
-          : null,
+            : null,
       );
     } catch (e) {
       print('[ERROR] Error building input field for $label: $e');
@@ -973,21 +1028,32 @@ class _CustomerPageState extends State<CustomerPage> {
 
   Widget _buildCustomerCard(Map<String, dynamic> customer) {
     try {
-      print('[DEBUG] Building customer card for customer ID: ${customer['id']}');
-      final fullName = '${customer['firstName']} ${customer['middleName']} ${customer['lastName']}'.trim();
+      print(
+        '[DEBUG] Building customer card for customer ID: ${customer['id']}',
+      );
+      final fullName =
+          '${customer['firstName']} ${customer['middleName']} ${customer['lastName']}'
+              .trim();
       final firstName = customer['firstName'] ?? '';
       final contact = customer['contact'] ?? 'N/A';
       final address = customer['address'] ?? 'N/A';
 
       // Use customer ID hash instead of indexOf for better performance
-      const accentColors = [Color(0xFF1B4D3E), Color(0xFF0F3B2F), Color(0xFF2C6F5E), Color(0xFF1A5E52)];
-      final accentColor = accentColors[(customer['id'].hashCode.abs()) % accentColors.length];
-      
+      const accentColors = [
+        Color(0xFF1B4D3E),
+        Color(0xFF0F3B2F),
+        Color(0xFF2C6F5E),
+        Color(0xFF1A5E52),
+      ];
+      final accentColor =
+          accentColors[(customer['id'].hashCode.abs()) % accentColors.length];
+
       // Get initials for avatar
-      final initials = '${firstName.isNotEmpty ? firstName[0].toUpperCase() : 'C'}';
+      final initials =
+          '${firstName.isNotEmpty ? firstName[0].toUpperCase() : 'C'}';
 
       return GestureDetector(
-        onTap: () => _showEditCustomerBottomSheet(customer),
+        onTap: () => _navigateToCustomerDetails(customer),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(16),
           child: Container(
@@ -1106,8 +1172,31 @@ class _CustomerPageState extends State<CustomerPage> {
                               borderRadius: BorderRadius.circular(12),
                             ),
                             elevation: 6,
-                            constraints: const BoxConstraints(minWidth: 140),
+                            constraints: const BoxConstraints(minWidth: 160),
                             itemBuilder: (context) => [
+                              PopupMenuItem(
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.account_balance_wallet_outlined,
+                                      color: accentColor,
+                                      size: 18,
+                                    ),
+                                    const SizedBox(width: 10),
+                                    const Text(
+                                      'View Balance',
+                                      style: TextStyle(
+                                        fontFamily: 'Literata',
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                onTap: () => Future.delayed(
+                                  const Duration(milliseconds: 100),
+                                  () => _navigateToCustomerDetails(customer),
+                                ),
+                              ),
                               PopupMenuItem(
                                 child: Row(
                                   children: [
@@ -1230,10 +1319,7 @@ class _CustomerPageState extends State<CustomerPage> {
             const SizedBox(height: 8),
             Text(
               e.toString(),
-              style: TextStyle(
-                color: Colors.red[600],
-                fontSize: 12,
-              ),
+              style: TextStyle(color: Colors.red[600], fontSize: 12),
             ),
           ],
         ),

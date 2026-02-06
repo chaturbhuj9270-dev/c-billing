@@ -1,5 +1,17 @@
 import 'bill_item.dart';
 
+/// Payment status of a bill
+enum PaymentStatus {
+  /// Full amount received at time of sale
+  paid,
+
+  /// Partial payment received, some amount pending
+  partiallyPaid,
+
+  /// No payment received, full amount pending
+  pending,
+}
+
 /// Represents a sales bill containing multiple items sold to a customer
 class Bill {
   final String id;
@@ -19,6 +31,15 @@ class Bill {
   final bool returnStatus;
   final DateTime? returnDate;
 
+  /// Payment status of the bill
+  final PaymentStatus paymentStatus;
+
+  /// Amount already paid for this bill
+  final double paidAmount;
+
+  /// Amount still pending for this bill
+  final double pendingAmount;
+
   Bill({
     required this.id,
     this.customerId,
@@ -36,6 +57,9 @@ class Bill {
     this.notes,
     this.returnStatus = false,
     this.returnDate,
+    this.paymentStatus = PaymentStatus.paid,
+    this.paidAmount = 0.0,
+    this.pendingAmount = 0.0,
   });
 
   /// Factory constructor to create from JSON (for Firebase)
@@ -80,6 +104,9 @@ class Bill {
         returnDate: json['returnDate'] != null
             ? DateTime.parse(json['returnDate'] as String)
             : null,
+        paymentStatus: _parsePaymentStatus(json['paymentStatus'] as String?),
+        paidAmount: ((json['paidAmount'] ?? 0) as num).toDouble(),
+        pendingAmount: ((json['pendingAmount'] ?? 0) as num).toDouble(),
       );
     } catch (e) {
       print('[ERROR] Failed to parse Bill from JSON: $json');
@@ -101,7 +128,24 @@ class Bill {
         notes: null,
         returnStatus: false,
         returnDate: null,
+        paymentStatus: PaymentStatus.paid,
+        paidAmount: 0.0,
+        pendingAmount: 0.0,
       );
+    }
+  }
+
+  /// Parse payment status from string
+  static PaymentStatus _parsePaymentStatus(String? status) {
+    switch (status) {
+      case 'paid':
+        return PaymentStatus.paid;
+      case 'partiallyPaid':
+        return PaymentStatus.partiallyPaid;
+      case 'pending':
+        return PaymentStatus.pending;
+      default:
+        return PaymentStatus.paid;
     }
   }
 
@@ -124,6 +168,9 @@ class Bill {
       'notes': notes,
       'returnStatus': returnStatus,
       'returnDate': returnDate?.toIso8601String(),
+      'paymentStatus': paymentStatus.name,
+      'paidAmount': paidAmount,
+      'pendingAmount': pendingAmount,
     };
   }
 
@@ -145,6 +192,9 @@ class Bill {
     String? notes,
     bool? returnStatus,
     DateTime? returnDate,
+    PaymentStatus? paymentStatus,
+    double? paidAmount,
+    double? pendingAmount,
   }) {
     return Bill(
       id: id ?? this.id,
@@ -163,6 +213,9 @@ class Bill {
       notes: notes ?? this.notes,
       returnStatus: returnStatus ?? this.returnStatus,
       returnDate: returnDate ?? this.returnDate,
+      paymentStatus: paymentStatus ?? this.paymentStatus,
+      paidAmount: paidAmount ?? this.paidAmount,
+      pendingAmount: pendingAmount ?? this.pendingAmount,
     );
   }
 
