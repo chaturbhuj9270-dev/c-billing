@@ -24,3 +24,4 @@ export 'formatters/esc_pos_bill_formatter.dart';
 
 // Services
 export 'services/pos_printer_service.dart';
+export 'services/pdf_bill_service.dart';

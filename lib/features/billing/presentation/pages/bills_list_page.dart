@@ -9,6 +9,9 @@ import 'package:c_billing/features/inventory_management/data/repositories/fireba
 import 'package:c_billing/features/inventory_management/data/repositories/firebase_stock_repository.dart';
 import 'package:c_billing/features/billing/data/datasources/bill_cache_datasource.dart';
 import 'package:c_billing/features/billing/presentation/pages/return_bill_page.dart';
+import 'package:c_billing/core/printing/printing.dart';
+import 'package:c_billing/common_widgets/printer_selection_widget.dart';
+import 'package:c_billing/features/shop/data/repositories/shop_repository.dart';
 
 class BillsListPage extends StatefulWidget {
   const BillsListPage({super.key});
@@ -25,6 +28,12 @@ class _BillsListPageState extends State<BillsListPage>
   late Animation<Offset> _offsetAnimation;
   late Animation<double> _opacityAnimation;
   final _cacheDataSource = BillCacheDataSource();
+
+  // Printing
+  final _printerService = PosPrinterService();
+  final _pdfService = PdfBillService();
+  late ShopRepository _shopRepository;
+  String? _printingBillId; // Track which bill is being printed
 
   List<Bill> _bills = [];
   List<Bill> _filteredBills = [];
@@ -44,6 +53,7 @@ class _BillsListPageState extends State<BillsListPage>
   void initState() {
     super.initState();
     _firestore = FirebaseFirestore.instance;
+    _shopRepository = ShopRepository(firestore: _firestore);
 
     _billingService = BillingService(
       billRepository: FirebaseBillRepository(firestore: _firestore),
@@ -94,7 +104,488 @@ class _BillsListPageState extends State<BillsListPage>
   void dispose() {
     _animController.dispose();
     _searchController.dispose();
+    _printerService.dispose();
     super.dispose();
+  }
+
+  Future<void> _printBill(Bill bill) async {
+    // Show bill preview dialog first
+    final shouldPrint = await _showPrintPreviewDialog(bill);
+    if (shouldPrint != true || !mounted) return;
+
+    // Show printer selection
+    final selectedPrinter = await PrinterSelectionWidget.show(context);
+    if (selectedPrinter == null || !mounted) return;
+
+    setState(() => _printingBillId = bill.id);
+
+    try {
+      // Connect to printer
+      final connectResult = await _printerService.connectPrinter(
+        selectedPrinter,
+      );
+      if (!connectResult.success) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to connect: ${connectResult.message}'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        return;
+      }
+
+      // Get shop details
+      final shop = await _shopRepository.getShopDetails();
+
+      // Create print data from bill
+      final printData = PrintBillData.fromBill(bill);
+
+      // Print the bill
+      final printResult = await _printerService.printBill(
+        billData: printData,
+        shopDetails: shop,
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              printResult.success
+                  ? 'Bill printed successfully!'
+                  : 'Print failed: ${printResult.message}',
+            ),
+            backgroundColor: printResult.success ? Colors.green : Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error printing: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _printingBillId = null);
+      }
+      await _printerService.disconnectPrinter();
+    }
+  }
+
+  Future<bool?> _showPrintPreviewDialog(Bill bill) {
+    final dateFormat = DateFormat('dd MMM yyyy, hh:mm a');
+
+    return showDialog<bool>(
+      context: context,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 400, maxHeight: 600),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Header
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: const BoxDecoration(
+                  color: Color(0xFF1B4D3E),
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.receipt_long,
+                      color: Colors.white,
+                      size: 24,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Print Preview',
+                            style: TextStyle(
+                              fontFamily: 'Literata',
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            ),
+                          ),
+                          Text(
+                            bill.billNumber,
+                            style: TextStyle(
+                              fontFamily: 'Literata',
+                              fontSize: 12,
+                              color: Colors.white.withOpacity(0.7),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close, color: Colors.white),
+                      onPressed: () => Navigator.pop(context, false),
+                    ),
+                  ],
+                ),
+              ),
+              // Bill Content
+              Flexible(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Date
+                      _buildPreviewRow(
+                        'Date',
+                        dateFormat.format(bill.billDate),
+                      ),
+                      const Divider(height: 24),
+                      // Customer Info
+                      if (bill.hasCustomerInfo) ...[
+                        _buildPreviewRow(
+                          'Customer',
+                          bill.customerName ?? 'N/A',
+                        ),
+                        if (bill.customerContact != null)
+                          _buildPreviewRow('Phone', bill.customerContact!),
+                        const Divider(height: 24),
+                      ],
+                      // Items Header
+                      const Text(
+                        'Items',
+                        style: TextStyle(
+                          fontFamily: 'Literata',
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF1B4D3E),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      // Items List
+                      ...bill.items.map(
+                        (item) => Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                flex: 2,
+                                child: Text(
+                                  item.productName,
+                                  style: const TextStyle(
+                                    fontFamily: 'Literata',
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ),
+                              SizedBox(
+                                width: 50,
+                                child: Text(
+                                  '${item.quantity}x',
+                                  style: TextStyle(
+                                    fontFamily: 'Literata',
+                                    fontSize: 12,
+                                    color: Colors.grey[600],
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                              SizedBox(
+                                width: 70,
+                                child: Text(
+                                  '₹${item.subtotal.toStringAsFixed(2)}',
+                                  style: const TextStyle(
+                                    fontFamily: 'Literata',
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  textAlign: TextAlign.right,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const Divider(height: 24),
+                      // Totals
+                      _buildPreviewRow(
+                        'Subtotal',
+                        '₹${bill.totalAmount.toStringAsFixed(2)}',
+                      ),
+                      if (bill.discountAmount > 0)
+                        _buildPreviewRow(
+                          'Discount (${bill.discountPercent.toStringAsFixed(0)}%)',
+                          '-₹${bill.discountAmount.toStringAsFixed(2)}',
+                          valueColor: Colors.green,
+                        ),
+                      const SizedBox(height: 8),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Total',
+                            style: TextStyle(
+                              fontFamily: 'Literata',
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF1B4D3E),
+                            ),
+                          ),
+                          Text(
+                            '₹${bill.finalAmount.toStringAsFixed(2)}',
+                            style: const TextStyle(
+                              fontFamily: 'Literata',
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF1B4D3E),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              // Actions
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.grey[50],
+                  borderRadius: const BorderRadius.vertical(
+                    bottom: Radius.circular(16),
+                  ),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // First row - Share and Save PDF
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: () {
+                              Navigator.pop(context);
+                              _shareBillAsPdf(bill);
+                            },
+                            icon: const Icon(Icons.share, size: 18),
+                            label: const Text(
+                              'Share',
+                              style: TextStyle(fontFamily: 'Literata'),
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: const Color(0xFF1B4D3E),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              side: const BorderSide(color: Color(0xFF1B4D3E)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: () {
+                              Navigator.pop(context);
+                              _saveBillAsPdf(bill);
+                            },
+                            icon: const Icon(Icons.picture_as_pdf, size: 18),
+                            label: const Text(
+                              'Save PDF',
+                              style: TextStyle(fontFamily: 'Literata'),
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: const Color(0xFF1B4D3E),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              side: const BorderSide(color: Color(0xFF1B4D3E)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    // Second row - Cancel and Print
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () => Navigator.pop(context, false),
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              side: BorderSide(color: Colors.grey[400]!),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            child: Text(
+                              'Cancel',
+                              style: TextStyle(
+                                fontFamily: 'Literata',
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () => Navigator.pop(context, true),
+                            icon: const Icon(Icons.print, size: 18),
+                            label: const Text(
+                              'Print',
+                              style: TextStyle(fontFamily: 'Literata'),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF1B4D3E),
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPreviewRow(String label, String value, {Color? valueColor}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontFamily: 'Literata',
+              fontSize: 13,
+              color: Colors.grey[600],
+            ),
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              fontFamily: 'Literata',
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: valueColor ?? Colors.black87,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _shareBillAsPdf(Bill bill) async {
+    try {
+      // Show loading indicator
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF1B4D3E)),
+          ),
+        ),
+      );
+
+      final shop = await _shopRepository.getShopDetails();
+      final printData = PrintBillData.fromBill(bill);
+
+      // Close loading indicator
+      if (mounted) Navigator.pop(context);
+
+      await _pdfService.shareBillAsPdf(billData: printData, shopDetails: shop);
+    } catch (e) {
+      // Close loading indicator if still showing
+      if (mounted) Navigator.pop(context);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error sharing bill: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _saveBillAsPdf(Bill bill) async {
+    try {
+      // Show loading indicator
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF1B4D3E)),
+          ),
+        ),
+      );
+
+      final shop = await _shopRepository.getShopDetails();
+      final printData = PrintBillData.fromBill(bill);
+
+      final file = await _pdfService.savePdfToFile(
+        billData: printData,
+        shopDetails: shop,
+      );
+
+      // Close loading indicator
+      if (mounted) Navigator.pop(context);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('PDF saved: ${file.path.split('/').last}'),
+            backgroundColor: Colors.green,
+            action: SnackBarAction(
+              label: 'Open',
+              textColor: Colors.white,
+              onPressed: () {
+                _pdfService.previewAndPrintPdf(
+                  billData: printData,
+                  shopDetails: shop,
+                );
+              },
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      // Close loading indicator if still showing
+      if (mounted) Navigator.pop(context);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error saving PDF: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   Future<void> _loadBills() async {
@@ -732,6 +1223,30 @@ class _BillsListPageState extends State<BillsListPage>
                     ),
                   ),
                   const Spacer(),
+                  // Print button
+                  _printingBillId == bill.id
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Color(0xFF1B4D3E),
+                            ),
+                          ),
+                        )
+                      : GestureDetector(
+                          onTap: () => _printBill(bill),
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            child: Icon(
+                              Icons.print_outlined,
+                              size: 18,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ),
+                  const SizedBox(width: 8),
                   Flexible(
                     child: Text(
                       dateFormat.format(bill.billDate),
