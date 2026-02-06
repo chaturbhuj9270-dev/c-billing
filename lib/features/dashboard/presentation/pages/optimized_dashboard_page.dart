@@ -12,7 +12,6 @@ import '../../../billing/presentation/pages/bills_list_page.dart';
 import '../../../../core/services/session_manager.dart';
 import '../../domain/entities/dashboard_summary.dart';
 import '../../domain/repositories/dashboard_repository_interface.dart';
-import '../../data/repositories/dashboard_repository_impl.dart';
 import '../cubit/optimized_dashboard_cubit.dart';
 import '../cubit/optimized_dashboard_state.dart';
 import '../widgets/shimmer_widgets.dart';
@@ -81,65 +80,158 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
     _sessionManager.resetSession();
   }
 
+  String _getPageTitle() {
+    switch (_selectedIndex) {
+      case 0:
+        return 'Dashboard';
+      case 1:
+        return 'Customers';
+      case 2:
+        return 'Availability';
+      case 3:
+        return 'Create Bill';
+      case 4:
+        return 'Purchases';
+      default:
+        return 'C-Billing';
+    }
+  }
+
+  String _getPageSubtitle() {
+    switch (_selectedIndex) {
+      case 0:
+        return 'Business Overview';
+      case 1:
+        return 'Manage Customers';
+      case 2:
+        return 'Stock Availability';
+      case 3:
+        return 'Generate Invoice';
+      case 4:
+        return 'Track Purchases';
+      default:
+        return '';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     _resetSessionTimer();
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFB),
-      body: IndexedStack(
-        index: _selectedIndex,
+      body: Column(
         children: [
-          // Dashboard tab
-          Stack(
-            children: [
-              NestedScrollView(
-                physics: const BouncingScrollPhysics(),
-                headerSliverBuilder: (context, innerBoxIsScrolled) {
-                  return [
-                    SliverAppBar(
-                      expandedHeight: 0,
-                      collapsedHeight: 100,
-                      pinned: true,
-                      floating: false,
-                      backgroundColor: const Color(0xFF1B4D3E),
-                      automaticallyImplyLeading: false,
-                      flexibleSpace: _buildGradientHeader(),
-                    ),
-                  ];
-                },
-                body:
-                    BlocBuilder<
-                      OptimizedDashboardCubit,
-                      OptimizedDashboardState
-                    >(
-                      builder: (context, state) {
-                        return FadeTransition(
-                          opacity: _fadeAnimation,
-                          child: RefreshIndicator(
-                            onRefresh: () => context
-                                .read<OptimizedDashboardCubit>()
-                                .refresh(),
-                            color: const Color(0xFF1B4D3E),
-                            child: _buildContent(state),
-                          ),
-                        );
-                      },
-                    ),
-              ),
-            ],
+          // Common header for all tabs
+          _buildCommonHeader(),
+          // Tab content
+          Expanded(
+            child: IndexedStack(
+              index: _selectedIndex,
+              children: [
+                // Dashboard tab
+                BlocBuilder<OptimizedDashboardCubit, OptimizedDashboardState>(
+                  builder: (context, state) {
+                    return FadeTransition(
+                      opacity: _fadeAnimation,
+                      child: RefreshIndicator(
+                        onRefresh: () =>
+                            context.read<OptimizedDashboardCubit>().refresh(),
+                        color: const Color(0xFF1B4D3E),
+                        child: _buildContent(state),
+                      ),
+                    );
+                  },
+                ),
+                // Customers tab
+                const CustomerPage(isEmbedded: true),
+                // Available tab (coming soon placeholder)
+                _buildComingSoonPage('Availability'),
+                // Billing tab
+                const BillingPage(isEmbedded: true),
+                // Purchase tab
+                const PurchasePage(isEmbedded: true),
+              ],
+            ),
           ),
-          // Customers tab
-          const CustomerPage(),
-          // Available tab (coming soon placeholder)
-          _buildComingSoonPage('Availability'),
-          // Billing tab
-          const BillingPage(),
-          // Purchase tab
-          const PurchasePage(),
         ],
       ),
       bottomNavigationBar: _buildBottomNavBar(),
+    );
+  }
+
+  Widget _buildCommonHeader() {
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF1B4D3E), Color(0xFF0F3B2F), Color(0xFF134E3A)],
+        ),
+      ),
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+          child: GestureDetector(
+            onTap: _openFlyoutMenu,
+            child: Row(
+              children: [
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: Colors.white.withOpacity(0.2)),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.asset(
+                      'assets/images/logo.png',
+                      width: 32,
+                      height: 32,
+                      fit: BoxFit.contain,
+                      errorBuilder: (_, __, ___) => const Icon(
+                        Icons.business,
+                        color: Colors.white,
+                        size: 24,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _getPageTitle(),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 24,
+                          fontWeight: FontWeight.w700,
+                          fontFamily: 'Literata',
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                      Text(
+                        _getPageSubtitle(),
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.7),
+                          fontSize: 12,
+                          fontFamily: 'Literata',
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 
@@ -290,79 +382,6 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
       return '₹${(amount / 1000).toStringAsFixed(1)} K';
     }
     return '₹${amount.toStringAsFixed(0)}';
-  }
-
-  Widget _buildGradientHeader() {
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFF1B4D3E), Color(0xFF0F3B2F), Color(0xFF134E3A)],
-        ),
-      ),
-      child: SafeArea(
-        bottom: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
-          child: GestureDetector(
-            onTap: _openFlyoutMenu,
-            child: Row(
-              children: [
-                Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: Colors.white.withOpacity(0.2)),
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: Image.asset(
-                      'assets/images/logo.png',
-                      width: 32,
-                      height: 32,
-                      fit: BoxFit.contain,
-                      errorBuilder: (_, __, ___) => const Icon(
-                        Icons.business,
-                        color: Colors.white,
-                        size: 24,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 14),
-                Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'C-Billing',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.w700,
-                        fontFamily: 'Literata',
-                        letterSpacing: -0.5,
-                      ),
-                    ),
-                    Text(
-                      'Business Dashboard',
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.7),
-                        fontSize: 12,
-                        fontFamily: 'Literata',
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
   }
 
   void _openFlyoutMenu() {

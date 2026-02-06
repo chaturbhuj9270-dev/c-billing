@@ -764,7 +764,12 @@ class _CustomerPageState extends State<CustomerPage> {
               children: [
                 // Search bar outside navbar with sort button
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 50, 16, 8),
+                  padding: EdgeInsets.fromLTRB(
+                    16,
+                    widget.isEmbedded ? 12 : 50,
+                    16,
+                    8,
+                  ),
                   child: Row(
                     children: [
                       // Search field

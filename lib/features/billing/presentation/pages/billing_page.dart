@@ -717,6 +717,20 @@ class _BillingPageState extends State<BillingPage> {
           ? const Center(
               child: CircularProgressIndicator(color: Color(0xFF1B4D3E)),
             )
+          : widget.isEmbedded
+          ? SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: Column(
+                children: [
+                  _buildCustomerSection(),
+                  _buildAddItemsButton(),
+                  if (_billItems.isNotEmpty) _buildBillItemsSection(),
+                  if (_billItems.isNotEmpty) _buildDiscountSection(),
+                  if (_billItems.isNotEmpty) _buildPaymentSection(),
+                  const SizedBox(height: 100),
+                ],
+              ),
+            )
           : CustomScrollView(
               slivers: [
                 _buildSliverAppBar(),
