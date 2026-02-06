@@ -2,17 +2,22 @@ import 'dart:async' show unawaited;
 
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
 import 'package:c_billing/core/services/billing_service.dart';
 import 'package:c_billing/features/billing/data/repositories/firebase_bill_repository.dart';
+import 'package:c_billing/features/billing/domain/entities/bill.dart';
 import 'package:c_billing/features/billing/domain/entities/bill_item.dart';
 import 'package:c_billing/features/inventory_management/data/repositories/firebase_product_repository.dart';
 import 'package:c_billing/features/inventory_management/data/repositories/firebase_stock_repository.dart';
 import 'package:c_billing/features/inventory_management/domain/entities/product.dart';
 import 'package:c_billing/features/billing/data/datasources/bill_cache_datasource.dart';
+import 'package:c_billing/core/printing/printing.dart';
+import 'package:c_billing/common_widgets/printer_selection_widget.dart';
+import 'package:c_billing/features/shop/data/repositories/shop_repository.dart';
 
 class BillingPage extends StatefulWidget {
   final bool isEmbedded;
-  
+
   const BillingPage({super.key, this.isEmbedded = false});
 
   @override
@@ -22,6 +27,11 @@ class BillingPage extends StatefulWidget {
 class _BillingPageState extends State<BillingPage> {
   late BillingService _billingService;
   late FirebaseFirestore _firestore;
+  late ShopRepository _shopRepository;
+
+  // Printing services
+  final _printerService = PosPrinterService();
+  final _pdfService = PdfBillService();
 
   final _customerNameController = TextEditingController();
   final _customerContactController = TextEditingController();
@@ -44,6 +54,7 @@ class _BillingPageState extends State<BillingPage> {
   void initState() {
     super.initState();
     _firestore = FirebaseFirestore.instance;
+    _shopRepository = ShopRepository(firestore: _firestore);
     _billingService = BillingService(
       billRepository: FirebaseBillRepository(firestore: _firestore),
       productRepository: FirebaseProductRepository(firestore: _firestore),
@@ -59,6 +70,7 @@ class _BillingPageState extends State<BillingPage> {
     _customerContactController.dispose();
     _notesController.dispose();
     _discountController.dispose();
+    _printerService.dispose();
     super.dispose();
   }
 
@@ -200,19 +212,32 @@ class _BillingPageState extends State<BillingPage> {
       setState(() => _isSavingBill = false);
 
       if (result.success) {
-        _showSnackbar('Bill saved successfully!');
         // Clear bills list cache so it reloads fresh data next time
         unawaited(BillCacheDataSource().clearCache());
-        
+
         // Keep a copy of items to update local stock
         final savedItems = List<BillItem>.from(_billItems);
+
+        // Fetch the created bill for print/share options
+        Bill? createdBill;
+        if (result.billId != null) {
+          createdBill = await _billingService.getBillById(result.billId!);
+        }
+
         _clearBill();
-        
+
         // Optimization: Update local stock immediately instead of full reload from server
         _updateLocalStock(savedItems);
-        
+
         // Background reload to ensure sync without blocking UI
         _loadProducts(showLoader: false);
+
+        // Show success dialog with print/share options
+        if (mounted && createdBill != null) {
+          _showBillSuccessDialog(createdBill);
+        } else {
+          _showSnackbar('Bill saved successfully!');
+        }
       } else {
         _showSnackbar(
           result.errorMessage ?? 'Error saving bill',
@@ -266,6 +291,368 @@ class _BillingPageState extends State<BillingPage> {
         margin: const EdgeInsets.all(16),
       ),
     );
+  }
+
+  void _showBillSuccessDialog(Bill bill) {
+    final dateFormat = DateFormat('dd MMM yyyy, hh:mm a');
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 400, maxHeight: 650),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Success Header
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: const BoxDecoration(
+                  color: Color(0xFF1B4D3E),
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+                ),
+                child: Column(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.check_circle,
+                        color: Colors.white,
+                        size: 40,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'Bill Saved Successfully!',
+                      style: TextStyle(
+                        fontFamily: 'Literata',
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      bill.billNumber,
+                      style: TextStyle(
+                        fontFamily: 'Literata',
+                        fontSize: 14,
+                        color: Colors.white.withOpacity(0.8),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // Bill Summary
+              Flexible(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildSuccessDialogRow(
+                        'Date',
+                        dateFormat.format(bill.billDate),
+                      ),
+                      if (bill.hasCustomerInfo) ...[
+                        const Divider(height: 16),
+                        _buildSuccessDialogRow(
+                          'Customer',
+                          bill.customerName ?? 'N/A',
+                        ),
+                      ],
+                      const Divider(height: 16),
+                      _buildSuccessDialogRow(
+                        'Items',
+                        '${bill.items.length} items (${bill.totalQuantity} qty)',
+                      ),
+                      const Divider(height: 16),
+                      _buildSuccessDialogRow(
+                        'Subtotal',
+                        '₹${bill.totalAmount.toStringAsFixed(2)}',
+                      ),
+                      if (bill.discountAmount > 0) ...[
+                        const SizedBox(height: 4),
+                        _buildSuccessDialogRow(
+                          'Discount',
+                          '-₹${bill.discountAmount.toStringAsFixed(2)}',
+                          valueColor: Colors.green,
+                        ),
+                      ],
+                      const SizedBox(height: 8),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Total',
+                            style: TextStyle(
+                              fontFamily: 'Literata',
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF1B4D3E),
+                            ),
+                          ),
+                          Text(
+                            '₹${bill.finalAmount.toStringAsFixed(2)}',
+                            style: const TextStyle(
+                              fontFamily: 'Literata',
+                              fontSize: 20,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF1B4D3E),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              // Actions
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.grey[50],
+                  borderRadius: const BorderRadius.vertical(
+                    bottom: Radius.circular(16),
+                  ),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // First row - Share and Save PDF
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: () {
+                              Navigator.pop(context);
+                              _shareBillAsPdf(bill);
+                            },
+                            icon: const Icon(Icons.share, size: 18),
+                            label: const Text(
+                              'Share',
+                              style: TextStyle(fontFamily: 'Literata'),
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: const Color(0xFF1B4D3E),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              side: const BorderSide(color: Color(0xFF1B4D3E)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: () {
+                              Navigator.pop(context);
+                              _saveBillAsPdf(bill);
+                            },
+                            icon: const Icon(Icons.picture_as_pdf, size: 18),
+                            label: const Text(
+                              'Save PDF',
+                              style: TextStyle(fontFamily: 'Literata'),
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: const Color(0xFF1B4D3E),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              side: const BorderSide(color: Color(0xFF1B4D3E)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    // Second row - Print POS
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          _printBillToPOS(bill);
+                        },
+                        icon: const Icon(Icons.print, size: 18),
+                        label: const Text(
+                          'Print to POS Printer',
+                          style: TextStyle(fontFamily: 'Literata'),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF1B4D3E),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    // Done button
+                    SizedBox(
+                      width: double.infinity,
+                      child: TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: Text(
+                          'Done',
+                          style: TextStyle(
+                            fontFamily: 'Literata',
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSuccessDialogRow(
+    String label,
+    String value, {
+    Color? valueColor,
+  }) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontFamily: 'Literata',
+            fontSize: 13,
+            color: Colors.grey[600],
+          ),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            fontFamily: 'Literata',
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: valueColor ?? Colors.black87,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _shareBillAsPdf(Bill bill) async {
+    try {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF1B4D3E)),
+          ),
+        ),
+      );
+
+      final shop = await _shopRepository.getShopDetails();
+      final printData = PrintBillData.fromBill(bill);
+
+      if (mounted) Navigator.pop(context);
+
+      await _pdfService.shareBillAsPdf(billData: printData, shopDetails: shop);
+    } catch (e) {
+      if (mounted) Navigator.pop(context);
+      _showSnackbar('Error sharing bill: $e', isError: true);
+    }
+  }
+
+  Future<void> _saveBillAsPdf(Bill bill) async {
+    try {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF1B4D3E)),
+          ),
+        ),
+      );
+
+      final shop = await _shopRepository.getShopDetails();
+      final printData = PrintBillData.fromBill(bill);
+
+      final file = await _pdfService.savePdfToFile(
+        billData: printData,
+        shopDetails: shop,
+      );
+
+      if (mounted) Navigator.pop(context);
+
+      _showSnackbar('PDF saved: ${file.path.split('/').last}');
+    } catch (e) {
+      if (mounted) Navigator.pop(context);
+      _showSnackbar('Error saving PDF: $e', isError: true);
+    }
+  }
+
+  Future<void> _printBillToPOS(Bill bill) async {
+    final selectedPrinter = await PrinterSelectionWidget.show(context);
+    if (selectedPrinter == null || !mounted) return;
+
+    try {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF1B4D3E)),
+          ),
+        ),
+      );
+
+      final connectResult = await _printerService.connectPrinter(
+        selectedPrinter,
+      );
+      if (!connectResult.success) {
+        if (mounted) Navigator.pop(context);
+        _showSnackbar(
+          'Failed to connect: ${connectResult.message}',
+          isError: true,
+        );
+        return;
+      }
+
+      final shop = await _shopRepository.getShopDetails();
+      final printData = PrintBillData.fromBill(bill);
+
+      final printResult = await _printerService.printBill(
+        billData: printData,
+        shopDetails: shop,
+      );
+
+      if (mounted) Navigator.pop(context);
+
+      _showSnackbar(
+        printResult.success
+            ? 'Bill printed successfully!'
+            : 'Print failed: ${printResult.message}',
+        isError: !printResult.success,
+      );
+    } catch (e) {
+      if (mounted) Navigator.pop(context);
+      _showSnackbar('Error printing: $e', isError: true);
+    } finally {
+      await _printerService.disconnectPrinter();
+    }
   }
 
   @override
