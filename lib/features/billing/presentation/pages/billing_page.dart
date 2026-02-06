@@ -766,59 +766,6 @@ class _BillingPageState extends State<BillingPage> {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: Row(
                 children: [
-                  if (!widget.isEmbedded) ...[
-                    GestureDetector(
-                      onTap: () {
-                        if (_billItems.isNotEmpty) {
-                          showDialog(
-                            context: context,
-                            builder: (ctx) => AlertDialog(
-                              title: const Text(
-                                'Discard Bill?',
-                                style: TextStyle(fontFamily: 'Literata'),
-                              ),
-                              content: const Text(
-                                'You have unsaved items.',
-                                style: TextStyle(fontFamily: 'Literata'),
-                              ),
-                              actions: [
-                                TextButton(
-                                  onPressed: () => Navigator.pop(ctx),
-                                  child: const Text('Cancel'),
-                                ),
-                                TextButton(
-                                  onPressed: () {
-                                    Navigator.pop(ctx);
-                                    Navigator.pop(context);
-                                  },
-                                  child: const Text(
-                                    'Discard',
-                                    style: TextStyle(color: Colors.red),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
-                        } else {
-                          Navigator.pop(context);
-                        }
-                      },
-                      child: Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: const Icon(
-                          Icons.arrow_back,
-                          color: Colors.white,
-                          size: 22,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                  ],
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
