@@ -12,7 +12,7 @@ import '../services/credentials_manager.dart';
 class SplashPage extends StatefulWidget {
   final Duration duration;
 
-  const SplashPage({super.key, this.duration = const Duration(seconds: 3)});
+  const SplashPage({super.key, this.duration = const Duration(microseconds: 500)});
 
   @override
   State<SplashPage> createState() => _SplashPageState();

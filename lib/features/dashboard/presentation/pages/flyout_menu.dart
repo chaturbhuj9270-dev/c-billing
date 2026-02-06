@@ -8,6 +8,7 @@ import '../../../customer/presentation/pages/customer_page.dart';
 import '../../../company/presentation/pages/company_page.dart';
 import '../../../inventory_management/presentation/pages/purchase_page.dart';
 import '../../../inventory_management/presentation/pages/product_management_page.dart';
+import '../../../shop/presentation/pages/shop_details_page.dart';
 
 class FlyoutMenu extends StatefulWidget {
   const FlyoutMenu({super.key});
@@ -34,6 +35,7 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
   // Menu items with icons and colors
   final List<_MenuItem> _menuItems = [
     _MenuItem(icon: Icons.person_rounded, label: 'Profile', route: 'Profile', color: const Color(0xFF2E7D32)),
+    _MenuItem(icon: Icons.store_rounded, label: 'Shop Details', route: 'ShopDetails', color: const Color(0xFF1976D2)),
     _MenuItem(icon: Icons.settings_rounded, label: 'Settings', route: 'Settings', color: const Color(0xFF78909C)),
   ];
 
@@ -186,6 +188,11 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
         case 'Profile':
           Navigator.of(context).push(
             MaterialPageRoute(builder: (_) => const ProfilePage()),
+          );
+          break;
+        case 'ShopDetails':
+          Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const ShopDetailsPage()),
           );
           break;
         case 'Settings':
