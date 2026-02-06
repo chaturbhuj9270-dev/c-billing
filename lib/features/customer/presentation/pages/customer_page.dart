@@ -690,81 +690,6 @@ class _CustomerPageState extends State<CustomerPage> {
     print('[DEBUG] CustomerPage build() called');
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(70),
-        child: Container(
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [Color(0xFF1B4D3E), Color(0xFF0F3B2F)],
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFF1B4D3E).withOpacity(0.2),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: SafeArea(
-            bottom: false,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              child: Row(
-                children: [
-                  if (!widget.isEmbedded) ...[
-                    GestureDetector(
-                      onTap: () => Navigator.pop(context),
-                      child: Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: const Icon(
-                          Icons.arrow_back,
-                          color: Colors.white,
-                          size: 22,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                  ],
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Text(
-                          'My Customers',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 22,
-                            fontWeight: FontWeight.w700,
-                            fontFamily: 'Literata',
-                            height: 1.2,
-                          ),
-                        ),
-                        Text(
-                          'Manage your clients',
-                          style: TextStyle(
-                            color: Colors.white.withOpacity(0.7),
-                            fontSize: 11,
-                            fontFamily: 'Literata',
-                            height: 1.2,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
       floatingActionButton: Container(
         decoration: BoxDecoration(
           gradient: const LinearGradient(
@@ -806,7 +731,7 @@ class _CustomerPageState extends State<CustomerPage> {
                     child: Icon(
                       Icons.people_outline,
                       size: 50,
-                      color: const Color(0xFF1B4D3E).withOpacity(0.3),
+                      color: const Color(0xFF1B4D3E),
                     ),
                   ),
                   const SizedBox(height: 20),
@@ -839,7 +764,7 @@ class _CustomerPageState extends State<CustomerPage> {
               children: [
                 // Search bar outside navbar with sort button
                 Padding(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.fromLTRB(16, 50, 16, 8),
                   child: Row(
                     children: [
                       // Search field
