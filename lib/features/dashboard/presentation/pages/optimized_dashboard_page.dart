@@ -172,35 +172,35 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
       child: SafeArea(
         bottom: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+          padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
           child: GestureDetector(
             onTap: _openFlyoutMenu,
             child: Row(
               children: [
                 Container(
-                  width: 48,
-                  height: 48,
+                  width: 40,
+                  height: 40,
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: Colors.white.withOpacity(0.2)),
                   ),
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(10),
                     child: Image.asset(
                       'assets/images/logo.png',
-                      width: 32,
-                      height: 32,
+                      width: 28,
+                      height: 28,
                       fit: BoxFit.contain,
                       errorBuilder: (_, __, ___) => const Icon(
                         Icons.business,
                         color: Colors.white,
-                        size: 24,
+                        size: 20,
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(width: 14),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -210,17 +210,17 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                         _getPageTitle(),
                         style: const TextStyle(
                           color: Colors.white,
-                          fontSize: 24,
+                          fontSize: 18,
                           fontWeight: FontWeight.w700,
                           fontFamily: 'Literata',
-                          letterSpacing: -0.5,
+                          letterSpacing: -0.3,
                         ),
                       ),
                       Text(
                         _getPageSubtitle(),
                         style: TextStyle(
                           color: Colors.white.withOpacity(0.7),
-                          fontSize: 12,
+                          fontSize: 11,
                           fontFamily: 'Literata',
                         ),
                       ),
