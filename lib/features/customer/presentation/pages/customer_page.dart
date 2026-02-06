@@ -731,7 +731,7 @@ class _CustomerPageState extends State<CustomerPage> {
                     child: Icon(
                       Icons.people_outline,
                       size: 50,
-                      color: const Color(0xFF1B4D3E),
+                      color: const Color(0xFF1B4D3E).withOpacity(0.3),
                     ),
                   ),
                   const SizedBox(height: 20),
@@ -762,114 +762,120 @@ class _CustomerPageState extends State<CustomerPage> {
             )
           : Column(
               children: [
-                // Search bar outside navbar with sort button
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 50, 16, 8),
-                  child: Row(
-                    children: [
-                      // Search field
-                      Expanded(
-                        child: SizedBox(
-                          height: 44,
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: Colors.grey[300]!,
-                                width: 1.5,
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.05),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            child: Center(
-                              child: TextField(
-                                controller: _filterController,
-                                textAlignVertical: TextAlignVertical.center,
-                                style: const TextStyle(
-                                  color: Colors.black87,
-                                  fontFamily: 'Literata',
-                                  fontSize: 14,
-                                  height: 1,
-                                ),
-                                decoration: InputDecoration(
-                                  hintText: 'Search customers...',
-                                  hintStyle: TextStyle(
-                                    color: Colors.grey[500],
-                                    fontFamily: 'Literata',
-                                    fontSize: 14,
-                                  ),
-                                  prefixIcon: Icon(
-                                    Icons.search_rounded,
-                                    color: Colors.grey[600],
-                                    size: 20,
-                                  ),
-                                  suffixIcon: _filterController.text.isNotEmpty
-                                      ? GestureDetector(
-                                          onTap: () {
-                                            _filterController.clear();
-                                            _filterCustomers();
-                                          },
-                                          child: Icon(
-                                            Icons.close,
-                                            color: Colors.grey[600],
-                                            size: 20,
-                                          ),
-                                        )
-                                      : null,
-                                  border: InputBorder.none,
-                                  isDense: true,
-                                  contentPadding: const EdgeInsets.fromLTRB(
-                                    0,
-                                    0,
-                                    12,
-                                    0,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      // Sort button
-                      GestureDetector(
-                        onTap: _toggleSort,
-                        child: Container(
-                          width: 44,
-                          height: 44,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: Colors.grey[300]!,
-                              width: 1.5,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.05),
-                                blurRadius: 8,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: Center(
-                            child: Icon(
-                              _isSortAscending
-                                  ? Icons.arrow_upward_rounded
-                                  : Icons.arrow_downward_rounded,
-                              color: const Color(0xFF1B4D3E),
-                              size: 20,
-                            ),
-                          ),
-                        ),
+                // Top nav bar with search
+                Container(
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [Color(0xFF1B4D3E), Color(0xFF0F3B2F)],
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF1B4D3E).withOpacity(0.3),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
                       ),
                     ],
+                  ),
+                  child: SafeArea(
+                    bottom: false,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                      child: Row(
+                        children: [
+                          // Search field
+                          Expanded(
+                            child: SizedBox(
+                              height: 44,
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: Colors.white.withOpacity(0.3),
+                                    width: 1.5,
+                                  ),
+                                ),
+                                child: Center(
+                                  child: TextField(
+                                    controller: _filterController,
+                                    textAlignVertical: TextAlignVertical.center,
+                                    style: const TextStyle(
+                                      color: Colors.black87,
+                                      fontFamily: 'Literata',
+                                      fontSize: 14,
+                                      height: 1,
+                                    ),
+                                    decoration: InputDecoration(
+                                      hintText: 'Search customers...',
+                                      hintStyle: TextStyle(
+                                        color: Colors.grey[500],
+                                        fontFamily: 'Literata',
+                                        fontSize: 14,
+                                      ),
+                                      prefixIcon: Icon(
+                                        Icons.search_rounded,
+                                        color: Colors.grey[600],
+                                        size: 20,
+                                      ),
+                                      suffixIcon:
+                                          _filterController.text.isNotEmpty
+                                          ? GestureDetector(
+                                              onTap: () {
+                                                _filterController.clear();
+                                                _filterCustomers();
+                                              },
+                                              child: Icon(
+                                                Icons.close,
+                                                color: Colors.grey[600],
+                                                size: 20,
+                                              ),
+                                            )
+                                          : null,
+                                      border: InputBorder.none,
+                                      isDense: true,
+                                      contentPadding: const EdgeInsets.fromLTRB(
+                                        0,
+                                        0,
+                                        12,
+                                        0,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          // Sort button
+                          GestureDetector(
+                            onTap: _toggleSort,
+                            child: Container(
+                              width: 44,
+                              height: 44,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: Colors.white.withOpacity(0.3),
+                                  width: 1.5,
+                                ),
+                              ),
+                              child: Center(
+                                child: Icon(
+                                  _isSortAscending
+                                      ? Icons.arrow_upward_rounded
+                                      : Icons.arrow_downward_rounded,
+                                  color: const Color(0xFF1B4D3E),
+                                  size: 20,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
                 // Customer list
