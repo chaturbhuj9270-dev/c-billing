@@ -41,8 +41,7 @@ class _OptimizedDashboardView extends StatefulWidget {
   const _OptimizedDashboardView();
 
   @override
-  State<_OptimizedDashboardView> createState() =>
-      _OptimizedDashboardViewState();
+  State<_OptimizedDashboardView> createState() => _OptimizedDashboardViewState();
 }
 
 class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
@@ -87,56 +86,36 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFB),
-      body: IndexedStack(
-        index: _selectedIndex,
+      body: Stack(
         children: [
-          // Dashboard tab
-          Stack(
-            children: [
-              NestedScrollView(
-                physics: const BouncingScrollPhysics(),
-                headerSliverBuilder: (context, innerBoxIsScrolled) {
-                  return [
-                    SliverAppBar(
-                      expandedHeight: 0,
-                      collapsedHeight: 100,
-                      pinned: true,
-                      floating: false,
-                      backgroundColor: const Color(0xFF1B4D3E),
-                      automaticallyImplyLeading: false,
-                      flexibleSpace: _buildGradientHeader(),
-                    ),
-                  ];
-                },
-                body:
-                    BlocBuilder<
-                      OptimizedDashboardCubit,
-                      OptimizedDashboardState
-                    >(
-                      builder: (context, state) {
-                        return FadeTransition(
-                          opacity: _fadeAnimation,
-                          child: RefreshIndicator(
-                            onRefresh: () => context
-                                .read<OptimizedDashboardCubit>()
-                                .refresh(),
-                            color: const Color(0xFF1B4D3E),
-                            child: _buildContent(state),
-                          ),
-                        );
-                      },
-                    ),
-              ),
-            ],
+          NestedScrollView(
+            physics: const BouncingScrollPhysics(),
+            headerSliverBuilder: (context, innerBoxIsScrolled) {
+              return [
+                SliverAppBar(
+                  expandedHeight: 0,
+                  collapsedHeight: 100,
+                  pinned: true,
+                  floating: false,
+                  backgroundColor: const Color(0xFF1B4D3E),
+                  automaticallyImplyLeading: false,
+                  flexibleSpace: _buildGradientHeader(),
+                ),
+              ];
+            },
+            body: BlocBuilder<OptimizedDashboardCubit, OptimizedDashboardState>(
+              builder: (context, state) {
+                return FadeTransition(
+                  opacity: _fadeAnimation,
+                  child: RefreshIndicator(
+                    onRefresh: () => context.read<OptimizedDashboardCubit>().refresh(),
+                    color: const Color(0xFF1B4D3E),
+                    child: _buildContent(state),
+                  ),
+                );
+              },
+            ),
           ),
-          // Customers tab
-          const CustomerPage(),
-          // Available tab (coming soon placeholder)
-          _buildComingSoonPage('Availability'),
-          // Billing tab
-          const BillingPage(),
-          // Purchase tab
-          const PurchasePage(),
         ],
       ),
       bottomNavigationBar: _buildBottomNavBar(),
@@ -252,8 +231,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
           ),
           if (state.canRetry)
             TextButton(
-              onPressed: () =>
-                  context.read<OptimizedDashboardCubit>().refresh(),
+              onPressed: () => context.read<OptimizedDashboardCubit>().refresh(),
               child: const Text('Retry'),
             ),
         ],
@@ -376,9 +354,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
       transitionBuilder: (context, animation, _, child) {
         return SlideTransition(
           position: Tween<Offset>(begin: const Offset(-1, 0), end: Offset.zero)
-              .animate(
-                CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
-              ),
+              .animate(CurvedAnimation(parent: animation, curve: Curves.easeOutCubic)),
           child: Align(
             alignment: Alignment.centerLeft,
             child: SizedBox(
@@ -403,10 +379,8 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
             label: 'Invoices',
             color: const Color(0xFF667eea),
             isLoading: isLoading,
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const BillsListPage()),
-            ),
+            onTap: () => Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const BillsListPage())),
           ),
           const SizedBox(width: 12),
           _buildQuickStatItem(
@@ -415,10 +389,8 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
             label: 'Customers',
             color: const Color(0xFF4CAF50),
             isLoading: isLoading,
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const CustomerPage()),
-            ),
+            onTap: () => Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const CustomerPage())),
           ),
           const SizedBox(width: 12),
           _buildQuickStatItem(
@@ -427,10 +399,8 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
             label: 'Products',
             color: const Color(0xFFf093fb),
             isLoading: isLoading,
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const ProductManagementPage()),
-            ),
+            onTap: () => Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const ProductManagementPage())),
           ),
           const SizedBox(width: 12),
           _buildQuickStatItem(
@@ -439,10 +409,8 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
             label: 'Suppliers',
             color: const Color(0xFFFF6B6B),
             isLoading: isLoading,
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const SupplierPage()),
-            ),
+            onTap: () => Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const SupplierPage())),
           ),
           const SizedBox(width: 12),
           _buildQuickStatItem(
@@ -451,10 +419,8 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
             label: 'Purchases',
             color: const Color(0xFF00BCD4),
             isLoading: isLoading,
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const PurchasePage()),
-            ),
+            onTap: () => Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const PurchasePage())),
           ),
           const SizedBox(width: 12),
           _buildQuickStatItem(
@@ -463,10 +429,8 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
             label: 'Companies',
             color: const Color(0xFF9C27B0),
             isLoading: isLoading,
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const CompanyPage()),
-            ),
+            onTap: () => Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const CompanyPage())),
           ),
         ],
       ),
@@ -562,11 +526,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
       children: [
         Row(
           children: [
-            const Icon(
-              Icons.filter_list_rounded,
-              color: Color(0xFF1B4D3E),
-              size: 18,
-            ),
+            const Icon(Icons.filter_list_rounded, color: Color(0xFF1B4D3E), size: 18),
             const SizedBox(width: 8),
             const Text(
               'Filter by Period',
@@ -585,47 +545,17 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
           physics: const BouncingScrollPhysics(),
           child: Row(
             children: [
-              _buildFilterChip(
-                DashboardFilter.today,
-                'Today',
-                Icons.today_rounded,
-                state,
-              ),
+              _buildFilterChip(DashboardFilter.today, 'Today', Icons.today_rounded, state),
               const SizedBox(width: 8),
-              _buildFilterChip(
-                DashboardFilter.thisWeek,
-                'This Week',
-                Icons.date_range_rounded,
-                state,
-              ),
+              _buildFilterChip(DashboardFilter.thisWeek, 'This Week', Icons.date_range_rounded, state),
               const SizedBox(width: 8),
-              _buildFilterChip(
-                DashboardFilter.thisMonth,
-                'This Month',
-                Icons.calendar_month_rounded,
-                state,
-              ),
+              _buildFilterChip(DashboardFilter.thisMonth, 'This Month', Icons.calendar_month_rounded, state),
               const SizedBox(width: 8),
-              _buildFilterChip(
-                DashboardFilter.thisYear,
-                'This Year',
-                Icons.calendar_today_rounded,
-                state,
-              ),
+              _buildFilterChip(DashboardFilter.thisYear, 'This Year', Icons.calendar_today_rounded, state),
               const SizedBox(width: 8),
-              _buildFilterChip(
-                DashboardFilter.custom,
-                'Custom',
-                Icons.edit_calendar_rounded,
-                state,
-              ),
+              _buildFilterChip(DashboardFilter.custom, 'Custom', Icons.edit_calendar_rounded, state),
               const SizedBox(width: 8),
-              _buildFilterChip(
-                DashboardFilter.all,
-                'All Time',
-                Icons.all_inclusive_rounded,
-                state,
-              ),
+              _buildFilterChip(DashboardFilter.all, 'All Time', Icons.all_inclusive_rounded, state),
             ],
           ),
         ),
@@ -653,42 +583,22 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
           gradient: isSelected
-              ? const LinearGradient(
-                  colors: [Color(0xFF1B4D3E), Color(0xFF2E7D32)],
-                )
+              ? const LinearGradient(colors: [Color(0xFF1B4D3E), Color(0xFF2E7D32)])
               : null,
           color: isSelected ? null : Colors.white,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected
-                ? Colors.transparent
-                : const Color(0xFF1B4D3E).withOpacity(0.2),
+            color: isSelected ? Colors.transparent : const Color(0xFF1B4D3E).withOpacity(0.2),
             width: 1.5,
           ),
           boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color: const Color(0xFF1B4D3E).withOpacity(0.3),
-                    blurRadius: 8,
-                    offset: const Offset(0, 3),
-                  ),
-                ]
-              : [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.04),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
+              ? [BoxShadow(color: const Color(0xFF1B4D3E).withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 3))]
+              : [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 4, offset: const Offset(0, 2))],
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              icon,
-              size: 16,
-              color: isSelected ? Colors.white : const Color(0xFF1B4D3E),
-            ),
+            Icon(icon, size: 16, color: isSelected ? Colors.white : const Color(0xFF1B4D3E)),
             const SizedBox(width: 6),
             Text(
               label,
@@ -734,10 +644,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
     );
 
     if (picked != null && mounted) {
-      context.read<OptimizedDashboardCubit>().setCustomDateRange(
-        picked.start,
-        picked.end,
-      );
+      context.read<OptimizedDashboardCubit>().setCustomDateRange(picked.start, picked.end);
     }
   }
 
@@ -752,16 +659,10 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
           width: 44,
           height: 44,
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [Color(0xFF1B4D3E), Color(0xFF2E7D32)],
-            ),
+            gradient: const LinearGradient(colors: [Color(0xFF1B4D3E), Color(0xFF2E7D32)]),
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
-              BoxShadow(
-                color: const Color(0xFF1B4D3E).withOpacity(0.3),
-                blurRadius: 8,
-                offset: const Offset(0, 3),
-              ),
+              BoxShadow(color: const Color(0xFF1B4D3E).withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 3)),
             ],
           ),
           child: Icon(icon, color: Colors.white, size: 22),
@@ -781,11 +682,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
             ),
             Text(
               subtitle,
-              style: TextStyle(
-                color: Colors.grey[600],
-                fontSize: 13,
-                fontFamily: 'Literata',
-              ),
+              style: TextStyle(color: Colors.grey[600], fontSize: 13, fontFamily: 'Literata'),
             ),
           ],
         ),
@@ -800,8 +697,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
           child: _buildGradientMetricCard(
             title: 'Total Sales',
             amount: _formatAmount(data.totalSales),
-            subtitle:
-                'Bills: ${data.totalBillsCount} • Items: ${data.totalItemsSold}',
+            subtitle: 'Bills: ${data.totalBillsCount} • Items: ${data.totalItemsSold}',
             gradient: const LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
@@ -816,8 +712,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
           child: _buildGradientMetricCard(
             title: 'Total Purchase',
             amount: _formatAmount(data.totalPurchases),
-            subtitle:
-                'Orders: ${data.purchaseOrders} • Qty: ${data.purchaseQty}',
+            subtitle: 'Orders: ${data.purchaseOrders} • Qty: ${data.purchaseQty}',
             gradient: const LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
@@ -855,16 +750,9 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
               ],
             ),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: Colors.white.withValues(alpha: 0.2),
-              width: 1.5,
-            ),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.2), width: 1.5),
             boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.1),
-                blurRadius: 20,
-                offset: const Offset(0, 8),
-              ),
+              BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 20, offset: const Offset(0, 8)),
             ],
           ),
           child: Column(
@@ -892,10 +780,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                         ? const SizedBox(
                             width: 16,
                             height: 16,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
+                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                           )
                         : Icon(icon, color: Colors.white, size: 16),
                   ),
@@ -945,20 +830,11 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: isProfitable
-                  ? [
-                      const Color(0xFF1B4D3E).withValues(alpha: 0.7),
-                      const Color(0xFF2E7D32).withValues(alpha: 0.7),
-                    ]
-                  : [
-                      const Color(0xFF1B4D3E).withValues(alpha: 0.7),
-                      const Color(0xFF2E7D32).withValues(alpha: 0.7),
-                    ],
+                  ? [const Color(0xFF1B4D3E).withValues(alpha: 0.7), const Color(0xFF2E7D32).withValues(alpha: 0.7)]
+                  : [const Color(0xFF1B4D3E).withValues(alpha: 0.7), const Color(0xFF2E7D32).withValues(alpha: 0.7)],
             ),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: Colors.white.withValues(alpha: 0.2),
-              width: 1.5,
-            ),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.2), width: 1.5),
           ),
           child: Row(
             children: [
@@ -967,10 +843,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 5,
-                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                       decoration: BoxDecoration(
                         color: Colors.white.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(16),
@@ -979,9 +852,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(
-                            isProfitable
-                                ? Icons.trending_up_rounded
-                                : Icons.trending_down_rounded,
+                            isProfitable ? Icons.trending_up_rounded : Icons.trending_down_rounded,
                             color: Colors.white,
                             size: 14,
                           ),
@@ -1034,9 +905,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                 ),
                 child: Center(
                   child: Icon(
-                    isProfitable
-                        ? Icons.thumb_up_rounded
-                        : Icons.thumb_down_rounded,
+                    isProfitable ? Icons.thumb_up_rounded : Icons.thumb_down_rounded,
                     color: Colors.white,
                     size: 36,
                   ),
@@ -1056,11 +925,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
+          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4)),
         ],
       ),
       child: Column(
@@ -1080,10 +945,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
               ),
               if (data.lowStockCount > 0)
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: Colors.orange.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(8),
@@ -1091,11 +953,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(
-                        Icons.warning_amber_rounded,
-                        color: Colors.orange,
-                        size: 14,
-                      ),
+                      const Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 14),
                       const SizedBox(width: 4),
                       Text(
                         '${data.lowStockCount} low stock',
@@ -1126,11 +984,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                     children: [
                       Text(
                         'Stock Value',
-                        style: TextStyle(
-                          color: Colors.grey[600],
-                          fontSize: 11,
-                          fontFamily: 'Literata',
-                        ),
+                        style: TextStyle(color: Colors.grey[600], fontSize: 11, fontFamily: 'Literata'),
                       ),
                       const SizedBox(height: 4),
                       AnimatedSwitcher(
@@ -1163,11 +1017,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                     children: [
                       Text(
                         'Total Products',
-                        style: TextStyle(
-                          color: Colors.grey[600],
-                          fontSize: 11,
-                          fontFamily: 'Literata',
-                        ),
+                        style: TextStyle(color: Colors.grey[600], fontSize: 11, fontFamily: 'Literata'),
                       ),
                       const SizedBox(height: 4),
                       AnimatedSwitcher(
@@ -1201,11 +1051,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
+          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4)),
         ],
       ),
       child: Column(
@@ -1244,11 +1090,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
           const SizedBox(height: 12),
           Text(
             'Payment tracking and receivables management will be available in the next update.',
-            style: TextStyle(
-              color: Colors.grey[600],
-              fontSize: 12,
-              fontFamily: 'Literata',
-            ),
+            style: TextStyle(color: Colors.grey[600], fontSize: 12, fontFamily: 'Literata'),
           ),
         ],
       ),
@@ -1260,11 +1102,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
       decoration: BoxDecoration(
         color: Colors.white,
         boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 20,
-            offset: const Offset(0, -4),
-          ),
+          BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 20, offset: const Offset(0, -4)),
         ],
       ),
       child: SafeArea(
@@ -1295,9 +1133,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
           margin: const EdgeInsets.symmetric(horizontal: 2),
           decoration: BoxDecoration(
-            color: isSelected
-                ? const Color(0xFF1B4D3E).withOpacity(0.1)
-                : Colors.transparent,
+            color: isSelected ? const Color(0xFF1B4D3E).withOpacity(0.1) : Colors.transparent,
             borderRadius: BorderRadius.circular(10),
           ),
           child: Column(
@@ -1316,9 +1152,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  color: isSelected
-                      ? const Color(0xFF1B4D3E)
-                      : Colors.grey[400],
+                  color: isSelected ? const Color(0xFF1B4D3E) : Colors.grey[400],
                   fontSize: 8,
                   fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                   fontFamily: 'Literata',
@@ -1334,56 +1168,24 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
   void _navigateToPage(int index) {
     _resetSessionTimer();
     setState(() => _selectedIndex = index);
-  }
-
-  Widget _buildComingSoonPage(String pageName) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFB),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF1B4D3E),
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        title: Text(
-          pageName,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 20,
-            fontWeight: FontWeight.w600,
-            fontFamily: 'Literata',
-          ),
-        ),
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.construction_rounded, size: 80, color: Colors.grey[400]),
-            const SizedBox(height: 24),
-            Text(
-              '$pageName Coming Soon',
-              style: TextStyle(
-                color: Colors.grey[700],
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
-                fontFamily: 'Literata',
-              ),
-            ),
-            const SizedBox(height: 12),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 40),
-              child: Text(
-                'This feature is under development and will be available soon.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Colors.grey[600],
-                  fontSize: 14,
-                  fontFamily: 'Literata',
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+    
+    switch (index) {
+      case 0:
+        break;
+      case 1:
+        Navigator.push(context, MaterialPageRoute(builder: (_) => const CustomerPage()));
+        break;
+      case 2:
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Availability page coming soon')),
+        );
+        break;
+      case 3:
+        Navigator.push(context, MaterialPageRoute(builder: (_) => const BillingPage()));
+        break;
+      case 4:
+        Navigator.push(context, MaterialPageRoute(builder: (_) => const PurchasePage()));
+        break;
+    }
   }
 }
