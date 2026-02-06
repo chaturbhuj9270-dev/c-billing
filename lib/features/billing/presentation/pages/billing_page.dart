@@ -990,25 +990,28 @@ class _BillingPageState extends State<BillingPage> {
   Widget _buildAddItemsButton() {
     return Padding(
       padding: const EdgeInsets.all(16),
-      child: ElevatedButton.icon(
-        onPressed: _showAddItemsPopup,
-        icon: const Icon(Icons.add_shopping_cart, size: 20),
-        label: const Text(
-          'Add Items to Bill',
-          style: TextStyle(
-            fontFamily: 'Literata',
-            fontWeight: FontWeight.w600,
-            fontSize: 15,
+      child: SizedBox(
+        width: double.infinity,
+        child: ElevatedButton.icon(
+          onPressed: _showAddItemsPopup,
+          icon: const Icon(Icons.add_shopping_cart, size: 20),
+          label: const Text(
+            'Add Items to Bill',
+            style: TextStyle(
+              fontFamily: 'Literata',
+              fontWeight: FontWeight.w600,
+              fontSize: 15,
+            ),
           ),
-        ),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF1B4D3E),
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(vertical: 14),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF1B4D3E),
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            elevation: 0,
           ),
-          elevation: 0,
         ),
       ),
     );
