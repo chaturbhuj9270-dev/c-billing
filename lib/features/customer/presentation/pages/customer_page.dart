@@ -692,28 +692,53 @@ class _CustomerPageState extends State<CustomerPage> {
       backgroundColor: const Color(0xFFF8F9FA),
       floatingActionButton: Container(
         decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
           gradient: const LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Color(0xFF1B4D3E), Color(0xFF0F3B2F)],
+            colors: [Color(0xFF1B4D3E), Color(0xFF2E7D32)],
           ),
-          borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
               color: const Color(0xFF1B4D3E).withOpacity(0.4),
-              blurRadius: 20,
-              offset: const Offset(0, 8),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
+            ),
+            BoxShadow(
+              color: const Color(0xFF1B4D3E).withOpacity(0.2),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
             ),
           ],
         ),
-        child: FloatingActionButton(
-          onPressed: () {
-            print('[DEBUG] FAB pressed to add customer');
-            _showAddCustomerBottomSheet();
-          },
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          child: const Icon(Icons.add, color: Colors.white),
+        child: Material(
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(20),
+          child: InkWell(
+            onTap: () {
+              print('[DEBUG] FAB pressed to add customer');
+              _showAddCustomerBottomSheet();
+            },
+            borderRadius: BorderRadius.circular(20),
+            splashColor: Colors.white.withOpacity(0.2),
+            highlightColor: Colors.white.withOpacity(0.1),
+            child: Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: Colors.white.withOpacity(0.2),
+                  width: 1,
+                ),
+              ),
+              child: const Icon(
+                Icons.add_rounded,
+                color: Colors.white,
+                size: 28,
+              ),
+            ),
+          ),
         ),
       ),
       body: _filteredCustomers.isEmpty
