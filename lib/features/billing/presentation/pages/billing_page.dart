@@ -1,4 +1,4 @@
-import 'dart:async' show unawaited;
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -2147,6 +2147,7 @@ class _AddItemsBottomSheetState extends State<_AddItemsBottomSheet> {
   final _searchController = TextEditingController();
   final _indexNoController = TextEditingController();
   final _indexNoFocusNode = FocusNode();
+  Timer? _debounceTimer;
 
   // Track quantities for each product in this session
   Map<String, int> _quantities = {};
@@ -2171,10 +2172,15 @@ class _AddItemsBottomSheetState extends State<_AddItemsBottomSheet> {
       _quantities[item.productId] = item.quantity;
       _prices[item.productId] = item.sellingPrice;
     }
+
+    // Add listener for auto-add on stop typing
+    _indexNoController.addListener(_onIndexNoChanged);
   }
 
   @override
   void dispose() {
+    _debounceTimer?.cancel();
+    _indexNoController.removeListener(_onIndexNoChanged);
     _searchController.dispose();
     _indexNoController.dispose();
     _indexNoFocusNode.dispose();
@@ -2213,6 +2219,19 @@ class _AddItemsBottomSheetState extends State<_AddItemsBottomSheet> {
     // Clear input and keep focus for next entry
     _indexNoController.clear();
     _indexNoFocusNode.requestFocus();
+  }
+
+  void _onIndexNoChanged() {
+    // Cancel existing timer
+    _debounceTimer?.cancel();
+
+    // Don't auto-add if empty
+    if (_indexNoController.text.trim().isEmpty) return;
+
+    // Start new timer for auto-add after 800ms pause
+    _debounceTimer = Timer(const Duration(milliseconds: 800), () {
+      _addProductByIndexNo();
+    });
   }
 
   void _filterProducts(String query) {
