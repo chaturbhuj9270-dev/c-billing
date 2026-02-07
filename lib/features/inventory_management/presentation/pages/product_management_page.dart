@@ -918,12 +918,14 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: !widget.isEmbedded,
+        iconTheme: const IconThemeData(color: Colors.white),
         title: const Text(
           'Product Management',
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w600,
             fontFamily: 'Literata',
+            color: Colors.white,
           ),
         ),
         backgroundColor: const Color(0xFF1B4D3E),
