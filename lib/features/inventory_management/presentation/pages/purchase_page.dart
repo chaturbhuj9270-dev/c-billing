@@ -214,10 +214,8 @@ class _PurchasePageState extends State<PurchasePage>
 
   Future<void> _addNewProduct() async {
     final nameController = TextEditingController();
-    final categoryController = TextEditingController();
     final purchasePriceController = TextEditingController();
     final salesPriceController = TextEditingController();
-    String selectedCompanyName = '';
 
     showDialog(
       context: context,
@@ -256,51 +254,6 @@ class _PurchasePageState extends State<PurchasePage>
                         width: 2,
                       ),
                     ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: categoryController,
-                  decoration: InputDecoration(
-                    labelText: 'Category',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: Color(0xFF1B4D3E),
-                        width: 2,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                // Company selection dropdown
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey[300]!),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: DropdownButton<String>(
-                    isExpanded: true,
-                    underline: const SizedBox.shrink(),
-                    hint: const Text('Select Company'),
-                    value: selectedCompanyName.isEmpty
-                        ? null
-                        : selectedCompanyName,
-                    items: _companies.map((company) {
-                      return DropdownMenuItem<String>(
-                        value: company['companyName'] as String,
-                        child: Text(company['companyName'] as String),
-                      );
-                    }).toList(),
-                    onChanged: (value) {
-                      setDialogState(() {
-                        selectedCompanyName = value ?? '';
-                      });
-                    },
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -358,8 +311,8 @@ class _PurchasePageState extends State<PurchasePage>
                       try {
                         await _inventoryService.createProduct(
                           name: nameController.text.trim(),
-                          companyName: selectedCompanyName,
-                          category: categoryController.text.trim(),
+                          companyName: '', // No company selection
+                          category: '', // No category required
                           purchasePrice: double.parse(
                             purchasePriceController.text,
                           ),
