@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'dart:ui';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../customer/presentation/pages/customer_page.dart';
 import '../../../supplier/presentation/pages/supplier_page.dart';
 import '../../../company/presentation/pages/company_page.dart';
@@ -14,6 +15,7 @@ import '../../../availability/presentation/pages/availability_page.dart';
 import '../../../../core/services/session_manager.dart';
 import '../../domain/entities/dashboard_summary.dart';
 import '../../domain/repositories/dashboard_repository_interface.dart';
+import '../../data/repositories/dashboard_repository.dart';
 import '../cubit/optimized_dashboard_cubit.dart';
 import '../cubit/optimized_dashboard_state.dart';
 import '../widgets/shimmer_widgets.dart';
@@ -55,6 +57,15 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
 
+  // Real data for quick insights
+  final DashboardRepository _repository = DashboardRepository();
+  List<Map<String, dynamic>> _upcomingPayments = [];
+  List<Map<String, dynamic>> _topProducts = [];
+  List<Map<String, dynamic>> _pendingPayments = [];
+  List<Map<String, dynamic>> _lastDues = [];
+  List<Map<String, dynamic>> _lowStockItems = [];
+  bool _isLoadingExpandableData = false;
+
   @override
   void initState() {
     super.initState();
@@ -70,6 +81,42 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
       curve: Curves.easeOut,
     );
     _fadeController.forward();
+    
+    // Load expandable section data
+    _loadExpandableSectionData();
+  }
+  
+  /// Load data for all expandable sections in parallel
+  Future<void> _loadExpandableSectionData() async {
+    if (_isLoadingExpandableData) return;
+    
+    setState(() => _isLoadingExpandableData = true);
+    
+    try {
+      final results = await Future.wait([
+        _repository.getUpcomingPaymentDues(limit: 5),
+        _repository.getTopSellingProducts(limit: 5),
+        _repository.getCustomersWithPendingBalance(limit: 5),
+        _repository.getRecentPendingBills(limit: 5),
+        _repository.getLowStockProducts(limit: 5),
+      ]);
+      
+      if (mounted) {
+        setState(() {
+          _upcomingPayments = results[0];
+          _topProducts = results[1];
+          _pendingPayments = results[2];
+          _lastDues = results[3];
+          _lowStockItems = results[4];
+          _isLoadingExpandableData = false;
+        });
+      }
+    } catch (e) {
+      print('[OptimizedDashboardPage] Error loading expandable data: $e');
+      if (mounted) {
+        setState(() => _isLoadingExpandableData = false);
+      }
+    }
   }
 
   @override
@@ -367,6 +414,73 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
           _buildInventoryCard(data, isRefreshing),
           const SizedBox(height: 16),
           _buildPaymentsCard(),
+          const SizedBox(height: 28),
+          // Quick Insights Section - Glassy Stats
+          _buildSectionHeader(
+            title: 'Quick Insights',
+            subtitle: 'At a glance',
+            icon: Icons.insights_outlined,
+          ),
+          const SizedBox(height: 16),
+          // First row - 3 cards
+          Row(
+            children: [
+              Expanded(
+                child: _buildGlassyStatCard(
+                  title: 'Upcoming',
+                  count: _upcomingPayments.length,
+                  icon: Icons.schedule_rounded,
+                  gradientColors: const [Color(0xFF4A90E2), Color(0xFF7B68EE)],
+                  onTap: () => _showQuickInsightDetail('Upcoming Payments', _upcomingPayments, 'upcoming'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildGlassyStatCard(
+                  title: 'Top Products',
+                  count: _topProducts.length,
+                  icon: Icons.star_rounded,
+                  gradientColors: const [Color(0xFFFFB74D), Color(0xFFFF9800)],
+                  onTap: () => _showQuickInsightDetail('Top Products', _topProducts, 'products'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildGlassyStatCard(
+                  title: 'Pending',
+                  count: _pendingPayments.length,
+                  icon: Icons.pending_actions_rounded,
+                  gradientColors: const [Color(0xFFEF5350), Color(0xFFE53935)],
+                  onTap: () => _showQuickInsightDetail('Pending Payments', _pendingPayments, 'pending'),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          // Second row - 2 cards
+          Row(
+            children: [
+              Expanded(
+                child: _buildGlassyStatCard(
+                  title: 'Last Dues',
+                  count: _lastDues.length,
+                  icon: Icons.receipt_long_rounded,
+                  gradientColors: const [Color(0xFF9575CD), Color(0xFF7E57C2)],
+                  onTap: () => _showQuickInsightDetail('Last Dues', _lastDues, 'dues'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildGlassyStatCard(
+                  title: 'Low Stock',
+                  count: _lowStockItems.length,
+                  icon: Icons.shopping_cart_rounded,
+                  gradientColors: const [Color(0xFF26A69A), Color(0xFF00897B)],
+                  onTap: () => _showQuickInsightDetail('Low Stock Items', _lowStockItems, 'lowstock'),
+                ),
+              ),
+            ],
+          ),
           const SizedBox(height: 24),
           if (state is DashboardErrorState) _buildErrorBanner(state),
         ],
@@ -1417,5 +1531,490 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
   void _navigateToPage(int index) {
     _resetSessionTimer();
     setState(() => _selectedIndex = index);
+  }
+
+  // ============ GLASSY QUICK STATS WIDGETS ============
+
+  Widget _buildGlassyStatCard({
+    required String title,
+    required int count,
+    required IconData icon,
+    required List<Color> gradientColors,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  gradientColors[0].withOpacity(0.15),
+                  gradientColors[1].withOpacity(0.08),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: gradientColors[0].withOpacity(0.3),
+                width: 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: gradientColors[0].withOpacity(0.1),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: gradientColors,
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: gradientColors[0].withOpacity(0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Icon(icon, color: Colors.white, size: 20),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  count.toString(),
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: gradientColors[0],
+                    fontFamily: 'Literata',
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  title,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.grey[700],
+                    fontFamily: 'Literata',
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showQuickInsightDetail(String title, List<Map<String, dynamic>> data, String type) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.6,
+        minChildSize: 0.3,
+        maxChildSize: 0.9,
+        builder: (context, scrollController) => Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            children: [
+              // Handle bar
+              Container(
+                margin: const EdgeInsets.only(top: 12),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              // Title
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: Row(
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF1B4D3E),
+                        fontFamily: 'Literata',
+                      ),
+                    ),
+                    const Spacer(),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        '${data.length} items',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF1B4D3E),
+                          fontFamily: 'Literata',
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1),
+              // Content
+              Expanded(
+                child: data.isEmpty
+                    ? _buildEmptyState('No data available')
+                    : ListView.builder(
+                        controller: scrollController,
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        itemCount: data.length,
+                        itemBuilder: (context, index) {
+                          final item = data[index];
+                          return _buildInsightListItem(item, type, index);
+                        },
+                      ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInsightListItem(Map<String, dynamic> item, String type, int index) {
+    switch (type) {
+      case 'upcoming':
+      case 'pending':
+      case 'dues':
+        return _buildPaymentListItem(
+          customerName: item['customerName'] ?? item['name'] ?? 'Unknown',
+          amount: ((item['pendingAmount'] ?? item['currentPendingAmount'] ?? item['pendingBalance'] ?? 0) as num).toDouble(),
+          dueDate: _parseDate(item['dueDate'] ?? item['billDate']),
+          isPending: type != 'dues',
+        );
+      case 'products':
+        return _buildProductRankItem(
+          rank: index + 1,
+          name: item['name'] ?? 'Unknown',
+          quantity: (item['quantity'] ?? 0) as int,
+          revenue: ((item['revenue'] ?? 0) as num).toDouble(),
+        );
+      case 'lowstock':
+        return _buildLowStockItem(
+          name: item['name'] ?? 'Unknown',
+          currentStock: (item['stock'] ?? 0) as int,
+          minStock: 10,
+        );
+      default:
+        return const SizedBox.shrink();
+    }
+  }
+
+  DateTime? _parseDate(dynamic value) {
+    if (value == null) return null;
+    if (value is DateTime) return value;
+    if (value is Timestamp) return value.toDate();
+    if (value is String) {
+      try {
+        return DateTime.parse(value);
+      } catch (_) {
+        return null;
+      }
+    }
+    return null;
+  }
+
+  Widget _buildPaymentListItem({
+    required String customerName,
+    required double amount,
+    DateTime? dueDate,
+    required bool isPending,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(color: Colors.grey[200]!, width: 1),
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: isPending
+                  ? Colors.orange.withOpacity(0.1)
+                  : Colors.green.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(
+              isPending ? Icons.schedule : Icons.check_circle_outline,
+              color: isPending ? Colors.orange : Colors.green,
+              size: 18,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  customerName,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    fontFamily: 'Literata',
+                  ),
+                ),
+                if (dueDate != null)
+                  Text(
+                    'Due: ${_formatDate(dueDate)}',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Colors.grey[600],
+                      fontFamily: 'Literata',
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          Text(
+            '₹${_formatAmount(amount)}',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: isPending ? Colors.orange[700] : Colors.green[700],
+              fontFamily: 'Literata',
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProductRankItem({
+    required int rank,
+    required String name,
+    required int quantity,
+    required double revenue,
+  }) {
+    final medalColors = [Colors.amber, Colors.grey[400]!, Colors.brown[300]!];
+    final showMedal = rank <= 3;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(color: Colors.grey[200]!, width: 1),
+        ),
+      ),
+      child: Row(
+        children: [
+          if (showMedal)
+            Container(
+              width: 28,
+              height: 28,
+              decoration: BoxDecoration(
+                color: medalColors[rank - 1].withOpacity(0.2),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.emoji_events,
+                color: medalColors[rank - 1],
+                size: 16,
+              ),
+            )
+          else
+            Container(
+              width: 28,
+              height: 28,
+              alignment: Alignment.center,
+              child: Text(
+                '#$rank',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey[600],
+                  fontFamily: 'Literata',
+                ),
+              ),
+            ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  name,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    fontFamily: 'Literata',
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                Text(
+                  '$quantity units sold',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Colors.grey[600],
+                    fontFamily: 'Literata',
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Text(
+            '₹${_formatAmount(revenue)}',
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF1B4D3E),
+              fontFamily: 'Literata',
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLowStockItem({
+    required String name,
+    required int currentStock,
+    required int minStock,
+  }) {
+    final isOutOfStock = currentStock == 0;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(color: Colors.grey[200]!, width: 1),
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: isOutOfStock
+                  ? Colors.red.withOpacity(0.1)
+                  : Colors.orange.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(
+              isOutOfStock ? Icons.error_outline : Icons.warning_amber_rounded,
+              color: isOutOfStock ? Colors.red : Colors.orange,
+              size: 18,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  name,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    fontFamily: 'Literata',
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                Text(
+                  isOutOfStock ? 'Out of stock!' : 'Only $currentStock left',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: isOutOfStock ? Colors.red : Colors.orange[700],
+                    fontWeight: FontWeight.w500,
+                    fontFamily: 'Literata',
+                  ),
+                ),
+              ],
+            ),
+          ),
+          TextButton(
+            onPressed: () {
+              // Navigate to order/restock
+            },
+            style: TextButton.styleFrom(
+              backgroundColor: const Color(0xFF1B4D3E).withOpacity(0.1),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: const Text(
+              'Order',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF1B4D3E),
+                fontFamily: 'Literata',
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(String message) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        children: [
+          Icon(
+            Icons.inbox_outlined,
+            size: 40,
+            color: Colors.grey[400],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            message,
+            style: TextStyle(
+              fontSize: 13,
+              color: Colors.grey[600],
+              fontFamily: 'Literata',
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatDate(DateTime date) {
+    return '${date.day}/${date.month}/${date.year}';
   }
 }
