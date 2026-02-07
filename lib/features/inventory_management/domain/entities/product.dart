@@ -1,5 +1,7 @@
 class Product {
   final String id;
+  final int
+  indexNo; // Unique index number for quick lookup (e.g., 101, 102, 103)
   final String name;
   final String companyName;
   final String category;
@@ -11,6 +13,7 @@ class Product {
 
   Product({
     required this.id,
+    required this.indexNo,
     required this.name,
     required this.companyName,
     required this.category,
@@ -26,13 +29,14 @@ class Product {
     try {
       return Product(
         id: (json['id'] ?? '') as String,
+        indexNo: (json['indexNo'] ?? 0) as int,
         name: (json['name'] ?? '') as String,
         companyName: (json['companyName'] ?? '') as String,
         category: (json['category'] ?? '') as String,
         purchasePrice: ((json['purchasePrice'] ?? 0) as num).toDouble(),
         salesPrice: ((json['salesPrice'] ?? 0) as num).toDouble(),
         currentStock: (json['currentStock'] ?? 0) as int,
-        createdAt: json['createdAt'] != null 
+        createdAt: json['createdAt'] != null
             ? DateTime.parse(json['createdAt'] as String)
             : DateTime.now(),
         updatedAt: json['updatedAt'] != null
@@ -45,6 +49,7 @@ class Product {
       // Return a default product to prevent crashes
       return Product(
         id: json['id']?.toString() ?? '',
+        indexNo: 0,
         name: json['name']?.toString() ?? 'Unknown Product',
         companyName: json['companyName']?.toString() ?? '',
         category: json['category']?.toString() ?? 'Uncategorized',
@@ -61,6 +66,7 @@ class Product {
   Map<String, dynamic> toJson() {
     return {
       'id': id,
+      'indexNo': indexNo,
       'name': name,
       'companyName': companyName,
       'category': category,
@@ -75,6 +81,7 @@ class Product {
   // Copy with modifications
   Product copyWith({
     String? id,
+    int? indexNo,
     String? name,
     String? companyName,
     String? category,
@@ -86,6 +93,7 @@ class Product {
   }) {
     return Product(
       id: id ?? this.id,
+      indexNo: indexNo ?? this.indexNo,
       name: name ?? this.name,
       companyName: companyName ?? this.companyName,
       category: category ?? this.category,

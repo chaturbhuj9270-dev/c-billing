@@ -11,7 +11,7 @@ import '../../domain/entities/product.dart';
 
 class ProductManagementPage extends StatefulWidget {
   final bool isEmbedded;
-  
+
   const ProductManagementPage({super.key, this.isEmbedded = false});
 
   @override
@@ -44,9 +44,18 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
     super.initState();
     _firestore = FirebaseFirestore.instance;
     _inventoryService = InventoryService(
-      productRepository: FirebaseProductRepository(firestore: _firestore, auth: _auth),
-      stockRepository: FirebaseStockRepository(firestore: _firestore, auth: _auth),
-      purchaseRepository: FirebasePurchaseRepository(firestore: _firestore, auth: _auth),
+      productRepository: FirebaseProductRepository(
+        firestore: _firestore,
+        auth: _auth,
+      ),
+      stockRepository: FirebaseStockRepository(
+        firestore: _firestore,
+        auth: _auth,
+      ),
+      purchaseRepository: FirebasePurchaseRepository(
+        firestore: _firestore,
+        auth: _auth,
+      ),
     );
     _scrollController = ScrollController();
     _scrollController.addListener(_onScroll);
@@ -68,13 +77,16 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
   }
 
   void _loadMoreProducts() {
-    if (!_isLoadingMore && _displayedProducts.length < _filteredProducts.length) {
+    if (!_isLoadingMore &&
+        _displayedProducts.length < _filteredProducts.length) {
       setState(() => _isLoadingMore = true);
       Future.delayed(const Duration(milliseconds: 300), () {
         if (mounted) {
           final startIndex = _displayedProducts.length;
-          final endIndex =
-              (startIndex + _pageSize).clamp(0, _filteredProducts.length);
+          final endIndex = (startIndex + _pageSize).clamp(
+            0,
+            _filteredProducts.length,
+          );
           setState(() {
             _displayedProducts.addAll(
               _filteredProducts.sublist(startIndex, endIndex),
@@ -118,7 +130,7 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
       if (_products.isEmpty) {
         setState(() => _isLoading = true);
       }
-      
+
       print('[DEBUG] Loading products from Firestore...');
       final currentUser = _auth.currentUser;
       if (currentUser == null) {
@@ -126,11 +138,11 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
         setState(() => _isLoading = false);
         return;
       }
-      
+
       print('[DEBUG] Fetching products for user: ${currentUser.uid}');
       final products = await _inventoryService.getAllProducts();
       print('[DEBUG] Loaded ${products.length} products from Firestore');
-      
+
       if (mounted) {
         setState(() {
           _products = products;
@@ -145,9 +157,9 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
       print('[ERROR] Failed to load products: $e');
       if (mounted) {
         setState(() => _isLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading products: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error loading products: $e')));
       }
     }
   }
@@ -162,7 +174,9 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
 
       // Category filter (case-insensitive)
       if (_filterCategory.isNotEmpty &&
-          !product.category.toLowerCase().contains(_filterCategory.toLowerCase())) {
+          !product.category.toLowerCase().contains(
+            _filterCategory.toLowerCase(),
+          )) {
         return false;
       }
 
@@ -273,7 +287,9 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                 const SizedBox(height: 12),
                 // Purchase Price - Read Only (Updated from Purchase Page)
                 TextField(
-                  controller: TextEditingController(text: product.purchasePrice.toString()),
+                  controller: TextEditingController(
+                    text: product.purchasePrice.toString(),
+                  ),
                   enabled: false,
                   decoration: InputDecoration(
                     labelText: 'Purchase Price (Read-Only)',
@@ -293,7 +309,9 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                 const SizedBox(height: 12),
                 // Sales Price - Read Only (Updated from Purchase Page)
                 TextField(
-                  controller: TextEditingController(text: product.salesPrice.toString()),
+                  controller: TextEditingController(
+                    text: product.salesPrice.toString(),
+                  ),
                   enabled: false,
                   decoration: InputDecoration(
                     labelText: 'Sales Price (Read-Only)',
@@ -313,7 +331,9 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                 const SizedBox(height: 12),
                 // Current Stock - Read Only
                 TextField(
-                  controller: TextEditingController(text: product.currentStock.toString()),
+                  controller: TextEditingController(
+                    text: product.currentStock.toString(),
+                  ),
                   enabled: false,
                   decoration: InputDecoration(
                     labelText: 'Current Stock (Read-Only)',
@@ -338,10 +358,7 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
               onPressed: () => Navigator.pop(context),
               child: const Text(
                 'Cancel',
-                style: TextStyle(
-                  fontFamily: 'Literata',
-                  color: Colors.grey,
-                ),
+                style: TextStyle(fontFamily: 'Literata', color: Colors.grey),
               ),
             ),
             ElevatedButton(
@@ -363,7 +380,9 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                     setState(() {
                       _products[index] = updatedProduct;
                       _applyFilters();
-                      _displayedProducts = _filteredProducts.take(_pageSize).toList();
+                      _displayedProducts = _filteredProducts
+                          .take(_pageSize)
+                          .toList();
                     });
                     _cacheDataSource.saveProducts(_products);
                   }
@@ -372,15 +391,17 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                   if (mounted) {
                     Navigator.pop(context);
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Product updated successfully')),
+                      const SnackBar(
+                        content: Text('Product updated successfully'),
+                      ),
                     );
                   }
                 } catch (e) {
                   // Reload on error to revert optimistic update
                   _loadProducts();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Error: $e')),
-                  );
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(SnackBar(content: Text('Error: $e')));
                 }
               },
               style: ElevatedButton.styleFrom(
@@ -388,10 +409,7 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
               ),
               child: const Text(
                 'Update',
-                style: TextStyle(
-                  fontFamily: 'Literata',
-                  color: Colors.white,
-                ),
+                style: TextStyle(fontFamily: 'Literata', color: Colors.white),
               ),
             ),
           ],
@@ -420,7 +438,9 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                 setState(() {
                   _products.removeWhere((p) => p.id == product.id);
                   _applyFilters();
-                  _displayedProducts = _filteredProducts.take(_pageSize).toList();
+                  _displayedProducts = _filteredProducts
+                      .take(_pageSize)
+                      .toList();
                 });
                 _cacheDataSource.saveProducts(_products);
 
@@ -428,20 +448,20 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                 if (mounted) {
                   Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Product deleted successfully')),
+                    const SnackBar(
+                      content: Text('Product deleted successfully'),
+                    ),
                   );
                 }
               } catch (e) {
                 // Reload on error to revert optimistic delete
                 _loadProducts();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Error: $e')),
-                );
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(SnackBar(content: Text('Error: $e')));
               }
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-            ),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             child: const Text('Delete'),
           ),
         ],
@@ -451,10 +471,18 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
 
   void _showFilterDialog() {
     final nameController = TextEditingController(text: _filterName);
-    final minPriceController = TextEditingController(text: _filterMinPrice?.toString() ?? '');
-    final maxPriceController = TextEditingController(text: _filterMaxPrice?.toString() ?? '');
-    final minStockController = TextEditingController(text: _filterMinStock?.toString() ?? '');
-    final maxStockController = TextEditingController(text: _filterMaxStock?.toString() ?? '');
+    final minPriceController = TextEditingController(
+      text: _filterMinPrice?.toString() ?? '',
+    );
+    final maxPriceController = TextEditingController(
+      text: _filterMaxPrice?.toString() ?? '',
+    );
+    final minStockController = TextEditingController(
+      text: _filterMinStock?.toString() ?? '',
+    );
+    final maxStockController = TextEditingController(
+      text: _filterMaxStock?.toString() ?? '',
+    );
     String? selectedCategory = _filterCategory.isEmpty ? null : _filterCategory;
     final allCategories = _getAllCategories();
 
@@ -548,153 +576,144 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                         child: TextField(
                           controller: minPriceController,
                           keyboardType: TextInputType.number,
-                        decoration: InputDecoration(
-                          labelText: 'Min',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
-                              color: Color(0xFF1B4D3E),
-                              width: 2,
+                          decoration: InputDecoration(
+                            labelText: 'Min',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
                             ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(
+                                color: Color(0xFF1B4D3E),
+                                width: 2,
+                              ),
+                            ),
+                            prefixIcon: const Icon(Icons.trending_down),
                           ),
-                          prefixIcon: const Icon(Icons.trending_down),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: TextField(
-                        controller: maxPriceController,
-                        keyboardType: TextInputType.number,
-                        decoration: InputDecoration(
-                          labelText: 'Max',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
-                              color: Color(0xFF1B4D3E),
-                              width: 2,
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: TextField(
+                          controller: maxPriceController,
+                          keyboardType: TextInputType.number,
+                          decoration: InputDecoration(
+                            labelText: 'Max',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
                             ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(
+                                color: Color(0xFF1B4D3E),
+                                width: 2,
+                              ),
+                            ),
+                            prefixIcon: const Icon(Icons.trending_up),
                           ),
-                          prefixIcon: const Icon(Icons.trending_up),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  'Stock Range (Units)',
-                  style: TextStyle(
-                    fontFamily: 'Literata',
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
+                    ],
                   ),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: minStockController,
-                        keyboardType: TextInputType.number,
-                        decoration: InputDecoration(
-                          labelText: 'Min',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
-                              color: Color(0xFF1B4D3E),
-                              width: 2,
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Stock Range (Units)',
+                    style: TextStyle(
+                      fontFamily: 'Literata',
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: minStockController,
+                          keyboardType: TextInputType.number,
+                          decoration: InputDecoration(
+                            labelText: 'Min',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
                             ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(
+                                color: Color(0xFF1B4D3E),
+                                width: 2,
+                              ),
+                            ),
+                            prefixIcon: const Icon(Icons.inventory_2),
                           ),
-                          prefixIcon: const Icon(Icons.inventory_2),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: TextField(
-                        controller: maxStockController,
-                        keyboardType: TextInputType.number,
-                        decoration: InputDecoration(
-                          labelText: 'Max',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
-                              color: Color(0xFF1B4D3E),
-                              width: 2,
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: TextField(
+                          controller: maxStockController,
+                          keyboardType: TextInputType.number,
+                          decoration: InputDecoration(
+                            labelText: 'Max',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
                             ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(
+                                color: Color(0xFF1B4D3E),
+                                width: 2,
+                              ),
+                            ),
+                            prefixIcon: const Icon(Icons.inventory),
                           ),
-                          prefixIcon: const Icon(Icons.inventory),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-              ],
+                    ],
+                  ),
+                ],
+              ),
             ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  _clearFilters();
+                  Navigator.pop(context);
+                },
+                child: const Text(
+                  'Clear All',
+                  style: TextStyle(fontFamily: 'Literata', color: Colors.red),
+                ),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text(
+                  'Cancel',
+                  style: TextStyle(fontFamily: 'Literata', color: Colors.grey),
+                ),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  this.setState(() {
+                    _filterName = nameController.text;
+                    _filterCategory = selectedCategory ?? '';
+                    _filterMinPrice = double.tryParse(minPriceController.text);
+                    _filterMaxPrice = double.tryParse(maxPriceController.text);
+                    _filterMinStock = int.tryParse(minStockController.text);
+                    _filterMaxStock = int.tryParse(maxStockController.text);
+                    _applyFilters();
+                  });
+                  Navigator.pop(context);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF1B4D3E),
+                ),
+                child: const Text(
+                  'Apply',
+                  style: TextStyle(fontFamily: 'Literata', color: Colors.white),
+                ),
+              ),
+            ],
           ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                _clearFilters();
-                Navigator.pop(context);
-              },
-              child: const Text(
-                'Clear All',
-                style: TextStyle(
-                  fontFamily: 'Literata',
-                  color: Colors.red,
-                ),
-              ),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text(
-                'Cancel',
-                style: TextStyle(
-                  fontFamily: 'Literata',
-                  color: Colors.grey,
-                ),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                this.setState(() {
-                  _filterName = nameController.text;
-                  _filterCategory = selectedCategory ?? '';
-                  _filterMinPrice = double.tryParse(minPriceController.text);
-                  _filterMaxPrice = double.tryParse(maxPriceController.text);
-                  _filterMinStock = int.tryParse(minStockController.text);
-                  _filterMaxStock = int.tryParse(maxStockController.text);
-                  _applyFilters();
-                });
-                Navigator.pop(context);
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF1B4D3E),
-              ),
-              child: const Text(
-                'Apply',
-                style: TextStyle(
-                  fontFamily: 'Literata',
-                  color: Colors.white,
-                ),
-              ),
-            ),
-          ],
-        ),
         ),
       ),
     );
@@ -827,10 +846,7 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
               onPressed: () => Navigator.pop(context),
               child: const Text(
                 'Cancel',
-                style: TextStyle(
-                  fontFamily: 'Literata',
-                  color: Colors.grey,
-                ),
+                style: TextStyle(fontFamily: 'Literata', color: Colors.grey),
               ),
             ),
             ElevatedButton(
@@ -838,6 +854,7 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                 try {
                   final newProduct = Product(
                     id: 'temp_${DateTime.now().millisecondsSinceEpoch}',
+                    indexNo: 0, // Will be generated by the service
                     name: nameController.text,
                     companyName: '',
                     category: categoryController.text,
@@ -852,7 +869,9 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                   setState(() {
                     _products.insert(0, newProduct);
                     _applyFilters();
-                    _displayedProducts = _filteredProducts.take(_pageSize).toList();
+                    _displayedProducts = _filteredProducts
+                        .take(_pageSize)
+                        .toList();
                   });
                   _cacheDataSource.saveProducts(_products);
 
@@ -867,15 +886,17 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                   if (mounted) {
                     Navigator.pop(context);
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Product added successfully')),
+                      const SnackBar(
+                        content: Text('Product added successfully'),
+                      ),
                     );
                   }
                 } catch (e) {
                   // Reload on error to revert optimistic add
                   _loadProducts();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Error: $e')),
-                  );
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(SnackBar(content: Text('Error: $e')));
                 }
               },
               style: ElevatedButton.styleFrom(
@@ -883,10 +904,7 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
               ),
               child: const Text(
                 'Add',
-                style: TextStyle(
-                  fontFamily: 'Literata',
-                  color: Colors.white,
-                ),
+                style: TextStyle(fontFamily: 'Literata', color: Colors.white),
               ),
             ),
           ],
@@ -947,277 +965,266 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _products.isEmpty
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.inventory_2_outlined,
-                        size: 64,
-                        color: Colors.grey[400],
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'No products found',
-                        style: TextStyle(
-                          fontSize: 18,
-                          color: Colors.grey[600],
-                          fontFamily: 'Literata',
-                        ),
-                      ),
-                    ],
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.inventory_2_outlined,
+                    size: 64,
+                    color: Colors.grey[400],
                   ),
-                )
-              : _filteredProducts.isEmpty
-                  ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.search_off,
-                            size: 64,
-                            color: Colors.grey[400],
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            'No products match your filters',
-                            style: TextStyle(
-                              fontSize: 18,
-                              color: Colors.grey[600],
-                              fontFamily: 'Literata',
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          ElevatedButton(
-                            onPressed: _clearFilters,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF1B4D3E),
-                            ),
-                            child: const Text('Clear Filters'),
-                          ),
-                        ],
-                      ),
-                    )
-              : ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: _filteredProducts.length,
-                  itemBuilder: (context, index) {
-                    final product = _filteredProducts[index];
-                    final isLowStock = product.isLowStock();
+                  const SizedBox(height: 16),
+                  Text(
+                    'No products found',
+                    style: TextStyle(
+                      fontSize: 18,
+                      color: Colors.grey[600],
+                      fontFamily: 'Literata',
+                    ),
+                  ),
+                ],
+              ),
+            )
+          : _filteredProducts.isEmpty
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.search_off, size: 64, color: Colors.grey[400]),
+                  const SizedBox(height: 16),
+                  Text(
+                    'No products match your filters',
+                    style: TextStyle(
+                      fontSize: 18,
+                      color: Colors.grey[600],
+                      fontFamily: 'Literata',
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  ElevatedButton(
+                    onPressed: _clearFilters,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF1B4D3E),
+                    ),
+                    child: const Text('Clear Filters'),
+                  ),
+                ],
+              ),
+            )
+          : ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: _filteredProducts.length,
+              itemBuilder: (context, index) {
+                final product = _filteredProducts[index];
+                final isLowStock = product.isLowStock();
 
-                    return Card(
-                      margin: const EdgeInsets.only(bottom: 12),
-                      elevation: 2,
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                return Card(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  elevation: 2,
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    product.name,
-                                    style: const TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w700,
-                                      fontFamily: 'Literata',
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
+                            Expanded(
+                              child: Text(
+                                product.name,
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w700,
+                                  fontFamily: 'Literata',
                                 ),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                    vertical: 6,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: isLowStock
-                                        ? Colors.red.withValues(alpha: 0.2)
-                                        : Colors.green.withValues(alpha: 0.2),
-                                    borderRadius: BorderRadius.circular(20),
-                                  ),
-                                  child: Text(
-                                    isLowStock ? 'Low Stock' : 'In Stock',
-                                    style: TextStyle(
-                                      color: isLowStock
-                                          ? Colors.red
-                                          : Colors.green,
-                                      fontWeight: FontWeight.w600,
-                                      fontFamily: 'Literata',
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ),
-                              ],
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
-                            const SizedBox(height: 12),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Category',
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: Colors.grey[600],
-                                        fontFamily: 'Literata',
-                                      ),
-                                    ),
-                                    Text(
-                                      product.category,
-                                      style: const TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w600,
-                                        fontFamily: 'Literata',
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.end,
-                                  children: [
-                                    Text(
-                                      'Current Stock',
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: Colors.grey[600],
-                                        fontFamily: 'Literata',
-                                      ),
-                                    ),
-                                    Text(
-                                      '${product.currentStock} units',
-                                      style: const TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w600,
-                                        fontFamily: 'Literata',
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 12),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Purchase Price',
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: Colors.grey[600],
-                                        fontFamily: 'Literata',
-                                      ),
-                                    ),
-                                    Text(
-                                      '₹${product.purchasePrice.toStringAsFixed(2)}',
-                                      style: const TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w600,
-                                        fontFamily: 'Literata',
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.end,
-                                  children: [
-                                    Text(
-                                      'Sales Price',
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: Colors.grey[600],
-                                        fontFamily: 'Literata',
-                                      ),
-                                    ),
-                                    Text(
-                                      '₹${product.salesPrice.toStringAsFixed(2)}',
-                                      style: const TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w600,
-                                        fontFamily: 'Literata',
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 12),
                             Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: Colors.blue.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(8),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
                               ),
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    'Stock Value',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.grey[600],
-                                      fontFamily: 'Literata',
-                                    ),
-                                  ),
-                                  Text(
-                                    '₹${product.getStockValue().toStringAsFixed(2)}',
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w700,
-                                      fontFamily: 'Literata',
-                                      color: Colors.blue,
-                                    ),
-                                  ),
-                                ],
+                              decoration: BoxDecoration(
+                                color: isLowStock
+                                    ? Colors.red.withValues(alpha: 0.2)
+                                    : Colors.green.withValues(alpha: 0.2),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                isLowStock ? 'Low Stock' : 'In Stock',
+                                style: TextStyle(
+                                  color: isLowStock ? Colors.red : Colors.green,
+                                  fontWeight: FontWeight.w600,
+                                  fontFamily: 'Literata',
+                                  fontSize: 12,
+                                ),
                               ),
                             ),
-                            const SizedBox(height: 12),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.end,
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                IconButton(
-                                  onPressed: () =>
-                                      _showEditProductDialog(product),
-                                  icon: const Icon(Icons.edit),
-                                  color: Colors.blue,
-                                  iconSize: 20,
-                                  padding: const EdgeInsets.all(4),
-                                  constraints: const BoxConstraints(),
+                                Text(
+                                  'Category',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey[600],
+                                    fontFamily: 'Literata',
+                                  ),
                                 ),
-                                const SizedBox(width: 4),
-                                IconButton(
-                                  onPressed: () =>
-                                      _deleteProduct(product),
-                                  icon: const Icon(Icons.delete),
-                                  color: Colors.red,
-                                  iconSize: 20,
-                                  padding: const EdgeInsets.all(4),
-                                  constraints: const BoxConstraints(),
+                                Text(
+                                  product.category,
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    fontFamily: 'Literata',
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Text(
+                                  'Current Stock',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey[600],
+                                    fontFamily: 'Literata',
+                                  ),
+                                ),
+                                Text(
+                                  '${product.currentStock} units',
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    fontFamily: 'Literata',
+                                  ),
                                 ),
                               ],
                             ),
                           ],
                         ),
-                      ),
-                    );
-                  },
-                ),
+                        const SizedBox(height: 12),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Purchase Price',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey[600],
+                                    fontFamily: 'Literata',
+                                  ),
+                                ),
+                                Text(
+                                  '₹${product.purchasePrice.toStringAsFixed(2)}',
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    fontFamily: 'Literata',
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Text(
+                                  'Sales Price',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey[600],
+                                    fontFamily: 'Literata',
+                                  ),
+                                ),
+                                Text(
+                                  '₹${product.salesPrice.toStringAsFixed(2)}',
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    fontFamily: 'Literata',
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.blue.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Stock Value',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey[600],
+                                  fontFamily: 'Literata',
+                                ),
+                              ),
+                              Text(
+                                '₹${product.getStockValue().toStringAsFixed(2)}',
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                  fontFamily: 'Literata',
+                                  color: Colors.blue,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            IconButton(
+                              onPressed: () => _showEditProductDialog(product),
+                              icon: const Icon(Icons.edit),
+                              color: Colors.blue,
+                              iconSize: 20,
+                              padding: const EdgeInsets.all(4),
+                              constraints: const BoxConstraints(),
+                            ),
+                            const SizedBox(width: 4),
+                            IconButton(
+                              onPressed: () => _deleteProduct(product),
+                              icon: const Icon(Icons.delete),
+                              color: Colors.red,
+                              iconSize: 20,
+                              padding: const EdgeInsets.all(4),
+                              constraints: const BoxConstraints(),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
       floatingActionButton: FloatingActionButton(
         onPressed: _showAddProductDialog,
         backgroundColor: const Color(0xFF1B4D3E),
         elevation: 8,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         child: const Icon(Icons.add_rounded, size: 28),
       ),
     );

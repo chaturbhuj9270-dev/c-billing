@@ -14,9 +14,9 @@ class InventoryService {
     required ProductRepository productRepository,
     required StockRepository stockRepository,
     required PurchaseRepository purchaseRepository,
-  })  : _productRepository = productRepository,
-        _stockRepository = stockRepository,
-        _purchaseRepository = purchaseRepository;
+  }) : _productRepository = productRepository,
+       _stockRepository = stockRepository,
+       _purchaseRepository = purchaseRepository;
 
   // ==================== Purchase Operations ====================
 
@@ -47,7 +47,7 @@ class InventoryService {
       // Create purchase record
       final totalAmount = quantity * purchasePrice;
       final now = DateTime.now();
-      
+
       final purchase = Purchase(
         id: '',
         productId: productId,
@@ -119,7 +119,7 @@ class InventoryService {
       // Create stock entry
       final now = DateTime.now();
       final saleId = referenceId ?? 'SALE_${now.millisecondsSinceEpoch}';
-      
+
       final stockEntry = Stock(
         id: '',
         productId: productId,
@@ -176,18 +176,22 @@ class InventoryService {
     DateTime? endDate,
   }) async {
     try {
-      final salesStocks = await _stockRepository.getStockByReferenceType('SALE');
-      
+      final salesStocks = await _stockRepository.getStockByReferenceType(
+        'SALE',
+      );
+
       double total = 0;
       for (var stock in salesStocks) {
         final createdAt = stock.createdAt;
-        
+
         // Filter by date range if provided
         if (startDate != null && createdAt.isBefore(startDate)) continue;
         if (endDate != null && createdAt.isAfter(endDate)) continue;
 
         // Get product to get sales price
-        final product = await _productRepository.getProductById(stock.productId);
+        final product = await _productRepository.getProductById(
+          stock.productId,
+        );
         if (product != null) {
           total += stock.quantityOut * product.salesPrice;
         }
@@ -204,12 +208,14 @@ class InventoryService {
     DateTime? endDate,
   }) async {
     try {
-      final salesStocks = await _stockRepository.getStockByReferenceType('SALE');
-      
+      final salesStocks = await _stockRepository.getStockByReferenceType(
+        'SALE',
+      );
+
       int total = 0;
       for (var stock in salesStocks) {
         final createdAt = stock.createdAt;
-        
+
         // Filter by date range if provided
         if (startDate != null && createdAt.isBefore(startDate)) continue;
         if (endDate != null && createdAt.isAfter(endDate)) continue;
@@ -223,10 +229,7 @@ class InventoryService {
   }
 
   /// Get profit (total sales - total purchases)
-  Future<double> getProfit({
-    DateTime? startDate,
-    DateTime? endDate,
-  }) async {
+  Future<double> getProfit({DateTime? startDate, DateTime? endDate}) async {
     try {
       final salesAmount = await getTotalSalesAmount(
         startDate: startDate,
@@ -275,19 +278,25 @@ class InventoryService {
     required double purchasePrice,
     required double salesPrice,
     int initialStock = 0,
+    int? indexNo,
   }) async {
     try {
       // Validate inputs
       if (name.isEmpty) throw Exception('Product name cannot be empty');
       if (companyName.isEmpty) throw Exception('Company name cannot be empty');
       if (category.isEmpty) throw Exception('Category cannot be empty');
-      if (purchasePrice < 0) throw Exception('Purchase price cannot be negative');
+      if (purchasePrice < 0)
+        throw Exception('Purchase price cannot be negative');
       if (salesPrice < 0) throw Exception('Sales price cannot be negative');
       if (initialStock < 0) throw Exception('Initial stock cannot be negative');
+
+      // Generate unique index number if not provided
+      final generatedIndexNo = indexNo ?? await _generateUniqueIndexNo();
 
       final now = DateTime.now();
       final product = Product(
         id: '',
+        indexNo: generatedIndexNo,
         name: name,
         companyName: companyName,
         category: category,
@@ -301,6 +310,25 @@ class InventoryService {
       return await _productRepository.addProduct(product);
     } catch (e) {
       throw Exception('Failed to create product: $e');
+    }
+  }
+
+  /// Generate a unique index number for products
+  Future<int> _generateUniqueIndexNo() async {
+    try {
+      final products = await _productRepository.getAllProducts();
+      if (products.isEmpty) {
+        return 101; // Start from 101
+      }
+      // Find the maximum index number and add 1
+      final maxIndexNo = products.fold<int>(
+        100,
+        (max, product) => product.indexNo > max ? product.indexNo : max,
+      );
+      return maxIndexNo + 1;
+    } catch (e) {
+      // If we can't get products, start from 101
+      return 101;
     }
   }
 
@@ -325,9 +353,7 @@ class InventoryService {
   /// Update product
   Future<void> updateProduct(Product product) async {
     try {
-      final updatedProduct = product.copyWith(
-        updatedAt: DateTime.now(),
-      );
+      final updatedProduct = product.copyWith(updatedAt: DateTime.now());
       await _productRepository.updateProduct(updatedProduct);
     } catch (e) {
       throw Exception('Failed to update product: $e');
