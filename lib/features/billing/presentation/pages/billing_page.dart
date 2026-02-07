@@ -59,6 +59,12 @@ class _BillingPageState extends State<BillingPage> {
   Map<String, dynamic>? _selectedCustomer;
   List<Map<String, dynamic>> _customers = [];
 
+  // Quick add by index number
+  final _indexNoController = TextEditingController();
+  final _indexNoFocusNode = FocusNode();
+  Timer? _debounceTimer;
+  Map<int, Product> _productByIndexNo = {};
+
   @override
   void initState() {
     super.initState();
@@ -88,6 +94,9 @@ class _BillingPageState extends State<BillingPage> {
 
   @override
   void dispose() {
+    _debounceTimer?.cancel();
+    _indexNoController.dispose();
+    _indexNoFocusNode.dispose();
     _customerNameController.dispose();
     _customerContactController.dispose();
     _notesController.dispose();
@@ -104,6 +113,11 @@ class _BillingPageState extends State<BillingPage> {
       if (mounted) {
         setState(() {
           _products = products;
+          // Build index lookup map for fast product search
+          _productByIndexNo = {
+            for (final product in products)
+              if (product.indexNo > 0) product.indexNo: product,
+          };
           if (showLoader) _isLoading = false;
         });
       }
@@ -723,7 +737,7 @@ class _BillingPageState extends State<BillingPage> {
               child: Column(
                 children: [
                   _buildCustomerSection(),
-                  _buildAddItemsButton(),
+                  _buildAddItemsSection(),
                   if (_billItems.isNotEmpty) _buildBillItemsSection(),
                   if (_billItems.isNotEmpty) _buildDiscountSection(),
                   if (_billItems.isNotEmpty) _buildPaymentSection(),
@@ -735,7 +749,7 @@ class _BillingPageState extends State<BillingPage> {
               slivers: [
                 _buildSliverAppBar(),
                 SliverToBoxAdapter(child: _buildCustomerSection()),
-                SliverToBoxAdapter(child: _buildAddItemsButton()),
+                SliverToBoxAdapter(child: _buildAddItemsSection()),
                 if (_billItems.isNotEmpty)
                   SliverToBoxAdapter(child: _buildBillItemsSection()),
                 if (_billItems.isNotEmpty)
@@ -987,32 +1001,184 @@ class _BillingPageState extends State<BillingPage> {
     );
   }
 
-  Widget _buildAddItemsButton() {
+  /// Add product by index number directly from the Create Bill page
+  void _addProductByIndexNoOnPage() {
+    final indexText = _indexNoController.text.trim();
+    if (indexText.isEmpty) return;
+
+    final indexNo = int.tryParse(indexText);
+    if (indexNo == null) {
+      _showSnackbar('Please enter a valid number', isError: true);
+      _indexNoController.clear();
+      return;
+    }
+
+    final product = _productByIndexNo[indexNo];
+    if (product == null) {
+      _showSnackbar('Product #$indexNo not found', isError: true);
+      _indexNoController.clear();
+      return;
+    }
+
+    if (product.currentStock <= 0) {
+      _showSnackbar('${product.name} is out of stock', isError: true);
+      _indexNoController.clear();
+      return;
+    }
+
+    // Add product — increment quantity if already in cart
+    final existingIndex = _billItems.indexWhere(
+      (item) => item.productId == product.id,
+    );
+    setState(() {
+      if (existingIndex != -1) {
+        final existing = _billItems[existingIndex];
+        if (existing.quantity < product.currentStock) {
+          _billItems[existingIndex] = BillItem.create(
+            productId: product.id,
+            productName: product.name,
+            sellingPrice: existing.sellingPrice,
+            quantity: existing.quantity + 1,
+          );
+        } else {
+          _showSnackbar('Max stock: ${product.currentStock}', isError: true);
+          _indexNoController.clear();
+          return;
+        }
+      } else {
+        _billItems.add(
+          BillItem.create(
+            productId: product.id,
+            productName: product.name,
+            sellingPrice: product.salesPrice,
+            quantity: 1,
+          ),
+        );
+      }
+    });
+
+    _showSnackbar('Added: ${product.name}', isError: false);
+
+    // Clear input and keep focus for next entry
+    _indexNoController.clear();
+    _indexNoFocusNode.requestFocus();
+  }
+
+  void _onPageIndexNoChanged() {
+    _debounceTimer?.cancel();
+    if (_indexNoController.text.trim().isEmpty) return;
+    _debounceTimer = Timer(const Duration(milliseconds: 800), () {
+      _addProductByIndexNoOnPage();
+    });
+  }
+
+  Widget _buildAddItemsSection() {
     return Padding(
-      padding: const EdgeInsets.all(16),
-      child: SizedBox(
-        width: double.infinity,
-        child: ElevatedButton.icon(
-          onPressed: _showAddItemsPopup,
-          icon: const Icon(Icons.add_shopping_cart, size: 20),
-          label: const Text(
-            'Add Items to Bill',
-            style: TextStyle(
-              fontFamily: 'Literata',
-              fontWeight: FontWeight.w600,
-              fontSize: 15,
-            ),
-          ),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF1B4D3E),
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(vertical: 14),
-            shape: RoundedRectangleBorder(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Column(
+        children: [
+          // Quick add by index number
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1B4D3E).withOpacity(0.05),
               borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: const Color(0xFF1B4D3E).withOpacity(0.2),
+              ),
             ),
-            elevation: 0,
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1B4D3E),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(
+                    Icons.flash_on,
+                    color: Colors.white,
+                    size: 16,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: TextField(
+                    controller: _indexNoController,
+                    focusNode: _indexNoFocusNode,
+                    keyboardType: TextInputType.number,
+                    style: const TextStyle(
+                      fontFamily: 'Literata',
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    decoration: InputDecoration(
+                      hintText: 'Enter product code...',
+                      hintStyle: TextStyle(
+                        color: Colors.grey[500],
+                        fontWeight: FontWeight.w400,
+                        fontSize: 14,
+                      ),
+                      border: InputBorder.none,
+                      isDense: true,
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                    onChanged: (_) => _onPageIndexNoChanged(),
+                    onSubmitted: (_) => _addProductByIndexNoOnPage(),
+                  ),
+                ),
+                Material(
+                  color: const Color(0xFF1B4D3E),
+                  borderRadius: BorderRadius.circular(8),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(8),
+                    onTap: _addProductByIndexNoOnPage,
+                    child: const Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      child: Text(
+                        'Add',
+                        style: TextStyle(
+                          fontFamily: 'Literata',
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
+          const SizedBox(height: 10),
+          // Search product button — opens bottom sheet
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: _showAddItemsPopup,
+              icon: const Icon(Icons.search, size: 20),
+              label: const Text(
+                'Search Product',
+                style: TextStyle(
+                  fontFamily: 'Literata',
+                  fontWeight: FontWeight.w600,
+                  fontSize: 15,
+                ),
+              ),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: const Color(0xFF1B4D3E),
+                side: const BorderSide(color: Color(0xFF1B4D3E), width: 1.5),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -2145,93 +2311,27 @@ class _AddItemsBottomSheet extends StatefulWidget {
 class _AddItemsBottomSheetState extends State<_AddItemsBottomSheet> {
   late List<Product> _filteredProducts;
   final _searchController = TextEditingController();
-  final _indexNoController = TextEditingController();
-  final _indexNoFocusNode = FocusNode();
-  Timer? _debounceTimer;
 
   // Track quantities for each product in this session
   Map<String, int> _quantities = {};
   Map<String, double> _prices = {};
-
-  // Index number lookup map for O(1) product search
-  late Map<int, Product> _productByIndexNo;
 
   @override
   void initState() {
     super.initState();
     _filteredProducts = widget.products;
 
-    // Build index lookup map for fast product search
-    _productByIndexNo = {
-      for (final product in widget.products)
-        if (product.indexNo > 0) product.indexNo: product,
-    };
-
     // Initialize with existing bill items
     for (final item in widget.billItems) {
       _quantities[item.productId] = item.quantity;
       _prices[item.productId] = item.sellingPrice;
     }
-
-    // Add listener for auto-add on stop typing
-    _indexNoController.addListener(_onIndexNoChanged);
   }
 
   @override
   void dispose() {
-    _debounceTimer?.cancel();
-    _indexNoController.removeListener(_onIndexNoChanged);
     _searchController.dispose();
-    _indexNoController.dispose();
-    _indexNoFocusNode.dispose();
     super.dispose();
-  }
-
-  /// Add product by index number - fast lookup and add to cart
-  void _addProductByIndexNo() {
-    final indexText = _indexNoController.text.trim();
-    if (indexText.isEmpty) return;
-
-    final indexNo = int.tryParse(indexText);
-    if (indexNo == null) {
-      widget.showSnackbar('Please enter a valid number', isError: true);
-      _indexNoController.clear();
-      return;
-    }
-
-    final product = _productByIndexNo[indexNo];
-    if (product == null) {
-      widget.showSnackbar('Product #$indexNo not found', isError: true);
-      _indexNoController.clear();
-      return;
-    }
-
-    if (product.currentStock <= 0) {
-      widget.showSnackbar('${product.name} is out of stock', isError: true);
-      _indexNoController.clear();
-      return;
-    }
-
-    // Add product (increment quantity if already in cart)
-    _incrementQuantity(product);
-    widget.showSnackbar('Added: ${product.name}', isError: false);
-
-    // Clear input and keep focus for next entry
-    _indexNoController.clear();
-    _indexNoFocusNode.requestFocus();
-  }
-
-  void _onIndexNoChanged() {
-    // Cancel existing timer
-    _debounceTimer?.cancel();
-
-    // Don't auto-add if empty
-    if (_indexNoController.text.trim().isEmpty) return;
-
-    // Start new timer for auto-add after 800ms pause
-    _debounceTimer = Timer(const Duration(milliseconds: 800), () {
-      _addProductByIndexNo();
-    });
   }
 
   void _filterProducts(String query) {
@@ -2380,84 +2480,6 @@ class _AddItemsBottomSheetState extends State<_AddItemsBottomSheet> {
                       ),
                     ),
                 ],
-              ),
-            ),
-            // Quick add by index number
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
-              child: Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1B4D3E).withOpacity(0.05),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: const Color(0xFF1B4D3E).withOpacity(0.2),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF1B4D3E),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Icon(
-                        Icons.flash_on,
-                        color: Colors.white,
-                        size: 16,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: TextField(
-                        controller: _indexNoController,
-                        focusNode: _indexNoFocusNode,
-                        keyboardType: TextInputType.number,
-                        style: const TextStyle(
-                          fontFamily: 'Literata',
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                        decoration: InputDecoration(
-                          hintText: 'Enter product code...',
-                          hintStyle: TextStyle(
-                            color: Colors.grey[500],
-                            fontWeight: FontWeight.w400,
-                            fontSize: 14,
-                          ),
-                          border: InputBorder.none,
-                          isDense: true,
-                          contentPadding: EdgeInsets.zero,
-                        ),
-                        onSubmitted: (_) => _addProductByIndexNo(),
-                      ),
-                    ),
-                    Material(
-                      color: const Color(0xFF1B4D3E),
-                      borderRadius: BorderRadius.circular(8),
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(8),
-                        onTap: _addProductByIndexNo,
-                        child: const Padding(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 8,
-                          ),
-                          child: Text(
-                            'Add',
-                            style: TextStyle(
-                              fontFamily: 'Literata',
-                              color: Colors.white,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
               ),
             ),
             // Search bar
