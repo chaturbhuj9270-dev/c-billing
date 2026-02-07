@@ -9,6 +9,7 @@ import '../../../inventory_management/presentation/pages/purchase_page.dart';
 import '../../../inventory_management/presentation/pages/product_management_page.dart';
 import '../../../billing/presentation/pages/billing_page.dart';
 import '../../../billing/presentation/pages/bills_list_page.dart';
+import '../../../availability/presentation/pages/availability_page.dart';
 import '../../../../core/services/session_manager.dart';
 import '../../domain/entities/dashboard_summary.dart';
 import '../../domain/repositories/dashboard_repository_interface.dart';
@@ -145,8 +146,8 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                 ),
                 // Customers tab
                 const CustomerPage(isEmbedded: true),
-                // Available tab (coming soon placeholder)
-                _buildComingSoonPage('Availability'),
+                // Available tab
+                const AvailabilityPage(isEmbedded: true),
                 // Billing tab
                 const BillingPage(isEmbedded: true),
                 // Purchase tab
@@ -1353,56 +1354,5 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
   void _navigateToPage(int index) {
     _resetSessionTimer();
     setState(() => _selectedIndex = index);
-  }
-
-  Widget _buildComingSoonPage(String pageName) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFB),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF1B4D3E),
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        title: Text(
-          pageName,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 20,
-            fontWeight: FontWeight.w600,
-            fontFamily: 'Literata',
-          ),
-        ),
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.construction_rounded, size: 80, color: Colors.grey[400]),
-            const SizedBox(height: 24),
-            Text(
-              '$pageName Coming Soon',
-              style: TextStyle(
-                color: Colors.grey[700],
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
-                fontFamily: 'Literata',
-              ),
-            ),
-            const SizedBox(height: 12),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 40),
-              child: Text(
-                'This feature is under development and will be available soon.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Colors.grey[600],
-                  fontSize: 14,
-                  fontFamily: 'Literata',
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 }
