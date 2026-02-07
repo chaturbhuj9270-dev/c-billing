@@ -422,64 +422,44 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
             icon: Icons.insights_outlined,
           ),
           const SizedBox(height: 16),
-          // First row - 3 cards
-          Row(
-            children: [
-              Expanded(
-                child: _buildGlassyStatCard(
-                  title: 'Upcoming',
-                  count: _upcomingPayments.length,
-                  icon: Icons.schedule_rounded,
-                  gradientColors: const [Color(0xFF4A90E2), Color(0xFF7B68EE)],
-                  onTap: () => _showQuickInsightDetail('Upcoming Payments', _upcomingPayments, 'upcoming'),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildGlassyStatCard(
-                  title: 'Top Products',
-                  count: _topProducts.length,
-                  icon: Icons.star_rounded,
-                  gradientColors: const [Color(0xFFFFB74D), Color(0xFFFF9800)],
-                  onTap: () => _showQuickInsightDetail('Top Products', _topProducts, 'products'),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildGlassyStatCard(
-                  title: 'Pending',
-                  count: _pendingPayments.length,
-                  icon: Icons.pending_actions_rounded,
-                  gradientColors: const [Color(0xFFEF5350), Color(0xFFE53935)],
-                  onTap: () => _showQuickInsightDetail('Pending Payments', _pendingPayments, 'pending'),
-                ),
-              ),
-            ],
+          _buildGlassyStatRow(
+            title: 'Upcoming Payments',
+            count: _upcomingPayments.length,
+            icon: Icons.schedule_rounded,
+            gradientColors: const [Color(0xFF4A90E2), Color(0xFF7B68EE)],
+            onTap: () => _showQuickInsightDetail('Upcoming Payments', _upcomingPayments, 'upcoming'),
           ),
-          const SizedBox(height: 12),
-          // Second row - 2 cards
-          Row(
-            children: [
-              Expanded(
-                child: _buildGlassyStatCard(
-                  title: 'Last Dues',
-                  count: _lastDues.length,
-                  icon: Icons.receipt_long_rounded,
-                  gradientColors: const [Color(0xFF9575CD), Color(0xFF7E57C2)],
-                  onTap: () => _showQuickInsightDetail('Last Dues', _lastDues, 'dues'),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildGlassyStatCard(
-                  title: 'Low Stock',
-                  count: _lowStockItems.length,
-                  icon: Icons.shopping_cart_rounded,
-                  gradientColors: const [Color(0xFF26A69A), Color(0xFF00897B)],
-                  onTap: () => _showQuickInsightDetail('Low Stock Items', _lowStockItems, 'lowstock'),
-                ),
-              ),
-            ],
+          const SizedBox(height: 10),
+          _buildGlassyStatRow(
+            title: 'Top Performing Products',
+            count: _topProducts.length,
+            icon: Icons.star_rounded,
+            gradientColors: const [Color(0xFFFFB74D), Color(0xFFFF9800)],
+            onTap: () => _showQuickInsightDetail('Top Products', _topProducts, 'products'),
+          ),
+          const SizedBox(height: 10),
+          _buildGlassyStatRow(
+            title: 'Pending Payments',
+            count: _pendingPayments.length,
+            icon: Icons.pending_actions_rounded,
+            gradientColors: const [Color(0xFFEF5350), Color(0xFFE53935)],
+            onTap: () => _showQuickInsightDetail('Pending Payments', _pendingPayments, 'pending'),
+          ),
+          const SizedBox(height: 10),
+          _buildGlassyStatRow(
+            title: 'Last Dues',
+            count: _lastDues.length,
+            icon: Icons.receipt_long_rounded,
+            gradientColors: const [Color(0xFF9575CD), Color(0xFF7E57C2)],
+            onTap: () => _showQuickInsightDetail('Last Dues', _lastDues, 'dues'),
+          ),
+          const SizedBox(height: 10),
+          _buildGlassyStatRow(
+            title: 'Low Stock Items',
+            count: _lowStockItems.length,
+            icon: Icons.shopping_cart_rounded,
+            gradientColors: const [Color(0xFF26A69A), Color(0xFF00897B)],
+            onTap: () => _showQuickInsightDetail('Low Stock Items', _lowStockItems, 'lowstock'),
           ),
           const SizedBox(height: 24),
           if (state is DashboardErrorState) _buildErrorBanner(state),
@@ -1535,7 +1515,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
 
   // ============ GLASSY QUICK STATS WIDGETS ============
 
-  Widget _buildGlassyStatCard({
+  Widget _buildGlassyStatRow({
     required String title,
     required int count,
     required IconData icon,
@@ -1545,78 +1525,103 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
     return GestureDetector(
       onTap: onTap,
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(14),
         child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
           child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  gradientColors[0].withOpacity(0.15),
-                  gradientColors[1].withOpacity(0.08),
+                  Colors.white.withOpacity(0.7),
+                  Colors.white.withOpacity(0.5),
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: gradientColors[0].withOpacity(0.3),
+                color: gradientColors[0].withOpacity(0.2),
                 width: 1,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: gradientColors[0].withOpacity(0.1),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
+                  color: Colors.black.withOpacity(0.04),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
                 ),
               ],
             ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
+            child: Row(
               children: [
+                // Icon with gradient background
                 Container(
-                  width: 40,
-                  height: 40,
+                  width: 38,
+                  height: 38,
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: gradientColors,
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(10),
                     boxShadow: [
                       BoxShadow(
-                        color: gradientColors[0].withOpacity(0.3),
-                        blurRadius: 8,
+                        color: gradientColors[0].withOpacity(0.25),
+                        blurRadius: 6,
                         offset: const Offset(0, 2),
                       ),
                     ],
                   ),
-                  child: Icon(icon, color: Colors.white, size: 20),
+                  child: Icon(icon, color: Colors.white, size: 18),
                 ),
-                const SizedBox(height: 10),
-                Text(
-                  count.toString(),
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: gradientColors[0],
-                    fontFamily: 'Literata',
+                const SizedBox(width: 14),
+                // Title
+                Expanded(
+                  child: Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: Color(0xFF1B4D3E),
+                      fontFamily: 'Literata',
+                    ),
                   ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  title,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.grey[700],
-                    fontFamily: 'Literata',
+                // Count badge on right
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        gradientColors[0].withOpacity(0.15),
+                        gradientColors[1].withOpacity(0.1),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: gradientColors[0].withOpacity(0.3),
+                      width: 1,
+                    ),
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                  child: Text(
+                    count.toString(),
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: gradientColors[0],
+                      fontFamily: 'Literata',
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                // Arrow icon
+                Icon(
+                  Icons.chevron_right_rounded,
+                  color: Colors.grey[400],
+                  size: 22,
                 ),
               ],
             ),
