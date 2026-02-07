@@ -6,6 +6,12 @@ import '../models/dashboard_data.dart';
 class DashboardRepository {
   final FirebaseFirestore _firestore;
   final FirebaseAuth _auth;
+  
+  // In-memory cache for dashboard data
+  static DashboardData? _cachedData;
+  static String? _cachedKey;
+  static DateTime? _cacheTimestamp;
+  static const Duration _cacheDuration = Duration(seconds: 30);
 
   DashboardRepository({FirebaseFirestore? firestore, FirebaseAuth? auth})
     : _firestore = firestore ?? FirebaseFirestore.instance,
@@ -20,16 +26,48 @@ class DashboardRepository {
     if (userId == null) return null;
     return _firestore.collection('users').doc(userId);
   }
+  
+  /// Generate cache key based on date range
+  String _getCacheKey(DateTime? startDate, DateTime? endDate) {
+    final userId = _userId ?? 'unknown';
+    final start = startDate?.toIso8601String() ?? 'null';
+    final end = endDate?.toIso8601String() ?? 'null';
+    return '$userId-$start-$end';
+  }
+  
+  /// Check if cached data is still valid
+  bool _isCacheValid(String cacheKey) {
+    if (_cachedData == null || _cachedKey != cacheKey || _cacheTimestamp == null) {
+      return false;
+    }
+    return DateTime.now().difference(_cacheTimestamp!) < _cacheDuration;
+  }
+  
+  /// Clear the cache (call after data changes)
+  static void invalidateCache() {
+    _cachedData = null;
+    _cachedKey = null;
+    _cacheTimestamp = null;
+  }
 
   /// Fetch dashboard data with optional date filtering
   /// Uses parallel queries for maximum performance
+  /// Implements in-memory caching for faster repeated loads
   Future<DashboardData> fetchDashboardData({
     DateTime? startDate,
     DateTime? endDate,
+    bool forceRefresh = false,
   }) async {
     final userRef = _userRef;
     if (userRef == null) {
       throw Exception('User not authenticated');
+    }
+    
+    // Check cache first (unless force refresh)
+    final cacheKey = _getCacheKey(startDate, endDate);
+    if (!forceRefresh && _isCacheValid(cacheKey)) {
+      print('[DashboardRepository] Returning cached data');
+      return _cachedData!;
     }
 
     final stopwatch = Stopwatch()..start();
@@ -111,7 +149,7 @@ class DashboardRepository {
       '[DashboardRepository] Data loaded in ${stopwatch.elapsedMilliseconds}ms',
     );
 
-    return DashboardData(
+    final data = DashboardData(
       invoicesCount: invoicesCount,
       clientsCount: clientsCount,
       productsCount: productsCount,
@@ -130,6 +168,13 @@ class DashboardRepository {
       stockValue: stockValue,
       lowStockCount: lowStockCount,
     );
+    
+    // Store in cache
+    _cachedData = data;
+    _cachedKey = cacheKey;
+    _cacheTimestamp = DateTime.now();
+    
+    return data;
   }
 
   /// Get bills with optional date filtering

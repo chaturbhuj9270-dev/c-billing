@@ -466,7 +466,7 @@ class _DashboardPageState extends State<DashboardPage>
       case 1:
         return const CustomerPage(isEmbedded: true);
       case 2:
-        return const ProductManagementPage(isEmbedded: true);
+        return const ProductManagementPage();
       case 3:
         return const BillingPage(isEmbedded: true);
       case 4:
