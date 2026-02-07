@@ -45,6 +45,17 @@ class InventoryReportService {
     }
   }
 
+  /// Get stock status label
+  String getStockStatus(int stock) {
+    if (stock == 0) {
+      return 'Out of Stock';
+    } else if (stock <= 10) {
+      return 'Low Stock';
+    } else {
+      return 'In Stock';
+    }
+  }
+
   /// Generate PDF report
   Future<File> generatePdfReport({
     required List<Product> products,
@@ -225,24 +236,24 @@ class InventoryReportService {
       cellPadding: const pw.EdgeInsets.all(6),
       headers: [
         '#',
-        'Index',
         'Product Name',
         'Category',
+        'Company',
         'Stock',
-        'Price',
-        'Value',
+        'Status',
+        'Order Qty',
       ],
       data: products.asMap().entries.map((entry) {
         final i = entry.key;
         final p = entry.value;
         return [
           '${i + 1}',
-          p.indexNo > 0 ? '${p.indexNo}' : '-',
           p.name,
           p.category,
+          p.companyName,
           '${p.currentStock}',
-          '₹${p.salesPrice.toStringAsFixed(2)}',
-          '₹${p.getStockValue().toStringAsFixed(2)}',
+          getStockStatus(p.currentStock),
+          '',
         ];
       }).toList(),
     );
@@ -266,23 +277,19 @@ class InventoryReportService {
     buffer.writeln('');
 
     // CSV headers
-    buffer.writeln(
-      'S.No,Index No,Product Name,Category,Company,Stock,Purchase Price,Sales Price,Stock Value',
-    );
+    buffer.writeln('S.No,Product Name,Category,Company,Stock,Status,Order Qty');
 
     // Data rows
     for (var i = 0; i < products.length; i++) {
       final p = products[i];
       buffer.writeln(
         '${i + 1},'
-        '${p.indexNo > 0 ? p.indexNo : "-"},'
         '"${p.name.replaceAll('"', '""')}",'
         '"${p.category.replaceAll('"', '""')}",'
         '"${p.companyName.replaceAll('"', '""')}",'
         '${p.currentStock},'
-        '${p.purchasePrice.toStringAsFixed(2)},'
-        '${p.salesPrice.toStringAsFixed(2)},'
-        '${p.getStockValue().toStringAsFixed(2)}',
+        '"${getStockStatus(p.currentStock)}",'
+        '',
       );
     }
 
