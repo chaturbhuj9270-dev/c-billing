@@ -40,6 +40,12 @@ class DashboardFirebaseDataSource {
     final stopwatch = Stopwatch()..start();
     final (startDate, endDate) = params.getDateRange();
 
+    // Debug: Log date range being queried
+    print(
+      '[DashboardFirebaseDataSource] Fetching data for filter: ${params.filter}',
+    );
+    print('[DashboardFirebaseDataSource] Date range: $startDate to $endDate');
+
     // Use cache source unless forced to network
     // Note: AggregateSource only supports server, but regular queries support cache
     final source = forceNetwork ? Source.server : Source.serverAndCache;
@@ -73,10 +79,29 @@ class DashboardFirebaseDataSource {
       final purchasesSnapshot = results[7] as QuerySnapshot;
       final productsSnapshot = results[8] as QuerySnapshot;
 
+      // Debug: Log document counts
+      print(
+        '[DashboardFirebaseDataSource] Bills found: ${billsSnapshot.docs.length}',
+      );
+      print(
+        '[DashboardFirebaseDataSource] Purchases found: ${purchasesSnapshot.docs.length}',
+      );
+
       // Calculate metrics in a single pass
       final salesMetrics = _calculateSalesMetrics(billsSnapshot);
       final purchaseMetrics = _calculatePurchaseMetrics(purchasesSnapshot);
       final stockMetrics = _calculateStockMetrics(productsSnapshot);
+
+      // Debug: Log calculated metrics
+      print(
+        '[DashboardFirebaseDataSource] Total Sales: ${salesMetrics.totalAmount}',
+      );
+      print(
+        '[DashboardFirebaseDataSource] Total Purchases: ${purchaseMetrics.totalAmount}',
+      );
+      print(
+        '[DashboardFirebaseDataSource] Profit: ${salesMetrics.totalProfit}',
+      );
 
       // Use profit calculated from sales (sale price after discount - purchase price)
       final profit = salesMetrics.totalProfit;
@@ -141,6 +166,7 @@ class DashboardFirebaseDataSource {
   }
 
   /// Get bills with optional date filtering
+  /// Note: billDate is stored as ISO8601 string in Firestore
   Future<QuerySnapshot> _getBillsForPeriod(
     DocumentReference userRef,
     DateTime? startDate,
@@ -152,13 +178,13 @@ class DashboardFirebaseDataSource {
     if (startDate != null) {
       query = query.where(
         'billDate',
-        isGreaterThanOrEqualTo: Timestamp.fromDate(startDate),
+        isGreaterThanOrEqualTo: startDate.toIso8601String(),
       );
     }
     if (endDate != null) {
       query = query.where(
         'billDate',
-        isLessThanOrEqualTo: Timestamp.fromDate(endDate),
+        isLessThanOrEqualTo: endDate.toIso8601String(),
       );
     }
 
@@ -166,6 +192,7 @@ class DashboardFirebaseDataSource {
   }
 
   /// Get purchases with optional date filtering
+  /// Note: createdAt is stored as ISO8601 string in Firestore
   Future<QuerySnapshot> _getPurchasesForPeriod(
     DocumentReference userRef,
     DateTime? startDate,
@@ -177,13 +204,13 @@ class DashboardFirebaseDataSource {
     if (startDate != null) {
       query = query.where(
         'createdAt',
-        isGreaterThanOrEqualTo: Timestamp.fromDate(startDate),
+        isGreaterThanOrEqualTo: startDate.toIso8601String(),
       );
     }
     if (endDate != null) {
       query = query.where(
         'createdAt',
-        isLessThanOrEqualTo: Timestamp.fromDate(endDate),
+        isLessThanOrEqualTo: endDate.toIso8601String(),
       );
     }
 
