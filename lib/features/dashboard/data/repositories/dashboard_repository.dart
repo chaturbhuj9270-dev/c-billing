@@ -6,7 +6,7 @@ import '../models/dashboard_data.dart';
 class DashboardRepository {
   final FirebaseFirestore _firestore;
   final FirebaseAuth _auth;
-  
+
   // In-memory cache for dashboard data
   static DashboardData? _cachedData;
   static String? _cachedKey;
@@ -26,7 +26,7 @@ class DashboardRepository {
     if (userId == null) return null;
     return _firestore.collection('users').doc(userId);
   }
-  
+
   /// Generate cache key based on date range
   String _getCacheKey(DateTime? startDate, DateTime? endDate) {
     final userId = _userId ?? 'unknown';
@@ -34,15 +34,17 @@ class DashboardRepository {
     final end = endDate?.toIso8601String() ?? 'null';
     return '$userId-$start-$end';
   }
-  
+
   /// Check if cached data is still valid
   bool _isCacheValid(String cacheKey) {
-    if (_cachedData == null || _cachedKey != cacheKey || _cacheTimestamp == null) {
+    if (_cachedData == null ||
+        _cachedKey != cacheKey ||
+        _cacheTimestamp == null) {
       return false;
     }
     return DateTime.now().difference(_cacheTimestamp!) < _cacheDuration;
   }
-  
+
   /// Clear the cache (call after data changes)
   static void invalidateCache() {
     _cachedData = null;
@@ -62,7 +64,7 @@ class DashboardRepository {
     if (userRef == null) {
       throw Exception('User not authenticated');
     }
-    
+
     // Check cache first (unless force refresh)
     final cacheKey = _getCacheKey(startDate, endDate);
     if (!forceRefresh && _isCacheValid(cacheKey)) {
@@ -168,12 +170,12 @@ class DashboardRepository {
       stockValue: stockValue,
       lowStockCount: lowStockCount,
     );
-    
+
     // Store in cache
     _cachedData = data;
     _cachedKey = cacheKey;
     _cacheTimestamp = DateTime.now();
-    
+
     return data;
   }
 
@@ -223,5 +225,246 @@ class DashboardRepository {
     }
 
     return query.get();
+  }
+
+  /// Get customers with pending balance (for pending payments section)
+  Future<List<Map<String, dynamic>>> getCustomersWithPendingBalance({
+    int limit = 5,
+  }) async {
+    final userRef = _userRef;
+    if (userRef == null) return [];
+
+    try {
+      final snapshot = await userRef
+          .collection('customers')
+          .where('isActive', isEqualTo: true)
+          .where('currentPendingAmount', isGreaterThan: 0)
+          .orderBy('currentPendingAmount', descending: true)
+          .limit(limit)
+          .get();
+
+      return snapshot.docs.map((doc) {
+        final data = doc.data() as Map<String, dynamic>;
+        data['id'] = doc.id;
+        return data;
+      }).toList();
+    } catch (e) {
+      print('[DashboardRepository] Error fetching pending customers: $e');
+      return [];
+    }
+  }
+
+  /// Get recent bills with pending amount (for last dues section)
+  Future<List<Map<String, dynamic>>> getRecentPendingBills({
+    int limit = 5,
+  }) async {
+    final userRef = _userRef;
+    if (userRef == null) return [];
+
+    try {
+      final snapshot = await userRef
+          .collection('bills')
+          .where('pendingAmount', isGreaterThan: 0)
+          .orderBy('pendingAmount', descending: true)
+          .limit(limit)
+          .get();
+
+      return snapshot.docs.map((doc) {
+        final data = doc.data() as Map<String, dynamic>;
+        data['id'] = doc.id;
+        return data;
+      }).toList();
+    } catch (e) {
+      // Fallback: get bills without ordering if index not available
+      try {
+        final snapshot = await userRef
+            .collection('bills')
+            .orderBy('billDate', descending: true)
+            .limit(20)
+            .get();
+
+        final bills = snapshot.docs
+            .map((doc) {
+              final data = doc.data() as Map<String, dynamic>;
+              data['id'] = doc.id;
+              return data;
+            })
+            .where((bill) => ((bill['pendingAmount'] ?? 0) as num) > 0)
+            .take(limit)
+            .toList();
+
+        return bills;
+      } catch (e2) {
+        print('[DashboardRepository] Error fetching pending bills: $e2');
+        return [];
+      }
+    }
+  }
+
+  /// Get top selling products (for top products section)
+  Future<List<Map<String, dynamic>>> getTopSellingProducts({
+    int limit = 5,
+  }) async {
+    final userRef = _userRef;
+    if (userRef == null) return [];
+
+    try {
+      // Get bills from last 30 days for top products
+      final thirtyDaysAgo = DateTime.now().subtract(const Duration(days: 30));
+      final snapshot = await userRef
+          .collection('bills')
+          .where(
+            'billDate',
+            isGreaterThanOrEqualTo: thirtyDaysAgo.toIso8601String(),
+          )
+          .get();
+
+      // Aggregate sales by product
+      final productSales = <String, Map<String, dynamic>>{};
+
+      for (var doc in snapshot.docs) {
+        final data = doc.data() as Map<String, dynamic>;
+        final items = data['items'] as List<dynamic>? ?? [];
+
+        for (var item in items) {
+          final productId = item['productId'] as String? ?? '';
+          final productName =
+              item['productName'] as String? ?? 'Unknown Product';
+          final quantity = (item['quantity'] as num?)?.toInt() ?? 0;
+          final subtotal = (item['subtotal'] as num?)?.toDouble() ?? 0;
+
+          if (productId.isEmpty) continue;
+
+          if (!productSales.containsKey(productId)) {
+            productSales[productId] = {
+              'productId': productId,
+              'productName': productName,
+              'totalQuantity': 0,
+              'totalRevenue': 0.0,
+            };
+          }
+
+          productSales[productId]!['totalQuantity'] += quantity;
+          productSales[productId]!['totalRevenue'] += subtotal;
+        }
+      }
+
+      // Sort by revenue and return top items
+      final sortedProducts = productSales.values.toList()
+        ..sort(
+          (a, b) => (b['totalRevenue'] as double).compareTo(
+            a['totalRevenue'] as double,
+          ),
+        );
+
+      return sortedProducts.take(limit).toList();
+    } catch (e) {
+      print('[DashboardRepository] Error fetching top products: $e');
+      return [];
+    }
+  }
+
+  /// Get low stock products (for order now section)
+  Future<List<Map<String, dynamic>>> getLowStockProducts({
+    int limit = 5,
+    int threshold = 10,
+  }) async {
+    final userRef = _userRef;
+    if (userRef == null) return [];
+
+    try {
+      final snapshot = await userRef
+          .collection('products')
+          .where('currentStock', isLessThan: threshold)
+          .where('currentStock', isGreaterThan: 0)
+          .orderBy('currentStock')
+          .limit(limit)
+          .get();
+
+      return snapshot.docs.map((doc) {
+        final data = doc.data() as Map<String, dynamic>;
+        data['id'] = doc.id;
+        return data;
+      }).toList();
+    } catch (e) {
+      // Fallback if index not available
+      try {
+        final snapshot = await userRef.collection('products').get();
+        final products = snapshot.docs
+            .map((doc) {
+              final data = doc.data() as Map<String, dynamic>;
+              data['id'] = doc.id;
+              return data;
+            })
+            .where((p) {
+              final stock = (p['currentStock'] as num?)?.toInt() ?? 0;
+              return stock > 0 && stock < threshold;
+            })
+            .toList();
+
+        products.sort(
+          (a, b) => ((a['currentStock'] as num?) ?? 0).compareTo(
+            (b['currentStock'] as num?) ?? 0,
+          ),
+        );
+
+        return products.take(limit).toList();
+      } catch (e2) {
+        print('[DashboardRepository] Error fetching low stock products: $e2');
+        return [];
+      }
+    }
+  }
+
+  /// Get upcoming payment dues (bills due in next 7 days)
+  Future<List<Map<String, dynamic>>> getUpcomingPaymentDues({
+    int limit = 5,
+  }) async {
+    final userRef = _userRef;
+    if (userRef == null) return [];
+
+    try {
+      // Get all pending bills and filter by customer's payment pattern
+      // For now, get recent pending bills as "upcoming"
+      final snapshot = await userRef
+          .collection('bills')
+          .where('paymentStatus', whereIn: ['pending', 'partiallyPaid'])
+          .orderBy('billDate', descending: true)
+          .limit(limit)
+          .get();
+
+      return snapshot.docs.map((doc) {
+        final data = doc.data() as Map<String, dynamic>;
+        data['id'] = doc.id;
+        return data;
+      }).toList();
+    } catch (e) {
+      // Fallback
+      try {
+        final snapshot = await userRef
+            .collection('bills')
+            .orderBy('billDate', descending: true)
+            .limit(20)
+            .get();
+
+        final pendingBills = snapshot.docs
+            .map((doc) {
+              final data = doc.data() as Map<String, dynamic>;
+              data['id'] = doc.id;
+              return data;
+            })
+            .where((bill) {
+              final status = bill['paymentStatus'] as String?;
+              return status == 'pending' || status == 'partiallyPaid';
+            })
+            .take(limit)
+            .toList();
+
+        return pendingBills;
+      } catch (e2) {
+        print('[DashboardRepository] Error fetching upcoming payments: $e2');
+        return [];
+      }
+    }
   }
 }

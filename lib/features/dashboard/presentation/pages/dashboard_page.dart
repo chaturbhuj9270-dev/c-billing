@@ -14,6 +14,7 @@ import '../../../../common_widgets/welcome_card.dart';
 import '../cubit/dashboard_cubit.dart';
 import '../cubit/dashboard_state.dart';
 import '../../data/models/dashboard_data.dart';
+import '../../data/repositories/dashboard_repository.dart';
 import 'flyout_menu.dart';
 
 class DashboardPage extends StatelessWidget {
@@ -54,6 +55,22 @@ class _DashboardViewState extends State<_DashboardView>
   Animation<Offset>? _welcomeSlideAnimation;
   Animation<double>? _welcomeFadeAnimation;
   bool _showWelcome = true;
+
+  // Expandable section states
+  bool _isUpcomingPaymentsExpanded = false;
+  bool _isTopProductsExpanded = false;
+  bool _isPendingPaymentsExpanded = false;
+  bool _isLastDuesExpanded = false;
+  bool _isLowStockExpanded = false;
+
+  // Real data for expandable sections
+  final DashboardRepository _repository = DashboardRepository();
+  List<Map<String, dynamic>> _upcomingPayments = [];
+  List<Map<String, dynamic>> _topProducts = [];
+  List<Map<String, dynamic>> _pendingPayments = [];
+  List<Map<String, dynamic>> _lastDues = [];
+  List<Map<String, dynamic>> _lowStockItems = [];
+  bool _isLoadingExpandableData = false;
 
   @override
   void initState() {
@@ -150,6 +167,42 @@ class _DashboardViewState extends State<_DashboardView>
         });
       }
     });
+
+    // Load expandable section data
+    _loadExpandableSectionData();
+  }
+
+  /// Load data for all expandable sections in parallel
+  Future<void> _loadExpandableSectionData() async {
+    if (_isLoadingExpandableData) return;
+
+    setState(() => _isLoadingExpandableData = true);
+
+    try {
+      final results = await Future.wait([
+        _repository.getUpcomingPaymentDues(limit: 5),
+        _repository.getTopSellingProducts(limit: 5),
+        _repository.getCustomersWithPendingBalance(limit: 5),
+        _repository.getRecentPendingBills(limit: 5),
+        _repository.getLowStockProducts(limit: 5),
+      ]);
+
+      if (mounted) {
+        setState(() {
+          _upcomingPayments = results[0];
+          _topProducts = results[1];
+          _pendingPayments = results[2];
+          _lastDues = results[3];
+          _lowStockItems = results[4];
+          _isLoadingExpandableData = false;
+        });
+      }
+    } catch (e) {
+      print('[DashboardPage] Error loading expandable data: $e');
+      if (mounted) {
+        setState(() => _isLoadingExpandableData = false);
+      }
+    }
   }
 
   @override
@@ -346,6 +399,95 @@ class _DashboardViewState extends State<_DashboardView>
                           _buildAnimatedCard(
                             index: 5,
                             child: _buildPaymentsCard(),
+                          ),
+                          const SizedBox(height: 28),
+                          // Expandable Insights Section
+                          _buildAnimatedCard(
+                            index: 5,
+                            child: _buildSectionHeader(
+                              title: 'Quick Insights',
+                              subtitle: 'Tap to expand',
+                              icon: Icons.insights_outlined,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          _buildExpandableCard(
+                            title: 'Upcoming Payments',
+                            subtitle: 'Due in next 7 days',
+                            icon: Icons.schedule_rounded,
+                            iconGradient: const [
+                              Color(0xFF4A90E2),
+                              Color(0xFF7B68EE),
+                            ],
+                            isExpanded: _isUpcomingPaymentsExpanded,
+                            onTap: () => setState(
+                              () => _isUpcomingPaymentsExpanded =
+                                  !_isUpcomingPaymentsExpanded,
+                            ),
+                            expandedContent: _buildUpcomingPaymentsContent(),
+                          ),
+                          const SizedBox(height: 12),
+                          _buildExpandableCard(
+                            title: 'Top Performing Products',
+                            subtitle: 'Best sellers this month',
+                            icon: Icons.star_rounded,
+                            iconGradient: const [
+                              Color(0xFFFFB74D),
+                              Color(0xFFFF9800),
+                            ],
+                            isExpanded: _isTopProductsExpanded,
+                            onTap: () => setState(
+                              () => _isTopProductsExpanded =
+                                  !_isTopProductsExpanded,
+                            ),
+                            expandedContent: _buildTopProductsContent(data),
+                          ),
+                          const SizedBox(height: 12),
+                          _buildExpandableCard(
+                            title: 'Pending Payments',
+                            subtitle: 'Awaiting collection',
+                            icon: Icons.pending_actions_rounded,
+                            iconGradient: const [
+                              Color(0xFFEF5350),
+                              Color(0xFFE53935),
+                            ],
+                            isExpanded: _isPendingPaymentsExpanded,
+                            onTap: () => setState(
+                              () => _isPendingPaymentsExpanded =
+                                  !_isPendingPaymentsExpanded,
+                            ),
+                            expandedContent: _buildPendingPaymentsContent(),
+                          ),
+                          const SizedBox(height: 12),
+                          _buildExpandableCard(
+                            title: 'Last Dues',
+                            subtitle: 'Recent outstanding amounts',
+                            icon: Icons.receipt_long_rounded,
+                            iconGradient: const [
+                              Color(0xFF9575CD),
+                              Color(0xFF7E57C2),
+                            ],
+                            isExpanded: _isLastDuesExpanded,
+                            onTap: () => setState(
+                              () => _isLastDuesExpanded = !_isLastDuesExpanded,
+                            ),
+                            expandedContent: _buildLastDuesContent(),
+                          ),
+                          const SizedBox(height: 12),
+                          _buildExpandableCard(
+                            title: 'Order Now - Low Stock',
+                            subtitle:
+                                '${data.lowStockCount} items need reorder',
+                            icon: Icons.shopping_cart_rounded,
+                            iconGradient: const [
+                              Color(0xFF26A69A),
+                              Color(0xFF00897B),
+                            ],
+                            isExpanded: _isLowStockExpanded,
+                            onTap: () => setState(
+                              () => _isLowStockExpanded = !_isLowStockExpanded,
+                            ),
+                            expandedContent: _buildLowStockContent(),
                           ),
                           const SizedBox(height: 24),
                         ],
@@ -1480,6 +1622,645 @@ class _DashboardViewState extends State<_DashboardView>
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  // Expandable Card Widget
+  Widget _buildExpandableCard({
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required List<Color> iconGradient,
+    required bool isExpanded,
+    required VoidCallback onTap,
+    required Widget expandedContent,
+  }) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: isExpanded
+                  ? iconGradient.first.withOpacity(0.3)
+                  : Colors.grey.withOpacity(0.15),
+              width: 1.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: isExpanded
+                    ? iconGradient.first.withOpacity(0.15)
+                    : Colors.black.withOpacity(0.05),
+                blurRadius: isExpanded ? 12 : 6,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              // Header (always visible)
+              InkWell(
+                onTap: onTap,
+                borderRadius: BorderRadius.circular(16),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(colors: iconGradient),
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: iconGradient.first.withOpacity(0.3),
+                              blurRadius: 8,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        child: Icon(icon, color: Colors.white, size: 22),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              title,
+                              style: const TextStyle(
+                                color: Color(0xFF1B4D3E),
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                                fontFamily: 'Literata',
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              subtitle,
+                              style: TextStyle(
+                                color: Colors.grey[600],
+                                fontSize: 12,
+                                fontFamily: 'Literata',
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      AnimatedRotation(
+                        turns: isExpanded ? 0.5 : 0,
+                        duration: const Duration(milliseconds: 300),
+                        child: Container(
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            color: iconGradient.first.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(
+                            Icons.keyboard_arrow_down_rounded,
+                            color: iconGradient.first,
+                            size: 22,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              // Expanded content
+              AnimatedCrossFade(
+                firstChild: const SizedBox.shrink(),
+                secondChild: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                  child: expandedContent,
+                ),
+                crossFadeState: isExpanded
+                    ? CrossFadeState.showSecond
+                    : CrossFadeState.showFirst,
+                duration: const Duration(milliseconds: 300),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Upcoming Payments Content
+  Widget _buildUpcomingPaymentsContent() {
+    if (_isLoadingExpandableData) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(20),
+          child: CircularProgressIndicator(strokeWidth: 2),
+        ),
+      );
+    }
+
+    if (_upcomingPayments.isEmpty) {
+      return _buildEmptyState(
+        'No upcoming payments',
+        Icons.check_circle_outline,
+      );
+    }
+
+    return Column(
+      children: [
+        Container(height: 1, color: Colors.grey.withOpacity(0.1)),
+        const SizedBox(height: 12),
+        ..._upcomingPayments.map((payment) {
+          final customerName =
+              payment['customerName'] as String? ?? 'Unknown Customer';
+          final pendingAmount =
+              (payment['pendingAmount'] as num?)?.toDouble() ?? 0;
+          final billDate = payment['billDate'] != null
+              ? DateFormat(
+                  'dd MMM',
+                ).format(DateTime.parse(payment['billDate'] as String))
+              : 'N/A';
+
+          return _buildPaymentListItem(
+            name: customerName,
+            amount: pendingAmount,
+            trailing: billDate,
+            color: const Color(0xFF4A90E2),
+          );
+        }),
+        const SizedBox(height: 8),
+        _buildViewAllButton('View All Payments', Icons.payments_outlined),
+      ],
+    );
+  }
+
+  // Top Performing Products Content
+  Widget _buildTopProductsContent(DashboardData data) {
+    if (_isLoadingExpandableData) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(20),
+          child: CircularProgressIndicator(strokeWidth: 2),
+        ),
+      );
+    }
+
+    if (_topProducts.isEmpty) {
+      return _buildEmptyState(
+        'No sales data available',
+        Icons.trending_up_outlined,
+      );
+    }
+
+    return Column(
+      children: [
+        Container(height: 1, color: Colors.grey.withOpacity(0.1)),
+        const SizedBox(height: 12),
+        ..._topProducts.asMap().entries.map((entry) {
+          final index = entry.key;
+          final product = entry.value;
+          return _buildProductRankItem(
+            rank: index + 1,
+            name: product['productName'] as String? ?? 'Unknown Product',
+            sold: (product['totalQuantity'] as num?)?.toInt() ?? 0,
+            revenue: (product['totalRevenue'] as num?)?.toDouble() ?? 0,
+          );
+        }),
+        const SizedBox(height: 8),
+        _buildViewAllButton('View Sales Report', Icons.bar_chart_rounded),
+      ],
+    );
+  }
+
+  // Pending Payments Content
+  Widget _buildPendingPaymentsContent() {
+    if (_isLoadingExpandableData) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(20),
+          child: CircularProgressIndicator(strokeWidth: 2),
+        ),
+      );
+    }
+
+    if (_pendingPayments.isEmpty) {
+      return _buildEmptyState(
+        'No pending payments',
+        Icons.check_circle_outline,
+      );
+    }
+
+    return Column(
+      children: [
+        Container(height: 1, color: Colors.grey.withOpacity(0.1)),
+        const SizedBox(height: 12),
+        ..._pendingPayments.map((customer) {
+          final name =
+              '${customer['firstName'] ?? ''} ${customer['lastName'] ?? ''}'
+                  .trim();
+          final amount =
+              (customer['currentPendingAmount'] as num?)?.toDouble() ?? 0;
+          final updatedAt = customer['updatedAt'] != null
+              ? DateTime.parse(customer['updatedAt'] as String)
+              : DateTime.now();
+          final daysOverdue = DateTime.now().difference(updatedAt).inDays;
+
+          return _buildPaymentListItem(
+            name: name.isEmpty ? 'Unknown Customer' : name,
+            amount: amount,
+            trailing: daysOverdue > 0 ? '$daysOverdue days overdue' : 'Recent',
+            color: const Color(0xFFEF5350),
+            isOverdue: daysOverdue > 7,
+          );
+        }),
+        const SizedBox(height: 8),
+        GestureDetector(
+          onTap: () => Navigator.of(
+            context,
+          ).push(MaterialPageRoute(builder: (_) => const CustomerPage())),
+          child: _buildViewAllButton(
+            'View All Customers',
+            Icons.people_outline_rounded,
+          ),
+        ),
+      ],
+    );
+  }
+
+  // Last Dues Content
+  Widget _buildLastDuesContent() {
+    if (_isLoadingExpandableData) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(20),
+          child: CircularProgressIndicator(strokeWidth: 2),
+        ),
+      );
+    }
+
+    if (_lastDues.isEmpty) {
+      return _buildEmptyState('No pending dues', Icons.check_circle_outline);
+    }
+
+    return Column(
+      children: [
+        Container(height: 1, color: Colors.grey.withOpacity(0.1)),
+        const SizedBox(height: 12),
+        ..._lastDues.map((bill) {
+          final billId = bill['id'] as String? ?? '';
+          final customerName =
+              bill['customerName'] as String? ?? 'Walk-in Customer';
+          final pendingAmount =
+              (bill['pendingAmount'] as num?)?.toDouble() ?? 0;
+          final billDate = bill['billDate'] != null
+              ? DateFormat(
+                  'dd MMM',
+                ).format(DateTime.parse(bill['billDate'] as String))
+              : 'N/A';
+
+          return _buildPaymentListItem(
+            name: customerName.isNotEmpty
+                ? customerName
+                : 'Bill #${billId.substring(0, 6)}',
+            amount: pendingAmount,
+            trailing: billDate,
+            color: const Color(0xFF9575CD),
+          );
+        }),
+        const SizedBox(height: 8),
+        GestureDetector(
+          onTap: () => Navigator.of(
+            context,
+          ).push(MaterialPageRoute(builder: (_) => const BillsListPage())),
+          child: _buildViewAllButton(
+            'View All Bills',
+            Icons.receipt_long_rounded,
+          ),
+        ),
+      ],
+    );
+  }
+
+  // Low Stock / Order Now Content
+  Widget _buildLowStockContent() {
+    if (_isLoadingExpandableData) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(20),
+          child: CircularProgressIndicator(strokeWidth: 2),
+        ),
+      );
+    }
+
+    if (_lowStockItems.isEmpty) {
+      return _buildEmptyState(
+        'All products are well stocked',
+        Icons.inventory_2_outlined,
+      );
+    }
+
+    return Column(
+      children: [
+        Container(height: 1, color: Colors.grey.withOpacity(0.1)),
+        const SizedBox(height: 12),
+        ..._lowStockItems.map(
+          (item) => _buildLowStockItem(
+            name: item['name'] as String? ?? 'Unknown Product',
+            currentStock: (item['currentStock'] as num?)?.toInt() ?? 0,
+            reorderQty: 20, // Default reorder quantity
+          ),
+        ),
+        const SizedBox(height: 8),
+        GestureDetector(
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const ProductManagementPage()),
+          ),
+          child: _buildViewAllButton(
+            'Go to Inventory',
+            Icons.inventory_2_rounded,
+          ),
+        ),
+      ],
+    );
+  }
+
+  // Empty State Widget
+  Widget _buildEmptyState(String message, IconData icon) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 20),
+      child: Column(
+        children: [
+          Container(height: 1, color: Colors.grey.withOpacity(0.1)),
+          const SizedBox(height: 20),
+          Icon(icon, size: 40, color: Colors.grey[400]),
+          const SizedBox(height: 8),
+          Text(
+            message,
+            style: TextStyle(
+              fontSize: 13,
+              color: Colors.grey[600],
+              fontFamily: 'Literata',
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Helper: Payment List Item
+  Widget _buildPaymentListItem({
+    required String name,
+    required double amount,
+    required String trailing,
+    required Color color,
+    bool isOverdue = false,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.05),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: color.withOpacity(0.15)),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    name,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      fontFamily: 'Literata',
+                      color: Color(0xFF1B4D3E),
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    trailing,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: isOverdue ? color : Colors.grey[600],
+                      fontFamily: 'Literata',
+                      fontWeight: isOverdue
+                          ? FontWeight.w600
+                          : FontWeight.normal,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Text(
+              '₹${amount.toStringAsFixed(0)}',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                fontFamily: 'Literata',
+                color: color,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Helper: Product Rank Item
+  Widget _buildProductRankItem({
+    required int rank,
+    required String name,
+    required int sold,
+    required double revenue,
+  }) {
+    final colors = [
+      const Color(0xFFFFD700), // Gold
+      const Color(0xFFC0C0C0), // Silver
+      const Color(0xFFCD7F32), // Bronze
+    ];
+    final color = rank <= 3 ? colors[rank - 1] : Colors.grey;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFFF8E1),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: color.withOpacity(0.3)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 28,
+              height: 28,
+              decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+              child: Center(
+                child: Text(
+                  '#$rank',
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    name,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      fontFamily: 'Literata',
+                      color: Color(0xFF1B4D3E),
+                    ),
+                  ),
+                  Text(
+                    '$sold units sold',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Colors.grey[600],
+                      fontFamily: 'Literata',
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Text(
+              '₹${(revenue / 1000).toStringAsFixed(1)}K',
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                fontFamily: 'Literata',
+                color: Color(0xFFFF9800),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Helper: Low Stock Item
+  Widget _buildLowStockItem({
+    required String name,
+    required int currentStock,
+    required int reorderQty,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: const Color(0xFFE0F2F1),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: const Color(0xFF26A69A).withOpacity(0.3)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: currentStock <= 5 ? Colors.red : Colors.orange,
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text(
+                '$currentStock left',
+                style: const TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                name,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  fontFamily: 'Literata',
+                  color: Color(0xFF1B4D3E),
+                ),
+              ),
+            ),
+            OutlinedButton(
+              onPressed: () {
+                // Navigate to purchase page or create order
+                Navigator.of(
+                  context,
+                ).push(MaterialPageRoute(builder: (_) => const PurchasePage()));
+              },
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                side: const BorderSide(color: Color(0xFF26A69A)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: Text(
+                'Order $reorderQty',
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF26A69A),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Helper: View All Button
+  Widget _buildViewAllButton(String text, IconData icon) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            const Color(0xFF1B4D3E).withOpacity(0.05),
+            const Color(0xFF1B4D3E).withOpacity(0.1),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, size: 16, color: const Color(0xFF1B4D3E)),
+          const SizedBox(width: 8),
+          Text(
+            text,
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              fontFamily: 'Literata',
+              color: Color(0xFF1B4D3E),
+            ),
+          ),
+        ],
       ),
     );
   }
