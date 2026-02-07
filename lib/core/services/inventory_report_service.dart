@@ -68,13 +68,18 @@ class InventoryReportService {
     final reportTitle = customTitle ?? getReportTypeLabel(reportType);
     final reportSubtitle = customSubtitle;
     final dateStr = DateFormat('dd MMM yyyy, hh:mm a').format(DateTime.now());
+    final finalShopName = shopName ?? 'C-Billing Network';
 
     pdf.addPage(
       pw.MultiPage(
         pageFormat: PdfPageFormat.a4,
         margin: const pw.EdgeInsets.all(32),
-        header: (context) =>
-            _buildPdfHeader(reportTitle, dateStr, shopName, reportSubtitle),
+        header: (context) => _buildPdfHeader(
+          reportTitle,
+          dateStr,
+          finalShopName,
+          reportSubtitle,
+        ),
         footer: (context) => _buildPdfFooter(context),
         build: (context) => [
           pw.SizedBox(height: 20),
@@ -114,17 +119,18 @@ class InventoryReportService {
                   pw.Text(
                     shopName,
                     style: pw.TextStyle(
-                      fontSize: 16,
+                      fontSize: 22,
                       fontWeight: pw.FontWeight.bold,
+                      color: PdfColors.green800,
                     ),
                   ),
                 pw.SizedBox(height: 4),
                 pw.Text(
                   reportTitle,
                   style: pw.TextStyle(
-                    fontSize: 20,
-                    fontWeight: pw.FontWeight.bold,
-                    color: PdfColors.green800,
+                    fontSize: 18,
+                    fontWeight: pw.FontWeight.normal,
+                    color: PdfColors.grey800,
                   ),
                 ),
                 if (subtitle != null && subtitle.isNotEmpty)
@@ -199,7 +205,7 @@ class InventoryReportService {
           _buildSummaryItem('Total Units', totalStock.toString()),
           _buildSummaryItem(
             'Total Value',
-            '₹${NumberFormat('#,##0.00').format(totalValue)}',
+            'Rs.${NumberFormat('#,##0.00').format(totalValue)}',
           ),
         ],
       ),
