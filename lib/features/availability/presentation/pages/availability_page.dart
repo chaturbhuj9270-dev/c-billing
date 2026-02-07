@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:c_billing/core/services/inventory_service.dart';
+import 'package:c_billing/core/services/inventory_report_service.dart';
 import 'package:c_billing/features/inventory_management/data/repositories/firebase_product_repository.dart';
 import 'package:c_billing/features/inventory_management/data/repositories/firebase_stock_repository.dart';
 import 'package:c_billing/features/inventory_management/data/repositories/firebase_purchase_repository.dart';
@@ -54,6 +55,465 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+
+  final _reportService = InventoryReportService();
+
+  void _showReportBottomSheet() {
+    Set<ReportType> selectedTypes = {ReportType.outOfStock};
+    ReportFormat selectedFormat = ReportFormat.pdf;
+    bool isGenerating = false;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setSheetState) => Container(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+          ),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Handle bar
+              const SizedBox(height: 12),
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              // Header
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(
+                        Icons.description_outlined,
+                        color: Color(0xFF1B4D3E),
+                        size: 22,
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Generate Report',
+                            style: TextStyle(
+                              fontFamily: 'Literata',
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF1B4D3E),
+                            ),
+                          ),
+                          Text(
+                            'Export inventory data as PDF or CSV',
+                            style: TextStyle(
+                              fontFamily: 'Literata',
+                              fontSize: 12,
+                              color: Colors.grey,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1),
+              // Report Type Selection
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Report Type',
+                      style: TextStyle(
+                        fontFamily: 'Literata',
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF1B4D3E),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Select one or more report types',
+                      style: TextStyle(
+                        fontFamily: 'Literata',
+                        fontSize: 11,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    _buildReportTypeCheckbox(
+                      'Out of Stock Products',
+                      'Products with 0 quantity',
+                      Icons.error_outline,
+                      Colors.red,
+                      ReportType.outOfStock,
+                      selectedTypes,
+                      (type, isChecked) => setSheetState(() {
+                        if (isChecked) {
+                          selectedTypes.add(type);
+                        } else {
+                          selectedTypes.remove(type);
+                        }
+                      }),
+                    ),
+                    const SizedBox(height: 8),
+                    _buildReportTypeCheckbox(
+                      'Low Stock Products',
+                      'Products with quantity ≤ 10',
+                      Icons.warning_amber,
+                      Colors.orange,
+                      ReportType.lowStock,
+                      selectedTypes,
+                      (type, isChecked) => setSheetState(() {
+                        if (isChecked) {
+                          selectedTypes.add(type);
+                        } else {
+                          selectedTypes.remove(type);
+                        }
+                      }),
+                    ),
+                    const SizedBox(height: 8),
+                    _buildReportTypeCheckbox(
+                      'All Products',
+                      'Complete inventory list',
+                      Icons.inventory_2,
+                      const Color(0xFF1B4D3E),
+                      ReportType.allProducts,
+                      selectedTypes,
+                      (type, isChecked) => setSheetState(() {
+                        if (isChecked) {
+                          selectedTypes.add(type);
+                        } else {
+                          selectedTypes.remove(type);
+                        }
+                      }),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1),
+              // Format Selection
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Export Format',
+                      style: TextStyle(
+                        fontFamily: 'Literata',
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF1B4D3E),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildFormatOption(
+                            'PDF',
+                            Icons.picture_as_pdf,
+                            Colors.red,
+                            ReportFormat.pdf,
+                            selectedFormat,
+                            (format) =>
+                                setSheetState(() => selectedFormat = format),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _buildFormatOption(
+                            'CSV (Excel)',
+                            Icons.table_chart,
+                            Colors.green,
+                            ReportFormat.csv,
+                            selectedFormat,
+                            (format) =>
+                                setSheetState(() => selectedFormat = format),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              // Generate Button
+              Padding(
+                padding: EdgeInsets.only(
+                  left: 16,
+                  right: 16,
+                  bottom: MediaQuery.of(context).padding.bottom + 16,
+                  top: 8,
+                ),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: isGenerating || selectedTypes.isEmpty
+                        ? null
+                        : () async {
+                            setSheetState(() => isGenerating = true);
+                            await _generateReportMultiple(
+                              selectedTypes,
+                              selectedFormat,
+                            );
+                            if (mounted) {
+                              Navigator.pop(context);
+                            }
+                          },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF1B4D3E),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: isGenerating
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Text(
+                            'Generate & Share',
+                            style: TextStyle(
+                              fontFamily: 'Literata',
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildReportTypeCheckbox(
+    String title,
+    String subtitle,
+    IconData icon,
+    Color iconColor,
+    ReportType type,
+    Set<ReportType> selectedTypes,
+    Function(ReportType, bool) onToggle,
+  ) {
+    final isSelected = selectedTypes.contains(type);
+    return InkWell(
+      onTap: () => onToggle(type, !isSelected),
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? const Color(0xFF1B4D3E).withOpacity(0.1)
+              : Colors.grey[50],
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? const Color(0xFF1B4D3E) : Colors.grey[200]!,
+            width: isSelected ? 2 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: iconColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(icon, color: iconColor, size: 20),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontFamily: 'Literata',
+                      fontSize: 14,
+                      fontWeight: isSelected
+                          ? FontWeight.w600
+                          : FontWeight.w500,
+                      color: isSelected
+                          ? const Color(0xFF1B4D3E)
+                          : Colors.black87,
+                    ),
+                  ),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontFamily: 'Literata',
+                      fontSize: 11,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Checkbox(
+              value: isSelected,
+              onChanged: (value) => onToggle(type, value ?? false),
+              activeColor: const Color(0xFF1B4D3E),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(4),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFormatOption(
+    String label,
+    IconData icon,
+    Color color,
+    ReportFormat format,
+    ReportFormat selectedFormat,
+    Function(ReportFormat) onSelect,
+  ) {
+    final isSelected = format == selectedFormat;
+    return InkWell(
+      onTap: () => onSelect(format),
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+        decoration: BoxDecoration(
+          color: isSelected ? color.withOpacity(0.1) : Colors.grey[50],
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? color : Colors.grey[200]!,
+            width: isSelected ? 2 : 1,
+          ),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: color, size: 28),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              style: TextStyle(
+                fontFamily: 'Literata',
+                fontSize: 13,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                color: isSelected ? color : Colors.black87,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _generateReportMultiple(
+    Set<ReportType> reportTypes,
+    ReportFormat format,
+  ) async {
+    try {
+      // Combine products from all selected types (avoiding duplicates)
+      final Set<String> addedProductIds = {};
+      final List<Product> combinedProducts = [];
+
+      for (final reportType in reportTypes) {
+        final filteredProducts = _reportService.filterProducts(
+          _products,
+          reportType,
+        );
+        for (final product in filteredProducts) {
+          if (!addedProductIds.contains(product.id)) {
+            addedProductIds.add(product.id);
+            combinedProducts.add(product);
+          }
+        }
+      }
+
+      if (combinedProducts.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('No products found for selected report types'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+        return;
+      }
+
+      // Generate combined report title
+      final typeLabels = reportTypes
+          .map((t) => _reportService.getReportTypeLabel(t))
+          .join(', ');
+
+      late final file;
+      if (format == ReportFormat.pdf) {
+        file = await _reportService.generatePdfReport(
+          products: combinedProducts,
+          reportType: reportTypes.length == 1
+              ? reportTypes.first
+              : ReportType.allProducts,
+          customTitle: reportTypes.length > 1 ? 'Combined Report' : null,
+          customSubtitle: reportTypes.length > 1 ? typeLabels : null,
+        );
+      } else {
+        file = await _reportService.generateCsvReport(
+          products: combinedProducts,
+          reportType: reportTypes.length == 1
+              ? reportTypes.first
+              : ReportType.allProducts,
+          customTitle: reportTypes.length > 1 ? 'Combined Report' : null,
+        );
+      }
+
+      await _reportService.shareReport(file);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Report generated with ${combinedProducts.length} products',
+            ),
+            backgroundColor: const Color(0xFF1B4D3E),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error generating report: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   Future<void> _loadProducts() async {
@@ -548,12 +1008,49 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
             )
           : Column(
               children: [
+                _buildPageHeader(),
                 _buildStatsCards(),
                 _buildSearchAndFilters(),
                 const SizedBox(height: 12),
                 _buildProductsList(),
               ],
             ),
+    );
+  }
+
+  Widget _buildPageHeader() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 8, 0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          const Text(
+            'Stock Overview',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF1B4D3E),
+              fontFamily: 'Literata',
+            ),
+          ),
+          IconButton(
+            onPressed: _showReportBottomSheet,
+            icon: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(
+                Icons.summarize_outlined,
+                color: Color(0xFF1B4D3E),
+                size: 20,
+              ),
+            ),
+            tooltip: 'Generate Report',
+          ),
+        ],
+      ),
     );
   }
 }
