@@ -517,18 +517,6 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
           ),
           const SizedBox(width: 12),
           _buildQuickStatItem(
-            icon: Icons.people_outline,
-            value: '${data.clientsCount}',
-            label: 'Customers',
-            color: const Color(0xFF4CAF50),
-            isLoading: isLoading,
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const CustomerPage()),
-            ),
-          ),
-          const SizedBox(width: 12),
-          _buildQuickStatItem(
             icon: Icons.inventory_2_outlined,
             value: '${data.productsCount}',
             label: 'Products',
@@ -549,18 +537,6 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const SupplierPage()),
-            ),
-          ),
-          const SizedBox(width: 12),
-          _buildQuickStatItem(
-            icon: Icons.shopping_cart_outlined,
-            value: '${data.purchasesCount}',
-            label: 'Purchases',
-            color: const Color(0xFF00BCD4),
-            isLoading: isLoading,
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const PurchasePage()),
             ),
           ),
           const SizedBox(width: 12),
