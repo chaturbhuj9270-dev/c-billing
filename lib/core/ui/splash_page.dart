@@ -12,7 +12,7 @@ import '../services/credentials_manager.dart';
 class SplashPage extends StatefulWidget {
   final Duration duration;
 
-  const SplashPage({super.key, this.duration = const Duration(microseconds: 500)});
+  const SplashPage({super.key, this.duration = const Duration(milliseconds: 1500)});
 
   @override
   State<SplashPage> createState() => _SplashPageState();
@@ -110,15 +110,27 @@ class _SplashPageState extends State<SplashPage> {
 
   void _goToDashboard() {
     if (mounted) {
-      // Don't auto-show biometric - user will tap "Unlock Now" button
-      // Just stay on splash screen
-      print('[DEBUG] User logged in, showing splash with Unlock Now button');
+      print('[DEBUG] User logged in, showing biometric prompt');
+      // Wait for splash animation to complete, then show biometric
+      _timer = Timer(widget.duration, () {
+        _showFingerprintDialog(FirebaseAuth.instance.currentUser!.uid);
+      });
     }
   }
 
   Future<void> _showFingerprintDialog(String userId) async {
     try {
       final biometricService = BiometricService.instance;
+      
+      // Check if biometrics are available
+      final canCheckBiometrics = await biometricService.canCheckBiometrics();
+      
+      if (!canCheckBiometrics) {
+        print('[DEBUG] Biometrics not available, navigating directly to dashboard');
+        _navigateToDashboard();
+        return;
+      }
+      
       final isAuthenticated = await biometricService.authenticate(
         reason: 'Verify your identity to continue',
         useErrorDialogs: true,
@@ -128,7 +140,8 @@ class _SplashPageState extends State<SplashPage> {
         print('[DEBUG] Fingerprint authentication successful');
         _navigateToDashboard();
       } else {
-        print('[DEBUG] Fingerprint authentication cancelled/failed');
+        print('[DEBUG] Fingerprint authentication cancelled/failed, navigating anyway');
+        // Navigate to dashboard even if cancelled
         _navigateToDashboard();
       }
     } catch (e) {
