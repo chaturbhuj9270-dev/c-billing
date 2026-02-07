@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'dart:ui';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
@@ -119,46 +120,132 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
   Widget build(BuildContext context) {
     _resetSessionTimer();
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFB),
-      body: Column(
-        children: [
-          // Common header for all tabs
-          _buildCommonHeader(),
-          // Tab content
-          Expanded(
-            child: IndexedStack(
-              index: _selectedIndex,
-              children: [
-                // Dashboard tab
-                BlocBuilder<OptimizedDashboardCubit, OptimizedDashboardState>(
-                  builder: (context, state) {
-                    return FadeTransition(
-                      opacity: _fadeAnimation,
-                      child: RefreshIndicator(
-                        onRefresh: () =>
-                            context.read<OptimizedDashboardCubit>().refresh(),
-                        color: const Color(0xFF1B4D3E),
-                        child: _buildContent(state),
-                      ),
-                    );
-                  },
-                ),
-                // Customers tab
-                const CustomerPage(isEmbedded: true),
-                // Available tab
-                const AvailabilityPage(isEmbedded: true),
-                // Billing tab
-                const BillingPage(isEmbedded: true),
-                // Purchase tab
-                const PurchasePage(isEmbedded: true),
-              ],
+    return PopScope(
+      canPop: false,
+      onPopInvoked: (didPop) {
+        if (didPop) return;
+        _showExitConfirmationDialog(context);
+      },
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF8FAFB),
+        body: Column(
+          children: [
+            // Common header for all tabs
+            _buildCommonHeader(),
+            // Tab content
+            Expanded(
+              child: IndexedStack(
+                index: _selectedIndex,
+                children: [
+                  // Dashboard tab
+                  BlocBuilder<OptimizedDashboardCubit, OptimizedDashboardState>(
+                    builder: (context, state) {
+                      return FadeTransition(
+                        opacity: _fadeAnimation,
+                        child: RefreshIndicator(
+                          onRefresh: () =>
+                              context.read<OptimizedDashboardCubit>().refresh(),
+                          color: const Color(0xFF1B4D3E),
+                          child: _buildContent(state),
+                        ),
+                      );
+                    },
+                  ),
+                  // Customers tab
+                  const CustomerPage(isEmbedded: true),
+                  // Available tab
+                  const AvailabilityPage(isEmbedded: true),
+                  // Billing tab
+                  const BillingPage(isEmbedded: true),
+                  // Purchase tab
+                  const PurchasePage(isEmbedded: true),
+                ],
+              ),
+            ),
+          ],
+        ),
+        bottomNavigationBar: _buildBottomNavBar(),
+      ),
+    );
+  }
+
+  Future<void> _showExitConfirmationDialog(BuildContext context) async {
+    final shouldExit = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(
+                Icons.exit_to_app,
+                color: Color(0xFF1B4D3E),
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 12),
+            const Text(
+              'Exit App',
+              style: TextStyle(
+                fontFamily: 'Literata',
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF1B4D3E),
+              ),
+            ),
+          ],
+        ),
+        content: const Text(
+          'Are you sure you want to exit the app?',
+          style: TextStyle(
+            fontFamily: 'Literata',
+            fontSize: 14,
+            color: Colors.black87,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(
+                fontFamily: 'Literata',
+                color: Colors.grey,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF1B4D3E),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: const Text(
+              'Exit',
+              style: TextStyle(
+                fontFamily: 'Literata',
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         ],
       ),
-      bottomNavigationBar: _buildBottomNavBar(),
     );
+
+    if (shouldExit == true && context.mounted) {
+      // Clear session and exit the app properly
+      SessionManager().endSession();
+      SystemNavigator.pop();
+    }
   }
 
   Widget _buildCommonHeader() {

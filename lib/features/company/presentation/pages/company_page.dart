@@ -53,7 +53,7 @@ class _CompanyPageState extends State<CompanyPage> {
     // Load from cache immediately for < 0.5s loading
     final cachedCompanies = await _cacheDataSource.getCachedCompanies();
     final cachedSuppliers = await _cacheDataSource.getCachedSuppliers();
-    
+
     if (mounted) {
       setState(() {
         if (cachedCompanies != null) {
@@ -65,7 +65,9 @@ class _CompanyPageState extends State<CompanyPage> {
           _filteredSuppliers = _suppliers;
         }
       });
-      print('[DEBUG] Loaded from cache: ${_companies.length} companies, ${_suppliers.length} suppliers');
+      print(
+        '[DEBUG] Loaded from cache: ${_companies.length} companies, ${_suppliers.length} suppliers',
+      );
     }
 
     // Fetch from Firestore in background
@@ -89,9 +91,13 @@ class _CompanyPageState extends State<CompanyPage> {
           _filteredCompanies = List.from(_companies);
         } else {
           _filteredCompanies = _companies.where((company) {
-            final name = (company['companyName'] ?? '').toString().toLowerCase();
+            final name = (company['companyName'] ?? '')
+                .toString()
+                .toLowerCase();
             final contact = (company['contact'] ?? '').toString().toLowerCase();
-            final contactPerson = (company['contactPerson'] ?? '').toString().toLowerCase();
+            final contactPerson = (company['contactPerson'] ?? '')
+                .toString()
+                .toLowerCase();
             final address = (company['address'] ?? '').toString().toLowerCase();
             return name.contains(query) ||
                 contact.contains(query) ||
@@ -125,17 +131,21 @@ class _CompanyPageState extends State<CompanyPage> {
 
   void _filterSuppliers() {
     final query = _supplierSearchController.text.toLowerCase();
-    
+
     setState(() {
       if (query.isEmpty) {
         _filteredSuppliers = _suppliers;
       } else {
         _filteredSuppliers = _suppliers.where((supplier) {
-          final firstName = (supplier['firstName'] ?? '').toString().toLowerCase();
-          final lastName = (supplier['lastName'] ?? '').toString().toLowerCase();
+          final firstName = (supplier['firstName'] ?? '')
+              .toString()
+              .toLowerCase();
+          final lastName = (supplier['lastName'] ?? '')
+              .toString()
+              .toLowerCase();
           final contact = (supplier['contact'] ?? '').toString().toLowerCase();
           final fullName = '$firstName $lastName'.trim().toLowerCase();
-          
+
           return fullName.contains(query) || contact.contains(query);
         }).toList();
       }
@@ -169,10 +179,7 @@ class _CompanyPageState extends State<CompanyPage> {
       print('[DEBUG] Loaded ${snapshot.docs.length} suppliers from Firestore');
 
       final freshSuppliers = snapshot.docs
-          .map((doc) => {
-                'id': doc.id,
-                ...doc.data(),
-              })
+          .map((doc) => {'id': doc.id, ...doc.data()})
           .toList();
 
       if (mounted) {
@@ -185,7 +192,7 @@ class _CompanyPageState extends State<CompanyPage> {
       }
     } catch (e) {
       print('[ERROR] Failed to load suppliers: $e');
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -216,12 +223,9 @@ class _CompanyPageState extends State<CompanyPage> {
           .get();
 
       print('[DEBUG] Loaded ${snapshot.docs.length} companies from Firestore');
-      
+
       final freshCompanies = snapshot.docs
-          .map((doc) => {
-                'id': doc.id,
-                ...doc.data(),
-              })
+          .map((doc) => {'id': doc.id, ...doc.data()})
           .toList();
 
       if (mounted && !_isNavigatingAway) {
@@ -234,7 +238,7 @@ class _CompanyPageState extends State<CompanyPage> {
       }
     } catch (e) {
       print('[ERROR] Failed to load companies: $e');
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -322,7 +326,7 @@ class _CompanyPageState extends State<CompanyPage> {
     print('[DEBUG] Opening supplier selection bottom sheet');
     _supplierSearchController.clear();
     setState(() => _filteredSuppliers = _suppliers);
-    
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -368,8 +372,15 @@ class _CompanyPageState extends State<CompanyPage> {
                   onChanged: (_) => _filterSuppliers(),
                   decoration: InputDecoration(
                     hintText: 'Search by name or contact...',
-                    hintStyle: TextStyle(color: Colors.grey[400], fontFamily: 'Literata'),
-                    prefixIcon: Icon(Icons.search, color: Colors.grey[600], size: 20),
+                    hintStyle: TextStyle(
+                      color: Colors.grey[400],
+                      fontFamily: 'Literata',
+                    ),
+                    prefixIcon: Icon(
+                      Icons.search,
+                      color: Colors.grey[600],
+                      size: 20,
+                    ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide(color: Colors.grey[300]!),
@@ -380,7 +391,10 @@ class _CompanyPageState extends State<CompanyPage> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Color(0xFF1B4D3E), width: 2),
+                      borderSide: const BorderSide(
+                        color: Color(0xFF1B4D3E),
+                        width: 2,
+                      ),
                     ),
                     filled: true,
                     fillColor: Colors.grey[50],
@@ -396,94 +410,134 @@ class _CompanyPageState extends State<CompanyPage> {
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.person_add_outlined, color: Colors.grey[400], size: 50),
+                              Icon(
+                                Icons.person_add_outlined,
+                                color: Colors.grey[400],
+                                size: 50,
+                              ),
                               const SizedBox(height: 16),
                               Text(
                                 'No suppliers yet',
-                                style: TextStyle(color: Colors.grey[600], fontFamily: 'Literata', fontWeight: FontWeight.w600, fontSize: 16),
+                                style: TextStyle(
+                                  color: Colors.grey[600],
+                                  fontFamily: 'Literata',
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 16,
+                                ),
                               ),
                               const SizedBox(height: 8),
                               Text(
                                 'Add suppliers from the Suppliers page first',
                                 textAlign: TextAlign.center,
-                                style: TextStyle(color: Colors.grey[500], fontFamily: 'Literata', fontSize: 13),
+                                style: TextStyle(
+                                  color: Colors.grey[500],
+                                  fontFamily: 'Literata',
+                                  fontSize: 13,
+                                ),
                               ),
                             ],
                           ),
                         ),
                       )
                     : _filteredSuppliers.isEmpty
-                        ? Padding(
-                            padding: const EdgeInsets.all(20),
-                            child: Center(
-                              child: Text(
-                                'No suppliers found',
-                                style: TextStyle(color: Colors.grey[600], fontFamily: 'Literata', fontSize: 14),
+                    ? Padding(
+                        padding: const EdgeInsets.all(20),
+                        child: Center(
+                          child: Text(
+                            'No suppliers found',
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              fontFamily: 'Literata',
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                      )
+                    : ListView.builder(
+                        shrinkWrap: true,
+                        padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                        itemCount: _filteredSuppliers.length,
+                        itemBuilder: (context, index) {
+                          final supplier = _filteredSuppliers[index];
+                          final fullName =
+                              '${supplier['firstName'] ?? ''} ${supplier['lastName'] ?? ''}'
+                                  .trim();
+                          final contact = supplier['contact'] ?? '';
+                          final isSelected =
+                              _selectedSupplierId == supplier['id'];
+
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 8),
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? const Color(0xFF1B4D3E).withOpacity(0.1)
+                                  : Colors.grey[50],
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: isSelected
+                                    ? const Color(0xFF1B4D3E)
+                                    : Colors.grey[300]!,
+                                width: isSelected ? 2 : 1,
                               ),
                             ),
-                          )
-                        : ListView.builder(
-                            shrinkWrap: true,
-                            padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-                            itemCount: _filteredSuppliers.length,
-                            itemBuilder: (context, index) {
-                              final supplier = _filteredSuppliers[index];
-                              final fullName = '${supplier['firstName'] ?? ''} ${supplier['lastName'] ?? ''}'.trim();
-                              final contact = supplier['contact'] ?? '';
-                              final isSelected = _selectedSupplierId == supplier['id'];
-                              
-                              return Container(
-                                margin: const EdgeInsets.only(bottom: 8),
+                            child: ListTile(
+                              leading: Container(
+                                width: 40,
+                                height: 40,
                                 decoration: BoxDecoration(
-                                  color: isSelected ? const Color(0xFF1B4D3E).withOpacity(0.1) : Colors.grey[50],
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(
-                                    color: isSelected ? const Color(0xFF1B4D3E) : Colors.grey[300]!,
-                                    width: isSelected ? 2 : 1,
-                                  ),
+                                  color: const Color(
+                                    0xFF1B4D3E,
+                                  ).withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(10),
                                 ),
-                                child: ListTile(
-                                  leading: Container(
-                                    width: 40,
-                                    height: 40,
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFF1B4D3E).withOpacity(0.1),
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                    child: const Icon(Icons.person, color: Color(0xFF1B4D3E), size: 22),
-                                  ),
-                                  title: Text(
-                                    fullName,
-                                    style: const TextStyle(
-                                      fontFamily: 'Literata',
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
+                                child: const Icon(
+                                  Icons.person,
+                                  color: Color(0xFF1B4D3E),
+                                  size: 22,
+                                ),
+                              ),
+                              title: Text(
+                                fullName,
+                                style: const TextStyle(
+                                  fontFamily: 'Literata',
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF1B4D3E),
+                                ),
+                              ),
+                              subtitle: Text(
+                                contact,
+                                style: TextStyle(
+                                  fontFamily: 'Literata',
+                                  fontSize: 12,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                              trailing: isSelected
+                                  ? const Icon(
+                                      Icons.check_circle,
                                       color: Color(0xFF1B4D3E),
+                                      size: 24,
+                                    )
+                                  : const Icon(
+                                      Icons.circle_outlined,
+                                      color: Colors.grey,
+                                      size: 24,
                                     ),
-                                  ),
-                                  subtitle: Text(
-                                    contact,
-                                    style: TextStyle(
-                                      fontFamily: 'Literata',
-                                      fontSize: 12,
-                                      color: Colors.grey[600],
-                                    ),
-                                  ),
-                                  trailing: isSelected
-                                      ? const Icon(Icons.check_circle, color: Color(0xFF1B4D3E), size: 24)
-                                      : const Icon(Icons.circle_outlined, color: Colors.grey, size: 24),
-                                  onTap: () {
-                                    print('[DEBUG] Selected supplier: $fullName (ID: ${supplier['id']})');
-                                    setState(() {
-                                      _selectedSupplierId = supplier['id'];
-                                      _selectedSupplierName = fullName;
-                                    });
-                                    Navigator.pop(ctx);
-                                  },
-                                ),
-                              );
-                            },
-                          ),
+                              onTap: () {
+                                print(
+                                  '[DEBUG] Selected supplier: $fullName (ID: ${supplier['id']})',
+                                );
+                                setState(() {
+                                  _selectedSupplierId = supplier['id'];
+                                  _selectedSupplierName = fullName;
+                                });
+                                Navigator.pop(ctx);
+                              },
+                            ),
+                          );
+                        },
+                      ),
               ),
             ],
           ),
@@ -552,15 +606,24 @@ class _CompanyPageState extends State<CompanyPage> {
                 children: [
                   Padding(
                     padding: const EdgeInsets.only(left: 12),
-                    child: Icon(Icons.person_outlined, color: Colors.grey[600], size: 20),
+                    child: Icon(
+                      Icons.person_outlined,
+                      color: Colors.grey[600],
+                      size: 20,
+                    ),
                   ),
                   Expanded(
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 14,
+                      ),
                       child: Text(
                         _selectedSupplierName ?? 'Select a supplier...',
                         style: TextStyle(
-                          color: _selectedSupplierName != null ? Colors.black87 : Colors.grey[500],
+                          color: _selectedSupplierName != null
+                              ? Colors.black87
+                              : Colors.grey[500],
                           fontSize: 14,
                           fontFamily: 'Literata',
                         ),
@@ -695,9 +758,9 @@ class _CompanyPageState extends State<CompanyPage> {
       final currentUser = _auth.currentUser;
       if (currentUser == null) {
         print('[ERROR] No authenticated user found');
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('User not authenticated')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('User not authenticated')));
         return;
       }
 
@@ -724,13 +787,12 @@ class _CompanyPageState extends State<CompanyPage> {
 
       if (_isEditing && _editingCompanyId != null) {
         // Optimistic update
-        final index = _companies.indexWhere((c) => c['id'] == _editingCompanyId);
+        final index = _companies.indexWhere(
+          (c) => c['id'] == _editingCompanyId,
+        );
         if (index != -1) {
           setState(() {
-            _companies[index] = {
-              ..._companies[index],
-              ...companyData,
-            };
+            _companies[index] = {..._companies[index], ...companyData};
             _filterAndSortCompanies();
           });
           _cacheDataSource.saveCompanies(_companies);
@@ -755,13 +817,10 @@ class _CompanyPageState extends State<CompanyPage> {
         // Create new company
         print('[DEBUG] Creating new company');
         companyData['createdAt'] = FieldValue.serverTimestamp();
-        
+
         // Optimistic add
         final tempId = 'temp_${DateTime.now().millisecondsSinceEpoch}';
-        final newCompany = {
-          'id': tempId,
-          ...companyData,
-        };
+        final newCompany = {'id': tempId, ...companyData};
         setState(() {
           _companies.insert(0, newCompany);
           _filterAndSortCompanies();
@@ -788,14 +847,17 @@ class _CompanyPageState extends State<CompanyPage> {
       _loadCompanies();
       print('[ERROR] Error type: ${e.runtimeType}');
       print('[ERROR] Full error: $e');
-      
+
       String errorMsg = 'Error saving company: ${e.toString()}';
-      
+
       if (e.toString().contains('permission-denied')) {
-        errorMsg = 'Permission Denied - Firestore security rules are blocking write access.';
-        print('[ERROR] CRITICAL: Firestore permission denied - security rules issue');
+        errorMsg =
+            'Permission Denied - Firestore security rules are blocking write access.';
+        print(
+          '[ERROR] CRITICAL: Firestore permission denied - security rules issue',
+        );
       }
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -852,7 +914,9 @@ class _CompanyPageState extends State<CompanyPage> {
       });
       _cacheDataSource.saveCompanies(_companies);
 
-      print('[DEBUG] Deleting from path: users/${currentUser.uid}/companies/$companyId');
+      print(
+        '[DEBUG] Deleting from path: users/${currentUser.uid}/companies/$companyId',
+      );
       await _firestore
           .collection('users')
           .doc(currentUser.uid)
@@ -874,11 +938,13 @@ class _CompanyPageState extends State<CompanyPage> {
       // Reload on error to revert optimistic delete
       _loadCompanies();
       print('[ERROR] Error type: ${e.runtimeType}');
-      
+
       if (e.toString().contains('permission-denied')) {
-        print('[ERROR] CRITICAL: Permission denied when deleting - security rules issue');
+        print(
+          '[ERROR] CRITICAL: Permission denied when deleting - security rules issue',
+        );
       }
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -919,7 +985,11 @@ class _CompanyPageState extends State<CompanyPage> {
               colors: [Color(0xFF1B4D3E), Color(0xFF0F3B2F)],
             ),
             boxShadow: [
-              BoxShadow(color: const Color(0xFF1B4D3E).withOpacity(0.2), blurRadius: 12, offset: const Offset(0, 4)),
+              BoxShadow(
+                color: const Color(0xFF1B4D3E).withOpacity(0.2),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
             ],
           ),
           child: SafeArea(
@@ -940,7 +1010,11 @@ class _CompanyPageState extends State<CompanyPage> {
                         color: Colors.white.withOpacity(0.2),
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: const Icon(Icons.arrow_back, color: Colors.white, size: 22),
+                      child: const Icon(
+                        Icons.arrow_back,
+                        color: Colors.white,
+                        size: 22,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -979,28 +1053,53 @@ class _CompanyPageState extends State<CompanyPage> {
       ),
       floatingActionButton: Container(
         decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
           gradient: const LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Color(0xFF1B4D3E), Color(0xFF0F3B2F)],
+            colors: [Color(0xFF1B4D3E), Color(0xFF2E7D32)],
           ),
-          borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
               color: const Color(0xFF1B4D3E).withOpacity(0.4),
-              blurRadius: 20,
-              offset: const Offset(0, 8),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
+            ),
+            BoxShadow(
+              color: const Color(0xFF1B4D3E).withOpacity(0.2),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
             ),
           ],
         ),
-        child: FloatingActionButton(
-          onPressed: () {
-            print('[DEBUG] FAB pressed to add company');
-            _showAddCompanyBottomSheet();
-          },
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          child: const Icon(Icons.add, color: Colors.white),
+        child: Material(
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(20),
+          child: InkWell(
+            onTap: () {
+              print('[DEBUG] FAB pressed to add company');
+              _showAddCompanyBottomSheet();
+            },
+            borderRadius: BorderRadius.circular(20),
+            splashColor: Colors.white.withOpacity(0.2),
+            highlightColor: Colors.white.withOpacity(0.1),
+            child: Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: Colors.white.withOpacity(0.2),
+                  width: 1,
+                ),
+              ),
+              child: const Icon(
+                Icons.add_rounded,
+                color: Colors.white,
+                size: 28,
+              ),
+            ),
+          ),
         ),
       ),
       body: Column(
@@ -1041,17 +1140,27 @@ class _CompanyPageState extends State<CompanyPage> {
                                 color: Colors.grey[400],
                                 fontFamily: 'Literata',
                               ),
-                              prefixIcon: Icon(Icons.search_rounded, color: Colors.grey[600], size: 20),
+                              prefixIcon: Icon(
+                                Icons.search_rounded,
+                                color: Colors.grey[600],
+                                size: 20,
+                              ),
                               suffixIcon: _searchController.text.isNotEmpty
                                   ? GestureDetector(
                                       onTap: () {
                                         _searchController.clear();
                                       },
-                                      child: Icon(Icons.close, color: Colors.grey[600], size: 18),
+                                      child: Icon(
+                                        Icons.close,
+                                        color: Colors.grey[600],
+                                        size: 18,
+                                      ),
                                     )
                                   : null,
                               border: InputBorder.none,
-                              contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                              contentPadding: const EdgeInsets.symmetric(
+                                vertical: 12,
+                              ),
                               isDense: true,
                             ),
                             onChanged: (_) {
@@ -1087,7 +1196,9 @@ class _CompanyPageState extends State<CompanyPage> {
                       borderRadius: BorderRadius.circular(11),
                       child: Center(
                         child: Icon(
-                          _isSortAscending ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded,
+                          _isSortAscending
+                              ? Icons.arrow_upward_rounded
+                              : Icons.arrow_downward_rounded,
                           color: const Color(0xFF1B4D3E),
                           size: 20,
                         ),
@@ -1112,29 +1223,47 @@ class _CompanyPageState extends State<CompanyPage> {
                             color: const Color(0xFF1B4D3E).withOpacity(0.1),
                             borderRadius: BorderRadius.circular(20),
                           ),
-                          child: Icon(Icons.business_outlined, size: 50, color: const Color(0xFF1B4D3E).withOpacity(0.3)),
+                          child: Icon(
+                            Icons.business_outlined,
+                            size: 50,
+                            color: const Color(0xFF1B4D3E).withOpacity(0.3),
+                          ),
                         ),
                         const SizedBox(height: 20),
                         Text(
-                          _companies.isEmpty ? 'No companies yet' : 'No results found',
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Colors.grey[700], fontFamily: 'Literata'),
+                          _companies.isEmpty
+                              ? 'No companies yet'
+                              : 'No results found',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.grey[700],
+                            fontFamily: 'Literata',
+                          ),
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          _companies.isEmpty ? 'Create your first company to get started' : 'Try a different search',
-                          style: TextStyle(fontSize: 14, color: Colors.grey[500], fontFamily: 'Literata'),
+                          _companies.isEmpty
+                              ? 'Create your first company to get started'
+                              : 'Try a different search',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[500],
+                            fontFamily: 'Literata',
+                          ),
                         ),
                       ],
                     ),
                   )
                 : ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
                     itemCount: _filteredCompanies.length,
                     itemBuilder: (context, index) {
                       final company = _filteredCompanies[index];
-                      return RepaintBoundary(
-                        child: _buildCompanyCard(company),
-                      );
+                      return RepaintBoundary(child: _buildCompanyCard(company));
                     },
                   ),
           ),
@@ -1150,11 +1279,19 @@ class _CompanyPageState extends State<CompanyPage> {
     final address = company['address'] ?? 'N/A';
     final companyId = company['id'] ?? '';
 
-    const accentColors = [Color(0xFF1B4D3E), Color(0xFF0F3B2F), Color(0xFF2C6F5E), Color(0xFF1A5E52)];
-    final accentColor = accentColors[(companyId.hashCode.abs()) % accentColors.length];
+    const accentColors = [
+      Color(0xFF1B4D3E),
+      Color(0xFF0F3B2F),
+      Color(0xFF2C6F5E),
+      Color(0xFF1A5E52),
+    ];
+    final accentColor =
+        accentColors[(companyId.hashCode.abs()) % accentColors.length];
 
     // Get first letter for avatar
-    final initials = companyName.isNotEmpty ? companyName[0].toUpperCase() : 'C';
+    final initials = companyName.isNotEmpty
+        ? companyName[0].toUpperCase()
+        : 'C';
 
     return GestureDetector(
       onTap: () => _showEditCompanyBottomSheet(company),
@@ -1238,7 +1375,11 @@ class _CompanyPageState extends State<CompanyPage> {
                           if (contactPerson != 'N/A')
                             Row(
                               children: [
-                                Icon(Icons.person_outlined, size: 13, color: Colors.grey[600]),
+                                Icon(
+                                  Icons.person_outlined,
+                                  size: 13,
+                                  color: Colors.grey[600],
+                                ),
                                 const SizedBox(width: 6),
                                 Expanded(
                                   child: Text(
@@ -1259,18 +1400,42 @@ class _CompanyPageState extends State<CompanyPage> {
                     ),
                     PopupMenuButton(
                       color: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                       elevation: 8,
                       itemBuilder: (context) => [
                         PopupMenuItem(
                           child: Row(
-                            children: [Icon(Icons.edit_outlined, color: accentColor, size: 18), const SizedBox(width: 8), const Text('Edit')],
+                            children: [
+                              Icon(
+                                Icons.edit_outlined,
+                                color: accentColor,
+                                size: 18,
+                              ),
+                              const SizedBox(width: 8),
+                              const Text('Edit'),
+                            ],
                           ),
-                          onTap: () => Future.delayed(const Duration(milliseconds: 100), () => _showEditCompanyBottomSheet(company)),
+                          onTap: () => Future.delayed(
+                            const Duration(milliseconds: 100),
+                            () => _showEditCompanyBottomSheet(company),
+                          ),
                         ),
                         PopupMenuItem(
                           child: Row(
-                            children: [const Icon(Icons.delete_outline, color: Colors.red, size: 18), const SizedBox(width: 8), const Text('Delete', style: TextStyle(color: Colors.red))],
+                            children: [
+                              const Icon(
+                                Icons.delete_outline,
+                                color: Colors.red,
+                                size: 18,
+                              ),
+                              const SizedBox(width: 8),
+                              const Text(
+                                'Delete',
+                                style: TextStyle(color: Colors.red),
+                              ),
+                            ],
                           ),
                           onTap: () => _deleteCompany(company['id']),
                         ),
@@ -1284,7 +1449,11 @@ class _CompanyPageState extends State<CompanyPage> {
                   const SizedBox(height: 12),
                   Row(
                     children: [
-                      Icon(Icons.phone_outlined, size: 13, color: Colors.grey[600]),
+                      Icon(
+                        Icons.phone_outlined,
+                        size: 13,
+                        color: Colors.grey[600],
+                      ),
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(
@@ -1313,7 +1482,11 @@ class _CompanyPageState extends State<CompanyPage> {
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Icon(Icons.location_on_outlined, size: 13, color: Colors.grey[600]),
+                        Icon(
+                          Icons.location_on_outlined,
+                          size: 13,
+                          color: Colors.grey[600],
+                        ),
                         const SizedBox(width: 6),
                         Expanded(
                           child: Text(
@@ -1364,10 +1537,7 @@ class _CompanyPageState extends State<CompanyPage> {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(
-            color: Color(0xFF1B4D3E),
-            width: 2,
-          ),
+          borderSide: const BorderSide(color: Color(0xFF1B4D3E), width: 2),
         ),
         filled: true,
         fillColor: Colors.grey[50],
