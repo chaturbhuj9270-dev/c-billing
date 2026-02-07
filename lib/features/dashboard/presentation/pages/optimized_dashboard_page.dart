@@ -412,8 +412,6 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
           ),
           const SizedBox(height: 20),
           _buildInventoryCard(data, isRefreshing),
-          const SizedBox(height: 16),
-          _buildPaymentsCard(),
           const SizedBox(height: 28),
           // Quick Insights Section - Glassy Stats
           _buildSectionHeader(
