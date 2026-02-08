@@ -522,7 +522,7 @@ class _CustomerPageState extends State<CustomerPage> {
         print('[DEBUG] Customer updated successfully');
         
         // Notify dashboard to refresh
-        DashboardRefreshService.instance.notifyDataChanged();
+        DashboardRefreshService.instance.notifyDataChanged(DataChangeType.customer);
         
         _clearForm();
         _loadCustomers();
@@ -555,7 +555,7 @@ class _CustomerPageState extends State<CustomerPage> {
         print('[DEBUG] Customer added successfully with ID: ${docRef.id}');
         
         // Notify dashboard to refresh
-        DashboardRefreshService.instance.notifyDataChanged();
+        DashboardRefreshService.instance.notifyDataChanged(DataChangeType.customer);
         
         _clearForm();
         _loadCustomers();
@@ -681,7 +681,7 @@ class _CustomerPageState extends State<CustomerPage> {
       print('[DEBUG] Customer deleted successfully');
       
       // Notify dashboard to refresh
-      DashboardRefreshService.instance.notifyDataChanged();
+      DashboardRefreshService.instance.notifyDataChanged(DataChangeType.customer);
       
       if (mounted && context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

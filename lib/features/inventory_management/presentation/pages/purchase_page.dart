@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -30,6 +31,11 @@ class _PurchasePageState extends State<PurchasePage>
   late Animation<double> _opacityAnimation;
   late AppLocalizations _localizations;
   final _cacheDataSource = PurchaseCacheDataSource();
+  
+  // Data refresh subscriptions
+  StreamSubscription<void>? _productRefreshSubscription;
+  StreamSubscription<void>? _supplierRefreshSubscription;
+  StreamSubscription<void>? _companyRefreshSubscription;
 
   Product? _selectedProduct;
   Map<String, dynamic>? _selectedSupplier;
@@ -97,6 +103,21 @@ class _PurchasePageState extends State<PurchasePage>
       const Duration(milliseconds: 150),
       () => _animController.forward(),
     );
+    
+    // Listen for product changes from other screens
+    _productRefreshSubscription = DashboardRefreshService.instance.onProductChanged.listen((_) {
+      if (mounted) _loadProducts();
+    });
+    
+    // Listen for supplier changes from other screens
+    _supplierRefreshSubscription = DashboardRefreshService.instance.onSupplierChanged.listen((_) {
+      if (mounted) _loadSuppliers();
+    });
+    
+    // Listen for company changes from other screens
+    _companyRefreshSubscription = DashboardRefreshService.instance.onCompanyChanged.listen((_) {
+      if (mounted) _loadCompanies();
+    });
 
     _setupInitialData();
   }
@@ -929,8 +950,8 @@ class _PurchasePageState extends State<PurchasePage>
           ),
         );
         
-        // Notify dashboard to refresh
-        DashboardRefreshService.instance.notifyDataChanged();
+        // Notify dashboard to refresh (purchase affects product stock)
+        DashboardRefreshService.instance.notifyDataChanged(DataChangeType.purchase);
 
         // Reset form
         setState(() {
@@ -961,6 +982,9 @@ class _PurchasePageState extends State<PurchasePage>
 
   @override
   void dispose() {
+    _productRefreshSubscription?.cancel();
+    _supplierRefreshSubscription?.cancel();
+    _companyRefreshSubscription?.cancel();
     LanguageService.instance.removeListener(_onLanguageChanged);
     _animController.dispose();
     _quantityController.dispose();
@@ -1315,7 +1339,7 @@ class _PurchasePageState extends State<PurchasePage>
       await _loadSuppliers();
       
       // Notify dashboard to refresh
-      DashboardRefreshService.instance.notifyDataChanged();
+      DashboardRefreshService.instance.notifyDataChanged(DataChangeType.supplier);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1503,7 +1527,7 @@ class _PurchasePageState extends State<PurchasePage>
       await _loadCompanies();
       
       // Notify dashboard to refresh
-      DashboardRefreshService.instance.notifyDataChanged();
+      DashboardRefreshService.instance.notifyDataChanged(DataChangeType.company);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

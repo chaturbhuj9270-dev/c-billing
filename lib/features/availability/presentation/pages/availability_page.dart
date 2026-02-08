@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:c_billing/core/services/inventory_service.dart';
 import 'package:c_billing/core/services/inventory_report_service.dart';
+import 'package:c_billing/core/services/dashboard_refresh_service.dart';
 import 'package:c_billing/core/localization/app_localizations.dart';
 import 'package:c_billing/core/services/language_service.dart';
 import 'package:c_billing/features/inventory_management/data/repositories/firebase_product_repository.dart';
@@ -29,6 +31,9 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
   bool _isLoading = false;
   String _searchQuery = '';
   final _searchController = TextEditingController();
+  
+  // Data refresh subscription
+  StreamSubscription<void>? _productRefreshSubscription;
 
   // Filter states
   String _stockFilter = 'all'; // all, in_stock, low_stock, out_of_stock
@@ -56,6 +61,17 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
         auth: _auth,
       ),
     );
+    
+    // Listen for product changes from other screens (purchase page, product management, etc.)
+    _productRefreshSubscription = DashboardRefreshService.instance.onProductChanged.listen((_) {
+      if (mounted) _loadProducts();
+    });
+    
+    // Also listen for purchase changes which affect stock
+    DashboardRefreshService.instance.onPurchaseChanged.listen((_) {
+      if (mounted) _loadProducts();
+    });
+    
     _loadProducts();
   }
 
@@ -69,6 +85,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
 
   @override
   void dispose() {
+    _productRefreshSubscription?.cancel();
     LanguageService.instance.removeListener(_onLanguageChanged);
     _searchController.dispose();
     super.dispose();

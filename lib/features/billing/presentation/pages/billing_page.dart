@@ -37,6 +37,10 @@ class _BillingPageState extends State<BillingPage> {
   late FirebaseCustomerRepository _customerRepository;
   late AppLocalizations _localizations;
 
+  // Data refresh subscriptions
+  StreamSubscription<void>? _productRefreshSubscription;
+  StreamSubscription<void>? _customerRefreshSubscription;
+
   // Printing services
   final _printerService = PosPrinterService();
   final _pdfService = PdfBillService();
@@ -98,12 +102,25 @@ class _BillingPageState extends State<BillingPage> {
       stockRepository: FirebaseStockRepository(firestore: _firestore),
       customerTransactionService: customerTransactionService,
     );
+    
+    // Listen for product changes from other screens
+    _productRefreshSubscription = DashboardRefreshService.instance.onProductChanged.listen((_) {
+      if (mounted) _loadProducts(showLoader: false);
+    });
+    
+    // Listen for customer changes from other screens
+    _customerRefreshSubscription = DashboardRefreshService.instance.onCustomerChanged.listen((_) {
+      if (mounted) _loadCustomers();
+    });
+    
     _loadProducts();
     _loadCustomers();
   }
 
   @override
   void dispose() {
+    _productRefreshSubscription?.cancel();
+    _customerRefreshSubscription?.cancel();
     LanguageService.instance.removeListener(_onLanguageChanged);
     _debounceTimer?.cancel();
     _indexNoController.dispose();
@@ -302,7 +319,7 @@ class _BillingPageState extends State<BillingPage> {
         _loadProducts(showLoader: false);
         
         // Notify dashboard to refresh (bill count and products count may change)
-        DashboardRefreshService.instance.notifyDataChanged();
+        DashboardRefreshService.instance.notifyDataChanged(DataChangeType.bill);
 
         // Show success dialog with print/share options
         if (mounted && createdBill != null) {

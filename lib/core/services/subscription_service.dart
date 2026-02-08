@@ -20,32 +20,39 @@ class SubscriptionService {
   String? get _userId => _auth.currentUser?.uid;
 
   /// Check if user's subscription is valid
-  /// Returns true if subscription is active, false if expired or not found
+  /// Returns true if subscription is active or no user logged in (let auth handle it)
+  /// Returns false only if user is logged in AND subscription is expired
   Future<bool> isSubscriptionValid() async {
     try {
       final userId = _userId;
       if (userId == null) {
-        print('[SubscriptionService] No user logged in');
-        return false;
+        print(
+          '[SubscriptionService] No user logged in - returning true to let auth flow handle',
+        );
+        return true; // Let the auth flow handle non-logged-in users
       }
 
       final userDoc = await _firestore.collection('users').doc(userId).get();
 
       if (!userDoc.exists) {
-        print('[SubscriptionService] User document not found');
-        return false;
+        print(
+          '[SubscriptionService] User document not found - granting access',
+        );
+        return true; // New user, document not yet created
       }
 
       final data = userDoc.data();
       if (data == null) {
-        print('[SubscriptionService] User data is null');
-        return false;
+        print('[SubscriptionService] User data is null - granting access');
+        return true;
       }
 
       final subscriptionDate = data['subscriptionDate'];
       if (subscriptionDate == null) {
-        print('[SubscriptionService] No subscription date found');
-        return false;
+        print(
+          '[SubscriptionService] No subscription date found - granting access',
+        );
+        return true; // Legacy user without subscription field
       }
 
       DateTime subDate;

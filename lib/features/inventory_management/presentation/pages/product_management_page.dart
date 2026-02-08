@@ -411,7 +411,7 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                   await _inventoryService.updateProduct(updatedProduct);
                   
                   // Notify dashboard to refresh
-                  DashboardRefreshService.instance.notifyDataChanged();
+                  DashboardRefreshService.instance.notifyDataChanged(DataChangeType.product);
                   
                   if (mounted) {
                     Navigator.pop(context);
@@ -477,7 +477,7 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                 await _inventoryService.deleteProduct(product.id);
                 
                 // Notify dashboard to refresh
-                DashboardRefreshService.instance.notifyDataChanged();
+                DashboardRefreshService.instance.notifyDataChanged(DataChangeType.product);
                 
                 if (mounted) {
                   Navigator.pop(context);
@@ -931,7 +931,7 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                   );
                   
                   // Notify dashboard to refresh
-                  DashboardRefreshService.instance.notifyDataChanged();
+                  DashboardRefreshService.instance.notifyDataChanged(DataChangeType.product);
                   
                   if (mounted) {
                     Navigator.pop(context);

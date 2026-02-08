@@ -580,7 +580,7 @@ class _SupplierPageState extends State<SupplierPage> {
         print('[DEBUG] Supplier updated: $_editingSupplierId');
         
         // Notify dashboard to refresh
-        DashboardRefreshService.instance.notifyDataChanged();
+        DashboardRefreshService.instance.notifyDataChanged(DataChangeType.supplier);
       } else {
         final newData = {
           'firstName': _firstNameController.text,
@@ -605,7 +605,7 @@ class _SupplierPageState extends State<SupplierPage> {
         print('[DEBUG] New supplier added');
         
         // Notify dashboard to refresh
-        DashboardRefreshService.instance.notifyDataChanged();
+        DashboardRefreshService.instance.notifyDataChanged(DataChangeType.supplier);
       }
 
       if (mounted && context.mounted) {
@@ -665,7 +665,7 @@ class _SupplierPageState extends State<SupplierPage> {
           .delete();
       
       // Notify dashboard to refresh
-      DashboardRefreshService.instance.notifyDataChanged();
+      DashboardRefreshService.instance.notifyDataChanged(DataChangeType.supplier);
 
       if (mounted && context.mounted) {
         Navigator.pop(context);

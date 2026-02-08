@@ -442,7 +442,7 @@ class _CompanyPageState extends State<CompanyPage> {
         print('[DEBUG] Company updated successfully');
         
         // Notify dashboard to refresh
-        DashboardRefreshService.instance.notifyDataChanged();
+        DashboardRefreshService.instance.notifyDataChanged(DataChangeType.company);
         
         _clearForm();
         _loadCompanies();
@@ -473,7 +473,7 @@ class _CompanyPageState extends State<CompanyPage> {
         print('[DEBUG] Company added successfully with ID: ${docRef.id}');
         
         // Notify dashboard to refresh
-        DashboardRefreshService.instance.notifyDataChanged();
+        DashboardRefreshService.instance.notifyDataChanged(DataChangeType.company);
         
         _clearForm();
         _loadCompanies();
@@ -573,7 +573,7 @@ class _CompanyPageState extends State<CompanyPage> {
       print('[DEBUG] Company deleted successfully');
       
       // Notify dashboard to refresh
-      DashboardRefreshService.instance.notifyDataChanged();
+      DashboardRefreshService.instance.notifyDataChanged(DataChangeType.company);
       
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

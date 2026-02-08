@@ -2,14 +2,28 @@ import 'dart:async';
 
 import '../../features/dashboard/data/repositories/dashboard_repository.dart';
 
-/// Singleton service to notify dashboard to refresh when data changes.
+/// Enum representing the type of data that changed
+enum DataChangeType {
+  customer,
+  supplier,
+  company,
+  product,
+  bill,
+  purchase,
+}
+
+/// Singleton service to notify screens to refresh when data changes.
 /// 
 /// This service acts as a communication bridge between data modification pages
-/// (Customer, Supplier, Company, Bill, Product pages) and the dashboard.
+/// (Customer, Supplier, Company, Bill, Product pages) and other screens that
+/// need to refresh their data.
 /// 
 /// Usage:
 /// ```dart
 /// // After adding/updating/deleting data:
+/// DashboardRefreshService.instance.notifyDataChanged(DataChangeType.customer);
+/// 
+/// // Or for multiple types:
 /// DashboardRefreshService.instance.notifyDataChanged();
 /// ```
 class DashboardRefreshService {
@@ -19,31 +33,90 @@ class DashboardRefreshService {
   
   DashboardRefreshService._internal();
   
-  // Stream controller for notifying listeners about data changes
+  // Stream controller for notifying listeners about data changes (general)
   final StreamController<void> _refreshController = StreamController<void>.broadcast();
   
-  /// Stream that emits when data changes and dashboard should refresh
+  // Stream controllers for specific data types
+  final StreamController<void> _customerChangeController = StreamController<void>.broadcast();
+  final StreamController<void> _supplierChangeController = StreamController<void>.broadcast();
+  final StreamController<void> _companyChangeController = StreamController<void>.broadcast();
+  final StreamController<void> _productChangeController = StreamController<void>.broadcast();
+  final StreamController<void> _billChangeController = StreamController<void>.broadcast();
+  final StreamController<void> _purchaseChangeController = StreamController<void>.broadcast();
+  
+  /// Stream that emits when any data changes (for dashboard)
   Stream<void> get onRefreshNeeded => _refreshController.stream;
   
+  /// Stream that emits when customer data changes
+  Stream<void> get onCustomerChanged => _customerChangeController.stream;
+  
+  /// Stream that emits when supplier data changes
+  Stream<void> get onSupplierChanged => _supplierChangeController.stream;
+  
+  /// Stream that emits when company data changes
+  Stream<void> get onCompanyChanged => _companyChangeController.stream;
+  
+  /// Stream that emits when product data changes
+  Stream<void> get onProductChanged => _productChangeController.stream;
+  
+  /// Stream that emits when bill data changes
+  Stream<void> get onBillChanged => _billChangeController.stream;
+  
+  /// Stream that emits when purchase data changes
+  Stream<void> get onPurchaseChanged => _purchaseChangeController.stream;
+  
   /// Call this method when any data that affects dashboard stats changes.
-  /// This includes:
-  /// - Adding/updating/deleting customers
-  /// - Adding/updating/deleting suppliers
-  /// - Adding/updating/deleting companies
-  /// - Adding/updating/deleting bills
-  /// - Adding/updating/deleting products
-  void notifyDataChanged() {
+  /// Optionally specify the data type that changed for more granular notifications.
+  void notifyDataChanged([DataChangeType? dataType]) {
     // Invalidate the cache in dashboard repository
     DashboardRepository.invalidateCache();
     
-    // Notify all listeners that refresh is needed
+    // Notify all general listeners
     _refreshController.add(null);
     
-    print('[DashboardRefreshService] Data changed - notifying dashboard to refresh');
+    // Notify specific data type listeners
+    if (dataType != null) {
+      switch (dataType) {
+        case DataChangeType.customer:
+          _customerChangeController.add(null);
+          break;
+        case DataChangeType.supplier:
+          _supplierChangeController.add(null);
+          break;
+        case DataChangeType.company:
+          _companyChangeController.add(null);
+          break;
+        case DataChangeType.product:
+          _productChangeController.add(null);
+          break;
+        case DataChangeType.bill:
+          _billChangeController.add(null);
+          break;
+        case DataChangeType.purchase:
+          _purchaseChangeController.add(null);
+          break;
+      }
+      print('[DashboardRefreshService] ${dataType.name} data changed - notifying listeners');
+    } else {
+      // Notify all specific listeners when no specific type is given
+      _customerChangeController.add(null);
+      _supplierChangeController.add(null);
+      _companyChangeController.add(null);
+      _productChangeController.add(null);
+      _billChangeController.add(null);
+      _purchaseChangeController.add(null);
+      print('[DashboardRefreshService] All data changed - notifying all listeners');
+    }
   }
   
   /// Dispose the service (typically called when app closes)
   void dispose() {
     _refreshController.close();
+    _customerChangeController.close();
+    _supplierChangeController.close();
+    _companyChangeController.close();
+    _productChangeController.close();
+    _billChangeController.close();
+    _purchaseChangeController.close();
   }
 }
