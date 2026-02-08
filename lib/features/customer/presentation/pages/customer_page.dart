@@ -3,6 +3,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:async';
 import '../../../../core/services/session_manager.dart';
+import '../../../../core/services/language_service.dart';
+import '../../../../core/localization/app_localizations.dart';
 import '../../data/datasources/customer_cache_datasource.dart';
 import 'customer_details_page.dart';
 
@@ -35,6 +37,7 @@ class _CustomerPageState extends State<CustomerPage> {
   final _auth = FirebaseAuth.instance;
   late final FirebaseFirestore _firestore;
   late SessionManager _sessionManager;
+  late AppLocalizations _localizations;
   final _cacheDataSource = CustomerCacheDataSource();
 
   @override
@@ -42,9 +45,22 @@ class _CustomerPageState extends State<CustomerPage> {
     super.initState();
     _firestore = FirebaseFirestore.instance;
     _sessionManager = SessionManager();
+    _localizations = AppLocalizations.of(LanguageService.instance.currentLanguage);
+    
+    // Listen for language changes
+    LanguageService.instance.addListener(_onLanguageChanged);
+    
     _checkUserAuthentication();
     _setupInitialData();
     _filterController.addListener(_filterCustomers);
+  }
+
+  void _onLanguageChanged() {
+    if (mounted) {
+      setState(() {
+        _localizations = AppLocalizations.of(LanguageService.instance.currentLanguage);
+      });
+    }
   }
 
   Future<void> _setupInitialData() async {
@@ -296,7 +312,7 @@ class _CustomerPageState extends State<CustomerPage> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                _isEditing ? 'Edit Customer' : 'Add New Customer',
+                _isEditing ? _localizations.editCustomer : _localizations.addNewCustomer,
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
@@ -316,7 +332,7 @@ class _CustomerPageState extends State<CustomerPage> {
           const SizedBox(height: 20),
           // First Name
           _buildInputField(
-            label: 'First Name',
+            label: _localizations.firstName,
             controller: _firstNameController,
             icon: Icons.person_outline,
             isRequired: true,
@@ -324,14 +340,14 @@ class _CustomerPageState extends State<CustomerPage> {
           const SizedBox(height: 16),
           // Middle Name
           _buildInputField(
-            label: 'Middle Name',
+            label: _localizations.middleName,
             controller: _middleNameController,
             icon: Icons.person_outline,
           ),
           const SizedBox(height: 16),
           // Last Name
           _buildInputField(
-            label: 'Last Name',
+            label: _localizations.lastName,
             controller: _lastNameController,
             icon: Icons.person_outline,
             isRequired: true,
@@ -339,7 +355,7 @@ class _CustomerPageState extends State<CustomerPage> {
           const SizedBox(height: 16),
           // Contact Number
           _buildInputField(
-            label: 'Contact Number',
+            label: _localizations.contactNumber,
             controller: _contactController,
             icon: Icons.phone_outlined,
             keyboardType: TextInputType.phone,
@@ -348,7 +364,7 @@ class _CustomerPageState extends State<CustomerPage> {
           const SizedBox(height: 16),
           // Address
           _buildInputField(
-            label: 'Address',
+            label: _localizations.address,
             controller: _addressController,
             icon: Icons.location_on_outlined,
             maxLines: 3,
@@ -380,7 +396,7 @@ class _CustomerPageState extends State<CustomerPage> {
                           ),
                         )
                       : Text(
-                          _isEditing ? 'Update' : 'Add Customer',
+                          _isEditing ? _localizations.update : _localizations.addCustomer,
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 14,
@@ -406,9 +422,9 @@ class _CustomerPageState extends State<CustomerPage> {
                         borderRadius: BorderRadius.circular(10),
                       ),
                     ),
-                    child: const Text(
-                      'Cancel',
-                      style: TextStyle(
+                    child: Text(
+                      _localizations.cancel,
+                      style: const TextStyle(
                         color: Color(0xFF1B4D3E),
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
@@ -576,9 +592,9 @@ class _CustomerPageState extends State<CustomerPage> {
       builder: (ctx) => AlertDialog(
         backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text(
-          'Delete Customer',
-          style: TextStyle(
+        title: Text(
+          _localizations.deleteCustomer,
+          style: const TextStyle(
             fontFamily: 'Literata',
             fontWeight: FontWeight.w700,
             color: Color(0xFF1B4D3E),
@@ -591,17 +607,17 @@ class _CustomerPageState extends State<CustomerPage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text(
-              'Cancel',
-              style: TextStyle(fontFamily: 'Literata', color: Colors.grey),
+            child: Text(
+              _localizations.cancel,
+              style: const TextStyle(fontFamily: 'Literata', color: Colors.grey),
             ),
           ),
           ElevatedButton(
             onPressed: () => Navigator.of(ctx).pop(true),
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text(
-              'Delete',
-              style: TextStyle(fontFamily: 'Literata', color: Colors.white),
+            child: Text(
+              _localizations.delete,
+              style: const TextStyle(fontFamily: 'Literata', color: Colors.white),
             ),
           ),
         ],
@@ -674,6 +690,7 @@ class _CustomerPageState extends State<CustomerPage> {
 
   @override
   void dispose() {
+    LanguageService.instance.removeListener(_onLanguageChanged);
     _filterDebounceTimer?.cancel();
     _firstNameController.dispose();
     _middleNameController.dispose();
@@ -762,8 +779,8 @@ class _CustomerPageState extends State<CustomerPage> {
                   const SizedBox(height: 20),
                   Text(
                     _filterController.text.isEmpty
-                        ? 'No customers yet'
-                        : 'No results found',
+                        ? _localizations.noCustomersYet
+                        : _localizations.noResultsFound,
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
@@ -774,8 +791,8 @@ class _CustomerPageState extends State<CustomerPage> {
                   const SizedBox(height: 8),
                   Text(
                     _filterController.text.isEmpty
-                        ? 'Create your first customer to get started'
-                        : 'Try a different search',
+                        ? _localizations.createFirstCustomer
+                        : _localizations.tryDifferentSearch,
                     style: TextStyle(
                       fontSize: 14,
                       color: Colors.grey[500],
@@ -828,7 +845,7 @@ class _CustomerPageState extends State<CustomerPage> {
                                   height: 1,
                                 ),
                                 decoration: InputDecoration(
-                                  hintText: 'Search customers...',
+                                  hintText: _localizations.searchCustomers,
                                   hintStyle: TextStyle(
                                     color: Colors.grey[500],
                                     fontFamily: 'Literata',
@@ -955,10 +972,10 @@ class _CustomerPageState extends State<CustomerPage> {
         validator: isRequired
             ? (value) {
                 if (value == null || value.isEmpty) {
-                  return '$label is required';
+                  return '$label ${_localizations.isRequired}';
                 }
-                if (label == 'Contact Number' && value.length < 10) {
-                  return 'Enter a valid phone number';
+                if (label == _localizations.contactNumber && value.length < 10) {
+                  return _localizations.enterValidPhone;
                 }
                 return null;
               }
@@ -1138,9 +1155,9 @@ class _CustomerPageState extends State<CustomerPage> {
                                       size: 18,
                                     ),
                                     const SizedBox(width: 10),
-                                    const Text(
-                                      'View Balance',
-                                      style: TextStyle(
+                                    Text(
+                                      _localizations.viewBalance,
+                                      style: const TextStyle(
                                         fontFamily: 'Literata',
                                         fontSize: 14,
                                       ),
@@ -1161,9 +1178,9 @@ class _CustomerPageState extends State<CustomerPage> {
                                       size: 18,
                                     ),
                                     const SizedBox(width: 10),
-                                    const Text(
-                                      'Edit',
-                                      style: TextStyle(
+                                    Text(
+                                      _localizations.edit,
+                                      style: const TextStyle(
                                         fontFamily: 'Literata',
                                         fontSize: 14,
                                       ),
@@ -1184,9 +1201,9 @@ class _CustomerPageState extends State<CustomerPage> {
                                       size: 18,
                                     ),
                                     const SizedBox(width: 10),
-                                    const Text(
-                                      'Delete',
-                                      style: TextStyle(
+                                    Text(
+                                      _localizations.delete,
+                                      style: const TextStyle(
                                         color: Colors.red,
                                         fontFamily: 'Literata',
                                         fontSize: 14,

@@ -84,6 +84,29 @@ class EnglishLocalization {
   static const String currentStock = 'Current Stock';
   static const String minStock = 'Min Stock';
   
+  // Customer Page
+  static const String addNewCustomer = 'Add New Customer';
+  static const String editCustomer = 'Edit Customer';
+  static const String firstName = 'First Name';
+  static const String middleName = 'Middle Name';
+  static const String lastName = 'Last Name';
+  static const String contactNumber = 'Contact Number';
+  static const String address = 'Address';
+  static const String addCustomer = 'Add Customer';
+  static const String update = 'Update';
+  static const String cancel = 'Cancel';
+  static const String deleteCustomer = 'Delete Customer';
+  static const String delete = 'Delete';
+  static const String noCustomersYet = 'No customers yet';
+  static const String noResultsFound = 'No results found';
+  static const String createFirstCustomer = 'Create your first customer to get started';
+  static const String tryDifferentSearch = 'Try a different search';
+  static const String searchCustomers = 'Search customers...';
+  static const String viewBalance = 'View Balance';
+  static const String edit = 'Edit';
+  static const String isRequired = 'is required';
+  static const String enterValidPhone = 'Enter a valid phone number';
+
   // Availability Page
   static const String stockOverview = 'Stock Overview';
   static const String totalProducts = 'Total Products';

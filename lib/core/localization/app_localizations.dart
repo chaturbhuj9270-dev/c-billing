@@ -990,4 +990,236 @@ class AppLocalizations {
         return EnglishLocalization.generateAndShare;
     }
   }
+
+  // Customer Page
+  String get addNewCustomer {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.addNewCustomer;
+      case 'Marathi':
+        return MarathiLocalization.addNewCustomer;
+      default:
+        return EnglishLocalization.addNewCustomer;
+    }
+  }
+
+  String get editCustomer {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.editCustomer;
+      case 'Marathi':
+        return MarathiLocalization.editCustomer;
+      default:
+        return EnglishLocalization.editCustomer;
+    }
+  }
+
+  String get firstName {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.firstName;
+      case 'Marathi':
+        return MarathiLocalization.firstName;
+      default:
+        return EnglishLocalization.firstName;
+    }
+  }
+
+  String get middleName {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.middleName;
+      case 'Marathi':
+        return MarathiLocalization.middleName;
+      default:
+        return EnglishLocalization.middleName;
+    }
+  }
+
+  String get lastName {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.lastName;
+      case 'Marathi':
+        return MarathiLocalization.lastName;
+      default:
+        return EnglishLocalization.lastName;
+    }
+  }
+
+  String get contactNumber {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.contactNumber;
+      case 'Marathi':
+        return MarathiLocalization.contactNumber;
+      default:
+        return EnglishLocalization.contactNumber;
+    }
+  }
+
+  String get address {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.address;
+      case 'Marathi':
+        return MarathiLocalization.address;
+      default:
+        return EnglishLocalization.address;
+    }
+  }
+
+  String get addCustomer {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.addCustomer;
+      case 'Marathi':
+        return MarathiLocalization.addCustomer;
+      default:
+        return EnglishLocalization.addCustomer;
+    }
+  }
+
+  String get update {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.update;
+      case 'Marathi':
+        return MarathiLocalization.update;
+      default:
+        return EnglishLocalization.update;
+    }
+  }
+
+  String get cancel {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.cancel;
+      case 'Marathi':
+        return MarathiLocalization.cancel;
+      default:
+        return EnglishLocalization.cancel;
+    }
+  }
+
+  String get deleteCustomer {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.deleteCustomer;
+      case 'Marathi':
+        return MarathiLocalization.deleteCustomer;
+      default:
+        return EnglishLocalization.deleteCustomer;
+    }
+  }
+
+  String get delete {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.delete;
+      case 'Marathi':
+        return MarathiLocalization.delete;
+      default:
+        return EnglishLocalization.delete;
+    }
+  }
+
+  String get noCustomersYet {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.noCustomersYet;
+      case 'Marathi':
+        return MarathiLocalization.noCustomersYet;
+      default:
+        return EnglishLocalization.noCustomersYet;
+    }
+  }
+
+  String get noResultsFound {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.noResultsFound;
+      case 'Marathi':
+        return MarathiLocalization.noResultsFound;
+      default:
+        return EnglishLocalization.noResultsFound;
+    }
+  }
+
+  String get createFirstCustomer {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.createFirstCustomer;
+      case 'Marathi':
+        return MarathiLocalization.createFirstCustomer;
+      default:
+        return EnglishLocalization.createFirstCustomer;
+    }
+  }
+
+  String get tryDifferentSearch {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.tryDifferentSearch;
+      case 'Marathi':
+        return MarathiLocalization.tryDifferentSearch;
+      default:
+        return EnglishLocalization.tryDifferentSearch;
+    }
+  }
+
+  String get searchCustomers {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.searchCustomers;
+      case 'Marathi':
+        return MarathiLocalization.searchCustomers;
+      default:
+        return EnglishLocalization.searchCustomers;
+    }
+  }
+
+  String get viewBalance {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.viewBalance;
+      case 'Marathi':
+        return MarathiLocalization.viewBalance;
+      default:
+        return EnglishLocalization.viewBalance;
+    }
+  }
+
+  String get edit {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.edit;
+      case 'Marathi':
+        return MarathiLocalization.edit;
+      default:
+        return EnglishLocalization.edit;
+    }
+  }
+
+  String get isRequired {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.isRequired;
+      case 'Marathi':
+        return MarathiLocalization.isRequired;
+      default:
+        return EnglishLocalization.isRequired;
+    }
+  }
+
+  String get enterValidPhone {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.enterValidPhone;
+      case 'Marathi':
+        return MarathiLocalization.enterValidPhone;
+      default:
+        return EnglishLocalization.enterValidPhone;
+    }
+  }
 }

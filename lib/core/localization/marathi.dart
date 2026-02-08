@@ -84,8 +84,31 @@ class MarathiLocalization {
   static const String currentStock = 'सध्याचा स्टॉक';
   static const String minStock = 'किमान स्टॉक';
   
+  // Customer Page
+  static const String addNewCustomer = 'नवीन ग्राहक जोडा';
+  static const String editCustomer = 'ग्राहक संपादित करा';
+  static const String firstName = 'पहिले नाव';
+  static const String middleName = 'मधले नाव';
+  static const String lastName = 'आडनाव';
+  static const String contactNumber = 'संपर्क क्रमांक';
+  static const String address = 'पत्ता';
+  static const String addCustomer = 'ग्राहक जोडा';
+  static const String update = 'अपडेट';
+  static const String cancel = 'रद्द करा';
+  static const String deleteCustomer = 'ग्राहक हटवा';
+  static const String delete = 'हटवा';
+  static const String noCustomersYet = 'अद्याप कोणतेही ग्राहक नाहीत';
+  static const String noResultsFound = 'कोणतेही परिणाम सापडले नाहीत';
+  static const String createFirstCustomer = 'सुरू करण्यासाठी तुमचा पहिला ग्राहक तयार करा';
+  static const String tryDifferentSearch = 'वेगळा शोध वापरून पहा';
+  static const String searchCustomers = 'ग्राहक शोधा...';
+  static const String viewBalance = 'शिल्लक पहा';
+  static const String edit = 'संपादित करा';
+  static const String isRequired = 'आवश्यक आहे';
+  static const String enterValidPhone = 'वैध फोन नंबर प्रविष्ट करा';
+
   // Availability Page
-  static const String stockOverview = 'स्टॉक विहंगावलोकन';
+  static const String stockOverview = 'साठा विहंगावलोकन';
   static const String totalProducts = 'एकूण उत्पादने';
   static const String inStock = 'स्टॉकमध्ये';
   static const String lowStock = 'कमी स्टॉक';
