@@ -167,4 +167,37 @@ class EnglishLocalization {
   static const String completeInventory = 'Complete inventory list';
   static const String exportFormat = 'Export Format';
   static const String generateAndShare = 'Generate & Share';
+
+  // Purchase Page - Additional
+  static const String addNewItems = 'Add New Items';
+  static const String createNewProduct = 'Create a new product';
+  static const String addNewSupplier = 'Add a new supplier';
+  static const String addNewCompany = 'Add a new company';
+  static const String addSupplier = 'Add Supplier';
+  static const String addCompany = 'Add Company';
+  static const String companyName = 'Company Name';
+  static const String enterCompanyName = 'Enter company name';
+  static const String enterFirstName = 'Enter first name';
+  static const String enterLastName = 'Enter last name';
+  
+  // Validation Messages
+  static const String firstNameRequired = 'First name cannot be empty';
+  static const String lastNameRequired = 'Last name cannot be empty';
+  static const String companyNameRequired = 'Company name cannot be empty';
+  static const String firstLastNameRequired = 'First name and last name are required';
+  static const String companyNameIsRequired = 'Company name is required';
+  static const String supplierAddedSuccessfully = 'Supplier added successfully';
+  static const String companyAddedSuccessfully = 'Company added successfully';
+  static const String errorAddingSupplier = 'Error adding supplier';
+  static const String errorAddingCompany = 'Error adding company';
+  static const String pleaseSelectProduct = 'Please select a product';
+  static const String pleaseSelectSupplier = 'Please select a supplier';
+  static const String pleaseSelectCompany = 'Please select a company';
+  static const String pleaseSelectProductionDate = 'Please select a production date';
+  static const String pleaseSelectExpiryDate = 'Please select an expiry date';
+  static const String expiryBeforeProduction = 'Expiry date cannot be before production date';
+  static const String pleaseEnterValidQuantity = 'Please enter a valid quantity';
+  static const String pleaseEnterValidPurchasePrice = 'Please enter a valid purchase price';
+  static const String pleaseEnterValidSalesPrice = 'Please enter a valid sales price';
+  static const String error = 'Error';
 }

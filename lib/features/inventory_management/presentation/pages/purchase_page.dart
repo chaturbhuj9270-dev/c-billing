@@ -365,7 +365,7 @@ class _PurchasePageState extends State<PurchasePage>
                         if (mounted && dialogContext.mounted) {
                           ScaffoldMessenger.of(
                             dialogContext,
-                          ).showSnackBar(SnackBar(content: Text('Error: $e')));
+                          ).showSnackBar(SnackBar(content: Text('${_localizations.error}: $e')));
                         }
                       }
                     },
@@ -790,21 +790,21 @@ class _PurchasePageState extends State<PurchasePage>
     if (_selectedProduct == null) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Please select a product')));
+      ).showSnackBar(SnackBar(content: Text(_localizations.pleaseSelectProduct)));
       return;
     }
 
     if (_selectedSupplier == null) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Please select a supplier')));
+      ).showSnackBar(SnackBar(content: Text(_localizations.pleaseSelectSupplier)));
       return;
     }
 
     if (_selectedCompany == null) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Please select a company')));
+      ).showSnackBar(SnackBar(content: Text(_localizations.pleaseSelectCompany)));
       return;
     }
 
@@ -837,21 +837,21 @@ class _PurchasePageState extends State<PurchasePage>
 
     if (quantity == null || quantity <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a valid quantity')),
+        SnackBar(content: Text(_localizations.pleaseEnterValidQuantity)),
       );
       return;
     }
 
     if (price == null || price < 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a valid purchase price')),
+        SnackBar(content: Text(_localizations.pleaseEnterValidPurchasePrice)),
       );
       return;
     }
 
     if (salesPrice == null || salesPrice < 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a valid sales price')),
+        SnackBar(content: Text(_localizations.pleaseEnterValidSalesPrice)),
       );
       return;
     }
@@ -905,7 +905,7 @@ class _PurchasePageState extends State<PurchasePage>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('Purchase recorded successfully'),
+            content: Text(_localizations.purchaseRecorded),
             backgroundColor: Colors.green,
           ),
         );
@@ -930,7 +930,7 @@ class _PurchasePageState extends State<PurchasePage>
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Error: $e')));
+        ).showSnackBar(SnackBar(content: Text('${_localizations.error}: $e')));
       }
     } finally {
       setState(() => _isLoading = false);
@@ -970,9 +970,9 @@ class _PurchasePageState extends State<PurchasePage>
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Add New Items',
-              style: TextStyle(
+            Text(
+              _localizations.addNewItems,
+              style: const TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w700,
                 fontFamily: 'Literata',
@@ -983,8 +983,8 @@ class _PurchasePageState extends State<PurchasePage>
             // Add Product
             _buildAddOptionTile(
               icon: Icons.inventory_2_rounded,
-              title: 'Add Product',
-              subtitle: 'Create a new product',
+              title: _localizations.addProduct,
+              subtitle: _localizations.createNewProduct,
               color: const Color(0xFFf093fb),
               onTap: () {
                 Navigator.pop(context);
@@ -995,8 +995,8 @@ class _PurchasePageState extends State<PurchasePage>
             // Add Supplier
             _buildAddOptionTile(
               icon: Icons.person_add_rounded,
-              title: 'Add Supplier',
-              subtitle: 'Add a new supplier',
+              title: _localizations.addSupplier,
+              subtitle: _localizations.addNewSupplier,
               color: const Color(0xFFFF6B6B),
               onTap: () {
                 Navigator.pop(context);
@@ -1007,8 +1007,8 @@ class _PurchasePageState extends State<PurchasePage>
             // Add Company
             _buildAddOptionTile(
               icon: Icons.business_rounded,
-              title: 'Add Company',
-              subtitle: 'Add a new company',
+              title: _localizations.addCompany,
+              subtitle: _localizations.addNewCompany,
               color: const Color(0xFF7B68EE),
               onTap: () {
                 Navigator.pop(context);
@@ -1104,9 +1104,9 @@ class _PurchasePageState extends State<PurchasePage>
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
-          title: const Text(
-            'Add New Supplier',
-            style: TextStyle(
+          title: Text(
+            _localizations.addNewSupplier,
+            style: const TextStyle(
               fontFamily: 'Literata',
               fontWeight: FontWeight.w700,
               color: Color(0xFF1B4D3E),
@@ -1121,8 +1121,8 @@ class _PurchasePageState extends State<PurchasePage>
                   controller: _newSupplierFirstNameController,
                   onChanged: (_) => setDialogState(() {}),
                   decoration: InputDecoration(
-                    labelText: 'First Name',
-                    hintText: 'Enter first name',
+                    labelText: _localizations.firstName,
+                    hintText: _localizations.enterFirstName,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -1138,7 +1138,7 @@ class _PurchasePageState extends State<PurchasePage>
                       borderSide: const BorderSide(color: Colors.red, width: 2),
                     ),
                     errorText: _newSupplierFirstNameController.text.isEmpty
-                        ? 'First name cannot be empty'
+                        ? _localizations.firstNameRequired
                         : null,
                   ),
                 ),
@@ -1147,8 +1147,8 @@ class _PurchasePageState extends State<PurchasePage>
                   controller: _newSupplierLastNameController,
                   onChanged: (_) => setDialogState(() {}),
                   decoration: InputDecoration(
-                    labelText: 'Last Name',
-                    hintText: 'Enter last name',
+                    labelText: _localizations.lastName,
+                    hintText: _localizations.enterLastName,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -1164,7 +1164,7 @@ class _PurchasePageState extends State<PurchasePage>
                       borderSide: const BorderSide(color: Colors.red, width: 2),
                     ),
                     errorText: _newSupplierLastNameController.text.isEmpty
-                        ? 'Last name cannot be empty'
+                        ? _localizations.lastNameRequired
                         : null,
                   ),
                 ),
@@ -1173,7 +1173,7 @@ class _PurchasePageState extends State<PurchasePage>
                   controller: _newSupplierContactController,
                   keyboardType: TextInputType.phone,
                   decoration: InputDecoration(
-                    labelText: 'Contact Number',
+                    labelText: _localizations.contactNumber,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -1191,7 +1191,7 @@ class _PurchasePageState extends State<PurchasePage>
                   controller: _newSupplierAddressController,
                   maxLines: 3,
                   decoration: InputDecoration(
-                    labelText: 'Address',
+                    labelText: _localizations.address,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -1210,7 +1210,7 @@ class _PurchasePageState extends State<PurchasePage>
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
+              child: Text(_localizations.cancel),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
@@ -1225,9 +1225,9 @@ class _PurchasePageState extends State<PurchasePage>
                       _newSupplierLastNameController.text.trim().isEmpty)
                   ? null
                   : () => _saveNewSupplier(context),
-              child: const Text(
-                'Add Supplier',
-                style: TextStyle(color: Colors.white),
+              child: Text(
+                _localizations.addSupplier,
+                style: const TextStyle(color: Colors.white),
               ),
             ),
           ],
@@ -1244,8 +1244,8 @@ class _PurchasePageState extends State<PurchasePage>
     if (firstName.isEmpty || lastName.isEmpty) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('First name and last name are required'),
+          SnackBar(
+            content: Text(_localizations.firstLastNameRequired),
           ),
         );
       }
@@ -1281,8 +1281,8 @@ class _PurchasePageState extends State<PurchasePage>
         Navigator.pop(context);
         await _loadSuppliers();
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Supplier added successfully'),
+          SnackBar(
+            content: Text(_localizations.supplierAddedSuccessfully),
             backgroundColor: Colors.green,
           ),
         );
@@ -1291,7 +1291,7 @@ class _PurchasePageState extends State<PurchasePage>
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Error adding supplier: $e')));
+        ).showSnackBar(SnackBar(content: Text('${_localizations.errorAddingSupplier}: $e')));
       }
     }
   }
@@ -1309,9 +1309,9 @@ class _PurchasePageState extends State<PurchasePage>
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
-          title: const Text(
-            'Add New Company',
-            style: TextStyle(
+          title: Text(
+            _localizations.addNewCompany,
+            style: const TextStyle(
               fontFamily: 'Literata',
               fontWeight: FontWeight.w700,
               color: Color(0xFF1B4D3E),
@@ -1326,8 +1326,8 @@ class _PurchasePageState extends State<PurchasePage>
                   controller: _newCompanyNameController,
                   onChanged: (_) => setDialogState(() {}),
                   decoration: InputDecoration(
-                    labelText: 'Company Name',
-                    hintText: 'Enter company name',
+                    labelText: _localizations.companyName,
+                    hintText: _localizations.enterCompanyName,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -1343,7 +1343,7 @@ class _PurchasePageState extends State<PurchasePage>
                       borderSide: const BorderSide(color: Colors.red, width: 2),
                     ),
                     errorText: _newCompanyNameController.text.isEmpty
-                        ? 'Company name cannot be empty'
+                        ? _localizations.companyNameRequired
                         : null,
                   ),
                 ),
@@ -1352,7 +1352,7 @@ class _PurchasePageState extends State<PurchasePage>
                   controller: _newCompanyContactController,
                   keyboardType: TextInputType.phone,
                   decoration: InputDecoration(
-                    labelText: 'Contact Number',
+                    labelText: _localizations.contactNumber,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -1370,7 +1370,7 @@ class _PurchasePageState extends State<PurchasePage>
                   controller: _newCompanyAddressController,
                   maxLines: 3,
                   decoration: InputDecoration(
-                    labelText: 'Address',
+                    labelText: _localizations.address,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -1389,7 +1389,7 @@ class _PurchasePageState extends State<PurchasePage>
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
+              child: Text(_localizations.cancel),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
@@ -1400,9 +1400,9 @@ class _PurchasePageState extends State<PurchasePage>
               onPressed: _newCompanyNameController.text.trim().isEmpty
                   ? null
                   : () => _saveNewCompany(context),
-              child: const Text(
-                'Add Company',
-                style: TextStyle(color: Colors.white),
+              child: Text(
+                _localizations.addCompany,
+                style: const TextStyle(color: Colors.white),
               ),
             ),
           ],
@@ -1418,7 +1418,7 @@ class _PurchasePageState extends State<PurchasePage>
     if (companyName.isEmpty) {
       if (companyContext.mounted) {
         ScaffoldMessenger.of(companyContext).showSnackBar(
-          const SnackBar(content: Text('Company name is required')),
+          SnackBar(content: Text(_localizations.companyNameIsRequired)),
         );
       }
       return;

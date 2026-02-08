@@ -166,5 +166,38 @@ class MarathiLocalization {
   static const String allProducts = 'सर्व उत्पादने';
   static const String completeInventory = 'संपूर्ण इन्व्हेंटरी यादी';
   static const String exportFormat = 'निर्यात स्वरूप';
-  static const String generateAndShare = 'तयार करा आणि शेअर करा';
+  static const String generateAndShare = 'तयार करा आणि सामायिक करा';
+
+  // Purchase Page - Additional
+  static const String addNewItems = 'नवीन वस्तू जोडा';
+  static const String createNewProduct = 'नवीन उत्पादन तयार करा';
+  static const String addNewSupplier = 'नवीन पुरवठादार जोडा';
+  static const String addNewCompany = 'नवीन कंपनी जोडा';
+  static const String addSupplier = 'पुरवठादार जोडा';
+  static const String addCompany = 'कंपनी जोडा';
+  static const String companyName = 'कंपनीचे नाव';
+  static const String enterCompanyName = 'कंपनीचे नाव प्रविष्ट करा';
+  static const String enterFirstName = 'पहिले नाव प्रविष्ट करा';
+  static const String enterLastName = 'आडनाव प्रविष्ट करा';
+  
+  // Validation Messages
+  static const String firstNameRequired = 'पहिले नाव रिक्त असू शकत नाही';
+  static const String lastNameRequired = 'आडनाव रिक्त असू शकत नाही';
+  static const String companyNameRequired = 'कंपनीचे नाव रिक्त असू शकत नाही';
+  static const String firstLastNameRequired = 'पहिले नाव आणि आडनाव आवश्यक आहेत';
+  static const String companyNameIsRequired = 'कंपनीचे नाव आवश्यक आहे';
+  static const String supplierAddedSuccessfully = 'पुरवठादार यशस्वीरीत्या जोडला';
+  static const String companyAddedSuccessfully = 'कंपनी यशस्वीरीत्या जोडली';
+  static const String errorAddingSupplier = 'पुरवठादार जोडण्यात त्रुटी';
+  static const String errorAddingCompany = 'कंपनी जोडण्यात त्रुटी';
+  static const String pleaseSelectProduct = 'कृपया उत्पादन निवडा';
+  static const String pleaseSelectSupplier = 'कृपया पुरवठादार निवडा';
+  static const String pleaseSelectCompany = 'कृपया कंपनी निवडा';
+  static const String pleaseSelectProductionDate = 'कृपया उत्पादन तारीख निवडा';
+  static const String pleaseSelectExpiryDate = 'कृपया कालबाह्यता तारीख निवडा';
+  static const String expiryBeforeProduction = 'कालबाह्यता तारीख उत्पादन तारखेपूर्वी असू शकत नाही';
+  static const String pleaseEnterValidQuantity = 'कृपया वैध प्रमाण प्रविष्ट करा';
+  static const String pleaseEnterValidPurchasePrice = 'कृपया वैध खरेदी किंमत प्रविष्ट करा';
+  static const String pleaseEnterValidSalesPrice = 'कृपया वैध विक्री किंमत प्रविष्ट करा';
+  static const String error = 'त्रुटी';
 }
