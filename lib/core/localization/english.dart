@@ -1,7 +1,7 @@
 class EnglishLocalization {
   // App General
   static const String appName = 'C-BILLING';
-  static const String tagline = 'THE BACKBONE FOR OUR\nBUSINESS';
+  static const String tagline = 'THE BACKBONE FOR YOUR\nBUSINESS';
   
   // Dashboard
   static const String dashboard = 'Dashboard';
@@ -106,6 +106,40 @@ class EnglishLocalization {
   static const String edit = 'Edit';
   static const String isRequired = 'is required';
   static const String enterValidPhone = 'Enter a valid phone number';
+
+  // Purchase Page
+  static const String addNewProduct = 'Add New Product';
+  static const String enterProductName = 'Enter product name';
+  static const String purchasePrice = 'Purchase Price';
+  static const String salesPrice = 'Sales Price';
+  static const String addProduct = 'Add Product';
+  static const String productAddedSuccessfully = 'Product added successfully';
+  static const String selectProduct = 'Select Product';
+  static const String searchByProduct = 'Search by product name, company, or category';
+  static const String noProductsAvailable = 'No products available';
+  static const String selectSupplier = 'Select Supplier';
+  static const String searchBySupplier = 'Search by supplier name or contact';
+  static const String noSuppliersAvailable = 'No suppliers available';
+  static const String noSuppliersFound = 'No suppliers found';
+  static const String selectCompany = 'Select Company';
+  static const String searchByCompany = 'Search by company name';
+  static const String noCompaniesAvailable = 'No companies available';
+  static const String noCompaniesFound = 'No companies found';
+  static const String quantity = 'Quantity';
+  static const String price = 'Price';
+  static const String supplier = 'Supplier';
+  static const String company = 'Company';
+  static const String productionDate = 'Production Date';
+  static const String expiryDate = 'Expiry Date';
+  static const String notes = 'Notes';
+  static const String optional = 'Optional';
+  static const String stock = 'Stock';
+  static const String recordPurchase = 'Record Purchase';
+  static const String purchaseRecorded = 'Purchase recorded successfully';
+  static const String errorRecordingPurchase = 'Error recording purchase';
+  static const String errorLoadingProducts = 'Error loading products';
+  static const String errorLoadingSuppliers = 'Error loading suppliers';
+  static const String errorLoadingCompanies = 'Error loading companies';
 
   // Availability Page
   static const String stockOverview = 'Stock Overview';

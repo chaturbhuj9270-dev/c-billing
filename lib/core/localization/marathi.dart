@@ -1,7 +1,7 @@
 class MarathiLocalization {
   // App General
   static const String appName = 'सी-बिलिंग';
-  static const String tagline = 'आमच्या व्यवसायाचा\nपाया';
+  static const String tagline = 'तुमच्या व्यवसायाचा कणा 💪';
   
   // Dashboard
   static const String dashboard = 'डॅशबोर्ड';
@@ -106,6 +106,40 @@ class MarathiLocalization {
   static const String edit = 'संपादित करा';
   static const String isRequired = 'आवश्यक आहे';
   static const String enterValidPhone = 'वैध फोन नंबर प्रविष्ट करा';
+
+  // Purchase Page
+  static const String addNewProduct = 'नवीन उत्पादन जोडा';
+  static const String enterProductName = 'उत्पादनाचे नाव प्रविष्ट करा';
+  static const String purchasePrice = 'खरेदी किंमत';
+  static const String salesPrice = 'विक्री किंमत';
+  static const String addProduct = 'उत्पादन जोडा';
+  static const String productAddedSuccessfully = 'उत्पादन यशस्वीरीत्या जोडले';
+  static const String selectProduct = 'उत्पादन निवडा';
+  static const String searchByProduct = 'उत्पादन नाव, कंपनी किंवा श्रेणीनुसार शोधा';
+  static const String noProductsAvailable = 'कोणतेही उत्पादने उपलब्ध नाहीत';
+  static const String selectSupplier = 'पुरवठादार निवडा';
+  static const String searchBySupplier = 'पुरवठादार नाव किंवा संपर्कानुसार शोधा';
+  static const String noSuppliersAvailable = 'कोणतेही पुरवठादार उपलब्ध नाहीत';
+  static const String noSuppliersFound = 'कोणतेही पुरवठादार सापडले नाहीत';
+  static const String selectCompany = 'कंपनी निवडा';
+  static const String searchByCompany = 'कंपनीच्या नावानुसार शोधा';
+  static const String noCompaniesAvailable = 'कोणत्याही कंपन्या उपलब्ध नाहीत';
+  static const String noCompaniesFound = 'कोणत्याही कंपन्या सापडल्या नाहीत';
+  static const String quantity = 'प्रमाण';
+  static const String price = 'किंमत';
+  static const String supplier = 'पुरवठादार';
+  static const String company = 'कंपनी';
+  static const String productionDate = 'उत्पादन तारीख';
+  static const String expiryDate = 'कालबाह्यता तारीख';
+  static const String notes = 'टिप्पण्या';
+  static const String optional = 'ऐच्छिक';
+  static const String stock = 'साठा';
+  static const String recordPurchase = 'खरेदी नोंदवा';
+  static const String purchaseRecorded = 'खरेदी यशस्वीरीत्या नोंदवली';
+  static const String errorRecordingPurchase = 'खरेदी नोंदण्यात त्रुटी';
+  static const String errorLoadingProducts = 'उत्पादने लोड करण्यात त्रुटी';
+  static const String errorLoadingSuppliers = 'पुरवठादार लोड करण्यात त्रुटी';
+  static const String errorLoadingCompanies = 'कंपन्या लोड करण्यात त्रुटी';
 
   // Availability Page
   static const String stockOverview = 'साठा विहंगावलोकन';

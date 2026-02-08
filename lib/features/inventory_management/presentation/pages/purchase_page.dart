@@ -3,6 +3,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:ui';
 import 'package:c_billing/core/services/inventory_service.dart';
+import 'package:c_billing/core/services/language_service.dart';
+import 'package:c_billing/core/localization/app_localizations.dart';
 import '../../data/repositories/firebase_product_repository.dart';
 import '../../data/repositories/firebase_stock_repository.dart';
 import '../../data/repositories/firebase_purchase_repository.dart';
@@ -25,6 +27,7 @@ class _PurchasePageState extends State<PurchasePage>
   late AnimationController _animController;
   late Animation<Offset> _offsetAnimation;
   late Animation<double> _opacityAnimation;
+  late AppLocalizations _localizations;
   final _cacheDataSource = PurchaseCacheDataSource();
 
   Product? _selectedProduct;
@@ -63,6 +66,11 @@ class _PurchasePageState extends State<PurchasePage>
   void initState() {
     super.initState();
     _firestore = FirebaseFirestore.instance;
+    _localizations = AppLocalizations.of(LanguageService.instance.currentLanguage);
+    
+    // Listen for language changes
+    LanguageService.instance.addListener(_onLanguageChanged);
+    
     _inventoryService = InventoryService(
       productRepository: FirebaseProductRepository(firestore: _firestore),
       stockRepository: FirebaseStockRepository(firestore: _firestore),
@@ -88,6 +96,14 @@ class _PurchasePageState extends State<PurchasePage>
     );
 
     _setupInitialData();
+  }
+
+  void _onLanguageChanged() {
+    if (mounted) {
+      setState(() {
+        _localizations = AppLocalizations.of(LanguageService.instance.currentLanguage);
+      });
+    }
   }
 
   Future<void> _setupInitialData() async {
@@ -129,7 +145,7 @@ class _PurchasePageState extends State<PurchasePage>
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Error loading products: $e')));
+        ).showSnackBar(SnackBar(content: Text('${_localizations.errorLoadingProducts}: $e')));
       }
     }
   }
@@ -172,7 +188,7 @@ class _PurchasePageState extends State<PurchasePage>
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Error loading suppliers: $e')));
+        ).showSnackBar(SnackBar(content: Text('${_localizations.errorLoadingSuppliers}: $e')));
       }
     }
   }
@@ -207,7 +223,7 @@ class _PurchasePageState extends State<PurchasePage>
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Error loading companies: $e')));
+        ).showSnackBar(SnackBar(content: Text('${_localizations.errorLoadingCompanies}: $e')));
       }
     }
   }
@@ -225,9 +241,9 @@ class _PurchasePageState extends State<PurchasePage>
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
-          title: const Text(
-            'Add New Product',
-            style: TextStyle(
+          title: Text(
+            _localizations.addNewProduct,
+            style: const TextStyle(
               fontFamily: 'Literata',
               fontWeight: FontWeight.w700,
               color: Color(0xFF1B4D3E),
@@ -242,8 +258,8 @@ class _PurchasePageState extends State<PurchasePage>
                   controller: nameController,
                   onChanged: (_) => setDialogState(() {}),
                   decoration: InputDecoration(
-                    labelText: 'Product Name',
-                    hintText: 'Enter product name',
+                    labelText: _localizations.productName,
+                    hintText: _localizations.enterProductName,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -261,7 +277,7 @@ class _PurchasePageState extends State<PurchasePage>
                   controller: purchasePriceController,
                   keyboardType: TextInputType.number,
                   decoration: InputDecoration(
-                    labelText: 'Purchase Price',
+                    labelText: _localizations.purchasePrice,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -279,7 +295,7 @@ class _PurchasePageState extends State<PurchasePage>
                   controller: salesPriceController,
                   keyboardType: TextInputType.number,
                   decoration: InputDecoration(
-                    labelText: 'Sales Price',
+                    labelText: _localizations.salesPrice,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -298,9 +314,9 @@ class _PurchasePageState extends State<PurchasePage>
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text(
-                'Cancel',
-                style: TextStyle(fontFamily: 'Literata', color: Colors.grey),
+              child: Text(
+                _localizations.cancel,
+                style: const TextStyle(fontFamily: 'Literata', color: Colors.grey),
               ),
             ),
             ElevatedButton(
@@ -338,8 +354,8 @@ class _PurchasePageState extends State<PurchasePage>
                           }
                           if (mounted) {
                             ScaffoldMessenger.of(dialogContext).showSnackBar(
-                              const SnackBar(
-                                content: Text('Product added successfully'),
+                              SnackBar(
+                                content: Text(_localizations.productAddedSuccessfully),
                                 backgroundColor: Colors.green,
                               ),
                             );
@@ -358,9 +374,9 @@ class _PurchasePageState extends State<PurchasePage>
                     ? Colors.grey[400]
                     : const Color(0xFF1B4D3E),
               ),
-              child: const Text(
-                'Add Product',
-                style: TextStyle(fontFamily: 'Literata', color: Colors.white),
+              child: Text(
+                _localizations.addProduct,
+                style: const TextStyle(fontFamily: 'Literata', color: Colors.white),
               ),
             ),
           ],
@@ -458,9 +474,9 @@ class _PurchasePageState extends State<PurchasePage>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Select Product',
-                    style: TextStyle(
+                  Text(
+                    _localizations.selectProduct,
+                    style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w700,
                       fontFamily: 'Literata',
@@ -470,7 +486,7 @@ class _PurchasePageState extends State<PurchasePage>
                   TextField(
                     controller: _productSearchController,
                     decoration: InputDecoration(
-                      hintText: 'Search by product name, company, or category',
+                      hintText: _localizations.searchByProduct,
                       prefixIcon: const Icon(Icons.search_rounded),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -491,8 +507,8 @@ class _PurchasePageState extends State<PurchasePage>
                         ? Center(
                             child: Text(
                               _productSearchController.text.isEmpty
-                                  ? 'No products available'
-                                  : 'No products found',
+                                  ? _localizations.noProductsAvailable
+                                  : _localizations.noProductsFound,
                               style: TextStyle(
                                 color: Colors.grey[600],
                                 fontSize: 14,
@@ -516,7 +532,7 @@ class _PurchasePageState extends State<PurchasePage>
                                   ),
                                 ),
                                 subtitle: Text(
-                                  '${product.companyName} • Stock: ${product.currentStock}',
+                                  '${product.companyName} • ${_localizations.stock}: ${product.currentStock}',
                                   style: TextStyle(
                                     fontSize: 12,
                                     color: Colors.grey[600],
@@ -582,9 +598,9 @@ class _PurchasePageState extends State<PurchasePage>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Select Supplier',
-                    style: TextStyle(
+                  Text(
+                    _localizations.selectSupplier,
+                    style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w700,
                       fontFamily: 'Literata',
@@ -594,7 +610,7 @@ class _PurchasePageState extends State<PurchasePage>
                   TextField(
                     controller: _supplierSearchController,
                     decoration: InputDecoration(
-                      hintText: 'Search by supplier name or contact',
+                      hintText: _localizations.searchBySupplier,
                       prefixIcon: const Icon(Icons.search_rounded),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -615,8 +631,8 @@ class _PurchasePageState extends State<PurchasePage>
                         ? Center(
                             child: Text(
                               _supplierSearchController.text.isEmpty
-                                  ? 'No suppliers available'
-                                  : 'No suppliers found',
+                                  ? _localizations.noSuppliersAvailable
+                                  : _localizations.noSuppliersFound,
                               style: TextStyle(
                                 color: Colors.grey[600],
                                 fontSize: 14,
@@ -689,9 +705,9 @@ class _PurchasePageState extends State<PurchasePage>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Select Company',
-                    style: TextStyle(
+                  Text(
+                    _localizations.selectCompany,
+                    style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w700,
                       fontFamily: 'Literata',
@@ -701,7 +717,7 @@ class _PurchasePageState extends State<PurchasePage>
                   TextField(
                     controller: _companySearchController,
                     decoration: InputDecoration(
-                      hintText: 'Search by company name',
+                      hintText: _localizations.searchByCompany,
                       prefixIcon: const Icon(Icons.search_rounded),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -722,8 +738,8 @@ class _PurchasePageState extends State<PurchasePage>
                         ? Center(
                             child: Text(
                               _companySearchController.text.isEmpty
-                                  ? 'No companies available'
-                                  : 'No companies found',
+                                  ? _localizations.noCompaniesAvailable
+                                  : _localizations.noCompaniesFound,
                               style: TextStyle(
                                 color: Colors.grey[600],
                                 fontSize: 14,
@@ -923,6 +939,7 @@ class _PurchasePageState extends State<PurchasePage>
 
   @override
   void dispose() {
+    LanguageService.instance.removeListener(_onLanguageChanged);
     _animController.dispose();
     _quantityController.dispose();
     _priceController.dispose();

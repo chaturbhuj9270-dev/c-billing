@@ -1,7 +1,7 @@
 class HindiLocalization {
   // App General
   static const String appName = 'सी-बिलिंग';
-  static const String tagline = 'हमारे व्यवसाय की\nरीढ़';
+  static const String tagline = 'आपके व्यवसाय की रीढ़ 💪';
   
   // Dashboard
   static const String dashboard = 'डैशबोर्ड';
@@ -106,6 +106,40 @@ class HindiLocalization {
   static const String edit = 'संपादित करें';
   static const String isRequired = 'आवश्यक है';
   static const String enterValidPhone = 'वैध फ़ोन नंबर दर्ज करें';
+
+  // Purchase Page
+  static const String addNewProduct = 'नया उत्पाद जोड़ें';
+  static const String enterProductName = 'उत्पाद नाम दर्ज करें';
+  static const String purchasePrice = 'खरीद मूल्य';
+  static const String salesPrice = 'बिक्री मूल्य';
+  static const String addProduct = 'उत्पाद जोड़ें';
+  static const String productAddedSuccessfully = 'उत्पाद सफलतापूर्वक जोड़ा गया';
+  static const String selectProduct = 'उत्पाद चुनें';
+  static const String searchByProduct = 'उत्पाद नाम, कंपनी या श्रेणी से खोजें';
+  static const String noProductsAvailable = 'कोई उत्पाद उपलब्ध नहीं';
+  static const String selectSupplier = 'आपूर्तिकर्ता चुनें';
+  static const String searchBySupplier = 'आपूर्तिकर्ता नाम या संपर्क से खोजें';
+  static const String noSuppliersAvailable = 'कोई आपूर्तिकर्ता उपलब्ध नहीं';
+  static const String noSuppliersFound = 'कोई आपूर्तिकर्ता नहीं मिला';
+  static const String selectCompany = 'कंपनी चुनें';
+  static const String searchByCompany = 'कंपनी नाम से खोजें';
+  static const String noCompaniesAvailable = 'कोई कंपनी उपलब्ध नहीं';
+  static const String noCompaniesFound = 'कोई कंपनी नहीं मिली';
+  static const String quantity = 'मात्रा';
+  static const String price = 'मूल्य';
+  static const String supplier = 'आपूर्तिकर्ता';
+  static const String company = 'कंपनी';
+  static const String productionDate = 'उत्पादन तिथि';
+  static const String expiryDate = 'समाप्ति तिथि';
+  static const String notes = 'नोट्स';
+  static const String optional = 'वैकल्पिक';
+  static const String stock = 'स्टॉक';
+  static const String recordPurchase = 'खरीद रिकॉर्ड करें';
+  static const String purchaseRecorded = 'खरीद सफलतापूर्वक रिकॉर्ड की गई';
+  static const String errorRecordingPurchase = 'खरीद रिकॉर्ड करने में त्रुटि';
+  static const String errorLoadingProducts = 'उत्पाद लोड करने में त्रुटि';
+  static const String errorLoadingSuppliers = 'आपूर्तिकर्ता लोड करने में त्रुटि';
+  static const String errorLoadingCompanies = 'कंपनी लोड करने में त्रुटि';
 
   // Availability Page
   static const String stockOverview = 'स्टॉक अवलोकन';
