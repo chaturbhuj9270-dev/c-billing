@@ -482,6 +482,7 @@ class _SupplierPageState extends State<SupplierPage> {
           keyboardType: keyboardType,
           maxLines: maxLines,
           minLines: maxLines,
+          maxLength: (label == _localizations.contactNumber) ? 10 : null,
           decoration: InputDecoration(
             prefixIcon: Icon(icon, color: Colors.grey[600]),
             border: OutlineInputBorder(
@@ -506,6 +507,12 @@ class _SupplierPageState extends State<SupplierPage> {
           validator: (value) {
             if (isRequired && (value == null || value.isEmpty)) {
               return '$label ${_localizations.isRequired}';
+            }
+            if (label == _localizations.contactNumber &&
+                value != null &&
+                value.isNotEmpty &&
+                value.length != 10) {
+              return 'Contact number must be exactly 10 digits';
             }
             return null;
           },

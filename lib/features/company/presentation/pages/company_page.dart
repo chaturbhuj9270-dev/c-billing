@@ -1136,6 +1136,7 @@ class _CompanyPageState extends State<CompanyPage> {
       controller: controller,
       keyboardType: keyboardType,
       maxLines: maxLines,
+      maxLength: (label == _localizations.contactNumber) ? 10 : null,
       decoration: InputDecoration(
         labelText: isRequired ? '$label *' : label,
         prefixIcon: Icon(icon, color: Colors.grey[600]),
@@ -1159,8 +1160,10 @@ class _CompanyPageState extends State<CompanyPage> {
               if (value == null || value.isEmpty) {
                 return '$label ${_localizations.isRequired}';
               }
-              if (label == _localizations.contactNumber && value.length < 10) {
-                return _localizations.enterValidPhone;
+              if (label == _localizations.contactNumber &&
+                  value.isNotEmpty &&
+                  value.length != 10) {
+                return 'Contact number must be exactly 10 digits';
               }
               return null;
             }

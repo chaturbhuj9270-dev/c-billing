@@ -45,11 +45,13 @@ class _CustomerPageState extends State<CustomerPage> {
     super.initState();
     _firestore = FirebaseFirestore.instance;
     _sessionManager = SessionManager();
-    _localizations = AppLocalizations.of(LanguageService.instance.currentLanguage);
-    
+    _localizations = AppLocalizations.of(
+      LanguageService.instance.currentLanguage,
+    );
+
     // Listen for language changes
     LanguageService.instance.addListener(_onLanguageChanged);
-    
+
     _checkUserAuthentication();
     _setupInitialData();
     _filterController.addListener(_filterCustomers);
@@ -58,7 +60,9 @@ class _CustomerPageState extends State<CustomerPage> {
   void _onLanguageChanged() {
     if (mounted) {
       setState(() {
-        _localizations = AppLocalizations.of(LanguageService.instance.currentLanguage);
+        _localizations = AppLocalizations.of(
+          LanguageService.instance.currentLanguage,
+        );
       });
     }
   }
@@ -312,7 +316,9 @@ class _CustomerPageState extends State<CustomerPage> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                _isEditing ? _localizations.editCustomer : _localizations.addNewCustomer,
+                _isEditing
+                    ? _localizations.editCustomer
+                    : _localizations.addNewCustomer,
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
@@ -396,7 +402,9 @@ class _CustomerPageState extends State<CustomerPage> {
                           ),
                         )
                       : Text(
-                          _isEditing ? _localizations.update : _localizations.addCustomer,
+                          _isEditing
+                              ? _localizations.update
+                              : _localizations.addCustomer,
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 14,
@@ -609,7 +617,10 @@ class _CustomerPageState extends State<CustomerPage> {
             onPressed: () => Navigator.of(ctx).pop(false),
             child: Text(
               _localizations.cancel,
-              style: const TextStyle(fontFamily: 'Literata', color: Colors.grey),
+              style: const TextStyle(
+                fontFamily: 'Literata',
+                color: Colors.grey,
+              ),
             ),
           ),
           ElevatedButton(
@@ -617,7 +628,10 @@ class _CustomerPageState extends State<CustomerPage> {
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             child: Text(
               _localizations.delete,
-              style: const TextStyle(fontFamily: 'Literata', color: Colors.white),
+              style: const TextStyle(
+                fontFamily: 'Literata',
+                color: Colors.white,
+              ),
             ),
           ),
         ],
@@ -951,6 +965,7 @@ class _CustomerPageState extends State<CustomerPage> {
         controller: controller,
         keyboardType: keyboardType,
         maxLines: maxLines,
+        maxLength: (label == _localizations.contactNumber) ? 10 : null,
         decoration: InputDecoration(
           labelText: isRequired ? '$label *' : label,
           prefixIcon: Icon(icon, color: Colors.grey[600]),
@@ -974,8 +989,10 @@ class _CustomerPageState extends State<CustomerPage> {
                 if (value == null || value.isEmpty) {
                   return '$label ${_localizations.isRequired}';
                 }
-                if (label == _localizations.contactNumber && value.length < 10) {
-                  return _localizations.enterValidPhone;
+                if (label == _localizations.contactNumber &&
+                    value.isNotEmpty &&
+                    value.length != 10) {
+                  return 'Contact number must be exactly 10 digits';
                 }
                 return null;
               }

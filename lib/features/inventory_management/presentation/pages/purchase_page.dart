@@ -1190,6 +1190,8 @@ class _PurchasePageState extends State<PurchasePage>
                 TextField(
                   controller: _newSupplierContactController,
                   keyboardType: TextInputType.phone,
+                  maxLength: 10,
+                  onChanged: (_) => setDialogState(() {}),
                   decoration: InputDecoration(
                     labelText: _localizations.contactNumber,
                     border: OutlineInputBorder(
@@ -1202,6 +1204,15 @@ class _PurchasePageState extends State<PurchasePage>
                         width: 2,
                       ),
                     ),
+                    errorBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Colors.red, width: 2),
+                    ),
+                    errorText:
+                        _newSupplierContactController.text.isNotEmpty &&
+                            _newSupplierContactController.text.length != 10
+                        ? 'Contact number must be exactly 10 digits'
+                        : null,
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -1371,6 +1382,8 @@ class _PurchasePageState extends State<PurchasePage>
                 TextField(
                   controller: _newCompanyContactController,
                   keyboardType: TextInputType.phone,
+                  maxLength: 10,
+                  onChanged: (_) => setDialogState(() {}),
                   decoration: InputDecoration(
                     labelText: _localizations.contactNumber,
                     border: OutlineInputBorder(
@@ -1383,6 +1396,15 @@ class _PurchasePageState extends State<PurchasePage>
                         width: 2,
                       ),
                     ),
+                    errorBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Colors.red, width: 2),
+                    ),
+                    errorText:
+                        _newCompanyContactController.text.isNotEmpty &&
+                            _newCompanyContactController.text.length != 10
+                        ? 'Contact number must be exactly 10 digits'
+                        : null,
                   ),
                 ),
                 const SizedBox(height: 12),
