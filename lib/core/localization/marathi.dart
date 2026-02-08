@@ -271,4 +271,29 @@ class MarathiLocalization {
   static const String unknown = 'अज्ञात';
   static const String open = 'उघडा';
   static const String print = 'प्रिंट करा';
+  
+  // Product Management Page
+  static const String productManagement = 'उत्पादन व्यवस्थापन';
+  static const String noProductsMatchFilter = 'कोणतीही उत्पादने आपल्या फिल्टरशी जुळली नाहीत';
+  static const String editProduct = 'उत्पादन संपादित करा';
+  static const String deleteProduct = 'उत्पादन हटवा';
+  static const String category = 'श्रेणी';
+  static const String initialStock = 'प्रारंभिक स्टॉक';
+  static const String purchasePriceReadOnly = 'खरेदी किंमत (फक्त वाचण्यासाठी)';
+  static const String salesPriceReadOnly = 'विक्री किंमत (फक्त वाचण्यासाठी)';
+  static const String currentStockReadOnly = 'सध्याचा स्टॉक (फक्त वाचण्यासाठी)';
+  static const String updatedFromPurchasePage = 'खरेदी पानावरून अपडेट केले';
+  static const String filterProducts = 'उत्पादने फिल्टर करा';
+  static const String selectCategory = 'श्रेणी निवडा';
+  static const String priceRange = 'किंमत श्रेणी';
+  static const String minPrice = 'किमान किंमत';
+  static const String maxPrice = 'कमाल किंमत';
+  static const String stockRange = 'स्टॉक श्रेणी';
+  static const String apply = 'लागू करा';
+  static const String deleteConfirmation = 'तुम्ही खरोखर हटवू इच्छिता';
+  static const String actionCannotBeUndone = 'ही क्रिया पूर्ववत करता येणार नाही';
+  static const String productUpdatedSuccessfully = 'उत्पादन यशस्वीरित्या अपडेट केले';
+  static const String productDeletedSuccessfully = 'उत्पादन यशस्वीरित्या हटवले';
+  static const String filters = 'फिल्टर';
+  static const String allCategories = 'सर्व श्रेणी';
 }

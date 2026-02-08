@@ -271,4 +271,29 @@ class EnglishLocalization {
   static const String unknown = 'Unknown';
   static const String open = 'Open';
   static const String print = 'Print';
+  
+  // Product Management Page
+  static const String productManagement = 'Product Management';
+  static const String noProductsMatchFilter = 'No products match your filters';
+  static const String editProduct = 'Edit Product';
+  static const String deleteProduct = 'Delete Product';
+  static const String category = 'Category';
+  static const String initialStock = 'Initial Stock';
+  static const String purchasePriceReadOnly = 'Purchase Price (Read-Only)';
+  static const String salesPriceReadOnly = 'Sales Price (Read-Only)';
+  static const String currentStockReadOnly = 'Current Stock (Read-Only)';
+  static const String updatedFromPurchasePage = 'Updated from Purchase Page';
+  static const String filterProducts = 'Filter Products';
+  static const String selectCategory = 'Select Category';
+  static const String priceRange = 'Price Range';
+  static const String minPrice = 'Min Price';
+  static const String maxPrice = 'Max Price';
+  static const String stockRange = 'Stock Range';
+  static const String apply = 'Apply';
+  static const String deleteConfirmation = 'Are you sure you want to delete';
+  static const String actionCannotBeUndone = 'This action cannot be undone';
+  static const String productUpdatedSuccessfully = 'Product updated successfully';
+  static const String productDeletedSuccessfully = 'Product deleted successfully';
+  static const String filters = 'Filters';
+  static const String allCategories = 'All Categories';
 }

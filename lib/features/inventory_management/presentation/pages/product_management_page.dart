@@ -3,6 +3,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:ui';
 import 'package:c_billing/core/services/inventory_service.dart';
+import 'package:c_billing/core/services/language_service.dart';
+import 'package:c_billing/core/localization/app_localizations.dart';
 import '../../data/repositories/firebase_product_repository.dart';
 import '../../data/repositories/firebase_stock_repository.dart';
 import '../../data/repositories/firebase_purchase_repository.dart';
@@ -31,6 +33,9 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
   int _pageSize = 20;
   late ScrollController _scrollController;
 
+  // Localization variables
+  late AppLocalizations _localizations;
+
   // Filter variables
   String _filterName = '';
   String _filterCategory = '';
@@ -42,6 +47,9 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
   @override
   void initState() {
     super.initState();
+    _localizations = AppLocalizations(LanguageService.instance.currentLanguage);
+    LanguageService.instance.addListener(_onLanguageChanged);
+
     _firestore = FirebaseFirestore.instance;
     _inventoryService = InventoryService(
       productRepository: FirebaseProductRepository(
@@ -63,8 +71,17 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
     _setupInitialData();
   }
 
+  void _onLanguageChanged() {
+    setState(() {
+      _localizations = AppLocalizations(
+        LanguageService.instance.currentLanguage,
+      );
+    });
+  }
+
   @override
   void dispose() {
+    LanguageService.instance.removeListener(_onLanguageChanged);
     _scrollController.dispose();
     super.dispose();
   }
@@ -239,9 +256,9 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
               width: 1.5,
             ),
           ),
-          title: const Text(
-            'Edit Product',
-            style: TextStyle(
+          title: Text(
+            _localizations.editProduct,
+            style: const TextStyle(
               fontFamily: 'Literata',
               fontWeight: FontWeight.w700,
               color: Color(0xFF1B4D3E),
@@ -254,7 +271,7 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                 TextField(
                   controller: nameController,
                   decoration: InputDecoration(
-                    labelText: 'Product Name',
+                    labelText: _localizations.productName,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -271,7 +288,7 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                 TextField(
                   controller: categoryController,
                   decoration: InputDecoration(
-                    labelText: 'Category',
+                    labelText: _localizations.category,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -292,8 +309,8 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                   ),
                   enabled: false,
                   decoration: InputDecoration(
-                    labelText: 'Purchase Price (Read-Only)',
-                    hintText: 'Updated from Purchase Page',
+                    labelText: _localizations.purchasePriceReadOnly,
+                    hintText: _localizations.updatedFromPurchasePage,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -314,8 +331,8 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                   ),
                   enabled: false,
                   decoration: InputDecoration(
-                    labelText: 'Sales Price (Read-Only)',
-                    hintText: 'Updated from Purchase Page',
+                    labelText: _localizations.salesPriceReadOnly,
+                    hintText: _localizations.updatedFromPurchasePage,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -336,8 +353,8 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                   ),
                   enabled: false,
                   decoration: InputDecoration(
-                    labelText: 'Current Stock (Read-Only)',
-                    hintText: 'Updated from Purchase Page',
+                    labelText: _localizations.currentStockReadOnly,
+                    hintText: _localizations.updatedFromPurchasePage,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -356,9 +373,12 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text(
-                'Cancel',
-                style: TextStyle(fontFamily: 'Literata', color: Colors.grey),
+              child: Text(
+                _localizations.cancel,
+                style: const TextStyle(
+                  fontFamily: 'Literata',
+                  color: Colors.grey,
+                ),
               ),
             ),
             ElevatedButton(
@@ -391,25 +411,30 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                   if (mounted) {
                     Navigator.pop(context);
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Product updated successfully'),
+                      SnackBar(
+                        content: Text(
+                          _localizations.productUpdatedSuccessfully,
+                        ),
                       ),
                     );
                   }
                 } catch (e) {
                   // Reload on error to revert optimistic update
                   _loadProducts();
-                  ScaffoldMessenger.of(
-                    context,
-                  ).showSnackBar(SnackBar(content: Text('Error: $e')));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('${_localizations.error}: $e')),
+                  );
                 }
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF1B4D3E),
               ),
-              child: const Text(
-                'Update',
-                style: TextStyle(fontFamily: 'Literata', color: Colors.white),
+              child: Text(
+                _localizations.update,
+                style: const TextStyle(
+                  fontFamily: 'Literata',
+                  color: Colors.white,
+                ),
               ),
             ),
           ],
@@ -422,14 +447,14 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Product'),
+        title: Text(_localizations.deleteProduct),
         content: Text(
-          'Are you sure you want to delete "${product.name}"?\n\nThis action cannot be undone.',
+          '${_localizations.deleteConfirmation} "${product.name}"?\n\n${_localizations.actionCannotBeUndone}.',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(_localizations.cancel),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -448,21 +473,21 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                 if (mounted) {
                   Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Product deleted successfully'),
+                    SnackBar(
+                      content: Text(_localizations.productDeletedSuccessfully),
                     ),
                   );
                 }
               } catch (e) {
                 // Reload on error to revert optimistic delete
                 _loadProducts();
-                ScaffoldMessenger.of(
-                  context,
-                ).showSnackBar(SnackBar(content: Text('Error: $e')));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('${_localizations.error}: $e')),
+                );
               }
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Delete'),
+            child: Text(_localizations.delete),
           ),
         ],
       ),
@@ -500,9 +525,9 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                 width: 1.5,
               ),
             ),
-            title: const Text(
-              'Filter Products',
-              style: TextStyle(
+            title: Text(
+              _localizations.filterProducts,
+              style: const TextStyle(
                 fontFamily: 'Literata',
                 fontWeight: FontWeight.w700,
                 color: Color(0xFF1B4D3E),
@@ -515,7 +540,7 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                   TextField(
                     controller: nameController,
                     decoration: InputDecoration(
-                      labelText: 'Product Name',
+                      labelText: _localizations.productName,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -540,11 +565,11 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                       isExpanded: true,
                       underline: const SizedBox(),
                       value: selectedCategory,
-                      hint: const Text('Select Category'),
+                      hint: Text(_localizations.selectCategory),
                       items: [
-                        const DropdownMenuItem(
+                        DropdownMenuItem(
                           value: null,
-                          child: Text('All Categories'),
+                          child: Text(_localizations.allCategories),
                         ),
                         ...allCategories.map((category) {
                           return DropdownMenuItem(
@@ -561,9 +586,9 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  const Text(
-                    'Price Range (₹)',
-                    style: TextStyle(
+                  Text(
+                    '${_localizations.priceRange} (₹)',
+                    style: const TextStyle(
                       fontFamily: 'Literata',
                       fontWeight: FontWeight.w600,
                       fontSize: 14,
@@ -577,7 +602,7 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                           controller: minPriceController,
                           keyboardType: TextInputType.number,
                           decoration: InputDecoration(
-                            labelText: 'Min',
+                            labelText: _localizations.minPrice,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
@@ -598,7 +623,7 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                           controller: maxPriceController,
                           keyboardType: TextInputType.number,
                           decoration: InputDecoration(
-                            labelText: 'Max',
+                            labelText: _localizations.maxPrice,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
@@ -616,9 +641,9 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                     ],
                   ),
                   const SizedBox(height: 16),
-                  const Text(
-                    'Stock Range (Units)',
-                    style: TextStyle(
+                  Text(
+                    '${_localizations.stockRange} (${_localizations.units})',
+                    style: const TextStyle(
                       fontFamily: 'Literata',
                       fontWeight: FontWeight.w600,
                       fontSize: 14,
@@ -632,7 +657,7 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                           controller: minStockController,
                           keyboardType: TextInputType.number,
                           decoration: InputDecoration(
-                            labelText: 'Min',
+                            labelText: _localizations.minStock,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
@@ -653,7 +678,7 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                           controller: maxStockController,
                           keyboardType: TextInputType.number,
                           decoration: InputDecoration(
-                            labelText: 'Max',
+                            labelText: _localizations.maxStock,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
@@ -679,16 +704,22 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                   _clearFilters();
                   Navigator.pop(context);
                 },
-                child: const Text(
-                  'Clear All',
-                  style: TextStyle(fontFamily: 'Literata', color: Colors.red),
+                child: Text(
+                  _localizations.clearFilters,
+                  style: const TextStyle(
+                    fontFamily: 'Literata',
+                    color: Colors.red,
+                  ),
                 ),
               ),
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text(
-                  'Cancel',
-                  style: TextStyle(fontFamily: 'Literata', color: Colors.grey),
+                child: Text(
+                  _localizations.cancel,
+                  style: const TextStyle(
+                    fontFamily: 'Literata',
+                    color: Colors.grey,
+                  ),
                 ),
               ),
               ElevatedButton(
@@ -707,9 +738,12 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF1B4D3E),
                 ),
-                child: const Text(
-                  'Apply',
-                  style: TextStyle(fontFamily: 'Literata', color: Colors.white),
+                child: Text(
+                  _localizations.apply,
+                  style: const TextStyle(
+                    fontFamily: 'Literata',
+                    color: Colors.white,
+                  ),
                 ),
               ),
             ],
@@ -739,9 +773,9 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
               width: 1.5,
             ),
           ),
-          title: const Text(
-            'Add New Product',
-            style: TextStyle(
+          title: Text(
+            _localizations.addNewProduct,
+            style: const TextStyle(
               fontFamily: 'Literata',
               fontWeight: FontWeight.w700,
               color: Color(0xFF1B4D3E),
@@ -754,7 +788,7 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                 TextField(
                   controller: nameController,
                   decoration: InputDecoration(
-                    labelText: 'Product Name',
+                    labelText: _localizations.productName,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -771,7 +805,7 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                 TextField(
                   controller: categoryController,
                   decoration: InputDecoration(
-                    labelText: 'Category',
+                    labelText: _localizations.category,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -789,7 +823,7 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                   controller: purchasePriceController,
                   keyboardType: TextInputType.number,
                   decoration: InputDecoration(
-                    labelText: 'Purchase Price',
+                    labelText: _localizations.purchasePrice,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -807,7 +841,7 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                   controller: salesPriceController,
                   keyboardType: TextInputType.number,
                   decoration: InputDecoration(
-                    labelText: 'Sales Price',
+                    labelText: _localizations.salesPrice,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -825,7 +859,7 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                   controller: initialStockController,
                   keyboardType: TextInputType.number,
                   decoration: InputDecoration(
-                    labelText: 'Initial Stock',
+                    labelText: _localizations.initialStock,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -844,9 +878,12 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text(
-                'Cancel',
-                style: TextStyle(fontFamily: 'Literata', color: Colors.grey),
+              child: Text(
+                _localizations.cancel,
+                style: const TextStyle(
+                  fontFamily: 'Literata',
+                  color: Colors.grey,
+                ),
               ),
             ),
             ElevatedButton(
@@ -886,24 +923,24 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                   if (mounted) {
                     Navigator.pop(context);
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Product added successfully'),
+                      SnackBar(
+                        content: Text(_localizations.productAddedSuccessfully),
                       ),
                     );
                   }
                 } catch (e) {
                   // Reload on error to revert optimistic add
                   _loadProducts();
-                  ScaffoldMessenger.of(
-                    context,
-                  ).showSnackBar(SnackBar(content: Text('Error: $e')));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('${_localizations.error}: $e')),
+                  );
                 }
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF1B4D3E),
               ),
-              child: const Text(
-                'Add',
+              child: Text(
+                _localizations.add,
                 style: TextStyle(fontFamily: 'Literata', color: Colors.white),
               ),
             ),
@@ -922,7 +959,7 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
         children: [
           Expanded(
             child: _buildStatCard(
-              title: 'Total Products',
+              title: _localizations.totalProducts,
               value: _products.length,
               icon: Icons.inventory_2,
               iconColor: const Color(0xFF1B4D3E),
@@ -931,7 +968,7 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
           ),
           Expanded(
             child: _buildStatCard(
-              title: 'Out of Stock',
+              title: _localizations.outOfStock,
               value: outOfStockCount,
               icon: Icons.warning_amber,
               iconColor: Colors.red,
@@ -993,9 +1030,9 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
       appBar: AppBar(
         automaticallyImplyLeading: !widget.isEmbedded,
         iconTheme: const IconThemeData(color: Colors.white),
-        title: const Text(
-          'Product Management',
-          style: TextStyle(
+        title: Text(
+          _localizations.productManagement,
+          style: const TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w600,
             fontFamily: 'Literata',
@@ -1031,7 +1068,7 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                       ),
                   ],
                 ),
-                tooltip: 'Filters',
+                tooltip: _localizations.filters,
               ),
             ),
           ),
@@ -1052,7 +1089,7 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'No products found',
+                    _localizations.noProductsFound,
                     style: TextStyle(
                       fontSize: 18,
                       color: Colors.grey[600],
@@ -1078,7 +1115,7 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                               ),
                               const SizedBox(height: 16),
                               Text(
-                                'No products match your filters',
+                                _localizations.noProductsMatchFilter,
                                 style: TextStyle(
                                   fontSize: 18,
                                   color: Colors.grey[600],
@@ -1091,7 +1128,7 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: const Color(0xFF1B4D3E),
                                 ),
-                                child: const Text('Clear Filters'),
+                                child: Text(_localizations.clearFilters),
                               ),
                             ],
                           ),
@@ -1146,8 +1183,8 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                                           ),
                                           child: Text(
                                             isLowStock
-                                                ? 'Low Stock'
-                                                : 'In Stock',
+                                                ? _localizations.lowStock
+                                                : _localizations.inStock,
                                             style: TextStyle(
                                               color: isLowStock
                                                   ? Colors.red
@@ -1192,7 +1229,7 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                                               CrossAxisAlignment.end,
                                           children: [
                                             Text(
-                                              'Current Stock',
+                                              _localizations.currentStock,
                                               style: TextStyle(
                                                 fontSize: 12,
                                                 color: Colors.grey[600],
@@ -1200,7 +1237,7 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                                               ),
                                             ),
                                             Text(
-                                              '${product.currentStock} units',
+                                              '${product.currentStock} ${_localizations.units}',
                                               style: const TextStyle(
                                                 fontSize: 14,
                                                 fontWeight: FontWeight.w600,
@@ -1221,7 +1258,7 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                                               CrossAxisAlignment.start,
                                           children: [
                                             Text(
-                                              'Purchase Price',
+                                              _localizations.purchasePrice,
                                               style: TextStyle(
                                                 fontSize: 12,
                                                 color: Colors.grey[600],
@@ -1243,7 +1280,7 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                                               CrossAxisAlignment.end,
                                           children: [
                                             Text(
-                                              'Sales Price',
+                                              _localizations.salesPrice,
                                               style: TextStyle(
                                                 fontSize: 12,
                                                 color: Colors.grey[600],
@@ -1276,7 +1313,7 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                                             MainAxisAlignment.spaceBetween,
                                         children: [
                                           Text(
-                                            'Stock Value',
+                                            _localizations.stockValue,
                                             style: TextStyle(
                                               fontSize: 12,
                                               color: Colors.grey[600],
