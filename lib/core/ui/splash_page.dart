@@ -10,7 +10,7 @@ import '../services/credentials_manager.dart';
 class SplashPage extends StatefulWidget {
   final Duration duration;
 
-  const SplashPage({super.key, this.duration = const Duration(seconds: 4)});
+  const SplashPage({super.key, this.duration = const Duration(seconds: 8)});
 
   @override
   State<SplashPage> createState() => _SplashPageState();
@@ -180,7 +180,7 @@ class _SplashPageState extends State<SplashPage> {
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: Text(
-                      'THE BACKBONE OF YOUR\nBUSINESS',
+                      'THE BACKBONE FOR OUR\nBUSINESS',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: const Color(0xFF1B4D3E).withOpacity(0.55),
