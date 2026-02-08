@@ -17,6 +17,8 @@ import 'package:c_billing/common_widgets/printer_selection_widget.dart';
 import 'package:c_billing/features/shop/data/repositories/shop_repository.dart';
 import 'package:c_billing/features/customer/data/repositories/customer_repository.dart';
 import 'package:c_billing/features/customer/data/repositories/customer_transaction_repository.dart';
+import 'package:c_billing/core/services/language_service.dart';
+import 'package:c_billing/core/localization/app_localizations.dart';
 
 class BillingPage extends StatefulWidget {
   final bool isEmbedded;
@@ -32,6 +34,7 @@ class _BillingPageState extends State<BillingPage> {
   late FirebaseFirestore _firestore;
   late ShopRepository _shopRepository;
   late FirebaseCustomerRepository _customerRepository;
+  late AppLocalizations _localizations;
 
   // Printing services
   final _printerService = PosPrinterService();
@@ -70,6 +73,12 @@ class _BillingPageState extends State<BillingPage> {
     super.initState();
     _firestore = FirebaseFirestore.instance;
     _shopRepository = ShopRepository(firestore: _firestore);
+    _localizations = AppLocalizations.of(
+      LanguageService.instance.currentLanguage,
+    );
+
+    // Listen for language changes
+    LanguageService.instance.addListener(_onLanguageChanged);
 
     // Initialize customer repository
     _customerRepository = FirebaseCustomerRepository(firestore: _firestore);
@@ -94,6 +103,7 @@ class _BillingPageState extends State<BillingPage> {
 
   @override
   void dispose() {
+    LanguageService.instance.removeListener(_onLanguageChanged);
     _debounceTimer?.cancel();
     _indexNoController.dispose();
     _indexNoFocusNode.dispose();
@@ -104,6 +114,16 @@ class _BillingPageState extends State<BillingPage> {
     _receivedAmountController.dispose();
     _printerService.dispose();
     super.dispose();
+  }
+
+  void _onLanguageChanged() {
+    if (mounted) {
+      setState(() {
+        _localizations = AppLocalizations.of(
+          LanguageService.instance.currentLanguage,
+        );
+      });
+    }
   }
 
   Future<void> _loadProducts({bool showLoader = true}) async {
@@ -124,7 +144,10 @@ class _BillingPageState extends State<BillingPage> {
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
-        _showSnackbar('Error loading products: $e', isError: true);
+        _showSnackbar(
+          '${_localizations.errorLoadingProducts}: $e',
+          isError: true,
+        );
       }
     }
   }
@@ -162,6 +185,7 @@ class _BillingPageState extends State<BillingPage> {
       builder: (ctx) => _AddItemsBottomSheet(
         products: _products,
         billItems: _billItems,
+        localizations: _localizations,
         onItemAdded: (product, quantity, price) {
           final existingIndex = _billItems.indexWhere(
             (item) => item.productId == product.id,
@@ -229,7 +253,7 @@ class _BillingPageState extends State<BillingPage> {
 
   Future<void> _saveBill() async {
     if (_billItems.isEmpty) {
-      _showSnackbar('Please add at least one item', isError: true);
+      _showSnackbar(_localizations.pleaseAddAtLeastOneItem, isError: true);
       return;
     }
 
@@ -280,17 +304,17 @@ class _BillingPageState extends State<BillingPage> {
         if (mounted && createdBill != null) {
           _showBillSuccessDialog(createdBill);
         } else {
-          _showSnackbar('Bill saved successfully!');
+          _showSnackbar(_localizations.billSavedSuccessfully);
         }
       } else {
         _showSnackbar(
-          result.errorMessage ?? 'Error saving bill',
+          result.errorMessage ?? _localizations.errorSavingBill,
           isError: true,
         );
       }
     } catch (e) {
       setState(() => _isSavingBill = false);
-      _showSnackbar('Error: $e', isError: true);
+      _showSnackbar('${_localizations.error}: $e', isError: true);
     }
   }
 
@@ -396,9 +420,9 @@ class _BillingPageState extends State<BillingPage> {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    const Text(
-                      'Bill Saved Successfully!',
-                      style: TextStyle(
+                    Text(
+                      _localizations.billSavedSuccessfully,
+                      style: const TextStyle(
                         fontFamily: 'Literata',
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
@@ -425,30 +449,30 @@ class _BillingPageState extends State<BillingPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _buildSuccessDialogRow(
-                        'Date',
+                        _localizations.date,
                         dateFormat.format(bill.billDate),
                       ),
                       if (bill.hasCustomerInfo) ...[
                         const Divider(height: 16),
                         _buildSuccessDialogRow(
-                          'Customer',
-                          bill.customerName ?? 'N/A',
+                          _localizations.customer,
+                          bill.customerName ?? _localizations.na,
                         ),
                       ],
                       const Divider(height: 16),
                       _buildSuccessDialogRow(
-                        'Items',
-                        '${bill.items.length} items (${bill.totalQuantity} qty)',
+                        _localizations.items,
+                        '${bill.items.length} ${_localizations.items.toLowerCase()} (${bill.totalQuantity} ${_localizations.qty.toLowerCase()})',
                       ),
                       const Divider(height: 16),
                       _buildSuccessDialogRow(
-                        'Subtotal',
+                        _localizations.subtotal,
                         '₹${bill.totalAmount.toStringAsFixed(2)}',
                       ),
                       if (bill.discountAmount > 0) ...[
                         const SizedBox(height: 4),
                         _buildSuccessDialogRow(
-                          'Discount',
+                          _localizations.discount,
                           '-₹${bill.discountAmount.toStringAsFixed(2)}',
                           valueColor: Colors.green,
                         ),
@@ -457,9 +481,9 @@ class _BillingPageState extends State<BillingPage> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text(
-                            'Total',
-                            style: TextStyle(
+                          Text(
+                            _localizations.total,
+                            style: const TextStyle(
                               fontFamily: 'Literata',
                               fontSize: 16,
                               fontWeight: FontWeight.w700,
@@ -503,9 +527,9 @@ class _BillingPageState extends State<BillingPage> {
                               _shareBillAsPdf(bill);
                             },
                             icon: const Icon(Icons.share, size: 18),
-                            label: const Text(
-                              'Share',
-                              style: TextStyle(fontFamily: 'Literata'),
+                            label: Text(
+                              _localizations.share,
+                              style: const TextStyle(fontFamily: 'Literata'),
                             ),
                             style: OutlinedButton.styleFrom(
                               foregroundColor: const Color(0xFF1B4D3E),
@@ -525,9 +549,9 @@ class _BillingPageState extends State<BillingPage> {
                               _saveBillAsPdf(bill);
                             },
                             icon: const Icon(Icons.picture_as_pdf, size: 18),
-                            label: const Text(
-                              'Save PDF',
-                              style: TextStyle(fontFamily: 'Literata'),
+                            label: Text(
+                              _localizations.savePdf,
+                              style: const TextStyle(fontFamily: 'Literata'),
                             ),
                             style: OutlinedButton.styleFrom(
                               foregroundColor: const Color(0xFF1B4D3E),
@@ -551,9 +575,9 @@ class _BillingPageState extends State<BillingPage> {
                           _printBillToPOS(bill);
                         },
                         icon: const Icon(Icons.print, size: 18),
-                        label: const Text(
-                          'Print to POS Printer',
-                          style: TextStyle(fontFamily: 'Literata'),
+                        label: Text(
+                          _localizations.printToPOS,
+                          style: const TextStyle(fontFamily: 'Literata'),
                         ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF1B4D3E),
@@ -572,7 +596,7 @@ class _BillingPageState extends State<BillingPage> {
                       child: TextButton(
                         onPressed: () => Navigator.pop(context),
                         child: Text(
-                          'Done',
+                          _localizations.done,
                           style: TextStyle(
                             fontFamily: 'Literata',
                             color: Colors.grey[600],
@@ -639,7 +663,7 @@ class _BillingPageState extends State<BillingPage> {
       await _pdfService.shareBillAsPdf(billData: printData, shopDetails: shop);
     } catch (e) {
       if (mounted) Navigator.pop(context);
-      _showSnackbar('Error sharing bill: $e', isError: true);
+      _showSnackbar('${_localizations.errorSharingBill}: $e', isError: true);
     }
   }
 
@@ -665,10 +689,10 @@ class _BillingPageState extends State<BillingPage> {
 
       if (mounted) Navigator.pop(context);
 
-      _showSnackbar('PDF saved: ${file.path.split('/').last}');
+      _showSnackbar('${_localizations.pdfSaved}: ${file.path.split('/').last}');
     } catch (e) {
       if (mounted) Navigator.pop(context);
-      _showSnackbar('Error saving PDF: $e', isError: true);
+      _showSnackbar('${_localizations.errorSavingPdf}: $e', isError: true);
     }
   }
 
@@ -693,7 +717,7 @@ class _BillingPageState extends State<BillingPage> {
       if (!connectResult.success) {
         if (mounted) Navigator.pop(context);
         _showSnackbar(
-          'Failed to connect: ${connectResult.message}',
+          '${_localizations.failedToConnect}: ${connectResult.message}',
           isError: true,
         );
         return;
@@ -711,13 +735,13 @@ class _BillingPageState extends State<BillingPage> {
 
       _showSnackbar(
         printResult.success
-            ? 'Bill printed successfully!'
-            : 'Print failed: ${printResult.message}',
+            ? _localizations.billPrintedSuccessfully
+            : '${_localizations.printFailed}: ${printResult.message}',
         isError: !printResult.success,
       );
     } catch (e) {
       if (mounted) Navigator.pop(context);
-      _showSnackbar('Error printing: $e', isError: true);
+      _showSnackbar('${_localizations.errorPrinting}: $e', isError: true);
     } finally {
       await _printerService.disconnectPrinter();
     }
@@ -799,9 +823,9 @@ class _BillingPageState extends State<BillingPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Text(
-                          'Create Bill',
-                          style: TextStyle(
+                        Text(
+                          _localizations.createBill,
+                          style: const TextStyle(
                             color: Colors.white,
                             fontSize: 22,
                             fontWeight: FontWeight.w700,
@@ -823,7 +847,7 @@ class _BillingPageState extends State<BillingPage> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
-                        '${_billItems.length} items',
+                        '${_billItems.length} ${_localizations.items.toLowerCase()}',
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 12,
@@ -874,9 +898,9 @@ class _BillingPageState extends State<BillingPage> {
                 ),
               ),
               const SizedBox(width: 12),
-              const Text(
-                'Customer (Optional)',
-                style: TextStyle(
+              Text(
+                _localizations.customerOptional,
+                style: const TextStyle(
                   fontFamily: 'Literata',
                   fontWeight: FontWeight.w600,
                   fontSize: 15,
@@ -906,7 +930,7 @@ class _BillingPageState extends State<BillingPage> {
                       child: Text(
                         _selectedCustomer != null
                             ? _selectedCustomer!['fullName']
-                            : 'Search existing customer...',
+                            : _localizations.searchExistingCustomer,
                         style: TextStyle(
                           fontFamily: 'Literata',
                           color: _selectedCustomer != null
@@ -941,7 +965,7 @@ class _BillingPageState extends State<BillingPage> {
                   controller: _customerNameController,
                   style: const TextStyle(fontFamily: 'Literata', fontSize: 14),
                   decoration: InputDecoration(
-                    labelText: 'Name',
+                    labelText: _localizations.name,
                     labelStyle: TextStyle(
                       color: Colors.grey[600],
                       fontSize: 13,
@@ -971,7 +995,7 @@ class _BillingPageState extends State<BillingPage> {
                   keyboardType: TextInputType.phone,
                   style: const TextStyle(fontFamily: 'Literata', fontSize: 14),
                   decoration: InputDecoration(
-                    labelText: 'Phone',
+                    labelText: _localizations.phone,
                     labelStyle: TextStyle(
                       color: Colors.grey[600],
                       fontSize: 13,
@@ -1008,20 +1032,26 @@ class _BillingPageState extends State<BillingPage> {
 
     final indexNo = int.tryParse(indexText);
     if (indexNo == null) {
-      _showSnackbar('Please enter a valid number', isError: true);
+      _showSnackbar(_localizations.pleaseEnterValidNumber, isError: true);
       _indexNoController.clear();
       return;
     }
 
     final product = _productByIndexNo[indexNo];
     if (product == null) {
-      _showSnackbar('Product #$indexNo not found', isError: true);
+      _showSnackbar(
+        '${_localizations.productNotFound} #$indexNo',
+        isError: true,
+      );
       _indexNoController.clear();
       return;
     }
 
     if (product.currentStock <= 0) {
-      _showSnackbar('${product.name} is out of stock', isError: true);
+      _showSnackbar(
+        '${product.name} ${_localizations.outOfStock}',
+        isError: true,
+      );
       _indexNoController.clear();
       return;
     }
@@ -1041,7 +1071,10 @@ class _BillingPageState extends State<BillingPage> {
             quantity: existing.quantity + 1,
           );
         } else {
-          _showSnackbar('Max stock: ${product.currentStock}', isError: true);
+          _showSnackbar(
+            '${_localizations.maxStock}: ${product.currentStock}',
+            isError: true,
+          );
           _indexNoController.clear();
           return;
         }
@@ -1057,7 +1090,7 @@ class _BillingPageState extends State<BillingPage> {
       }
     });
 
-    _showSnackbar('Added: ${product.name}', isError: false);
+    _showSnackbar('${_localizations.added}: ${product.name}', isError: false);
 
     // Clear input and keep focus for next entry
     _indexNoController.clear();
@@ -1113,7 +1146,7 @@ class _BillingPageState extends State<BillingPage> {
                       fontWeight: FontWeight.w600,
                     ),
                     decoration: InputDecoration(
-                      hintText: 'Enter product code...',
+                      hintText: _localizations.enterProductCode,
                       hintStyle: TextStyle(
                         color: Colors.grey[500],
                         fontWeight: FontWeight.w400,
@@ -1133,14 +1166,14 @@ class _BillingPageState extends State<BillingPage> {
                   child: InkWell(
                     borderRadius: BorderRadius.circular(8),
                     onTap: _addProductByIndexNoOnPage,
-                    child: const Padding(
-                      padding: EdgeInsets.symmetric(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
                         horizontal: 16,
                         vertical: 8,
                       ),
                       child: Text(
-                        'Add',
-                        style: TextStyle(
+                        _localizations.add,
+                        style: const TextStyle(
                           fontFamily: 'Literata',
                           color: Colors.white,
                           fontWeight: FontWeight.w600,
@@ -1160,9 +1193,9 @@ class _BillingPageState extends State<BillingPage> {
             child: OutlinedButton.icon(
               onPressed: _showAddItemsPopup,
               icon: const Icon(Icons.search, size: 20),
-              label: const Text(
-                'Search Product',
-                style: TextStyle(
+              label: Text(
+                _localizations.searchProduct,
+                style: const TextStyle(
                   fontFamily: 'Literata',
                   fontWeight: FontWeight.w600,
                   fontSize: 15,
@@ -1217,9 +1250,9 @@ class _BillingPageState extends State<BillingPage> {
                   ),
                 ),
                 const SizedBox(width: 12),
-                const Text(
-                  'Bill Items',
-                  style: TextStyle(
+                Text(
+                  _localizations.billItems,
+                  style: const TextStyle(
                     fontFamily: 'Literata',
                     fontWeight: FontWeight.w600,
                     fontSize: 15,
@@ -1237,7 +1270,7 @@ class _BillingPageState extends State<BillingPage> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
-                    '${_billItems.length} items',
+                    '${_billItems.length} ${_localizations.items.toLowerCase()}',
                     style: const TextStyle(
                       fontFamily: 'Literata',
                       fontSize: 11,
@@ -1367,7 +1400,7 @@ class _BillingPageState extends State<BillingPage> {
                                   });
                                 } else {
                                   _showSnackbar(
-                                    'Max stock: ${product.currentStock}',
+                                    '${_localizations.maxStock}: ${product.currentStock}',
                                     isError: true,
                                   );
                                 }
@@ -1453,9 +1486,9 @@ class _BillingPageState extends State<BillingPage> {
                 ),
               ),
               const SizedBox(width: 12),
-              const Text(
-                'Discount',
-                style: TextStyle(
+              Text(
+                _localizations.discount,
+                style: const TextStyle(
                   fontFamily: 'Literata',
                   fontWeight: FontWeight.w600,
                   fontSize: 15,
@@ -1532,8 +1565,8 @@ class _BillingPageState extends State<BillingPage> {
                   onChanged: _updateDiscount,
                   decoration: InputDecoration(
                     hintText: _isPercentageDiscount
-                        ? 'Enter %'
-                        : 'Enter amount',
+                        ? _localizations.enterPercent
+                        : _localizations.enterAmount,
                     hintStyle: TextStyle(color: Colors.grey[400], fontSize: 13),
                     contentPadding: const EdgeInsets.symmetric(
                       horizontal: 14,
@@ -1595,7 +1628,7 @@ class _BillingPageState extends State<BillingPage> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'Subtotal',
+                        _localizations.subtotal,
                         style: TextStyle(
                           fontFamily: 'Literata',
                           fontSize: 13,
@@ -1639,9 +1672,9 @@ class _BillingPageState extends State<BillingPage> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
-                        'Final Total',
-                        style: TextStyle(
+                      Text(
+                        _localizations.finalTotal,
+                        style: const TextStyle(
                           fontFamily: 'Literata',
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
@@ -1702,9 +1735,9 @@ class _BillingPageState extends State<BillingPage> {
                 ),
               ),
               const SizedBox(width: 12),
-              const Text(
-                'Payment',
-                style: TextStyle(
+              Text(
+                _localizations.payment,
+                style: const TextStyle(
                   fontFamily: 'Literata',
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
@@ -1726,7 +1759,7 @@ class _BillingPageState extends State<BillingPage> {
               children: [
                 Expanded(
                   child: _buildPaymentTypeButton(
-                    label: 'Full Payment',
+                    label: _localizations.fullPayment,
                     isSelected: _isFullPayment,
                     onTap: () {
                       setState(() {
@@ -1740,7 +1773,7 @@ class _BillingPageState extends State<BillingPage> {
                 ),
                 Expanded(
                   child: _buildPaymentTypeButton(
-                    label: 'Partial Payment',
+                    label: _localizations.partialPayment,
                     isSelected: !_isFullPayment,
                     onTap: () {
                       setState(() {
@@ -1765,7 +1798,7 @@ class _BillingPageState extends State<BillingPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Received Amount',
+                        _localizations.receivedAmount,
                         style: TextStyle(
                           fontFamily: 'Literata',
                           fontSize: 12,
@@ -1827,7 +1860,7 @@ class _BillingPageState extends State<BillingPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Pending Amount',
+                        _localizations.pendingAmount,
                         style: TextStyle(
                           fontFamily: 'Literata',
                           fontSize: 12,
@@ -1902,7 +1935,7 @@ class _BillingPageState extends State<BillingPage> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'Select a customer to track pending balance',
+                      _localizations.selectCustomerForPending,
                       style: TextStyle(
                         fontFamily: 'Literata',
                         fontSize: 12,
@@ -1927,18 +1960,18 @@ class _BillingPageState extends State<BillingPage> {
               child: Column(
                 children: [
                   _buildPaymentSummaryRow(
-                    'Bill Total',
+                    _localizations.billTotal,
                     '₹${_finalAmount.toStringAsFixed(2)}',
                   ),
                   const SizedBox(height: 6),
                   _buildPaymentSummaryRow(
-                    'Received',
+                    _localizations.received,
                     '₹${_receivedAmount.toStringAsFixed(2)}',
                     color: Colors.green[700],
                   ),
                   const Divider(height: 16),
                   _buildPaymentSummaryRow(
-                    'Pending',
+                    _localizations.pending,
                     '₹${_pendingAmount.toStringAsFixed(2)}',
                     color: _pendingAmount > 0
                         ? Colors.orange[700]
@@ -2149,7 +2182,7 @@ class _BillingPageState extends State<BillingPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '$_totalQuantity items',
+                  '$_totalQuantity ${_localizations.items.toLowerCase()}',
                   style: TextStyle(
                     fontFamily: 'Literata',
                     fontSize: 12,
@@ -2235,9 +2268,9 @@ class _BillingPageState extends State<BillingPage> {
                         valueColor: AlwaysStoppedAnimation(Colors.white),
                       ),
                     )
-                  : const Text(
-                      'Save Bill',
-                      style: TextStyle(
+                  : Text(
+                      _localizations.saveBill,
+                      style: const TextStyle(
                         fontFamily: 'Literata',
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
@@ -2275,6 +2308,7 @@ class _BillingPageState extends State<BillingPage> {
       backgroundColor: Colors.transparent,
       builder: (ctx) => _CustomerPickerBottomSheet(
         customers: _customers,
+        localizations: _localizations,
         onCustomerSelected: (customer) {
           setState(() {
             _selectedCustomer = customer;
@@ -2295,6 +2329,7 @@ class _AddItemsBottomSheet extends StatefulWidget {
   final Function(Product product, int quantity, double price) onItemAdded;
   final Function(String productId) onItemRemoved;
   final Function(String message, {bool isError}) showSnackbar;
+  final AppLocalizations localizations;
 
   const _AddItemsBottomSheet({
     required this.products,
@@ -2302,6 +2337,7 @@ class _AddItemsBottomSheet extends StatefulWidget {
     required this.onItemAdded,
     required this.onItemRemoved,
     required this.showSnackbar,
+    required this.localizations,
   });
 
   @override
@@ -2368,7 +2404,10 @@ class _AddItemsBottomSheetState extends State<_AddItemsBottomSheet> {
         _prices[product.id]!,
       );
     } else {
-      widget.showSnackbar('Max stock: ${product.currentStock}', isError: true);
+      widget.showSnackbar(
+        '${widget.localizations.maxStock}: ${product.currentStock}',
+        isError: true,
+      );
     }
   }
 
@@ -2435,13 +2474,13 @@ class _AddItemsBottomSheetState extends State<_AddItemsBottomSheet> {
                     ),
                   ),
                   const SizedBox(width: 14),
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Add Items',
-                          style: TextStyle(
+                          widget.localizations.addItems,
+                          style: const TextStyle(
                             fontFamily: 'Literata',
                             fontSize: 20,
                             fontWeight: FontWeight.w700,
@@ -2449,8 +2488,8 @@ class _AddItemsBottomSheetState extends State<_AddItemsBottomSheet> {
                           ),
                         ),
                         Text(
-                          'Tap + to add multiple items',
-                          style: TextStyle(
+                          widget.localizations.tapToAddItems,
+                          style: const TextStyle(
                             fontFamily: 'Literata',
                             fontSize: 12,
                             color: Colors.grey,
@@ -2470,7 +2509,7 @@ class _AddItemsBottomSheetState extends State<_AddItemsBottomSheet> {
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
-                        '$_totalItems items',
+                        '$_totalItems ${widget.localizations.items.toLowerCase()}',
                         style: const TextStyle(
                           fontFamily: 'Literata',
                           fontSize: 13,
@@ -2490,7 +2529,7 @@ class _AddItemsBottomSheetState extends State<_AddItemsBottomSheet> {
                 onChanged: _filterProducts,
                 style: const TextStyle(fontFamily: 'Literata', fontSize: 14),
                 decoration: InputDecoration(
-                  hintText: 'Search products...',
+                  hintText: widget.localizations.searchProducts,
                   hintStyle: TextStyle(color: Colors.grey[500]),
                   prefixIcon: const Icon(
                     Icons.search,
@@ -2533,7 +2572,7 @@ class _AddItemsBottomSheetState extends State<_AddItemsBottomSheet> {
                           ),
                           const SizedBox(height: 12),
                           Text(
-                            'No products found',
+                            widget.localizations.noProductsFound,
                             style: TextStyle(
                               fontFamily: 'Literata',
                               color: Colors.grey[600],
@@ -2771,7 +2810,9 @@ class _AddItemsBottomSheetState extends State<_AddItemsBottomSheet> {
                     elevation: 0,
                   ),
                   child: Text(
-                    _totalItems > 0 ? 'Done ($_totalItems items)' : 'Done',
+                    _totalItems > 0
+                        ? '${widget.localizations.done} ($_totalItems ${widget.localizations.items.toLowerCase()})'
+                        : widget.localizations.done,
                     style: const TextStyle(
                       fontFamily: 'Literata',
                       fontSize: 16,
@@ -2810,10 +2851,12 @@ class _AddItemsBottomSheetState extends State<_AddItemsBottomSheet> {
 class _CustomerPickerBottomSheet extends StatefulWidget {
   final List<Map<String, dynamic>> customers;
   final Function(Map<String, dynamic> customer) onCustomerSelected;
+  final AppLocalizations localizations;
 
   const _CustomerPickerBottomSheet({
     required this.customers,
     required this.onCustomerSelected,
+    required this.localizations,
   });
 
   @override
@@ -2898,13 +2941,13 @@ class _CustomerPickerBottomSheetState
                     ),
                   ),
                   const SizedBox(width: 14),
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Select Customer',
-                          style: TextStyle(
+                          widget.localizations.selectCustomer,
+                          style: const TextStyle(
                             fontFamily: 'Literata',
                             fontSize: 20,
                             fontWeight: FontWeight.w700,
@@ -2912,8 +2955,8 @@ class _CustomerPickerBottomSheetState
                           ),
                         ),
                         Text(
-                          'Choose from existing customers',
-                          style: TextStyle(
+                          widget.localizations.chooseFromExistingCustomers,
+                          style: const TextStyle(
                             fontFamily: 'Literata',
                             fontSize: 12,
                             color: Colors.grey,
@@ -2933,7 +2976,7 @@ class _CustomerPickerBottomSheetState
                 onChanged: _filterCustomers,
                 style: const TextStyle(fontFamily: 'Literata', fontSize: 14),
                 decoration: InputDecoration(
-                  hintText: 'Search by name or phone...',
+                  hintText: widget.localizations.searchByNameOrPhone,
                   hintStyle: TextStyle(color: Colors.grey[500]),
                   prefixIcon: const Icon(
                     Icons.search,
@@ -2976,7 +3019,7 @@ class _CustomerPickerBottomSheetState
                           ),
                           const SizedBox(height: 12),
                           Text(
-                            'No customers found',
+                            widget.localizations.noCustomersFound,
                             style: TextStyle(
                               fontFamily: 'Literata',
                               color: Colors.grey[600],
