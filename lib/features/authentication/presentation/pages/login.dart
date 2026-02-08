@@ -5,6 +5,8 @@ import 'dart:ui';
 import '../../../dashboard/presentation/pages/optimized_dashboard_page.dart';
 import '../../../../core/services/session_manager.dart';
 import '../../../../core/services/credentials_manager.dart';
+import '../../../../core/services/subscription_service.dart';
+import '../../../../core/ui/subscription_screen.dart';
 import 'signup.dart';
 
 class LoginPageV2 extends StatefulWidget {
@@ -14,7 +16,8 @@ class LoginPageV2 extends StatefulWidget {
   State<LoginPageV2> createState() => _LoginPageV2State();
 }
 
-class _LoginPageV2State extends State<LoginPageV2> with TickerProviderStateMixin {
+class _LoginPageV2State extends State<LoginPageV2>
+    with TickerProviderStateMixin {
   final _emailOrPhoneController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscure = true;
@@ -48,92 +51,158 @@ class _LoginPageV2State extends State<LoginPageV2> with TickerProviderStateMixin
       duration: const Duration(milliseconds: 1000),
     );
 
-    _offsetAnimation = Tween<Offset>(begin: const Offset(0, -0.1), end: Offset.zero)
-        .animate(CurvedAnimation(parent: _animController, curve: Curves.easeOut));
+    _offsetAnimation = Tween<Offset>(
+      begin: const Offset(0, -0.1),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _animController, curve: Curves.easeOut));
 
-    _opacityAnimation = Tween<double>(begin: 0.0, end: 1.0)
-        .animate(CurvedAnimation(parent: _animController, curve: Curves.easeIn));
+    _opacityAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _animController, curve: Curves.easeIn));
 
     // Staggered field animations
     _fieldAnimations = List.generate(4, (index) {
       final start = index * 0.1;
       final end = start + 0.5;
-      return Tween<Offset>(begin: const Offset(0, 0.15), end: Offset.zero)
-          .animate(CurvedAnimation(
-            parent: _staggerController,
-            curve: Interval(start.clamp(0.0, 1.0), end.clamp(0.0, 1.0), curve: Curves.easeOutCubic),
-          ));
+      return Tween<Offset>(
+        begin: const Offset(0, 0.15),
+        end: Offset.zero,
+      ).animate(
+        CurvedAnimation(
+          parent: _staggerController,
+          curve: Interval(
+            start.clamp(0.0, 1.0),
+            end.clamp(0.0, 1.0),
+            curve: Curves.easeOutCubic,
+          ),
+        ),
+      );
     });
 
     _fieldFadeAnimations = List.generate(4, (index) {
       final start = index * 0.1;
       final end = start + 0.5;
-      return Tween<double>(begin: 0.0, end: 1.0)
-          .animate(CurvedAnimation(
-            parent: _staggerController,
-            curve: Interval(start.clamp(0.0, 1.0), end.clamp(0.0, 1.0), curve: Curves.easeOut),
-          ));
+      return Tween<double>(begin: 0.0, end: 1.0).animate(
+        CurvedAnimation(
+          parent: _staggerController,
+          curve: Interval(
+            start.clamp(0.0, 1.0),
+            end.clamp(0.0, 1.0),
+            curve: Curves.easeOut,
+          ),
+        ),
+      );
     });
 
     // start after a short delay
-    Future.delayed(const Duration(milliseconds: 200), () => _animController.forward());
-    Future.delayed(const Duration(milliseconds: 600), () => _staggerController.forward());
+    Future.delayed(
+      const Duration(milliseconds: 200),
+      () => _animController.forward(),
+    );
+    Future.delayed(
+      const Duration(milliseconds: 600),
+      () => _staggerController.forward(),
+    );
   }
 
   void _submit() {
     final emailOrPhone = _emailOrPhoneController.text.trim();
     final password = _passwordController.text;
     if (emailOrPhone.isEmpty || password.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Enter email/phone and password')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Enter email/phone and password')),
+      );
       return;
     }
 
     setState(() => _loading = true);
     print('[DEBUG] Attempting login with: $emailOrPhone');
-    
-    FirebaseAuth.instance.signInWithEmailAndPassword(email: emailOrPhone, password: password).then((cred) {
-      print('[DEBUG] Login successful for user: ${cred.user?.uid}');
-      
-      // Initialize session with 2-hour timeout
-      final sessionManager = SessionManager();
-      sessionManager.initializeSession(cred.user!, () {
-        print('[CRITICAL] Session expired - logging out user');
-        FirebaseAuth.instance.signOut().then((_) {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Session expired. Please login again.'))
-            );
-            Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
-          }
+
+    FirebaseAuth.instance
+        .signInWithEmailAndPassword(email: emailOrPhone, password: password)
+        .then((cred) {
+          print('[DEBUG] Login successful for user: ${cred.user?.uid}');
+
+          // Initialize session with 2-hour timeout
+          final sessionManager = SessionManager();
+          sessionManager.initializeSession(cred.user!, () {
+            print('[CRITICAL] Session expired - logging out user');
+            FirebaseAuth.instance.signOut().then((_) {
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Session expired. Please login again.'),
+                  ),
+                );
+                Navigator.of(
+                  context,
+                ).pushNamedAndRemoveUntil('/', (route) => false);
+              }
+            });
+          });
+
+          // Save credentials for persistent login
+          final credentialsManager = CredentialsManager();
+          credentialsManager
+              .saveCredentials(
+                email: emailOrPhone,
+                password: password,
+                userId: cred.user!.uid,
+              )
+              .then((_) {
+                print('[DEBUG] User credentials saved for persistent login');
+              })
+              .catchError((e) {
+                print('[ERROR] Failed to save credentials: $e');
+              });
+
+          setState(() => _loading = false);
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('Login successful')));
+          print('[DEBUG] Session timeout set for 2 hours');
+
+          // Check subscription status before navigating
+          _checkSubscriptionAndNavigate();
+        })
+        .catchError((e) {
+          print('[ERROR] Login failed: $e');
+          setState(() => _loading = false);
+          final msg = e is FirebaseAuthException
+              ? e.message ?? 'Auth error'
+              : e.toString();
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(msg)));
         });
-      });
-      
-      // Save credentials for persistent login
-      final credentialsManager = CredentialsManager();
-      credentialsManager.saveCredentials(
-        email: emailOrPhone,
-        password: password,
-        userId: cred.user!.uid,
-      ).then((_) {
-        print('[DEBUG] User credentials saved for persistent login');
-      }).catchError((e) {
-        print('[ERROR] Failed to save credentials: $e');
-      });
-      
-      setState(() => _loading = false);
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Login successful')));
-      print('[DEBUG] Session timeout set for 2 hours');
-      
-      // Navigate to dashboard
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const OptimizedDashboardPage()),
-      );
-    }).catchError((e) {
-      print('[ERROR] Login failed: $e');
-      setState(() => _loading = false);
-      final msg = e is FirebaseAuthException ? e.message ?? 'Auth error' : e.toString();
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
-    });
+  }
+
+  Future<void> _checkSubscriptionAndNavigate() async {
+    try {
+      final subscriptionService = SubscriptionService();
+      final isValid = await subscriptionService.isSubscriptionValid();
+
+      if (!mounted) return;
+
+      if (isValid) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const OptimizedDashboardPage()),
+        );
+      } else {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const SubscriptionScreen()),
+        );
+      }
+    } catch (e) {
+      print('[ERROR] Error checking subscription: $e');
+      // If error, navigate to dashboard anyway
+      if (mounted) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const OptimizedDashboardPage()),
+        );
+      }
+    }
   }
 
   @override
@@ -146,11 +215,7 @@ class _LoginPageV2State extends State<LoginPageV2> with TickerProviderStateMixin
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFFE8F5E9),
-              Color(0xFFF5F5F5),
-              Color(0xFFE8F5E9),
-            ],
+            colors: [Color(0xFFE8F5E9), Color(0xFFF5F5F5), Color(0xFFE8F5E9)],
           ),
         ),
         child: SafeArea(
@@ -169,7 +234,9 @@ class _LoginPageV2State extends State<LoginPageV2> with TickerProviderStateMixin
                             decoration: BoxDecoration(
                               boxShadow: [
                                 BoxShadow(
-                                  color: const Color(0xFF1B4D3E).withValues(alpha: 0.25),
+                                  color: const Color(
+                                    0xFF1B4D3E,
+                                  ).withValues(alpha: 0.25),
                                   blurRadius: 24,
                                   offset: const Offset(0, 12),
                                 ),
@@ -301,7 +368,8 @@ class _LoginPageV2State extends State<LoginPageV2> with TickerProviderStateMixin
                                         style: TextButton.styleFrom(
                                           padding: EdgeInsets.zero,
                                           minimumSize: Size.zero,
-                                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                          tapTargetSize:
+                                              MaterialTapTargetSize.shrinkWrap,
                                         ),
                                         child: const Text(
                                           'Forgot password?',
@@ -336,7 +404,9 @@ class _LoginPageV2State extends State<LoginPageV2> with TickerProviderStateMixin
                                       ),
                                     ),
                                     Padding(
-                                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 16,
+                                      ),
                                       child: Text(
                                         'OR',
                                         style: TextStyle(
@@ -363,7 +433,9 @@ class _LoginPageV2State extends State<LoginPageV2> with TickerProviderStateMixin
                                   child: OutlinedButton(
                                     onPressed: () {},
                                     style: OutlinedButton.styleFrom(
-                                      padding: const EdgeInsets.symmetric(vertical: 14),
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 14,
+                                      ),
                                       side: BorderSide(
                                         color: Colors.grey[300]!,
                                         width: 1,
@@ -373,32 +445,38 @@ class _LoginPageV2State extends State<LoginPageV2> with TickerProviderStateMixin
                                       ),
                                     ),
                                     child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
                                       children: [
                                         Image.asset(
                                           'assets/images/google.png',
                                           width: 22,
                                           height: 22,
-                                          errorBuilder: (context, error, stackTrace) {
-                                            return Container(
-                                              width: 22,
-                                              height: 22,
-                                              decoration: BoxDecoration(
-                                                color: Colors.white,
-                                                borderRadius: BorderRadius.circular(4),
-                                              ),
-                                              child: const Center(
-                                                child: Text(
-                                                  'G',
-                                                  style: TextStyle(
-                                                    fontSize: 14,
-                                                    fontWeight: FontWeight.bold,
-                                                    color: Colors.red,
+                                          errorBuilder:
+                                              (context, error, stackTrace) {
+                                                return Container(
+                                                  width: 22,
+                                                  height: 22,
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.white,
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          4,
+                                                        ),
                                                   ),
-                                                ),
-                                              ),
-                                            );
-                                          },
+                                                  child: const Center(
+                                                    child: Text(
+                                                      'G',
+                                                      style: TextStyle(
+                                                        fontSize: 14,
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        color: Colors.red,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                );
+                                              },
                                         ),
                                         const SizedBox(width: 12),
                                         const Text(
@@ -503,11 +581,7 @@ class _LoginPageV2State extends State<LoginPageV2> with TickerProviderStateMixin
             fontWeight: FontWeight.w400,
             fontFamily: 'Literata',
           ),
-          prefixIcon: Icon(
-            icon,
-            color: const Color(0xFF1B4D3E),
-            size: 22,
-          ),
+          prefixIcon: Icon(icon, color: const Color(0xFF1B4D3E), size: 22),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 16,
@@ -611,9 +685,7 @@ class _LoginPageV2State extends State<LoginPageV2> with TickerProviderStateMixin
                     height: 20,
                     width: 20,
                     child: CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        Colors.white,
-                      ),
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                       strokeWidth: 2,
                     ),
                   )

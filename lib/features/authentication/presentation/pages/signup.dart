@@ -48,37 +48,66 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-    _animController = AnimationController(vsync: this, duration: const Duration(milliseconds: 700));
-    _staggerController = AnimationController(vsync: this, duration: const Duration(milliseconds: 1200));
-    
-    _offsetAnimation = Tween<Offset>(begin: const Offset(0, 0.08), end: Offset.zero)
-        .animate(CurvedAnimation(parent: _animController, curve: Curves.easeOut));
-    _opacityAnimation = Tween<double>(begin: 0.0, end: 1.0)
-        .animate(CurvedAnimation(parent: _animController, curve: Curves.easeIn));
-    
+    _animController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 700),
+    );
+    _staggerController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    );
+
+    _offsetAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.08),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _animController, curve: Curves.easeOut));
+    _opacityAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _animController, curve: Curves.easeIn));
+
     // Staggered field animations (8 fields)
     _fieldAnimations = List.generate(8, (index) {
       final start = index * 0.08;
       final end = start + 0.4;
-      return Tween<Offset>(begin: const Offset(0, 0.15), end: Offset.zero)
-          .animate(CurvedAnimation(
-            parent: _staggerController,
-            curve: Interval(start.clamp(0.0, 1.0), end.clamp(0.0, 1.0), curve: Curves.easeOutCubic),
-          ));
+      return Tween<Offset>(
+        begin: const Offset(0, 0.15),
+        end: Offset.zero,
+      ).animate(
+        CurvedAnimation(
+          parent: _staggerController,
+          curve: Interval(
+            start.clamp(0.0, 1.0),
+            end.clamp(0.0, 1.0),
+            curve: Curves.easeOutCubic,
+          ),
+        ),
+      );
     });
 
     _fieldFadeAnimations = List.generate(8, (index) {
       final start = index * 0.08;
       final end = start + 0.4;
-      return Tween<double>(begin: 0.0, end: 1.0)
-          .animate(CurvedAnimation(
-            parent: _staggerController,
-            curve: Interval(start.clamp(0.0, 1.0), end.clamp(0.0, 1.0), curve: Curves.easeOut),
-          ));
+      return Tween<double>(begin: 0.0, end: 1.0).animate(
+        CurvedAnimation(
+          parent: _staggerController,
+          curve: Interval(
+            start.clamp(0.0, 1.0),
+            end.clamp(0.0, 1.0),
+            curve: Curves.easeOut,
+          ),
+        ),
+      );
     });
-    
-    Future.delayed(const Duration(milliseconds: 150), () => _animController.forward());
-    Future.delayed(const Duration(milliseconds: 600), () => _staggerController.forward());
+
+    Future.delayed(
+      const Duration(milliseconds: 150),
+      () => _animController.forward(),
+    );
+    Future.delayed(
+      const Duration(milliseconds: 600),
+      () => _staggerController.forward(),
+    );
   }
 
   void _submit() {
@@ -89,83 +118,109 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
 
     // Validate all required fields
     if (email.isEmpty || contact.isEmpty || pw.isEmpty || cpw.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please fill in all fields')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please fill in all fields')),
+      );
       return;
     }
 
     if (pw != cpw) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Passwords do not match')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Passwords do not match')));
       return;
     }
 
     // Validate phone number format
     if (!RegExp(r'^[6-9]\d{9}$').hasMatch(contact)) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Enter a valid 10-digit phone number')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Enter a valid 10-digit phone number')),
+      );
       return;
     }
 
     // Create user with email and password
-    FirebaseAuth.instance.createUserWithEmailAndPassword(
-      email: email,
-      password: pw,
-    ).then((userCredential) async {
-      final currentUser = userCredential.user;
-      if (currentUser == null) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Account creation failed')));
-        return;
-      }
+    FirebaseAuth.instance
+        .createUserWithEmailAndPassword(email: email, password: pw)
+        .then((userCredential) async {
+          final currentUser = userCredential.user;
+          if (currentUser == null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Account creation failed')),
+            );
+            return;
+          }
 
-      print('[DEBUG] User account created: ${currentUser.uid}');
-      
-      try {
-        print('[DEBUG] Writing user profile to Firestore...');
-        final doc = FirebaseFirestore.instance.collection('users').doc(currentUser.uid);
-        await doc.set({
-          'firstName': _firstController.text.trim(),
-          'middleName': _middleController.text.trim(),
-          'lastName': _lastController.text.trim(),
-          'address': _addressController.text.trim(),
-          'email': email,
-          'contact': contact,
-          'createdAt': FieldValue.serverTimestamp(),
-        });
-        print('[DEBUG] Firestore write successful for UID: ${currentUser.uid}');
-        
-        // Initialize session for new user
-        final sessionManager = SessionManager();
-        sessionManager.initializeSession(currentUser, () {
-          print('[CRITICAL] Session expired - logging out user');
-          FirebaseAuth.instance.signOut().then((_) {
+          print('[DEBUG] User account created: ${currentUser.uid}');
+
+          try {
+            print('[DEBUG] Writing user profile to Firestore...');
+            final doc = FirebaseFirestore.instance
+                .collection('users')
+                .doc(currentUser.uid);
+            await doc.set({
+              'firstName': _firstController.text.trim(),
+              'middleName': _middleController.text.trim(),
+              'lastName': _lastController.text.trim(),
+              'address': _addressController.text.trim(),
+              'email': email,
+              'contact': contact,
+              'createdAt': FieldValue.serverTimestamp(),
+              'subscriptionDate':
+                  FieldValue.serverTimestamp(), // Set initial subscription
+            });
+            print(
+              '[DEBUG] Firestore write successful for UID: ${currentUser.uid}',
+            );
+
+            // Initialize session for new user
+            final sessionManager = SessionManager();
+            sessionManager.initializeSession(currentUser, () {
+              print('[CRITICAL] Session expired - logging out user');
+              FirebaseAuth.instance.signOut().then((_) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Session expired. Please login again.'),
+                    ),
+                  );
+                  Navigator.of(
+                    context,
+                  ).pushNamedAndRemoveUntil('/', (route) => false);
+                }
+              });
+            });
+            print('[DEBUG] Session initialized with 2-hour timeout');
+
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Session expired. Please login again.'))
+                const SnackBar(
+                  content: Text('Account created successfully'),
+                  backgroundColor: Colors.green,
+                ),
               );
-              Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
+              Navigator.of(context).pop();
             }
-          });
+          } catch (e) {
+            print('[ERROR] Account setup error: $e');
+            if (mounted) {
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
+            }
+          }
+        })
+        .catchError((e) {
+          print('[ERROR] Account creation failed: $e');
+          if (mounted) {
+            final msg = e is FirebaseAuthException
+                ? e.message ?? 'Account creation failed'
+                : e.toString();
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text(msg)));
+          }
         });
-        print('[DEBUG] Session initialized with 2-hour timeout');
-        
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text('Account created successfully'),
-            backgroundColor: Colors.green,
-          ));
-          Navigator.of(context).pop();
-        }
-      } catch (e) {
-        print('[ERROR] Account setup error: $e');
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
-        }
-      }
-    }).catchError((e) {
-      print('[ERROR] Account creation failed: $e');
-      if (mounted) {
-        final msg = e is FirebaseAuthException ? e.message ?? 'Account creation failed' : e.toString();
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
-      }
-    });
   }
 
   @override
@@ -178,11 +233,7 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFFE8F5E9),
-              Color(0xFFF5F5F5),
-              Color(0xFFE8F5E9),
-            ],
+            colors: [Color(0xFFE8F5E9), Color(0xFFF5F5F5), Color(0xFFE8F5E9)],
           ),
         ),
         child: SafeArea(
@@ -203,7 +254,9 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
                             decoration: BoxDecoration(
                               boxShadow: [
                                 BoxShadow(
-                                  color: const Color(0xFF1B4D3E).withValues(alpha: 0.25),
+                                  color: const Color(
+                                    0xFF1B4D3E,
+                                  ).withValues(alpha: 0.25),
                                   blurRadius: 24,
                                   offset: const Offset(0, 12),
                                 ),
@@ -395,7 +448,9 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
                                       ),
                                     ),
                                     Padding(
-                                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 16,
+                                      ),
                                       child: Text(
                                         'OR',
                                         style: TextStyle(
@@ -494,11 +549,7 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
             fontWeight: FontWeight.w400,
             fontFamily: 'Literata',
           ),
-          prefixIcon: Icon(
-            icon,
-            color: const Color(0xFF1B4D3E),
-            size: 20,
-          ),
+          prefixIcon: Icon(icon, color: const Color(0xFF1B4D3E), size: 20),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 16,
@@ -549,7 +600,9 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
           ),
           suffixIcon: IconButton(
             icon: Icon(
-              _obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+              _obscure
+                  ? Icons.visibility_off_outlined
+                  : Icons.visibility_outlined,
               color: const Color(0xFF1B4D3E),
               size: 20,
             ),
@@ -620,10 +673,7 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
       decoration: BoxDecoration(
         color: Colors.grey[50],
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: Colors.grey[300]!,
-          width: 1,
-        ),
+        border: Border.all(color: Colors.grey[300]!, width: 1),
       ),
       child: TextField(
         controller: controller,
@@ -631,15 +681,8 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
         obscureText: obscureText,
         decoration: InputDecoration(
           hintText: label,
-          hintStyle: TextStyle(
-            color: Colors.grey[500],
-            fontSize: 14,
-          ),
-          prefixIcon: Icon(
-            icon,
-            color: Colors.grey[500],
-            size: 20,
-          ),
+          hintStyle: TextStyle(color: Colors.grey[500], fontSize: 14),
+          prefixIcon: Icon(icon, color: Colors.grey[500], size: 20),
           suffixIcon: suffix,
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(
@@ -647,10 +690,7 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
             vertical: 16,
           ),
         ),
-        style: const TextStyle(
-          color: Colors.black87,
-          fontSize: 14,
-        ),
+        style: const TextStyle(color: Colors.black87, fontSize: 14),
       ),
     );
   }
