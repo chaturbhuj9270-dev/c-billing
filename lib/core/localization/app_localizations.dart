@@ -3121,4 +3121,93 @@ class AppLocalizations {
         return EnglishLocalization.userNotAuthenticated;
     }
   }
+
+  // Supplier Page
+  String get mySuppliers {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.mySuppliers;
+      case 'Marathi':
+        return MarathiLocalization.mySuppliers;
+      default:
+        return EnglishLocalization.mySuppliers;
+    }
+  }
+
+  String get manageYourVendors {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.manageYourVendors;
+      case 'Marathi':
+        return MarathiLocalization.manageYourVendors;
+      default:
+        return EnglishLocalization.manageYourVendors;
+    }
+  }
+
+  String get editSupplier {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.editSupplier;
+      case 'Marathi':
+        return MarathiLocalization.editSupplier;
+      default:
+        return EnglishLocalization.editSupplier;
+    }
+  }
+
+  String get searchSuppliers {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.searchSuppliers;
+      case 'Marathi':
+        return MarathiLocalization.searchSuppliers;
+      default:
+        return EnglishLocalization.searchSuppliers;
+    }
+  }
+
+  String get noSuppliersYetPage {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.noSuppliersYetPage;
+      case 'Marathi':
+        return MarathiLocalization.noSuppliersYetPage;
+      default:
+        return EnglishLocalization.noSuppliersYetPage;
+    }
+  }
+
+  String get createFirstSupplier {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.createFirstSupplier;
+      case 'Marathi':
+        return MarathiLocalization.createFirstSupplier;
+      default:
+        return EnglishLocalization.createFirstSupplier;
+    }
+  }
+
+  String get supplierUpdatedSuccessfully {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.supplierUpdatedSuccessfully;
+      case 'Marathi':
+        return MarathiLocalization.supplierUpdatedSuccessfully;
+      default:
+        return EnglishLocalization.supplierUpdatedSuccessfully;
+    }
+  }
+
+  String get supplierDeletedSuccessfully {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.supplierDeletedSuccessfully;
+      case 'Marathi':
+        return MarathiLocalization.supplierDeletedSuccessfully;
+      default:
+        return EnglishLocalization.supplierDeletedSuccessfully;
+    }
+  }
 }

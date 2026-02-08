@@ -341,4 +341,17 @@ class HindiLocalization {
   static const String errorDeletingCompany = 'कंपनी हटाने में त्रुटि';
   static const String unknownCompany = 'अज्ञात कंपनी';
   static const String userNotAuthenticated = 'उपयोगकर्ता प्रमाणित नहीं है';
+
+  // Supplier Page
+  static const String mySuppliers = 'मेरे आपूर्तिकर्ता';
+  static const String manageYourVendors = 'अपने विक्रेताओं को प्रबंधित करें';
+  static const String editSupplier = 'आपूर्तिकर्ता संपादित करें';
+  static const String searchSuppliers = 'आपूर्तिकर्ता खोजें...';
+  static const String noSuppliersYetPage = 'अभी तक कोई आपूर्तिकर्ता नहीं';
+  static const String createFirstSupplier =
+      'शुरू करने के लिए अपना पहला आपूर्तिकर्ता बनाएं';
+  static const String supplierUpdatedSuccessfully =
+      'आपूर्तिकर्ता सफलतापूर्वक अपडेट किया गया';
+  static const String supplierDeletedSuccessfully =
+      'आपूर्तिकर्ता सफलतापूर्वक हटाया गया';
 }

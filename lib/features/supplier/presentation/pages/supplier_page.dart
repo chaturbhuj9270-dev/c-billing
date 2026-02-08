@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../core/services/session_manager.dart';
+import '../../../../core/services/language_service.dart';
+import '../../../../core/localization/app_localizations.dart';
 import '../../data/datasources/supplier_cache_datasource.dart';
 
 class SupplierPage extends StatefulWidget {
@@ -27,7 +29,7 @@ class _SupplierPageState extends State<SupplierPage> {
   List<Map<String, dynamic>> _suppliers = [];
   List<Map<String, dynamic>> _filteredSuppliers = [];
   final _cacheDataSource = SupplierCacheDataSource();
-  
+
   // Search, sort, and filter variables
   String _sortBy = 'name'; // 'name', 'date', 'contact'
   bool _isSortAscending = true; // Toggle for ascending/descending
@@ -37,15 +39,26 @@ class _SupplierPageState extends State<SupplierPage> {
   final _auth = FirebaseAuth.instance;
   late final FirebaseFirestore _firestore;
   late SessionManager _sessionManager;
+  late AppLocalizations _localizations;
 
   @override
   void initState() {
     super.initState();
     _firestore = FirebaseFirestore.instance;
     _sessionManager = SessionManager();
+    _localizations = AppLocalizations(LanguageService.instance.currentLanguage);
+    LanguageService.instance.addListener(_onLanguageChanged);
     _checkUserAuthentication();
     _setupInitialData();
     _searchController.addListener(_filterAndSearchSuppliers);
+  }
+
+  void _onLanguageChanged() {
+    setState(() {
+      _localizations = AppLocalizations(
+        LanguageService.instance.currentLanguage,
+      );
+    });
   }
 
   @override
@@ -58,17 +71,21 @@ class _SupplierPageState extends State<SupplierPage> {
     _lastNameController.dispose();
     _contactController.dispose();
     _addressController.dispose();
+    LanguageService.instance.removeListener(_onLanguageChanged);
     super.dispose();
   }
-
 
   void _applySorting() {
     // Sort by selected option
     switch (_sortBy) {
       case 'name':
         _filteredSuppliers.sort((a, b) {
-          final aName = '${a['firstName'] ?? ''} ${a['lastName'] ?? ''}'.trim().toLowerCase();
-          final bName = '${b['firstName'] ?? ''} ${b['lastName'] ?? ''}'.trim().toLowerCase();
+          final aName = '${a['firstName'] ?? ''} ${a['lastName'] ?? ''}'
+              .trim()
+              .toLowerCase();
+          final bName = '${b['firstName'] ?? ''} ${b['lastName'] ?? ''}'
+              .trim()
+              .toLowerCase();
           if (_isSortAscending) {
             return aName.compareTo(bName);
           } else {
@@ -117,10 +134,18 @@ class _SupplierPageState extends State<SupplierPage> {
           _filteredSuppliers = List.from(_suppliers);
         } else {
           _filteredSuppliers = _suppliers.where((supplier) {
-            final firstName = (supplier['firstName'] ?? '').toString().toLowerCase();
-            final lastName = (supplier['lastName'] ?? '').toString().toLowerCase();
-            final contact = (supplier['contact'] ?? '').toString().toLowerCase();
-            final address = (supplier['address'] ?? '').toString().toLowerCase();
+            final firstName = (supplier['firstName'] ?? '')
+                .toString()
+                .toLowerCase();
+            final lastName = (supplier['lastName'] ?? '')
+                .toString()
+                .toLowerCase();
+            final contact = (supplier['contact'] ?? '')
+                .toString()
+                .toLowerCase();
+            final address = (supplier['address'] ?? '')
+                .toString()
+                .toLowerCase();
             return firstName.contains(query) ||
                 lastName.contains(query) ||
                 contact.contains(query) ||
@@ -167,7 +192,7 @@ class _SupplierPageState extends State<SupplierPage> {
       if (_suppliers.isEmpty) {
         setState(() => _isLoading = true);
       }
-      
+
       print('[DEBUG] Loading suppliers from Firestore...');
       final currentUser = _auth.currentUser;
       if (currentUser == null) {
@@ -186,10 +211,7 @@ class _SupplierPageState extends State<SupplierPage> {
       if (!mounted || _isNavigatingAway) return;
 
       final freshSuppliers = snapshot.docs
-          .map((doc) => {
-                'id': doc.id,
-                ...doc.data(),
-              })
+          .map((doc) => {'id': doc.id, ...doc.data()})
           .toList();
 
       setState(() {
@@ -197,12 +219,12 @@ class _SupplierPageState extends State<SupplierPage> {
         _filterAndSortSuppliers();
         _isLoading = false;
       });
-      
+
       // Save to cache for next time
       _cacheDataSource.saveSuppliers(freshSuppliers);
     } catch (e) {
       print('[ERROR] Failed to load suppliers: $e');
-      
+
       if (mounted) {
         setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
@@ -283,9 +305,7 @@ class _SupplierPageState extends State<SupplierPage> {
               top: 20,
               bottom: MediaQuery.of(context).viewInsets.bottom + 20,
             ),
-            child: _buildSupplierForm(
-              onClose: () => Navigator.pop(ctx),
-            ),
+            child: _buildSupplierForm(onClose: () => Navigator.pop(ctx)),
           ),
         ),
       ),
@@ -303,7 +323,9 @@ class _SupplierPageState extends State<SupplierPage> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                _isEditing ? 'Edit Supplier' : 'Add New Supplier',
+                _isEditing
+                    ? _localizations.editSupplier
+                    : _localizations.addNewSupplier,
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
@@ -323,7 +345,7 @@ class _SupplierPageState extends State<SupplierPage> {
           const SizedBox(height: 20),
           // First Name
           _buildInputField(
-            label: 'First Name',
+            label: _localizations.firstName,
             controller: _firstNameController,
             icon: Icons.person_outline,
             isRequired: true,
@@ -331,14 +353,14 @@ class _SupplierPageState extends State<SupplierPage> {
           const SizedBox(height: 16),
           // Middle Name
           _buildInputField(
-            label: 'Middle Name',
+            label: _localizations.middleName,
             controller: _middleNameController,
             icon: Icons.person_outline,
           ),
           const SizedBox(height: 16),
           // Last Name
           _buildInputField(
-            label: 'Last Name',
+            label: _localizations.lastName,
             controller: _lastNameController,
             icon: Icons.person_outline,
             isRequired: true,
@@ -346,7 +368,7 @@ class _SupplierPageState extends State<SupplierPage> {
           const SizedBox(height: 16),
           // Contact Number
           _buildInputField(
-            label: 'Contact Number',
+            label: _localizations.contactNumber,
             controller: _contactController,
             icon: Icons.phone_outlined,
             keyboardType: TextInputType.phone,
@@ -355,7 +377,7 @@ class _SupplierPageState extends State<SupplierPage> {
           const SizedBox(height: 16),
           // Address
           _buildInputField(
-            label: 'Address',
+            label: _localizations.address,
             controller: _addressController,
             icon: Icons.location_on_outlined,
             maxLines: 3,
@@ -387,7 +409,9 @@ class _SupplierPageState extends State<SupplierPage> {
                           ),
                         )
                       : Text(
-                          _isEditing ? 'Update' : 'Add Supplier',
+                          _isEditing
+                              ? _localizations.update
+                              : _localizations.addSupplier,
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 14,
@@ -449,10 +473,7 @@ class _SupplierPageState extends State<SupplierPage> {
               ),
             ),
             if (isRequired)
-              const Text(
-                ' *',
-                style: TextStyle(color: Colors.red),
-              ),
+              const Text(' *', style: TextStyle(color: Colors.red)),
           ],
         ),
         const SizedBox(height: 8),
@@ -473,10 +494,7 @@ class _SupplierPageState extends State<SupplierPage> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(
-                color: Color(0xFF1B4D3E),
-                width: 2,
-              ),
+              borderSide: const BorderSide(color: Color(0xFF1B4D3E), width: 2),
             ),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 12,
@@ -487,7 +505,7 @@ class _SupplierPageState extends State<SupplierPage> {
           ),
           validator: (value) {
             if (isRequired && (value == null || value.isEmpty)) {
-              return '$label is required';
+              return '$label ${_localizations.isRequired}';
             }
             return null;
           },
@@ -539,13 +557,12 @@ class _SupplierPageState extends State<SupplierPage> {
         };
 
         // Optimistic update
-        final index = _suppliers.indexWhere((s) => s['id'] == _editingSupplierId);
+        final index = _suppliers.indexWhere(
+          (s) => s['id'] == _editingSupplierId,
+        );
         if (index != -1) {
           setState(() {
-            _suppliers[index] = {
-              ..._suppliers[index],
-              ...updatedData,
-            };
+            _suppliers[index] = {..._suppliers[index], ...updatedData};
             _filterAndSortSuppliers();
           });
           _cacheDataSource.saveSuppliers(_suppliers);
@@ -566,10 +583,7 @@ class _SupplierPageState extends State<SupplierPage> {
 
         // Optimistic add
         final tempId = 'temp_${DateTime.now().millisecondsSinceEpoch}';
-        final newSupplier = {
-          'id': tempId,
-          ...newData,
-        };
+        final newSupplier = {'id': tempId, ...newData};
         setState(() {
           _suppliers.insert(0, newSupplier);
           _filterAndSortSuppliers();
@@ -585,7 +599,9 @@ class _SupplierPageState extends State<SupplierPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              _isEditing ? 'Supplier updated successfully' : 'Supplier added successfully',
+              _isEditing
+                  ? _localizations.supplierUpdatedSuccessfully
+                  : _localizations.supplierAddedSuccessfully,
             ),
             backgroundColor: Colors.green,
           ),
@@ -601,10 +617,7 @@ class _SupplierPageState extends State<SupplierPage> {
       _loadSuppliers();
       if (mounted && context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: $e'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -640,8 +653,8 @@ class _SupplierPageState extends State<SupplierPage> {
       if (mounted && context.mounted) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Supplier deleted successfully'),
+          SnackBar(
+            content: Text(_localizations.supplierDeletedSuccessfully),
             backgroundColor: Colors.green,
           ),
         );
@@ -656,10 +669,7 @@ class _SupplierPageState extends State<SupplierPage> {
       _loadSuppliers();
       if (mounted && context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: $e'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -684,7 +694,11 @@ class _SupplierPageState extends State<SupplierPage> {
               colors: [Color(0xFF1B4D3E), Color(0xFF0F3B2F)],
             ),
             boxShadow: [
-              BoxShadow(color: const Color(0xFF1B4D3E).withOpacity(0.2), blurRadius: 12, offset: const Offset(0, 4)),
+              BoxShadow(
+                color: const Color(0xFF1B4D3E).withOpacity(0.2),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
             ],
           ),
           child: SafeArea(
@@ -701,7 +715,11 @@ class _SupplierPageState extends State<SupplierPage> {
                         Navigator.of(context).pop();
                       }
                     },
-                    child: Icon(Icons.arrow_back_rounded, color: Colors.white.withOpacity(0.9), size: 24),
+                    child: Icon(
+                      Icons.arrow_back_rounded,
+                      color: Colors.white.withOpacity(0.9),
+                      size: 24,
+                    ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -709,9 +727,9 @@ class _SupplierPageState extends State<SupplierPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Text(
-                          'My Suppliers',
-                          style: TextStyle(
+                        Text(
+                          _localizations.mySuppliers,
+                          style: const TextStyle(
                             color: Colors.white,
                             fontSize: 18,
                             fontWeight: FontWeight.w700,
@@ -720,7 +738,7 @@ class _SupplierPageState extends State<SupplierPage> {
                           ),
                         ),
                         Text(
-                          'Manage your vendors',
+                          _localizations.manageYourVendors,
                           style: TextStyle(
                             color: Colors.white.withOpacity(0.7),
                             fontSize: 11,
@@ -793,22 +811,32 @@ class _SupplierPageState extends State<SupplierPage> {
                               color: Color(0xFF1B4D3E),
                             ),
                             decoration: InputDecoration(
-                              hintText: 'Search suppliers...',
+                              hintText: _localizations.searchSuppliers,
                               hintStyle: TextStyle(
                                 color: Colors.grey[400],
                                 fontFamily: 'Literata',
                               ),
-                              prefixIcon: Icon(Icons.search_rounded, color: Colors.grey[600], size: 20),
+                              prefixIcon: Icon(
+                                Icons.search_rounded,
+                                color: Colors.grey[600],
+                                size: 20,
+                              ),
                               suffixIcon: _searchController.text.isNotEmpty
                                   ? GestureDetector(
                                       onTap: () {
                                         _searchController.clear();
                                       },
-                                      child: Icon(Icons.close, color: Colors.grey[600], size: 18),
+                                      child: Icon(
+                                        Icons.close,
+                                        color: Colors.grey[600],
+                                        size: 18,
+                                      ),
                                     )
                                   : null,
                               border: InputBorder.none,
-                              contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                              contentPadding: const EdgeInsets.symmetric(
+                                vertical: 12,
+                              ),
                               isDense: true,
                             ),
                             onChanged: (_) {
@@ -844,7 +872,9 @@ class _SupplierPageState extends State<SupplierPage> {
                       borderRadius: BorderRadius.circular(11),
                       child: Center(
                         child: Icon(
-                          _isSortAscending ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded,
+                          _isSortAscending
+                              ? Icons.arrow_upward_rounded
+                              : Icons.arrow_downward_rounded,
                           color: const Color(0xFF1B4D3E),
                           size: 20,
                         ),
@@ -870,23 +900,43 @@ class _SupplierPageState extends State<SupplierPage> {
                             color: const Color(0xFF1B4D3E).withOpacity(0.1),
                             borderRadius: BorderRadius.circular(20),
                           ),
-                          child: Icon(Icons.business_outlined, size: 50, color: const Color(0xFF1B4D3E).withOpacity(0.3)),
+                          child: Icon(
+                            Icons.business_outlined,
+                            size: 50,
+                            color: const Color(0xFF1B4D3E).withOpacity(0.3),
+                          ),
                         ),
                         const SizedBox(height: 20),
                         Text(
-                          _suppliers.isEmpty ? 'No suppliers yet' : 'No results found',
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Colors.grey[700], fontFamily: 'Literata'),
+                          _suppliers.isEmpty
+                              ? _localizations.noSuppliersYetPage
+                              : _localizations.noResultsFound,
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.grey[700],
+                            fontFamily: 'Literata',
+                          ),
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          _suppliers.isEmpty ? 'Create your first supplier to get started' : 'Try a different search',
-                          style: TextStyle(fontSize: 14, color: Colors.grey[500], fontFamily: 'Literata'),
+                          _suppliers.isEmpty
+                              ? _localizations.createFirstSupplier
+                              : _localizations.tryDifferentSearch,
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[500],
+                            fontFamily: 'Literata',
+                          ),
                         ),
                       ],
                     ),
                   )
                 : ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
                     itemCount: _filteredSuppliers.length,
                     itemBuilder: (context, index) {
                       final supplier = _filteredSuppliers[index];
@@ -902,15 +952,21 @@ class _SupplierPageState extends State<SupplierPage> {
   }
 
   Widget _buildSupplierCard(Map<String, dynamic> supplier) {
-    final fullName = '${supplier['firstName'] ?? ''} ${supplier['lastName'] ?? ''}'.trim();
+    final fullName =
+        '${supplier['firstName'] ?? ''} ${supplier['lastName'] ?? ''}'.trim();
     final firstName = supplier['firstName'] ?? '';
     final contact = supplier['contact'] ?? 'N/A';
     final address = supplier['address'] ?? 'N/A';
     final supplierId = supplier['id'] ?? '';
 
-    final accentColors = [const Color(0xFF1B4D3E), const Color(0xFF0F3B2F), const Color(0xFF2C6F5E), const Color(0xFF1A5E52)];
+    final accentColors = [
+      const Color(0xFF1B4D3E),
+      const Color(0xFF0F3B2F),
+      const Color(0xFF2C6F5E),
+      const Color(0xFF1A5E52),
+    ];
     final accentColor = accentColors[(supplierId.hashCode.abs()) % 4];
-    
+
     // Get initials for avatar
     final initials = firstName.isNotEmpty ? firstName[0].toUpperCase() : 'S';
 
@@ -995,7 +1051,11 @@ class _SupplierPageState extends State<SupplierPage> {
                           const SizedBox(height: 6),
                           Row(
                             children: [
-                              Icon(Icons.phone_outlined, size: 13, color: Colors.grey[600]),
+                              Icon(
+                                Icons.phone_outlined,
+                                size: 13,
+                                color: Colors.grey[600],
+                              ),
                               const SizedBox(width: 6),
                               Expanded(
                                 child: Text(
@@ -1016,18 +1076,42 @@ class _SupplierPageState extends State<SupplierPage> {
                     ),
                     PopupMenuButton(
                       color: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                       elevation: 8,
                       itemBuilder: (context) => [
                         PopupMenuItem(
                           child: Row(
-                            children: [Icon(Icons.edit_outlined, color: accentColor, size: 18), const SizedBox(width: 8), const Text('Edit')],
+                            children: [
+                              Icon(
+                                Icons.edit_outlined,
+                                color: accentColor,
+                                size: 18,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(_localizations.edit),
+                            ],
                           ),
-                          onTap: () => Future.delayed(const Duration(milliseconds: 100), () => _showEditSupplierBottomSheet(supplier)),
+                          onTap: () => Future.delayed(
+                            const Duration(milliseconds: 100),
+                            () => _showEditSupplierBottomSheet(supplier),
+                          ),
                         ),
                         PopupMenuItem(
                           child: Row(
-                            children: [const Icon(Icons.delete_outline, color: Colors.red, size: 18), const SizedBox(width: 8), const Text('Delete', style: TextStyle(color: Colors.red))],
+                            children: [
+                              const Icon(
+                                Icons.delete_outline,
+                                color: Colors.red,
+                                size: 18,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                _localizations.delete,
+                                style: const TextStyle(color: Colors.red),
+                              ),
+                            ],
                           ),
                           onTap: () => _deleteSupplier(),
                         ),
@@ -1048,7 +1132,11 @@ class _SupplierPageState extends State<SupplierPage> {
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Icon(Icons.location_on_outlined, size: 13, color: Colors.grey[600]),
+                        Icon(
+                          Icons.location_on_outlined,
+                          size: 13,
+                          color: Colors.grey[600],
+                        ),
                         const SizedBox(width: 6),
                         Expanded(
                           child: Text(

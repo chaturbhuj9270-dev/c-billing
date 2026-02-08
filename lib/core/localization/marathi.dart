@@ -342,4 +342,17 @@ class MarathiLocalization {
   static const String errorDeletingCompany = 'कंपनी हटवताना त्रुटी';
   static const String unknownCompany = 'अज्ञात कंपनी';
   static const String userNotAuthenticated = 'वापरकर्ता प्रमाणित नाही';
+
+  // Supplier Page
+  static const String mySuppliers = 'माझे पुरवठादार';
+  static const String manageYourVendors = 'तुमचे विक्रेते व्यवस्थापित करा';
+  static const String editSupplier = 'पुरवठादार संपादित करा';
+  static const String searchSuppliers = 'पुरवठादार शोधा...';
+  static const String noSuppliersYetPage = 'अद्याप कोणतेही पुरवठादार नाहीत';
+  static const String createFirstSupplier =
+      'सुरू करण्यासाठी तुमचा पहिला पुरवठादार तयार करा';
+  static const String supplierUpdatedSuccessfully =
+      'पुरवठादार यशस्वीरित्या अपडेट केला';
+  static const String supplierDeletedSuccessfully =
+      'पुरवठादार यशस्वीरित्या हटवला';
 }

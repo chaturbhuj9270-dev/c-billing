@@ -340,4 +340,17 @@ class EnglishLocalization {
   static const String errorDeletingCompany = 'Error deleting company';
   static const String unknownCompany = 'Unknown Company';
   static const String userNotAuthenticated = 'User not authenticated';
+
+  // Supplier Page
+  static const String mySuppliers = 'My Suppliers';
+  static const String manageYourVendors = 'Manage your vendors';
+  static const String editSupplier = 'Edit Supplier';
+  static const String searchSuppliers = 'Search suppliers...';
+  static const String noSuppliersYetPage = 'No suppliers yet';
+  static const String createFirstSupplier =
+      'Create your first supplier to get started';
+  static const String supplierUpdatedSuccessfully =
+      'Supplier updated successfully';
+  static const String supplierDeletedSuccessfully =
+      'Supplier deleted successfully';
 }
