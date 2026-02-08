@@ -166,8 +166,10 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
               'email': email,
               'contact': contact,
               'createdAt': FieldValue.serverTimestamp(),
-              'subscriptionDate':
-                  FieldValue.serverTimestamp(), // Set initial subscription
+              // Set subscription date to 1 year - 7 days ago for 7-day trial
+              'subscriptionDate': Timestamp.fromDate(
+                DateTime.now().subtract(const Duration(days: 358)),
+              ),
             });
             print(
               '[DEBUG] Firestore write successful for UID: ${currentUser.uid}',
