@@ -2469,4 +2469,170 @@ class AppLocalizations {
         return EnglishLocalization.enterAmount;
     }
   }
+
+  // Bill History Page getters
+  String get billsHistory {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.billsHistory;
+      case 'Marathi':
+        return MarathiLocalization.billsHistory;
+      default:
+        return EnglishLocalization.billsHistory;
+    }
+  }
+
+  String get viewAllTransactions {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.viewAllTransactions;
+      case 'Marathi':
+        return MarathiLocalization.viewAllTransactions;
+      default:
+        return EnglishLocalization.viewAllTransactions;
+    }
+  }
+
+  String get totalBills {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.totalBills;
+      case 'Marathi':
+        return MarathiLocalization.totalBills;
+      default:
+        return EnglishLocalization.totalBills;
+    }
+  }
+
+  String get avgBill {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.avgBill;
+      case 'Marathi':
+        return MarathiLocalization.avgBill;
+      default:
+        return EnglishLocalization.avgBill;
+    }
+  }
+
+  String get searchBills {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.searchBills;
+      case 'Marathi':
+        return MarathiLocalization.searchBills;
+      default:
+        return EnglishLocalization.searchBills;
+    }
+  }
+
+  String get newest {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.newest;
+      case 'Marathi':
+        return MarathiLocalization.newest;
+      default:
+        return EnglishLocalization.newest;
+    }
+  }
+
+  String get oldest {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.oldest;
+      case 'Marathi':
+        return MarathiLocalization.oldest;
+      default:
+        return EnglishLocalization.oldest;
+    }
+  }
+
+  String get highest {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.highest;
+      case 'Marathi':
+        return MarathiLocalization.highest;
+      default:
+        return EnglishLocalization.highest;
+    }
+  }
+
+  String get lowest {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.lowest;
+      case 'Marathi':
+        return MarathiLocalization.lowest;
+      default:
+        return EnglishLocalization.lowest;
+    }
+  }
+
+  String get noBillsFound {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.noBillsFound;
+      case 'Marathi':
+        return MarathiLocalization.noBillsFound;
+      default:
+        return EnglishLocalization.noBillsFound;
+    }
+  }
+
+  String get clearFilters {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.clearFilters;
+      case 'Marathi':
+        return MarathiLocalization.clearFilters;
+      default:
+        return EnglishLocalization.clearFilters;
+    }
+  }
+
+  String get printPreview {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.printPreview;
+      case 'Marathi':
+        return MarathiLocalization.printPreview;
+      default:
+        return EnglishLocalization.printPreview;
+    }
+  }
+
+  String get unknown {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.unknown;
+      case 'Marathi':
+        return MarathiLocalization.unknown;
+      default:
+        return EnglishLocalization.unknown;
+    }
+  }
+
+  String get open {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.open;
+      case 'Marathi':
+        return MarathiLocalization.open;
+      default:
+        return EnglishLocalization.open;
+    }
+  }
+
+  String get print {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.print;
+      case 'Marathi':
+        return MarathiLocalization.print;
+      default:
+        return EnglishLocalization.print;
+    }
+  }
 }

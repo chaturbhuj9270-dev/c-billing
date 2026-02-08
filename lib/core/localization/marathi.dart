@@ -254,4 +254,21 @@ class MarathiLocalization {
   static const String selectCustomerForPending = 'बाकी शिल्लक ट्रॅक करण्यासाठी ग्राहक निवडा';
   static const String enterPercent = '% प्रविष्ट करा';
   static const String enterAmount = 'रक्कम प्रविष्ट करा';
+  
+  // Bill History Page
+  static const String billsHistory = 'बिल इतिहास';
+  static const String viewAllTransactions = 'सर्व व्यवहार पहा';
+  static const String totalBills = 'एकूण बिल';
+  static const String avgBill = 'सरासरी बिल';
+  static const String searchBills = 'बिल शोधा...';
+  static const String newest = 'नवीनतम';
+  static const String oldest = 'जुने';
+  static const String highest = 'सर्वात जास्त ₹';
+  static const String lowest = 'सर्वात कमी ₹';
+  static const String noBillsFound = 'कोणती बिल सापडली नाही';
+  static const String clearFilters = 'फिल्टर साफ करा';
+  static const String printPreview = 'प्रिंट पूर्वावलोकन';
+  static const String unknown = 'अज्ञात';
+  static const String open = 'उघडा';
+  static const String print = 'प्रिंट करा';
 }

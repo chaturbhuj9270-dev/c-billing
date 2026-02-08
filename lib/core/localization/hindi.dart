@@ -254,4 +254,21 @@ class HindiLocalization {
   static const String selectCustomerForPending = 'बकाया शेष ट्रैक करने के लिए ग्राहक चुनें';
   static const String enterPercent = '% दर्ज करें';
   static const String enterAmount = 'राशि दर्ज करें';
+  
+  // Bill History Page
+  static const String billsHistory = 'बिल इतिहास';
+  static const String viewAllTransactions = 'सभी लेनदेन देखें';
+  static const String totalBills = 'कुल बिल';
+  static const String avgBill = 'औसत बिल';
+  static const String searchBills = 'बिल खोजें...';
+  static const String newest = 'नवीनतम';
+  static const String oldest = 'पुराने से पुराना';
+  static const String highest = 'सबसे ज्यादा ₹';
+  static const String lowest = 'सबसे कम ₹';
+  static const String noBillsFound = 'कोई बिल नहीं मिला';
+  static const String clearFilters = 'फिल्टर साफ करें';
+  static const String printPreview = 'प्रिंट पूर्वावलोकन';
+  static const String unknown = 'अज्ञात';
+  static const String open = 'खोलें';
+  static const String print = 'प्रिंट करें';
 }

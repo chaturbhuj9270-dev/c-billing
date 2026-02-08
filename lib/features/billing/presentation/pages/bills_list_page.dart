@@ -13,6 +13,8 @@ import 'package:c_billing/core/printing/printing.dart';
 import 'package:c_billing/common_widgets/printer_selection_widget.dart';
 import 'package:c_billing/features/shop/data/repositories/shop_repository.dart';
 import 'package:c_billing/features/customer/data/repositories/customer_repository.dart';
+import 'package:c_billing/core/services/language_service.dart';
+import 'package:c_billing/core/localization/app_localizations.dart';
 
 class BillsListPage extends StatefulWidget {
   const BillsListPage({super.key});
@@ -29,6 +31,9 @@ class _BillsListPageState extends State<BillsListPage>
   late Animation<Offset> _offsetAnimation;
   late Animation<double> _opacityAnimation;
   final _cacheDataSource = BillCacheDataSource();
+  
+  // Localization
+  late AppLocalizations _localizations;
 
   // Printing
   final _printerService = PosPrinterService();
@@ -57,6 +62,10 @@ class _BillsListPageState extends State<BillsListPage>
     _firestore = FirebaseFirestore.instance;
     _shopRepository = ShopRepository(firestore: _firestore);
     _customerRepository = FirebaseCustomerRepository(firestore: _firestore);
+
+    // Initialize localization
+    _localizations = AppLocalizations(LanguageService.instance.currentLanguage);
+    LanguageService.instance.addListener(_onLanguageChanged);
 
     _billingService = BillingService(
       billRepository: FirebaseBillRepository(firestore: _firestore),
@@ -108,7 +117,13 @@ class _BillsListPageState extends State<BillsListPage>
     _animController.dispose();
     _searchController.dispose();
     _printerService.dispose();
+    LanguageService.instance.removeListener(_onLanguageChanged);
     super.dispose();
+  }
+
+  void _onLanguageChanged() {
+    _localizations = AppLocalizations(LanguageService.instance.currentLanguage);
+    setState(() {}); // Rebuild UI with new language
   }
 
   /// Create PrintBillData with customer's total due amount
@@ -152,7 +167,7 @@ class _BillsListPageState extends State<BillsListPage>
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Failed to connect: ${connectResult.message}'),
+              content: Text('${_localizations.failedToConnect}: ${connectResult.message}'),
               backgroundColor: Colors.red,
             ),
           );
@@ -177,8 +192,8 @@ class _BillsListPageState extends State<BillsListPage>
           SnackBar(
             content: Text(
               printResult.success
-                  ? 'Bill printed successfully!'
-                  : 'Print failed: ${printResult.message}',
+                  ? _localizations.billPrintedSuccessfully
+                  : '${_localizations.printFailed}: ${printResult.message}',
             ),
             backgroundColor: printResult.success ? Colors.green : Colors.red,
           ),
@@ -188,7 +203,7 @@ class _BillsListPageState extends State<BillsListPage>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error printing: $e'),
+            content: Text('${_localizations.errorPrinting}: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -232,9 +247,9 @@ class _BillsListPageState extends State<BillsListPage>
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'Print Preview',
-                            style: TextStyle(
+                          Text(
+                            _localizations.printPreview,
+                            style: const TextStyle(
                               fontFamily: 'Literata',
                               fontSize: 18,
                               fontWeight: FontWeight.w700,
@@ -453,7 +468,7 @@ class _BillsListPageState extends State<BillsListPage>
                               ),
                             ),
                             child: Text(
-                              'Cancel',
+                              _localizations.cancel,
                               style: TextStyle(
                                 fontFamily: 'Literata',
                                 color: Colors.grey[600],
@@ -466,8 +481,8 @@ class _BillsListPageState extends State<BillsListPage>
                           child: ElevatedButton.icon(
                             onPressed: () => Navigator.pop(context, true),
                             icon: const Icon(Icons.print, size: 18),
-                            label: const Text(
-                              'Print',
+                            label: Text(
+                              _localizations.print,
                               style: TextStyle(fontFamily: 'Literata'),
                             ),
                             style: ElevatedButton.styleFrom(
@@ -547,7 +562,7 @@ class _BillsListPageState extends State<BillsListPage>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error sharing bill: $e'),
+            content: Text('${_localizations.errorSharingBill}: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -582,10 +597,10 @@ class _BillsListPageState extends State<BillsListPage>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('PDF saved: ${file.path.split('/').last}'),
+            content: Text('${_localizations.pdfSaved}: ${file.path.split('/').last}'),
             backgroundColor: Colors.green,
             action: SnackBarAction(
-              label: 'Open',
+              label: _localizations.open,
               textColor: Colors.white,
               onPressed: () {
                 _pdfService.previewAndPrintPdf(
@@ -776,9 +791,9 @@ class _BillsListPageState extends State<BillsListPage>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Text(
-                          'Bills History',
-                          style: TextStyle(
+                        Text(
+                          _localizations.billsHistory,
+                          style: const TextStyle(
                             color: Colors.white,
                             fontSize: 22,
                             fontWeight: FontWeight.w700,
@@ -787,7 +802,7 @@ class _BillsListPageState extends State<BillsListPage>
                           ),
                         ),
                         Text(
-                          'View all transactions',
+                          _localizations.viewAllTransactions,
                           style: TextStyle(
                             color: Colors.white.withOpacity(0.7),
                             fontSize: 11,
@@ -848,7 +863,7 @@ class _BillsListPageState extends State<BillsListPage>
         children: [
           Expanded(
             child: _buildStatCard(
-              'Total Sales',
+              _localizations.totalSales,
               '₹${_formatAmount(_totalSales)}',
               Icons.currency_rupee,
               const Color(0xFF1B4D3E),
@@ -857,7 +872,7 @@ class _BillsListPageState extends State<BillsListPage>
           const SizedBox(width: 12),
           Expanded(
             child: _buildStatCard(
-              'Total Bills',
+              _localizations.totalBills,
               '$_totalBillsCount',
               Icons.receipt_long,
               const Color(0xFF2196F3),
@@ -866,7 +881,7 @@ class _BillsListPageState extends State<BillsListPage>
           const SizedBox(width: 12),
           Expanded(
             child: _buildStatCard(
-              'Avg. Bill',
+              _localizations.avgBill,
               _totalBillsCount > 0
                   ? '₹${_formatAmount(_totalSales / _totalBillsCount)}'
                   : '₹0',
@@ -978,7 +993,7 @@ class _BillsListPageState extends State<BillsListPage>
             controller: _searchController,
             onChanged: _filterBills,
             decoration: InputDecoration(
-              hintText: 'Search bills...',
+              hintText: _localizations.searchBills,
               hintStyle: TextStyle(
                 fontFamily: 'Literata',
                 fontSize: 14,
@@ -1050,7 +1065,7 @@ class _BillsListPageState extends State<BillsListPage>
                               child: Text(
                                 _startDate != null
                                     ? '${DateFormat('dd/MM').format(_startDate!)} - ${DateFormat('dd/MM').format(_endDate!)}'
-                                    : 'Date',
+                                    : _localizations.date,
                                 style: TextStyle(
                                   fontFamily: 'Literata',
                                   fontSize: 11,
@@ -1096,32 +1111,32 @@ class _BillsListPageState extends State<BillsListPage>
                         isDense: true,
                         isExpanded: true,
                         icon: const Icon(Icons.keyboard_arrow_down, size: 18),
-                        items: const [
+                        items: [
                           DropdownMenuItem(
                             value: 'newest',
                             child: Text(
-                              'Newest',
+                              _localizations.newest,
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
                           DropdownMenuItem(
                             value: 'oldest',
                             child: Text(
-                              'Oldest',
+                              _localizations.oldest,
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
                           DropdownMenuItem(
                             value: 'highest',
                             child: Text(
-                              'Highest ₹',
+                              _localizations.highest,
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
                           DropdownMenuItem(
                             value: 'lowest',
                             child: Text(
-                              'Lowest ₹',
+                              _localizations.lowest,
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
@@ -1165,7 +1180,7 @@ class _BillsListPageState extends State<BillsListPage>
             ),
             const SizedBox(height: 16),
             Text(
-              'No bills found',
+              _localizations.noBillsFound,
               style: TextStyle(
                 fontFamily: 'Literata',
                 fontSize: 16,
@@ -1178,8 +1193,8 @@ class _BillsListPageState extends State<BillsListPage>
                   _searchController.clear();
                   _clearDateFilter();
                 },
-                child: const Text(
-                  'Clear filters',
+                child: Text(
+                  _localizations.clearFilters,
                   style: TextStyle(
                     fontFamily: 'Literata',
                     color: Color(0xFF1B4D3E),
@@ -1298,7 +1313,7 @@ class _BillsListPageState extends State<BillsListPage>
                     const SizedBox(width: 4),
                     Expanded(
                       child: Text(
-                        bill.customerName ?? 'Unknown',
+                        bill.customerName ?? _localizations.unknown,
                         style: const TextStyle(
                           fontFamily: 'Literata',
                           fontSize: 13,
@@ -1334,7 +1349,7 @@ class _BillsListPageState extends State<BillsListPage>
                 children: [
                   Expanded(
                     child: Text(
-                      '${bill.items.length} items • ${bill.totalQuantity} qty',
+                      '${bill.items.length} items • ${bill.totalQuantity} ${_localizations.quantity}',
                       style: TextStyle(
                         fontFamily: 'Literata',
                         fontSize: 11,

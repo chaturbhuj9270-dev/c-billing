@@ -254,4 +254,21 @@ class EnglishLocalization {
   static const String selectCustomerForPending = 'Select a customer to track pending balance';
   static const String enterPercent = 'Enter %';
   static const String enterAmount = 'Enter amount';
+  
+  // Bill History Page
+  static const String billsHistory = 'Bills History';
+  static const String viewAllTransactions = 'View all transactions';
+  static const String totalBills = 'Total Bills';
+  static const String avgBill = 'Avg. Bill';
+  static const String searchBills = 'Search bills...';
+  static const String newest = 'Newest';
+  static const String oldest = 'Oldest';
+  static const String highest = 'Highest ₹';
+  static const String lowest = 'Lowest ₹';
+  static const String noBillsFound = 'No bills found';
+  static const String clearFilters = 'Clear filters';
+  static const String printPreview = 'Print Preview';
+  static const String unknown = 'Unknown';
+  static const String open = 'Open';
+  static const String print = 'Print';
 }
