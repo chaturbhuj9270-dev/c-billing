@@ -318,12 +318,12 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
                     letterSpacing: 1,
                   ),
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 12),
                 // Hurry up badge
                 Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 8,
+                    horizontal: 12,
+                    vertical: 6,
                   ),
                   decoration: BoxDecoration(
                     color: Colors.red.withOpacity(0.15),
@@ -338,23 +338,28 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
                     children: [
                       Icon(
                         Icons.local_fire_department,
-                        size: 16,
+                        size: 14,
                         color: Colors.red[700],
                       ),
-                      const SizedBox(width: 6),
-                      Text(
-                        'Hurry up! This offer is for first 100 users only',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.red[700],
-                          fontFamily: 'Literata',
+                      const SizedBox(width: 5),
+                      Flexible(
+                        child: Text(
+                          'Hurry up! This offer is for first 100 users only',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.red[700],
+                            fontFamily: 'Literata',
+                          ),
+                          textAlign: TextAlign.center,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 14),
                 // Divider
                 Container(
                   width: 60,
