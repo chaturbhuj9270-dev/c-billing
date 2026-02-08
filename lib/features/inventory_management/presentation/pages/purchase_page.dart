@@ -66,11 +66,13 @@ class _PurchasePageState extends State<PurchasePage>
   void initState() {
     super.initState();
     _firestore = FirebaseFirestore.instance;
-    _localizations = AppLocalizations.of(LanguageService.instance.currentLanguage);
-    
+    _localizations = AppLocalizations.of(
+      LanguageService.instance.currentLanguage,
+    );
+
     // Listen for language changes
     LanguageService.instance.addListener(_onLanguageChanged);
-    
+
     _inventoryService = InventoryService(
       productRepository: FirebaseProductRepository(firestore: _firestore),
       stockRepository: FirebaseStockRepository(firestore: _firestore),
@@ -101,7 +103,9 @@ class _PurchasePageState extends State<PurchasePage>
   void _onLanguageChanged() {
     if (mounted) {
       setState(() {
-        _localizations = AppLocalizations.of(LanguageService.instance.currentLanguage);
+        _localizations = AppLocalizations.of(
+          LanguageService.instance.currentLanguage,
+        );
       });
     }
   }
@@ -143,9 +147,9 @@ class _PurchasePageState extends State<PurchasePage>
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('${_localizations.errorLoadingProducts}: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('${_localizations.errorLoadingProducts}: $e')),
+        );
       }
     }
   }
@@ -186,9 +190,11 @@ class _PurchasePageState extends State<PurchasePage>
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('${_localizations.errorLoadingSuppliers}: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${_localizations.errorLoadingSuppliers}: $e'),
+          ),
+        );
       }
     }
   }
@@ -221,9 +227,11 @@ class _PurchasePageState extends State<PurchasePage>
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('${_localizations.errorLoadingCompanies}: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${_localizations.errorLoadingCompanies}: $e'),
+          ),
+        );
       }
     }
   }
@@ -316,7 +324,10 @@ class _PurchasePageState extends State<PurchasePage>
               onPressed: () => Navigator.pop(context),
               child: Text(
                 _localizations.cancel,
-                style: const TextStyle(fontFamily: 'Literata', color: Colors.grey),
+                style: const TextStyle(
+                  fontFamily: 'Literata',
+                  color: Colors.grey,
+                ),
               ),
             ),
             ElevatedButton(
@@ -355,7 +366,9 @@ class _PurchasePageState extends State<PurchasePage>
                           if (mounted) {
                             ScaffoldMessenger.of(dialogContext).showSnackBar(
                               SnackBar(
-                                content: Text(_localizations.productAddedSuccessfully),
+                                content: Text(
+                                  _localizations.productAddedSuccessfully,
+                                ),
                                 backgroundColor: Colors.green,
                               ),
                             );
@@ -363,9 +376,11 @@ class _PurchasePageState extends State<PurchasePage>
                         }
                       } catch (e) {
                         if (mounted && dialogContext.mounted) {
-                          ScaffoldMessenger.of(
-                            dialogContext,
-                          ).showSnackBar(SnackBar(content: Text('${_localizations.error}: $e')));
+                          ScaffoldMessenger.of(dialogContext).showSnackBar(
+                            SnackBar(
+                              content: Text('${_localizations.error}: $e'),
+                            ),
+                          );
                         }
                       }
                     },
@@ -376,7 +391,10 @@ class _PurchasePageState extends State<PurchasePage>
               ),
               child: Text(
                 _localizations.addProduct,
-                style: const TextStyle(fontFamily: 'Literata', color: Colors.white),
+                style: const TextStyle(
+                  fontFamily: 'Literata',
+                  color: Colors.white,
+                ),
               ),
             ),
           ],
@@ -788,23 +806,23 @@ class _PurchasePageState extends State<PurchasePage>
 
   Future<void> _processPurchase() async {
     if (_selectedProduct == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(_localizations.pleaseSelectProduct)));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_localizations.pleaseSelectProduct)),
+      );
       return;
     }
 
     if (_selectedSupplier == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(_localizations.pleaseSelectSupplier)));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_localizations.pleaseSelectSupplier)),
+      );
       return;
     }
 
     if (_selectedCompany == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(_localizations.pleaseSelectCompany)));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_localizations.pleaseSelectCompany)),
+      );
       return;
     }
 
@@ -1236,17 +1254,15 @@ class _PurchasePageState extends State<PurchasePage>
     );
   }
 
-  Future<void> _saveNewSupplier(BuildContext context) async {
+  Future<void> _saveNewSupplier(BuildContext dialogContext) async {
     final firstName = _newSupplierFirstNameController.text.trim();
     final lastName = _newSupplierLastNameController.text.trim();
     final contact = _newSupplierContactController.text.trim();
 
     if (firstName.isEmpty || lastName.isEmpty) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(_localizations.firstLastNameRequired),
-          ),
+      if (dialogContext.mounted) {
+        ScaffoldMessenger.of(dialogContext).showSnackBar(
+          SnackBar(content: Text(_localizations.firstLastNameRequired)),
         );
       }
       return;
@@ -1277,9 +1293,13 @@ class _PurchasePageState extends State<PurchasePage>
             'createdAt': FieldValue.serverTimestamp(),
           });
 
-      if (mounted && context.mounted) {
-        Navigator.pop(context);
-        await _loadSuppliers();
+      if (dialogContext.mounted) {
+        Navigator.pop(dialogContext);
+      }
+
+      await _loadSuppliers();
+
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(_localizations.supplierAddedSuccessfully),
@@ -1289,9 +1309,9 @@ class _PurchasePageState extends State<PurchasePage>
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('${_localizations.errorAddingSupplier}: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('${_localizations.errorAddingSupplier}: $e')),
+        );
       }
     }
   }
@@ -1411,13 +1431,12 @@ class _PurchasePageState extends State<PurchasePage>
     );
   }
 
-  Future<void> _saveNewCompany(BuildContext context) async {
+  Future<void> _saveNewCompany(BuildContext dialogContext) async {
     final companyName = _newCompanyNameController.text.trim();
-    final companyContext = context;
 
     if (companyName.isEmpty) {
-      if (companyContext.mounted) {
-        ScaffoldMessenger.of(companyContext).showSnackBar(
+      if (dialogContext.mounted) {
+        ScaffoldMessenger.of(dialogContext).showSnackBar(
           SnackBar(content: Text(_localizations.companyNameIsRequired)),
         );
       }
@@ -1448,22 +1467,24 @@ class _PurchasePageState extends State<PurchasePage>
             'createdAt': FieldValue.serverTimestamp(),
           });
 
-      if (mounted && companyContext.mounted) {
-        Navigator.pop(companyContext);
-        await _loadCompanies();
-        if (companyContext.mounted) {
-          ScaffoldMessenger.of(companyContext).showSnackBar(
-            const SnackBar(
-              content: Text('Company added successfully'),
-              backgroundColor: Colors.green,
-            ),
-          );
-        }
+      if (dialogContext.mounted) {
+        Navigator.pop(dialogContext);
+      }
+
+      await _loadCompanies();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Company added successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
       }
     } catch (e) {
-      if (mounted && companyContext.mounted) {
+      if (mounted) {
         ScaffoldMessenger.of(
-          companyContext,
+          context,
         ).showSnackBar(SnackBar(content: Text('Error adding company: $e')));
       }
     }
