@@ -355,4 +355,43 @@ class MarathiLocalization {
       'पुरवठादार यशस्वीरित्या अपडेट केला';
   static const String supplierDeletedSuccessfully =
       'पुरवठादार यशस्वीरित्या हटवला';
+
+  // Subscription Screen
+  static const String premiumFinancialSolutions = 'प्रीमियम वित्तीय उपाय';
+  static const String subscriptionExpired = 'सदस्यता समाप्त';
+  static const String premiumPlan = 'प्रीमियम योजना';
+  static const String perYear = 'प्रति वर्ष';
+  static const String hurryUpFirstUsers =
+      'घाई करा! ही ऑफर फक्त पहिल्या 100 वापरकर्त्यांसाठी आहे';
+  static const String justPerMonth = 'फक्त ₹333/महिना';
+  static const String whatsIncluded = 'काय समाविष्ट आहे';
+  static const String unlimitedBillGeneration = 'अमर्यादित बिल निर्मिती';
+  static const String completeInventoryManagement =
+      'संपूर्ण इन्व्हेंटरी व्यवस्थापन';
+  static const String customerSupplierTracking =
+      'ग्राहक आणि पुरवठादार ट्रॅकिंग';
+  static const String advancedReportsAnalytics = 'प्रगत अहवाल आणि विश्लेषण';
+  static const String posPrinterSupport = 'POS प्रिंटर समर्थन';
+  static const String cloudBackupPrioritySupport =
+      'क्लाउड बॅकअप आणि प्राधान्य समर्थन';
+  static const String subscribeNow = 'आता सदस्यता घ्या';
+  static const String needHelpContactUs = 'मदत हवी आहे? आमच्याशी संपर्क साधा';
+  static const String poweredBy = 'द्वारे समर्थित ';
+  static const String chaturbhujSolutions = 'चतुर्भुज सोल्यूशन्स';
+
+  // Payment Screen
+  static const String amountToPay = 'देय रक्कम';
+  static const String oneYearSubscription = '1 वर्षाची सदस्यता';
+  static const String scanQRCodeToPay = 'पेमेंट करण्यासाठी QR कोड स्कॅन करा';
+  static const String payViaAnyUPIApp = 'कोणत्याही UPI अॅपद्वारे पेमेंट करा';
+  static const String important = 'महत्त्वाचे';
+  static const String pleaseShareScreenshotOn =
+      'कृपया पेमेंट करा आणि स्क्रीनशॉट शेअर करा';
+  static const String subscriptionActivatedWithin24Hours =
+      'पेमेंट सत्यापनानंतर 24 तासांच्या आत तुमची सदस्यता सक्रिय होईल।';
+  static const String phoneNumberCopied = 'फोन नंबर कॉपी केला!';
+  static const String shareOnWhatsApp = 'व्हॉट्सअॅपवर शेअर करा';
+  static const String callSupport = 'सपोर्ट कॉल करा';
+  static const String securePayment = 'सुरक्षित पेमेंट';
+  static const String couldNotOpenWhatsApp = 'व्हॉट्सअॅप उघडता आला नाही';
 }

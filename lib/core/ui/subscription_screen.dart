@@ -2,6 +2,8 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../localization/app_localizations.dart';
+import '../services/language_service.dart';
 import 'payment_screen.dart';
 
 /// Subscription screen shown when user's subscription has expired
@@ -22,6 +24,9 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
   late Animation<double> _pulseAnimation;
 
   static const String contactNumber = '9970662978';
+
+  AppLocalizations get _localizations =>
+      AppLocalizations.of(LanguageService.instance.currentLanguage);
 
   @override
   void initState() {
@@ -91,7 +96,10 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
                 child: SingleChildScrollView(
                   child: Column(
                     children: [
-                      const SizedBox(height: 30),
+                      const SizedBox(height: 20),
+                      // Language Selector
+                      _buildLanguageSelector(),
+                      const SizedBox(height: 20),
                       // Logo
                       _buildLogo(),
                       const SizedBox(height: 24),
@@ -136,6 +144,66 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
     );
   }
 
+  Widget _buildLanguageSelector() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.7),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: const Color(0xFF1B4D3E).withOpacity(0.2),
+                width: 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value: LanguageService.instance.currentLanguage,
+                isDense: true,
+                icon: Icon(
+                  Icons.language,
+                  size: 18,
+                  color: const Color(0xFF1B4D3E).withOpacity(0.7),
+                ),
+                style: const TextStyle(
+                  color: Color(0xFF1B4D3E),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  fontFamily: 'Literata',
+                ),
+                dropdownColor: const Color(0xFFF5F5F5),
+                borderRadius: BorderRadius.circular(12),
+                items: const [
+                  DropdownMenuItem(value: 'English', child: Text('English')),
+                  DropdownMenuItem(value: 'Hindi', child: Text('हिंदी')),
+                  DropdownMenuItem(value: 'Marathi', child: Text('मराठी')),
+                ],
+                onChanged: (String? newLanguage) {
+                  if (newLanguage != null) {
+                    setState(() {
+                      LanguageService.instance.setLanguage(newLanguage);
+                    });
+                  }
+                },
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildLogo() {
     return Container(
       width: 90,
@@ -172,7 +240,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
         ),
         const SizedBox(height: 8),
         Text(
-          'PREMIUM FINANCIAL SOLUTIONS',
+          _localizations.premiumFinancialSolutions,
           style: TextStyle(
             color: const Color(0xFF1B4D3E).withOpacity(0.5),
             fontSize: 10,
@@ -205,9 +273,9 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
             ),
           ),
           const SizedBox(width: 10),
-          const Text(
-            'Subscription Expired',
-            style: TextStyle(
+          Text(
+            _localizations.subscriptionExpired,
+            style: const TextStyle(
               color: Colors.red,
               fontSize: 13,
               fontWeight: FontWeight.w600,
@@ -267,9 +335,9 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
                     color: const Color(0xFF1B4D3E),
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  child: const Text(
-                    'PREMIUM PLAN',
-                    style: TextStyle(
+                  child: Text(
+                    _localizations.premiumPlan,
+                    style: const TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
                       color: Colors.white,
@@ -310,7 +378,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'per year',
+                  _localizations.perYear,
                   style: TextStyle(
                     fontSize: 14,
                     color: const Color(0xFF1B4D3E).withOpacity(0.6),
@@ -344,7 +412,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
                       const SizedBox(width: 5),
                       Flexible(
                         child: Text(
-                          'Hurry up! This offer is for first 100 users only',
+                          _localizations.hurryUpFirstUsers,
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.w700,
@@ -386,7 +454,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
-                    'Just ₹333/month',
+                    _localizations.justPerMonth,
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
@@ -404,15 +472,6 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
   }
 
   Widget _buildBenefitsCard() {
-    final benefits = [
-      'Unlimited Bill Generation',
-      'Complete Inventory Management',
-      'Customer & Supplier Tracking',
-      'Advanced Reports & Analytics',
-      'POS Printer Support',
-      'Cloud Backup & Priority Support',
-    ];
-
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
@@ -425,7 +484,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'What\'s Included',
+            _localizations.whatsIncluded,
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w700,
@@ -435,7 +494,12 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
             ),
           ),
           const SizedBox(height: 16),
-          ...benefits.map((benefit) => _buildBenefitItem(benefit)),
+          _buildBenefitItem(_localizations.unlimitedBillGeneration),
+          _buildBenefitItem(_localizations.completeInventoryManagement),
+          _buildBenefitItem(_localizations.customerSupplierTracking),
+          _buildBenefitItem(_localizations.advancedReportsAnalytics),
+          _buildBenefitItem(_localizations.posPrinterSupport),
+          _buildBenefitItem(_localizations.cloudBackupPrioritySupport),
         ],
       ),
     );
@@ -518,10 +582,10 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
                       ),
                       const SizedBox(width: 10),
                       Text(
-                        'Subscribe Now',
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.95),
-                          fontSize: 17,
+                        _localizations.subscribeNow,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
                           fontWeight: FontWeight.w600,
                           fontFamily: 'Literata',
                           letterSpacing: 0.5,
@@ -542,7 +606,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
     return Column(
       children: [
         Text(
-          'Need help? Contact us',
+          _localizations.needHelpContactUs,
           style: TextStyle(
             fontSize: 12,
             color: const Color(0xFF1B4D3E).withOpacity(0.5),
@@ -609,7 +673,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
           text: TextSpan(
             children: [
               TextSpan(
-                text: 'Powered by ',
+                text: _localizations.poweredBy,
                 style: TextStyle(
                   color: const Color(0xFF1B4D3E).withOpacity(0.35),
                   fontSize: 9.5,
@@ -617,9 +681,9 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
                   fontFamily: 'Literata',
                 ),
               ),
-              const TextSpan(
-                text: 'CHATURBHUJ SOLUTIONS',
-                style: TextStyle(
+              TextSpan(
+                text: _localizations.chaturbhujSolutions,
+                style: const TextStyle(
                   color: Color(0xFF1B4D3E),
                   fontSize: 9.5,
                   fontWeight: FontWeight.w700,

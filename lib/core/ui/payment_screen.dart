@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../localization/app_localizations.dart';
+import '../services/language_service.dart';
+
 /// Payment screen with QR code for subscription payment
 /// Premium UI matching the app's elegant design language
 class PaymentScreen extends StatefulWidget {
@@ -19,6 +22,9 @@ class _PaymentScreenState extends State<PaymentScreen>
   late Animation<Offset> _slideAnimation;
 
   static const String contactNumber = '9970662978';
+
+  AppLocalizations get _localizations =>
+      AppLocalizations.of(LanguageService.instance.currentLanguage);
 
   @override
   void initState() {
@@ -56,8 +62,8 @@ class _PaymentScreenState extends State<PaymentScreen>
     } else {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Could not open WhatsApp'),
+          SnackBar(
+            content: Text(_localizations.couldNotOpenWhatsApp),
             backgroundColor: Colors.red,
           ),
         );
@@ -76,11 +82,11 @@ class _PaymentScreenState extends State<PaymentScreen>
     Clipboard.setData(const ClipboardData(text: contactNumber));
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: const Row(
+        content: Row(
           children: [
-            Icon(Icons.check_circle, color: Colors.white, size: 18),
-            SizedBox(width: 10),
-            Text('Phone number copied!'),
+            const Icon(Icons.check_circle, color: Colors.white, size: 18),
+            const SizedBox(width: 10),
+            Text(_localizations.phoneNumberCopied),
           ],
         ),
         backgroundColor: const Color(0xFF1B4D3E),
@@ -168,11 +174,11 @@ class _PaymentScreenState extends State<PaymentScreen>
               ),
             ),
           ),
-          const Expanded(
+          Expanded(
             child: Text(
-              'Payment',
+              _localizations.payment,
               textAlign: TextAlign.center,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w600,
                 color: Color(0xFF1B4D3E),
@@ -213,7 +219,7 @@ class _PaymentScreenState extends State<PaymentScreen>
           child: Column(
             children: [
               Text(
-                'Amount to Pay',
+                _localizations.amountToPay,
                 style: TextStyle(
                   fontSize: 13,
                   color: const Color(0xFF1B4D3E).withOpacity(0.6),
@@ -260,9 +266,9 @@ class _PaymentScreenState extends State<PaymentScreen>
                   color: const Color(0xFF1B4D3E),
                   borderRadius: BorderRadius.circular(15),
                 ),
-                child: const Text(
-                  '1 Year Subscription',
-                  style: TextStyle(
+                child: Text(
+                  _localizations.oneYearSubscription,
+                  style: const TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
                     color: Colors.white,
@@ -296,7 +302,7 @@ class _PaymentScreenState extends State<PaymentScreen>
       child: Column(
         children: [
           Text(
-            'Scan QR Code to Pay',
+            _localizations.scanQRCodeToPay,
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
@@ -381,7 +387,7 @@ class _PaymentScreenState extends State<PaymentScreen>
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  'Pay via any UPI App',
+                  _localizations.payViaAnyUPIApp,
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
@@ -428,9 +434,9 @@ class _PaymentScreenState extends State<PaymentScreen>
                 ),
               ),
               const SizedBox(width: 10),
-              const Text(
-                'Important',
-                style: TextStyle(
+              Text(
+                _localizations.important,
+                style: const TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
                   color: Color(0xFFE65100),
@@ -441,7 +447,7 @@ class _PaymentScreenState extends State<PaymentScreen>
           ),
           const SizedBox(height: 14),
           Text(
-            'Please make payment and share screenshot on',
+            _localizations.pleaseShareScreenshotOn,
             style: TextStyle(
               fontSize: 13,
               color: const Color(0xFF1B4D3E).withOpacity(0.8),
@@ -495,7 +501,7 @@ class _PaymentScreenState extends State<PaymentScreen>
           ),
           const SizedBox(height: 12),
           Text(
-            'Your subscription will be activated within 24 hours after payment verification.',
+            _localizations.subscriptionActivatedWithin24Hours,
             style: TextStyle(
               fontSize: 11,
               color: const Color(0xFF1B4D3E).withOpacity(0.6),
@@ -554,9 +560,9 @@ class _PaymentScreenState extends State<PaymentScreen>
                             ),
                           ),
                           const SizedBox(width: 10),
-                          const Text(
-                            'Share on WhatsApp',
-                            style: TextStyle(
+                          Text(
+                            _localizations.shareOnWhatsApp,
+                            style: const TextStyle(
                               color: Colors.white,
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
@@ -602,7 +608,7 @@ class _PaymentScreenState extends State<PaymentScreen>
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        'Call Support',
+                        _localizations.callSupport,
                         style: TextStyle(
                           color: const Color(0xFF1B4D3E).withOpacity(0.9),
                           fontSize: 15,
@@ -648,7 +654,7 @@ class _PaymentScreenState extends State<PaymentScreen>
             ),
             const SizedBox(width: 6),
             Text(
-              'Secure Payment',
+              _localizations.securePayment,
               style: TextStyle(
                 fontSize: 11,
                 color: const Color(0xFF1B4D3E).withOpacity(0.4),

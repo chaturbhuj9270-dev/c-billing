@@ -353,4 +353,42 @@ class EnglishLocalization {
       'Supplier updated successfully';
   static const String supplierDeletedSuccessfully =
       'Supplier deleted successfully';
+
+  // Subscription Screen
+  static const String premiumFinancialSolutions = 'PREMIUM FINANCIAL SOLUTIONS';
+  static const String subscriptionExpired = 'Subscription Expired';
+  static const String premiumPlan = 'PREMIUM PLAN';
+  static const String perYear = 'per year';
+  static const String hurryUpFirstUsers =
+      'Hurry up! This offer is for first 100 users only';
+  static const String justPerMonth = 'Just ₹333/month';
+  static const String whatsIncluded = 'What\'s Included';
+  static const String unlimitedBillGeneration = 'Unlimited Bill Generation';
+  static const String completeInventoryManagement =
+      'Complete Inventory Management';
+  static const String customerSupplierTracking = 'Customer & Supplier Tracking';
+  static const String advancedReportsAnalytics = 'Advanced Reports & Analytics';
+  static const String posPrinterSupport = 'POS Printer Support';
+  static const String cloudBackupPrioritySupport =
+      'Cloud Backup & Priority Support';
+  static const String subscribeNow = 'Subscribe Now';
+  static const String needHelpContactUs = 'Need help? Contact us';
+  static const String poweredBy = 'Powered by ';
+  static const String chaturbhujSolutions = 'CHATURBHUJ SOLUTIONS';
+
+  // Payment Screen
+  static const String amountToPay = 'Amount to Pay';
+  static const String oneYearSubscription = '1 Year Subscription';
+  static const String scanQRCodeToPay = 'Scan QR Code to Pay';
+  static const String payViaAnyUPIApp = 'Pay via any UPI App';
+  static const String important = 'Important';
+  static const String pleaseShareScreenshotOn =
+      'Please make payment and share screenshot on';
+  static const String subscriptionActivatedWithin24Hours =
+      'Your subscription will be activated within 24 hours after payment verification.';
+  static const String phoneNumberCopied = 'Phone number copied!';
+  static const String shareOnWhatsApp = 'Share on WhatsApp';
+  static const String callSupport = 'Call Support';
+  static const String securePayment = 'Secure Payment';
+  static const String couldNotOpenWhatsApp = 'Could not open WhatsApp';
 }
