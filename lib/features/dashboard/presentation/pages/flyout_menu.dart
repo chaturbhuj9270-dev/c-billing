@@ -23,6 +23,7 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
   late CredentialsManager _credentialsManager;
   late User? _currentUser;
   String _userName = 'User';
+  String _selectedLanguage = 'English'; // Default language
 
   // Animation controllers
   late AnimationController _slideController;
@@ -36,6 +37,7 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
   final List<_MenuItem> _menuItems = [
     _MenuItem(icon: Icons.person_rounded, label: 'Profile', route: 'Profile', color: const Color(0xFF2E7D32)),
     _MenuItem(icon: Icons.store_rounded, label: 'Shop Details', route: 'ShopDetails', color: const Color(0xFF1976D2)),
+    _MenuItem(icon: Icons.language_rounded, label: 'Language', route: 'Language', color: const Color(0xFFFF6F00)),
     _MenuItem(icon: Icons.settings_rounded, label: 'Settings', route: 'Settings', color: const Color(0xFF78909C)),
   ];
 
@@ -195,6 +197,9 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
             MaterialPageRoute(builder: (_) => const ShopDetailsPage()),
           );
           break;
+        case 'Language':
+          _showLanguageDialog();
+          break;
         case 'Settings':
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Settings page coming soon')),
@@ -202,6 +207,149 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
           break;
       }
     });
+  }
+
+  void _showLanguageDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFF6F00).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(
+                Icons.language_rounded,
+                color: Color(0xFFFF6F00),
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 12),
+            const Text(
+              'Select Language',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w600,
+                fontFamily: 'Literata',
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildLanguageOption('English', '🇬🇧', 'English'),
+            const SizedBox(height: 12),
+            _buildLanguageOption('Hindi', '🇮🇳', 'हिंदी'),
+            const SizedBox(height: 12),
+            _buildLanguageOption('Marathi', '🇮🇳', 'मराठी'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(
+                color: Colors.grey,
+                fontFamily: 'Literata',
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLanguageOption(String language, String flag, String nativeName) {
+    final isSelected = _selectedLanguage == language;
+    
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _selectedLanguage = language;
+        });
+        Navigator.of(context).pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Language changed to $language'),
+            backgroundColor: const Color(0xFF2E7D32),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: isSelected 
+              ? const Color(0xFFFF6F00).withOpacity(0.1)
+              : Colors.grey.withOpacity(0.05),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected 
+                ? const Color(0xFFFF6F00)
+                : Colors.grey.withOpacity(0.2),
+            width: isSelected ? 2 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Text(
+              flag,
+              style: const TextStyle(fontSize: 24),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    language,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                      fontFamily: 'Literata',
+                      color: isSelected ? const Color(0xFFFF6F00) : Colors.black87,
+                    ),
+                  ),
+                  Text(
+                    nativeName,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.grey[600],
+                      fontFamily: 'Literata',
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (isSelected)
+              Container(
+                padding: const EdgeInsets.all(4),
+                decoration: const BoxDecoration(
+                  color: Color(0xFFFF6F00),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.check,
+                  color: Colors.white,
+                  size: 16,
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override

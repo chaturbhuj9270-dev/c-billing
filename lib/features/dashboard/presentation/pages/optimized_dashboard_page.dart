@@ -390,10 +390,6 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
           _buildQuickStatsSection(data, isRefreshing),
           const SizedBox(height: 20),
           _buildFilterSection(state),
-          if (isFromCache && isRefreshing) ...[
-            const SizedBox(height: 8),
-            _buildCacheIndicator(),
-          ],
           const SizedBox(height: 28),
           _buildSectionHeader(
             title: 'Sales & Profit Analysis',
@@ -461,39 +457,6 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
           ),
           const SizedBox(height: 24),
           if (state is DashboardErrorState) _buildErrorBanner(state),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCacheIndicator() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: Colors.amber.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.amber.withOpacity(0.3)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          SizedBox(
-            width: 12,
-            height: 12,
-            child: CircularProgressIndicator(
-              strokeWidth: 1.5,
-              color: Colors.amber[700],
-            ),
-          ),
-          const SizedBox(width: 8),
-          Text(
-            'Updating data...',
-            style: TextStyle(
-              color: Colors.amber[800],
-              fontSize: 12,
-              fontFamily: 'Literata',
-            ),
-          ),
         ],
       ),
     );
@@ -1063,16 +1026,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                       color: Colors.white.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: isLoading
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : Icon(icon, color: Colors.white, size: 16),
+                    child: Icon(icon, color: Colors.white, size: 16),
                   ),
                 ],
               ),

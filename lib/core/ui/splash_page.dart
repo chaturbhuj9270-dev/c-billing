@@ -121,16 +121,7 @@ class _SplashPageState extends State<SplashPage> {
   Future<void> _showFingerprintDialog(String userId) async {
     try {
       final biometricService = BiometricService.instance;
-      
-      // Check if biometrics are available
-      final canCheckBiometrics = await biometricService.canCheckBiometrics();
-      
-      if (!canCheckBiometrics) {
-        print('[DEBUG] Biometrics not available, navigating directly to dashboard');
-        _navigateToDashboard();
-        return;
-      }
-      
+
       final isAuthenticated = await biometricService.authenticate(
         reason: 'Verify your identity to continue',
         useErrorDialogs: true,
