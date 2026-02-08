@@ -37,6 +37,10 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
   void initState() {
     super.initState();
     _localizations = AppLocalizations.of(LanguageService.instance.currentLanguage);
+    
+    // Listen for language changes
+    LanguageService.instance.addListener(_onLanguageChanged);
+    
     _firestore = FirebaseFirestore.instance;
     _inventoryService = InventoryService(
       productRepository: FirebaseProductRepository(
@@ -55,8 +59,17 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
     _loadProducts();
   }
 
+  void _onLanguageChanged() {
+    if (mounted) {
+      setState(() {
+        _localizations = AppLocalizations.of(LanguageService.instance.currentLanguage);
+      });
+    }
+  }
+
   @override
   void dispose() {
+    LanguageService.instance.removeListener(_onLanguageChanged);
     _searchController.dispose();
     super.dispose();
   }

@@ -1,6 +1,7 @@
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class LanguageService {
+class LanguageService extends ChangeNotifier {
   static const String _languageKey = 'selected_language';
   static LanguageService? _instance;
   
@@ -24,5 +25,6 @@ class LanguageService {
     _currentLanguage = language;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_languageKey, language);
+    notifyListeners(); // Notify all listeners about the language change
   }
 }

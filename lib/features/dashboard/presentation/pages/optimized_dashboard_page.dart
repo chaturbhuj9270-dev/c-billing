@@ -75,6 +75,9 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
     _sessionManager = SessionManager();
     _localizations = AppLocalizations.of(LanguageService.instance.currentLanguage);
 
+    // Listen for language changes
+    LanguageService.instance.addListener(_onLanguageChanged);
+
     // Fade animation for content
     _fadeController = AnimationController(
       vsync: this,
@@ -88,6 +91,14 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
     
     // Load expandable section data
     _loadExpandableSectionData();
+  }
+
+  void _onLanguageChanged() {
+    if (mounted) {
+      setState(() {
+        _localizations = AppLocalizations.of(LanguageService.instance.currentLanguage);
+      });
+    }
   }
   
   /// Load data for all expandable sections in parallel
@@ -125,6 +136,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
 
   @override
   void dispose() {
+    LanguageService.instance.removeListener(_onLanguageChanged);
     _fadeController.dispose();
     super.dispose();
   }
@@ -312,11 +324,11 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
         bottom: false,
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
-          child: GestureDetector(
-            onTap: _openFlyoutMenu,
-            child: Row(
-              children: [
-                Container(
+          child: Row(
+            children: [
+              GestureDetector(
+                onTap: _openFlyoutMenu,
+                child: Container(
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
@@ -339,8 +351,11 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: GestureDetector(
+                  onTap: _openFlyoutMenu,
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -366,9 +381,150 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                     ],
                   ),
                 ),
-              ],
-            ),
+              ),
+              // Language Icon
+              GestureDetector(
+                onTap: _showLanguageDialog,
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.white.withOpacity(0.2)),
+                  ),
+                  child: const Icon(
+                    Icons.language_rounded,
+                    color: Colors.white,
+                    size: 22,
+                  ),
+                ),
+              ),
+            ],
           ),
+        ),
+      ),
+    );
+  }
+
+  void _showLanguageDialog() {
+    final currentLanguage = LanguageService.instance.currentLanguage;
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFF6F00).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(
+                Icons.language_rounded,
+                color: Color(0xFFFF6F00),
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 12),
+            const Text(
+              'Select Language',
+              style: TextStyle(
+                fontFamily: 'Literata',
+                fontWeight: FontWeight.w700,
+                fontSize: 18,
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildLanguageOption('English', '🇺🇸', 'English', currentLanguage),
+            const SizedBox(height: 8),
+            _buildLanguageOption('Hindi', '🇮🇳', 'हिंदी', currentLanguage),
+            const SizedBox(height: 8),
+            _buildLanguageOption('Marathi', '🇮🇳', 'मराठी', currentLanguage),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLanguageOption(String language, String flag, String nativeName, String currentLanguage) {
+    final isSelected = language == currentLanguage;
+    return InkWell(
+      onTap: () async {
+        Navigator.of(context).pop();
+        await LanguageService.instance.setLanguage(language);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Language changed to $language'),
+              backgroundColor: const Color(0xFF2E7D32),
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+      },
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: isSelected 
+              ? const Color(0xFFFF6F00).withOpacity(0.1)
+              : Colors.grey.withOpacity(0.05),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected 
+                ? const Color(0xFFFF6F00)
+                : Colors.grey.withOpacity(0.2),
+            width: isSelected ? 2 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Text(flag, style: const TextStyle(fontSize: 24)),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    language,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                      fontFamily: 'Literata',
+                      color: isSelected ? const Color(0xFFFF6F00) : Colors.black87,
+                    ),
+                  ),
+                  Text(
+                    nativeName,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.grey[600],
+                      fontFamily: 'Literata',
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (isSelected)
+              Container(
+                padding: const EdgeInsets.all(4),
+                decoration: const BoxDecoration(
+                  color: Color(0xFFFF6F00),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.check, color: Colors.white, size: 16),
+              ),
+          ],
         ),
       ),
     );
