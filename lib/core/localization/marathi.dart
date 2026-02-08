@@ -9,6 +9,9 @@ class MarathiLocalization {
   static const String goodMorning = 'सुप्रभात';
   static const String goodAfternoon = 'शुभ दुपार';
   static const String goodEvening = 'शुभ संध्याकाळ';
+  static const String businessOverview = 'व्यवसाय विहंगावलोकन';
+  static const String quickInsights = 'द्रुत अंतर्दृष्टी';
+  static const String atAGlance = 'एका दृष्टीक्षेपात';
   
   // Quick Stats
   static const String invoices = 'बिले';
@@ -50,7 +53,13 @@ class MarathiLocalization {
   static const String billing = 'बिलिंग';
   static const String customers = 'ग्राहक';
   static const String availability = 'उपलब्धता';
-  static const String purchase = 'खरेदी';
+  static const String purchase = 'खरीद';
+  
+  // Navigation Subtitles
+  static const String manageCustomers = 'ग्राहकांना सुविधा';
+  static const String stockAvailability = 'स्टॉक उपलब्धता';
+  static const String generateInvoice = 'बिल तौल करा';
+  static const String trackPurchases = 'खरेदी सुथ करा';
   
   // Actions
   static const String refresh = 'रिफ्रेश करा';

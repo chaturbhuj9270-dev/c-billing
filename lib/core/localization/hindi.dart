@@ -9,6 +9,9 @@ class HindiLocalization {
   static const String goodMorning = 'सुप्रभात';
   static const String goodAfternoon = 'शुभ दोपहर';
   static const String goodEvening = 'शुभ संध्या';
+  static const String businessOverview = 'व्यवसाय अवलोकन';
+  static const String quickInsights = 'त्वरित अंतर्दृष्टि';
+  static const String atAGlance = 'एक नज़र में';
   
   // Quick Stats
   static const String invoices = 'बिल';
@@ -51,6 +54,12 @@ class HindiLocalization {
   static const String customers = 'ग्राहक';
   static const String availability = 'उपलब्धता';
   static const String purchase = 'खरीद';
+  
+  // Navigation Subtitles
+  static const String manageCustomers = 'ग्राहकों का परिलक्षण करें';
+  static const String stockAvailability = 'स्टॉक उपलब्धता';
+  static const String generateInvoice = 'इनवॉयस तैयार करें';
+  static const String trackPurchases = 'खरीद को संधबन से संबंधित करें';
   
   // Actions
   static const String refresh = 'रीफ्रेश करें';

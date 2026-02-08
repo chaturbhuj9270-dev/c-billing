@@ -9,6 +9,9 @@ class EnglishLocalization {
   static const String goodMorning = 'Good Morning';
   static const String goodAfternoon = 'Good Afternoon';
   static const String goodEvening = 'Good Evening';
+  static const String businessOverview = 'Business Overview';
+  static const String quickInsights = 'Quick Insights';
+  static const String atAGlance = 'At a glance';
   
   // Quick Stats
   static const String invoices = 'Invoices';
@@ -51,6 +54,12 @@ class EnglishLocalization {
   static const String customers = 'Customers';
   static const String availability = 'Availability';
   static const String purchase = 'Purchase';
+  
+  // Navigation Subtitles
+  static const String manageCustomers = 'Manage Customers';
+  static const String stockAvailability = 'Stock Availability';
+  static const String generateInvoice = 'Generate Invoice';
+  static const String trackPurchases = 'Track Purchases';
   
   // Actions
   static const String refresh = 'Refresh';

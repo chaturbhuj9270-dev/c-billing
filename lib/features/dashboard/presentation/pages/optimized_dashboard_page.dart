@@ -153,15 +153,15 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
   String _getPageSubtitle() {
     switch (_selectedIndex) {
       case 0:
-        return 'Business Overview';
+        return _localizations.businessOverview;
       case 1:
-        return 'Manage Customers';
+        return _localizations.manageCustomers;
       case 2:
-        return 'Stock Availability';
+        return _localizations.stockAvailability;
       case 3:
-        return 'Generate Invoice';
+        return _localizations.generateInvoice;
       case 4:
-        return 'Track Purchases';
+        return _localizations.trackPurchases;
       default:
         return '';
     }
@@ -415,8 +415,8 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
           const SizedBox(height: 28),
           // Quick Insights Section - Glassy Stats
           _buildSectionHeader(
-            title: 'Quick Insights',
-            subtitle: 'At a glance',
+            title: _localizations.quickInsights,
+            subtitle: _localizations.atAGlance,
             icon: Icons.insights_outlined,
           ),
           const SizedBox(height: 16),
@@ -1120,7 +1120,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            isProfitable ? 'Profit' : 'Loss',
+                            isProfitable ? _localizations.netProfit : 'Loss',
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 11,
@@ -1148,7 +1148,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '${data.profitPercentage.toStringAsFixed(1)}% margin',
+                      '${data.profitPercentage.toStringAsFixed(1)}% ${_localizations.profitMargin}',
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.8),
                         fontSize: 12,

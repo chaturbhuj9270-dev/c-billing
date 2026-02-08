@@ -90,6 +90,39 @@ class AppLocalizations {
     }
   }
 
+  String get businessOverview {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.businessOverview;
+      case 'Marathi':
+        return MarathiLocalization.businessOverview;
+      default:
+        return EnglishLocalization.businessOverview;
+    }
+  }
+
+  String get quickInsights {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.quickInsights;
+      case 'Marathi':
+        return MarathiLocalization.quickInsights;
+      default:
+        return EnglishLocalization.quickInsights;
+    }
+  }
+
+  String get atAGlance {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.atAGlance;
+      case 'Marathi':
+        return MarathiLocalization.atAGlance;
+      default:
+        return EnglishLocalization.atAGlance;
+    }
+  }
+
   // Quick Stats
   String get invoices {
     switch (languageCode) {
@@ -634,6 +667,51 @@ class AppLocalizations {
         return MarathiLocalization.minStock;
       default:
         return EnglishLocalization.minStock;
+    }
+  }
+
+  // Navigation Subtitles
+  String get manageCustomers {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.manageCustomers;
+      case 'Marathi':
+        return MarathiLocalization.manageCustomers;
+      default:
+        return EnglishLocalization.manageCustomers;
+    }
+  }
+
+  String get stockAvailability {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.stockAvailability;
+      case 'Marathi':
+        return MarathiLocalization.stockAvailability;
+      default:
+        return EnglishLocalization.stockAvailability;
+    }
+  }
+
+  String get generateInvoice {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.generateInvoice;
+      case 'Marathi':
+        return MarathiLocalization.generateInvoice;
+      default:
+        return EnglishLocalization.generateInvoice;
+    }
+  }
+
+  String get trackPurchases {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.trackPurchases;
+      case 'Marathi':
+        return MarathiLocalization.trackPurchases;
+      default:
+        return EnglishLocalization.trackPurchases;
     }
   }
 }
