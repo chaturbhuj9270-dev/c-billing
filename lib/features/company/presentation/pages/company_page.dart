@@ -16,7 +16,6 @@ class CompanyPage extends StatefulWidget {
 
 class _CompanyPageState extends State<CompanyPage> {
   final _companyNameController = TextEditingController();
-  final _supplierSearchController = TextEditingController();
   final _contactController = TextEditingController();
   final _addressController = TextEditingController();
   final _searchController = TextEditingController();
@@ -25,12 +24,8 @@ class _CompanyPageState extends State<CompanyPage> {
   bool _isLoading = false;
   bool _isEditing = false;
   String? _editingCompanyId;
-  String? _selectedSupplierId;
-  String? _selectedSupplierName;
   List<Map<String, dynamic>> _companies = [];
   List<Map<String, dynamic>> _filteredCompanies = [];
-  List<Map<String, dynamic>> _suppliers = [];
-  List<Map<String, dynamic>> _filteredSuppliers = [];
   bool _isSortAscending = true;
   Timer? _filterDebounceTimer;
   bool _isNavigatingAway = false;
@@ -50,7 +45,6 @@ class _CompanyPageState extends State<CompanyPage> {
     LanguageService.instance.addListener(_onLanguageChanged);
     _checkUserAuthentication();
     _setupInitialData();
-    _supplierSearchController.addListener(_filterSuppliers);
     _searchController.addListener(_filterAndSearchCompanies);
   }
 
@@ -65,7 +59,6 @@ class _CompanyPageState extends State<CompanyPage> {
   Future<void> _setupInitialData() async {
     // Load from cache immediately for < 0.5s loading
     final cachedCompanies = await _cacheDataSource.getCachedCompanies();
-    final cachedSuppliers = await _cacheDataSource.getCachedSuppliers();
 
     if (mounted) {
       setState(() {
@@ -73,18 +66,11 @@ class _CompanyPageState extends State<CompanyPage> {
           _companies = cachedCompanies;
           _filterAndSortCompanies();
         }
-        if (cachedSuppliers != null) {
-          _suppliers = cachedSuppliers;
-          _filteredSuppliers = _suppliers;
-        }
       });
-      print(
-        '[DEBUG] Loaded from cache: ${_companies.length} companies, ${_suppliers.length} suppliers',
-      );
+      print('[DEBUG] Loaded from cache: ${_companies.length} companies');
     }
 
     // Fetch from Firestore in background
-    _loadSuppliers();
     _loadCompanies();
   }
 
@@ -142,79 +128,10 @@ class _CompanyPageState extends State<CompanyPage> {
     });
   }
 
-  void _filterSuppliers() {
-    final query = _supplierSearchController.text.toLowerCase();
-
-    setState(() {
-      if (query.isEmpty) {
-        _filteredSuppliers = _suppliers;
-      } else {
-        _filteredSuppliers = _suppliers.where((supplier) {
-          final firstName = (supplier['firstName'] ?? '')
-              .toString()
-              .toLowerCase();
-          final lastName = (supplier['lastName'] ?? '')
-              .toString()
-              .toLowerCase();
-          final contact = (supplier['contact'] ?? '').toString().toLowerCase();
-          final fullName = '$firstName $lastName'.trim().toLowerCase();
-
-          return fullName.contains(query) || contact.contains(query);
-        }).toList();
-      }
-    });
-  }
-
   void _checkUserAuthentication() {
     final currentUser = _auth.currentUser;
     if (currentUser == null) {
       Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
-    }
-  }
-
-  Future<void> _loadSuppliers() async {
-    try {
-      print('[DEBUG] Loading suppliers from Firestore...');
-      final currentUser = _auth.currentUser;
-      if (currentUser == null) {
-        print('[ERROR] No authenticated user - cannot load suppliers');
-        return;
-      }
-
-      print('[DEBUG] Fetching suppliers for user: ${currentUser.uid}');
-      final snapshot = await _firestore
-          .collection('users')
-          .doc(currentUser.uid)
-          .collection('suppliers')
-          .orderBy('firstName')
-          .get();
-
-      print('[DEBUG] Loaded ${snapshot.docs.length} suppliers from Firestore');
-
-      final freshSuppliers = snapshot.docs
-          .map((doc) => {'id': doc.id, ...doc.data()})
-          .toList();
-
-      if (mounted) {
-        setState(() {
-          _suppliers = freshSuppliers;
-          _filteredSuppliers = _suppliers;
-        });
-        // Save to cache for next time
-        _cacheDataSource.saveSuppliers(freshSuppliers);
-      }
-    } catch (e) {
-      print('[ERROR] Failed to load suppliers: $e');
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('${_localizations.errorLoadingSuppliers}: $e'),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 3),
-          ),
-        );
-      }
     }
   }
 
@@ -266,11 +183,8 @@ class _CompanyPageState extends State<CompanyPage> {
 
   void _clearForm() {
     _companyNameController.clear();
-    _supplierSearchController.clear();
     _contactController.clear();
     _addressController.clear();
-    _selectedSupplierId = null;
-    _selectedSupplierName = null;
     _editingCompanyId = null;
     _isEditing = false;
   }
@@ -335,230 +249,6 @@ class _CompanyPageState extends State<CompanyPage> {
     );
   }
 
-  void _showSupplierBottomSheet() {
-    print('[DEBUG] Opening supplier selection bottom sheet');
-    _supplierSearchController.clear();
-    setState(() => _filteredSuppliers = _suppliers);
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(20),
-            topRight: Radius.circular(20),
-          ),
-        ),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      _localizations.selectContactPerson,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF1B4D3E),
-                        fontFamily: 'Literata',
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: () => Navigator.pop(ctx),
-                    ),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-                child: TextField(
-                  controller: _supplierSearchController,
-                  onChanged: (_) => _filterSuppliers(),
-                  decoration: InputDecoration(
-                    hintText: _localizations.searchByNameOrContact,
-                    hintStyle: TextStyle(
-                      color: Colors.grey[400],
-                      fontFamily: 'Literata',
-                    ),
-                    prefixIcon: Icon(
-                      Icons.search,
-                      color: Colors.grey[600],
-                      size: 20,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey[300]!),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey[300]!),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: Color(0xFF1B4D3E),
-                        width: 2,
-                      ),
-                    ),
-                    filled: true,
-                    fillColor: Colors.grey[50],
-                  ),
-                ),
-              ),
-              ConstrainedBox(
-                constraints: const BoxConstraints(maxHeight: 400),
-                child: _suppliers.isEmpty
-                    ? Padding(
-                        padding: const EdgeInsets.all(40),
-                        child: Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.person_add_outlined,
-                                color: Colors.grey[400],
-                                size: 50,
-                              ),
-                              const SizedBox(height: 16),
-                              Text(
-                                _localizations.noSuppliersYet,
-                                style: TextStyle(
-                                  color: Colors.grey[600],
-                                  fontFamily: 'Literata',
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 16,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                _localizations.addSuppliersFirst,
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  color: Colors.grey[500],
-                                  fontFamily: 'Literata',
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      )
-                    : _filteredSuppliers.isEmpty
-                    ? Padding(
-                        padding: const EdgeInsets.all(20),
-                        child: Center(
-                          child: Text(
-                            _localizations.noSuppliersFound,
-                            style: TextStyle(
-                              color: Colors.grey[600],
-                              fontFamily: 'Literata',
-                              fontSize: 14,
-                            ),
-                          ),
-                        ),
-                      )
-                    : ListView.builder(
-                        shrinkWrap: true,
-                        padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-                        itemCount: _filteredSuppliers.length,
-                        itemBuilder: (context, index) {
-                          final supplier = _filteredSuppliers[index];
-                          final fullName =
-                              '${supplier['firstName'] ?? ''} ${supplier['lastName'] ?? ''}'
-                                  .trim();
-                          final contact = supplier['contact'] ?? '';
-                          final isSelected =
-                              _selectedSupplierId == supplier['id'];
-
-                          return Container(
-                            margin: const EdgeInsets.only(bottom: 8),
-                            decoration: BoxDecoration(
-                              color: isSelected
-                                  ? const Color(0xFF1B4D3E).withOpacity(0.1)
-                                  : Colors.grey[50],
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: isSelected
-                                    ? const Color(0xFF1B4D3E)
-                                    : Colors.grey[300]!,
-                                width: isSelected ? 2 : 1,
-                              ),
-                            ),
-                            child: ListTile(
-                              leading: Container(
-                                width: 40,
-                                height: 40,
-                                decoration: BoxDecoration(
-                                  color: const Color(
-                                    0xFF1B4D3E,
-                                  ).withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: const Icon(
-                                  Icons.person,
-                                  color: Color(0xFF1B4D3E),
-                                  size: 22,
-                                ),
-                              ),
-                              title: Text(
-                                fullName,
-                                style: const TextStyle(
-                                  fontFamily: 'Literata',
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: Color(0xFF1B4D3E),
-                                ),
-                              ),
-                              subtitle: Text(
-                                contact,
-                                style: TextStyle(
-                                  fontFamily: 'Literata',
-                                  fontSize: 12,
-                                  color: Colors.grey[600],
-                                ),
-                              ),
-                              trailing: isSelected
-                                  ? const Icon(
-                                      Icons.check_circle,
-                                      color: Color(0xFF1B4D3E),
-                                      size: 24,
-                                    )
-                                  : const Icon(
-                                      Icons.circle_outlined,
-                                      color: Colors.grey,
-                                      size: 24,
-                                    ),
-                              onTap: () {
-                                print(
-                                  '[DEBUG] Selected supplier: $fullName (ID: ${supplier['id']})',
-                                );
-                                setState(() {
-                                  _selectedSupplierId = supplier['id'];
-                                  _selectedSupplierName = fullName;
-                                });
-                                Navigator.pop(ctx);
-                              },
-                            ),
-                          );
-                        },
-                      ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildCompanyForm() {
     return Form(
       key: _formKey,
@@ -596,62 +286,6 @@ class _CompanyPageState extends State<CompanyPage> {
             controller: _companyNameController,
             icon: Icons.business_outlined,
             isRequired: true,
-          ),
-          const SizedBox(height: 16),
-          // Contact Person (Supplier Selection with Search)
-          Text(
-            '${_localizations.contactPersonSupplier} *',
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF1B4D3E),
-              fontFamily: 'Literata',
-            ),
-          ),
-          const SizedBox(height: 8),
-          GestureDetector(
-            onTap: _showSupplierBottomSheet,
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.grey[50],
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.grey[300]!, width: 1.5),
-              ),
-              child: Row(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(left: 12),
-                    child: Icon(
-                      Icons.person_outlined,
-                      color: Colors.grey[600],
-                      size: 20,
-                    ),
-                  ),
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 14,
-                      ),
-                      child: Text(
-                        _selectedSupplierName ?? _localizations.selectASupplier,
-                        style: TextStyle(
-                          color: _selectedSupplierName != null
-                              ? Colors.black87
-                              : Colors.grey[500],
-                          fontSize: 14,
-                          fontFamily: 'Literata',
-                        ),
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(right: 12),
-                    child: Icon(Icons.expand_more, color: Colors.grey[600]),
-                  ),
-                ],
-              ),
-            ),
           ),
           const SizedBox(height: 16),
           // Contact Number
@@ -743,8 +377,6 @@ class _CompanyPageState extends State<CompanyPage> {
 
   void _editCompany(Map<String, dynamic> company) {
     _companyNameController.text = company['companyName'] ?? '';
-    _selectedSupplierId = company['contactPersonId'];
-    _selectedSupplierName = company['contactPerson'] ?? '';
     _contactController.text = company['contact'] ?? '';
     _addressController.text = company['address'] ?? '';
     _editingCompanyId = company['id'];
@@ -755,16 +387,6 @@ class _CompanyPageState extends State<CompanyPage> {
     print('[DEBUG] _saveCompany() called - IsEditing: $_isEditing');
     if (!_formKey.currentState!.validate()) {
       print('[ERROR] Form validation failed');
-      return;
-    }
-
-    if (_selectedSupplierId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(_localizations.pleaseSelectContactPerson),
-          backgroundColor: Colors.orange,
-        ),
-      );
       return;
     }
 
@@ -793,8 +415,6 @@ class _CompanyPageState extends State<CompanyPage> {
 
       final companyData = {
         'companyName': _companyNameController.text.trim(),
-        'contactPerson': _selectedSupplierName ?? '',
-        'contactPersonId': _selectedSupplierId,
         'contact': _contactController.text.trim(),
         'address': _addressController.text.trim(),
         'updatedAt': FieldValue.serverTimestamp(),
@@ -979,7 +599,6 @@ class _CompanyPageState extends State<CompanyPage> {
     _isNavigatingAway = true;
     _filterDebounceTimer?.cancel();
     _companyNameController.dispose();
-    _supplierSearchController.dispose();
     _contactController.dispose();
     _addressController.dispose();
     _searchController.dispose();
@@ -1292,7 +911,6 @@ class _CompanyPageState extends State<CompanyPage> {
 
   Widget _buildCompanyCard(Map<String, dynamic> company) {
     final companyName = company['companyName'] ?? _localizations.unknownCompany;
-    final contactPerson = company['contactPerson'] ?? 'N/A';
     final contact = company['contact'] ?? 'N/A';
     final address = company['address'] ?? 'N/A';
     final companyId = company['id'] ?? '';
@@ -1389,30 +1007,6 @@ class _CompanyPageState extends State<CompanyPage> {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
-                          const SizedBox(height: 6),
-                          if (contactPerson != 'N/A')
-                            Row(
-                              children: [
-                                Icon(
-                                  Icons.person_outlined,
-                                  size: 13,
-                                  color: Colors.grey[600],
-                                ),
-                                const SizedBox(width: 6),
-                                Expanded(
-                                  child: Text(
-                                    contactPerson,
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.grey[700],
-                                      fontFamily: 'Literata',
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              ],
-                            ),
                         ],
                       ),
                     ),
