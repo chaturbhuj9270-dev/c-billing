@@ -2,7 +2,7 @@ class MarathiLocalization {
   // App General
   static const String appName = 'सी-बिलिंग';
   static const String tagline = 'तुमच्या व्यवसायाचा कणा 💪';
-  
+
   // Dashboard
   static const String dashboard = 'डॅशबोर्ड';
   static const String welcomeBack = 'परत स्वागत आहे';
@@ -12,13 +12,13 @@ class MarathiLocalization {
   static const String businessOverview = 'व्यवसाय विहंगावलोकन';
   static const String quickInsights = 'द्रुत अंतर्दृष्टी';
   static const String atAGlance = 'एका दृष्टीक्षेपात';
-  
+
   // Quick Stats
   static const String invoices = 'बिले';
   static const String products = 'उत्पादने';
   static const String suppliers = 'पुरवठादार';
   static const String companies = 'कंपन्या';
-  
+
   // Filter Section
   static const String filterByPeriod = 'कालावधीनुसार फिल्टर करा';
   static const String today = 'आज';
@@ -27,7 +27,7 @@ class MarathiLocalization {
   static const String thisYear = 'या वर्षी';
   static const String allTime = 'सर्व काळ';
   static const String customRange = 'कस्टम रेंज';
-  
+
   // Sales & Profit
   static const String salesProfitAnalysis = 'विक्री आणि नफा विश्लेषण';
   static const String totalSales = 'एकूण विक्री';
@@ -38,7 +38,7 @@ class MarathiLocalization {
   static const String items = 'वस्तू';
   static const String orders = 'ऑर्डर';
   static const String qty = 'प्रमाण';
-  
+
   // Inventory & Payments
   static const String inventoryPayments = 'इन्व्हेंटरी आणि देयके';
   static const String liveStatus = 'थेट स्थिती';
@@ -47,30 +47,30 @@ class MarathiLocalization {
   static const String pendingPayments = 'प्रलंबित देयके';
   static const String lastDues = 'शेवटची थकबाकी';
   static const String lowStockItems = 'कमी स्टॉक वस्तू';
-  
+
   // Navigation
   static const String home = 'मुख्यपृष्ठ';
   static const String billing = 'बिलिंग';
   static const String customers = 'ग्राहक';
   static const String availability = 'उपलब्धता';
   static const String purchase = 'खरीद';
-  
+
   // Navigation Subtitles
   static const String manageCustomers = 'ग्राहकांना सुविधा';
   static const String stockAvailability = 'स्टॉक उपलब्धता';
   static const String generateInvoice = 'बिल तौल करा';
   static const String trackPurchases = 'खरेदी सुथ करा';
-  
+
   // Actions
   static const String refresh = 'रिफ्रेश करा';
   static const String viewAll = 'सर्व पहा';
   static const String unlockNow = 'आता अनलॉक करा';
-  
+
   // Messages
   static const String noDataAvailable = 'कोणताही डेटा उपलब्ध नाही';
   static const String loadingData = 'डेटा लोड होत आहे...';
   static const String errorLoadingData = 'डेटा लोड करताना त्रुटी';
-  
+
   // Details
   static const String customerName = 'ग्राहकाचे नाव';
   static const String amount = 'रक्कम';
@@ -83,7 +83,7 @@ class MarathiLocalization {
   static const String date = 'तारीख';
   static const String currentStock = 'सध्याचा स्टॉक';
   static const String minStock = 'किमान स्टॉक';
-  
+
   // Customer Page
   static const String addNewCustomer = 'नवीन ग्राहक जोडा';
   static const String editCustomer = 'ग्राहक संपादित करा';
@@ -99,7 +99,8 @@ class MarathiLocalization {
   static const String delete = 'हटवा';
   static const String noCustomersYet = 'अद्याप कोणतेही ग्राहक नाहीत';
   static const String noResultsFound = 'कोणतेही परिणाम सापडले नाहीत';
-  static const String createFirstCustomer = 'सुरू करण्यासाठी तुमचा पहिला ग्राहक तयार करा';
+  static const String createFirstCustomer =
+      'सुरू करण्यासाठी तुमचा पहिला ग्राहक तयार करा';
   static const String tryDifferentSearch = 'वेगळा शोध वापरून पहा';
   static const String searchCustomers = 'ग्राहक शोधा...';
   static const String viewBalance = 'शिल्लक पहा';
@@ -115,10 +116,12 @@ class MarathiLocalization {
   static const String addProduct = 'उत्पादन जोडा';
   static const String productAddedSuccessfully = 'उत्पादन यशस्वीरीत्या जोडले';
   static const String selectProduct = 'उत्पादन निवडा';
-  static const String searchByProduct = 'उत्पादन नाव, कंपनी किंवा श्रेणीनुसार शोधा';
+  static const String searchByProduct =
+      'उत्पादन नाव, कंपनी किंवा श्रेणीनुसार शोधा';
   static const String noProductsAvailable = 'कोणतेही उत्पादने उपलब्ध नाहीत';
   static const String selectSupplier = 'पुरवठादार निवडा';
-  static const String searchBySupplier = 'पुरवठादार नाव किंवा संपर्कानुसार शोधा';
+  static const String searchBySupplier =
+      'पुरवठादार नाव किंवा संपर्कानुसार शोधा';
   static const String noSuppliersAvailable = 'कोणतेही पुरवठादार उपलब्ध नाहीत';
   static const String noSuppliersFound = 'कोणतेही पुरवठादार सापडले नाहीत';
   static const String selectCompany = 'कंपनी निवडा';
@@ -150,13 +153,17 @@ class MarathiLocalization {
   static const String searchProducts = 'उत्पादने शोधा...';
   static const String all = 'सर्व';
   static const String noProductsFound = 'कोणतेही उत्पादन सापडले नाही';
-  static const String noProductsMatch = 'तुमच्या शोधाशी कोणतेही उत्पादन जुळत नाही';
+  static const String noProductsMatch =
+      'तुमच्या शोधाशी कोणतेही उत्पादन जुळत नाही';
   static const String units = 'युनिट';
   static const String stockValue = 'स्टॉक मूल्य';
-  static const String outOfStockMessage = 'हे उत्पादन स्टॉकमध्ये नाही आणि त्वरित रीस्टॉक करणे आवश्यक आहे.';
-  static const String lowStockMessage = 'या उत्पादनाचा स्टॉक कमी होत आहे. लवकरच रीस्टॉक करण्याचा विचार करा.';
+  static const String outOfStockMessage =
+      'हे उत्पादन स्टॉकमध्ये नाही आणि त्वरित रीस्टॉक करणे आवश्यक आहे.';
+  static const String lowStockMessage =
+      'या उत्पादनाचा स्टॉक कमी होत आहे. लवकरच रीस्टॉक करण्याचा विचार करा.';
   static const String generateReport = 'अहवाल तयार करा';
-  static const String exportInventory = 'इन्व्हेंटरी डेटा PDF किंवा CSV म्हणून निर्यात करा';
+  static const String exportInventory =
+      'इन्व्हेंटरी डेटा PDF किंवा CSV म्हणून निर्यात करा';
   static const String reportType = 'अहवाल प्रकार';
   static const String selectReportTypes = 'एक किंवा अधिक अहवाल प्रकार निवडा';
   static const String outOfStockProducts = 'स्टॉक संपलेली उत्पादने';
@@ -179,14 +186,15 @@ class MarathiLocalization {
   static const String enterCompanyName = 'कंपनीचे नाव प्रविष्ट करा';
   static const String enterFirstName = 'पहिले नाव प्रविष्ट करा';
   static const String enterLastName = 'आडनाव प्रविष्ट करा';
-  
+
   // Validation Messages
   static const String firstNameRequired = 'पहिले नाव रिक्त असू शकत नाही';
   static const String lastNameRequired = 'आडनाव रिक्त असू शकत नाही';
   static const String companyNameRequired = 'कंपनीचे नाव रिक्त असू शकत नाही';
   static const String firstLastNameRequired = 'पहिले नाव आणि आडनाव आवश्यक आहेत';
   static const String companyNameIsRequired = 'कंपनीचे नाव आवश्यक आहे';
-  static const String supplierAddedSuccessfully = 'पुरवठादार यशस्वीरीत्या जोडला';
+  static const String supplierAddedSuccessfully =
+      'पुरवठादार यशस्वीरीत्या जोडला';
   static const String companyAddedSuccessfully = 'कंपनी यशस्वीरीत्या जोडली';
   static const String errorAddingSupplier = 'पुरवठादार जोडण्यात त्रुटी';
   static const String errorAddingCompany = 'कंपनी जोडण्यात त्रुटी';
@@ -195,10 +203,14 @@ class MarathiLocalization {
   static const String pleaseSelectCompany = 'कृपया कंपनी निवडा';
   static const String pleaseSelectProductionDate = 'कृपया उत्पादन तारीख निवडा';
   static const String pleaseSelectExpiryDate = 'कृपया कालबाह्यता तारीख निवडा';
-  static const String expiryBeforeProduction = 'कालबाह्यता तारीख उत्पादन तारखेपूर्वी असू शकत नाही';
-  static const String pleaseEnterValidQuantity = 'कृपया वैध प्रमाण प्रविष्ट करा';
-  static const String pleaseEnterValidPurchasePrice = 'कृपया वैध खरेदी किंमत प्रविष्ट करा';
-  static const String pleaseEnterValidSalesPrice = 'कृपया वैध विक्री किंमत प्रविष्ट करा';
+  static const String expiryBeforeProduction =
+      'कालबाह्यता तारीख उत्पादन तारखेपूर्वी असू शकत नाही';
+  static const String pleaseEnterValidQuantity =
+      'कृपया वैध प्रमाण प्रविष्ट करा';
+  static const String pleaseEnterValidPurchasePrice =
+      'कृपया वैध खरेदी किंमत प्रविष्ट करा';
+  static const String pleaseEnterValidSalesPrice =
+      'कृपया वैध विक्री किंमत प्रविष्ट करा';
   static const String error = 'त्रुटी';
 
   // Billing Page
@@ -216,7 +228,8 @@ class MarathiLocalization {
   static const String fullPayment = 'पूर्ण पेमेंट';
   static const String partialPayment = 'आंशिक पेमेंट';
   static const String receivedAmount = 'प्राप्त रक्कम';
-  static const String selectCustomerToTrack = 'बाकी शिल्लक ट्रॅक करण्यासाठी ग्राहक निवडा';
+  static const String selectCustomerToTrack =
+      'बाकी शिल्लक ट्रॅक करण्यासाठी ग्राहक निवडा';
   static const String billTotal = 'बिल एकूण';
   static const String received = 'प्राप्त';
   static const String pending = 'बाकी';
@@ -250,11 +263,13 @@ class MarathiLocalization {
   static const String printFailed = 'प्रिंट अपयश';
   static const String errorPrinting = 'प्रिंट करण्यात त्रुटी';
   static const String na = 'उपलब्ध नाही';
-  static const String chooseFromExistingCustomers = 'असलेल्या ग्राहकांमधून निवडा';
-  static const String selectCustomerForPending = 'बाकी शिल्लक ट्रॅक करण्यासाठी ग्राहक निवडा';
+  static const String chooseFromExistingCustomers =
+      'असलेल्या ग्राहकांमधून निवडा';
+  static const String selectCustomerForPending =
+      'बाकी शिल्लक ट्रॅक करण्यासाठी ग्राहक निवडा';
   static const String enterPercent = '% प्रविष्ट करा';
   static const String enterAmount = 'रक्कम प्रविष्ट करा';
-  
+
   // Bill History Page
   static const String billsHistory = 'बिल इतिहास';
   static const String viewAllTransactions = 'सर्व व्यवहार पहा';
@@ -271,10 +286,11 @@ class MarathiLocalization {
   static const String unknown = 'अज्ञात';
   static const String open = 'उघडा';
   static const String print = 'प्रिंट करा';
-  
+
   // Product Management Page
   static const String productManagement = 'उत्पादन व्यवस्थापन';
-  static const String noProductsMatchFilter = 'कोणतीही उत्पादने आपल्या फिल्टरशी जुळली नाहीत';
+  static const String noProductsMatchFilter =
+      'कोणतीही उत्पादने आपल्या फिल्टरशी जुळली नाहीत';
   static const String editProduct = 'उत्पादन संपादित करा';
   static const String deleteProduct = 'उत्पादन हटवा';
   static const String category = 'श्रेणी';
@@ -291,9 +307,39 @@ class MarathiLocalization {
   static const String stockRange = 'स्टॉक श्रेणी';
   static const String apply = 'लागू करा';
   static const String deleteConfirmation = 'तुम्ही खरोखर हटवू इच्छिता';
-  static const String actionCannotBeUndone = 'ही क्रिया पूर्ववत करता येणार नाही';
-  static const String productUpdatedSuccessfully = 'उत्पादन यशस्वीरित्या अपडेट केले';
+  static const String actionCannotBeUndone =
+      'ही क्रिया पूर्ववत करता येणार नाही';
+  static const String productUpdatedSuccessfully =
+      'उत्पादन यशस्वीरित्या अपडेट केले';
   static const String productDeletedSuccessfully = 'उत्पादन यशस्वीरित्या हटवले';
   static const String filters = 'फिल्टर';
   static const String allCategories = 'सर्व श्रेणी';
+
+  // Company Page
+  static const String myCompanies = 'माझ्या कंपन्या';
+  static const String manageYourBusinesses = 'तुमचे व्यवसाय व्यवस्थापित करा';
+  static const String searchCompanies = 'कंपन्या शोधा...';
+  static const String noCompaniesYet = 'अद्याप कोणतीही कंपनी नाही';
+  static const String createFirstCompany =
+      'सुरू करण्यासाठी तुमची पहिली कंपनी तयार करा';
+  static const String editCompany = 'कंपनी संपादित करा';
+  static const String selectContactPerson = 'संपर्क व्यक्ती निवडा';
+  static const String contactPersonSupplier = 'संपर्क व्यक्ती (पुरवठादार)';
+  static const String selectASupplier = 'पुरवठादार निवडा...';
+  static const String searchByNameOrContact = 'नाव किंवा संपर्क द्वारे शोधा...';
+  static const String noSuppliersYet = 'अद्याप कोणतेही पुरवठादार नाहीत';
+  static const String addSuppliersFirst =
+      'प्रथम पुरवठादार पृष्ठावरून पुरवठादार जोडा';
+  static const String pleaseSelectContactPerson =
+      'कृपया संपर्क व्यक्ती (पुरवठादार) निवडा';
+  static const String companyUpdatedSuccessfully =
+      'कंपनी यशस्वीरित्या अपडेट केली';
+  static const String deleteCompany = 'कंपनी हटवा';
+  static const String deleteCompanyConfirm =
+      'तुम्हाला खात्री आहे की तुम्ही ही कंपनी हटवू इच्छिता?';
+  static const String companyDeletedSuccessfully = 'कंपनी यशस्वीरित्या हटवली';
+  static const String errorSavingCompany = 'कंपनी जतन करताना त्रुटी';
+  static const String errorDeletingCompany = 'कंपनी हटवताना त्रुटी';
+  static const String unknownCompany = 'अज्ञात कंपनी';
+  static const String userNotAuthenticated = 'वापरकर्ता प्रमाणित नाही';
 }

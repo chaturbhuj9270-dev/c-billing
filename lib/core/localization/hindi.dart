@@ -2,7 +2,7 @@ class HindiLocalization {
   // App General
   static const String appName = 'सी-बिलिंग';
   static const String tagline = 'आपके व्यवसाय की रीढ़ 💪';
-  
+
   // Dashboard
   static const String dashboard = 'डैशबोर्ड';
   static const String welcomeBack = 'वापसी पर स्वागत है';
@@ -12,13 +12,13 @@ class HindiLocalization {
   static const String businessOverview = 'व्यवसाय अवलोकन';
   static const String quickInsights = 'त्वरित अंतर्दृष्टि';
   static const String atAGlance = 'एक नज़र में';
-  
+
   // Quick Stats
   static const String invoices = 'बिल';
   static const String products = 'उत्पाद';
   static const String suppliers = 'आपूर्तिकर्ता';
   static const String companies = 'कंपनियां';
-  
+
   // Filter Section
   static const String filterByPeriod = 'अवधि के अनुसार फ़िल्टर करें';
   static const String today = 'आज';
@@ -27,7 +27,7 @@ class HindiLocalization {
   static const String thisYear = 'इस साल';
   static const String allTime = 'सभी समय';
   static const String customRange = 'कस्टम रेंज';
-  
+
   // Sales & Profit
   static const String salesProfitAnalysis = 'बिक्री और लाभ विश्लेषण';
   static const String totalSales = 'कुल बिक्री';
@@ -38,7 +38,7 @@ class HindiLocalization {
   static const String items = 'वस्तुएं';
   static const String orders = 'आदेश';
   static const String qty = 'मात्रा';
-  
+
   // Inventory & Payments
   static const String inventoryPayments = 'इन्वेंटरी और भुगतान';
   static const String liveStatus = 'लाइव स्थिति';
@@ -47,30 +47,30 @@ class HindiLocalization {
   static const String pendingPayments = 'लंबित भुगतान';
   static const String lastDues = 'अंतिम बकाया';
   static const String lowStockItems = 'कम स्टॉक आइटम';
-  
+
   // Navigation
   static const String home = 'होम';
   static const String billing = 'बिलिंग';
   static const String customers = 'ग्राहक';
   static const String availability = 'उपलब्धता';
   static const String purchase = 'खरीद';
-  
+
   // Navigation Subtitles
   static const String manageCustomers = 'ग्राहकों का परिलक्षण करें';
   static const String stockAvailability = 'स्टॉक उपलब्धता';
   static const String generateInvoice = 'इनवॉयस तैयार करें';
   static const String trackPurchases = 'खरीद को संधबन से संबंधित करें';
-  
+
   // Actions
   static const String refresh = 'रीफ्रेश करें';
   static const String viewAll = 'सभी देखें';
   static const String unlockNow = 'अभी अनलॉक करें';
-  
+
   // Messages
   static const String noDataAvailable = 'कोई डेटा उपलब्ध नहीं';
   static const String loadingData = 'डेटा लोड हो रहा है...';
   static const String errorLoadingData = 'डेटा लोड करने में त्रुटि';
-  
+
   // Details
   static const String customerName = 'ग्राहक का नाम';
   static const String amount = 'राशि';
@@ -83,7 +83,7 @@ class HindiLocalization {
   static const String date = 'तारीख';
   static const String currentStock = 'वर्तमान स्टॉक';
   static const String minStock = 'न्यूनतम स्टॉक';
-  
+
   // Customer Page
   static const String addNewCustomer = 'नया ग्राहक जोड़ें';
   static const String editCustomer = 'ग्राहक संपादित करें';
@@ -99,7 +99,8 @@ class HindiLocalization {
   static const String delete = 'हटाएं';
   static const String noCustomersYet = 'अभी तक कोई ग्राहक नहीं';
   static const String noResultsFound = 'कोई परिणाम नहीं मिला';
-  static const String createFirstCustomer = 'शुरू करने के लिए अपना पहला ग्राहक बनाएं';
+  static const String createFirstCustomer =
+      'शुरू करने के लिए अपना पहला ग्राहक बनाएं';
   static const String tryDifferentSearch = 'एक अलग खोज का प्रयास करें';
   static const String searchCustomers = 'ग्राहक खोजें...';
   static const String viewBalance = 'बैलेंस देखें';
@@ -138,7 +139,8 @@ class HindiLocalization {
   static const String purchaseRecorded = 'खरीद सफलतापूर्वक रिकॉर्ड की गई';
   static const String errorRecordingPurchase = 'खरीद रिकॉर्ड करने में त्रुटि';
   static const String errorLoadingProducts = 'उत्पाद लोड करने में त्रुटि';
-  static const String errorLoadingSuppliers = 'आपूर्तिकर्ता लोड करने में त्रुटि';
+  static const String errorLoadingSuppliers =
+      'आपूर्तिकर्ता लोड करने में त्रुटि';
   static const String errorLoadingCompanies = 'कंपनी लोड करने में त्रुटि';
 
   // Availability Page
@@ -153,10 +155,13 @@ class HindiLocalization {
   static const String noProductsMatch = 'आपकी खोज से कोई उत्पाद मेल नहीं खाता';
   static const String units = 'इकाई';
   static const String stockValue = 'स्टॉक मूल्य';
-  static const String outOfStockMessage = 'यह उत्पाद स्टॉक में नहीं है और तुरंत रीस्टॉक करने की आवश्यकता है।';
-  static const String lowStockMessage = 'इस उत्पाद का स्टॉक कम हो रहा है। जल्द ही रीस्टॉक करने पर विचार करें।';
+  static const String outOfStockMessage =
+      'यह उत्पाद स्टॉक में नहीं है और तुरंत रीस्टॉक करने की आवश्यकता है।';
+  static const String lowStockMessage =
+      'इस उत्पाद का स्टॉक कम हो रहा है। जल्द ही रीस्टॉक करने पर विचार करें।';
   static const String generateReport = 'रिपोर्ट तैयार करें';
-  static const String exportInventory = 'इन्वेंटरी डेटा PDF या CSV के रूप में निर्यात करें';
+  static const String exportInventory =
+      'इन्वेंटरी डेटा PDF या CSV के रूप में निर्यात करें';
   static const String reportType = 'रिपोर्ट प्रकार';
   static const String selectReportTypes = 'एक या अधिक रिपोर्ट प्रकार चुनें';
   static const String outOfStockProducts = 'स्टॉक समाप्त उत्पाद';
@@ -179,14 +184,16 @@ class HindiLocalization {
   static const String enterCompanyName = 'कंपनी का नाम दर्ज करें';
   static const String enterFirstName = 'पहला नाम दर्ज करें';
   static const String enterLastName = 'अंतिम नाम दर्ज करें';
-  
+
   // Validation Messages
   static const String firstNameRequired = 'पहला नाम खाली नहीं हो सकता';
   static const String lastNameRequired = 'अंतिम नाम खाली नहीं हो सकता';
   static const String companyNameRequired = 'कंपनी का नाम खाली नहीं हो सकता';
-  static const String firstLastNameRequired = 'पहला नाम और अंतिम नाम आवश्यक हैं';
+  static const String firstLastNameRequired =
+      'पहला नाम और अंतिम नाम आवश्यक हैं';
   static const String companyNameIsRequired = 'कंपनी का नाम आवश्यक है';
-  static const String supplierAddedSuccessfully = 'आपूर्तिकर्ता सफलतापूर्वक जोड़ा गया';
+  static const String supplierAddedSuccessfully =
+      'आपूर्तिकर्ता सफलतापूर्वक जोड़ा गया';
   static const String companyAddedSuccessfully = 'कंपनी सफलतापूर्वक जोड़ी गई';
   static const String errorAddingSupplier = 'आपूर्तिकर्ता जोड़ने में त्रुटि';
   static const String errorAddingCompany = 'कंपनी जोड़ने में त्रुटि';
@@ -195,10 +202,13 @@ class HindiLocalization {
   static const String pleaseSelectCompany = 'कृपया एक कंपनी चुनें';
   static const String pleaseSelectProductionDate = 'कृपया उत्पादन तिथि चुनें';
   static const String pleaseSelectExpiryDate = 'कृपया समाप्ति तिथि चुनें';
-  static const String expiryBeforeProduction = 'समाप्ति तिथि उत्पादन तिथि से पहले नहीं हो सकती';
+  static const String expiryBeforeProduction =
+      'समाप्ति तिथि उत्पादन तिथि से पहले नहीं हो सकती';
   static const String pleaseEnterValidQuantity = 'कृपया मान्य मात्रा दर्ज करें';
-  static const String pleaseEnterValidPurchasePrice = 'कृपया मान्य खरीद मूल्य दर्ज करें';
-  static const String pleaseEnterValidSalesPrice = 'कृपया मान्य बिक्री मूल्य दर्ज करें';
+  static const String pleaseEnterValidPurchasePrice =
+      'कृपया मान्य खरीद मूल्य दर्ज करें';
+  static const String pleaseEnterValidSalesPrice =
+      'कृपया मान्य बिक्री मूल्य दर्ज करें';
   static const String error = 'त्रुटि';
 
   // Billing Page
@@ -216,7 +226,8 @@ class HindiLocalization {
   static const String fullPayment = 'पूर्ण भुगतान';
   static const String partialPayment = 'आंशिक भुगतान';
   static const String receivedAmount = 'प्राप्त राशि';
-  static const String selectCustomerToTrack = 'बकाया शेष ट्रैक करने के लिए ग्राहक चुनें';
+  static const String selectCustomerToTrack =
+      'बकाया शेष ट्रैक करने के लिए ग्राहक चुनें';
   static const String billTotal = 'बिल कुल';
   static const String received = 'प्राप्त';
   static const String pending = 'बकाया';
@@ -250,11 +261,13 @@ class HindiLocalization {
   static const String printFailed = 'प्रिंट विफल';
   static const String errorPrinting = 'प्रिंट करने में त्रुटि';
   static const String na = 'उपलब्ध नहीं';
-  static const String chooseFromExistingCustomers = 'मौजूदा ग्राहकों में से चुनें';
-  static const String selectCustomerForPending = 'बकाया शेष ट्रैक करने के लिए ग्राहक चुनें';
+  static const String chooseFromExistingCustomers =
+      'मौजूदा ग्राहकों में से चुनें';
+  static const String selectCustomerForPending =
+      'बकाया शेष ट्रैक करने के लिए ग्राहक चुनें';
   static const String enterPercent = '% दर्ज करें';
   static const String enterAmount = 'राशि दर्ज करें';
-  
+
   // Bill History Page
   static const String billsHistory = 'बिल इतिहास';
   static const String viewAllTransactions = 'सभी लेनदेन देखें';
@@ -271,10 +284,11 @@ class HindiLocalization {
   static const String unknown = 'अज्ञात';
   static const String open = 'खोलें';
   static const String print = 'प्रिंट करें';
-  
+
   // Product Management Page
   static const String productManagement = 'उत्पाद प्रबंधन';
-  static const String noProductsMatchFilter = 'कोई उत्पाद आपके फिल्टर से मेल नहीं खाता';
+  static const String noProductsMatchFilter =
+      'कोई उत्पाद आपके फिल्टर से मेल नहीं खाता';
   static const String editProduct = 'उत्पाद संपादित करें';
   static const String deleteProduct = 'उत्पाद हटाएं';
   static const String category = 'श्रेणी';
@@ -291,9 +305,40 @@ class HindiLocalization {
   static const String stockRange = 'स्टॉक सीमा';
   static const String apply = 'लागू करें';
   static const String deleteConfirmation = 'क्या आप वाकई हटाना चाहते हैं';
-  static const String actionCannotBeUndone = 'यह क्रिया पूर्ववत नहीं की जा सकती';
-  static const String productUpdatedSuccessfully = 'उत्पाद सफलतापूर्वक अपडेट किया गया';
-  static const String productDeletedSuccessfully = 'उत्पाद सफलतापूर्वक हटाया गया';
+  static const String actionCannotBeUndone =
+      'यह क्रिया पूर्ववत नहीं की जा सकती';
+  static const String productUpdatedSuccessfully =
+      'उत्पाद सफलतापूर्वक अपडेट किया गया';
+  static const String productDeletedSuccessfully =
+      'उत्पाद सफलतापूर्वक हटाया गया';
   static const String filters = 'फिल्टर';
   static const String allCategories = 'सभी श्रेणियां';
+
+  // Company Page
+  static const String myCompanies = 'मेरी कंपनियाँ';
+  static const String manageYourBusinesses = 'अपने व्यवसायों को प्रबंधित करें';
+  static const String searchCompanies = 'कंपनियाँ खोजें...';
+  static const String noCompaniesYet = 'अभी तक कोई कंपनी नहीं';
+  static const String createFirstCompany =
+      'शुरू करने के लिए अपनी पहली कंपनी बनाएं';
+  static const String editCompany = 'कंपनी संपादित करें';
+  static const String selectContactPerson = 'संपर्क व्यक्ति चुनें';
+  static const String contactPersonSupplier = 'संपर्क व्यक्ति (आपूर्तिकर्ता)';
+  static const String selectASupplier = 'एक आपूर्तिकर्ता चुनें...';
+  static const String searchByNameOrContact = 'नाम या संपर्क से खोजें...';
+  static const String noSuppliersYet = 'अभी तक कोई आपूर्तिकर्ता नहीं';
+  static const String addSuppliersFirst =
+      'पहले आपूर्तिकर्ता पृष्ठ से आपूर्तिकर्ता जोड़ें';
+  static const String pleaseSelectContactPerson =
+      'कृपया एक संपर्क व्यक्ति (आपूर्तिकर्ता) चुनें';
+  static const String companyUpdatedSuccessfully =
+      'कंपनी सफलतापूर्वक अपडेट की गई';
+  static const String deleteCompany = 'कंपनी हटाएं';
+  static const String deleteCompanyConfirm =
+      'क्या आप वाकई इस कंपनी को हटाना चाहते हैं?';
+  static const String companyDeletedSuccessfully = 'कंपनी सफलतापूर्वक हटाई गई';
+  static const String errorSavingCompany = 'कंपनी सहेजने में त्रुटि';
+  static const String errorDeletingCompany = 'कंपनी हटाने में त्रुटि';
+  static const String unknownCompany = 'अज्ञात कंपनी';
+  static const String userNotAuthenticated = 'उपयोगकर्ता प्रमाणित नहीं है';
 }

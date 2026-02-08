@@ -2,7 +2,7 @@ class EnglishLocalization {
   // App General
   static const String appName = 'C-BILLING';
   static const String tagline = 'THE BACKBONE FOR YOUR\nBUSINESS';
-  
+
   // Dashboard
   static const String dashboard = 'Dashboard';
   static const String welcomeBack = 'Welcome Back';
@@ -12,13 +12,13 @@ class EnglishLocalization {
   static const String businessOverview = 'Business Overview';
   static const String quickInsights = 'Quick Insights';
   static const String atAGlance = 'At a glance';
-  
+
   // Quick Stats
   static const String invoices = 'Invoices';
   static const String products = 'Products';
   static const String suppliers = 'Suppliers';
   static const String companies = 'Companies';
-  
+
   // Filter Section
   static const String filterByPeriod = 'Filter by Period';
   static const String today = 'Today';
@@ -27,7 +27,7 @@ class EnglishLocalization {
   static const String thisYear = 'This Year';
   static const String allTime = 'All Time';
   static const String customRange = 'Custom Range';
-  
+
   // Sales & Profit
   static const String salesProfitAnalysis = 'Sales & Profit Analysis';
   static const String totalSales = 'Total Sales';
@@ -38,7 +38,7 @@ class EnglishLocalization {
   static const String items = 'Items';
   static const String orders = 'Orders';
   static const String qty = 'Qty';
-  
+
   // Inventory & Payments
   static const String inventoryPayments = 'Inventory & Payments';
   static const String liveStatus = 'Live status';
@@ -47,30 +47,30 @@ class EnglishLocalization {
   static const String pendingPayments = 'Pending Payments';
   static const String lastDues = 'Last Dues';
   static const String lowStockItems = 'Low Stock Items';
-  
+
   // Navigation
   static const String home = 'Home';
   static const String billing = 'Billing';
   static const String customers = 'Customers';
   static const String availability = 'Availability';
   static const String purchase = 'Purchase';
-  
+
   // Navigation Subtitles
   static const String manageCustomers = 'Manage Customers';
   static const String stockAvailability = 'Stock Availability';
   static const String generateInvoice = 'Generate Invoice';
   static const String trackPurchases = 'Track Purchases';
-  
+
   // Actions
   static const String refresh = 'Refresh';
   static const String viewAll = 'View All';
   static const String unlockNow = 'Unlock Now';
-  
+
   // Messages
   static const String noDataAvailable = 'No data available';
   static const String loadingData = 'Loading data...';
   static const String errorLoadingData = 'Error loading data';
-  
+
   // Details
   static const String customerName = 'Customer Name';
   static const String amount = 'Amount';
@@ -83,7 +83,7 @@ class EnglishLocalization {
   static const String date = 'Date';
   static const String currentStock = 'Current Stock';
   static const String minStock = 'Min Stock';
-  
+
   // Customer Page
   static const String addNewCustomer = 'Add New Customer';
   static const String editCustomer = 'Edit Customer';
@@ -99,7 +99,8 @@ class EnglishLocalization {
   static const String delete = 'Delete';
   static const String noCustomersYet = 'No customers yet';
   static const String noResultsFound = 'No results found';
-  static const String createFirstCustomer = 'Create your first customer to get started';
+  static const String createFirstCustomer =
+      'Create your first customer to get started';
   static const String tryDifferentSearch = 'Try a different search';
   static const String searchCustomers = 'Search customers...';
   static const String viewBalance = 'View Balance';
@@ -115,7 +116,8 @@ class EnglishLocalization {
   static const String addProduct = 'Add Product';
   static const String productAddedSuccessfully = 'Product added successfully';
   static const String selectProduct = 'Select Product';
-  static const String searchByProduct = 'Search by product name, company, or category';
+  static const String searchByProduct =
+      'Search by product name, company, or category';
   static const String noProductsAvailable = 'No products available';
   static const String selectSupplier = 'Select Supplier';
   static const String searchBySupplier = 'Search by supplier name or contact';
@@ -153,8 +155,10 @@ class EnglishLocalization {
   static const String noProductsMatch = 'No products match your search';
   static const String units = 'units';
   static const String stockValue = 'Stock Value';
-  static const String outOfStockMessage = 'This product is out of stock and needs to be restocked immediately.';
-  static const String lowStockMessage = 'This product is running low on stock. Consider restocking soon.';
+  static const String outOfStockMessage =
+      'This product is out of stock and needs to be restocked immediately.';
+  static const String lowStockMessage =
+      'This product is running low on stock. Consider restocking soon.';
   static const String generateReport = 'Generate Report';
   static const String exportInventory = 'Export inventory data as PDF or CSV';
   static const String reportType = 'Report Type';
@@ -179,12 +183,13 @@ class EnglishLocalization {
   static const String enterCompanyName = 'Enter company name';
   static const String enterFirstName = 'Enter first name';
   static const String enterLastName = 'Enter last name';
-  
+
   // Validation Messages
   static const String firstNameRequired = 'First name cannot be empty';
   static const String lastNameRequired = 'Last name cannot be empty';
   static const String companyNameRequired = 'Company name cannot be empty';
-  static const String firstLastNameRequired = 'First name and last name are required';
+  static const String firstLastNameRequired =
+      'First name and last name are required';
   static const String companyNameIsRequired = 'Company name is required';
   static const String supplierAddedSuccessfully = 'Supplier added successfully';
   static const String companyAddedSuccessfully = 'Company added successfully';
@@ -193,12 +198,17 @@ class EnglishLocalization {
   static const String pleaseSelectProduct = 'Please select a product';
   static const String pleaseSelectSupplier = 'Please select a supplier';
   static const String pleaseSelectCompany = 'Please select a company';
-  static const String pleaseSelectProductionDate = 'Please select a production date';
+  static const String pleaseSelectProductionDate =
+      'Please select a production date';
   static const String pleaseSelectExpiryDate = 'Please select an expiry date';
-  static const String expiryBeforeProduction = 'Expiry date cannot be before production date';
-  static const String pleaseEnterValidQuantity = 'Please enter a valid quantity';
-  static const String pleaseEnterValidPurchasePrice = 'Please enter a valid purchase price';
-  static const String pleaseEnterValidSalesPrice = 'Please enter a valid sales price';
+  static const String expiryBeforeProduction =
+      'Expiry date cannot be before production date';
+  static const String pleaseEnterValidQuantity =
+      'Please enter a valid quantity';
+  static const String pleaseEnterValidPurchasePrice =
+      'Please enter a valid purchase price';
+  static const String pleaseEnterValidSalesPrice =
+      'Please enter a valid sales price';
   static const String error = 'Error';
 
   // Billing Page
@@ -216,7 +226,8 @@ class EnglishLocalization {
   static const String fullPayment = 'Full Payment';
   static const String partialPayment = 'Partial Payment';
   static const String receivedAmount = 'Received Amount';
-  static const String selectCustomerToTrack = 'Select a customer to track pending balance';
+  static const String selectCustomerToTrack =
+      'Select a customer to track pending balance';
   static const String billTotal = 'Bill Total';
   static const String received = 'Received';
   static const String pending = 'Pending';
@@ -250,11 +261,13 @@ class EnglishLocalization {
   static const String printFailed = 'Print failed';
   static const String errorPrinting = 'Error printing';
   static const String na = 'N/A';
-  static const String chooseFromExistingCustomers = 'Choose from existing customers';
-  static const String selectCustomerForPending = 'Select a customer to track pending balance';
+  static const String chooseFromExistingCustomers =
+      'Choose from existing customers';
+  static const String selectCustomerForPending =
+      'Select a customer to track pending balance';
   static const String enterPercent = 'Enter %';
   static const String enterAmount = 'Enter amount';
-  
+
   // Bill History Page
   static const String billsHistory = 'Bills History';
   static const String viewAllTransactions = 'View all transactions';
@@ -271,7 +284,7 @@ class EnglishLocalization {
   static const String unknown = 'Unknown';
   static const String open = 'Open';
   static const String print = 'Print';
-  
+
   // Product Management Page
   static const String productManagement = 'Product Management';
   static const String noProductsMatchFilter = 'No products match your filters';
@@ -292,8 +305,39 @@ class EnglishLocalization {
   static const String apply = 'Apply';
   static const String deleteConfirmation = 'Are you sure you want to delete';
   static const String actionCannotBeUndone = 'This action cannot be undone';
-  static const String productUpdatedSuccessfully = 'Product updated successfully';
-  static const String productDeletedSuccessfully = 'Product deleted successfully';
+  static const String productUpdatedSuccessfully =
+      'Product updated successfully';
+  static const String productDeletedSuccessfully =
+      'Product deleted successfully';
   static const String filters = 'Filters';
   static const String allCategories = 'All Categories';
+
+  // Company Page
+  static const String myCompanies = 'My Companies';
+  static const String manageYourBusinesses = 'Manage your businesses';
+  static const String searchCompanies = 'Search companies...';
+  static const String noCompaniesYet = 'No companies yet';
+  static const String createFirstCompany =
+      'Create your first company to get started';
+  static const String editCompany = 'Edit Company';
+  static const String selectContactPerson = 'Select Contact Person';
+  static const String contactPersonSupplier = 'Contact Person (Supplier)';
+  static const String selectASupplier = 'Select a supplier...';
+  static const String searchByNameOrContact = 'Search by name or contact...';
+  static const String noSuppliersYet = 'No suppliers yet';
+  static const String addSuppliersFirst =
+      'Add suppliers from the Suppliers page first';
+  static const String pleaseSelectContactPerson =
+      'Please select a contact person (supplier)';
+  static const String companyUpdatedSuccessfully =
+      'Company updated successfully';
+  static const String deleteCompany = 'Delete Company';
+  static const String deleteCompanyConfirm =
+      'Are you sure you want to delete this company?';
+  static const String companyDeletedSuccessfully =
+      'Company deleted successfully';
+  static const String errorSavingCompany = 'Error saving company';
+  static const String errorDeletingCompany = 'Error deleting company';
+  static const String unknownCompany = 'Unknown Company';
+  static const String userNotAuthenticated = 'User not authenticated';
 }

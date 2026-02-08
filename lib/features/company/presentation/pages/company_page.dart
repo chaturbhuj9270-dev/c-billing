@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../core/services/session_manager.dart';
+import '../../../../core/services/language_service.dart';
+import '../../../../core/localization/app_localizations.dart';
 import '../../data/datasources/company_cache_datasource.dart';
 
 class CompanyPage extends StatefulWidget {
@@ -37,16 +39,27 @@ class _CompanyPageState extends State<CompanyPage> {
   final _auth = FirebaseAuth.instance;
   late final FirebaseFirestore _firestore;
   late SessionManager _sessionManager;
+  late AppLocalizations _localizations;
 
   @override
   void initState() {
     super.initState();
     _firestore = FirebaseFirestore.instance;
     _sessionManager = SessionManager();
+    _localizations = AppLocalizations(LanguageService.instance.currentLanguage);
+    LanguageService.instance.addListener(_onLanguageChanged);
     _checkUserAuthentication();
     _setupInitialData();
     _supplierSearchController.addListener(_filterSuppliers);
     _searchController.addListener(_filterAndSearchCompanies);
+  }
+
+  void _onLanguageChanged() {
+    setState(() {
+      _localizations = AppLocalizations(
+        LanguageService.instance.currentLanguage,
+      );
+    });
   }
 
   Future<void> _setupInitialData() async {
@@ -196,7 +209,7 @@ class _CompanyPageState extends State<CompanyPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error loading suppliers: $e'),
+            content: Text('${_localizations.errorLoadingSuppliers}: $e'),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 3),
           ),
@@ -242,7 +255,7 @@ class _CompanyPageState extends State<CompanyPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error loading companies: $e'),
+            content: Text('${_localizations.errorLoadingCompanies}: $e'),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 3),
           ),
@@ -349,9 +362,9 @@ class _CompanyPageState extends State<CompanyPage> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
-                      'Select Contact Person',
-                      style: TextStyle(
+                    Text(
+                      _localizations.selectContactPerson,
+                      style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
                         color: Color(0xFF1B4D3E),
@@ -371,7 +384,7 @@ class _CompanyPageState extends State<CompanyPage> {
                   controller: _supplierSearchController,
                   onChanged: (_) => _filterSuppliers(),
                   decoration: InputDecoration(
-                    hintText: 'Search by name or contact...',
+                    hintText: _localizations.searchByNameOrContact,
                     hintStyle: TextStyle(
                       color: Colors.grey[400],
                       fontFamily: 'Literata',
@@ -417,7 +430,7 @@ class _CompanyPageState extends State<CompanyPage> {
                               ),
                               const SizedBox(height: 16),
                               Text(
-                                'No suppliers yet',
+                                _localizations.noSuppliersYet,
                                 style: TextStyle(
                                   color: Colors.grey[600],
                                   fontFamily: 'Literata',
@@ -427,7 +440,7 @@ class _CompanyPageState extends State<CompanyPage> {
                               ),
                               const SizedBox(height: 8),
                               Text(
-                                'Add suppliers from the Suppliers page first',
+                                _localizations.addSuppliersFirst,
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                   color: Colors.grey[500],
@@ -444,7 +457,7 @@ class _CompanyPageState extends State<CompanyPage> {
                         padding: const EdgeInsets.all(20),
                         child: Center(
                           child: Text(
-                            'No suppliers found',
+                            _localizations.noSuppliersFound,
                             style: TextStyle(
                               color: Colors.grey[600],
                               fontFamily: 'Literata',
@@ -557,7 +570,9 @@ class _CompanyPageState extends State<CompanyPage> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                _isEditing ? 'Edit Company' : 'Add New Company',
+                _isEditing
+                    ? _localizations.editCompany
+                    : _localizations.addNewCompany,
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
@@ -577,7 +592,7 @@ class _CompanyPageState extends State<CompanyPage> {
           const SizedBox(height: 20),
           // Company Name
           _buildInputField(
-            label: 'Company Name',
+            label: _localizations.companyName,
             controller: _companyNameController,
             icon: Icons.business_outlined,
             isRequired: true,
@@ -585,7 +600,7 @@ class _CompanyPageState extends State<CompanyPage> {
           const SizedBox(height: 16),
           // Contact Person (Supplier Selection with Search)
           Text(
-            'Contact Person (Supplier) *',
+            '${_localizations.contactPersonSupplier} *',
             style: const TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
@@ -619,7 +634,7 @@ class _CompanyPageState extends State<CompanyPage> {
                         vertical: 14,
                       ),
                       child: Text(
-                        _selectedSupplierName ?? 'Select a supplier...',
+                        _selectedSupplierName ?? _localizations.selectASupplier,
                         style: TextStyle(
                           color: _selectedSupplierName != null
                               ? Colors.black87
@@ -641,7 +656,7 @@ class _CompanyPageState extends State<CompanyPage> {
           const SizedBox(height: 16),
           // Contact Number
           _buildInputField(
-            label: 'Contact Number',
+            label: _localizations.contactNumber,
             controller: _contactController,
             icon: Icons.phone_outlined,
             keyboardType: TextInputType.phone,
@@ -650,7 +665,7 @@ class _CompanyPageState extends State<CompanyPage> {
           const SizedBox(height: 16),
           // Address
           _buildInputField(
-            label: 'Address',
+            label: _localizations.address,
             controller: _addressController,
             icon: Icons.location_on_outlined,
             maxLines: 3,
@@ -681,7 +696,9 @@ class _CompanyPageState extends State<CompanyPage> {
                           ),
                         )
                       : Text(
-                          _isEditing ? 'Update' : 'Add Company',
+                          _isEditing
+                              ? _localizations.update
+                              : _localizations.addCompany,
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 14,
@@ -743,8 +760,8 @@ class _CompanyPageState extends State<CompanyPage> {
 
     if (_selectedSupplierId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select a contact person (supplier)'),
+        SnackBar(
+          content: Text(_localizations.pleaseSelectContactPerson),
           backgroundColor: Colors.orange,
         ),
       );
@@ -758,9 +775,9 @@ class _CompanyPageState extends State<CompanyPage> {
       final currentUser = _auth.currentUser;
       if (currentUser == null) {
         print('[ERROR] No authenticated user found');
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('User not authenticated')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(_localizations.userNotAuthenticated)),
+        );
         return;
       }
 
@@ -807,8 +824,8 @@ class _CompanyPageState extends State<CompanyPage> {
         if (mounted) {
           Navigator.pop(context);
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Company updated successfully'),
+            SnackBar(
+              content: Text(_localizations.companyUpdatedSuccessfully),
               backgroundColor: Colors.green,
             ),
           );
@@ -834,8 +851,8 @@ class _CompanyPageState extends State<CompanyPage> {
         if (mounted) {
           Navigator.pop(context);
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Company added successfully'),
+            SnackBar(
+              content: Text(_localizations.companyAddedSuccessfully),
               backgroundColor: Colors.green,
             ),
           );
@@ -848,7 +865,7 @@ class _CompanyPageState extends State<CompanyPage> {
       print('[ERROR] Error type: ${e.runtimeType}');
       print('[ERROR] Full error: $e');
 
-      String errorMsg = 'Error saving company: ${e.toString()}';
+      String errorMsg = '${_localizations.errorSavingCompany}: ${e.toString()}';
 
       if (e.toString().contains('permission-denied')) {
         errorMsg =
@@ -878,17 +895,17 @@ class _CompanyPageState extends State<CompanyPage> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete Company'),
-        content: const Text('Are you sure you want to delete this company?'),
+        title: Text(_localizations.deleteCompany),
+        content: Text(_localizations.deleteCompanyConfirm),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancel'),
+            child: Text(_localizations.cancel),
           ),
           ElevatedButton(
             onPressed: () => Navigator.of(ctx).pop(true),
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Delete'),
+            child: Text(_localizations.delete),
           ),
         ],
       ),
@@ -927,8 +944,8 @@ class _CompanyPageState extends State<CompanyPage> {
       print('[DEBUG] Company deleted successfully');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Company deleted successfully'),
+          SnackBar(
+            content: Text(_localizations.companyDeletedSuccessfully),
             backgroundColor: Colors.green,
           ),
         );
@@ -948,7 +965,7 @@ class _CompanyPageState extends State<CompanyPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error deleting company: $e'),
+            content: Text('${_localizations.errorDeletingCompany}: $e'),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 3),
           ),
@@ -966,6 +983,7 @@ class _CompanyPageState extends State<CompanyPage> {
     _contactController.dispose();
     _addressController.dispose();
     _searchController.dispose();
+    LanguageService.instance.removeListener(_onLanguageChanged);
     super.dispose();
   }
 
@@ -1023,9 +1041,9 @@ class _CompanyPageState extends State<CompanyPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Text(
-                          'My Companies',
-                          style: TextStyle(
+                        Text(
+                          _localizations.myCompanies,
+                          style: const TextStyle(
                             color: Colors.white,
                             fontSize: 22,
                             fontWeight: FontWeight.w700,
@@ -1034,7 +1052,7 @@ class _CompanyPageState extends State<CompanyPage> {
                           ),
                         ),
                         Text(
-                          'Manage your businesses',
+                          _localizations.manageYourBusinesses,
                           style: TextStyle(
                             color: Colors.white.withOpacity(0.7),
                             fontSize: 11,
@@ -1135,7 +1153,7 @@ class _CompanyPageState extends State<CompanyPage> {
                               color: Color(0xFF1B4D3E),
                             ),
                             decoration: InputDecoration(
-                              hintText: 'Search companies...',
+                              hintText: _localizations.searchCompanies,
                               hintStyle: TextStyle(
                                 color: Colors.grey[400],
                                 fontFamily: 'Literata',
@@ -1232,8 +1250,8 @@ class _CompanyPageState extends State<CompanyPage> {
                         const SizedBox(height: 20),
                         Text(
                           _companies.isEmpty
-                              ? 'No companies yet'
-                              : 'No results found',
+                              ? _localizations.noCompaniesYet
+                              : _localizations.noResultsFound,
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w600,
@@ -1244,8 +1262,8 @@ class _CompanyPageState extends State<CompanyPage> {
                         const SizedBox(height: 8),
                         Text(
                           _companies.isEmpty
-                              ? 'Create your first company to get started'
-                              : 'Try a different search',
+                              ? _localizations.createFirstCompany
+                              : _localizations.tryDifferentSearch,
                           style: TextStyle(
                             fontSize: 14,
                             color: Colors.grey[500],
@@ -1273,7 +1291,7 @@ class _CompanyPageState extends State<CompanyPage> {
   }
 
   Widget _buildCompanyCard(Map<String, dynamic> company) {
-    final companyName = company['companyName'] ?? 'Unknown Company';
+    final companyName = company['companyName'] ?? _localizations.unknownCompany;
     final contactPerson = company['contactPerson'] ?? 'N/A';
     final contact = company['contact'] ?? 'N/A';
     final address = company['address'] ?? 'N/A';
@@ -1414,7 +1432,7 @@ class _CompanyPageState extends State<CompanyPage> {
                                 size: 18,
                               ),
                               const SizedBox(width: 8),
-                              const Text('Edit'),
+                              Text(_localizations.edit),
                             ],
                           ),
                           onTap: () => Future.delayed(
@@ -1431,9 +1449,9 @@ class _CompanyPageState extends State<CompanyPage> {
                                 size: 18,
                               ),
                               const SizedBox(width: 8),
-                              const Text(
-                                'Delete',
-                                style: TextStyle(color: Colors.red),
+                              Text(
+                                _localizations.delete,
+                                style: const TextStyle(color: Colors.red),
                               ),
                             ],
                           ),
@@ -1545,10 +1563,10 @@ class _CompanyPageState extends State<CompanyPage> {
       validator: isRequired
           ? (value) {
               if (value == null || value.isEmpty) {
-                return '$label is required';
+                return '$label ${_localizations.isRequired}';
               }
-              if (label == 'Contact Number' && value.length < 10) {
-                return 'Enter a valid phone number';
+              if (label == _localizations.contactNumber && value.length < 10) {
+                return _localizations.enterValidPhone;
               }
               return null;
             }
