@@ -83,4 +83,31 @@ class MarathiLocalization {
   static const String date = 'तारीख';
   static const String currentStock = 'सध्याचा स्टॉक';
   static const String minStock = 'किमान स्टॉक';
+  
+  // Availability Page
+  static const String stockOverview = 'स्टॉक विहंगावलोकन';
+  static const String totalProducts = 'एकूण उत्पादने';
+  static const String inStock = 'स्टॉकमध्ये';
+  static const String lowStock = 'कमी स्टॉक';
+  static const String outOfStock = 'स्टॉक संपला';
+  static const String searchProducts = 'उत्पादने शोधा...';
+  static const String all = 'सर्व';
+  static const String noProductsFound = 'कोणतेही उत्पादन सापडले नाही';
+  static const String noProductsMatch = 'तुमच्या शोधाशी कोणतेही उत्पादन जुळत नाही';
+  static const String units = 'युनिट';
+  static const String stockValue = 'स्टॉक मूल्य';
+  static const String outOfStockMessage = 'हे उत्पादन स्टॉकमध्ये नाही आणि त्वरित रीस्टॉक करणे आवश्यक आहे.';
+  static const String lowStockMessage = 'या उत्पादनाचा स्टॉक कमी होत आहे. लवकरच रीस्टॉक करण्याचा विचार करा.';
+  static const String generateReport = 'अहवाल तयार करा';
+  static const String exportInventory = 'इन्व्हेंटरी डेटा PDF किंवा CSV म्हणून निर्यात करा';
+  static const String reportType = 'अहवाल प्रकार';
+  static const String selectReportTypes = 'एक किंवा अधिक अहवाल प्रकार निवडा';
+  static const String outOfStockProducts = 'स्टॉक संपलेली उत्पादने';
+  static const String productsWithZero = '0 प्रमाण असलेली उत्पादने';
+  static const String lowStockProducts = 'कमी स्टॉक उत्पादने';
+  static const String productsWithLow = 'प्रमाण ≤ 10 असलेली उत्पादने';
+  static const String allProducts = 'सर्व उत्पादने';
+  static const String completeInventory = 'संपूर्ण इन्व्हेंटरी यादी';
+  static const String exportFormat = 'निर्यात स्वरूप';
+  static const String generateAndShare = 'तयार करा आणि शेअर करा';
 }

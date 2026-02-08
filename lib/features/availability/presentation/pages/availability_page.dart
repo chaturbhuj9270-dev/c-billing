@@ -3,6 +3,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:c_billing/core/services/inventory_service.dart';
 import 'package:c_billing/core/services/inventory_report_service.dart';
+import 'package:c_billing/core/localization/app_localizations.dart';
+import 'package:c_billing/core/services/language_service.dart';
 import 'package:c_billing/features/inventory_management/data/repositories/firebase_product_repository.dart';
 import 'package:c_billing/features/inventory_management/data/repositories/firebase_stock_repository.dart';
 import 'package:c_billing/features/inventory_management/data/repositories/firebase_purchase_repository.dart';
@@ -20,6 +22,7 @@ class AvailabilityPage extends StatefulWidget {
 class _AvailabilityPageState extends State<AvailabilityPage> {
   late InventoryService _inventoryService;
   late FirebaseFirestore _firestore;
+  late AppLocalizations _localizations;
   final _auth = FirebaseAuth.instance;
   List<Product> _products = [];
   List<Product> _filteredProducts = [];
@@ -33,6 +36,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
   @override
   void initState() {
     super.initState();
+    _localizations = AppLocalizations.of(LanguageService.instance.currentLanguage);
     _firestore = FirebaseFirestore.instance;
     _inventoryService = InventoryService(
       productRepository: FirebaseProductRepository(
@@ -108,13 +112,13 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                       ),
                     ),
                     const SizedBox(width: 14),
-                    const Expanded(
+                    Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Generate Report',
-                            style: TextStyle(
+                            _localizations.generateReport,
+                            style: const TextStyle(
                               fontFamily: 'Literata',
                               fontSize: 18,
                               fontWeight: FontWeight.w700,
@@ -122,8 +126,8 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                             ),
                           ),
                           Text(
-                            'Export inventory data as PDF or CSV',
-                            style: TextStyle(
+                            _localizations.exportInventory,
+                            style: const TextStyle(
                               fontFamily: 'Literata',
                               fontSize: 12,
                               color: Colors.grey,
@@ -142,9 +146,9 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Report Type',
-                      style: TextStyle(
+                    Text(
+                      _localizations.reportType,
+                      style: const TextStyle(
                         fontFamily: 'Literata',
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -153,7 +157,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Select one or more report types',
+                      _localizations.selectReportTypes,
                       style: TextStyle(
                         fontFamily: 'Literata',
                         fontSize: 11,
@@ -162,8 +166,8 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                     ),
                     const SizedBox(height: 12),
                     _buildReportTypeCheckbox(
-                      'Out of Stock Products',
-                      'Products with 0 quantity',
+                      _localizations.outOfStockProducts,
+                      _localizations.productsWithZero,
                       Icons.error_outline,
                       Colors.red,
                       ReportType.outOfStock,
@@ -178,8 +182,8 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                     ),
                     const SizedBox(height: 8),
                     _buildReportTypeCheckbox(
-                      'Low Stock Products',
-                      'Products with quantity ≤ 10',
+                      _localizations.lowStockProducts,
+                      _localizations.productsWithLow,
                       Icons.warning_amber,
                       Colors.orange,
                       ReportType.lowStock,
@@ -194,8 +198,8 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                     ),
                     const SizedBox(height: 8),
                     _buildReportTypeCheckbox(
-                      'All Products',
-                      'Complete inventory list',
+                      _localizations.allProducts,
+                      _localizations.completeInventory,
                       Icons.inventory_2,
                       const Color(0xFF1B4D3E),
                       ReportType.allProducts,
@@ -218,9 +222,9 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Export Format',
-                      style: TextStyle(
+                    Text(
+                      _localizations.exportFormat,
+                      style: const TextStyle(
                         fontFamily: 'Literata',
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -297,9 +301,9 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                               color: Colors.white,
                             ),
                           )
-                        : const Text(
-                            'Generate & Share',
-                            style: TextStyle(
+                        : Text(
+                            _localizations.generateAndShare,
+                            style: const TextStyle(
                               fontFamily: 'Literata',
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
@@ -600,7 +604,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
         children: [
           Expanded(
             child: _buildStatCard(
-              title: 'Total Products',
+              title: _localizations.totalProducts,
               value: totalProducts,
               icon: Icons.inventory_2,
               iconColor: const Color(0xFF1B4D3E),
@@ -609,7 +613,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
           ),
           Expanded(
             child: _buildStatCard(
-              title: 'In Stock',
+              title: _localizations.inStock,
               value: inStock,
               icon: Icons.check_circle,
               iconColor: Colors.green,
@@ -618,7 +622,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
           ),
           Expanded(
             child: _buildStatCard(
-              title: 'Low Stock',
+              title: _localizations.lowStock,
               value: lowStock,
               icon: Icons.warning,
               iconColor: Colors.orange,
@@ -627,7 +631,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
           ),
           Expanded(
             child: _buildStatCard(
-              title: 'Out of Stock',
+              title: _localizations.outOfStock,
               value: outOfStock,
               icon: Icons.error,
               iconColor: Colors.red,
@@ -696,7 +700,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
             onChanged: _onSearchChanged,
             style: const TextStyle(fontFamily: 'Literata', fontSize: 14),
             decoration: InputDecoration(
-              hintText: 'Search products...',
+              hintText: _localizations.searchProducts,
               hintStyle: TextStyle(color: Colors.grey[500]),
               prefixIcon: const Icon(Icons.search, color: Color(0xFF1B4D3E)),
               suffixIcon: _searchQuery.isNotEmpty
@@ -726,13 +730,13 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
             scrollDirection: Axis.horizontal,
             child: Row(
               children: [
-                _buildFilterChip('All', 'all'),
+                _buildFilterChip(_localizations.all, 'all'),
                 const SizedBox(width: 8),
-                _buildFilterChip('In Stock', 'in_stock'),
+                _buildFilterChip(_localizations.inStock, 'in_stock'),
                 const SizedBox(width: 8),
-                _buildFilterChip('Low Stock', 'low_stock'),
+                _buildFilterChip(_localizations.lowStock, 'low_stock'),
                 const SizedBox(width: 8),
-                _buildFilterChip('Out of Stock', 'out_of_stock'),
+                _buildFilterChip(_localizations.outOfStock, 'out_of_stock'),
               ],
             ),
           ),
@@ -779,8 +783,8 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
               const SizedBox(height: 16),
               Text(
                 _searchQuery.isEmpty
-                    ? 'No products found'
-                    : 'No products match your search',
+                    ? _localizations.noProductsFound
+                    : _localizations.noProductsMatch,
                 style: TextStyle(
                   fontSize: 18,
                   color: Colors.grey[600],
@@ -895,7 +899,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Current Stock',
+                              _localizations.currentStock,
                               style: TextStyle(
                                 fontSize: 10,
                                 color: Colors.grey[600],
@@ -904,7 +908,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              '${product.currentStock} units',
+                              '${product.currentStock} ${_localizations.units}',
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w700,
@@ -918,7 +922,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
                             Text(
-                              'Stock Value',
+                              _localizations.stockValue,
                               style: TextStyle(
                                 fontSize: 10,
                                 color: Colors.grey[600],
@@ -965,8 +969,8 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                           Expanded(
                             child: Text(
                               product.currentStock == 0
-                                  ? 'This product is out of stock and needs to be restocked immediately.'
-                                  : 'This product is running low on stock. Consider restocking soon.',
+                                  ? _localizations.outOfStockMessage
+                                  : _localizations.lowStockMessage,
                               style: TextStyle(
                                 fontSize: 10,
                                 color: product.currentStock == 0
@@ -990,11 +994,11 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
 
   Map<String, dynamic> _getStockLevel(int stock) {
     if (stock == 0) {
-      return {'label': 'OUT OF STOCK', 'color': Colors.red};
+      return {'label': _localizations.outOfStock.toUpperCase(), 'color': Colors.red};
     } else if (stock <= 10) {
-      return {'label': 'LOW STOCK', 'color': Colors.orange};
+      return {'label': _localizations.lowStock.toUpperCase(), 'color': Colors.orange};
     } else {
-      return {'label': 'IN STOCK', 'color': Colors.green};
+      return {'label': _localizations.inStock.toUpperCase(), 'color': Colors.green};
     }
   }
 
@@ -1024,9 +1028,9 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const Text(
-            'Stock Overview',
-            style: TextStyle(
+          Text(
+            _localizations.stockOverview,
+            style: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
               color: Color(0xFF1B4D3E),
@@ -1047,7 +1051,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                 size: 20,
               ),
             ),
-            tooltip: 'Generate Report',
+            tooltip: _localizations.generateReport,
           ),
         ],
       ),

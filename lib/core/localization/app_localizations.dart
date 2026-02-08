@@ -714,4 +714,280 @@ class AppLocalizations {
         return EnglishLocalization.trackPurchases;
     }
   }
+
+  // Availability Page
+  String get stockOverview {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.stockOverview;
+      case 'Marathi':
+        return MarathiLocalization.stockOverview;
+      default:
+        return EnglishLocalization.stockOverview;
+    }
+  }
+
+  String get totalProducts {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.totalProducts;
+      case 'Marathi':
+        return MarathiLocalization.totalProducts;
+      default:
+        return EnglishLocalization.totalProducts;
+    }
+  }
+
+  String get inStock {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.inStock;
+      case 'Marathi':
+        return MarathiLocalization.inStock;
+      default:
+        return EnglishLocalization.inStock;
+    }
+  }
+
+  String get lowStock {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.lowStock;
+      case 'Marathi':
+        return MarathiLocalization.lowStock;
+      default:
+        return EnglishLocalization.lowStock;
+    }
+  }
+
+  String get outOfStock {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.outOfStock;
+      case 'Marathi':
+        return MarathiLocalization.outOfStock;
+      default:
+        return EnglishLocalization.outOfStock;
+    }
+  }
+
+  String get searchProducts {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.searchProducts;
+      case 'Marathi':
+        return MarathiLocalization.searchProducts;
+      default:
+        return EnglishLocalization.searchProducts;
+    }
+  }
+
+  String get all {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.all;
+      case 'Marathi':
+        return MarathiLocalization.all;
+      default:
+        return EnglishLocalization.all;
+    }
+  }
+
+  String get noProductsFound {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.noProductsFound;
+      case 'Marathi':
+        return MarathiLocalization.noProductsFound;
+      default:
+        return EnglishLocalization.noProductsFound;
+    }
+  }
+
+  String get noProductsMatch {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.noProductsMatch;
+      case 'Marathi':
+        return MarathiLocalization.noProductsMatch;
+      default:
+        return EnglishLocalization.noProductsMatch;
+    }
+  }
+
+  String get units {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.units;
+      case 'Marathi':
+        return MarathiLocalization.units;
+      default:
+        return EnglishLocalization.units;
+    }
+  }
+
+  String get stockValue {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.stockValue;
+      case 'Marathi':
+        return MarathiLocalization.stockValue;
+      default:
+        return EnglishLocalization.stockValue;
+    }
+  }
+
+  String get outOfStockMessage {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.outOfStockMessage;
+      case 'Marathi':
+        return MarathiLocalization.outOfStockMessage;
+      default:
+        return EnglishLocalization.outOfStockMessage;
+    }
+  }
+
+  String get lowStockMessage {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.lowStockMessage;
+      case 'Marathi':
+        return MarathiLocalization.lowStockMessage;
+      default:
+        return EnglishLocalization.lowStockMessage;
+    }
+  }
+
+  String get generateReport {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.generateReport;
+      case 'Marathi':
+        return MarathiLocalization.generateReport;
+      default:
+        return EnglishLocalization.generateReport;
+    }
+  }
+
+  String get exportInventory {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.exportInventory;
+      case 'Marathi':
+        return MarathiLocalization.exportInventory;
+      default:
+        return EnglishLocalization.exportInventory;
+    }
+  }
+
+  String get reportType {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.reportType;
+      case 'Marathi':
+        return MarathiLocalization.reportType;
+      default:
+        return EnglishLocalization.reportType;
+    }
+  }
+
+  String get selectReportTypes {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.selectReportTypes;
+      case 'Marathi':
+        return MarathiLocalization.selectReportTypes;
+      default:
+        return EnglishLocalization.selectReportTypes;
+    }
+  }
+
+  String get outOfStockProducts {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.outOfStockProducts;
+      case 'Marathi':
+        return MarathiLocalization.outOfStockProducts;
+      default:
+        return EnglishLocalization.outOfStockProducts;
+    }
+  }
+
+  String get productsWithZero {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.productsWithZero;
+      case 'Marathi':
+        return MarathiLocalization.productsWithZero;
+      default:
+        return EnglishLocalization.productsWithZero;
+    }
+  }
+
+  String get lowStockProducts {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.lowStockProducts;
+      case 'Marathi':
+        return MarathiLocalization.lowStockProducts;
+      default:
+        return EnglishLocalization.lowStockProducts;
+    }
+  }
+
+  String get productsWithLow {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.productsWithLow;
+      case 'Marathi':
+        return MarathiLocalization.productsWithLow;
+      default:
+        return EnglishLocalization.productsWithLow;
+    }
+  }
+
+  String get allProducts {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.allProducts;
+      case 'Marathi':
+        return MarathiLocalization.allProducts;
+      default:
+        return EnglishLocalization.allProducts;
+    }
+  }
+
+  String get completeInventory {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.completeInventory;
+      case 'Marathi':
+        return MarathiLocalization.completeInventory;
+      default:
+        return EnglishLocalization.completeInventory;
+    }
+  }
+
+  String get exportFormat {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.exportFormat;
+      case 'Marathi':
+        return MarathiLocalization.exportFormat;
+      default:
+        return EnglishLocalization.exportFormat;
+    }
+  }
+
+  String get generateAndShare {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.generateAndShare;
+      case 'Marathi':
+        return MarathiLocalization.generateAndShare;
+      default:
+        return EnglishLocalization.generateAndShare;
+    }
+  }
 }

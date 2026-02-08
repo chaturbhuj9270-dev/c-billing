@@ -83,4 +83,31 @@ class EnglishLocalization {
   static const String date = 'Date';
   static const String currentStock = 'Current Stock';
   static const String minStock = 'Min Stock';
+  
+  // Availability Page
+  static const String stockOverview = 'Stock Overview';
+  static const String totalProducts = 'Total Products';
+  static const String inStock = 'In Stock';
+  static const String lowStock = 'Low Stock';
+  static const String outOfStock = 'Out of Stock';
+  static const String searchProducts = 'Search products...';
+  static const String all = 'All';
+  static const String noProductsFound = 'No products found';
+  static const String noProductsMatch = 'No products match your search';
+  static const String units = 'units';
+  static const String stockValue = 'Stock Value';
+  static const String outOfStockMessage = 'This product is out of stock and needs to be restocked immediately.';
+  static const String lowStockMessage = 'This product is running low on stock. Consider restocking soon.';
+  static const String generateReport = 'Generate Report';
+  static const String exportInventory = 'Export inventory data as PDF or CSV';
+  static const String reportType = 'Report Type';
+  static const String selectReportTypes = 'Select one or more report types';
+  static const String outOfStockProducts = 'Out of Stock Products';
+  static const String productsWithZero = 'Products with 0 quantity';
+  static const String lowStockProducts = 'Low Stock Products';
+  static const String productsWithLow = 'Products with quantity ≤ 10';
+  static const String allProducts = 'All Products';
+  static const String completeInventory = 'Complete inventory list';
+  static const String exportFormat = 'Export Format';
+  static const String generateAndShare = 'Generate & Share';
 }
