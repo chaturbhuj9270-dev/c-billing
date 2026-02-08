@@ -13,6 +13,8 @@ import '../../../billing/presentation/pages/billing_page.dart';
 import '../../../billing/presentation/pages/bills_list_page.dart';
 import '../../../availability/presentation/pages/availability_page.dart';
 import '../../../../core/services/session_manager.dart';
+import '../../../../core/services/language_service.dart';
+import '../../../../core/localization/app_localizations.dart';
 import '../../domain/entities/dashboard_summary.dart';
 import '../../domain/repositories/dashboard_repository_interface.dart';
 import '../../data/repositories/dashboard_repository.dart';
@@ -52,6 +54,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
     with TickerProviderStateMixin {
   int _selectedIndex = 0;
   late SessionManager _sessionManager;
+  late AppLocalizations _localizations;
 
   // Animation controllers
   late AnimationController _fadeController;
@@ -70,6 +73,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
   void initState() {
     super.initState();
     _sessionManager = SessionManager();
+    _localizations = AppLocalizations.of(LanguageService.instance.currentLanguage);
 
     // Fade animation for content
     _fadeController = AnimationController(
@@ -132,15 +136,15 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
   String _getPageTitle() {
     switch (_selectedIndex) {
       case 0:
-        return 'Dashboard';
+        return _localizations.dashboard;
       case 1:
-        return 'Customers';
+        return _localizations.customers;
       case 2:
-        return 'Availability';
+        return _localizations.availability;
       case 3:
-        return 'Create Bill';
+        return _localizations.billing;
       case 4:
-        return 'Purchases';
+        return _localizations.purchase;
       default:
         return 'C-Billing';
     }
@@ -392,7 +396,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
           _buildFilterSection(state),
           const SizedBox(height: 28),
           _buildSectionHeader(
-            title: 'Sales & Profit Analysis',
+            title: _localizations.salesProfitAnalysis,
             subtitle: _getFilterLabel(state.params),
             icon: Icons.analytics_outlined,
           ),
@@ -402,8 +406,8 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
           _buildProfitCard(data, isRefreshing),
           const SizedBox(height: 28),
           _buildSectionHeader(
-            title: 'Inventory & Payments',
-            subtitle: 'Live status',
+            title: _localizations.inventoryPayments,
+            subtitle: _localizations.liveStatus,
             icon: Icons.inventory_2_outlined,
           ),
           const SizedBox(height: 20),
@@ -417,43 +421,43 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
           ),
           const SizedBox(height: 16),
           _buildGlassyStatRow(
-            title: 'Upcoming Payments',
+            title: _localizations.upcomingPayments,
             count: _upcomingPayments.length,
             icon: Icons.schedule_rounded,
             gradientColors: const [Color(0xFF4A90E2), Color(0xFF7B68EE)],
-            onTap: () => _showQuickInsightDetail('Upcoming Payments', _upcomingPayments, 'upcoming'),
+            onTap: () => _showQuickInsightDetail(_localizations.upcomingPayments, _upcomingPayments, 'upcoming'),
           ),
           const SizedBox(height: 10),
           _buildGlassyStatRow(
-            title: 'Top Performing Products',
+            title: _localizations.topProducts,
             count: _topProducts.length,
             icon: Icons.star_rounded,
             gradientColors: const [Color(0xFFFFB74D), Color(0xFFFF9800)],
-            onTap: () => _showQuickInsightDetail('Top Products', _topProducts, 'products'),
+            onTap: () => _showQuickInsightDetail(_localizations.topProducts, _topProducts, 'products'),
           ),
           const SizedBox(height: 10),
           _buildGlassyStatRow(
-            title: 'Pending Payments',
+            title: _localizations.pendingPayments,
             count: _pendingPayments.length,
             icon: Icons.pending_actions_rounded,
             gradientColors: const [Color(0xFFEF5350), Color(0xFFE53935)],
-            onTap: () => _showQuickInsightDetail('Pending Payments', _pendingPayments, 'pending'),
+            onTap: () => _showQuickInsightDetail(_localizations.pendingPayments, _pendingPayments, 'pending'),
           ),
           const SizedBox(height: 10),
           _buildGlassyStatRow(
-            title: 'Last Dues',
+            title: _localizations.lastDues,
             count: _lastDues.length,
             icon: Icons.receipt_long_rounded,
             gradientColors: const [Color(0xFF9575CD), Color(0xFF7E57C2)],
-            onTap: () => _showQuickInsightDetail('Last Dues', _lastDues, 'dues'),
+            onTap: () => _showQuickInsightDetail(_localizations.lastDues, _lastDues, 'dues'),
           ),
           const SizedBox(height: 10),
           _buildGlassyStatRow(
-            title: 'Low Stock Items',
+            title: _localizations.lowStockItems,
             count: _lowStockItems.length,
             icon: Icons.shopping_cart_rounded,
             gradientColors: const [Color(0xFF26A69A), Color(0xFF00897B)],
-            onTap: () => _showQuickInsightDetail('Low Stock Items', _lowStockItems, 'lowstock'),
+            onTap: () => _showQuickInsightDetail(_localizations.lowStockItems, _lowStockItems, 'lowstock'),
           ),
           const SizedBox(height: 24),
           if (state is DashboardErrorState) _buildErrorBanner(state),
@@ -562,7 +566,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
           _buildQuickStatItem(
             icon: Icons.receipt_long_outlined,
             value: '${data.invoicesCount}',
-            label: 'Invoices',
+            label: _localizations.invoices,
             color: const Color(0xFF667eea),
             isLoading: isLoading,
             onTap: () => Navigator.push(
@@ -574,7 +578,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
           _buildQuickStatItem(
             icon: Icons.inventory_2_outlined,
             value: '${data.productsCount}',
-            label: 'Products',
+            label: _localizations.products,
             color: const Color(0xFFf093fb),
             isLoading: isLoading,
             onTap: () => Navigator.push(
@@ -586,7 +590,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
           _buildQuickStatItem(
             icon: Icons.local_shipping_outlined,
             value: '${data.suppliersCount}',
-            label: 'Suppliers',
+            label: _localizations.suppliers,
             color: const Color(0xFFFF6B6B),
             isLoading: isLoading,
             onTap: () => Navigator.push(
@@ -598,7 +602,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
           _buildQuickStatItem(
             icon: Icons.business_outlined,
             value: '${data.companiesCount}',
-            label: 'Companies',
+            label: _localizations.companies,
             color: const Color(0xFF9C27B0),
             isLoading: isLoading,
             onTap: () => Navigator.push(
@@ -706,9 +710,9 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
               size: 18,
             ),
             const SizedBox(width: 8),
-            const Text(
-              'Filter by Period',
-              style: TextStyle(
+            Text(
+              _localizations.filterByPeriod,
+              style: const TextStyle(
                 color: Color(0xFF1B4D3E),
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
@@ -725,28 +729,28 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
             children: [
               _buildFilterChip(
                 DashboardFilter.today,
-                'Today',
+                _localizations.today,
                 Icons.today_rounded,
                 state,
               ),
               const SizedBox(width: 8),
               _buildFilterChip(
                 DashboardFilter.thisWeek,
-                'This Week',
+                _localizations.thisWeek,
                 Icons.date_range_rounded,
                 state,
               ),
               const SizedBox(width: 8),
               _buildFilterChip(
                 DashboardFilter.thisMonth,
-                'This Month',
+                _localizations.thisMonth,
                 Icons.calendar_month_rounded,
                 state,
               ),
               const SizedBox(width: 8),
               _buildFilterChip(
                 DashboardFilter.thisYear,
-                'This Year',
+                _localizations.thisYear,
                 Icons.calendar_today_rounded,
                 state,
               ),
@@ -760,7 +764,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
               const SizedBox(width: 8),
               _buildFilterChip(
                 DashboardFilter.all,
-                'All Time',
+                _localizations.allTime,
                 Icons.all_inclusive_rounded,
                 state,
               ),
@@ -936,10 +940,10 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
       children: [
         Expanded(
           child: _buildGradientMetricCard(
-            title: 'Total Sales',
+            title: _localizations.totalSales,
             amount: _formatAmount(data.totalSales),
             subtitle:
-                'Bills: ${data.totalBillsCount} • Items: ${data.totalItemsSold}',
+                '${_localizations.bills}: ${data.totalBillsCount} • ${_localizations.items}: ${data.totalItemsSold}',
             gradient: const LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
@@ -952,10 +956,10 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
         const SizedBox(width: 16),
         Expanded(
           child: _buildGradientMetricCard(
-            title: 'Total Purchase',
+            title: _localizations.totalPurchase,
             amount: _formatAmount(data.totalPurchases),
             subtitle:
-                'Orders: ${data.purchaseOrders} • Qty: ${data.purchaseQty}',
+                '${_localizations.orders}: ${data.purchaseOrders} • ${_localizations.qty}: ${data.purchaseQty}',
             gradient: const LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
@@ -1402,11 +1406,11 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              _buildNavItem(0, Icons.dashboard_rounded, 'Dashboard'),
-              _buildNavItem(1, Icons.people_rounded, 'Customers'),
-              _buildNavItem(2, Icons.event_available_rounded, 'Available'),
-              _buildNavItem(3, Icons.receipt_long_rounded, 'Billing'),
-              _buildNavItem(4, Icons.shopping_cart_rounded, 'Purchase'),
+              _buildNavItem(0, Icons.dashboard_rounded, _localizations.dashboard),
+              _buildNavItem(1, Icons.people_rounded, _localizations.customers),
+              _buildNavItem(2, Icons.event_available_rounded, _localizations.availability),
+              _buildNavItem(3, Icons.receipt_long_rounded, _localizations.billing),
+              _buildNavItem(4, Icons.shopping_cart_rounded, _localizations.purchase),
             ],
           ),
         ),

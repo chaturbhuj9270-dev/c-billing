@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../../core/services/session_manager.dart';
 import '../../../../core/services/credentials_manager.dart';
+import '../../../../core/services/language_service.dart';
 import 'profile_page.dart';
 import '../../../supplier/presentation/pages/supplier_page.dart';
 import '../../../customer/presentation/pages/customer_page.dart';
@@ -50,6 +51,7 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
     _credentialsManager = CredentialsManager();
     _currentUser = _auth.currentUser;
     _userName = _currentUser?.displayName ?? 'User';
+    _selectedLanguage = LanguageService.instance.currentLanguage;
 
     // Main slide animation
     _slideController = AnimationController(
@@ -212,142 +214,27 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
   void _showLanguageDialog() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFF6F00).withOpacity(0.1),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Icon(
-                Icons.language_rounded,
-                color: Color(0xFFFF6F00),
-                size: 24,
-              ),
-            ),
-            const SizedBox(width: 12),
-            const Text(
-              'Select Language',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
-                fontFamily: 'Literata',
-              ),
-            ),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _buildLanguageOption('English', '🇬🇧', 'English'),
-            const SizedBox(height: 12),
-            _buildLanguageOption('Hindi', '🇮🇳', 'हिंदी'),
-            const SizedBox(height: 12),
-            _buildLanguageOption('Marathi', '🇮🇳', 'मराठी'),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text(
-              'Cancel',
-              style: TextStyle(
-                color: Colors.grey,
-                fontFamily: 'Literata',
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildLanguageOption(String language, String flag, String nativeName) {
-    final isSelected = _selectedLanguage == language;
-    
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          _selectedLanguage = language;
-        });
-        Navigator.of(context).pop();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Language changed to $language'),
-            backgroundColor: const Color(0xFF2E7D32),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-            duration: const Duration(seconds: 2),
-          ),
-        );
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        decoration: BoxDecoration(
-          color: isSelected 
-              ? const Color(0xFFFF6F00).withOpacity(0.1)
-              : Colors.grey.withOpacity(0.05),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isSelected 
-                ? const Color(0xFFFF6F00)
-                : Colors.grey.withOpacity(0.2),
-            width: isSelected ? 2 : 1,
-          ),
-        ),
-        child: Row(
-          children: [
-            Text(
-              flag,
-              style: const TextStyle(fontSize: 24),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    language,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                      fontFamily: 'Literata',
-                      color: isSelected ? const Color(0xFFFF6F00) : Colors.black87,
-                    ),
-                  ),
-                  Text(
-                    nativeName,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.grey[600],
-                      fontFamily: 'Literata',
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            if (isSelected)
-              Container(
-                padding: const EdgeInsets.all(4),
-                decoration: const BoxDecoration(
-                  color: Color(0xFFFF6F00),
-                  shape: BoxShape.circle,
+      builder: (dialogContext) => _LanguageDialog(
+        currentLanguage: _selectedLanguage,
+        onLanguageSelected: (language) async {
+          await LanguageService.instance.setLanguage(language);
+          if (mounted) {
+            setState(() {
+              _selectedLanguage = language;
+            });
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Language changed to $language'),
+                backgroundColor: const Color(0xFF2E7D32),
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(
-                  Icons.check,
-                  color: Colors.white,
-                  size: 16,
-                ),
+                duration: const Duration(seconds: 2),
               ),
-          ],
-        ),
+            );
+          }
+        },
       ),
     );
   }
@@ -719,4 +606,142 @@ class _MenuItem {
     required this.route,
     required this.color,
   });
+}
+
+class _LanguageDialog extends StatelessWidget {
+  final String currentLanguage;
+  final Function(String) onLanguageSelected;
+
+  const _LanguageDialog({
+    required this.currentLanguage,
+    required this.onLanguageSelected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+      ),
+      title: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFF6F00).withOpacity(0.1),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Icon(
+              Icons.language_rounded,
+              color: Color(0xFFFF6F00),
+              size: 24,
+            ),
+          ),
+          const SizedBox(width: 12),
+          const Text(
+            'Select Language',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
+              fontFamily: 'Literata',
+            ),
+          ),
+        ],
+      ),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildLanguageOption(context, 'English', '🇬🇧', 'English'),
+          const SizedBox(height: 12),
+          _buildLanguageOption(context, 'Hindi', '🇮🇳', 'हिंदी'),
+          const SizedBox(height: 12),
+          _buildLanguageOption(context, 'Marathi', '🇮🇳', 'मराठी'),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text(
+            'Cancel',
+            style: TextStyle(
+              color: Colors.grey,
+              fontFamily: 'Literata',
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLanguageOption(BuildContext context, String language, String flag, String nativeName) {
+    final isSelected = currentLanguage == language;
+    
+    return GestureDetector(
+      onTap: () {
+        Navigator.of(context).pop();
+        onLanguageSelected(language);
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: isSelected 
+              ? const Color(0xFFFF6F00).withOpacity(0.1)
+              : Colors.grey.withOpacity(0.05),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected 
+                ? const Color(0xFFFF6F00)
+                : Colors.grey.withOpacity(0.2),
+            width: isSelected ? 2 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Text(
+              flag,
+              style: const TextStyle(fontSize: 24),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    language,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                      fontFamily: 'Literata',
+                      color: isSelected ? const Color(0xFFFF6F00) : Colors.black87,
+                    ),
+                  ),
+                  Text(
+                    nativeName,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.grey[600],
+                      fontFamily: 'Literata',
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (isSelected)
+              Container(
+                padding: const EdgeInsets.all(4),
+                decoration: const BoxDecoration(
+                  color: Color(0xFFFF6F00),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.check,
+                  color: Colors.white,
+                  size: 16,
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
 }

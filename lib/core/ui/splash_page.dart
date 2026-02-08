@@ -8,6 +8,8 @@ import '../../features/authentication/presentation/pages/login.dart';
 import '../../features/dashboard/presentation/pages/optimized_dashboard_page.dart';
 import '../../core/services/biometric_service.dart';
 import '../services/credentials_manager.dart';
+import '../services/language_service.dart';
+import '../localization/app_localizations.dart';
 
 class SplashPage extends StatefulWidget {
   final Duration duration;
@@ -21,11 +23,13 @@ class SplashPage extends StatefulWidget {
 class _SplashPageState extends State<SplashPage> {
   Timer? _timer;
   late CredentialsManager _credentialsManager;
+  late AppLocalizations _localizations;
 
   @override
   void initState() {
     super.initState();
     _credentialsManager = CredentialsManager();
+    _localizations = AppLocalizations.of(LanguageService.instance.currentLanguage);
     _initializeApp();
   }
 
@@ -215,9 +219,9 @@ class _SplashPageState extends State<SplashPage> {
                   const SizedBox(height: 40),
                   
                   // App name
-                  const Text(
-                    'C-BILLING',
-                    style: TextStyle(
+                  Text(
+                    _localizations.appName,
+                    style: const TextStyle(
                       color: Color(0xFF1B4D3E),
                       fontSize: 46,
                       fontWeight: FontWeight.w600,
@@ -231,7 +235,7 @@ class _SplashPageState extends State<SplashPage> {
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: Text(
-                      'THE BACKBONE FOR OUR\nBUSINESS',
+                      _localizations.tagline,
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: const Color(0xFF1B4D3E).withOpacity(0.55),
@@ -294,7 +298,7 @@ class _SplashPageState extends State<SplashPage> {
                                       ),
                                       const SizedBox(width: 8),
                                       Text(
-                                        'Unlock Now',
+                                        _localizations.unlockNow,
                                         style: TextStyle(
                                           color: Colors.white.withValues(alpha: 0.95),
                                           fontSize: 16,

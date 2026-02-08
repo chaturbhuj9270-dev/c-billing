@@ -4,6 +4,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'core/di/injection.dart' as di;
 import 'core/ui/splash_page.dart';
 import 'core/services/credentials_manager.dart';
+import 'core/services/language_service.dart';
 import 'firebase_options.dart';
 
 Future<void> main() async {
@@ -12,6 +13,9 @@ Future<void> main() async {
   
   // Initialize CredentialsManager early
   await CredentialsManager().init();
+  
+  // Initialize LanguageService
+  await LanguageService.instance.init();
   
   try {
     await Firebase.initializeApp(
