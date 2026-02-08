@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:ui';
@@ -14,6 +15,7 @@ import '../../../billing/presentation/pages/bills_list_page.dart';
 import '../../../availability/presentation/pages/availability_page.dart';
 import '../../../../core/services/session_manager.dart';
 import '../../../../core/services/language_service.dart';
+import '../../../../core/services/dashboard_refresh_service.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../../domain/entities/dashboard_summary.dart';
 import '../../domain/repositories/dashboard_repository_interface.dart';
@@ -68,6 +70,9 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
   List<Map<String, dynamic>> _lastDues = [];
   List<Map<String, dynamic>> _lowStockItems = [];
   bool _isLoadingExpandableData = false;
+  
+  // Dashboard refresh subscription
+  StreamSubscription<void>? _refreshSubscription;
 
   @override
   void initState() {
@@ -77,6 +82,11 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
 
     // Listen for language changes
     LanguageService.instance.addListener(_onLanguageChanged);
+    
+    // Listen for dashboard refresh events (when data changes in other pages)
+    _refreshSubscription = DashboardRefreshService.instance.onRefreshNeeded.listen((_) {
+      _onDataChanged();
+    });
 
     // Fade animation for content
     _fadeController = AnimationController(
@@ -91,6 +101,16 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
     
     // Load expandable section data
     _loadExpandableSectionData();
+  }
+  
+  /// Called when data changes in other pages (customers, suppliers, etc.)
+  void _onDataChanged() {
+    if (mounted) {
+      // Refresh the dashboard cubit
+      context.read<OptimizedDashboardCubit>().refresh();
+      // Also reload expandable section data
+      _loadExpandableSectionData();
+    }
   }
 
   void _onLanguageChanged() {
@@ -136,6 +156,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
 
   @override
   void dispose() {
+    _refreshSubscription?.cancel();
     LanguageService.instance.removeListener(_onLanguageChanged);
     _fadeController.dispose();
     super.dispose();

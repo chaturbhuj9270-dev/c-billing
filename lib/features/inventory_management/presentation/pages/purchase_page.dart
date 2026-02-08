@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:ui';
 import 'package:c_billing/core/services/inventory_service.dart';
 import 'package:c_billing/core/services/language_service.dart';
+import 'package:c_billing/core/services/dashboard_refresh_service.dart';
 import 'package:c_billing/core/localization/app_localizations.dart';
 import '../../data/repositories/firebase_product_repository.dart';
 import '../../data/repositories/firebase_stock_repository.dart';
@@ -927,6 +928,9 @@ class _PurchasePageState extends State<PurchasePage>
             backgroundColor: Colors.green,
           ),
         );
+        
+        // Notify dashboard to refresh
+        DashboardRefreshService.instance.notifyDataChanged();
 
         // Reset form
         setState(() {
@@ -1309,6 +1313,9 @@ class _PurchasePageState extends State<PurchasePage>
       }
 
       await _loadSuppliers();
+      
+      // Notify dashboard to refresh
+      DashboardRefreshService.instance.notifyDataChanged();
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1494,6 +1501,9 @@ class _PurchasePageState extends State<PurchasePage>
       }
 
       await _loadCompanies();
+      
+      // Notify dashboard to refresh
+      DashboardRefreshService.instance.notifyDataChanged();
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

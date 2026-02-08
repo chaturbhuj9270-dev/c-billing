@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../core/services/session_manager.dart';
 import '../../../../core/services/language_service.dart';
+import '../../../../core/services/dashboard_refresh_service.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../../data/datasources/company_cache_datasource.dart';
 
@@ -439,6 +440,10 @@ class _CompanyPageState extends State<CompanyPage> {
         print('[DEBUG] Updating existing company: $_editingCompanyId');
         await companiesCollection.doc(_editingCompanyId).update(companyData);
         print('[DEBUG] Company updated successfully');
+        
+        // Notify dashboard to refresh
+        DashboardRefreshService.instance.notifyDataChanged();
+        
         _clearForm();
         _loadCompanies();
         if (mounted) {
@@ -466,6 +471,10 @@ class _CompanyPageState extends State<CompanyPage> {
 
         final docRef = await companiesCollection.add(companyData);
         print('[DEBUG] Company added successfully with ID: ${docRef.id}');
+        
+        // Notify dashboard to refresh
+        DashboardRefreshService.instance.notifyDataChanged();
+        
         _clearForm();
         _loadCompanies();
         if (mounted) {
@@ -562,6 +571,10 @@ class _CompanyPageState extends State<CompanyPage> {
           .delete();
 
       print('[DEBUG] Company deleted successfully');
+      
+      // Notify dashboard to refresh
+      DashboardRefreshService.instance.notifyDataChanged();
+      
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:async';
 import '../../../../core/services/session_manager.dart';
 import '../../../../core/services/language_service.dart';
+import '../../../../core/services/dashboard_refresh_service.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../../data/datasources/customer_cache_datasource.dart';
 import 'customer_details_page.dart';
@@ -519,6 +520,10 @@ class _CustomerPageState extends State<CustomerPage> {
         print('[DEBUG] Updating existing customer: $_editingCustomerId');
         await customersCollection.doc(_editingCustomerId).update(customerData);
         print('[DEBUG] Customer updated successfully');
+        
+        // Notify dashboard to refresh
+        DashboardRefreshService.instance.notifyDataChanged();
+        
         _clearForm();
         _loadCustomers();
         if (mounted && context.mounted) {
@@ -548,6 +553,10 @@ class _CustomerPageState extends State<CustomerPage> {
 
         final docRef = await customersCollection.add(customerData);
         print('[DEBUG] Customer added successfully with ID: ${docRef.id}');
+        
+        // Notify dashboard to refresh
+        DashboardRefreshService.instance.notifyDataChanged();
+        
         _clearForm();
         _loadCustomers();
         if (mounted && context.mounted) {
@@ -670,6 +679,10 @@ class _CustomerPageState extends State<CustomerPage> {
           .delete();
 
       print('[DEBUG] Customer deleted successfully');
+      
+      // Notify dashboard to refresh
+      DashboardRefreshService.instance.notifyDataChanged();
+      
       if (mounted && context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(

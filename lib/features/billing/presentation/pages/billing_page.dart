@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'package:c_billing/core/services/billing_service.dart';
 import 'package:c_billing/core/services/customer_transaction_service.dart';
+import 'package:c_billing/core/services/dashboard_refresh_service.dart';
 import 'package:c_billing/features/billing/data/repositories/firebase_bill_repository.dart';
 import 'package:c_billing/features/billing/domain/entities/bill.dart';
 import 'package:c_billing/features/billing/domain/entities/bill_item.dart';
@@ -299,6 +300,9 @@ class _BillingPageState extends State<BillingPage> {
 
         // Background reload to ensure sync without blocking UI
         _loadProducts(showLoader: false);
+        
+        // Notify dashboard to refresh (bill count and products count may change)
+        DashboardRefreshService.instance.notifyDataChanged();
 
         // Show success dialog with print/share options
         if (mounted && createdBill != null) {

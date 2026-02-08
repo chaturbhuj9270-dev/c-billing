@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../core/services/session_manager.dart';
 import '../../../../core/services/language_service.dart';
+import '../../../../core/services/dashboard_refresh_service.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../../data/datasources/supplier_cache_datasource.dart';
 
@@ -577,6 +578,9 @@ class _SupplierPageState extends State<SupplierPage> {
 
         await suppliersRef.doc(_editingSupplierId).update(updatedData);
         print('[DEBUG] Supplier updated: $_editingSupplierId');
+        
+        // Notify dashboard to refresh
+        DashboardRefreshService.instance.notifyDataChanged();
       } else {
         final newData = {
           'firstName': _firstNameController.text,
@@ -599,6 +603,9 @@ class _SupplierPageState extends State<SupplierPage> {
 
         await suppliersRef.add(newData);
         print('[DEBUG] New supplier added');
+        
+        // Notify dashboard to refresh
+        DashboardRefreshService.instance.notifyDataChanged();
       }
 
       if (mounted && context.mounted) {
@@ -656,6 +663,9 @@ class _SupplierPageState extends State<SupplierPage> {
           .collection('suppliers')
           .doc(_editingSupplierId)
           .delete();
+      
+      // Notify dashboard to refresh
+      DashboardRefreshService.instance.notifyDataChanged();
 
       if (mounted && context.mounted) {
         Navigator.pop(context);

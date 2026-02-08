@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:ui';
 import 'package:c_billing/core/services/inventory_service.dart';
 import 'package:c_billing/core/services/language_service.dart';
+import 'package:c_billing/core/services/dashboard_refresh_service.dart';
 import 'package:c_billing/core/localization/app_localizations.dart';
 import '../../data/repositories/firebase_product_repository.dart';
 import '../../data/repositories/firebase_stock_repository.dart';
@@ -408,6 +409,10 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                   }
 
                   await _inventoryService.updateProduct(updatedProduct);
+                  
+                  // Notify dashboard to refresh
+                  DashboardRefreshService.instance.notifyDataChanged();
+                  
                   if (mounted) {
                     Navigator.pop(context);
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -470,6 +475,10 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                 _cacheDataSource.saveProducts(_products);
 
                 await _inventoryService.deleteProduct(product.id);
+                
+                // Notify dashboard to refresh
+                DashboardRefreshService.instance.notifyDataChanged();
+                
                 if (mounted) {
                   Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -920,6 +929,10 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                     salesPrice: double.parse(salesPriceController.text),
                     initialStock: int.parse(initialStockController.text),
                   );
+                  
+                  // Notify dashboard to refresh
+                  DashboardRefreshService.instance.notifyDataChanged();
+                  
                   if (mounted) {
                     Navigator.pop(context);
                     ScaffoldMessenger.of(context).showSnackBar(
