@@ -273,8 +273,8 @@ class InventoryService {
   /// Create a new product
   Future<String> createProduct({
     required String name,
-    required String companyName,
-    required String category,
+    String companyName = '',
+    String category = '',
     required double purchasePrice,
     required double salesPrice,
     int initialStock = 0,
@@ -283,8 +283,6 @@ class InventoryService {
     try {
       // Validate inputs
       if (name.isEmpty) throw Exception('Product name cannot be empty');
-      if (companyName.isEmpty) throw Exception('Company name cannot be empty');
-      if (category.isEmpty) throw Exception('Category cannot be empty');
       if (purchasePrice < 0)
         throw Exception('Purchase price cannot be negative');
       if (salesPrice < 0) throw Exception('Sales price cannot be negative');
