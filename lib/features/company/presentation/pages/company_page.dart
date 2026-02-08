@@ -294,7 +294,7 @@ class _CompanyPageState extends State<CompanyPage> {
             controller: _contactController,
             icon: Icons.phone_outlined,
             keyboardType: TextInputType.phone,
-            isRequired: true,
+            isRequired: false,
           ),
           const SizedBox(height: 16),
           // Address
