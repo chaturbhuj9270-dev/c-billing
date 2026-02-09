@@ -11,6 +11,8 @@ import 'package:c_billing/features/inventory_management/data/repositories/fireba
 import 'package:c_billing/features/inventory_management/data/repositories/firebase_stock_repository.dart';
 import 'package:c_billing/features/inventory_management/data/repositories/firebase_purchase_repository.dart';
 import 'package:c_billing/features/inventory_management/domain/entities/product.dart';
+import 'package:c_billing/features/inventory_management/domain/entities/report_item.dart';
+import 'package:c_billing/features/availability/presentation/pages/report_preview_screen.dart';
 
 class AvailabilityPage extends StatefulWidget {
   final bool isEmbedded;
@@ -96,7 +98,6 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
   void _showReportBottomSheet() {
     Set<ReportType> selectedTypes = {ReportType.outOfStock};
     ReportFormat selectedFormat = ReportFormat.pdf;
-    bool isGenerating = false;
 
     showModalBottomSheet(
       context: context,
@@ -303,17 +304,14 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                 child: SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: isGenerating || selectedTypes.isEmpty
+                    onPressed: selectedTypes.isEmpty
                         ? null
                         : () async {
-                            setSheetState(() => isGenerating = true);
-                            await _generateReportMultiple(
+                            Navigator.pop(context);
+                            await _openPreviewScreen(
                               selectedTypes,
                               selectedFormat,
                             );
-                            if (mounted) {
-                              Navigator.pop(context);
-                            }
                           },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF1B4D3E),
@@ -322,24 +320,22 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    child: isGenerating
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : Text(
-                            _localizations.generateAndShare,
-                            style: const TextStyle(
-                              fontFamily: 'Literata',
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                            ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.preview, size: 20),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Preview & Generate',
+                          style: const TextStyle(
+                            fontFamily: 'Literata',
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
                           ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -469,7 +465,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
     );
   }
 
-  Future<void> _generateReportMultiple(
+  Future<void> _openPreviewScreen(
     Set<ReportType> reportTypes,
     ReportFormat format,
   ) async {
@@ -501,48 +497,39 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
         return;
       }
 
+      // Convert to ReportItems
+      final reportItems = combinedProducts
+          .map((product) => ReportItem.fromProduct(product))
+          .toList();
+
       // Generate combined report title
       final typeLabels = reportTypes
           .map((t) => _reportService.getReportTypeLabel(t))
           .join(', ');
 
-      late final file;
-      if (format == ReportFormat.pdf) {
-        file = await _reportService.generatePdfReport(
-          products: combinedProducts,
-          reportType: reportTypes.length == 1
-              ? reportTypes.first
-              : ReportType.allProducts,
-          customTitle: reportTypes.length > 1 ? 'Combined Report' : null,
-          customSubtitle: reportTypes.length > 1 ? typeLabels : null,
-        );
-      } else {
-        file = await _reportService.generateCsvReport(
-          products: combinedProducts,
-          reportType: reportTypes.length == 1
-              ? reportTypes.first
-              : ReportType.allProducts,
-          customTitle: reportTypes.length > 1 ? 'Combined Report' : null,
-        );
-      }
+      final reportTitle = reportTypes.length == 1
+          ? _reportService.getReportTypeLabel(reportTypes.first)
+          : 'Combined Report: $typeLabels';
 
-      await _reportService.shareReport(file);
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Report generated with ${combinedProducts.length} products',
-            ),
-            backgroundColor: const Color(0xFF1B4D3E),
+      // Navigate to preview screen
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ReportPreviewScreen(
+            reportItems: reportItems,
+            reportType: reportTypes.length == 1
+                ? reportTypes.first
+                : ReportType.allProducts,
+            selectedFormat: format,
+            reportTitle: reportTitle,
           ),
-        );
-      }
+        ),
+      );
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error generating report: $e'),
+            content: Text('Error opening preview: $e'),
             backgroundColor: Colors.red,
           ),
         );

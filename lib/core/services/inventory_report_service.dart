@@ -313,4 +313,136 @@ class InventoryReportService {
   Future<void> shareReport(File file) async {
     await Share.shareXFiles([XFile(file.path)], subject: 'Inventory Report');
   }
+
+  /// Generate PDF report with order quantities
+  Future<File> generatePdfReportWithOrderQty({
+    required List<Product> products,
+    required List<int> orderQuantities,
+    required ReportType reportType,
+    String? shopName,
+    String? customTitle,
+    String? customSubtitle,
+  }) async {
+    final pdf = pw.Document();
+    final reportTitle = customTitle ?? getReportTypeLabel(reportType);
+    final reportSubtitle = customSubtitle;
+    final dateStr = DateFormat('dd MMM yyyy, hh:mm a').format(DateTime.now());
+    final finalShopName = shopName ?? 'C-Billing Network';
+
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.all(32),
+        header: (context) => _buildPdfHeader(
+          reportTitle,
+          dateStr,
+          finalShopName,
+          reportSubtitle,
+        ),
+        footer: (context) => _buildPdfFooter(context),
+        build: (context) => [
+          pw.SizedBox(height: 20),
+          _buildPdfSummary(products, reportType),
+          pw.SizedBox(height: 20),
+          _buildPdfTableWithOrderQty(products, orderQuantities),
+        ],
+      ),
+    );
+
+    // Save to file
+    final directory = await getApplicationDocumentsDirectory();
+    final fileName =
+        '${reportType.name}_report_${DateFormat('yyyyMMdd_HHmmss').format(DateTime.now())}.pdf';
+    final file = File('${directory.path}/$fileName');
+    await file.writeAsBytes(await pdf.save());
+
+    return file;
+  }
+
+  pw.Widget _buildPdfTableWithOrderQty(
+    List<Product> products,
+    List<int> orderQuantities,
+  ) {
+    return pw.TableHelper.fromTextArray(
+      context: null,
+      headerStyle: pw.TextStyle(
+        fontWeight: pw.FontWeight.bold,
+        fontSize: 10,
+        color: PdfColors.white,
+      ),
+      headerDecoration: const pw.BoxDecoration(color: PdfColors.green800),
+      cellStyle: const pw.TextStyle(fontSize: 9),
+      cellAlignment: pw.Alignment.centerLeft,
+      cellPadding: const pw.EdgeInsets.all(6),
+      headers: [
+        '#',
+        'Product Name',
+        'Category',
+        'Company',
+        'Stock',
+        'Status',
+        'Order Qty',
+      ],
+      data: products.asMap().entries.map((entry) {
+        final i = entry.key;
+        final p = entry.value;
+        final orderQty = i < orderQuantities.length ? orderQuantities[i] : 0;
+        return [
+          '${i + 1}',
+          p.name,
+          p.category,
+          p.companyName,
+          '${p.currentStock}',
+          getStockStatus(p.currentStock),
+          '$orderQty',
+        ];
+      }).toList(),
+    );
+  }
+
+  /// Generate CSV report with order quantities
+  Future<File> generateCsvReportWithOrderQty({
+    required List<Product> products,
+    required List<int> orderQuantities,
+    required ReportType reportType,
+    String? customTitle,
+  }) async {
+    final reportTitle = customTitle ?? getReportTypeLabel(reportType);
+    final dateStr = DateFormat('dd MMM yyyy, hh:mm a').format(DateTime.now());
+
+    final buffer = StringBuffer();
+
+    // Header info
+    buffer.writeln('Report: $reportTitle');
+    buffer.writeln('Generated: $dateStr');
+    buffer.writeln('Total Products: ${products.length}');
+    buffer.writeln('');
+
+    // CSV headers
+    buffer.writeln('S.No,Product Name,Category,Company,Stock,Status,Order Qty');
+
+    // Data rows
+    for (var i = 0; i < products.length; i++) {
+      final p = products[i];
+      final orderQty = i < orderQuantities.length ? orderQuantities[i] : 0;
+      buffer.writeln(
+        '${i + 1},'
+        '"${p.name.replaceAll('"', '""')}",'
+        '"${p.category.replaceAll('"', '""')}",'
+        '"${p.companyName.replaceAll('"', '""')}",'
+        '${p.currentStock},'
+        '"${getStockStatus(p.currentStock)}",'
+        '$orderQty',
+      );
+    }
+
+    // Save to file
+    final directory = await getApplicationDocumentsDirectory();
+    final fileName =
+        '${reportType.name}_report_${DateFormat('yyyyMMdd_HHmmss').format(DateTime.now())}.csv';
+    final file = File('${directory.path}/$fileName');
+    await file.writeAsString(buffer.toString());
+
+    return file;
+  }
 }
