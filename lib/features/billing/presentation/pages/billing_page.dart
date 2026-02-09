@@ -72,6 +72,11 @@ class _BillingPageState extends State<BillingPage> {
   final _indexNoFocusNode = FocusNode();
   Timer? _debounceTimer;
   Map<int, Product> _productByIndexNo = {};
+  
+  // Customer phone search debounce
+  Timer? _phoneSearchDebounceTimer;
+  bool _isSearchingCustomer = false;
+  String? _autoFoundCustomerName;
 
   @override
   void initState() {
@@ -103,6 +108,9 @@ class _BillingPageState extends State<BillingPage> {
       customerTransactionService: customerTransactionService,
     );
     
+    // Listen for customer phone number changes
+    _customerContactController.addListener(_onPhoneNumberChanged);
+    
     // Listen for product changes from other screens
     _productRefreshSubscription = DashboardRefreshService.instance.onProductChanged.listen((_) {
       if (mounted) _loadProducts(showLoader: false);
@@ -123,6 +131,8 @@ class _BillingPageState extends State<BillingPage> {
     _customerRefreshSubscription?.cancel();
     LanguageService.instance.removeListener(_onLanguageChanged);
     _debounceTimer?.cancel();
+    _phoneSearchDebounceTimer?.cancel();
+    _customerContactController.removeListener(_onPhoneNumberChanged);
     _indexNoController.dispose();
     _indexNoFocusNode.dispose();
     _customerNameController.dispose();
@@ -192,6 +202,317 @@ class _BillingPageState extends State<BillingPage> {
       });
     } catch (e) {
       debugPrint('[DEBUG] Error loading customers: $e');
+    }
+  }
+
+  /// Listener for phone number changes - implements debounced search
+  void _onPhoneNumberChanged() {
+    final phoneNumber = _customerContactController.text.trim();
+    
+    // Cancel previous timer
+    _phoneSearchDebounceTimer?.cancel();
+    
+    // Clear auto-found customer name if phone number is cleared
+    if (phoneNumber.isEmpty) {
+      setState(() {
+        _autoFoundCustomerName = null;
+        _selectedCustomer = null;
+      });
+      return;
+    }
+    
+    // Validate phone number length (at least 10 digits)
+    if (phoneNumber.length < 10) {
+      setState(() {
+        _autoFoundCustomerName = null;
+      });
+      return;
+    }
+    
+    // Start new debounce timer (600ms)
+    _phoneSearchDebounceTimer = Timer(const Duration(milliseconds: 600), () {
+      _searchCustomerByPhone(phoneNumber);
+    });
+  }
+
+  /// Search for customer by phone number
+  Future<void> _searchCustomerByPhone(String phoneNumber) async {
+    if (!mounted) return;
+    
+    setState(() {
+      _isSearchingCustomer = true;
+      _autoFoundCustomerName = null;
+    });
+    
+    try {
+      final customer = await _customerRepository.getCustomerByContact(phoneNumber);
+      
+      if (!mounted) return;
+      
+      if (customer != null) {
+        // Customer found - auto-attach to bill
+        setState(() {
+          _selectedCustomer = {
+            'id': customer.id,
+            'firstName': customer.firstName,
+            'lastName': customer.lastName,
+            'contact': customer.contact,
+            'fullName': '${customer.firstName} ${customer.lastName}'.trim(),
+          };
+          _autoFoundCustomerName = _selectedCustomer!['fullName'];
+          _customerNameController.text = _autoFoundCustomerName!;
+          _isSearchingCustomer = false;
+        });
+        
+        _showSnackbar(
+          'Customer found: ${_autoFoundCustomerName}',
+          isError: false,
+        );
+      } else {
+        // Customer not found - show add customer dialog
+        setState(() {
+          _isSearchingCustomer = false;
+        });
+        _showAddCustomerDialog(phoneNumber);
+      }
+    } catch (e) {
+      if (!mounted) return;
+      
+      setState(() {
+        _isSearchingCustomer = false;
+      });
+      
+      debugPrint('[DEBUG] Error searching customer: $e');
+      _showSnackbar(
+        'Error searching customer',
+        isError: true,
+      );
+    }
+  }
+
+  /// Show dialog to add new customer with pre-filled phone number
+  void _showAddCustomerDialog(String phoneNumber) {
+    final firstNameController = TextEditingController();
+    final lastNameController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+    
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(
+                Icons.person_add,
+                color: Color(0xFF1B4D3E),
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 12),
+            const Text(
+              'Add New Customer',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF1B4D3E),
+                fontFamily: 'Literata',
+              ),
+            ),
+          ],
+        ),
+        content: Form(
+          key: formKey,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Customer not found for $phoneNumber',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.grey[600],
+                    fontFamily: 'Literata',
+                  ),
+                ),
+                const SizedBox(height: 20),
+                TextFormField(
+                  controller: firstNameController,
+                  autofocus: true,
+                  decoration: InputDecoration(
+                    labelText: 'First Name *',
+                    prefixIcon: const Icon(Icons.person_outline),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(
+                        color: Color(0xFF1B4D3E),
+                        width: 2,
+                      ),
+                    ),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'First name is required';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: lastNameController,
+                  decoration: InputDecoration(
+                    labelText: 'Last Name *',
+                    prefixIcon: const Icon(Icons.person_outline),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(
+                        color: Color(0xFF1B4D3E),
+                        width: 2,
+                      ),
+                    ),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Last name is required';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  initialValue: phoneNumber,
+                  readOnly: true,
+                  decoration: InputDecoration(
+                    labelText: 'Phone Number',
+                    prefixIcon: const Icon(Icons.phone_outlined),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    filled: true,
+                    fillColor: Colors.grey[100],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              firstNameController.dispose();
+              lastNameController.dispose();
+              Navigator.pop(ctx);
+            },
+            child: Text(
+              'Cancel',
+              style: TextStyle(
+                color: Colors.grey[600],
+                fontFamily: 'Literata',
+              ),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              if (formKey.currentState!.validate()) {
+                await _saveNewCustomer(
+                  firstName: firstNameController.text.trim(),
+                  lastName: lastNameController.text.trim(),
+                  phoneNumber: phoneNumber,
+                );
+                firstNameController.dispose();
+                lastNameController.dispose();
+                Navigator.pop(ctx);
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF1B4D3E),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            child: const Text(
+              'Save & Attach',
+              style: TextStyle(
+                color: Colors.white,
+                fontFamily: 'Literata',
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Save new customer and auto-attach to current bill
+  Future<void> _saveNewCustomer({
+    required String firstName,
+    required String lastName,
+    required String phoneNumber,
+  }) async {
+    try {
+      final billRepo = FirebaseBillRepository(firestore: _firestore);
+      final docRef = await _firestore
+          .collection('users')
+          .doc(billRepo.userId)
+          .collection('customers')
+          .add({
+        'firstName': firstName,
+        'lastName': lastName,
+        'middleName': '',
+        'contact': phoneNumber,
+        'address': '',
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+        'isActive': true,
+        'pendingBalance': 0.0,
+        'totalPurchaseAmount': 0.0,
+        'totalPaidAmount': 0.0,
+      });
+
+      // Auto-attach customer to bill
+      final fullName = '$firstName $lastName'.trim();
+      setState(() {
+        _selectedCustomer = {
+          'id': docRef.id,
+          'firstName': firstName,
+          'lastName': lastName,
+          'contact': phoneNumber,
+          'fullName': fullName,
+        };
+        _autoFoundCustomerName = fullName;
+        _customerNameController.text = fullName;
+      });
+
+      // Refresh customer list
+      await _loadCustomers();
+      
+      // Notify other screens
+      DashboardRefreshService.instance.notifyDataChanged(DataChangeType.customer);
+
+      _showSnackbar(
+        'Customer added: $fullName',
+        isError: false,
+      );
+    } catch (e) {
+      debugPrint('[DEBUG] Error saving customer: $e');
+      _showSnackbar(
+        'Error saving customer: $e',
+        isError: true,
+      );
     }
   }
 
@@ -367,6 +688,7 @@ class _BillingPageState extends State<BillingPage> {
       _discountValue = 0.0;
       _isPercentageDiscount = true;
       _selectedCustomer = null;
+      _autoFoundCustomerName = null;
       _receivedAmount = 0.0;
       _isFullPayment = true;
     });
@@ -1011,32 +1333,76 @@ class _BillingPageState extends State<BillingPage> {
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: TextField(
-                  controller: _customerContactController,
-                  keyboardType: TextInputType.phone,
-                  style: const TextStyle(fontFamily: 'Literata', fontSize: 14),
-                  decoration: InputDecoration(
-                    labelText: _localizations.phone,
-                    labelStyle: TextStyle(
-                      color: Colors.grey[600],
-                      fontSize: 13,
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 12,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey[300]!),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: Color(0xFF1B4D3E),
-                        width: 1.5,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    TextField(
+                      controller: _customerContactController,
+                      keyboardType: TextInputType.phone,
+                      style: const TextStyle(fontFamily: 'Literata', fontSize: 14),
+                      decoration: InputDecoration(
+                        labelText: _localizations.phone,
+                        labelStyle: TextStyle(
+                          color: Colors.grey[600],
+                          fontSize: 13,
+                        ),
+                        suffixIcon: _isSearchingCustomer
+                            ? const Padding(
+                                padding: EdgeInsets.all(12.0),
+                                child: SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Color(0xFF1B4D3E),
+                                  ),
+                                ),
+                              )
+                            : null,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 12,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Colors.grey[300]!),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(
+                            color: Color(0xFF1B4D3E),
+                            width: 1.5,
+                          ),
+                        ),
                       ),
                     ),
-                  ),
+                    if (_autoFoundCustomerName != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 6, left: 4),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.check_circle,
+                              size: 14,
+                              color: Colors.green,
+                            ),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                'Customer: $_autoFoundCustomerName',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.green,
+                                  fontFamily: 'Literata',
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
                 ),
               ),
             ],
