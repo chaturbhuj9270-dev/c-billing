@@ -256,17 +256,22 @@ class _BillingPageState extends State<BillingPage> {
       if (customer == null && normalizedPhone.length >= 10) {
         final last10Digits = normalizedPhone.substring(normalizedPhone.length - 10);
         
-        // Search through all customers and match last 10 digits
-        final allCustomers = await _customerRepository.getAllCustomers();
-        for (final c in allCustomers) {
-          final customerNormalized = c.contact.replaceAll(RegExp(r'[\s\-\(\)\+]'), '');
-          if (customerNormalized.length >= 10) {
-            final customerLast10 = customerNormalized.substring(customerNormalized.length - 10);
-            if (customerLast10 == last10Digits) {
-              customer = c;
-              break;
+        try {
+          // Search through all customers and match last 10 digits
+          final allCustomers = await _customerRepository.getAllCustomers();
+          for (final c in allCustomers) {
+            final customerNormalized = c.contact.replaceAll(RegExp(r'[\s\-\(\)\+]'), '');
+            if (customerNormalized.length >= 10) {
+              final customerLast10 = customerNormalized.substring(customerNormalized.length - 10);
+              if (customerLast10 == last10Digits) {
+                customer = c;
+                break;
+              }
             }
           }
+        } catch (e) {
+          // If getAllCustomers fails, just continue without fuzzy matching
+          debugPrint('[DEBUG] Could not fetch all customers for fuzzy match: $e');
         }
       }
       
@@ -310,7 +315,7 @@ class _BillingPageState extends State<BillingPage> {
       
       debugPrint('[DEBUG] Error searching customer: $e');
       _showSnackbar(
-        'Error searching customer',
+        'Error searching customer: ${e.toString()}',
         isError: true,
       );
     }
