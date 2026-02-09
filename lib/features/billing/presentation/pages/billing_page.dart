@@ -77,6 +77,7 @@ class _BillingPageState extends State<BillingPage> {
   Timer? _phoneSearchDebounceTimer;
   bool _isSearchingCustomer = false;
   String? _autoFoundCustomerName;
+  bool _isAddCustomerDialogOpen = false;
 
   @override
   void initState() {
@@ -273,7 +274,10 @@ class _BillingPageState extends State<BillingPage> {
         setState(() {
           _isSearchingCustomer = false;
         });
-        _showAddCustomerDialog(phoneNumber);
+        // Only show dialog if not already open
+        if (!_isAddCustomerDialogOpen) {
+          _showAddCustomerDialog(phoneNumber);
+        }
       }
     } catch (e) {
       if (!mounted) return;
@@ -292,12 +296,14 @@ class _BillingPageState extends State<BillingPage> {
 
   /// Show dialog to add new customer with pre-filled phone number
   void _showAddCustomerDialog(String phoneNumber) {
+    _isAddCustomerDialogOpen = true;
     final firstNameController = TextEditingController();
     final lastNameController = TextEditingController();
     final formKey = GlobalKey<FormState>();
     
     showDialog(
       context: context,
+      barrierDismissible: false,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
@@ -412,6 +418,7 @@ class _BillingPageState extends State<BillingPage> {
         actions: [
           TextButton(
             onPressed: () {
+              _isAddCustomerDialogOpen = false;
               firstNameController.dispose();
               lastNameController.dispose();
               Navigator.pop(ctx);
@@ -427,14 +434,15 @@ class _BillingPageState extends State<BillingPage> {
           ElevatedButton(
             onPressed: () async {
               if (formKey.currentState!.validate()) {
+                _isAddCustomerDialogOpen = false;
+                Navigator.pop(ctx);
+                firstNameController.dispose();
+                lastNameController.dispose();
                 await _saveNewCustomer(
                   firstName: firstNameController.text.trim(),
                   lastName: lastNameController.text.trim(),
                   phoneNumber: phoneNumber,
                 );
-                firstNameController.dispose();
-                lastNameController.dispose();
-                Navigator.pop(ctx);
               }
             },
             style: ElevatedButton.styleFrom(
@@ -485,17 +493,19 @@ class _BillingPageState extends State<BillingPage> {
 
       // Auto-attach customer to bill
       final fullName = '$firstName $lastName'.trim();
-      setState(() {
-        _selectedCustomer = {
-          'id': docRef.id,
-          'firstName': firstName,
-          'lastName': lastName,
-          'contact': phoneNumber,
-          'fullName': fullName,
-        };
-        _autoFoundCustomerName = fullName;
-        _customerNameController.text = fullName;
-      });
+      if (mounted) {
+        setState(() {
+          _selectedCustomer = {
+            'id': docRef.id,
+            'firstName': firstName,
+            'lastName': lastName,
+            'contact': phoneNumber,
+            'fullName': fullName,
+          };
+          _autoFoundCustomerName = fullName;
+          _customerNameController.text = fullName;
+        });
+      }
 
       // Refresh customer list
       await _loadCustomers();
@@ -503,16 +513,20 @@ class _BillingPageState extends State<BillingPage> {
       // Notify other screens
       DashboardRefreshService.instance.notifyDataChanged(DataChangeType.customer);
 
-      _showSnackbar(
-        'Customer added: $fullName',
-        isError: false,
-      );
+      if (mounted) {
+        _showSnackbar(
+          'Customer added: $fullName',
+          isError: false,
+        );
+      }
     } catch (e) {
       debugPrint('[DEBUG] Error saving customer: $e');
-      _showSnackbar(
-        'Error saving customer: $e',
-        isError: true,
-      );
+      if (mounted) {
+        _showSnackbar(
+          'Error saving customer: $e',
+          isError: true,
+        );
+      }
     }
   }
 
@@ -689,6 +703,7 @@ class _BillingPageState extends State<BillingPage> {
       _isPercentageDiscount = true;
       _selectedCustomer = null;
       _autoFoundCustomerName = null;
+      _isAddCustomerDialogOpen = false;
       _receivedAmount = 0.0;
       _isFullPayment = true;
     });
