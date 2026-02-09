@@ -259,7 +259,7 @@ class InventoryReportService {
           p.companyName,
           '${p.currentStock}',
           getStockStatus(p.currentStock),
-          '',
+          '-',
         ];
       }).toList(),
     );
@@ -295,7 +295,7 @@ class InventoryReportService {
         '"${p.companyName.replaceAll('"', '""')}",'
         '${p.currentStock},'
         '"${getStockStatus(p.currentStock)}",'
-        '',
+        '-',
       );
     }
 
