@@ -246,7 +246,29 @@ class _BillingPageState extends State<BillingPage> {
     });
     
     try {
-      final customer = await _customerRepository.getCustomerByContact(phoneNumber);
+      // Normalize phone number - remove spaces, dashes, and country code for comparison
+      final normalizedPhone = phoneNumber.replaceAll(RegExp(r'[\s\-\(\)\+]'), '');
+      
+      // Try exact match first
+      var customer = await _customerRepository.getCustomerByContact(phoneNumber);
+      
+      // If not found, try normalized search (last 10 digits)
+      if (customer == null && normalizedPhone.length >= 10) {
+        final last10Digits = normalizedPhone.substring(normalizedPhone.length - 10);
+        
+        // Search through all customers and match last 10 digits
+        final allCustomers = await _customerRepository.getAllCustomers();
+        for (final c in allCustomers) {
+          final customerNormalized = c.contact.replaceAll(RegExp(r'[\s\-\(\)\+]'), '');
+          if (customerNormalized.length >= 10) {
+            final customerLast10 = customerNormalized.substring(customerNormalized.length - 10);
+            if (customerLast10 == last10Digits) {
+              customer = c;
+              break;
+            }
+          }
+        }
+      }
       
       if (!mounted) return;
       
@@ -254,7 +276,7 @@ class _BillingPageState extends State<BillingPage> {
         // Customer found - auto-attach to bill
         setState(() {
           _selectedCustomer = {
-            'id': customer.id,
+            'id': customer!.id,
             'firstName': customer.firstName,
             'lastName': customer.lastName,
             'contact': customer.contact,
