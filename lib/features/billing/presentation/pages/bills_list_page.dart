@@ -1070,185 +1070,244 @@ class _BillsListPageState extends State<BillsListPage>
   }
 
   Widget _buildSearchAndFilterSection() {
-    return Container(
+    final hasDateFilter = _startDate != null;
+    return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
         children: [
-          // Search bar
-          TextField(
-            controller: _searchController,
-            onChanged: _filterBills,
-            decoration: InputDecoration(
-              hintText: _localizations.searchBills,
-              hintStyle: TextStyle(
-                fontFamily: 'Literata',
-                fontSize: 14,
-                color: Colors.grey[500],
-              ),
-              prefixIcon: const Icon(
-                Icons.search,
-                color: Color(0xFF1B4D3E),
-                size: 20,
-              ),
-              filled: true,
-              fillColor: Colors.white,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 12,
-              ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: BorderSide.none,
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: const BorderSide(
+          // ── Search bar ──
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(14),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.04),
+                  blurRadius: 10,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: TextField(
+              controller: _searchController,
+              onChanged: _filterBills,
+              decoration: InputDecoration(
+                hintText: _localizations.searchBills,
+                hintStyle: TextStyle(
+                  fontFamily: 'Literata',
+                  fontSize: 14,
+                  color: Colors.grey[400],
+                ),
+                prefixIcon: const Icon(
+                  Icons.search_rounded,
                   color: Color(0xFF1B4D3E),
-                  width: 1.5,
+                  size: 20,
+                ),
+                suffixIcon: _searchController.text.isNotEmpty
+                    ? GestureDetector(
+                        onTap: () {
+                          _searchController.clear();
+                          _filterBills('');
+                        },
+                        child: Icon(
+                          Icons.close_rounded,
+                          color: Colors.grey[400],
+                          size: 18,
+                        ),
+                      )
+                    : null,
+                filled: true,
+                fillColor: Colors.white,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: BorderSide.none,
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: const BorderSide(
+                    color: Color(0xFF1B4D3E),
+                    width: 1.5,
+                  ),
                 ),
               ),
+              style: const TextStyle(fontFamily: 'Literata', fontSize: 14),
             ),
-            style: const TextStyle(fontFamily: 'Literata', fontSize: 14),
           ),
-          const SizedBox(height: 10),
-          // Filter row - responsive
-          LayoutBuilder(
-            builder: (context, constraints) {
-              return Row(
-                children: [
-                  // Date filter button - flexible
-                  Flexible(
-                    child: GestureDetector(
-                      onTap: _showDateFilterDialog,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: _startDate != null
-                              ? const Color(0xFF1B4D3E)
-                              : Colors.white,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                            color: _startDate != null
-                                ? const Color(0xFF1B4D3E)
-                                : Colors.grey[300]!,
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.date_range,
-                              size: 16,
-                              color: _startDate != null
-                                  ? Colors.white
-                                  : Colors.grey[600],
-                            ),
-                            const SizedBox(width: 4),
-                            Flexible(
-                              child: Text(
-                                _startDate != null
-                                    ? '${DateFormat('dd/MM').format(_startDate!)} - ${DateFormat('dd/MM').format(_endDate!)}'
-                                    : _localizations.date,
-                                style: TextStyle(
-                                  fontFamily: 'Literata',
-                                  fontSize: 11,
-                                  color: _startDate != null
-                                      ? Colors.white
-                                      : Colors.grey[600],
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                                maxLines: 1,
-                              ),
-                            ),
-                            if (_startDate != null) ...[
-                              const SizedBox(width: 2),
-                              GestureDetector(
-                                onTap: _clearDateFilter,
-                                child: const Icon(
-                                  Icons.close,
-                                  size: 14,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-                    ),
+          const SizedBox(height: 12),
+
+          // ── Filter chips row ──
+          SizedBox(
+            height: 40,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              clipBehavior: Clip.none,
+              children: [
+                // Date range chip
+                _buildFilterChip(
+                  icon: Icons.calendar_today_rounded,
+                  label: hasDateFilter
+                      ? '${DateFormat('dd MMM').format(_startDate!)} – ${DateFormat('dd MMM').format(_endDate!)}'
+                      : _localizations.date,
+                  isActive: hasDateFilter,
+                  onTap: _showDateFilterDialog,
+                  onClear: hasDateFilter ? _clearDateFilter : null,
+                ),
+                const SizedBox(width: 8),
+                // Sort chips
+                _buildSortChip('newest', _localizations.newest, Icons.arrow_downward_rounded),
+                const SizedBox(width: 8),
+                _buildSortChip('oldest', _localizations.oldest, Icons.arrow_upward_rounded),
+                const SizedBox(width: 8),
+                _buildSortChip('highest', _localizations.highest, Icons.trending_up_rounded),
+                const SizedBox(width: 8),
+                _buildSortChip('lowest', _localizations.lowest, Icons.trending_down_rounded),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFilterChip({
+    required IconData icon,
+    required String label,
+    required bool isActive,
+    required VoidCallback onTap,
+    VoidCallback? onClear,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        decoration: BoxDecoration(
+          color: isActive ? const Color(0xFF1B4D3E) : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isActive
+                ? const Color(0xFF1B4D3E)
+                : Colors.grey[300]!,
+            width: 1,
+          ),
+          boxShadow: isActive
+              ? [
+                  BoxShadow(
+                    color: const Color(0xFF1B4D3E).withOpacity(0.25),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
                   ),
-                  const SizedBox(width: 8),
-                  // Sort dropdown - constrained
-                  Container(
-                    constraints: BoxConstraints(
-                      maxWidth: constraints.maxWidth * 0.45,
-                    ),
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.grey[300]!),
-                    ),
-                    child: DropdownButtonHideUnderline(
-                      child: DropdownButton<String>(
-                        value: _sortOrder,
-                        isDense: true,
-                        isExpanded: true,
-                        icon: const Icon(Icons.keyboard_arrow_down, size: 18),
-                        items: [
-                          DropdownMenuItem(
-                            value: 'newest',
-                            child: Text(
-                              _localizations.newest,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          DropdownMenuItem(
-                            value: 'oldest',
-                            child: Text(
-                              _localizations.oldest,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          DropdownMenuItem(
-                            value: 'highest',
-                            child: Text(
-                              _localizations.highest,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          DropdownMenuItem(
-                            value: 'lowest',
-                            child: Text(
-                              _localizations.lowest,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                        onChanged: (value) {
-                          if (value != null) {
-                            setState(() {
-                              _sortOrder = value;
-                              _applySorting();
-                            });
-                          }
-                        },
-                        style: const TextStyle(
-                          fontFamily: 'Literata',
-                          fontSize: 12,
-                          color: Colors.black,
-                        ),
-                      ),
-                    ),
+                ]
+              : [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.03),
+                    blurRadius: 4,
+                    offset: const Offset(0, 1),
                   ),
                 ],
-              );
-            },
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 14,
+              color: isActive ? Colors.white : Colors.grey[600],
+            ),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                fontFamily: 'Literata',
+                fontSize: 12,
+                fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
+                color: isActive ? Colors.white : Colors.grey[700],
+              ),
+            ),
+            if (onClear != null) ...[
+              const SizedBox(width: 4),
+              GestureDetector(
+                onTap: onClear,
+                child: Container(
+                  padding: const EdgeInsets.all(2),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.25),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.close_rounded,
+                    size: 12,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSortChip(String value, String label, IconData icon) {
+    final isActive = _sortOrder == value;
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _sortOrder = value;
+          _applySorting();
+        });
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        decoration: BoxDecoration(
+          color: isActive
+              ? const Color(0xFF1B4D3E).withOpacity(0.12)
+              : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isActive
+                ? const Color(0xFF1B4D3E)
+                : Colors.grey[300]!,
+            width: isActive ? 1.5 : 1,
           ),
-          const SizedBox(height: 10),
-        ],
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.03),
+              blurRadius: 4,
+              offset: const Offset(0, 1),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 14,
+              color: isActive
+                  ? const Color(0xFF1B4D3E)
+                  : Colors.grey[500],
+            ),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontFamily: 'Literata',
+                fontSize: 12,
+                fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
+                color: isActive
+                    ? const Color(0xFF1B4D3E)
+                    : Colors.grey[600],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
