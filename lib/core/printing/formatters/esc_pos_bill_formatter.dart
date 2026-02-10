@@ -300,13 +300,9 @@ class EscPosBillFormatter {
     // Bill Number
     bytes.addAll(_printLine('Bill No: ${billData.billNumber}', bold: true));
 
-    // Date and Time
-    bytes.addAll(
-      _printTwoColumns(
-        'Date: ${dateFormatter.format(billData.dateTime)}',
-        timeFormatter.format(billData.dateTime),
-      ),
-    );
+    // Date and Time on separate lines to avoid cropping
+    bytes.addAll(_printLine('Date: ${dateFormatter.format(billData.dateTime)}'));
+    bytes.addAll(_printLine('Time: ${timeFormatter.format(billData.dateTime)}'));
 
     // Customer Info if available
     if (billData.customerName != null && billData.customerName!.isNotEmpty) {
