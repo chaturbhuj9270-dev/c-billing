@@ -317,7 +317,7 @@ class InventoryReportService {
   /// Generate PDF report with order quantities
   Future<File> generatePdfReportWithOrderQty({
     required List<Product> products,
-    required List<int> orderQuantities,
+    required List<int?> orderQuantities,
     required ReportType reportType,
     String? shopName,
     String? customTitle,
@@ -361,7 +361,7 @@ class InventoryReportService {
 
   pw.Widget _buildPdfTableWithOrderQty(
     List<Product> products,
-    List<int> orderQuantities,
+    List<int?> orderQuantities,
   ) {
     return pw.TableHelper.fromTextArray(
       context: null,
@@ -386,7 +386,7 @@ class InventoryReportService {
       data: products.asMap().entries.map((entry) {
         final i = entry.key;
         final p = entry.value;
-        final orderQty = i < orderQuantities.length ? orderQuantities[i] : 0;
+        final orderQty = i < orderQuantities.length ? orderQuantities[i] : null;
         return [
           '${i + 1}',
           p.name,
@@ -394,7 +394,7 @@ class InventoryReportService {
           p.companyName,
           '${p.currentStock}',
           getStockStatus(p.currentStock),
-          '$orderQty',
+          orderQty != null ? '$orderQty' : '-',
         ];
       }).toList(),
     );
@@ -403,7 +403,7 @@ class InventoryReportService {
   /// Generate CSV report with order quantities
   Future<File> generateCsvReportWithOrderQty({
     required List<Product> products,
-    required List<int> orderQuantities,
+    required List<int?> orderQuantities,
     required ReportType reportType,
     String? customTitle,
   }) async {
@@ -424,7 +424,7 @@ class InventoryReportService {
     // Data rows
     for (var i = 0; i < products.length; i++) {
       final p = products[i];
-      final orderQty = i < orderQuantities.length ? orderQuantities[i] : 0;
+      final orderQty = i < orderQuantities.length ? orderQuantities[i] : null;
       buffer.writeln(
         '${i + 1},'
         '"${p.name.replaceAll('"', '""')}",'
@@ -432,7 +432,7 @@ class InventoryReportService {
         '"${p.companyName.replaceAll('"', '""')}",'
         '${p.currentStock},'
         '"${getStockStatus(p.currentStock)}",'
-        '$orderQty',
+        '${orderQty != null ? '$orderQty' : '-'}',
       );
     }
 
