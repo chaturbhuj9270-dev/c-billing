@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:c_billing/core/services/dashboard_refresh_service.dart';
 
 /// Bill settings page for configuring billing preferences
 class BillSettingsPage extends StatefulWidget {
@@ -11,8 +12,10 @@ class BillSettingsPage extends StatefulWidget {
 
 class _BillSettingsPageState extends State<BillSettingsPage> {
   static const String _keyShowCustomerOnBill = 'bill_show_customer_details';
+  static const String _keyGenerateViaContact = 'bill_generate_via_contact';
   
   bool _showCustomerDetails = true;
+  bool _generateViaContact = false;
   bool _isLoading = true;
 
   @override
@@ -25,6 +28,7 @@ class _BillSettingsPageState extends State<BillSettingsPage> {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
       _showCustomerDetails = prefs.getBool(_keyShowCustomerOnBill) ?? true;
+      _generateViaContact = prefs.getBool(_keyGenerateViaContact) ?? false;
       _isLoading = false;
     });
   }
@@ -32,6 +36,10 @@ class _BillSettingsPageState extends State<BillSettingsPage> {
   Future<void> _saveSettings() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_keyShowCustomerOnBill, _showCustomerDetails);
+    await prefs.setBool(_keyGenerateViaContact, _generateViaContact);
+    
+    // Notify billing page to reload settings immediately
+    DashboardRefreshService.instance.notifyDataChanged(DataChangeType.billSettings);
     
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -83,6 +91,26 @@ class _BillSettingsPageState extends State<BillSettingsPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Billing Settings Section
+                  _buildSectionCard(
+                    title: 'Billing Settings',
+                    icon: Icons.receipt_long,
+                    children: [
+                      _buildSettingTile(
+                        title: 'Generate Bill via Contact Number',
+                        subtitle: 'Require customer contact number before generating a bill',
+                        value: _generateViaContact,
+                        onChanged: (value) async {
+                          setState(() {
+                            _generateViaContact = value;
+                          });
+                          await _saveSettings();
+                        },
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  
                   // Print Settings Section
                   _buildSectionCard(
                     title: 'Print Settings',
@@ -117,7 +145,7 @@ class _BillSettingsPageState extends State<BillSettingsPage> {
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(
-                            'More billing settings will be added here in future updates',
+                            'When "Generate Bill via Contact Number" is enabled, a valid phone number is required before saving a bill.',
                             style: TextStyle(
                               fontFamily: 'Literata',
                               fontSize: 13,

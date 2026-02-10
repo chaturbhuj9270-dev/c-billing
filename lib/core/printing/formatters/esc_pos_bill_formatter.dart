@@ -295,6 +295,7 @@ class EscPosBillFormatter {
     // Check if customer details should be shown
     final prefs = await SharedPreferences.getInstance();
     final showCustomer = prefs.getBool('bill_show_customer_details') ?? true;
+    final generateViaContact = prefs.getBool('bill_generate_via_contact') ?? false;
 
     // Return Bill indicator
     if (billData.isReturnBill) {
@@ -309,8 +310,17 @@ class EscPosBillFormatter {
     bytes.addAll(_printLine('Date: ${dateFormatter.format(billData.dateTime)}'));
     bytes.addAll(_printLine('Time: ${timeFormatter.format(billData.dateTime)}'));
 
-    // Customer Info if available and setting is enabled
-    if (showCustomer) {
+    // Always show phone number when generate via contact is enabled
+    if (generateViaContact) {
+      if (billData.customerPhone != null && billData.customerPhone!.isNotEmpty) {
+        bytes.addAll(_printLine('Phone: ${billData.customerPhone}'));
+      }
+      // Also show customer name if found via phone search
+      if (showCustomer && billData.customerName != null && billData.customerName!.isNotEmpty) {
+        bytes.addAll(_printLine('Customer: ${billData.customerName}'));
+      }
+    } else if (showCustomer) {
+      // Normal mode - show customer details if enabled
       if (billData.customerName != null && billData.customerName!.isNotEmpty) {
         bytes.addAll(_printLine('Customer: ${billData.customerName}'));
       }

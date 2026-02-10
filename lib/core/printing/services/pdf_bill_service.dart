@@ -24,19 +24,20 @@ class PdfBillService {
     // Check if customer details should be shown
     final prefs = await SharedPreferences.getInstance();
     final showCustomer = prefs.getBool('bill_show_customer_details') ?? true;
+    final generateViaContact = prefs.getBool('bill_generate_via_contact') ?? false;
 
     pdf.addPage(
       pw.Page(
         pageFormat: PdfPageFormat.roll80,
         margin: const pw.EdgeInsets.all(16),
-        build: (context) => _buildBillContent(billData, shopDetails, showCustomer),
+        build: (context) => _buildBillContent(billData, shopDetails, showCustomer, generateViaContact),
       ),
     );
 
     return pdf;
   }
 
-  pw.Widget _buildBillContent(PrintBillData billData, Shop shopDetails, bool showCustomer) {
+  pw.Widget _buildBillContent(PrintBillData billData, Shop shopDetails, bool showCustomer, bool generateViaContact) {
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
@@ -99,8 +100,23 @@ class PdfBillService {
         ),
         pw.SizedBox(height: 4),
 
-        // Customer Info - only show if enabled in settings
-        if (showCustomer &&
+        // Customer Info - show based on settings
+        if (generateViaContact &&
+            billData.customerPhone != null &&
+            billData.customerPhone!.isNotEmpty) ...[
+          pw.Text(
+            'Phone: ${billData.customerPhone}',
+            style: const pw.TextStyle(fontSize: 10),
+          ),
+          if (showCustomer &&
+              billData.customerName != null &&
+              billData.customerName!.isNotEmpty)
+            pw.Text(
+              'Customer: ${billData.customerName}',
+              style: const pw.TextStyle(fontSize: 10),
+            ),
+          pw.SizedBox(height: 4),
+        ] else if (showCustomer &&
             billData.customerName != null &&
             billData.customerName!.isNotEmpty) ...[
           pw.Text(

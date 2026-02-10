@@ -42,6 +42,7 @@ class _BillingPageState extends State<BillingPage> {
   // Data refresh subscriptions
   StreamSubscription<void>? _productRefreshSubscription;
   StreamSubscription<void>? _customerRefreshSubscription;
+  StreamSubscription<void>? _billSettingsSubscription;
 
   // Printing services
   final _printerService = PosPrinterService();
@@ -83,6 +84,7 @@ class _BillingPageState extends State<BillingPage> {
   
   // Bill settings
   bool _showCustomerOnBill = true;
+  bool _generateBillViaContact = false;
 
   @override
   void initState() {
@@ -127,6 +129,11 @@ class _BillingPageState extends State<BillingPage> {
       if (mounted) _loadCustomers();
     });
     
+    // Listen for bill settings changes from settings page
+    _billSettingsSubscription = DashboardRefreshService.instance.onBillSettingsChanged.listen((_) {
+      if (mounted) _loadBillSettings();
+    });
+    
     _loadProducts();
     _loadCustomers();
     _loadBillSettings();
@@ -137,6 +144,7 @@ class _BillingPageState extends State<BillingPage> {
     if (mounted) {
       setState(() {
         _showCustomerOnBill = prefs.getBool('bill_show_customer_details') ?? true;
+        _generateBillViaContact = prefs.getBool('bill_generate_via_contact') ?? false;
       });
     }
   }
@@ -145,6 +153,7 @@ class _BillingPageState extends State<BillingPage> {
   void dispose() {
     _productRefreshSubscription?.cancel();
     _customerRefreshSubscription?.cancel();
+    _billSettingsSubscription?.cancel();
     LanguageService.instance.removeListener(_onLanguageChanged);
     _debounceTimer?.cancel();
     _phoneSearchDebounceTimer?.cancel();
@@ -685,6 +694,18 @@ class _BillingPageState extends State<BillingPage> {
       return;
     }
 
+    // Validate contact number if generate via contact is enabled
+    if (_generateBillViaContact) {
+      final contact = _customerContactController.text.trim();
+      if (contact.isEmpty || contact.length < 10) {
+        _showSnackbar(
+          'Please enter a valid customer contact number to generate bill',
+          isError: true,
+        );
+        return;
+      }
+    }
+
     setState(() => _isSavingBill = true);
 
     try {
@@ -1192,7 +1213,7 @@ class _BillingPageState extends State<BillingPage> {
               physics: const BouncingScrollPhysics(),
               child: Column(
                 children: [
-                  if (_showCustomerOnBill) _buildCustomerSection(),
+                  if (_showCustomerOnBill || _generateBillViaContact) _buildCustomerSection(),
                   _buildAddItemsSection(),
                   if (_billItems.isNotEmpty) _buildBillItemsSection(),
                   if (_billItems.isNotEmpty) _buildDiscountSection(),
@@ -1204,7 +1225,7 @@ class _BillingPageState extends State<BillingPage> {
           : CustomScrollView(
               slivers: [
                 _buildSliverAppBar(),
-                if (_showCustomerOnBill) 
+                if (_showCustomerOnBill || _generateBillViaContact) 
                   SliverToBoxAdapter(child: _buildCustomerSection()),
                 SliverToBoxAdapter(child: _buildAddItemsSection()),
                 if (_billItems.isNotEmpty)
@@ -1350,7 +1371,9 @@ class _BillingPageState extends State<BillingPage> {
               ),
               const SizedBox(width: 12),
               Text(
-                _localizations.customerOptional,
+                _generateBillViaContact
+                    ? 'Phone Number'
+                    : _localizations.customerOptional,
                 style: const TextStyle(
                   fontFamily: 'Literata',
                   fontWeight: FontWeight.w600,
@@ -1359,87 +1382,85 @@ class _BillingPageState extends State<BillingPage> {
                 ),
               ),
               const Spacer(),
-              // Add Customer button
-              IconButton(
-                icon: const Icon(Icons.person_add, color: Color(0xFF1B4D3E)),
-                onPressed: () {
-                  final phone = _customerContactController.text.trim();
-                  _showAddCustomerDialog(phone);
-                },
-                tooltip: 'Add New Customer',
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
-              ),
+              // Add Customer button (only when not in generate via contact mode)
+              if (!_generateBillViaContact)
+                IconButton(
+                  icon: const Icon(Icons.person_add, color: Color(0xFF1B4D3E)),
+                  onPressed: () {
+                    final phone = _customerContactController.text.trim();
+                    _showAddCustomerDialog(phone);
+                  },
+                  tooltip: 'Add New Customer',
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                ),
             ],
           ),
           const SizedBox(height: 16),
-          if (_customers.isNotEmpty) ...[
-            GestureDetector(
-              onTap: _showCustomerPicker,
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 12,
-                ),
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey[300]!),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.search, color: Colors.grey[500], size: 20),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        _selectedCustomer != null
-                            ? _selectedCustomer!['fullName']
-                            : _localizations.searchExistingCustomer,
-                        style: TextStyle(
-                          fontFamily: 'Literata',
-                          color: _selectedCustomer != null
-                              ? Colors.black87
-                              : Colors.grey[500],
-                        ),
-                      ),
-                    ),
-                    if (_selectedCustomer != null)
-                      GestureDetector(
-                        onTap: () => setState(() {
-                          _selectedCustomer = null;
-                          _customerNameController.clear();
-                          _customerContactController.clear();
-                        }),
-                        child: Icon(
-                          Icons.close,
-                          color: Colors.grey[500],
-                          size: 18,
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-          ],
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _customerNameController,
+          if (_generateBillViaContact) ...[
+            // Show only phone number field when generate via contact is enabled
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TextField(
+                  controller: _customerContactController,
+                  keyboardType: TextInputType.phone,
                   style: const TextStyle(fontFamily: 'Literata', fontSize: 14),
                   decoration: InputDecoration(
-                    labelText: _localizations.name,
-                    labelStyle: TextStyle(
-                      color: Colors.grey[600],
+                    labelText: 'Enter Phone Number *',
+                    hintText: 'Enter customer phone number',
+                    hintStyle: TextStyle(
+                      color: Colors.grey[400],
                       fontSize: 13,
                     ),
+                    labelStyle: const TextStyle(
+                      color: Color(0xFF1B4D3E),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    prefixIcon: const Icon(
+                      Icons.phone_outlined,
+                      color: Color(0xFF1B4D3E),
+                      size: 20,
+                    ),
+                    suffixIcon: _isSearchingCustomer
+                        ? const Padding(
+                            padding: EdgeInsets.all(12.0),
+                            child: SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Color(0xFF1B4D3E),
+                              ),
+                            ),
+                          )
+                        : _hasPhoneText
+                            ? IconButton(
+                                icon: const Icon(Icons.clear, size: 20),
+                                onPressed: () {
+                                  _customerContactController.clear();
+                                  setState(() {
+                                    _autoFoundCustomerName = null;
+                                    _selectedCustomer = null;
+                                    _hasPhoneText = false;
+                                  });
+                                },
+                                color: Colors.grey[600],
+                                tooltip: 'Clear phone number',
+                              )
+                            : null,
                     contentPadding: const EdgeInsets.symmetric(
                       horizontal: 14,
-                      vertical: 12,
+                      vertical: 14,
                     ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey[300]!),
+                      borderSide: const BorderSide(color: Color(0xFF1B4D3E)),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: const Color(0xFF1B4D3E).withOpacity(0.5)),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -1450,97 +1471,205 @@ class _BillingPageState extends State<BillingPage> {
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    TextField(
-                      controller: _customerContactController,
-                      keyboardType: TextInputType.phone,
-                      style: const TextStyle(fontFamily: 'Literata', fontSize: 14),
-                      decoration: InputDecoration(
-                        labelText: _localizations.phone,
-                        labelStyle: TextStyle(
-                          color: Colors.grey[600],
-                          fontSize: 13,
+                if (_autoFoundCustomerName != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 6, left: 4),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.check_circle,
+                          size: 14,
+                          color: Colors.green,
                         ),
-                        suffixIcon: _isSearchingCustomer
-                            ? const Padding(
-                                padding: EdgeInsets.all(12.0),
-                                child: SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: Color(0xFF1B4D3E),
-                                  ),
-                                ),
-                              )
-                            : _hasPhoneText
-                                ? IconButton(
-                                    icon: const Icon(Icons.clear, size: 20),
-                                    onPressed: () {
-                                      _customerContactController.clear();
-                                      setState(() {
-                                        _autoFoundCustomerName = null;
-                                        _selectedCustomer = null;
-                                        _hasPhoneText = false;
-                                      });
-                                    },
-                                    color: Colors.grey[600],
-                                    tooltip: 'Clear phone number',
-                                  )
-                                : null,
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 12,
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            'Customer: $_autoFoundCustomerName',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.green,
+                              fontFamily: 'Literata',
+                              fontWeight: FontWeight.w600,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: Colors.grey[300]!),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(
-                            color: Color(0xFF1B4D3E),
-                            width: 1.5,
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+          ] else ...[
+            // Normal customer section with all fields
+            if (_customers.isNotEmpty) ...[
+              GestureDetector(
+                onTap: _showCustomerPicker,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey[300]!),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.search, color: Colors.grey[500], size: 20),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          _selectedCustomer != null
+                              ? _selectedCustomer!['fullName']
+                              : _localizations.searchExistingCustomer,
+                          style: TextStyle(
+                            fontFamily: 'Literata',
+                            color: _selectedCustomer != null
+                                ? Colors.black87
+                                : Colors.grey[500],
                           ),
                         ),
                       ),
-                    ),
-                    if (_autoFoundCustomerName != null)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 6, left: 4),
-                        child: Row(
-                          children: [
-                            const Icon(
-                              Icons.check_circle,
-                              size: 14,
-                              color: Colors.green,
-                            ),
-                            const SizedBox(width: 4),
-                            Expanded(
-                              child: Text(
-                                'Customer: $_autoFoundCustomerName',
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.green,
-                                  fontFamily: 'Literata',
-                                  fontWeight: FontWeight.w600,
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
+                      if (_selectedCustomer != null)
+                        GestureDetector(
+                          onTap: () => setState(() {
+                            _selectedCustomer = null;
+                            _customerNameController.clear();
+                            _customerContactController.clear();
+                          }),
+                          child: Icon(
+                            Icons.close,
+                            color: Colors.grey[500],
+                            size: 18,
+                          ),
                         ),
-                      ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
+              const SizedBox(height: 12),
             ],
-          ),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _customerNameController,
+                    style: const TextStyle(fontFamily: 'Literata', fontSize: 14),
+                    decoration: InputDecoration(
+                      labelText: _localizations.name,
+                      labelStyle: TextStyle(
+                        color: Colors.grey[600],
+                        fontSize: 13,
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 12,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.grey[300]!),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(
+                          color: Color(0xFF1B4D3E),
+                          width: 1.5,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      TextField(
+                        controller: _customerContactController,
+                        keyboardType: TextInputType.phone,
+                        style: const TextStyle(fontFamily: 'Literata', fontSize: 14),
+                        decoration: InputDecoration(
+                          labelText: _localizations.phone,
+                          labelStyle: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 13,
+                          ),
+                          suffixIcon: _isSearchingCustomer
+                              ? const Padding(
+                                  padding: EdgeInsets.all(12.0),
+                                  child: SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Color(0xFF1B4D3E),
+                                    ),
+                                  ),
+                                )
+                              : _hasPhoneText
+                                  ? IconButton(
+                                      icon: const Icon(Icons.clear, size: 20),
+                                      onPressed: () {
+                                        _customerContactController.clear();
+                                        setState(() {
+                                          _autoFoundCustomerName = null;
+                                          _selectedCustomer = null;
+                                          _hasPhoneText = false;
+                                        });
+                                      },
+                                      color: Colors.grey[600],
+                                      tooltip: 'Clear phone number',
+                                    )
+                                  : null,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 12,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: Colors.grey[300]!),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(
+                              color: Color(0xFF1B4D3E),
+                              width: 1.5,
+                            ),
+                          ),
+                        ),
+                      ),
+                      if (_autoFoundCustomerName != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 6, left: 4),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.check_circle,
+                                size: 14,
+                                color: Colors.green,
+                              ),
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: Text(
+                                  'Customer: $_autoFoundCustomerName',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.green,
+                                    fontFamily: 'Literata',
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );
