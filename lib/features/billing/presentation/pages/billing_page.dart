@@ -458,6 +458,27 @@ class _BillingPageState extends State<BillingPage> {
               ),
             ),
           ),
+          TextButton(
+            onPressed: () {
+              _isAddCustomerDialogOpen = false;
+              firstNameController.dispose();
+              lastNameController.dispose();
+              Navigator.pop(ctx);
+              // Continue without customer - just keep the phone number
+              _showSnackbar(
+                'Continuing without customer',
+                isError: false,
+              );
+            },
+            child: const Text(
+              'Skip',
+              style: TextStyle(
+                color: Color(0xFF1B4D3E),
+                fontFamily: 'Literata',
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
           ElevatedButton(
             onPressed: () async {
               if (formKey.currentState!.validate()) {
