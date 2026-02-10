@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/print_bill_data.dart';
 import '../models/printer_models.dart';
 import '../../../features/shop/domain/entities/shop.dart';
@@ -77,7 +78,7 @@ class EscPosBillFormatter {
     bytes.addAll(_generateHeader(shopDetails));
 
     // Bill Info Section
-    bytes.addAll(_generateBillInfo(billData));
+    bytes.addAll(await _generateBillInfo(billData));
 
     // Items Section
     bytes.addAll(_generateItemsSection(billData));
@@ -285,11 +286,15 @@ class EscPosBillFormatter {
   }
 
   /// Generate bill information section
-  List<int> _generateBillInfo(PrintBillData billData) {
+  Future<List<int>> _generateBillInfo(PrintBillData billData) async {
     List<int> bytes = [];
 
     final dateFormatter = DateFormat('dd/MM/yyyy');
     final timeFormatter = DateFormat('hh:mm a');
+    
+    // Check if customer details should be shown
+    final prefs = await SharedPreferences.getInstance();
+    final showCustomer = prefs.getBool('bill_show_customer_details') ?? true;
 
     // Return Bill indicator
     if (billData.isReturnBill) {
@@ -304,12 +309,14 @@ class EscPosBillFormatter {
     bytes.addAll(_printLine('Date: ${dateFormatter.format(billData.dateTime)}'));
     bytes.addAll(_printLine('Time: ${timeFormatter.format(billData.dateTime)}'));
 
-    // Customer Info if available
-    if (billData.customerName != null && billData.customerName!.isNotEmpty) {
-      bytes.addAll(_printLine('Customer: ${billData.customerName}'));
-    }
-    if (billData.customerPhone != null && billData.customerPhone!.isNotEmpty) {
-      bytes.addAll(_printLine('Phone: ${billData.customerPhone}'));
+    // Customer Info if available and setting is enabled
+    if (showCustomer) {
+      if (billData.customerName != null && billData.customerName!.isNotEmpty) {
+        bytes.addAll(_printLine('Customer: ${billData.customerName}'));
+      }
+      if (billData.customerPhone != null && billData.customerPhone!.isNotEmpty) {
+        bytes.addAll(_printLine('Phone: ${billData.customerPhone}'));
+      }
     }
 
     bytes.addAll(_printDivider());

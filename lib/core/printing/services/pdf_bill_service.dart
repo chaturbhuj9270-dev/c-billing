@@ -4,6 +4,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:printing/printing.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/print_bill_data.dart';
 import '../../../features/shop/domain/entities/shop.dart';
 
@@ -19,19 +20,23 @@ class PdfBillService {
     required Shop shopDetails,
   }) async {
     final pdf = pw.Document();
+    
+    // Check if customer details should be shown
+    final prefs = await SharedPreferences.getInstance();
+    final showCustomer = prefs.getBool('bill_show_customer_details') ?? true;
 
     pdf.addPage(
       pw.Page(
         pageFormat: PdfPageFormat.roll80,
         margin: const pw.EdgeInsets.all(16),
-        build: (context) => _buildBillContent(billData, shopDetails),
+        build: (context) => _buildBillContent(billData, shopDetails, showCustomer),
       ),
     );
 
     return pdf;
   }
 
-  pw.Widget _buildBillContent(PrintBillData billData, Shop shopDetails) {
+  pw.Widget _buildBillContent(PrintBillData billData, Shop shopDetails, bool showCustomer) {
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
@@ -94,8 +99,9 @@ class PdfBillService {
         ),
         pw.SizedBox(height: 4),
 
-        // Customer Info
-        if (billData.customerName != null &&
+        // Customer Info - only show if enabled in settings
+        if (showCustomer &&
+            billData.customerName != null &&
             billData.customerName!.isNotEmpty) ...[
           pw.Text(
             'Customer: ${billData.customerName}',

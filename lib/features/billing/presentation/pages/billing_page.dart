@@ -20,6 +20,7 @@ import 'package:c_billing/features/customer/data/repositories/customer_repositor
 import 'package:c_billing/features/customer/data/repositories/customer_transaction_repository.dart';
 import 'package:c_billing/core/services/language_service.dart';
 import 'package:c_billing/core/localization/app_localizations.dart';
+import 'package:c_billing/features/billing/presentation/pages/bill_settings_page.dart';
 
 class BillingPage extends StatefulWidget {
   final bool isEmbedded;
@@ -1262,6 +1263,20 @@ class _BillingPageState extends State<BillingPage> {
                         ),
                       ),
                     ),
+                  const SizedBox(width: 8),
+                  // Settings button
+                  IconButton(
+                    icon: const Icon(Icons.settings, color: Colors.white, size: 24),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const BillSettingsPage(),
+                        ),
+                      );
+                    },
+                    tooltip: 'Bill Settings',
+                  ),
                 ],
               ),
             ),
