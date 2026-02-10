@@ -1283,14 +1283,16 @@ class _BillingPageState extends State<BillingPage> {
                   IconButton(
                     icon: const Icon(Icons.settings, color: Colors.white, size: 24),
                     onPressed: () async {
-                      await Navigator.push(
+                      final result = await Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (context) => const BillSettingsPage(),
                         ),
                       );
-                      // Reload settings when returning
-                      _loadBillSettings();
+                      // Reload settings when returning if settings changed
+                      if (result == true) {
+                        _loadBillSettings();
+                      }
                     },
                     tooltip: 'Bill Settings',
                   ),

@@ -52,15 +52,20 @@ class _BillSettingsPageState extends State<BillSettingsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF1B4D3E),
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
-        ),
+    return WillPopScope(
+      onWillPop: () async {
+        Navigator.pop(context, true); // Return true to indicate settings changed
+        return false;
+      },
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF5F5F5),
+        appBar: AppBar(
+          backgroundColor: const Color(0xFF1B4D3E),
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.white),
+            onPressed: () => Navigator.pop(context, true), // Return true when back pressed
+          ),
         title: const Text(
           'Bill Settings',
           style: TextStyle(
@@ -126,6 +131,7 @@ class _BillSettingsPageState extends State<BillSettingsPage> {
                 ],
               ),
             ),
+      ),
     );
   }
 
