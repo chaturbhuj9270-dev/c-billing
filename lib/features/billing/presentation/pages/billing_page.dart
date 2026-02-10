@@ -1338,6 +1338,22 @@ class _BillingPageState extends State<BillingPage> {
                   color: Color(0xFF1B4D3E),
                 ),
               ),
+              const Spacer(),
+              // Add Customer button
+              IconButton(
+                icon: const Icon(Icons.person_add, color: Color(0xFF1B4D3E)),
+                onPressed: () {
+                  final phone = _customerContactController.text.trim();
+                  if (phone.isEmpty) {
+                    _showSnackbar('Please enter phone number first', isError: true);
+                    return;
+                  }
+                  _showAddCustomerDialog(phone);
+                },
+                tooltip: 'Add New Customer',
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+              ),
             ],
           ),
           const SizedBox(height: 16),
@@ -1492,20 +1508,6 @@ class _BillingPageState extends State<BillingPage> {
                       ),
                   ],
                 ),
-              ),
-              const SizedBox(width: 8),
-              // Add Customer button
-              IconButton(
-                icon: const Icon(Icons.person_add, color: Color(0xFF1B4D3E)),
-                onPressed: () {
-                  final phone = _customerContactController.text.trim();
-                  if (phone.isEmpty) {
-                    _showSnackbar('Please enter phone number first', isError: true);
-                    return;
-                  }
-                  _showAddCustomerDialog(phone);
-                },
-                tooltip: 'Add New Customer',
               ),
             ],
           ),
