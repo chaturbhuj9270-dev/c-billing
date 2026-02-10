@@ -79,6 +79,7 @@ class _BillingPageState extends State<BillingPage> {
   Timer? _phoneSearchDebounceTimer;
   bool _isSearchingCustomer = false;
   String? _autoFoundCustomerName;
+  bool _hasPhoneText = false;
   
   // Bill settings
   bool _showCustomerOnBill = true;
@@ -222,10 +223,16 @@ class _BillingPageState extends State<BillingPage> {
 
   /// Listener for phone number changes - implements debounced search
   void _onPhoneNumberChanged() {
+    if (!mounted) return;
     final phoneNumber = _customerContactController.text.trim();
     
     // Cancel previous timer
     _phoneSearchDebounceTimer?.cancel();
+    
+    // Update phone text state
+    setState(() {
+      _hasPhoneText = phoneNumber.isNotEmpty;
+    });
     
     // Clear auto-found customer name if phone number is cleared
     if (phoneNumber.isEmpty) {
@@ -332,10 +339,11 @@ class _BillingPageState extends State<BillingPage> {
     }
   }
 
-  /// Show dialog to add new customer with pre-filled phone number
+  /// Show dialog to add new customer with optional phone number
   void _showAddCustomerDialog(String phoneNumber) {
     final firstNameController = TextEditingController();
     final lastNameController = TextEditingController();
+    final phoneController = TextEditingController(text: phoneNumber);
     final formKey = GlobalKey<FormState>();
     
     showDialog(
@@ -377,15 +385,16 @@ class _BillingPageState extends State<BillingPage> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  'Customer not found for $phoneNumber',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.grey[600],
-                    fontFamily: 'Literata',
+                if (phoneNumber.isNotEmpty)
+                  Text(
+                    'Customer not found for $phoneNumber',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.grey[600],
+                      fontFamily: 'Literata',
+                    ),
                   ),
-                ),
-                const SizedBox(height: 20),
+                if (phoneNumber.isNotEmpty) const SizedBox(height: 20),
                 TextFormField(
                   controller: firstNameController,
                   autofocus: true,
@@ -436,16 +445,21 @@ class _BillingPageState extends State<BillingPage> {
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
-                  initialValue: phoneNumber,
-                  readOnly: true,
+                  controller: phoneController,
+                  keyboardType: TextInputType.phone,
                   decoration: InputDecoration(
-                    labelText: 'Phone Number',
+                    labelText: 'Phone Number (Optional)',
                     prefixIcon: const Icon(Icons.phone_outlined),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    filled: true,
-                    fillColor: Colors.grey[100],
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(
+                        color: Color(0xFF1B4D3E),
+                        width: 2,
+                      ),
+                    ),
                   ),
                 ),
               ],
@@ -455,8 +469,6 @@ class _BillingPageState extends State<BillingPage> {
         actions: [
           TextButton(
             onPressed: () {
-              firstNameController.dispose();
-              lastNameController.dispose();
               Navigator.pop(ctx);
             },
             child: Text(
@@ -469,8 +481,6 @@ class _BillingPageState extends State<BillingPage> {
           ),
           TextButton(
             onPressed: () {
-              firstNameController.dispose();
-              lastNameController.dispose();
               Navigator.pop(ctx);
               // Continue without customer - just keep the phone number
               _showSnackbar(
@@ -490,13 +500,19 @@ class _BillingPageState extends State<BillingPage> {
           ElevatedButton(
             onPressed: () async {
               if (formKey.currentState!.validate()) {
+                // Extract values before closing dialog
+                final firstName = firstNameController.text.trim();
+                final lastName = lastNameController.text.trim();
+                final phone = phoneController.text.trim();
+                
+                // Close dialog first
                 Navigator.pop(ctx);
-                firstNameController.dispose();
-                lastNameController.dispose();
+                
+                // Save customer with extracted values
                 await _saveNewCustomer(
-                  firstName: firstNameController.text.trim(),
-                  lastName: lastNameController.text.trim(),
-                  phoneNumber: phoneNumber,
+                  firstName: firstName,
+                  lastName: lastName,
+                  phoneNumber: phone,
                 );
               }
             },
@@ -559,6 +575,10 @@ class _BillingPageState extends State<BillingPage> {
           };
           _autoFoundCustomerName = fullName;
           _customerNameController.text = fullName;
+          if (phoneNumber.isNotEmpty) {
+            _customerContactController.text = phoneNumber;
+            _hasPhoneText = true;
+          }
         });
       }
 
@@ -1344,10 +1364,6 @@ class _BillingPageState extends State<BillingPage> {
                 icon: const Icon(Icons.person_add, color: Color(0xFF1B4D3E)),
                 onPressed: () {
                   final phone = _customerContactController.text.trim();
-                  if (phone.isEmpty) {
-                    _showSnackbar('Please enter phone number first', isError: true);
-                    return;
-                  }
                   _showAddCustomerDialog(phone);
                 },
                 tooltip: 'Add New Customer',
@@ -1462,7 +1478,21 @@ class _BillingPageState extends State<BillingPage> {
                                   ),
                                 ),
                               )
-                            : null,
+                            : _hasPhoneText
+                                ? IconButton(
+                                    icon: const Icon(Icons.clear, size: 20),
+                                    onPressed: () {
+                                      _customerContactController.clear();
+                                      setState(() {
+                                        _autoFoundCustomerName = null;
+                                        _selectedCustomer = null;
+                                        _hasPhoneText = false;
+                                      });
+                                    },
+                                    color: Colors.grey[600],
+                                    tooltip: 'Clear phone number',
+                                  )
+                                : null,
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: 14,
                           vertical: 12,
