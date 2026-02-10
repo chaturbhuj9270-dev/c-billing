@@ -21,6 +21,7 @@ import 'package:c_billing/features/customer/data/repositories/customer_transacti
 import 'package:c_billing/core/services/language_service.dart';
 import 'package:c_billing/core/localization/app_localizations.dart';
 import 'package:c_billing/features/billing/presentation/pages/bill_settings_page.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class BillingPage extends StatefulWidget {
   final bool isEmbedded;
@@ -79,6 +80,9 @@ class _BillingPageState extends State<BillingPage> {
   bool _isSearchingCustomer = false;
   String? _autoFoundCustomerName;
   bool _isAddCustomerDialogOpen = false;
+  
+  // Bill settings
+  bool _showCustomerOnBill = true;
 
   @override
   void initState() {
@@ -125,6 +129,16 @@ class _BillingPageState extends State<BillingPage> {
     
     _loadProducts();
     _loadCustomers();
+    _loadBillSettings();
+  }
+  
+  Future<void> _loadBillSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (mounted) {
+      setState(() {
+        _showCustomerOnBill = prefs.getBool('bill_show_customer_details') ?? true;
+      });
+    }
   }
 
   @override
@@ -1167,7 +1181,7 @@ class _BillingPageState extends State<BillingPage> {
               physics: const BouncingScrollPhysics(),
               child: Column(
                 children: [
-                  _buildCustomerSection(),
+                  if (_showCustomerOnBill) _buildCustomerSection(),
                   _buildAddItemsSection(),
                   if (_billItems.isNotEmpty) _buildBillItemsSection(),
                   if (_billItems.isNotEmpty) _buildDiscountSection(),
@@ -1179,7 +1193,8 @@ class _BillingPageState extends State<BillingPage> {
           : CustomScrollView(
               slivers: [
                 _buildSliverAppBar(),
-                SliverToBoxAdapter(child: _buildCustomerSection()),
+                if (_showCustomerOnBill) 
+                  SliverToBoxAdapter(child: _buildCustomerSection()),
                 SliverToBoxAdapter(child: _buildAddItemsSection()),
                 if (_billItems.isNotEmpty)
                   SliverToBoxAdapter(child: _buildBillItemsSection()),
@@ -1267,13 +1282,15 @@ class _BillingPageState extends State<BillingPage> {
                   // Settings button
                   IconButton(
                     icon: const Icon(Icons.settings, color: Colors.white, size: 24),
-                    onPressed: () {
-                      Navigator.push(
+                    onPressed: () async {
+                      await Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (context) => const BillSettingsPage(),
                         ),
                       );
+                      // Reload settings when returning
+                      _loadBillSettings();
                     },
                     tooltip: 'Bill Settings',
                   ),
