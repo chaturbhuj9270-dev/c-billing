@@ -50,6 +50,8 @@ class _PurchasePageState extends State<PurchasePage>
   final _productSearchController = TextEditingController();
   final _supplierSearchController = TextEditingController();
   final _companySearchController = TextEditingController();
+  final _productionDateController = TextEditingController();
+  final _expiryDateController = TextEditingController();
 
   // For adding new supplier/company
   final _newSupplierFirstNameController = TextEditingController();
@@ -848,21 +850,8 @@ class _PurchasePageState extends State<PurchasePage>
       return;
     }
 
-    if (_productionDate == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a production date')),
-      );
-      return;
-    }
-
-    if (_expiryDate == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select an expiry date')),
-      );
-      return;
-    }
-
-    if (_expiryDate!.isBefore(_productionDate!)) {
+    // Validate expiry date is after production date only if both are provided
+    if (_productionDate != null && _expiryDate != null && _expiryDate!.isBefore(_productionDate!)) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Expiry date must be after production date'),
@@ -964,6 +953,8 @@ class _PurchasePageState extends State<PurchasePage>
           _priceController.clear();
           _salesPriceController.clear();
           _notesController.clear();
+          _productionDateController.clear();
+          _expiryDateController.clear();
         });
 
         // Reload products to show updated stock
@@ -1001,6 +992,8 @@ class _PurchasePageState extends State<PurchasePage>
     _newCompanyNameController.dispose();
     _newCompanyContactController.dispose();
     _newCompanyAddressController.dispose();
+    _productionDateController.dispose();
+    _expiryDateController.dispose();
     super.dispose();
   }
 
@@ -1922,7 +1915,7 @@ class _PurchasePageState extends State<PurchasePage>
 
                         // Production Date Picker
                         const Text(
-                          'Production Date',
+                          'Production Date (Optional)',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w700,
@@ -1930,76 +1923,84 @@ class _PurchasePageState extends State<PurchasePage>
                           ),
                         ),
                         const SizedBox(height: 12),
-                        GestureDetector(
-                          onTap: () async {
-                            final selectedDate = await showDatePicker(
-                              context: context,
-                              initialDate: _productionDate ?? DateTime.now(),
-                              firstDate: DateTime(2000),
-                              lastDate: DateTime.now(),
-                              builder: (context, child) {
-                                return Theme(
-                                  data: Theme.of(context).copyWith(
-                                    colorScheme: ColorScheme.light(
-                                      primary: const Color(0xFF1B4D3E),
-                                      onPrimary: Colors.white,
-                                      surface: Colors.white,
-                                      onSurface: Colors.black,
-                                      secondary: const Color(0xFF1B4D3E),
-                                      onSecondary: Colors.white,
-                                    ),
-                                    useMaterial3: true,
-                                    buttonTheme: ButtonThemeData(
-                                      buttonColor: const Color(0xFF1B4D3E),
-                                      textTheme: ButtonTextTheme.primary,
-                                    ),
-                                  ),
-                                  child: child!,
+                        TextField(
+                          controller: _productionDateController,
+                          keyboardType: TextInputType.datetime,
+                          decoration: InputDecoration(
+                            hintText: 'DD/MM/YYYY',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                Icons.calendar_today,
+                                color: Colors.grey[600],
+                              ),
+                              onPressed: () async {
+                                final selectedDate = await showDatePicker(
+                                  context: context,
+                                  initialDate: _productionDate ?? DateTime.now(),
+                                  firstDate: DateTime(2000),
+                                  lastDate: DateTime.now(),
+                                  builder: (context, child) {
+                                    return Theme(
+                                      data: Theme.of(context).copyWith(
+                                        colorScheme: ColorScheme.light(
+                                          primary: const Color(0xFF1B4D3E),
+                                          onPrimary: Colors.white,
+                                          surface: Colors.white,
+                                          onSurface: Colors.black,
+                                          secondary: const Color(0xFF1B4D3E),
+                                          onSecondary: Colors.white,
+                                        ),
+                                        useMaterial3: true,
+                                        buttonTheme: ButtonThemeData(
+                                          buttonColor: const Color(0xFF1B4D3E),
+                                          textTheme: ButtonTextTheme.primary,
+                                        ),
+                                      ),
+                                      child: child!,
+                                    );
+                                  },
                                 );
+                                if (selectedDate != null) {
+                                  setState(() {
+                                    _productionDate = selectedDate;
+                                    _productionDateController.text = '${selectedDate.day.toString().padLeft(2, '0')}/${selectedDate.month.toString().padLeft(2, '0')}/${selectedDate.year}';
+                                  });
+                                }
                               },
-                            );
-                            if (selectedDate != null) {
+                            ),
+                          ),
+                          onChanged: (value) {
+                            // Parse manually entered date (DD/MM/YYYY format)
+                            final parts = value.split('/');
+                            if (parts.length == 3) {
+                              final day = int.tryParse(parts[0]);
+                              final month = int.tryParse(parts[1]);
+                              final year = int.tryParse(parts[2]);
+                              if (day != null && month != null && year != null) {
+                                try {
+                                  final date = DateTime(year, month, day);
+                                  if (date.isBefore(DateTime.now().add(const Duration(days: 1)))) {
+                                    setState(() {
+                                      _productionDate = date;
+                                    });
+                                  }
+                                } catch (_) {}
+                              }
+                            } else if (value.isEmpty) {
                               setState(() {
-                                _productionDate = selectedDate;
+                                _productionDate = null;
                               });
                             }
                           },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 14,
-                            ),
-                            decoration: BoxDecoration(
-                              border: Border.all(color: Colors.grey[300]!),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  _productionDate == null
-                                      ? 'Select production date'
-                                      : '${_productionDate!.day}/${_productionDate!.month}/${_productionDate!.year}',
-                                  style: TextStyle(
-                                    color: _productionDate == null
-                                        ? Colors.grey[600]
-                                        : Colors.black,
-                                    fontFamily: 'Literata',
-                                  ),
-                                ),
-                                Icon(
-                                  Icons.calendar_today,
-                                  color: Colors.grey[600],
-                                ),
-                              ],
-                            ),
-                          ),
                         ),
                         const SizedBox(height: 20),
 
                         // Expiry Date Picker
                         const Text(
-                          'Expiry Date',
+                          'Expiry Date (Optional)',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w700,
@@ -2007,72 +2008,78 @@ class _PurchasePageState extends State<PurchasePage>
                           ),
                         ),
                         const SizedBox(height: 12),
-                        GestureDetector(
-                          onTap: () async {
-                            final selectedDate = await showDatePicker(
-                              context: context,
-                              initialDate:
-                                  _expiryDate ??
-                                  DateTime.now().add(const Duration(days: 30)),
-                              firstDate: DateTime.now(),
-                              lastDate: DateTime(2100),
-                              builder: (context, child) {
-                                return Theme(
-                                  data: Theme.of(context).copyWith(
-                                    colorScheme: ColorScheme.light(
-                                      primary: const Color(0xFF1B4D3E),
-                                      onPrimary: Colors.white,
-                                      surface: Colors.white,
-                                      onSurface: Colors.black,
-                                      secondary: const Color(0xFF1B4D3E),
-                                      onSecondary: Colors.white,
-                                    ),
-                                    useMaterial3: true,
-                                    buttonTheme: ButtonThemeData(
-                                      buttonColor: const Color(0xFF1B4D3E),
-                                      textTheme: ButtonTextTheme.primary,
-                                    ),
-                                  ),
-                                  child: child!,
+                        TextField(
+                          controller: _expiryDateController,
+                          keyboardType: TextInputType.datetime,
+                          decoration: InputDecoration(
+                            hintText: 'DD/MM/YYYY',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                Icons.calendar_today,
+                                color: Colors.grey[600],
+                              ),
+                              onPressed: () async {
+                                final selectedDate = await showDatePicker(
+                                  context: context,
+                                  initialDate:
+                                      _expiryDate ??
+                                      DateTime.now().add(const Duration(days: 30)),
+                                  firstDate: DateTime.now(),
+                                  lastDate: DateTime(2100),
+                                  builder: (context, child) {
+                                    return Theme(
+                                      data: Theme.of(context).copyWith(
+                                        colorScheme: ColorScheme.light(
+                                          primary: const Color(0xFF1B4D3E),
+                                          onPrimary: Colors.white,
+                                          surface: Colors.white,
+                                          onSurface: Colors.black,
+                                          secondary: const Color(0xFF1B4D3E),
+                                          onSecondary: Colors.white,
+                                        ),
+                                        useMaterial3: true,
+                                        buttonTheme: ButtonThemeData(
+                                          buttonColor: const Color(0xFF1B4D3E),
+                                          textTheme: ButtonTextTheme.primary,
+                                        ),
+                                      ),
+                                      child: child!,
+                                    );
+                                  },
                                 );
+                                if (selectedDate != null) {
+                                  setState(() {
+                                    _expiryDate = selectedDate;
+                                    _expiryDateController.text = '${selectedDate.day.toString().padLeft(2, '0')}/${selectedDate.month.toString().padLeft(2, '0')}/${selectedDate.year}';
+                                  });
+                                }
                               },
-                            );
-                            if (selectedDate != null) {
+                            ),
+                          ),
+                          onChanged: (value) {
+                            // Parse manually entered date (DD/MM/YYYY format)
+                            final parts = value.split('/');
+                            if (parts.length == 3) {
+                              final day = int.tryParse(parts[0]);
+                              final month = int.tryParse(parts[1]);
+                              final year = int.tryParse(parts[2]);
+                              if (day != null && month != null && year != null) {
+                                try {
+                                  final date = DateTime(year, month, day);
+                                  setState(() {
+                                    _expiryDate = date;
+                                  });
+                                } catch (_) {}
+                              }
+                            } else if (value.isEmpty) {
                               setState(() {
-                                _expiryDate = selectedDate;
+                                _expiryDate = null;
                               });
                             }
                           },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 14,
-                            ),
-                            decoration: BoxDecoration(
-                              border: Border.all(color: Colors.grey[300]!),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  _expiryDate == null
-                                      ? 'Select expiry date'
-                                      : '${_expiryDate!.day}/${_expiryDate!.month}/${_expiryDate!.year}',
-                                  style: TextStyle(
-                                    color: _expiryDate == null
-                                        ? Colors.grey[600]
-                                        : Colors.black,
-                                    fontFamily: 'Literata',
-                                  ),
-                                ),
-                                Icon(
-                                  Icons.calendar_today,
-                                  color: Colors.grey[600],
-                                ),
-                              ],
-                            ),
-                          ),
                         ),
                         const SizedBox(height: 28),
 

@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:path_provider/path_provider.dart';
@@ -506,29 +507,41 @@ class PdfBillService {
     required PrintBillData billData,
     required Shop shopDetails,
   }) async {
-    final pdf = await generateBillPdf(
-      billData: billData,
-      shopDetails: shopDetails,
-    );
+    try {
+      debugPrint('[PdfBillService] Starting shareBillAsPdf for bill: ${billData.billNumber}');
+      
+      final pdf = await generateBillPdf(
+        billData: billData,
+        shopDetails: shopDetails,
+      );
+      debugPrint('[PdfBillService] PDF generated successfully');
 
-    final bytes = await pdf.save();
+      final bytes = await pdf.save();
+      debugPrint('[PdfBillService] PDF bytes saved, size: ${bytes.length}');
 
-    // Save to cache directory under share_plus/ so the ShareFileProvider can access it
-    final cacheDir = await getTemporaryDirectory();
-    final shareDir = Directory('${cacheDir.path}/share_plus');
-    if (!await shareDir.exists()) {
-      await shareDir.create(recursive: true);
+      // Use XFile.fromData to let share_plus handle file creation internally
+      final fileName =
+          'bill_${billData.billNumber.replaceAll('/', '_')}_${DateTime.now().millisecondsSinceEpoch}.pdf';
+      
+      debugPrint('[PdfBillService] Creating XFile from data with name: $fileName');
+      final xFile = XFile.fromData(
+        Uint8List.fromList(bytes),
+        name: fileName,
+        mimeType: 'application/pdf',
+      );
+
+      debugPrint('[PdfBillService] Calling Share.shareXFiles...');
+      final result = await Share.shareXFiles(
+        [xFile],
+        text: 'Bill ${billData.billNumber} - ${shopDetails.shopName}',
+        subject: 'Bill from ${shopDetails.shopName}',
+      );
+      debugPrint('[PdfBillService] Share result: ${result.status}');
+    } catch (e, stackTrace) {
+      debugPrint('[PdfBillService] ERROR in shareBillAsPdf: $e');
+      debugPrint('[PdfBillService] Stack trace: $stackTrace');
+      rethrow;
     }
-    final fileName =
-        'bill_${billData.billNumber.replaceAll('/', '_')}_${DateTime.now().millisecondsSinceEpoch}.pdf';
-    final file = File('${shareDir.path}/$fileName');
-    await file.writeAsBytes(bytes);
-
-    await Share.shareXFiles(
-      [XFile(file.path)],
-      text: 'Bill ${billData.billNumber} - ${shopDetails.shopName}',
-      subject: 'Bill from ${shopDetails.shopName}',
-    );
   }
 
   /// Preview and print PDF using system print dialog

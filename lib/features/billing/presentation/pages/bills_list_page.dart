@@ -622,6 +622,8 @@ class _BillsListPageState extends State<BillsListPage>
   Future<void> _shareBillAsPdf(Bill bill) async {
     bool loadingDialogShowing = false;
     try {
+      debugPrint('[BillsListPage] Starting _shareBillAsPdf for bill: ${bill.billNumber}');
+      
       // Show loading indicator
       showDialog(
         context: context,
@@ -634,8 +636,13 @@ class _BillsListPageState extends State<BillsListPage>
       );
       loadingDialogShowing = true;
 
+      debugPrint('[BillsListPage] Getting shop details...');
       final shop = await _shopRepository.getShopDetails();
+      debugPrint('[BillsListPage] Shop: ${shop.shopName}');
+      
+      debugPrint('[BillsListPage] Creating print data...');
       final printData = await _createPrintBillData(bill);
+      debugPrint('[BillsListPage] Print data created');
 
       // Close loading indicator
       if (mounted && loadingDialogShowing) {
@@ -643,8 +650,13 @@ class _BillsListPageState extends State<BillsListPage>
         loadingDialogShowing = false;
       }
 
+      debugPrint('[BillsListPage] Calling pdfService.shareBillAsPdf...');
       await _pdfService.shareBillAsPdf(billData: printData, shopDetails: shop);
-    } catch (e) {
+      debugPrint('[BillsListPage] Share completed successfully');
+    } catch (e, stackTrace) {
+      debugPrint('[BillsListPage] ERROR in _shareBillAsPdf: $e');
+      debugPrint('[BillsListPage] Stack trace: $stackTrace');
+      
       // Close loading indicator only if still showing
       if (mounted && loadingDialogShowing) {
         Navigator.pop(context);
