@@ -254,9 +254,9 @@ class InventoryReportService {
         final p = entry.value;
         return [
           '${i + 1}',
-          p.name,
-          p.category,
-          p.companyName,
+          p.name.isEmpty ? '-' : p.name,
+          p.category.isEmpty ? '-' : p.category,
+          p.companyName.isEmpty ? '-' : p.companyName,
           '${p.currentStock}',
           getStockStatus(p.currentStock),
           '-',
@@ -288,11 +288,18 @@ class InventoryReportService {
     // Data rows
     for (var i = 0; i < products.length; i++) {
       final p = products[i];
+      final name = p.name.isEmpty ? '-' : p.name.replaceAll('"', '""');
+      final category = p.category.isEmpty
+          ? '-'
+          : p.category.replaceAll('"', '""');
+      final company = p.companyName.isEmpty
+          ? '-'
+          : p.companyName.replaceAll('"', '""');
       buffer.writeln(
         '${i + 1},'
-        '"${p.name.replaceAll('"', '""')}",'
-        '"${p.category.replaceAll('"', '""')}",'
-        '"${p.companyName.replaceAll('"', '""')}",'
+        '"$name",'
+        '"$category",'
+        '"$company",'
         '${p.currentStock},'
         '"${getStockStatus(p.currentStock)}",'
         '-',
@@ -389,9 +396,9 @@ class InventoryReportService {
         final orderQty = i < orderQuantities.length ? orderQuantities[i] : null;
         return [
           '${i + 1}',
-          p.name,
-          p.category,
-          p.companyName,
+          p.name.isEmpty ? '-' : p.name,
+          p.category.isEmpty ? '-' : p.category,
+          p.companyName.isEmpty ? '-' : p.companyName,
           '${p.currentStock}',
           getStockStatus(p.currentStock),
           orderQty != null ? '$orderQty' : '-',
@@ -425,11 +432,18 @@ class InventoryReportService {
     for (var i = 0; i < products.length; i++) {
       final p = products[i];
       final orderQty = i < orderQuantities.length ? orderQuantities[i] : null;
+      final name = p.name.isEmpty ? '-' : p.name.replaceAll('"', '""');
+      final category = p.category.isEmpty
+          ? '-'
+          : p.category.replaceAll('"', '""');
+      final company = p.companyName.isEmpty
+          ? '-'
+          : p.companyName.replaceAll('"', '""');
       buffer.writeln(
         '${i + 1},'
-        '"${p.name.replaceAll('"', '""')}",'
-        '"${p.category.replaceAll('"', '""')}",'
-        '"${p.companyName.replaceAll('"', '""')}",'
+        '"$name",'
+        '"$category",'
+        '"$company",'
         '${p.currentStock},'
         '"${getStockStatus(p.currentStock)}",'
         '${orderQty != null ? '$orderQty' : '-'}',

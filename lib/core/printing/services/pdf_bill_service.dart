@@ -20,24 +20,35 @@ class PdfBillService {
     required Shop shopDetails,
   }) async {
     final pdf = pw.Document();
-    
+
     // Check if customer details should be shown
     final prefs = await SharedPreferences.getInstance();
     final showCustomer = prefs.getBool('bill_show_customer_details') ?? true;
-    final generateViaContact = prefs.getBool('bill_generate_via_contact') ?? false;
+    final generateViaContact =
+        prefs.getBool('bill_generate_via_contact') ?? false;
 
     pdf.addPage(
       pw.Page(
         pageFormat: PdfPageFormat.roll80,
         margin: const pw.EdgeInsets.all(16),
-        build: (context) => _buildBillContent(billData, shopDetails, showCustomer, generateViaContact),
+        build: (context) => _buildBillContent(
+          billData,
+          shopDetails,
+          showCustomer,
+          generateViaContact,
+        ),
       ),
     );
 
     return pdf;
   }
 
-  pw.Widget _buildBillContent(PrintBillData billData, Shop shopDetails, bool showCustomer, bool generateViaContact) {
+  pw.Widget _buildBillContent(
+    PrintBillData billData,
+    Shop shopDetails,
+    bool showCustomer,
+    bool generateViaContact,
+  ) {
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
@@ -188,51 +199,121 @@ class PdfBillService {
         pw.SizedBox(height: 4),
 
         // Items
-        ...billData.items.map(
-          (item) => pw.Padding(
-            padding: const pw.EdgeInsets.symmetric(vertical: 2),
-            child: pw.Row(
-              crossAxisAlignment: pw.CrossAxisAlignment.start,
-              children: [
-                pw.Expanded(
-                  flex: 3,
-                  child: pw.Text(
-                    item.name,
-                    style: const pw.TextStyle(fontSize: 10),
+        ...billData.items.expand(
+          (item) => [
+            pw.Padding(
+              padding: const pw.EdgeInsets.symmetric(vertical: 2),
+              child: pw.Row(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  pw.Expanded(
+                    flex: 3,
+                    child: pw.Text(
+                      item.name,
+                      style: const pw.TextStyle(fontSize: 10),
+                    ),
                   ),
-                ),
-                pw.SizedBox(
-                  width: 40,
-                  child: pw.Text(
-                    '${item.quantity}',
-                    style: const pw.TextStyle(fontSize: 10),
-                    textAlign: pw.TextAlign.center,
+                  pw.SizedBox(
+                    width: 40,
+                    child: pw.Text(
+                      '${item.quantity}',
+                      style: const pw.TextStyle(fontSize: 10),
+                      textAlign: pw.TextAlign.center,
+                    ),
                   ),
-                ),
-                pw.SizedBox(
-                  width: 50,
-                  child: pw.Text(
-                    '${item.rate.toStringAsFixed(2)}',
-                    style: const pw.TextStyle(fontSize: 10),
-                    textAlign: pw.TextAlign.right,
+                  pw.SizedBox(
+                    width: 50,
+                    child: pw.Text(
+                      '${item.rate.toStringAsFixed(2)}',
+                      style: const pw.TextStyle(fontSize: 10),
+                      textAlign: pw.TextAlign.right,
+                    ),
                   ),
-                ),
-                pw.SizedBox(
-                  width: 60,
-                  child: pw.Text(
-                    '${item.amount.toStringAsFixed(2)}',
-                    style: const pw.TextStyle(fontSize: 10),
-                    textAlign: pw.TextAlign.right,
+                  pw.SizedBox(
+                    width: 60,
+                    child: pw.Text(
+                      '${item.amount.toStringAsFixed(2)}',
+                      style: const pw.TextStyle(fontSize: 10),
+                      textAlign: pw.TextAlign.right,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
+            // Show returned quantity for this item
+            if (item.hasReturns)
+              pw.Padding(
+                padding: const pw.EdgeInsets.only(left: 8, bottom: 2),
+                child: pw.Row(
+                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                  children: [
+                    pw.Text(
+                      'Returned: ${item.returnedQuantity} qty',
+                      style: pw.TextStyle(
+                        fontSize: 9,
+                        color: PdfColors.orange800,
+                        fontWeight: pw.FontWeight.bold,
+                      ),
+                    ),
+                    pw.Text(
+                      '-Rs. ${item.returnedAmount.toStringAsFixed(2)}',
+                      style: pw.TextStyle(
+                        fontSize: 9,
+                        color: PdfColors.orange800,
+                        fontWeight: pw.FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+          ],
         ),
 
         pw.SizedBox(height: 8),
         pw.Divider(thickness: 0.5),
         pw.SizedBox(height: 8),
+
+        // Returns summary section
+        if (billData.hasAnyReturns) ...[
+          pw.Row(
+            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+            children: [
+              pw.Text(
+                'Returned Items:',
+                style: const pw.TextStyle(fontSize: 10),
+              ),
+              pw.Text(
+                '${billData.totalReturnedQuantity} qty',
+                style: const pw.TextStyle(fontSize: 10),
+              ),
+            ],
+          ),
+          pw.SizedBox(height: 4),
+          pw.Row(
+            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+            children: [
+              pw.Text(
+                'Return Amount:',
+                style: pw.TextStyle(
+                  fontSize: 10,
+                  fontWeight: pw.FontWeight.bold,
+                  color: PdfColors.orange800,
+                ),
+              ),
+              pw.Text(
+                '-Rs. ${billData.totalReturnedAmount.toStringAsFixed(2)}',
+                style: pw.TextStyle(
+                  fontSize: 10,
+                  fontWeight: pw.FontWeight.bold,
+                  color: PdfColors.orange800,
+                ),
+              ),
+            ],
+          ),
+          pw.SizedBox(height: 8),
+          pw.Divider(thickness: 0.5),
+          pw.SizedBox(height: 8),
+        ],
 
         // Totals
         _buildTotalRow('Subtotal', billData.subtotal),

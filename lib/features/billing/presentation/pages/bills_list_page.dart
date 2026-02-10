@@ -31,7 +31,7 @@ class _BillsListPageState extends State<BillsListPage>
   late Animation<Offset> _offsetAnimation;
   late Animation<double> _opacityAnimation;
   final _cacheDataSource = BillCacheDataSource();
-  
+
   // Localization
   late AppLocalizations _localizations;
 
@@ -167,7 +167,9 @@ class _BillsListPageState extends State<BillsListPage>
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('${_localizations.failedToConnect}: ${connectResult.message}'),
+              content: Text(
+                '${_localizations.failedToConnect}: ${connectResult.message}',
+              ),
               backgroundColor: Colors.red,
             ),
           );
@@ -312,47 +314,129 @@ class _BillsListPageState extends State<BillsListPage>
                       ...bill.items.map(
                         (item) => Padding(
                           padding: const EdgeInsets.only(bottom: 8),
-                          child: Row(
+                          child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Expanded(
-                                flex: 2,
-                                child: Text(
-                                  item.productName,
-                                  style: const TextStyle(
-                                    fontFamily: 'Literata',
-                                    fontSize: 13,
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Expanded(
+                                    flex: 2,
+                                    child: Text(
+                                      item.productName,
+                                      style: const TextStyle(
+                                        fontFamily: 'Literata',
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(
+                                    width: 50,
+                                    child: Text(
+                                      '${item.quantity}x',
+                                      style: TextStyle(
+                                        fontFamily: 'Literata',
+                                        fontSize: 12,
+                                        color: Colors.grey[600],
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
+                                  SizedBox(
+                                    width: 70,
+                                    child: Text(
+                                      '₹${item.subtotal.toStringAsFixed(2)}',
+                                      style: const TextStyle(
+                                        fontFamily: 'Literata',
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                      textAlign: TextAlign.right,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              // Show returned quantity if any
+                              if (item.returnedQuantity > 0)
+                                Padding(
+                                  padding: const EdgeInsets.only(
+                                    top: 4,
+                                    left: 4,
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.assignment_return,
+                                        size: 14,
+                                        color: Colors.orange[700],
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        'Returned: ${item.returnedQuantity} qty',
+                                        style: TextStyle(
+                                          fontFamily: 'Literata',
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.orange[700],
+                                        ),
+                                      ),
+                                      const Spacer(),
+                                      Text(
+                                        '-₹${(item.sellingPrice * item.returnedQuantity).toStringAsFixed(2)}',
+                                        style: TextStyle(
+                                          fontFamily: 'Literata',
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.orange[700],
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                              ),
-                              SizedBox(
-                                width: 50,
-                                child: Text(
-                                  '${item.quantity}x',
-                                  style: TextStyle(
-                                    fontFamily: 'Literata',
-                                    fontSize: 12,
-                                    color: Colors.grey[600],
-                                  ),
-                                  textAlign: TextAlign.center,
+                            ],
+                          ),
+                        ),
+                      ),
+                      // Returns summary before totals
+                      if (bill.hasAnyReturns) ...[
+                        const SizedBox(height: 4),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.orange.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: Colors.orange.withOpacity(0.3),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Total Returns (${bill.totalReturnedQuantity} qty)',
+                                style: TextStyle(
+                                  fontFamily: 'Literata',
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.orange[800],
                                 ),
                               ),
-                              SizedBox(
-                                width: 70,
-                                child: Text(
-                                  '₹${item.subtotal.toStringAsFixed(2)}',
-                                  style: const TextStyle(
-                                    fontFamily: 'Literata',
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                  textAlign: TextAlign.right,
+                              Text(
+                                '-₹${bill.totalReturnedAmount.toStringAsFixed(2)}',
+                                style: TextStyle(
+                                  fontFamily: 'Literata',
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.orange[800],
                                 ),
                               ),
                             ],
                           ),
                         ),
-                      ),
+                      ],
                       const Divider(height: 24),
                       // Totals
                       _buildPreviewRow(
@@ -597,7 +681,9 @@ class _BillsListPageState extends State<BillsListPage>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('${_localizations.pdfSaved}: ${file.path.split('/').last}'),
+            content: Text(
+              '${_localizations.pdfSaved}: ${file.path.split('/').last}',
+            ),
             backgroundColor: Colors.green,
             action: SnackBarAction(
               label: _localizations.open,
@@ -2032,39 +2118,89 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog> {
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: Colors.white.withOpacity(0.1), width: 1),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  item.productName,
-                  style: const TextStyle(
-                    fontFamily: 'Literata',
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                  ),
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item.productName,
+                      style: const TextStyle(
+                        fontFamily: 'Literata',
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                    Text(
+                      '₹${item.sellingPrice.toStringAsFixed(2)} × ${item.quantity}',
+                      style: TextStyle(
+                        fontFamily: 'Literata',
+                        fontSize: 12,
+                        color: Colors.white.withOpacity(0.6),
+                      ),
+                    ),
+                  ],
                 ),
-                Text(
-                  '₹${item.sellingPrice.toStringAsFixed(2)} × ${item.quantity}',
-                  style: TextStyle(
-                    fontFamily: 'Literata',
-                    fontSize: 12,
-                    color: Colors.white.withOpacity(0.6),
-                  ),
+              ),
+              Text(
+                '₹${item.subtotal.toStringAsFixed(2)}',
+                style: const TextStyle(
+                  fontFamily: 'Literata',
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-          Text(
-            '₹${item.subtotal.toStringAsFixed(2)}',
-            style: const TextStyle(
-              fontFamily: 'Literata',
-              fontWeight: FontWeight.w700,
-              color: Colors.white,
+          // Show returned quantity if any
+          if (item.returnedQuantity > 0) ...[
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.orange.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: Colors.orange.withOpacity(0.4)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.assignment_return,
+                        size: 14,
+                        color: Colors.orange[300],
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Returned: ${item.returnedQuantity} qty',
+                        style: TextStyle(
+                          fontFamily: 'Literata',
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.orange[300],
+                        ),
+                      ),
+                    ],
+                  ),
+                  Text(
+                    '-₹${(item.sellingPrice * item.returnedQuantity).toStringAsFixed(2)}',
+                    style: TextStyle(
+                      fontFamily: 'Literata',
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.orange[300],
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
+          ],
         ],
       ),
     );

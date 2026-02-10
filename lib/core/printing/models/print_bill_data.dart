@@ -4,13 +4,24 @@ class PrintBillItem {
   final int quantity;
   final double rate;
   final double amount;
+  final int returnedQuantity;
 
   const PrintBillItem({
     required this.name,
     required this.quantity,
     required this.rate,
     required this.amount,
+    this.returnedQuantity = 0,
   });
+
+  /// Whether some units of this item have been returned
+  bool get hasReturns => returnedQuantity > 0;
+
+  /// Quantity still held by the customer
+  int get effectiveQuantity => quantity - returnedQuantity;
+
+  /// Refund amount for the returned units
+  double get returnedAmount => rate * returnedQuantity;
 
   /// Create from BillItem entity
   factory PrintBillItem.fromBillItem(dynamic billItem) {
@@ -19,11 +30,18 @@ class PrintBillItem {
       quantity: billItem.quantity as int,
       rate: billItem.sellingPrice as double,
       amount: billItem.subtotal as double,
+      returnedQuantity: (billItem.returnedQuantity as int?) ?? 0,
     );
   }
 
   Map<String, dynamic> toJson() {
-    return {'name': name, 'quantity': quantity, 'rate': rate, 'amount': amount};
+    return {
+      'name': name,
+      'quantity': quantity,
+      'rate': rate,
+      'amount': amount,
+      'returnedQuantity': returnedQuantity,
+    };
   }
 }
 
@@ -109,6 +127,17 @@ class PrintBillData {
 
   /// Get total quantity of items
   int get totalQuantity => items.fold(0, (sum, item) => sum + item.quantity);
+
+  /// Total returned quantity across all items
+  int get totalReturnedQuantity =>
+      items.fold(0, (sum, item) => sum + item.returnedQuantity);
+
+  /// Total refund amount for all returned items
+  double get totalReturnedAmount =>
+      items.fold(0.0, (sum, item) => sum + item.returnedAmount);
+
+  /// Whether any item in this bill has returns
+  bool get hasAnyReturns => items.any((item) => item.hasReturns);
 
   /// Check if discount is applied
   bool get hasDiscount => discountAmount != null && discountAmount! > 0;

@@ -291,11 +291,12 @@ class EscPosBillFormatter {
 
     final dateFormatter = DateFormat('dd/MM/yyyy');
     final timeFormatter = DateFormat('hh:mm a');
-    
+
     // Check if customer details should be shown
     final prefs = await SharedPreferences.getInstance();
     final showCustomer = prefs.getBool('bill_show_customer_details') ?? true;
-    final generateViaContact = prefs.getBool('bill_generate_via_contact') ?? false;
+    final generateViaContact =
+        prefs.getBool('bill_generate_via_contact') ?? false;
 
     // Return Bill indicator
     if (billData.isReturnBill) {
@@ -307,16 +308,23 @@ class EscPosBillFormatter {
     bytes.addAll(_printLine('Bill No: ${billData.billNumber}', bold: true));
 
     // Date and Time on separate lines to avoid cropping
-    bytes.addAll(_printLine('Date: ${dateFormatter.format(billData.dateTime)}'));
-    bytes.addAll(_printLine('Time: ${timeFormatter.format(billData.dateTime)}'));
+    bytes.addAll(
+      _printLine('Date: ${dateFormatter.format(billData.dateTime)}'),
+    );
+    bytes.addAll(
+      _printLine('Time: ${timeFormatter.format(billData.dateTime)}'),
+    );
 
     // Always show phone number when generate via contact is enabled
     if (generateViaContact) {
-      if (billData.customerPhone != null && billData.customerPhone!.isNotEmpty) {
+      if (billData.customerPhone != null &&
+          billData.customerPhone!.isNotEmpty) {
         bytes.addAll(_printLine('Phone: ${billData.customerPhone}'));
       }
       // Also show customer name if found via phone search
-      if (showCustomer && billData.customerName != null && billData.customerName!.isNotEmpty) {
+      if (showCustomer &&
+          billData.customerName != null &&
+          billData.customerName!.isNotEmpty) {
         bytes.addAll(_printLine('Customer: ${billData.customerName}'));
       }
     } else if (showCustomer) {
@@ -324,7 +332,8 @@ class EscPosBillFormatter {
       if (billData.customerName != null && billData.customerName!.isNotEmpty) {
         bytes.addAll(_printLine('Customer: ${billData.customerName}'));
       }
-      if (billData.customerPhone != null && billData.customerPhone!.isNotEmpty) {
+      if (billData.customerPhone != null &&
+          billData.customerPhone!.isNotEmpty) {
         bytes.addAll(_printLine('Phone: ${billData.customerPhone}'));
       }
     }
@@ -355,9 +364,36 @@ class EscPosBillFormatter {
           _formatAmount(item.amount),
         ),
       );
+      // Show returned quantity for this item if any
+      if (item.hasReturns) {
+        bytes.addAll(
+          _printTwoColumns(
+            '  Returned: ${item.returnedQuantity} qty',
+            '-Rs.${_formatAmount(item.returnedAmount)}',
+          ),
+        );
+      }
     }
 
     bytes.addAll(_printDivider());
+
+    // Returns summary if any items have been returned
+    if (billData.hasAnyReturns) {
+      bytes.addAll(
+        _printTwoColumns(
+          'Returned Items:',
+          '${billData.totalReturnedQuantity} qty',
+        ),
+      );
+      bytes.addAll(
+        _printTwoColumns(
+          'Return Amount:',
+          '-Rs.${_formatAmount(billData.totalReturnedAmount)}',
+          bold: true,
+        ),
+      );
+      bytes.addAll(_printDivider());
+    }
 
     return bytes;
   }
