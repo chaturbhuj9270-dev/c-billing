@@ -239,15 +239,23 @@ class DashboardRepository {
           .collection('customers')
           .where('isActive', isEqualTo: true)
           .where('currentPendingAmount', isGreaterThan: 0)
-          .orderBy('currentPendingAmount', descending: true)
-          .limit(limit)
           .get();
 
-      return snapshot.docs.map((doc) {
+      final customers = snapshot.docs.map((doc) {
         final data = doc.data() as Map<String, dynamic>;
         data['id'] = doc.id;
         return data;
       }).toList();
+      
+      // Sort in memory to avoid composite index requirement
+      customers.sort((a, b) {
+        final aAmount = (a['currentPendingAmount'] ?? 0) as num;
+        final bAmount = (b['currentPendingAmount'] ?? 0) as num;
+        return bAmount.compareTo(aAmount);
+      });
+      
+      // Apply limit after sorting
+      return customers.take(limit).toList();
     } catch (e) {
       print('[DashboardRepository] Error fetching pending customers: $e');
       return [];

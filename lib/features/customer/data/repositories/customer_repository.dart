@@ -64,14 +64,18 @@ class FirebaseCustomerRepository implements CustomerRepository {
     try {
       final snapshot = await _customersCollection
           .where('isActive', isEqualTo: true)
-          .orderBy('firstName')
           .get();
 
-      return snapshot.docs.map((doc) {
+      final customers = snapshot.docs.map((doc) {
         final data = doc.data();
         data['id'] = doc.id;
         return Customer.fromJson(data);
       }).toList();
+      
+      // Sort in memory instead of using orderBy to avoid composite index
+      customers.sort((a, b) => a.firstName.compareTo(b.firstName));
+      
+      return customers;
     } catch (e) {
       print('[ERROR] Failed to get all customers: $e');
       rethrow;
@@ -207,14 +211,18 @@ class FirebaseCustomerRepository implements CustomerRepository {
       final snapshot = await _customersCollection
           .where('isActive', isEqualTo: true)
           .where('currentPendingAmount', isGreaterThan: 0)
-          .orderBy('currentPendingAmount', descending: true)
           .get();
 
-      return snapshot.docs.map((doc) {
+      final customers = snapshot.docs.map((doc) {
         final data = doc.data();
         data['id'] = doc.id;
         return Customer.fromJson(data);
       }).toList();
+      
+      // Sort in memory to avoid composite index requirement
+      customers.sort((a, b) => b.currentPendingAmount.compareTo(a.currentPendingAmount));
+      
+      return customers;
     } catch (e) {
       print('[ERROR] Failed to get customers with pending balance: $e');
       rethrow;
