@@ -620,6 +620,7 @@ class _BillsListPageState extends State<BillsListPage>
   }
 
   Future<void> _shareBillAsPdf(Bill bill) async {
+    bool loadingDialogShowing = false;
     try {
       // Show loading indicator
       showDialog(
@@ -631,17 +632,24 @@ class _BillsListPageState extends State<BillsListPage>
           ),
         ),
       );
+      loadingDialogShowing = true;
 
       final shop = await _shopRepository.getShopDetails();
       final printData = await _createPrintBillData(bill);
 
       // Close loading indicator
-      if (mounted) Navigator.pop(context);
+      if (mounted && loadingDialogShowing) {
+        Navigator.pop(context);
+        loadingDialogShowing = false;
+      }
 
       await _pdfService.shareBillAsPdf(billData: printData, shopDetails: shop);
     } catch (e) {
-      // Close loading indicator if still showing
-      if (mounted) Navigator.pop(context);
+      // Close loading indicator only if still showing
+      if (mounted && loadingDialogShowing) {
+        Navigator.pop(context);
+        loadingDialogShowing = false;
+      }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -655,6 +663,7 @@ class _BillsListPageState extends State<BillsListPage>
   }
 
   Future<void> _saveBillAsPdf(Bill bill) async {
+    bool loadingDialogShowing = false;
     try {
       // Show loading indicator
       showDialog(
@@ -666,6 +675,7 @@ class _BillsListPageState extends State<BillsListPage>
           ),
         ),
       );
+      loadingDialogShowing = true;
 
       final shop = await _shopRepository.getShopDetails();
       final printData = await _createPrintBillData(bill);
@@ -676,7 +686,10 @@ class _BillsListPageState extends State<BillsListPage>
       );
 
       // Close loading indicator
-      if (mounted) Navigator.pop(context);
+      if (mounted && loadingDialogShowing) {
+        Navigator.pop(context);
+        loadingDialogShowing = false;
+      }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -699,8 +712,11 @@ class _BillsListPageState extends State<BillsListPage>
         );
       }
     } catch (e) {
-      // Close loading indicator if still showing
-      if (mounted) Navigator.pop(context);
+      // Close loading indicator only if still showing
+      if (mounted && loadingDialogShowing) {
+        Navigator.pop(context);
+        loadingDialogShowing = false;
+      }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

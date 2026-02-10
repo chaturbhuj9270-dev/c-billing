@@ -30,6 +30,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
 
   // Printer service for bill printing
   final PosPrinterService _printerService = PosPrinterService();
+  final PdfBillService _pdfService = PdfBillService();
   final ShopRepository _shopRepository = ShopRepository();
   bool _isPrinting = false;
 
@@ -237,23 +238,19 @@ class _ReturnBillPageState extends State<ReturnBillPage>
                 children: [
                   const Icon(Icons.check_circle, color: Colors.white),
                   const SizedBox(width: 8),
-                  const Text('Bill returned successfully!'),
+                  const Expanded(
+                    child: Text('Return processed! Print or share the receipt before leaving.'),
+                  ),
                 ],
               ),
               backgroundColor: Colors.green,
               behavior: SnackBarBehavior.floating,
+              duration: const Duration(seconds: 4),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
               ),
             ),
           );
-
-          // Navigate back after a short delay
-          Future.delayed(const Duration(seconds: 2), () {
-            if (mounted) {
-              Navigator.pop(context, true);
-            }
-          });
         } else {
           setState(() {
             _isProcessing = false;
@@ -271,6 +268,17 @@ class _ReturnBillPageState extends State<ReturnBillPage>
     }
   }
 
+  /// Create PrintBillData with proper return bill context
+  PrintBillData _createReturnPrintData() {
+    final bill = _currentBill!;
+    final hasReturns = bill.hasAnyReturns;
+    return PrintBillData.fromBill(
+      bill,
+      isReturn: hasReturns,
+      refund: hasReturns ? bill.totalReturnedAmount : null,
+    );
+  }
+
   /// Handle printing the bill
   Future<void> _handlePrintBill() async {
     if (_currentBill == null) return;
@@ -278,7 +286,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
     // Check if printer is connected
     if (!_printerService.isConnected) {
       final selectedPrinter = await PrinterSelectionWidget.show(context);
-      if (selectedPrinter == null) return;
+      if (selectedPrinter == null || !mounted) return;
     }
 
     setState(() => _isPrinting = true);
@@ -286,9 +294,10 @@ class _ReturnBillPageState extends State<ReturnBillPage>
     try {
       // Get shop details
       final shop = await _shopRepository.getShopDetails();
+      if (!mounted) return;
 
-      // Create print bill data from current bill
-      final printData = PrintBillData.fromBill(_currentBill!);
+      // Create print bill data with return context
+      final printData = _createReturnPrintData();
 
       // Print the bill
       final result = await _printerService.printBill(
@@ -336,6 +345,65 @@ class _ReturnBillPageState extends State<ReturnBillPage>
                 const Icon(Icons.error_outline, color: Colors.white),
                 const SizedBox(width: 8),
                 Expanded(child: Text('Print error: $e')),
+              ],
+            ),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        );
+      }
+    }
+  }
+
+  /// Handle sharing the bill as PDF
+  Future<void> _handleShareBill() async {
+    if (_currentBill == null) return;
+
+    bool loadingDialogShowing = false;
+    try {
+      // Show loading indicator
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+          ),
+        ),
+      );
+      loadingDialogShowing = true;
+
+      final shop = await _shopRepository.getShopDetails();
+      final printData = _createReturnPrintData();
+
+      // Close loading indicator
+      if (mounted && loadingDialogShowing) {
+        Navigator.pop(context);
+        loadingDialogShowing = false;
+      }
+
+      await _pdfService.shareBillAsPdf(
+        billData: printData,
+        shopDetails: shop,
+      );
+    } catch (e) {
+      // Close loading indicator only if still showing
+      if (mounted && loadingDialogShowing) {
+        Navigator.pop(context);
+        loadingDialogShowing = false;
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.error_outline, color: Colors.white),
+                const SizedBox(width: 8),
+                Expanded(child: Text('Share error: $e')),
               ],
             ),
             backgroundColor: Colors.red,
@@ -452,8 +520,27 @@ class _ReturnBillPageState extends State<ReturnBillPage>
                     ],
                   ),
                 ),
-                // Print button - only show when bill is loaded
+                // Share & Print buttons - only show when bill is loaded
                 if (_currentBill != null) ...[
+                  // Share button
+                  GestureDetector(
+                    onTap: _handleShareBill,
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      margin: const EdgeInsets.only(right: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(
+                        Icons.share_rounded,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                    ),
+                  ),
+                  // Print button
                   GestureDetector(
                     onTap: _isPrinting ? null : _handlePrintBill,
                     child: Container(
@@ -478,7 +565,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
                               ),
                             )
                           : const Icon(
-                              Icons.print,
+                              Icons.print_rounded,
                               color: Colors.white,
                               size: 20,
                             ),

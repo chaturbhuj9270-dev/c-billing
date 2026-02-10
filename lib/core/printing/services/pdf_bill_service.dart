@@ -506,10 +506,23 @@ class PdfBillService {
     required PrintBillData billData,
     required Shop shopDetails,
   }) async {
-    final file = await savePdfToFile(
+    final pdf = await generateBillPdf(
       billData: billData,
       shopDetails: shopDetails,
     );
+
+    final bytes = await pdf.save();
+
+    // Save to cache directory under share_plus/ so the ShareFileProvider can access it
+    final cacheDir = await getTemporaryDirectory();
+    final shareDir = Directory('${cacheDir.path}/share_plus');
+    if (!await shareDir.exists()) {
+      await shareDir.create(recursive: true);
+    }
+    final fileName =
+        'bill_${billData.billNumber.replaceAll('/', '_')}_${DateTime.now().millisecondsSinceEpoch}.pdf';
+    final file = File('${shareDir.path}/$fileName');
+    await file.writeAsBytes(bytes);
 
     await Share.shareXFiles(
       [XFile(file.path)],
