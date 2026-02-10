@@ -79,7 +79,6 @@ class _BillingPageState extends State<BillingPage> {
   Timer? _phoneSearchDebounceTimer;
   bool _isSearchingCustomer = false;
   String? _autoFoundCustomerName;
-  bool _isAddCustomerDialogOpen = false;
   
   // Bill settings
   bool _showCustomerOnBill = true;
@@ -312,14 +311,11 @@ class _BillingPageState extends State<BillingPage> {
           isError: false,
         );
       } else {
-        // Customer not found - show add customer dialog
+        // Customer not found - just clear the search state, don't show dialog
         setState(() {
           _isSearchingCustomer = false;
+          _autoFoundCustomerName = null;
         });
-        // Only show dialog if not already open
-        if (!_isAddCustomerDialogOpen) {
-          _showAddCustomerDialog(phoneNumber);
-        }
       }
     } catch (e) {
       if (!mounted) return;
@@ -338,7 +334,6 @@ class _BillingPageState extends State<BillingPage> {
 
   /// Show dialog to add new customer with pre-filled phone number
   void _showAddCustomerDialog(String phoneNumber) {
-    _isAddCustomerDialogOpen = true;
     final firstNameController = TextEditingController();
     final lastNameController = TextEditingController();
     final formKey = GlobalKey<FormState>();
@@ -460,7 +455,6 @@ class _BillingPageState extends State<BillingPage> {
         actions: [
           TextButton(
             onPressed: () {
-              _isAddCustomerDialogOpen = false;
               firstNameController.dispose();
               lastNameController.dispose();
               Navigator.pop(ctx);
@@ -475,7 +469,6 @@ class _BillingPageState extends State<BillingPage> {
           ),
           TextButton(
             onPressed: () {
-              _isAddCustomerDialogOpen = false;
               firstNameController.dispose();
               lastNameController.dispose();
               Navigator.pop(ctx);
@@ -497,7 +490,6 @@ class _BillingPageState extends State<BillingPage> {
           ElevatedButton(
             onPressed: () async {
               if (formKey.currentState!.validate()) {
-                _isAddCustomerDialogOpen = false;
                 Navigator.pop(ctx);
                 firstNameController.dispose();
                 lastNameController.dispose();
@@ -766,7 +758,6 @@ class _BillingPageState extends State<BillingPage> {
       _isPercentageDiscount = true;
       _selectedCustomer = null;
       _autoFoundCustomerName = null;
-      _isAddCustomerDialogOpen = false;
       _receivedAmount = 0.0;
       _isFullPayment = true;
     });
@@ -1501,6 +1492,20 @@ class _BillingPageState extends State<BillingPage> {
                       ),
                   ],
                 ),
+              ),
+              const SizedBox(width: 8),
+              // Add Customer button
+              IconButton(
+                icon: const Icon(Icons.person_add, color: Color(0xFF1B4D3E)),
+                onPressed: () {
+                  final phone = _customerContactController.text.trim();
+                  if (phone.isEmpty) {
+                    _showSnackbar('Please enter phone number first', isError: true);
+                    return;
+                  }
+                  _showAddCustomerDialog(phone);
+                },
+                tooltip: 'Add New Customer',
               ),
             ],
           ),
