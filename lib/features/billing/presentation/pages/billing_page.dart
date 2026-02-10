@@ -1083,13 +1083,16 @@ class _BillingPageState extends State<BillingPage> {
             color: Colors.grey[600],
           ),
         ),
-        Text(
-          value,
-          style: TextStyle(
-            fontFamily: 'Literata',
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: valueColor ?? Colors.black87,
+        Flexible(
+          child: Text(
+            value,
+            textAlign: TextAlign.right,
+            style: TextStyle(
+              fontFamily: 'Literata',
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: valueColor ?? Colors.black87,
+            ),
           ),
         ),
       ],
