@@ -7,6 +7,8 @@ import '../../../../core/services/language_service.dart';
 import '../../../../core/services/dashboard_refresh_service.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../../data/datasources/customer_cache_datasource.dart';
+import '../../offline/controllers/customer_offline_controller.dart';
+import '../../data/services/customer_sync_service.dart';
 import 'customer_details_page.dart';
 
 class CustomerPage extends StatefulWidget {
@@ -468,7 +470,7 @@ class _CustomerPageState extends State<CustomerPage> {
     }
 
     setState(() => _isLoading = true);
-    print('[DEBUG] Starting customer save operation');
+    print('[DEBUG] Starting customer save operation (offline-first)');
 
     try {
       final currentUser = _auth.currentUser;
@@ -482,115 +484,141 @@ class _CustomerPageState extends State<CustomerPage> {
         return;
       }
 
-      print('[DEBUG] Authenticated user ID: ${currentUser.uid}');
-      print('[DEBUG] Building customer data...');
+      // Build full name
+      final firstName = _firstNameController.text.trim();
+      final middleName = _middleNameController.text.trim();
+      final lastName = _lastNameController.text.trim();
+      final fullName = [firstName, middleName, lastName]
+          .where((s) => s.isNotEmpty)
+          .join(' ');
+      final contact = _contactController.text.trim();
+      final address = _addressController.text.trim();
 
-      final customersCollection = _firestore
-          .collection('users')
-          .doc(currentUser.uid)
-          .collection('customers');
+      print('[DEBUG] Saving to Isar (offline-first): $fullName');
 
-      print('[DEBUG] Firestore path: users/${currentUser.uid}/customers');
-
-      final customerData = {
-        'firstName': _firstNameController.text.trim(),
-        'middleName': _middleNameController.text.trim(),
-        'lastName': _lastNameController.text.trim(),
-        'contact': _contactController.text.trim(),
-        'address': _addressController.text.trim(),
-        'updatedAt': FieldValue.serverTimestamp(),
-      };
-
-      print('[DEBUG] Customer data: $customerData');
+      // Get offline controller
+      final offlineController = CustomerOfflineController.instance;
 
       if (_isEditing && _editingCustomerId != null) {
-        // Optimistic update
-        final index = _customers.indexWhere(
-          (c) => c['id'] == _editingCustomerId,
-        );
+        // For editing, we need to find the local ID
+        // Try to get by server ID first
+        final existing = await offlineController.getCustomerByServerId(_editingCustomerId!);
+        
+        if (existing != null) {
+          await offlineController.updateCustomer(
+            id: existing.id,
+            name: fullName,
+            mobile: contact,
+            address: address,
+          );
+          print('[DEBUG] Customer updated in Isar');
+        } else {
+          // Fallback to Firebase direct update if not in Isar
+          print('[DEBUG] Customer not in Isar, updating Firebase directly');
+          final customersCollection = _firestore
+              .collection('users')
+              .doc(currentUser.uid)
+              .collection('customers');
+          
+          await customersCollection.doc(_editingCustomerId).update({
+            'firstName': firstName,
+            'middleName': middleName,
+            'lastName': lastName,
+            'contact': contact,
+            'address': address,
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+        }
+
+        // Optimistic update UI
+        final index = _customers.indexWhere((c) => c['id'] == _editingCustomerId);
         if (index != -1) {
           setState(() {
-            _customers[index] = {..._customers[index], ...customerData};
+            _customers[index] = {
+              ..._customers[index],
+              'firstName': firstName,
+              'middleName': middleName,
+              'lastName': lastName,
+              'contact': contact,
+              'address': address,
+            };
             _filterCustomers();
           });
           _cacheDataSource.saveCustomers(_customers);
         }
-
-        // Update existing customer
-        print('[DEBUG] Updating existing customer: $_editingCustomerId');
-        await customersCollection.doc(_editingCustomerId).update(customerData);
-        print('[DEBUG] Customer updated successfully');
         
-        // Notify dashboard to refresh
         DashboardRefreshService.instance.notifyDataChanged(DataChangeType.customer);
         
         _clearForm();
-        _loadCustomers();
         if (mounted && context.mounted) {
           Navigator.pop(context);
-          if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Customer updated successfully'),
-                backgroundColor: Colors.green,
-              ),
-            );
-          }
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Customer updated successfully'),
+              backgroundColor: Colors.green,
+            ),
+          );
         }
       } else {
-        // Create new customer
-        print('[DEBUG] Creating new customer');
-        customerData['createdAt'] = FieldValue.serverTimestamp();
+        // Create new customer - save to Isar first (offline-first)
+        print('[DEBUG] Creating new customer in Isar');
+        
+        final newCustomer = await offlineController.addCustomer(
+          name: fullName,
+          mobile: contact,
+          address: address,
+        );
+        
+        print('[DEBUG] Customer saved to Isar with ID: ${newCustomer.id}');
 
-        // Optimistic add
-        final tempId = 'temp_${DateTime.now().millisecondsSinceEpoch}';
-        final newCustomer = {...customerData, 'id': tempId};
+        // Optimistic add to UI
+        final tempCustomerData = {
+          'id': 'local_${newCustomer.id}',
+          'localId': newCustomer.id,
+          'firstName': firstName,
+          'middleName': middleName,
+          'lastName': lastName,
+          'contact': contact,
+          'address': address,
+          'isSynced': false,
+        };
+        
         setState(() {
-          _customers.insert(0, newCustomer);
+          _customers.insert(0, tempCustomerData);
           _filterCustomers();
         });
         _cacheDataSource.saveCustomers(_customers);
-
-        final docRef = await customersCollection.add(customerData);
-        print('[DEBUG] Customer added successfully with ID: ${docRef.id}');
         
-        // Notify dashboard to refresh
         DashboardRefreshService.instance.notifyDataChanged(DataChangeType.customer);
         
         _clearForm();
-        _loadCustomers();
         if (mounted && context.mounted) {
           Navigator.pop(context);
-          if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Customer added successfully'),
-                backgroundColor: Colors.green,
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: const [
+                  Icon(Icons.cloud_off, color: Colors.white, size: 18),
+                  SizedBox(width: 8),
+                  Text('Customer saved offline. Will sync when online.'),
+                ],
               ),
-            );
-          }
+              backgroundColor: Colors.green,
+            ),
+          );
         }
+
+        // Trigger background sync (non-blocking)
+        CustomerSyncService.instance.syncNow();
       }
     } catch (e) {
       print('[ERROR] Failed to save customer: $e');
       print('[ERROR] Error type: ${e.runtimeType}');
-      print('[ERROR] Full error: $e');
-
-      String errorMsg = 'Error saving customer: ${e.toString()}';
-
-      // Handle permission denied error
-      if (e.toString().contains('permission-denied')) {
-        errorMsg =
-            'Permission Denied - Firestore security rules are blocking write access.\n\nYou need to:\n1. Go to Firebase Console\n2. Go to Firestore Database\n3. Go to Rules tab\n4. Update rules to allow authenticated users to read/write their own data\n\nSee console logs for detailed error.';
-        print(
-          '[ERROR] CRITICAL: Firestore permission denied - security rules issue',
-        );
-      }
 
       if (mounted && context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(errorMsg),
+            content: Text('Error saving customer: ${e.toString()}'),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 5),
           ),

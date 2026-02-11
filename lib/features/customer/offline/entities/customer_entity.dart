@@ -1,0 +1,181 @@
+import 'package:isar_community/isar.dart';
+
+part 'customer_entity.g.dart';
+
+/// Isar Collection for Customer with offline-first support
+/// Designed for high-performance CRUD operations with proper indexing
+@collection
+class CustomerEntity {
+  /// Auto-generated Isar ID
+  Id id = Isar.autoIncrement;
+
+  /// Server-side ID (null for locally created, not yet synced records)
+  @Index()
+  String? serverId;
+
+  /// Customer name
+  String name;
+
+  /// Mobile number (indexed for fast lookup)
+  @Index(unique: true, caseSensitive: false)
+  String mobile;
+
+  /// Address (optional)
+  String? address;
+
+  /// Email (optional)
+  String? email;
+
+  /// Current pending amount for this customer
+  double currentPendingAmount;
+
+  /// Total purchases made by this customer
+  double totalPurchases;
+
+  /// Sync status - false means pending sync with server
+  @Index()
+  bool isSynced;
+
+  /// Soft delete flag - true means marked for deletion
+  @Index()
+  bool isDeleted;
+
+  /// Last update timestamp for conflict resolution
+  @Index()
+  DateTime updatedAt;
+
+  /// Created timestamp
+  DateTime createdAt;
+
+  CustomerEntity({
+    this.serverId,
+    required this.name,
+    required this.mobile,
+    this.address,
+    this.email,
+    this.currentPendingAmount = 0.0,
+    this.totalPurchases = 0.0,
+    this.isSynced = false,
+    this.isDeleted = false,
+    required this.updatedAt,
+    required this.createdAt,
+  });
+  
+  /// Factory constructor for convenience with default timestamps
+  factory CustomerEntity.create({
+    String? serverId,
+    required String name,
+    required String mobile,
+    String? address,
+    String? email,
+    double currentPendingAmount = 0.0,
+    double totalPurchases = 0.0,
+    bool isSynced = false,
+    bool isDeleted = false,
+    DateTime? updatedAt,
+    DateTime? createdAt,
+  }) {
+    return CustomerEntity(
+      serverId: serverId,
+      name: name,
+      mobile: mobile,
+      address: address,
+      email: email,
+      currentPendingAmount: currentPendingAmount,
+      totalPurchases: totalPurchases,
+      isSynced: isSynced,
+      isDeleted: isDeleted,
+      updatedAt: updatedAt ?? DateTime.now(),
+      createdAt: createdAt ?? DateTime.now(),
+    );
+  }
+
+  /// Create from domain Customer model
+  factory CustomerEntity.fromCustomer(Map<String, dynamic> customer) {
+    final now = DateTime.now();
+    return CustomerEntity(
+      serverId: customer['id'] as String?,
+      name: customer['name'] as String? ?? '',
+      mobile: customer['mobile'] as String? ?? '',
+      address: customer['address'] as String?,
+      email: customer['email'] as String?,
+      currentPendingAmount: (customer['currentPendingAmount'] as num?)?.toDouble() ?? 0.0,
+      totalPurchases: (customer['totalPurchases'] as num?)?.toDouble() ?? 0.0,
+      isSynced: true, // From server, so it's synced
+      isDeleted: false,
+      updatedAt: DateTime.tryParse(customer['updatedAt']?.toString() ?? '') ?? now,
+      createdAt: DateTime.tryParse(customer['createdAt']?.toString() ?? '') ?? now,
+    );
+  }
+
+  /// Convert to Map for API sync
+  Map<String, dynamic> toSyncPayload() {
+    return {
+      'id': serverId,
+      'name': name,
+      'mobile': mobile,
+      'address': address,
+      'email': email,
+      'currentPendingAmount': currentPendingAmount,
+      'totalPurchases': totalPurchases,
+      'updatedAt': updatedAt.toIso8601String(),
+      'createdAt': createdAt.toIso8601String(),
+      'isDeleted': isDeleted,
+    };
+  }
+
+  /// Convert to domain Customer map
+  Map<String, dynamic> toCustomerMap() {
+    return {
+      'id': serverId ?? id.toString(),
+      'localId': id,
+      'name': name,
+      'mobile': mobile,
+      'address': address,
+      'email': email,
+      'currentPendingAmount': currentPendingAmount,
+      'totalPurchases': totalPurchases,
+      'isSynced': isSynced,
+      'isDeleted': isDeleted,
+      'updatedAt': updatedAt,
+      'createdAt': createdAt,
+    };
+  }
+
+  /// Copy with modifications
+  CustomerEntity copyWith({
+    Id? id,
+    String? serverId,
+    String? name,
+    String? mobile,
+    String? address,
+    String? email,
+    double? currentPendingAmount,
+    double? totalPurchases,
+    bool? isSynced,
+    bool? isDeleted,
+    DateTime? updatedAt,
+    DateTime? createdAt,
+  }) {
+    final entity = CustomerEntity(
+      serverId: serverId ?? this.serverId,
+      name: name ?? this.name,
+      mobile: mobile ?? this.mobile,
+      address: address ?? this.address,
+      email: email ?? this.email,
+      currentPendingAmount: currentPendingAmount ?? this.currentPendingAmount,
+      totalPurchases: totalPurchases ?? this.totalPurchases,
+      isSynced: isSynced ?? this.isSynced,
+      isDeleted: isDeleted ?? this.isDeleted,
+      updatedAt: updatedAt ?? DateTime.now(),
+      createdAt: createdAt ?? this.createdAt,
+    );
+    entity.id = id ?? this.id;
+    return entity;
+  }
+
+  @override
+  String toString() {
+    return 'CustomerEntity(id: $id, serverId: $serverId, name: $name, mobile: $mobile, isSynced: $isSynced, isDeleted: $isDeleted)';
+  }
+}
