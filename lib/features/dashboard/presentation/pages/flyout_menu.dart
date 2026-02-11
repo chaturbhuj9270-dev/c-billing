@@ -44,9 +44,8 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
     _MenuItem(icon: Icons.person_rounded, label: 'Profile', route: 'Profile', color: const Color(0xFF2E7D32)),
     _MenuItem(icon: Icons.store_rounded, label: 'Shop Details', route: 'ShopDetails', color: const Color(0xFF1976D2)),
     _MenuItem(icon: Icons.receipt_long_rounded, label: 'Bill Settings', route: 'BillSettings', color: const Color(0xFF7B1FA2)),
-    _MenuItem(icon: Icons.lock_reset_rounded, label: 'Change Password', route: 'ChangePassword', color: const Color(0xFFE65100)),
+    _MenuItem(icon: Icons.lock_reset_rounded, label: 'Forgot Password', route: 'ChangePassword', color: const Color(0xFFE65100)),
     _MenuItem(icon: Icons.language_rounded, label: 'Language', route: 'Language', color: const Color(0xFFFF6F00)),
-    _MenuItem(icon: Icons.settings_rounded, label: 'Settings', route: 'Settings', color: const Color(0xFF78909C)),
   ];
 
   int _selectedIndex = 0;
@@ -326,22 +325,28 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
             Expanded(
               child: FadeTransition(
                 opacity: _fadeAnimation,
-                child: ListView.builder(
+                child: ListView(
                   padding: const EdgeInsets.symmetric(vertical: 8),
-                  itemCount: _menuItems.length,
-                  itemBuilder: (context, index) {
-                    return SlideTransition(
-                      position: _menuItemAnimations[index],
-                      child: FadeTransition(
-                        opacity: _menuItemFadeAnimations[index],
-                        child: _buildMenuItem(
-                          item: _menuItems[index],
-                          index: index,
-                          isSelected: _selectedIndex == index,
+                  children: [
+                    // Regular menu items
+                    ...List.generate(_menuItems.length, (index) {
+                      return SlideTransition(
+                        position: _menuItemAnimations[index],
+                        child: FadeTransition(
+                          opacity: _menuItemFadeAnimations[index],
+                          child: _buildMenuItem(
+                            item: _menuItems[index],
+                            index: index,
+                            isSelected: _selectedIndex == index,
+                          ),
                         ),
-                      ),
-                    );
-                  },
+                      );
+                    }),
+                    
+                    // Biometric Lock Toggle
+                    if (_canUseBiometrics)
+                      _buildBiometricToggle(),
+                  ],
                 ),
               ),
             ),
@@ -576,6 +581,96 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildBiometricToggle() {
+    const biometricColor = Color(0xFF2E7D32);
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+      decoration: BoxDecoration(
+        color: _biometricLockEnabled 
+            ? biometricColor.withOpacity(0.1) 
+            : Colors.transparent,
+        borderRadius: BorderRadius.circular(16),
+        border: _biometricLockEnabled
+            ? Border.all(color: biometricColor.withOpacity(0.3))
+            : null,
+      ),
+      child: Row(
+        children: [
+          // Icon with gradient background when enabled
+          Container(
+            width: 50,
+            height: 50,
+            decoration: BoxDecoration(
+              gradient: _biometricLockEnabled
+                  ? LinearGradient(
+                      colors: [biometricColor, biometricColor.withOpacity(0.7)],
+                    )
+                  : null,
+              color: _biometricLockEnabled ? null : biometricColor.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(14),
+              boxShadow: _biometricLockEnabled
+                  ? [
+                      BoxShadow(
+                        color: biometricColor.withOpacity(0.3),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ]
+                  : null,
+            ),
+            child: Icon(
+              Icons.fingerprint,
+              color: _biometricLockEnabled ? Colors.white : biometricColor,
+              size: 24,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Biometric Lock',
+                  style: TextStyle(
+                    color: _biometricLockEnabled 
+                        ? biometricColor 
+                        : const Color(0xFF333333),
+                    fontSize: 16,
+                    fontWeight: _biometricLockEnabled 
+                        ? FontWeight.w600 
+                        : FontWeight.w500,
+                    fontFamily: 'Literata',
+                    decoration: TextDecoration.none,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  _biometricLockEnabled ? 'Enabled' : 'Disabled',
+                  style: TextStyle(
+                    color: Colors.grey[500],
+                    fontSize: 12,
+                    fontFamily: 'Literata',
+                    decoration: TextDecoration.none,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Toggle Switch
+          Switch(
+            value: _biometricLockEnabled,
+            onChanged: (value) => _toggleBiometricLock(value),
+            activeTrackColor: biometricColor.withOpacity(0.5),
+            activeColor: biometricColor,
+            inactiveTrackColor: Colors.grey[300],
+            inactiveThumbColor: Colors.grey[400],
+          ),
+        ],
       ),
     );
   }
