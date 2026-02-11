@@ -24,6 +24,22 @@ class Product {
     required this.updatedAt,
   });
 
+  // Factory constructor to create from ProductEntity (Isar offline entity)
+  factory Product.fromProductEntity(dynamic entity) {
+    return Product(
+      id: entity.serverId ?? 'local_${entity.id}',
+      indexNo: entity.indexNo ?? 0,
+      name: entity.name ?? '',
+      companyName: entity.companyName ?? '',
+      category: entity.category ?? '',
+      purchasePrice: entity.purchasePrice ?? 0.0,
+      salesPrice: entity.salesPrice ?? 0.0,
+      currentStock: entity.currentStock ?? 0,
+      createdAt: entity.createdAt ?? DateTime.now(),
+      updatedAt: entity.updatedAt ?? DateTime.now(),
+    );
+  }
+
   // Factory constructor to create from JSON (for Firebase)
   factory Product.fromJson(Map<String, dynamic> json) {
     try {

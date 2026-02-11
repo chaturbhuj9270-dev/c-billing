@@ -1,15 +1,11 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:c_billing/core/services/inventory_service.dart';
 import 'package:c_billing/core/services/inventory_report_service.dart';
 import 'package:c_billing/core/services/dashboard_refresh_service.dart';
 import 'package:c_billing/core/localization/app_localizations.dart';
 import 'package:c_billing/core/services/language_service.dart';
-import 'package:c_billing/features/inventory_management/data/repositories/firebase_product_repository.dart';
-import 'package:c_billing/features/inventory_management/data/repositories/firebase_stock_repository.dart';
-import 'package:c_billing/features/inventory_management/data/repositories/firebase_purchase_repository.dart';
+import 'package:c_billing/features/product/offline/controllers/product_offline_controller.dart';
+import 'package:c_billing/features/product/data/services/product_sync_service.dart';
 import 'package:c_billing/features/inventory_management/domain/entities/product.dart';
 import 'package:c_billing/features/inventory_management/domain/entities/report_item.dart';
 import 'package:c_billing/features/availability/presentation/pages/report_preview_screen.dart';
@@ -24,10 +20,7 @@ class AvailabilityPage extends StatefulWidget {
 }
 
 class _AvailabilityPageState extends State<AvailabilityPage> {
-  late InventoryService _inventoryService;
-  late FirebaseFirestore _firestore;
   late AppLocalizations _localizations;
-  final _auth = FirebaseAuth.instance;
   List<Product> _products = [];
   List<Product> _filteredProducts = [];
   bool _isLoading = false;
@@ -36,6 +29,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
   
   // Data refresh subscription
   StreamSubscription<void>? _productRefreshSubscription;
+  StreamSubscription<void>? _purchaseRefreshSubscription;
 
   // Filter states
   String _stockFilter = 'all'; // all, in_stock, low_stock, out_of_stock
@@ -48,33 +42,27 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
     // Listen for language changes
     LanguageService.instance.addListener(_onLanguageChanged);
     
-    _firestore = FirebaseFirestore.instance;
-    _inventoryService = InventoryService(
-      productRepository: FirebaseProductRepository(
-        firestore: _firestore,
-        auth: _auth,
-      ),
-      stockRepository: FirebaseStockRepository(
-        firestore: _firestore,
-        auth: _auth,
-      ),
-      purchaseRepository: FirebasePurchaseRepository(
-        firestore: _firestore,
-        auth: _auth,
-      ),
-    );
-    
     // Listen for product changes from other screens (purchase page, product management, etc.)
     _productRefreshSubscription = DashboardRefreshService.instance.onProductChanged.listen((_) {
       if (mounted) _loadProducts();
     });
     
     // Also listen for purchase changes which affect stock
-    DashboardRefreshService.instance.onPurchaseChanged.listen((_) {
+    _purchaseRefreshSubscription = DashboardRefreshService.instance.onPurchaseChanged.listen((_) {
       if (mounted) _loadProducts();
     });
     
+    // Listen for changes from ProductOfflineController
+    ProductOfflineController.instance.addListener(_onProductsChanged);
+    
     _loadProducts();
+    
+    // Trigger sync in background
+    ProductSyncService.instance.syncNow();
+  }
+  
+  void _onProductsChanged() {
+    if (mounted) _loadProducts();
   }
 
   void _onLanguageChanged() {
@@ -88,6 +76,8 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
   @override
   void dispose() {
     _productRefreshSubscription?.cancel();
+    _purchaseRefreshSubscription?.cancel();
+    ProductOfflineController.instance.removeListener(_onProductsChanged);
     LanguageService.instance.removeListener(_onLanguageChanged);
     _searchController.dispose();
     super.dispose();
@@ -540,7 +530,15 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
   Future<void> _loadProducts() async {
     try {
       setState(() => _isLoading = true);
-      final products = await _inventoryService.getAllProducts();
+      
+      // Load products from offline-first Isar storage
+      final productEntities = await ProductOfflineController.instance.getAllProducts();
+      
+      // Convert ProductEntity to Product domain model
+      final products = productEntities
+          .map((entity) => Product.fromProductEntity(entity))
+          .toList();
+      
       if (mounted) {
         setState(() {
           _products = products;
