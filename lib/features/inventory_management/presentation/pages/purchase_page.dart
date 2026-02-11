@@ -189,6 +189,21 @@ class _PurchasePageState extends State<PurchasePage>
     try {
       print('[DEBUG] Loading products from Firestore...');
       final products = await _inventoryService.getAllProducts();
+      
+      // Debug: Check for duplicates
+      final uniqueIds = products.map((p) => p.id).toSet();
+      if (uniqueIds.length != products.length) {
+        print('[WARNING] Found duplicate products! Total: ${products.length}, Unique IDs: ${uniqueIds.length}');
+        // Log duplicate IDs
+        final idCounts = <String, int>{};
+        for (final product in products) {
+          idCounts[product.id] = (idCounts[product.id] ?? 0) + 1;
+        }
+        idCounts.forEach((id, count) {
+          if (count > 1) print('[WARNING] Product ID $id appears $count times');
+        });
+      }
+      
       if (mounted) {
         setState(() {
           _products = products;
@@ -1284,23 +1299,21 @@ class _PurchasePageState extends State<PurchasePage>
       
       print('[DEBUG] Purchase saved locally');
 
-      // Also process through inventory service for stock update
-      await _inventoryService.processPurchase(
-        productId: _selectedProduct!.id,
-        quantity: quantity,
-        purchasePrice: price,
-        notes: _notesController.text.isNotEmpty ? _notesController.text : null,
-      );
-
-      // Update product's purchase price (rate) in products collection
+      // Update product stock and prices in Firestore
       final currentUser = FirebaseAuth.instance.currentUser;
       if (currentUser != null) {
+        final newStock = _selectedProduct!.currentStock + quantity;
         await _firestore
             .collection('users')
             .doc(currentUser.uid)
             .collection('products')
             .doc(_selectedProduct!.id)
-            .update({'purchasePrice': price, 'salesPrice': salesPrice});
+            .update({
+              'purchasePrice': price, 
+              'salesPrice': salesPrice,
+              'currentStock': newStock,
+              'updatedAt': DateTime.now().toIso8601String(),
+            });
       }
       
       // Trigger background sync
