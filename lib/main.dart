@@ -12,6 +12,7 @@ import 'features/product/data/services/product_sync_service.dart';
 import 'features/supplier/data/services/supplier_sync_service.dart';
 import 'features/company/data/services/company_sync_service.dart';
 import 'features/inventory_management/data/services/purchase_sync_service.dart';
+import 'features/billing/data/services/bill_sync_service.dart';
 import 'firebase_options.dart';
 
 Future<void> main() async {
@@ -54,6 +55,9 @@ Future<void> main() async {
   
   // Initialize Purchase Sync Service (after Firebase is ready)
   PurchaseSyncService.instance.initialize();
+  
+  // Initialize Bill Sync Service (after Firebase is ready)
+  BillSyncService.instance.initialize();
   
   runApp(const MyApp());
 }

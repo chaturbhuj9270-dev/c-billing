@@ -22,6 +22,10 @@ import 'package:c_billing/core/services/language_service.dart';
 import 'package:c_billing/core/localization/app_localizations.dart';
 import 'package:c_billing/features/billing/presentation/pages/bill_settings_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:c_billing/features/billing/offline/controllers/bill_offline_controller.dart';
+import 'package:c_billing/features/billing/offline/entities/bill_entity.dart';
+import 'package:c_billing/features/billing/data/services/bill_sync_service.dart';
+import 'package:c_billing/features/product/offline/controllers/product_offline_controller.dart';
 
 class BillingPage extends StatefulWidget {
   final bool isEmbedded;
@@ -182,13 +186,19 @@ class _BillingPageState extends State<BillingPage> {
   Future<void> _loadProducts({bool showLoader = true}) async {
     try {
       if (showLoader) setState(() => _isLoading = true);
-      final products = await _billingService.getAvailableProducts();
+      // Use offline-first controller to get products with stock > 0
+      final allProducts = await ProductOfflineController.instance.getAllProducts();
+      // Filter products with available stock
+      final availableProducts = allProducts
+          .map((entity) => Product.fromProductEntity(entity))
+          .where((p) => p.currentStock > 0)
+          .toList();
       if (mounted) {
         setState(() {
-          _products = products;
+          _products = availableProducts;
           // Build index lookup map for fast product search
           _productByIndexNo = {
-            for (final product in products)
+            for (final product in _products)
               if (product.indexNo > 0) product.indexNo: product,
           };
           if (showLoader) _isLoading = false;
@@ -709,8 +719,33 @@ class _BillingPageState extends State<BillingPage> {
     setState(() => _isSavingBill = true);
 
     try {
-      final result = await _billingService.processBill(
-        items: _billItems,
+      // === OFFLINE-FIRST APPROACH ===
+      // 1. Calculate payment status
+      final actualPaidAmount = _isFullPayment ? _finalAmount : _receivedAmount;
+      final calculatedPendingAmount = _finalAmount - actualPaidAmount;
+      BillPaymentStatus paymentStatus;
+      if (calculatedPendingAmount <= 0) {
+        paymentStatus = BillPaymentStatus.paid;
+      } else if (actualPaidAmount > 0) {
+        paymentStatus = BillPaymentStatus.partiallyPaid;
+      } else {
+        paymentStatus = BillPaymentStatus.pending;
+      }
+
+      // 2. Convert bill items to embedded format
+      final embeddedItems = _billItems.map((item) => BillItemEmbedded(
+        itemId: item.id.isNotEmpty ? item.id : 'item_${DateTime.now().millisecondsSinceEpoch}_${item.productId}',
+        productId: item.productId,
+        productName: item.productName,
+        purchasePrice: item.purchasePrice,
+        sellingPrice: item.sellingPrice,
+        quantity: item.quantity,
+        subtotal: item.subtotal,
+        returnedQuantity: item.returnedQuantity,
+      )).toList();
+
+      // 3. Create bill entity for Isar
+      final billEntity = await BillOfflineController.instance.addBill(
         customerId: _selectedCustomer?['id'],
         customerName: _customerNameController.text.trim().isNotEmpty
             ? _customerNameController.text.trim()
@@ -718,51 +753,56 @@ class _BillingPageState extends State<BillingPage> {
         customerContact: _customerContactController.text.trim().isNotEmpty
             ? _customerContactController.text.trim()
             : _selectedCustomer?['contact'],
+        items: embeddedItems,
+        totalQuantity: _totalQuantity,
+        totalAmount: _totalAmount,
+        discountAmount: _discountAmount,
+        discountPercent: _discountPercent,
+        finalAmount: _finalAmount,
         notes: _notesController.text.trim().isNotEmpty
             ? _notesController.text.trim()
             : null,
-        discountAmount: _discountAmount,
-        discountPercent: _discountPercent,
-        paidAmount: _isFullPayment ? null : _receivedAmount,
+        paymentStatus: paymentStatus,
+        paidAmount: actualPaidAmount > 0 ? actualPaidAmount : 0,
+        pendingAmount: calculatedPendingAmount > 0 ? calculatedPendingAmount : 0,
       );
+
+      // 4. Update product stock in Isar immediately
+      for (final item in _billItems) {
+        await ProductOfflineController.instance.decrementStock(
+          item.productId,
+          item.quantity,
+        );
+      }
+
+      // 5. Trigger background sync
+      unawaited(BillSyncService.instance.syncNow());
 
       setState(() => _isSavingBill = false);
 
-      if (result.success) {
-        // Clear bills list cache so it reloads fresh data next time
-        unawaited(BillCacheDataSource().clearCache());
+      // Clear bills list cache so it reloads fresh data next time
+      unawaited(BillCacheDataSource().clearCache());
 
-        // Keep a copy of items to update local stock
-        final savedItems = List<BillItem>.from(_billItems);
+      // Keep a copy of items to update local stock display
+      final savedItems = List<BillItem>.from(_billItems);
 
-        // Fetch the created bill for print/share options
-        Bill? createdBill;
-        if (result.billId != null) {
-          createdBill = await _billingService.getBillById(result.billId!);
-        }
+      // Convert to domain Bill for print/share dialog
+      final createdBill = Bill.fromBillEntity(billEntity);
 
-        _clearBill();
+      _clearBill();
 
-        // Optimization: Update local stock immediately instead of full reload from server
-        _updateLocalStock(savedItems);
+      // Update local stock display
+      _updateLocalStock(savedItems);
 
-        // Background reload to ensure sync without blocking UI
-        _loadProducts(showLoader: false);
-        
-        // Notify dashboard to refresh (bill count and products count may change)
-        DashboardRefreshService.instance.notifyDataChanged(DataChangeType.bill);
+      // Background reload to ensure sync without blocking UI
+      _loadProducts(showLoader: false);
+      
+      // Notify dashboard to refresh (bill count and products count may change)
+      DashboardRefreshService.instance.notifyDataChanged(DataChangeType.bill);
 
-        // Show success dialog with print/share options
-        if (mounted && createdBill != null) {
-          _showBillSuccessDialog(createdBill);
-        } else {
-          _showSnackbar(_localizations.billSavedSuccessfully);
-        }
-      } else {
-        _showSnackbar(
-          result.errorMessage ?? _localizations.errorSavingBill,
-          isError: true,
-        );
+      // Show success dialog with print/share options
+      if (mounted) {
+        _showBillSuccessDialog(createdBill);
       }
     } catch (e) {
       setState(() => _isSavingBill = false);

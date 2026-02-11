@@ -1,4 +1,5 @@
 import 'bill_item.dart';
+import 'package:c_billing/features/billing/offline/entities/bill_entity.dart';
 
 /// Payment status of a bill
 enum PaymentStatus {
@@ -133,6 +134,58 @@ class Bill {
         pendingAmount: 0.0,
       );
     }
+  }
+
+  /// Factory constructor to create from BillEntity (for offline-first)
+  factory Bill.fromBillEntity(BillEntity entity) {
+    // Convert embedded bill items to domain BillItem
+    final billItems = entity.items.map((item) => BillItem(
+      id: item.itemId ?? '',
+      billId: entity.serverId ?? entity.id.toString(),
+      productId: item.productId ?? '',
+      productName: item.productName ?? '',
+      purchasePrice: item.purchasePrice,
+      sellingPrice: item.sellingPrice,
+      quantity: item.quantity,
+      subtotal: item.subtotal,
+      returnedQuantity: item.returnedQuantity,
+    )).toList();
+
+    // Convert BillPaymentStatus to PaymentStatus
+    PaymentStatus paymentStatus;
+    switch (entity.paymentStatus) {
+      case BillPaymentStatus.paid:
+        paymentStatus = PaymentStatus.paid;
+        break;
+      case BillPaymentStatus.partiallyPaid:
+        paymentStatus = PaymentStatus.partiallyPaid;
+        break;
+      case BillPaymentStatus.pending:
+        paymentStatus = PaymentStatus.pending;
+        break;
+    }
+
+    return Bill(
+      id: entity.serverId ?? entity.id.toString(),
+      customerId: entity.customerId,
+      customerName: entity.customerName,
+      customerContact: entity.customerContact,
+      items: billItems,
+      totalQuantity: entity.totalQuantity,
+      totalAmount: entity.totalAmount,
+      discountAmount: entity.discountAmount,
+      discountPercent: entity.discountPercent,
+      finalAmount: entity.finalAmount,
+      billDate: entity.billDate,
+      createdAt: entity.createdAt,
+      updatedAt: entity.updatedAt,
+      notes: entity.notes,
+      returnStatus: entity.returnStatus,
+      returnDate: entity.returnDate,
+      paymentStatus: paymentStatus,
+      paidAmount: entity.paidAmount,
+      pendingAmount: entity.pendingAmount,
+    );
   }
 
   /// Parse payment status from string

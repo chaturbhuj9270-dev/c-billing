@@ -257,6 +257,44 @@ class ProductOfflineController extends ChangeNotifier {
     return await updateProduct(id: id, currentStock: newQuantity);
   }
 
+  /// Decrement stock by product server ID (used when creating bills)
+  /// Reduces stock by the specified quantity
+  Future<ProductEntity?> decrementStock(String productServerId, int quantity) async {
+    // First find the product by server ID
+    final existing = await _isar.productEntitys
+        .filter()
+        .serverIdEqualTo(productServerId)
+        .findFirst();
+    
+    if (existing == null) {
+      debugPrint('[ProductOffline] Cannot decrement stock: product not found with serverId: $productServerId');
+      return null;
+    }
+    
+    final newQuantity = (existing.currentStock - quantity).clamp(0, double.maxFinite).toInt();
+    debugPrint('[ProductOffline] Decrementing stock for ${existing.name}: ${existing.currentStock} - $quantity = $newQuantity');
+    return await updateProduct(id: existing.id, currentStock: newQuantity);
+  }
+
+  /// Increment stock by product server ID (used when restocking or returns)
+  /// Increases stock by the specified quantity
+  Future<ProductEntity?> incrementStock(String productServerId, int quantity) async {
+    // First find the product by server ID
+    final existing = await _isar.productEntitys
+        .filter()
+        .serverIdEqualTo(productServerId)
+        .findFirst();
+    
+    if (existing == null) {
+      debugPrint('[ProductOffline] Cannot increment stock: product not found with serverId: $productServerId');
+      return null;
+    }
+    
+    final newQuantity = existing.currentStock + quantity;
+    debugPrint('[ProductOffline] Incrementing stock for ${existing.name}: ${existing.currentStock} + $quantity = $newQuantity');
+    return await updateProduct(id: existing.id, currentStock: newQuantity);
+  }
+
   // ==================== DELETE ====================
 
   /// Soft delete a product (marks for deletion, will be synced)
