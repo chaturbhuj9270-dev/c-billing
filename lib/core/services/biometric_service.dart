@@ -20,7 +20,9 @@ class BiometricService {
   /// Check if device supports biometric authentication
   Future<bool> canUseBiometrics() async {
     try {
-      final isDeviceSupported = await _localAuth.canCheckBiometrics;
+      // Add timeout to prevent freeze
+      final isDeviceSupported = await _localAuth.canCheckBiometrics
+          .timeout(const Duration(seconds: 3), onTimeout: () => false);
       return isDeviceSupported;
     } catch (e) {
       print('[BiometricService] Error checking biometrics support: $e');
@@ -31,7 +33,9 @@ class BiometricService {
   /// Get available biometric types on device
   Future<List<BiometricType>> getAvailableBiometrics() async {
     try {
-      final availableBiometrics = await _localAuth.getAvailableBiometrics();
+      // Add timeout to prevent freeze
+      final availableBiometrics = await _localAuth.getAvailableBiometrics()
+          .timeout(const Duration(seconds: 3), onTimeout: () => <BiometricType>[]);
       return availableBiometrics;
     } catch (e) {
       print('[BiometricService] Error getting available biometrics: $e');

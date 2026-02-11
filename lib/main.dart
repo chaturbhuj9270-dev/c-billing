@@ -7,6 +7,7 @@ import 'core/services/credentials_manager.dart';
 import 'core/services/language_service.dart';
 import 'core/services/purchase_settings_service.dart';
 import 'core/services/isar_service.dart';
+import 'core/services/error_logging_service.dart';
 import 'features/customer/data/services/customer_sync_service.dart';
 import 'features/product/data/services/product_sync_service.dart';
 import 'features/supplier/data/services/supplier_sync_service.dart';
@@ -17,6 +18,10 @@ import 'firebase_options.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize error logging service early to capture all errors
+  ErrorLoggingService.initialize();
+  
   await di.init();
   
   // Initialize CredentialsManager early

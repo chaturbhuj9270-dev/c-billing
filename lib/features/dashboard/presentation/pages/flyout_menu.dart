@@ -4,6 +4,7 @@ import '../../../../core/services/session_manager.dart';
 import '../../../../core/services/credentials_manager.dart';
 import '../../../../core/services/language_service.dart';
 import '../../../../core/services/biometric_service.dart';
+import '../../../../core/services/error_logging_service.dart';
 import '../../../../features/authentication/presentation/pages/change_password_page.dart';
 import 'profile_page.dart';
 import '../../../supplier/presentation/pages/supplier_page.dart';
@@ -137,14 +138,25 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
   }
 
   Future<void> _loadBiometricStatus() async {
-    final biometricService = BiometricService.instance;
-    final canUse = await biometricService.canUseBiometrics();
-    final isEnabled = await biometricService.isBiometricLockEnabled();
-    if (mounted) {
-      setState(() {
-        _canUseBiometrics = canUse;
-        _biometricLockEnabled = isEnabled;
-      });
+    try {
+      final biometricService = BiometricService.instance;
+      final canUse = await biometricService.canUseBiometrics();
+      final isEnabled = await biometricService.isBiometricLockEnabled();
+      if (mounted) {
+        setState(() {
+          _canUseBiometrics = canUse;
+          _biometricLockEnabled = isEnabled;
+        });
+      }
+    } catch (e) {
+      print('[ERROR] Failed to load biometric status: $e');
+      // Default to not showing biometric option if there's an error
+      if (mounted) {
+        setState(() {
+          _canUseBiometrics = false;
+          _biometricLockEnabled = false;
+        });
+      }
     }
   }
 
@@ -382,12 +394,12 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
       child: SafeArea(
         bottom: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(24, 20, 24, 28),
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
           child: Row(
             children: [
               // Premium Profile Avatar with ring
               Container(
-                padding: const EdgeInsets.all(3),
+                padding: const EdgeInsets.all(2),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: const LinearGradient(
@@ -402,20 +414,20 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
                   boxShadow: [
                     BoxShadow(
                       color: const Color(0xFF4CAF50).withOpacity(0.4),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
                     ),
                   ],
                 ),
                 child: Container(
-                  width: 52,
-                  height: 52,
+                  width: 44,
+                  height: 44,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: const Color(0xFF1B4D3E),
                     border: Border.all(
                       color: const Color(0xFF1B4D3E),
-                      width: 3,
+                      width: 2,
                     ),
                   ),
                   child: Center(
@@ -424,7 +436,7 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
                           ? _userName[0].toUpperCase()
                           : 'U',
                       style: const TextStyle(
-                        fontSize: 22,
+                        fontSize: 18,
                         fontWeight: FontWeight.w700,
                         color: Colors.white,
                         fontFamily: 'Literata',
@@ -434,7 +446,7 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
                   ),
                 ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 12),
               // User Info
               Expanded(
                 child: Column(
@@ -445,7 +457,7 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
                       _userName,
                       style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 20,
+                        fontSize: 16,
                         fontWeight: FontWeight.w700,
                         fontFamily: 'Literata',
                         letterSpacing: 0.3,
@@ -508,11 +520,11 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
       onTap: () => _navigateToPage(item.route, index),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+        margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
           color: isSelected ? item.color.withOpacity(0.1) : Colors.transparent,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(14),
           border: isSelected
               ? Border.all(color: item.color.withOpacity(0.3))
               : null,
@@ -522,8 +534,8 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
             // Icon with gradient background when selected
             AnimatedContainer(
               duration: const Duration(milliseconds: 200),
-              width: 50,
-              height: 50,
+              width: 40,
+              height: 40,
               decoration: BoxDecoration(
                 gradient: isSelected
                     ? LinearGradient(
@@ -545,10 +557,10 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
               child: Icon(
                 item.icon,
                 color: isSelected ? Colors.white : item.color,
-                size: 24,
+                size: 20,
               ),
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: 12),
             Expanded(
               child: Text(
                 item.label,
@@ -588,13 +600,13 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
   Widget _buildBiometricToggle() {
     const biometricColor = Color(0xFF2E7D32);
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
         color: _biometricLockEnabled 
             ? biometricColor.withOpacity(0.1) 
             : Colors.transparent,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(14),
         border: _biometricLockEnabled
             ? Border.all(color: biometricColor.withOpacity(0.3))
             : null,
@@ -603,8 +615,8 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
         children: [
           // Icon with gradient background when enabled
           Container(
-            width: 50,
-            height: 50,
+            width: 40,
+            height: 40,
             decoration: BoxDecoration(
               gradient: _biometricLockEnabled
                   ? LinearGradient(
@@ -612,13 +624,13 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
                     )
                   : null,
               color: _biometricLockEnabled ? null : biometricColor.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(12),
               boxShadow: _biometricLockEnabled
                   ? [
                       BoxShadow(
                         color: biometricColor.withOpacity(0.3),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
                       ),
                     ]
                   : null,
@@ -626,49 +638,40 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
             child: Icon(
               Icons.fingerprint,
               color: _biometricLockEnabled ? Colors.white : biometricColor,
-              size: 24,
+              size: 20,
             ),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 12),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Biometric Lock',
-                  style: TextStyle(
-                    color: _biometricLockEnabled 
-                        ? biometricColor 
-                        : const Color(0xFF333333),
-                    fontSize: 16,
-                    fontWeight: _biometricLockEnabled 
-                        ? FontWeight.w600 
-                        : FontWeight.w500,
-                    fontFamily: 'Literata',
-                    decoration: TextDecoration.none,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  _biometricLockEnabled ? 'Enabled' : 'Disabled',
-                  style: TextStyle(
-                    color: Colors.grey[500],
-                    fontSize: 12,
-                    fontFamily: 'Literata',
-                    decoration: TextDecoration.none,
-                  ),
-                ),
-              ],
+            child: Text(
+              'Biometric Lock',
+              style: TextStyle(
+                color: _biometricLockEnabled 
+                    ? biometricColor 
+                    : const Color(0xFF333333),
+                fontSize: 14,
+                fontWeight: _biometricLockEnabled 
+                    ? FontWeight.w600 
+                    : FontWeight.w500,
+                fontFamily: 'Literata',
+                decoration: TextDecoration.none,
+              ),
             ),
           ),
           // Toggle Switch
-          Switch(
-            value: _biometricLockEnabled,
-            onChanged: (value) => _toggleBiometricLock(value),
-            activeTrackColor: biometricColor.withOpacity(0.5),
-            activeColor: biometricColor,
-            inactiveTrackColor: Colors.grey[300],
-            inactiveThumbColor: Colors.grey[400],
+          Transform.scale(
+            scale: 0.8,
+            child: Material(
+              color: Colors.transparent,
+              child: Switch(
+                value: _biometricLockEnabled,
+                onChanged: (value) => _toggleBiometricLock(value),
+                activeTrackColor: biometricColor.withOpacity(0.5),
+                activeColor: biometricColor,
+                inactiveTrackColor: Colors.grey[300],
+                inactiveThumbColor: Colors.grey[400],
+              ),
+            ),
           ),
         ],
       ),
@@ -677,7 +680,7 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
 
   Widget _buildBottomSection() {
     return Container(
-      padding: const EdgeInsets.fromLTRB(18, 12, 18, 20),
+      padding: const EdgeInsets.fromLTRB(14, 8, 14, 12),
       decoration: BoxDecoration(
         color: Colors.white,
         boxShadow: [
@@ -691,49 +694,92 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
       child: SafeArea(
         top: false,
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            // Logout Button
-            GestureDetector(
-              onTap: _logout,
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      const Color(0xFFD32F2F).withOpacity(0.1),
-                      const Color(0xFFD32F2F).withOpacity(0.05),
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: const Color(0xFFD32F2F).withOpacity(0.2),
-                  ),
-                ),
-                child: const Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.logout_rounded,
-                      color: Color(0xFFD32F2F),
-                      size: 22,
-                    ),
-                    SizedBox(width: 10),
-                    Text(
-                      'Logout',
-                      style: TextStyle(
-                        color: Color(0xFFD32F2F),
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        fontFamily: 'Literata',
-                        decoration: TextDecoration.none,
+            // Error Logs and Logout Row
+            Row(
+              children: [
+                // Error Logs Button
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => ErrorLoggingService.showLogsDialog(context),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.bug_report_outlined,
+                            color: Colors.grey[600],
+                            size: 18,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Logs',
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              fontFamily: 'Literata',
+                              decoration: TextDecoration.none,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ],
+                  ),
                 ),
-              ),
+                const SizedBox(width: 10),
+                // Logout Button
+                Expanded(
+                  flex: 2,
+                  child: GestureDetector(
+                    onTap: _logout,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            const Color(0xFFD32F2F).withOpacity(0.1),
+                            const Color(0xFFD32F2F).withOpacity(0.05),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: const Color(0xFFD32F2F).withOpacity(0.2),
+                        ),
+                      ),
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.logout_rounded,
+                            color: Color(0xFFD32F2F),
+                            size: 18,
+                          ),
+                          SizedBox(width: 6),
+                          Text(
+                            'Logout',
+                            style: TextStyle(
+                              color: Color(0xFFD32F2F),
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              fontFamily: 'Literata',
+                              decoration: TextDecoration.none,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
             // Version number only
             Text(
               'Version 1.0.0',
