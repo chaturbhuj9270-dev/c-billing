@@ -5,6 +5,7 @@ import 'core/di/injection.dart' as di;
 import 'core/ui/splash_page.dart';
 import 'core/services/credentials_manager.dart';
 import 'core/services/language_service.dart';
+import 'core/services/purchase_settings_service.dart';
 import 'firebase_options.dart';
 
 Future<void> main() async {
@@ -16,6 +17,9 @@ Future<void> main() async {
   
   // Initialize LanguageService
   await LanguageService.instance.init();
+  
+  // Initialize PurchaseSettingsService
+  await PurchaseSettingsService.instance.init();
   
   try {
     await Firebase.initializeApp(

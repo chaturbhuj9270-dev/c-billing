@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
 import 'dart:ui';
 import 'package:c_billing/core/services/inventory_service.dart';
 import 'package:c_billing/core/services/language_service.dart';
 import 'package:c_billing/core/services/dashboard_refresh_service.dart';
+import 'package:c_billing/core/services/purchase_settings_service.dart';
 import 'package:c_billing/core/localization/app_localizations.dart';
 import '../../data/repositories/firebase_product_repository.dart';
 import '../../data/repositories/firebase_stock_repository.dart';
@@ -33,6 +35,9 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
   bool _isLoadingMore = false;
   int _pageSize = 20;
   late ScrollController _scrollController;
+  
+  // Latest purchase info for each product
+  Map<String, Map<String, dynamic>> _latestPurchases = {};
 
   // Localization variables
   late AppLocalizations _localizations;
@@ -170,6 +175,9 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
         });
         // Save to cache for next time
         _cacheDataSource.saveProducts(products);
+        
+        // Load latest purchase info for each product
+        _loadLatestPurchases(products);
       }
     } catch (e) {
       print('[ERROR] Failed to load products: $e');
@@ -179,6 +187,41 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
           context,
         ).showSnackBar(SnackBar(content: Text('Error loading products: $e')));
       }
+    }
+  }
+  
+  Future<void> _loadLatestPurchases(List<Product> products) async {
+    try {
+      final currentUser = _auth.currentUser;
+      if (currentUser == null) return;
+      
+      final purchasesRef = _firestore
+          .collection('users')
+          .doc(currentUser.uid)
+          .collection('purchases');
+      
+      Map<String, Map<String, dynamic>> latestPurchases = {};
+      
+      // Load latest purchase for each product
+      for (final product in products) {
+        final querySnapshot = await purchasesRef
+            .where('productId', isEqualTo: product.id)
+            .orderBy('createdAt', descending: true)
+            .limit(1)
+            .get();
+        
+        if (querySnapshot.docs.isNotEmpty) {
+          latestPurchases[product.id] = querySnapshot.docs.first.data();
+        }
+      }
+      
+      if (mounted) {
+        setState(() {
+          _latestPurchases = latestPurchases;
+        });
+      }
+    } catch (e) {
+      print('[DEBUG] Error loading latest purchases: $e');
     }
   }
 
@@ -1345,6 +1388,8 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                                         ],
                                       ),
                                     ),
+                                    // Latest Purchase Info Section
+                                    _buildLatestPurchaseInfo(product.id),
                                     const SizedBox(height: 12),
                                     Row(
                                       mainAxisAlignment: MainAxisAlignment.end,
@@ -1428,5 +1473,153 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
         ),
       ),
     );
+  }
+  
+  Widget _buildLatestPurchaseInfo(String productId) {
+    final purchaseData = _latestPurchases[productId];
+    if (purchaseData == null) return const SizedBox.shrink();
+    
+    final unit = purchaseData['unit'] as String?;
+    final warrantyMonths = purchaseData['warrantyMonths'] as int?;
+    final productionDate = purchaseData['productionDate'];
+    final expiryDate = purchaseData['expiryDate'];
+    
+    // Check if any data exists to show
+    final hasUnit = unit != null && unit.isNotEmpty;
+    final hasWarranty = warrantyMonths != null && warrantyMonths > 0;
+    final hasProductionDate = productionDate != null;
+    final hasExpiryDate = expiryDate != null;
+    
+    if (!hasUnit && !hasWarranty && !hasProductionDate && !hasExpiryDate) {
+      return const SizedBox.shrink();
+    }
+    
+    final dateFormat = DateFormat('dd MMM yyyy');
+    
+    // Parse dates
+    DateTime? parsedProductionDate;
+    DateTime? parsedExpiryDate;
+    
+    if (hasProductionDate) {
+      if (productionDate is Timestamp) {
+        parsedProductionDate = productionDate.toDate();
+      } else if (productionDate is String) {
+        parsedProductionDate = DateTime.tryParse(productionDate);
+      }
+    }
+    
+    if (hasExpiryDate) {
+      if (expiryDate is Timestamp) {
+        parsedExpiryDate = expiryDate.toDate();
+      } else if (expiryDate is String) {
+        parsedExpiryDate = DateTime.tryParse(expiryDate);
+      }
+    }
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 12),
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.purple.withOpacity(0.08),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.purple.withOpacity(0.2)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.receipt_long_rounded, size: 16, color: Colors.purple[700]),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Last Purchase Info',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      fontFamily: 'Literata',
+                      color: Colors.purple[700],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 16,
+                runSpacing: 8,
+                children: [
+                  if (hasUnit)
+                    _buildPurchaseInfoChip(
+                      Icons.straighten_rounded,
+                      'Unit',
+                      unit,
+                      Colors.teal,
+                    ),
+                  if (hasWarranty)
+                    _buildPurchaseInfoChip(
+                      Icons.verified_user_rounded,
+                      'Warranty',
+                      PurchaseSettingsService.instance.getWarrantyLabel(warrantyMonths),
+                      Colors.deepPurple,
+                    ),
+                  if (parsedProductionDate != null)
+                    _buildPurchaseInfoChip(
+                      Icons.factory_rounded,
+                      'Mfg Date',
+                      dateFormat.format(parsedProductionDate),
+                      Colors.orange,
+                    ),
+                  if (parsedExpiryDate != null)
+                    _buildPurchaseInfoChip(
+                      Icons.event_busy_rounded,
+                      'Exp Date',
+                      dateFormat.format(parsedExpiryDate),
+                      _isExpired(parsedExpiryDate) ? Colors.red : Colors.green,
+                    ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+  
+  Widget _buildPurchaseInfoChip(IconData icon, String label, String value, Color color) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 14, color: color),
+        const SizedBox(width: 4),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 10,
+                color: Colors.grey[600],
+                fontFamily: 'Literata',
+              ),
+            ),
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                fontFamily: 'Literata',
+                color: color,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+  
+  bool _isExpired(DateTime expiryDate) {
+    return expiryDate.isBefore(DateTime.now());
   }
 }

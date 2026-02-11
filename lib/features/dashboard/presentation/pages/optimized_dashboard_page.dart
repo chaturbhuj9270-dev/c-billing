@@ -9,6 +9,7 @@ import '../../../customer/presentation/pages/customer_page.dart';
 import '../../../supplier/presentation/pages/supplier_page.dart';
 import '../../../company/presentation/pages/company_page.dart';
 import '../../../inventory_management/presentation/pages/purchase_page.dart';
+import '../../../inventory_management/presentation/pages/purchase_settings_page.dart';
 import '../../../inventory_management/presentation/pages/product_management_page.dart';
 import '../../../billing/presentation/pages/billing_page.dart';
 import '../../../billing/presentation/pages/bills_list_page.dart';
@@ -403,6 +404,36 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                   ),
                 ),
               ),
+              // Purchase Settings Icon (only show when on Purchase tab)
+              if (_selectedIndex == 4) ...[
+                const SizedBox(width: 8),
+                GestureDetector(
+                  onTap: () async {
+                    await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const PurchaseSettingsPage(),
+                      ),
+                    );
+                    // Refresh UI when returning from settings
+                    setState(() {});
+                  },
+                  child: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.white.withOpacity(0.2)),
+                    ),
+                    child: const Icon(
+                      Icons.settings_rounded,
+                      color: Colors.white,
+                      size: 22,
+                    ),
+                  ),
+                ),
+              ],
               // Language Icon
               GestureDetector(
                 onTap: _showLanguageDialog,
