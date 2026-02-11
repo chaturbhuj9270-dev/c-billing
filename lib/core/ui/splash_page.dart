@@ -30,6 +30,7 @@ class _SplashPageState extends State<SplashPage> {
   late CredentialsManager _credentialsManager;
   late AppLocalizations _localizations;
   final SubscriptionService _subscriptionService = SubscriptionService();
+  bool _showUnlockButton = false;
 
   @override
   void initState() {
@@ -122,11 +123,34 @@ class _SplashPageState extends State<SplashPage> {
 
   void _goToDashboard() {
     if (mounted) {
-      print('[DEBUG] User logged in, showing biometric prompt');
-      // Wait for splash animation to complete, then show biometric
+      print('[DEBUG] User logged in, checking biometric lock status');
+      // Wait for splash animation to complete, then check biometric setting
       _timer = Timer(widget.duration, () {
-        _showFingerprintDialog(FirebaseAuth.instance.currentUser!.uid);
+        _checkBiometricLockAndNavigate();
       });
+    }
+  }
+
+  Future<void> _checkBiometricLockAndNavigate() async {
+    try {
+      final biometricService = BiometricService.instance;
+      final isLockEnabled = await biometricService.isBiometricLockEnabled();
+      
+      print('[DEBUG] Biometric lock enabled: $isLockEnabled');
+      
+      if (isLockEnabled && mounted) {
+        // Show unlock button instead of auto-prompting
+        setState(() {
+          _showUnlockButton = true;
+        });
+      } else {
+        // Biometric lock is disabled, go directly to dashboard
+        _navigateToDashboard();
+      }
+    } catch (e) {
+      print('[ERROR] Error checking biometric lock: $e');
+      // On error, go directly to dashboard
+      _navigateToDashboard();
     }
   }
 
@@ -144,14 +168,29 @@ class _SplashPageState extends State<SplashPage> {
         _navigateToDashboard();
       } else {
         print(
-          '[DEBUG] Fingerprint authentication cancelled/failed, navigating anyway',
+          '[DEBUG] Fingerprint authentication cancelled/failed',
         );
-        // Navigate to dashboard even if cancelled
-        _navigateToDashboard();
+        // Stay on splash screen - user can tap unlock again
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Authentication cancelled. Tap "Unlock Now" to try again.'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
       }
     } catch (e) {
       print('[ERROR] Error during fingerprint authentication: $e');
-      _navigateToDashboard();
+      // Show error but stay on splash screen
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Authentication error: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -287,76 +326,78 @@ class _SplashPageState extends State<SplashPage> {
                   ),
                   const SizedBox(height: 40),
 
-                  // Unlock Now Button - Glassy Look
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 40),
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: BackdropFilter(
-                          filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                                colors: [
-                                  const Color(
-                                    0xFF1B4D3E,
-                                  ).withValues(alpha: 0.25),
-                                  const Color(
-                                    0xFF2E7D32,
-                                  ).withValues(alpha: 0.15),
+                  // Unlock Now Button - Only visible when biometric lock is enabled
+                  if (_showUnlockButton)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 40),
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: BackdropFilter(
+                            filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: [
+                                    const Color(
+                                      0xFF1B4D3E,
+                                    ).withValues(alpha: 0.25),
+                                    const Color(
+                                      0xFF2E7D32,
+                                    ).withValues(alpha: 0.15),
+                                  ],
+                                ),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: Colors.white.withValues(alpha: 0.3),
+                                  width: 1.5,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(
+                                      0xFF1B4D3E,
+                                    ).withValues(alpha: 0.2),
+                                    blurRadius: 12,
+                                    offset: const Offset(0, 4),
+                                  ),
                                 ],
                               ),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: Colors.white.withValues(alpha: 0.3),
-                                width: 1.5,
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: const Color(
-                                    0xFF1B4D3E,
-                                  ).withValues(alpha: 0.2),
-                                  blurRadius: 12,
-                                  offset: const Offset(0, 4),
-                                ),
-                              ],
-                            ),
-                            child: Material(
-                              color: Colors.transparent,
-                              child: InkWell(
-                                onTap: _showUnlockBiometric,
-                                borderRadius: BorderRadius.circular(12),
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 14,
-                                  ),
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(
-                                        Icons.lock_open,
-                                        size: 20,
-                                        color: Colors.white.withValues(
-                                          alpha: 0.95,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        _localizations.unlockNow,
-                                        style: TextStyle(
+                              child: Material(
+                                color: Colors.transparent,
+                                child: InkWell(
+                                  onTap: _showUnlockBiometric,
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 14,
+                                    ),
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.lock_open,
+                                          size: 20,
                                           color: Colors.white.withValues(
                                             alpha: 0.95,
                                           ),
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w600,
-                                          fontFamily: 'Literata',
                                         ),
-                                      ),
-                                    ],
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          _localizations.unlockNow,
+                                          style: TextStyle(
+                                            color: Colors.white.withValues(
+                                              alpha: 0.95,
+                                            ),
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w600,
+                                            fontFamily: 'Literata',
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ),
@@ -365,7 +406,6 @@ class _SplashPageState extends State<SplashPage> {
                         ),
                       ),
                     ),
-                  ),
                 ],
               ),
             ),

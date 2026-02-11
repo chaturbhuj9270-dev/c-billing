@@ -123,6 +123,57 @@ class BiometricService {
     }
   }
 
+  // =========== Global App Lock Settings ===========
+  static const String _biometricLockEnabledKey = 'biometric_lock_enabled';
+
+  /// Enable global biometric app lock (shown on splash screen)
+  Future<void> enableBiometricLock() async {
+    try {
+      await _secureStorage.write(
+        key: _biometricLockEnabledKey,
+        value: 'true',
+      );
+      print('[BiometricService] Biometric lock enabled');
+    } catch (e) {
+      print('[BiometricService] Error enabling biometric lock: $e');
+    }
+  }
+
+  /// Disable global biometric app lock
+  Future<void> disableBiometricLock() async {
+    try {
+      await _secureStorage.write(
+        key: _biometricLockEnabledKey,
+        value: 'false',
+      );
+      print('[BiometricService] Biometric lock disabled');
+    } catch (e) {
+      print('[BiometricService] Error disabling biometric lock: $e');
+    }
+  }
+
+  /// Check if global biometric lock is enabled
+  Future<bool> isBiometricLockEnabled() async {
+    try {
+      final value = await _secureStorage.read(
+        key: _biometricLockEnabledKey,
+      );
+      return value == 'true';
+    } catch (e) {
+      print('[BiometricService] Error checking biometric lock status: $e');
+      return false;
+    }
+  }
+
+  /// Set biometric lock status (convenience method)
+  Future<void> setBiometricLockEnabled(bool enabled) async {
+    if (enabled) {
+      await enableBiometricLock();
+    } else {
+      await disableBiometricLock();
+    }
+  }
+
   /// Get the type of biometric to use (face or fingerprint)
   Future<String> getPreferredBiometricType(String userId) async {
     try {

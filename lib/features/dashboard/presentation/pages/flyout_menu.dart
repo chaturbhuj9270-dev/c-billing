@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../../../core/services/session_manager.dart';
 import '../../../../core/services/credentials_manager.dart';
 import '../../../../core/services/language_service.dart';
+import '../../../../core/services/biometric_service.dart';
 import 'profile_page.dart';
 import '../../../supplier/presentation/pages/supplier_page.dart';
 import '../../../customer/presentation/pages/customer_page.dart';
@@ -26,6 +27,8 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
   late User? _currentUser;
   String _userName = 'User';
   String _selectedLanguage = 'English'; // Default language
+  bool _biometricLockEnabled = false;
+  bool _canUseBiometrics = false;
 
   // Animation controllers
   late AnimationController _slideController;
@@ -54,6 +57,7 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
     _currentUser = _auth.currentUser;
     _userName = _currentUser?.displayName ?? 'User';
     _selectedLanguage = LanguageService.instance.currentLanguage;
+    _loadBiometricStatus();
 
     // Main slide animation
     _slideController = AnimationController(
@@ -129,6 +133,41 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
     _slideController.dispose();
     _staggerController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadBiometricStatus() async {
+    final biometricService = BiometricService.instance;
+    final canUse = await biometricService.canUseBiometrics();
+    final isEnabled = await biometricService.isBiometricLockEnabled();
+    if (mounted) {
+      setState(() {
+        _canUseBiometrics = canUse;
+        _biometricLockEnabled = isEnabled;
+      });
+    }
+  }
+
+  Future<void> _toggleBiometricLock(bool enabled) async {
+    final biometricService = BiometricService.instance;
+    await biometricService.setBiometricLockEnabled(enabled);
+    if (mounted) {
+      setState(() {
+        _biometricLockEnabled = enabled;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(enabled 
+            ? 'Biometric lock enabled' 
+            : 'Biometric lock disabled'),
+          backgroundColor: const Color(0xFF2E7D32),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
   }
 
   void _logout() {
@@ -210,12 +249,21 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
           _showLanguageDialog();
           break;
         case 'Settings':
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Settings page coming soon')),
-          );
+          _showSettingsDialog();
           break;
       }
     });
+  }
+
+  void _showSettingsDialog() {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => _SettingsDialog(
+        biometricLockEnabled: _biometricLockEnabled,
+        canUseBiometrics: _canUseBiometrics,
+        onBiometricToggle: _toggleBiometricLock,
+      ),
+    );
   }
 
   void _showLanguageDialog() {
@@ -749,6 +797,163 @@ class _LanguageDialog extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _SettingsDialog extends StatefulWidget {
+  final bool biometricLockEnabled;
+  final bool canUseBiometrics;
+  final Function(bool) onBiometricToggle;
+
+  const _SettingsDialog({
+    required this.biometricLockEnabled,
+    required this.canUseBiometrics,
+    required this.onBiometricToggle,
+  });
+
+  @override
+  State<_SettingsDialog> createState() => _SettingsDialogState();
+}
+
+class _SettingsDialogState extends State<_SettingsDialog> {
+  late bool _biometricEnabled;
+
+  @override
+  void initState() {
+    super.initState();
+    _biometricEnabled = widget.biometricLockEnabled;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+      ),
+      title: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: const Color(0xFF78909C).withOpacity(0.1),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Icon(
+              Icons.settings_rounded,
+              color: Color(0xFF78909C),
+              size: 24,
+            ),
+          ),
+          const SizedBox(width: 12),
+          const Text(
+            'Settings',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
+              fontFamily: 'Literata',
+            ),
+          ),
+        ],
+      ),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Biometric Lock Toggle
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: widget.canUseBiometrics 
+                  ? (_biometricEnabled 
+                      ? const Color(0xFF2E7D32).withOpacity(0.1) 
+                      : Colors.grey.withOpacity(0.05))
+                  : Colors.grey.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: widget.canUseBiometrics && _biometricEnabled
+                    ? const Color(0xFF2E7D32)
+                    : Colors.grey.withOpacity(0.2),
+                width: _biometricEnabled ? 2 : 1,
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: widget.canUseBiometrics
+                        ? const Color(0xFF2E7D32).withOpacity(0.1)
+                        : Colors.grey.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    Icons.fingerprint,
+                    color: widget.canUseBiometrics
+                        ? const Color(0xFF2E7D32)
+                        : Colors.grey,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Biometric Lock',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          fontFamily: 'Literata',
+                          color: widget.canUseBiometrics 
+                              ? Colors.black87 
+                              : Colors.grey,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        widget.canUseBiometrics
+                            ? 'Unlock app with fingerprint/face'
+                            : 'Biometrics not available',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey[600],
+                          fontFamily: 'Literata',
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Switch(
+                  value: _biometricEnabled,
+                  onChanged: widget.canUseBiometrics
+                      ? (value) {
+                          setState(() {
+                            _biometricEnabled = value;
+                          });
+                          widget.onBiometricToggle(value);
+                        }
+                      : null,
+                  activeColor: const Color(0xFF2E7D32),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text(
+            'Close',
+            style: TextStyle(
+              color: Color(0xFF78909C),
+              fontFamily: 'Literata',
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
