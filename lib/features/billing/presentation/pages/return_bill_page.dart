@@ -9,6 +9,7 @@ import 'package:c_billing/features/inventory_management/data/repositories/fireba
 import 'package:c_billing/features/inventory_management/data/repositories/firebase_stock_repository.dart';
 import 'package:c_billing/features/shop/data/repositories/shop_repository.dart';
 import 'package:c_billing/common_widgets/printer_selection_widget.dart';
+import 'package:c_billing/features/billing/offline/controllers/bill_offline_controller.dart';
 
 /// Return Bill Page for processing bill returns
 /// Allows searching by bill number or customer mobile and processing returns
@@ -127,16 +128,20 @@ class _ReturnBillPageState extends State<ReturnBillPage>
 
     try {
       final query = _searchController.text.trim();
-      final result = await _billingService.searchBillForReturn(query);
-
+      
+      // Use offline controller for searching
+      final results = await BillOfflineController.instance.searchBills(query);
+      
       if (mounted) {
         setState(() {
           _isSearching = false;
-          if (result.success && result.bill != null) {
-            _currentBill = result.bill;
-            _initializeReturnQuantities(result.bill!);
+          if (results.isNotEmpty) {
+            // Take the first matching bill
+            final billEntity = results.first;
+            _currentBill = Bill.fromBillEntity(billEntity);
+            _initializeReturnQuantities(_currentBill!);
           } else {
-            _errorMessage = result.errorMessage ?? 'Bill not found';
+            _errorMessage = 'Bill not found';
           }
         });
       }

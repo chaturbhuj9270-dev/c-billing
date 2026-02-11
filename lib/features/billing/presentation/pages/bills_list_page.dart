@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -15,6 +16,9 @@ import 'package:c_billing/features/shop/data/repositories/shop_repository.dart';
 import 'package:c_billing/features/customer/data/repositories/customer_repository.dart';
 import 'package:c_billing/core/services/language_service.dart';
 import 'package:c_billing/core/localization/app_localizations.dart';
+import 'package:c_billing/features/billing/offline/controllers/bill_offline_controller.dart';
+import 'package:c_billing/features/billing/offline/entities/bill_entity.dart';
+import 'package:c_billing/features/billing/data/services/bill_sync_service.dart';
 
 class BillsListPage extends StatefulWidget {
   const BillsListPage({super.key});
@@ -56,6 +60,9 @@ class _BillsListPageState extends State<BillsListPage>
   double _totalSales = 0.0;
   int _totalBillsCount = 0;
 
+  // Offline-first stream subscription
+  StreamSubscription<List<BillEntity>>? _billsSubscription;
+
   @override
   void initState() {
     super.initState();
@@ -72,6 +79,19 @@ class _BillsListPageState extends State<BillsListPage>
       productRepository: FirebaseProductRepository(firestore: _firestore),
       stockRepository: FirebaseStockRepository(firestore: _firestore),
     );
+
+    // Subscribe to bills stream for reactive updates
+    _billsSubscription = BillOfflineController.instance.watchAllBills().listen((entities) {
+      if (mounted) {
+        final bills = entities.map((e) => Bill.fromBillEntity(e)).toList();
+        setState(() {
+          _bills = bills;
+          _totalSales = bills.fold(0.0, (sum, bill) => sum + bill.finalAmount);
+          _totalBillsCount = bills.length;
+          _filterBills(_searchController.text);
+        });
+      }
+    });
 
     // Initialize animations
     _animController = AnimationController(
@@ -95,25 +115,16 @@ class _BillsListPageState extends State<BillsListPage>
   }
 
   Future<void> _setupInitialData() async {
-    // 1. Load from cache immediately
-    final cached = await _cacheDataSource.getCachedBills();
-    if (cached != null && mounted) {
-      setState(() {
-        _bills = cached;
-        _filteredBills = cached;
-        _totalSales = _bills.fold(0.0, (sum, bill) => sum + bill.finalAmount);
-        _totalBillsCount = _bills.length;
-        _applySorting();
-      });
-      print('[DEBUG] Loaded ${_bills.length} bills from cache');
-    }
-
-    // 2. Load from Firestore in background
-    _loadBills();
+    // Load from Isar (offline-first) - data comes through stream subscription
+    // Initial data is already loaded via watchAllBills() in initState
+    
+    // Trigger background sync to fetch latest from server
+    BillSyncService.instance.syncNow();
   }
 
   @override
   void dispose() {
+    _billsSubscription?.cancel();
     _animController.dispose();
     _searchController.dispose();
     _printerService.dispose();
@@ -747,15 +758,19 @@ class _BillsListPageState extends State<BillsListPage>
         setState(() => _isLoading = true);
       }
 
-      List<Bill> bills;
+      // Use offline-first controller
+      List<BillEntity> entities;
       if (_startDate != null && _endDate != null) {
-        bills = await _billingService.getBillsByDateRange(
+        entities = await BillOfflineController.instance.getBillsByDateRange(
           _startDate!,
           _endDate!,
         );
       } else {
-        bills = await _billingService.getAllBills();
+        entities = await BillOfflineController.instance.getAllBills();
       }
+
+      // Convert to domain Bills
+      final bills = entities.map((e) => Bill.fromBillEntity(e)).toList();
 
       // Calculate stats (use finalAmount to account for discounts)
       _totalSales = bills.fold(0.0, (sum, bill) => sum + bill.finalAmount);
@@ -768,8 +783,8 @@ class _BillsListPageState extends State<BillsListPage>
         _isLoading = false;
       });
 
-      // Save to cache
-      _cacheDataSource.saveBills(bills);
+      // Trigger background sync
+      BillSyncService.instance.syncNow();
     } catch (e) {
       setState(() => _isLoading = false);
       if (mounted) {
