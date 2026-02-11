@@ -14,7 +14,7 @@ import '../../../../common_widgets/welcome_card.dart';
 import '../cubit/dashboard_cubit.dart';
 import '../cubit/dashboard_state.dart';
 import '../../data/models/dashboard_data.dart';
-import '../../data/repositories/dashboard_repository.dart';
+import '../../data/repositories/dashboard_offline_repository.dart';
 import 'flyout_menu.dart';
 
 class DashboardPage extends StatelessWidget {
@@ -63,8 +63,8 @@ class _DashboardViewState extends State<_DashboardView>
   bool _isLastDuesExpanded = false;
   bool _isLowStockExpanded = false;
 
-  // Real data for expandable sections
-  final DashboardRepository _repository = DashboardRepository();
+  // Real data for expandable sections - using offline repository for instant loading
+  final DashboardOfflineRepository _repository = DashboardOfflineRepository.instance;
   List<Map<String, dynamic>> _upcomingPayments = [];
   List<Map<String, dynamic>> _topProducts = [];
   List<Map<String, dynamic>> _pendingPayments = [];

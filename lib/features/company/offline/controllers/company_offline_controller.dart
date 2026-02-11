@@ -276,6 +276,17 @@ class CompanyOfflineController extends ChangeNotifier {
     notifyListeners();
   }
 
+  // ==================== STATISTICS ====================
+
+  /// Get total company count
+  Future<int> getTotalCount() async {
+    return await _isar.companyEntitys
+        .filter()
+        .not()
+        .syncStatusEqualTo(CompanySyncStatus.deleted)
+        .count();
+  }
+
   /// Clear all local companies (use with caution)
   Future<void> clearAll() async {
     await _isar.writeTxn(() async {

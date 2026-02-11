@@ -330,6 +330,30 @@ class PurchaseOfflineController extends ChangeNotifier {
     notifyListeners();
   }
 
+  // ==================== STATISTICS ====================
+
+  /// Get total purchase count
+  Future<int> getTotalCount() async {
+    return await _isar.purchaseEntitys
+        .filter()
+        .not()
+        .syncStatusEqualTo(PurchaseSyncStatus.deleted)
+        .count();
+  }
+
+  /// Get purchases by date range
+  Future<List<PurchaseEntity>> getPurchasesByDateRange(
+    DateTime startDate,
+    DateTime endDate,
+  ) async {
+    return await _isar.purchaseEntitys
+        .filter()
+        .not()
+        .syncStatusEqualTo(PurchaseSyncStatus.deleted)
+        .createdAtBetween(startDate, endDate)
+        .findAll();
+  }
+
   /// Get total purchase amount for a date range
   Future<double> getTotalPurchaseAmount({
     DateTime? startDate,

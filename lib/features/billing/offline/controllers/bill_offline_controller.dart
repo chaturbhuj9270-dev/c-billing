@@ -385,6 +385,15 @@ class BillOfflineController extends ChangeNotifier {
 
   // ==================== STATISTICS ====================
 
+  /// Get total bill count
+  Future<int> getTotalCount() async {
+    return await _isar.billEntitys
+        .filter()
+        .not()
+        .syncStatusEqualTo(BillSyncStatus.deleted)
+        .count();
+  }
+
   /// Get total sales amount for a date range
   Future<double> getTotalSales({DateTime? startDate, DateTime? endDate}) async {
     var query = _isar.billEntitys
@@ -416,6 +425,20 @@ class BillOfflineController extends ChangeNotifier {
         .findAll();
 
     return bills.fold<double>(0.0, (sum, b) => sum + b.pendingAmount);
+  }
+
+  /// Get bills with pending payment (for dashboard)
+  Future<List<BillEntity>> getPendingBills() async {
+    return await _isar.billEntitys
+        .filter()
+        .not()
+        .syncStatusEqualTo(BillSyncStatus.deleted)
+        .group((q) => q
+            .paymentStatusEqualTo(BillPaymentStatus.pending)
+            .or()
+            .paymentStatusEqualTo(BillPaymentStatus.partiallyPaid))
+        .sortByPendingAmountDesc()
+        .findAll();
   }
 
   /// Get bill count

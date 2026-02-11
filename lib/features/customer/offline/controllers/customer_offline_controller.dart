@@ -327,4 +327,15 @@ class CustomerOfflineController extends ChangeNotifier {
     final customers = await getAllCustomers();
     return customers.fold<double>(0, (sum, c) => sum + c.currentPendingAmount);
   }
+
+  /// Get customers with pending balance (for dashboard)
+  Future<List<CustomerEntity>> getCustomersWithPendingBalance() async {
+    final customers = await _isar.customerEntitys
+        .filter()
+        .isDeletedEqualTo(false)
+        .currentPendingAmountGreaterThan(0)
+        .sortByCurrentPendingAmountDesc()
+        .findAll();
+    return customers;
+  }
 }

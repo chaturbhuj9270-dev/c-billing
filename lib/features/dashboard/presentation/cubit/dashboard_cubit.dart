@@ -1,16 +1,18 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../data/repositories/dashboard_repository.dart';
+import '../../data/repositories/dashboard_offline_repository.dart';
 import 'dashboard_state.dart';
 
 /// Cubit for managing dashboard state and data loading
+/// Uses offline-first repository for instant data loading
 class DashboardCubit extends Cubit<DashboardState> {
-  final DashboardRepository _repository;
+  final DashboardOfflineRepository _repository;
 
-  DashboardCubit({DashboardRepository? repository})
-    : _repository = repository ?? DashboardRepository(),
+  DashboardCubit({DashboardOfflineRepository? repository})
+    : _repository = repository ?? DashboardOfflineRepository.instance,
       super(const DashboardInitial());
 
   /// Load dashboard data with the current filter
+  /// Uses local Isar database for microsecond-level loading
   Future<void> loadDashboard() async {
     final stopwatch = Stopwatch()..start();
 
@@ -44,7 +46,7 @@ class DashboardCubit extends Cubit<DashboardState> {
 
       stopwatch.stop();
       print(
-        '[DashboardCubit] Total load time: ${stopwatch.elapsedMilliseconds}ms',
+        '[DashboardCubit] Total load time: ${stopwatch.elapsedMicroseconds}μs (${stopwatch.elapsedMilliseconds}ms)',
       );
 
       emit(
