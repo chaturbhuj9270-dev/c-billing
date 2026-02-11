@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'dart:ui';
+import 'dart:async';
 import 'package:c_billing/core/services/inventory_service.dart';
 import 'package:c_billing/core/services/language_service.dart';
 import 'package:c_billing/core/services/dashboard_refresh_service.dart';
@@ -13,6 +14,9 @@ import '../../data/repositories/firebase_stock_repository.dart';
 import '../../data/repositories/firebase_purchase_repository.dart';
 import '../../data/datasources/product_cache_datasource.dart';
 import '../../domain/entities/product.dart';
+import '../../../product/offline/controllers/product_offline_controller.dart';
+import '../../../product/offline/entities/product_entity.dart';
+import '../../../product/data/services/product_sync_service.dart';
 
 class ProductManagementPage extends StatefulWidget {
   final bool isEmbedded;
@@ -35,6 +39,10 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
   bool _isLoadingMore = false;
   int _pageSize = 20;
   late ScrollController _scrollController;
+  
+  // Offline-first support
+  StreamSubscription<List<ProductEntity>>? _productStreamSubscription;
+  int _unsyncedCount = 0;
   
   // Latest purchase info for each product
   Map<String, Map<String, dynamic>> _latestPurchases = {};
@@ -75,6 +83,7 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
     _scrollController.addListener(_onScroll);
     _checkUserAuthentication();
     _setupInitialData();
+    _setupOfflineStream();
   }
 
   void _onLanguageChanged() {
@@ -88,6 +97,7 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
   @override
   void dispose() {
     LanguageService.instance.removeListener(_onLanguageChanged);
+    _productStreamSubscription?.cancel();
     _scrollController.dispose();
     super.dispose();
   }
@@ -147,6 +157,54 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
     _loadProducts();
   }
 
+  /// Setup offline stream for real-time Isar updates
+  void _setupOfflineStream() {
+    final offlineController = ProductOfflineController.instance;
+    
+    // Listen to Isar changes for instant UI updates
+    _productStreamSubscription = offlineController.watchAllProducts().listen(
+      (entities) {
+        if (mounted) {
+          // Convert entities to Product domain objects
+          final products = entities.map((e) => Product(
+            id: e.serverId ?? 'local_${e.id}',
+            indexNo: e.indexNo,
+            name: e.name,
+            companyName: e.companyName,
+            category: e.category,
+            purchasePrice: e.purchasePrice,
+            salesPrice: e.salesPrice,
+            currentStock: e.currentStock,
+            createdAt: e.createdAt,
+            updatedAt: e.updatedAt,
+          )).toList();
+          
+          setState(() {
+            _products = products;
+            _applyFilters();
+            _displayedProducts = _filteredProducts.take(_pageSize).toList();
+          });
+          
+          // Update unsynced count
+          _updateUnsyncedCount();
+        }
+      },
+      onError: (e) {
+        print('[ERROR] Isar stream error: $e');
+      },
+    );
+    
+    // Initial unsynced count
+    _updateUnsyncedCount();
+  }
+  
+  Future<void> _updateUnsyncedCount() async {
+    final count = await ProductOfflineController.instance.getUnsyncedCount();
+    if (mounted && count != _unsyncedCount) {
+      setState(() => _unsyncedCount = count);
+    }
+  }
+
   Future<void> _loadProducts() async {
     try {
       // Only show loader if we have no cached data
@@ -176,6 +234,9 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
         // Save to cache for next time
         _cacheDataSource.saveProducts(products);
         
+        // Import products to Isar for offline-first support
+        _importProductsToIsar(products);
+        
         // Load latest purchase info for each product
         _loadLatestPurchases(products);
       }
@@ -187,6 +248,29 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
           context,
         ).showSnackBar(SnackBar(content: Text('Error loading products: $e')));
       }
+    }
+  }
+  
+  /// Import products from Firestore to Isar for offline support
+  Future<void> _importProductsToIsar(List<Product> products) async {
+    try {
+      final serverProducts = products.map((p) => {
+        'id': p.id,
+        'indexNo': p.indexNo,
+        'name': p.name,
+        'companyName': p.companyName,
+        'category': p.category,
+        'purchasePrice': p.purchasePrice,
+        'salesPrice': p.salesPrice,
+        'currentStock': p.currentStock,
+        'createdAt': p.createdAt.toIso8601String(),
+        'updatedAt': p.updatedAt.toIso8601String(),
+      }).toList();
+      
+      final imported = await ProductOfflineController.instance.importFromServer(serverProducts);
+      print('[DEBUG] Imported $imported products to Isar');
+    } catch (e) {
+      print('[ERROR] Failed to import products to Isar: $e');
     }
   }
   
@@ -428,33 +512,32 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
             ElevatedButton(
               onPressed: () async {
                 try {
-                  final updatedProduct = product.copyWith(
-                    name: nameController.text,
-                    companyName: product.companyName,
-                    category: categoryController.text,
-                    purchasePrice: product.purchasePrice,
-                    salesPrice: product.salesPrice,
-                    currentStock: product.currentStock,
-                    updatedAt: DateTime.now(),
-                  );
-
-                  // Optimistic update
-                  final index = _products.indexWhere((p) => p.id == product.id);
-                  if (index != -1) {
-                    setState(() {
-                      _products[index] = updatedProduct;
-                      _applyFilters();
-                      _displayedProducts = _filteredProducts
-                          .take(_pageSize)
-                          .toList();
-                    });
-                    _cacheDataSource.saveProducts(_products);
+                  // Offline-first: Update in Isar
+                  final offlineController = ProductOfflineController.instance;
+                  
+                  // Find local ID by server ID
+                  final existing = await offlineController.getProductByServerId(product.id);
+                  
+                  if (existing != null) {
+                    await offlineController.updateProduct(
+                      id: existing.id,
+                      name: nameController.text,
+                      category: categoryController.text,
+                    );
+                  } else {
+                    // Fallback to Firebase direct update if not in Isar
+                    await _inventoryService.updateProduct(product.copyWith(
+                      name: nameController.text,
+                      category: categoryController.text,
+                      updatedAt: DateTime.now(),
+                    ));
                   }
-
-                  await _inventoryService.updateProduct(updatedProduct);
                   
                   // Notify dashboard to refresh
                   DashboardRefreshService.instance.notifyDataChanged(DataChangeType.product);
+                  
+                  // Trigger background sync if online
+                  ProductSyncService.instance.syncNow();
                   
                   if (mounted) {
                     Navigator.pop(context);
@@ -463,12 +546,11 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                         content: Text(
                           _localizations.productUpdatedSuccessfully,
                         ),
+                        backgroundColor: const Color(0xFF1B4D3E),
                       ),
                     );
                   }
                 } catch (e) {
-                  // Reload on error to revert optimistic update
-                  _loadProducts();
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text('${_localizations.error}: $e')),
                   );
@@ -507,32 +589,35 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
           ElevatedButton(
             onPressed: () async {
               try {
-                // Optimistic delete
-                setState(() {
-                  _products.removeWhere((p) => p.id == product.id);
-                  _applyFilters();
-                  _displayedProducts = _filteredProducts
-                      .take(_pageSize)
-                      .toList();
-                });
-                _cacheDataSource.saveProducts(_products);
-
-                await _inventoryService.deleteProduct(product.id);
+                // Offline-first: Delete from Isar
+                final offlineController = ProductOfflineController.instance;
+                
+                // Find local ID by server ID
+                final existing = await offlineController.getProductByServerId(product.id);
+                
+                if (existing != null) {
+                  await offlineController.deleteProduct(existing.id);
+                } else {
+                  // Fallback to Firebase direct delete if not in Isar
+                  await _inventoryService.deleteProduct(product.id);
+                }
                 
                 // Notify dashboard to refresh
                 DashboardRefreshService.instance.notifyDataChanged(DataChangeType.product);
+                
+                // Trigger background sync if online
+                ProductSyncService.instance.syncNow();
                 
                 if (mounted) {
                   Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text(_localizations.productDeletedSuccessfully),
+                      backgroundColor: Colors.red,
                     ),
                   );
                 }
               } catch (e) {
-                // Reload on error to revert optimistic delete
-                _loadProducts();
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text('${_localizations.error}: $e')),
                 );
@@ -941,52 +1026,33 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
             ElevatedButton(
               onPressed: () async {
                 try {
-                  final newProduct = Product(
-                    id: 'temp_${DateTime.now().millisecondsSinceEpoch}',
-                    indexNo: 0, // Will be generated by the service
+                  // Offline-first: Save to Isar immediately
+                  final offlineController = ProductOfflineController.instance;
+                  await offlineController.addProduct(
                     name: nameController.text,
                     companyName: '',
-                    category: '', // Category is optional, set to empty
+                    category: categoryController.text,
                     purchasePrice: double.parse(purchasePriceController.text),
                     salesPrice: double.parse(salesPriceController.text),
                     currentStock: int.parse(initialStockController.text),
-                    createdAt: DateTime.now(),
-                    updatedAt: DateTime.now(),
-                  );
-
-                  // Optimistic add
-                  setState(() {
-                    _products.insert(0, newProduct);
-                    _applyFilters();
-                    _displayedProducts = _filteredProducts
-                        .take(_pageSize)
-                        .toList();
-                  });
-                  _cacheDataSource.saveProducts(_products);
-
-                  await _inventoryService.createProduct(
-                    name: nameController.text,
-                    companyName: '',
-                    category: '', // Category is optional
-                    purchasePrice: double.parse(purchasePriceController.text),
-                    salesPrice: double.parse(salesPriceController.text),
-                    initialStock: int.parse(initialStockController.text),
                   );
                   
                   // Notify dashboard to refresh
                   DashboardRefreshService.instance.notifyDataChanged(DataChangeType.product);
+                  
+                  // Trigger background sync if online
+                  ProductSyncService.instance.syncNow();
                   
                   if (mounted) {
                     Navigator.pop(context);
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(_localizations.productAddedSuccessfully),
+                        backgroundColor: const Color(0xFF1B4D3E),
                       ),
                     );
                   }
                 } catch (e) {
-                  // Reload on error to revert optimistic add
-                  _loadProducts();
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text('${_localizations.error}: $e')),
                   );
@@ -1031,6 +1097,16 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
               backgroundColor: Colors.red.withOpacity(0.1),
             ),
           ),
+          if (_unsyncedCount > 0)
+            Expanded(
+              child: _buildStatCard(
+                title: 'Pending Sync',
+                value: _unsyncedCount,
+                icon: Icons.cloud_upload_outlined,
+                iconColor: Colors.orange,
+                backgroundColor: Colors.orange.withOpacity(0.1),
+              ),
+            ),
         ],
       ),
     );
