@@ -7,6 +7,9 @@ import '../../../../core/services/language_service.dart';
 import '../../../../core/services/dashboard_refresh_service.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../../data/datasources/company_cache_datasource.dart';
+import '../../offline/controllers/company_offline_controller.dart';
+import '../../offline/entities/company_entity.dart';
+import '../../data/services/company_sync_service.dart';
 
 class CompanyPage extends StatefulWidget {
   const CompanyPage({super.key});
@@ -25,12 +28,17 @@ class _CompanyPageState extends State<CompanyPage> {
   bool _isLoading = false;
   bool _isEditing = false;
   String? _editingCompanyId;
+  int? _editingCompanyLocalId; // Local Isar ID for offline-first
   List<Map<String, dynamic>> _companies = [];
   List<Map<String, dynamic>> _filteredCompanies = [];
   bool _isSortAscending = true;
   Timer? _filterDebounceTimer;
   bool _isNavigatingAway = false;
   final _cacheDataSource = CompanyCacheDataSource();
+  
+  // Offline-first support
+  StreamSubscription<List<CompanyEntity>>? _companyStreamSubscription;
+  int _unsyncedCount = 0;
 
   final _auth = FirebaseAuth.instance;
   late final FirebaseFirestore _firestore;
@@ -47,6 +55,7 @@ class _CompanyPageState extends State<CompanyPage> {
     _checkUserAuthentication();
     _setupInitialData();
     _searchController.addListener(_filterAndSearchCompanies);
+    _setupOfflineStream();
   }
 
   void _onLanguageChanged() {
@@ -73,6 +82,42 @@ class _CompanyPageState extends State<CompanyPage> {
 
     // Fetch from Firestore in background
     _loadCompanies();
+  }
+
+  /// Setup offline stream for real-time Isar updates
+  void _setupOfflineStream() {
+    final offlineController = CompanyOfflineController.instance;
+    
+    // Listen to Isar changes for instant UI updates
+    _companyStreamSubscription = offlineController.watchAllCompanies().listen(
+      (entities) {
+        if (mounted && !_isNavigatingAway) {
+          // Convert entities to Map format for existing UI
+          final companies = entities.map((e) => e.toCompanyMap()).toList();
+          
+          setState(() {
+            _companies = companies;
+            _filterAndSortCompanies();
+          });
+          
+          // Update unsynced count
+          _updateUnsyncedCount();
+        }
+      },
+      onError: (e) {
+        print('[ERROR] Isar stream error: $e');
+      },
+    );
+    
+    // Initial unsynced count
+    _updateUnsyncedCount();
+  }
+  
+  Future<void> _updateUnsyncedCount() async {
+    final count = await CompanyOfflineController.instance.getUnsyncedCount();
+    if (mounted && count != _unsyncedCount) {
+      setState(() => _unsyncedCount = count);
+    }
   }
 
   void _toggleSort() {
@@ -159,11 +204,13 @@ class _CompanyPageState extends State<CompanyPage> {
           .map((doc) => {'id': doc.id, ...doc.data()})
           .toList();
 
+      // Import server data to Isar (offline-first)
+      await CompanyOfflineController.instance.importFromServer(freshCompanies);
+      
+      // Trigger background sync for any pending local changes
+      CompanySyncService.instance.syncNow();
+
       if (mounted && !_isNavigatingAway) {
-        setState(() {
-          _companies = freshCompanies;
-          _filterAndSortCompanies();
-        });
         // Save to cache for next time
         _cacheDataSource.saveCompanies(freshCompanies);
       }
@@ -187,6 +234,7 @@ class _CompanyPageState extends State<CompanyPage> {
     _contactController.clear();
     _addressController.clear();
     _editingCompanyId = null;
+    _editingCompanyLocalId = null;
     _isEditing = false;
   }
 
@@ -381,6 +429,7 @@ class _CompanyPageState extends State<CompanyPage> {
     _contactController.text = company['contact'] ?? '';
     _addressController.text = company['address'] ?? '';
     _editingCompanyId = company['id'];
+    _editingCompanyLocalId = company['localId'] as int?;
     _isEditing = true;
   }
 
@@ -395,131 +444,82 @@ class _CompanyPageState extends State<CompanyPage> {
     print('[DEBUG] Starting company save operation');
 
     try {
-      final currentUser = _auth.currentUser;
-      if (currentUser == null) {
-        print('[ERROR] No authenticated user found');
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(_localizations.userNotAuthenticated)),
-        );
-        return;
-      }
+      final offlineController = CompanyOfflineController.instance;
 
-      print('[DEBUG] Authenticated user ID: ${currentUser.uid}');
-      print('[DEBUG] Building company data...');
-
-      final companiesCollection = _firestore
-          .collection('users')
-          .doc(currentUser.uid)
-          .collection('companies');
-
-      print('[DEBUG] Firestore path: users/${currentUser.uid}/companies');
-
-      final companyData = {
-        'companyName': _companyNameController.text.trim(),
-        'contact': _contactController.text.trim(),
-        'address': _addressController.text.trim(),
-        'updatedAt': FieldValue.serverTimestamp(),
-      };
-
-      print('[DEBUG] Company data: $companyData');
-
-      if (_isEditing && _editingCompanyId != null) {
-        // Optimistic update
-        final index = _companies.indexWhere(
-          (c) => c['id'] == _editingCompanyId,
-        );
-        if (index != -1) {
-          setState(() {
-            _companies[index] = {..._companies[index], ...companyData};
-            _filterAndSortCompanies();
-          });
-          _cacheDataSource.saveCompanies(_companies);
+      if (_isEditing) {
+        // For editing, we need the local Isar ID
+        int? localId = _editingCompanyLocalId;
+        
+        // If localId not available, try to find by serverId
+        if (localId == null && _editingCompanyId != null) {
+          final existing = await offlineController.getCompanyByServerId(_editingCompanyId!);
+          localId = existing?.id;
         }
-
-        // Update existing company
-        print('[DEBUG] Updating existing company: $_editingCompanyId');
-        await companiesCollection.doc(_editingCompanyId).update(companyData);
-        print('[DEBUG] Company updated successfully');
+        
+        if (localId != null) {
+          // Update existing company in Isar
+          await offlineController.updateCompany(
+            id: localId,
+            companyName: _companyNameController.text.trim(),
+            contact: _contactController.text.trim(),
+            address: _addressController.text.trim(),
+          );
+          print('[DEBUG] Company updated locally: $localId');
+        } else {
+          print('[ERROR] Could not find company to update');
+          throw Exception('Company not found');
+        }
         
         // Notify dashboard to refresh
         DashboardRefreshService.instance.notifyDataChanged(DataChangeType.company);
-        
-        _clearForm();
-        _loadCompanies();
-        if (mounted) {
-          Navigator.pop(context);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(_localizations.companyUpdatedSuccessfully),
-              backgroundColor: Colors.green,
-            ),
-          );
-        }
       } else {
-        // Create new company
-        print('[DEBUG] Creating new company');
-        companyData['createdAt'] = FieldValue.serverTimestamp();
-
-        // Optimistic add
-        final tempId = 'temp_${DateTime.now().millisecondsSinceEpoch}';
-        final newCompany = {'id': tempId, ...companyData};
-        setState(() {
-          _companies.insert(0, newCompany);
-          _filterAndSortCompanies();
-        });
-        _cacheDataSource.saveCompanies(_companies);
-
-        final docRef = await companiesCollection.add(companyData);
-        print('[DEBUG] Company added successfully with ID: ${docRef.id}');
+        // Add new company to Isar
+        await offlineController.addCompany(
+          companyName: _companyNameController.text.trim(),
+          contact: _contactController.text.trim(),
+          address: _addressController.text.trim(),
+        );
+        print('[DEBUG] New company added locally');
         
         // Notify dashboard to refresh
         DashboardRefreshService.instance.notifyDataChanged(DataChangeType.company);
-        
-        _clearForm();
-        _loadCompanies();
-        if (mounted) {
-          Navigator.pop(context);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(_localizations.companyAddedSuccessfully),
-              backgroundColor: Colors.green,
-            ),
-          );
-        }
       }
-    } catch (e) {
-      print('[ERROR] Failed to save company: $e');
-      // Reload on error to revert optimistic update
-      _loadCompanies();
-      print('[ERROR] Error type: ${e.runtimeType}');
-      print('[ERROR] Full error: $e');
 
-      String errorMsg = '${_localizations.errorSavingCompany}: ${e.toString()}';
+      // Trigger background sync
+      CompanySyncService.instance.syncNow();
 
-      if (e.toString().contains('permission-denied')) {
-        errorMsg =
-            'Permission Denied - Firestore security rules are blocking write access.';
-        print(
-          '[ERROR] CRITICAL: Firestore permission denied - security rules issue',
+      if (mounted && context.mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              _isEditing
+                  ? _localizations.companyUpdatedSuccessfully
+                  : _localizations.companyAddedSuccessfully,
+            ),
+            backgroundColor: Colors.green,
+          ),
         );
       }
 
       if (mounted) {
+        _clearForm();
+      }
+    } catch (e) {
+      print('[ERROR] Error saving company: $e');
+      if (mounted && context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(errorMsg),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 5),
-          ),
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
         );
       }
     } finally {
-      setState(() => _isLoading = false);
-      print('[DEBUG] _saveCompany() completed');
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
-  Future<void> _deleteCompany(String companyId) async {
+  Future<void> _deleteCompany(String companyId, {int? localId}) async {
     print('[DEBUG] Delete company initiated for ID: $companyId');
     final confirmed = await showDialog<bool>(
       context: context,
@@ -546,35 +546,32 @@ class _CompanyPageState extends State<CompanyPage> {
     }
 
     try {
-      print('[DEBUG] Attempting to delete company: $companyId');
-      final currentUser = _auth.currentUser;
-      if (currentUser == null) {
-        print('[ERROR] No authenticated user for delete operation');
-        return;
+      final offlineController = CompanyOfflineController.instance;
+      
+      // Get the local Isar ID
+      int? deleteLocalId = localId;
+      
+      // If localId not available, try to find by serverId
+      if (deleteLocalId == null) {
+        final existing = await offlineController.getCompanyByServerId(companyId);
+        deleteLocalId = existing?.id;
       }
-
-      // Optimistic delete
-      setState(() {
-        _companies.removeWhere((c) => c['id'] == companyId);
-        _filterAndSortCompanies();
-      });
-      _cacheDataSource.saveCompanies(_companies);
-
-      print(
-        '[DEBUG] Deleting from path: users/${currentUser.uid}/companies/$companyId',
-      );
-      await _firestore
-          .collection('users')
-          .doc(currentUser.uid)
-          .collection('companies')
-          .doc(companyId)
-          .delete();
-
-      print('[DEBUG] Company deleted successfully');
+      
+      if (deleteLocalId != null) {
+        // Soft delete in Isar (marks as deleted for sync)
+        await offlineController.deleteCompany(deleteLocalId);
+        print('[DEBUG] Company marked for deletion: $deleteLocalId');
+      } else {
+        print('[ERROR] Could not find company to delete');
+        throw Exception('Company not found');
+      }
+      
+      // Trigger background sync to delete from server
+      CompanySyncService.instance.syncNow();
       
       // Notify dashboard to refresh
       DashboardRefreshService.instance.notifyDataChanged(DataChangeType.company);
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -584,17 +581,7 @@ class _CompanyPageState extends State<CompanyPage> {
         );
       }
     } catch (e) {
-      print('[ERROR] Failed to delete company: $e');
-      // Reload on error to revert optimistic delete
-      _loadCompanies();
-      print('[ERROR] Error type: ${e.runtimeType}');
-
-      if (e.toString().contains('permission-denied')) {
-        print(
-          '[ERROR] CRITICAL: Permission denied when deleting - security rules issue',
-        );
-      }
-
+      print('[ERROR] Error deleting company: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -610,6 +597,7 @@ class _CompanyPageState extends State<CompanyPage> {
   @override
   void dispose() {
     _isNavigatingAway = true;
+    _companyStreamSubscription?.cancel();
     _filterDebounceTimer?.cancel();
     _companyNameController.dispose();
     _contactController.dispose();
@@ -1062,7 +1050,10 @@ class _CompanyPageState extends State<CompanyPage> {
                               ),
                             ],
                           ),
-                          onTap: () => _deleteCompany(company['id']),
+                          onTap: () => _deleteCompany(
+                            company['id'],
+                            localId: company['localId'] as int?,
+                          ),
                         ),
                       ],
                       icon: Icon(Icons.more_vert, color: accentColor, size: 20),

@@ -3,6 +3,7 @@ import 'package:path_provider/path_provider.dart';
 import '../../features/customer/offline/entities/customer_entity.dart';
 import '../../features/product/offline/entities/product_entity.dart';
 import '../../features/supplier/offline/entities/supplier_entity.dart';
+import '../../features/company/offline/entities/company_entity.dart';
 
 /// Singleton service for managing Isar database instance
 /// Handles initialization, instance access, and database cleanup
@@ -40,7 +41,7 @@ class IsarService {
     final dir = await getApplicationDocumentsDirectory();
     
     _isar = await Isar.open(
-      [CustomerEntitySchema, ProductEntitySchema, SupplierEntitySchema],
+      [CustomerEntitySchema, ProductEntitySchema, SupplierEntitySchema, CompanyEntitySchema],
       directory: dir.path,
       name: 'c_billing_db',
       inspector: true, // Enable Isar inspector in debug mode

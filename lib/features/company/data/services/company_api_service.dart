@@ -1,0 +1,91 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
+
+/// API service for Company Firebase operations
+/// Handles all server-side CRUD for sync
+class CompanyApiService {
+  static CompanyApiService? _instance;
+
+  final FirebaseFirestore _firestore;
+  final FirebaseAuth _auth;
+
+  CompanyApiService._({
+    FirebaseFirestore? firestore,
+    FirebaseAuth? auth,
+  })  : _firestore = firestore ?? FirebaseFirestore.instance,
+        _auth = auth ?? FirebaseAuth.instance;
+
+  /// Get the singleton instance
+  static CompanyApiService get instance {
+    _instance ??= CompanyApiService._();
+    return _instance!;
+  }
+
+  /// Get current user ID
+  String? get _userId => _auth.currentUser?.uid;
+
+  /// Get companies collection reference
+  CollectionReference<Map<String, dynamic>> get _companiesRef {
+    final userId = _userId;
+    if (userId == null) {
+      throw StateError('User not authenticated');
+    }
+    return _firestore.collection('users').doc(userId).collection('companies');
+  }
+
+  /// Create a new company on server
+  /// Returns the server-generated document ID
+  Future<String> createCompany(Map<String, dynamic> data) async {
+    final docRef = await _companiesRef.add({
+      ...data,
+      'createdAt': FieldValue.serverTimestamp(),
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+    debugPrint('[CompanyAPI] Created company: ${docRef.id}');
+    return docRef.id;
+  }
+
+  /// Update an existing company on server
+  Future<void> updateCompany(String serverId, Map<String, dynamic> data) async {
+    await _companiesRef.doc(serverId).update({
+      ...data,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+    debugPrint('[CompanyAPI] Updated company: $serverId');
+  }
+
+  /// Delete a company from server
+  Future<void> deleteCompany(String serverId) async {
+    await _companiesRef.doc(serverId).delete();
+    debugPrint('[CompanyAPI] Deleted company: $serverId');
+  }
+
+  /// Get all companies from server
+  Future<List<Map<String, dynamic>>> getCompanies() async {
+    final snapshot = await _companiesRef
+        .orderBy('createdAt', descending: true)
+        .get();
+
+    return snapshot.docs.map((doc) => {
+      'id': doc.id,
+      ...doc.data(),
+    }).toList();
+  }
+
+  /// Get companies updated since a specific time
+  /// Used for delta sync
+  Future<List<Map<String, dynamic>>> getCompaniesSince(DateTime since) async {
+    final snapshot = await _companiesRef
+        .where('updatedAt', isGreaterThan: Timestamp.fromDate(since))
+        .get();
+
+    return snapshot.docs.map((doc) => {
+      'id': doc.id,
+      ...doc.data(),
+    }).toList();
+  }
+
+  /// Check if user is authenticated
+  bool get isAuthenticated => _userId != null;
+}
