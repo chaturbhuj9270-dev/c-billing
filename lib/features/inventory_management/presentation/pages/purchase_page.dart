@@ -13,6 +13,8 @@ import '../../data/repositories/firebase_stock_repository.dart';
 import '../../data/repositories/firebase_purchase_repository.dart';
 import '../../data/datasources/purchase_cache_datasource.dart';
 import '../../domain/entities/product.dart';
+import '../../offline/controllers/purchase_offline_controller.dart';
+import '../../data/services/purchase_sync_service.dart';
 import 'purchase_settings_page.dart';
 
 class PurchasePage extends StatefulWidget {
@@ -1260,34 +1262,27 @@ class _PurchasePageState extends State<PurchasePage>
     setState(() => _isLoading = true);
 
     try {
-      // Save purchase to Firestore with supplier and company info
-      final currentUser = FirebaseAuth.instance.currentUser;
-      if (currentUser == null) throw Exception('User not authenticated');
-
-      await _firestore
-          .collection('users')
-          .doc(currentUser.uid)
-          .collection('purchases')
-          .add({
-            'productId': _selectedProduct!.id,
-            'productName': _selectedProduct!.name,
-            'supplierId': _selectedSupplier!['id'],
-            'supplierName': _selectedSupplier!['fullName'],
-            'companyId': _selectedCompany!['id'],
-            'companyName': _selectedCompany!['companyName'],
-            'quantity': quantity,
-            'unit': _selectedUnit ?? PurchaseSettingsService.instance.defaultUnit,
-            'purchasePrice': price,
-            'salesPrice': salesPrice,
-            'totalAmount': quantity * price,
-            'productionDate': _productionDate,
-            'expiryDate': _expiryDate,
-            'warrantyMonths': _selectedWarranty ?? 0,
-            'notes': _notesController.text.isNotEmpty
-                ? _notesController.text
-                : null,
-            'createdAt': FieldValue.serverTimestamp(),
-          });
+      // Save purchase to local Isar (offline-first)
+      final offlineController = PurchaseOfflineController.instance;
+      
+      await offlineController.addPurchase(
+        productId: _selectedProduct!.id,
+        productName: _selectedProduct!.name,
+        supplierId: _selectedSupplier!['id'],
+        supplierName: _selectedSupplier!['fullName'],
+        companyId: _selectedCompany!['id'],
+        companyName: _selectedCompany!['companyName'],
+        quantity: quantity,
+        unit: _selectedUnit ?? PurchaseSettingsService.instance.defaultUnit,
+        purchasePrice: price,
+        salesPrice: salesPrice,
+        productionDate: _productionDate,
+        expiryDate: _expiryDate,
+        warrantyMonths: _selectedWarranty ?? 0,
+        notes: _notesController.text.isNotEmpty ? _notesController.text : null,
+      );
+      
+      print('[DEBUG] Purchase saved locally');
 
       // Also process through inventory service for stock update
       await _inventoryService.processPurchase(
@@ -1298,12 +1293,18 @@ class _PurchasePageState extends State<PurchasePage>
       );
 
       // Update product's purchase price (rate) in products collection
-      await _firestore
-          .collection('users')
-          .doc(currentUser.uid)
-          .collection('products')
-          .doc(_selectedProduct!.id)
-          .update({'purchasePrice': price, 'salesPrice': salesPrice});
+      final currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser != null) {
+        await _firestore
+            .collection('users')
+            .doc(currentUser.uid)
+            .collection('products')
+            .doc(_selectedProduct!.id)
+            .update({'purchasePrice': price, 'salesPrice': salesPrice});
+      }
+      
+      // Trigger background sync
+      PurchaseSyncService.instance.syncNow();
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1337,6 +1338,7 @@ class _PurchasePageState extends State<PurchasePage>
         _loadProducts();
       }
     } catch (e) {
+      print('[ERROR] Failed to process purchase: $e');
       if (mounted) {
         ScaffoldMessenger.of(
           context,
