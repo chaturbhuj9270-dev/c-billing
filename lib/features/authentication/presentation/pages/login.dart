@@ -8,6 +8,7 @@ import '../../../../core/services/credentials_manager.dart';
 import '../../../../core/services/subscription_service.dart';
 import '../../../../core/ui/subscription_screen.dart';
 import 'signup.dart';
+import 'change_password_page.dart';
 
 class LoginPageV2 extends StatefulWidget {
   const LoginPageV2({super.key});
@@ -364,7 +365,13 @@ class _LoginPageV2State extends State<LoginPageV2>
                                     child: Align(
                                       alignment: Alignment.centerRight,
                                       child: TextButton(
-                                        onPressed: () {},
+                                        onPressed: () {
+                                          Navigator.of(context).push(
+                                            MaterialPageRoute(
+                                              builder: (_) => const ChangePasswordPage(),
+                                            ),
+                                          );
+                                        },
                                         style: TextButton.styleFrom(
                                           padding: EdgeInsets.zero,
                                           minimumSize: Size.zero,

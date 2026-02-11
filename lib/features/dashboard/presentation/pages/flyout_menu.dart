@@ -4,6 +4,7 @@ import '../../../../core/services/session_manager.dart';
 import '../../../../core/services/credentials_manager.dart';
 import '../../../../core/services/language_service.dart';
 import '../../../../core/services/biometric_service.dart';
+import '../../../../features/authentication/presentation/pages/change_password_page.dart';
 import 'profile_page.dart';
 import '../../../supplier/presentation/pages/supplier_page.dart';
 import '../../../customer/presentation/pages/customer_page.dart';
@@ -43,6 +44,7 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
     _MenuItem(icon: Icons.person_rounded, label: 'Profile', route: 'Profile', color: const Color(0xFF2E7D32)),
     _MenuItem(icon: Icons.store_rounded, label: 'Shop Details', route: 'ShopDetails', color: const Color(0xFF1976D2)),
     _MenuItem(icon: Icons.receipt_long_rounded, label: 'Bill Settings', route: 'BillSettings', color: const Color(0xFF7B1FA2)),
+    _MenuItem(icon: Icons.lock_reset_rounded, label: 'Change Password', route: 'ChangePassword', color: const Color(0xFFE65100)),
     _MenuItem(icon: Icons.language_rounded, label: 'Language', route: 'Language', color: const Color(0xFFFF6F00)),
     _MenuItem(icon: Icons.settings_rounded, label: 'Settings', route: 'Settings', color: const Color(0xFF78909C)),
   ];
@@ -243,6 +245,11 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
         case 'BillSettings':
           Navigator.of(context).push(
             MaterialPageRoute(builder: (_) => const BillSettingsPage()),
+          );
+          break;
+        case 'ChangePassword':
+          Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const ChangePasswordPage()),
           );
           break;
         case 'Language':
