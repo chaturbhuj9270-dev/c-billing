@@ -7,6 +7,9 @@ import '../../../../core/services/language_service.dart';
 import '../../../../core/services/dashboard_refresh_service.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../../data/datasources/supplier_cache_datasource.dart';
+import '../../offline/controllers/supplier_offline_controller.dart';
+import '../../offline/entities/supplier_entity.dart';
+import '../../data/services/supplier_sync_service.dart';
 
 class SupplierPage extends StatefulWidget {
   const SupplierPage({super.key});
@@ -27,9 +30,14 @@ class _SupplierPageState extends State<SupplierPage> {
   bool _isLoading = false;
   bool _isEditing = false;
   String? _editingSupplierId;
+  int? _editingSupplierLocalId; // Local Isar ID for offline-first
   List<Map<String, dynamic>> _suppliers = [];
   List<Map<String, dynamic>> _filteredSuppliers = [];
   final _cacheDataSource = SupplierCacheDataSource();
+  
+  // Offline-first support
+  StreamSubscription<List<SupplierEntity>>? _supplierStreamSubscription;
+  int _unsyncedCount = 0;
 
   // Search, sort, and filter variables
   String _sortBy = 'name'; // 'name', 'date', 'contact'
@@ -51,6 +59,7 @@ class _SupplierPageState extends State<SupplierPage> {
     LanguageService.instance.addListener(_onLanguageChanged);
     _checkUserAuthentication();
     _setupInitialData();
+    _setupOfflineStream();
     _searchController.addListener(_filterAndSearchSuppliers);
   }
 
@@ -66,6 +75,7 @@ class _SupplierPageState extends State<SupplierPage> {
   void dispose() {
     _isNavigatingAway = true; // Signal async operations to stop
     _filterDebounceTimer?.cancel();
+    _supplierStreamSubscription?.cancel();
     _searchController.dispose();
     _firstNameController.dispose();
     _middleNameController.dispose();
@@ -187,6 +197,42 @@ class _SupplierPageState extends State<SupplierPage> {
     _loadSuppliers();
   }
 
+  /// Setup offline stream for real-time Isar updates
+  void _setupOfflineStream() {
+    final offlineController = SupplierOfflineController.instance;
+    
+    // Listen to Isar changes for instant UI updates
+    _supplierStreamSubscription = offlineController.watchAllSuppliers().listen(
+      (entities) {
+        if (mounted && !_isNavigatingAway) {
+          // Convert entities to Map format for existing UI
+          final suppliers = entities.map((e) => e.toSupplierMap()).toList();
+          
+          setState(() {
+            _suppliers = suppliers;
+            _filterAndSortSuppliers();
+          });
+          
+          // Update unsynced count
+          _updateUnsyncedCount();
+        }
+      },
+      onError: (e) {
+        print('[ERROR] Isar stream error: $e');
+      },
+    );
+    
+    // Initial unsynced count
+    _updateUnsyncedCount();
+  }
+  
+  Future<void> _updateUnsyncedCount() async {
+    final count = await SupplierOfflineController.instance.getUnsyncedCount();
+    if (mounted && count != _unsyncedCount) {
+      setState(() => _unsyncedCount = count);
+    }
+  }
+
   Future<void> _loadSuppliers() async {
     try {
       // Only show loader if we have no cached data
@@ -215,9 +261,13 @@ class _SupplierPageState extends State<SupplierPage> {
           .map((doc) => {'id': doc.id, ...doc.data()})
           .toList();
 
+      // Import server data to Isar (offline-first)
+      await SupplierOfflineController.instance.importFromServer(freshSuppliers);
+      
+      // Trigger background sync for any pending local changes
+      SupplierSyncService.instance.syncNow();
+
       setState(() {
-        _suppliers = freshSuppliers;
-        _filterAndSortSuppliers();
         _isLoading = false;
       });
 
@@ -248,6 +298,7 @@ class _SupplierPageState extends State<SupplierPage> {
         _contactController.clear();
         _addressController.clear();
         _editingSupplierId = null;
+        _editingSupplierLocalId = null;
         _isEditing = false;
       });
     } catch (e) {
@@ -533,6 +584,7 @@ class _SupplierPageState extends State<SupplierPage> {
       print('[ERROR] Error setting controller text: $e');
     }
     _editingSupplierId = supplier['id'];
+    _editingSupplierLocalId = supplier['localId'] as int?;
     _isEditing = true;
   }
 
@@ -544,69 +596,53 @@ class _SupplierPageState extends State<SupplierPage> {
     setState(() => _isLoading = true);
 
     try {
-      final currentUser = _auth.currentUser;
-      if (currentUser == null) {
-        throw Exception('User not authenticated');
-      }
-
-      final suppliersRef = _firestore
-          .collection('users')
-          .doc(currentUser.uid)
-          .collection('suppliers');
+      final offlineController = SupplierOfflineController.instance;
 
       if (_isEditing) {
-        final updatedData = {
-          'firstName': _firstNameController.text,
-          'middleName': _middleNameController.text,
-          'lastName': _lastNameController.text,
-          'contact': _contactController.text,
-          'address': _addressController.text,
-          'updatedAt': FieldValue.serverTimestamp(),
-        };
-
-        // Optimistic update
-        final index = _suppliers.indexWhere(
-          (s) => s['id'] == _editingSupplierId,
-        );
-        if (index != -1) {
-          setState(() {
-            _suppliers[index] = {..._suppliers[index], ...updatedData};
-            _filterAndSortSuppliers();
-          });
-          _cacheDataSource.saveSuppliers(_suppliers);
+        // For editing, we need the local Isar ID
+        int? localId = _editingSupplierLocalId;
+        
+        // If localId not available, try to find by serverId
+        if (localId == null && _editingSupplierId != null) {
+          final existing = await offlineController.getSupplierByServerId(_editingSupplierId!);
+          localId = existing?.id;
         }
-
-        await suppliersRef.doc(_editingSupplierId).update(updatedData);
-        print('[DEBUG] Supplier updated: $_editingSupplierId');
+        
+        if (localId != null) {
+          // Update existing supplier in Isar
+          await offlineController.updateSupplier(
+            id: localId,
+            firstName: _firstNameController.text,
+            middleName: _middleNameController.text,
+            lastName: _lastNameController.text,
+            contact: _contactController.text,
+            address: _addressController.text,
+          );
+          print('[DEBUG] Supplier updated locally: $localId');
+        } else {
+          print('[ERROR] Could not find supplier to update');
+          throw Exception('Supplier not found');
+        }
         
         // Notify dashboard to refresh
         DashboardRefreshService.instance.notifyDataChanged(DataChangeType.supplier);
       } else {
-        final newData = {
-          'firstName': _firstNameController.text,
-          'middleName': _middleNameController.text,
-          'lastName': _lastNameController.text,
-          'contact': _contactController.text,
-          'address': _addressController.text,
-          'createdAt': FieldValue.serverTimestamp(),
-          'updatedAt': FieldValue.serverTimestamp(),
-        };
-
-        // Optimistic add
-        final tempId = 'temp_${DateTime.now().millisecondsSinceEpoch}';
-        final newSupplier = {'id': tempId, ...newData};
-        setState(() {
-          _suppliers.insert(0, newSupplier);
-          _filterAndSortSuppliers();
-        });
-        _cacheDataSource.saveSuppliers(_suppliers);
-
-        await suppliersRef.add(newData);
-        print('[DEBUG] New supplier added');
+        // Add new supplier to Isar
+        await offlineController.addSupplier(
+          firstName: _firstNameController.text,
+          middleName: _middleNameController.text,
+          lastName: _lastNameController.text,
+          contact: _contactController.text,
+          address: _addressController.text,
+        );
+        print('[DEBUG] New supplier added locally');
         
         // Notify dashboard to refresh
         DashboardRefreshService.instance.notifyDataChanged(DataChangeType.supplier);
       }
+
+      // Trigger background sync
+      SupplierSyncService.instance.syncNow();
 
       if (mounted && context.mounted) {
         Navigator.pop(context);
@@ -627,8 +663,6 @@ class _SupplierPageState extends State<SupplierPage> {
       }
     } catch (e) {
       print('[ERROR] Error saving supplier: $e');
-      // Reload on error to revert optimistic update
-      _loadSuppliers();
       if (mounted && context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
@@ -645,24 +679,28 @@ class _SupplierPageState extends State<SupplierPage> {
     setState(() => _isLoading = true);
 
     try {
-      final currentUser = _auth.currentUser;
-      if (currentUser == null) {
-        throw Exception('User not authenticated');
+      final offlineController = SupplierOfflineController.instance;
+      
+      // Get the local Isar ID
+      int? localId = _editingSupplierLocalId;
+      
+      // If localId not available, try to find by serverId
+      if (localId == null && _editingSupplierId != null) {
+        final existing = await offlineController.getSupplierByServerId(_editingSupplierId!);
+        localId = existing?.id;
       }
-
-      // Optimistic delete
-      setState(() {
-        _suppliers.removeWhere((s) => s['id'] == _editingSupplierId);
-        _filterAndSortSuppliers();
-      });
-      _cacheDataSource.saveSuppliers(_suppliers);
-
-      await _firestore
-          .collection('users')
-          .doc(currentUser.uid)
-          .collection('suppliers')
-          .doc(_editingSupplierId)
-          .delete();
+      
+      if (localId != null) {
+        // Soft delete in Isar (marks as deleted for sync)
+        await offlineController.deleteSupplier(localId);
+        print('[DEBUG] Supplier marked for deletion: $localId');
+      } else {
+        print('[ERROR] Could not find supplier to delete');
+        throw Exception('Supplier not found');
+      }
+      
+      // Trigger background sync to delete from server
+      SupplierSyncService.instance.syncNow();
       
       // Notify dashboard to refresh
       DashboardRefreshService.instance.notifyDataChanged(DataChangeType.supplier);
@@ -682,8 +720,6 @@ class _SupplierPageState extends State<SupplierPage> {
       }
     } catch (e) {
       print('[ERROR] Error deleting supplier: $e');
-      // Reload on error to revert optimistic delete
-      _loadSuppliers();
       if (mounted && context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
