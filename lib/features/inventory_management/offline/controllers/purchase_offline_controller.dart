@@ -383,4 +383,128 @@ class PurchaseOfflineController extends ChangeNotifier {
     debugPrint('[PurchaseOffline] All purchases cleared');
     notifyListeners();
   }
+
+  // ==================== SEARCH & FILTER ====================
+
+  /// Search purchases by product name or supplier name
+  Future<List<PurchaseEntity>> searchPurchases(String query) async {
+    if (query.isEmpty) return getAllPurchases();
+    
+    final lowerQuery = query.toLowerCase();
+    final allPurchases = await _isar.purchaseEntitys
+        .filter()
+        .not()
+        .syncStatusEqualTo(PurchaseSyncStatus.deleted)
+        .findAll();
+    
+    return allPurchases.where((p) {
+      return p.productName.toLowerCase().contains(lowerQuery) ||
+             (p.supplierName?.toLowerCase().contains(lowerQuery) ?? false) ||
+             (p.companyName?.toLowerCase().contains(lowerQuery) ?? false);
+    }).toList()..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+  }
+
+  /// Get purchases with filters
+  Future<List<PurchaseEntity>> getFilteredPurchases({
+    String? searchQuery,
+    DateTime? startDate,
+    DateTime? endDate,
+    String? supplierId,
+    bool? syncedOnly,
+    bool? pendingOnly,
+  }) async {
+    var results = await _isar.purchaseEntitys
+        .filter()
+        .not()
+        .syncStatusEqualTo(PurchaseSyncStatus.deleted)
+        .findAll();
+    
+    // Apply date range filter
+    if (startDate != null) {
+      results = results.where((p) => p.createdAt.isAfter(startDate) || 
+                                     p.createdAt.isAtSameMomentAs(startDate)).toList();
+    }
+    if (endDate != null) {
+      final endOfDay = DateTime(endDate.year, endDate.month, endDate.day, 23, 59, 59);
+      results = results.where((p) => p.createdAt.isBefore(endOfDay) || 
+                                     p.createdAt.isAtSameMomentAs(endOfDay)).toList();
+    }
+    
+    // Apply supplier filter
+    if (supplierId != null && supplierId.isNotEmpty) {
+      results = results.where((p) => p.supplierId == supplierId).toList();
+    }
+    
+    // Apply sync status filter
+    if (syncedOnly == true) {
+      results = results.where((p) => p.syncStatus == PurchaseSyncStatus.synced).toList();
+    } else if (pendingOnly == true) {
+      results = results.where((p) => p.syncStatus != PurchaseSyncStatus.synced).toList();
+    }
+    
+    // Apply search query
+    if (searchQuery != null && searchQuery.isNotEmpty) {
+      final lowerQuery = searchQuery.toLowerCase();
+      results = results.where((p) {
+        return p.productName.toLowerCase().contains(lowerQuery) ||
+               (p.supplierName?.toLowerCase().contains(lowerQuery) ?? false);
+      }).toList();
+    }
+    
+    // Sort by created date descending
+    results.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return results;
+  }
+
+  /// Get all unique suppliers from purchases
+  Future<List<Map<String, String>>> getUniqueSuppliers() async {
+    final purchases = await getAllPurchases();
+    final suppliers = <String, String>{};
+    
+    for (final p in purchases) {
+      if (p.supplierId != null && p.supplierName != null) {
+        suppliers[p.supplierId!] = p.supplierName!;
+      }
+    }
+    
+    return suppliers.entries
+        .map((e) => {'id': e.key, 'name': e.value})
+        .toList();
+  }
+
+  /// Bulk update purchase quantities (for stock adjustment)
+  Future<void> bulkUpdateQuantities(List<Map<String, dynamic>> updates) async {
+    await _isar.writeTxn(() async {
+      for (final update in updates) {
+        final id = update['id'] as Id;
+        final addedQty = update['addedQty'] as int;
+        
+        final existing = await _isar.purchaseEntitys.get(id);
+        if (existing == null) continue;
+        
+        // Determine new sync status
+        PurchaseSyncStatus newSyncStatus;
+        if (existing.syncStatus == PurchaseSyncStatus.newRecord) {
+          newSyncStatus = PurchaseSyncStatus.newRecord;
+        } else {
+          newSyncStatus = PurchaseSyncStatus.updated;
+        }
+        
+        final newQuantity = existing.quantity + addedQty;
+        final newTotal = newQuantity * existing.purchasePrice;
+        
+        final updated = existing.copyWith(
+          quantity: newQuantity,
+          totalAmount: newTotal,
+          syncStatus: newSyncStatus,
+          updatedAt: DateTime.now(),
+        );
+        
+        await _isar.purchaseEntitys.put(updated);
+        debugPrint('[PurchaseOffline] Bulk updated purchase: ${updated.id}, qty: $newQuantity');
+      }
+    });
+    
+    notifyListeners();
+  }
 }

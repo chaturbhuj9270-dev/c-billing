@@ -179,11 +179,13 @@ class PurchaseSyncService extends ChangeNotifier {
     int createdCount = 0;
     int updatedCount = 0;
     int deletedCount = 0;
+    int downloadedCount = 0;
     int failedCount = 0;
 
     try {
       debugPrint('[PurchaseSync] Starting delta sync...');
 
+      // Step 1: Push local changes to server
       // Get all purchases that need syncing
       final pendingPurchases = await _offlineController.getPurchasesNeedingSync();
       debugPrint('[PurchaseSync] Found ${pendingPurchases.length} purchases to sync');
@@ -235,6 +237,9 @@ class PurchaseSyncService extends ChangeNotifier {
         }
       }
 
+      // Step 2: Pull changes from server into local DB
+      downloadedCount = await _pullServerChanges();
+
       stopwatch.stop();
       _lastSyncTime = DateTime.now();
       _status = PurchaseSyncServiceStatus.success;
@@ -245,6 +250,7 @@ class PurchaseSyncService extends ChangeNotifier {
         createdCount: createdCount,
         updatedCount: updatedCount,
         deletedCount: deletedCount,
+        downloadedCount: downloadedCount,
         failedCount: failedCount,
         duration: stopwatch.elapsed,
       );
@@ -267,6 +273,33 @@ class PurchaseSyncService extends ChangeNotifier {
       );
     } finally {
       _isSyncing = false;
+    }
+  }
+
+  /// Pull changes from server into local Isar DB
+  /// Uses delta sync (only fetches records updated since last sync)
+  Future<int> _pullServerChanges() async {
+    try {
+      List<Map<String, dynamic>> serverPurchases;
+
+      if (_lastSyncTime != null) {
+        // Delta sync: only fetch purchases updated since last sync
+        serverPurchases = await _apiService.getPurchasesSince(_lastSyncTime!);
+        debugPrint('[PurchaseSync] Delta pull: ${serverPurchases.length} purchases since $_lastSyncTime');
+      } else {
+        // First sync: fetch all purchases
+        serverPurchases = await _apiService.getPurchases();
+        debugPrint('[PurchaseSync] Full pull: ${serverPurchases.length} purchases from server');
+      }
+
+      if (serverPurchases.isNotEmpty) {
+        await _offlineController.importFromServer(serverPurchases);
+      }
+
+      return serverPurchases.length;
+    } catch (e) {
+      debugPrint('[PurchaseSync] Failed to pull server changes: $e');
+      return 0;
     }
   }
 

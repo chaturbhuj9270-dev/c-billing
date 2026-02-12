@@ -10,6 +10,7 @@ import '../../../supplier/presentation/pages/supplier_page.dart';
 import '../../../company/presentation/pages/company_page.dart';
 import '../../../inventory_management/presentation/pages/purchase_page.dart';
 import '../../../inventory_management/presentation/pages/purchase_settings_page.dart';
+import '../../../inventory_management/presentation/pages/purchase_history_screen.dart';
 import '../../../inventory_management/presentation/pages/product_management_page.dart';
 import '../../../billing/presentation/pages/billing_page.dart';
 import '../../../billing/presentation/pages/bills_list_page.dart';
@@ -818,6 +819,19 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
               MaterialPageRoute(builder: (_) => const CompanyPage()),
             ),
           ),
+          const SizedBox(width: 12),
+          _buildQuickStatItem(
+            icon: Icons.history_outlined,
+            value: '${data.purchasesCount}',
+            label: 'Purchase History',
+            color: const Color(0xFF00BCD4),
+            isLoading: isLoading,
+            width: 115,
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const PurchaseHistoryScreen()),
+            ),
+          ),
         ],
       ),
     );
@@ -829,6 +843,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
     required String label,
     required Color color,
     required bool isLoading,
+    double? width,
     VoidCallback? onTap,
   }) {
     return GestureDetector(
@@ -838,7 +853,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
           child: Container(
-            width: 90,
+            width: width ?? 90,
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
             decoration: BoxDecoration(
               gradient: LinearGradient(

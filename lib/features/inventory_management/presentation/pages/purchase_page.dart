@@ -16,6 +16,7 @@ import '../../domain/entities/product.dart';
 import '../../offline/controllers/purchase_offline_controller.dart';
 import '../../data/services/purchase_sync_service.dart';
 import '../../../product/offline/controllers/product_offline_controller.dart';
+import '../../../product/data/services/product_sync_service.dart';
 import '../../../supplier/offline/controllers/supplier_offline_controller.dart';
 import '../../../company/offline/controllers/company_offline_controller.dart';
 import 'purchase_settings_page.dart';
@@ -139,7 +140,16 @@ class _PurchasePageState extends State<PurchasePage>
       if (mounted) _loadCompanies();
     });
 
+    // Listen for changes from offline controllers (for background sync updates)
+    ProductOfflineController.instance.addListener(_onProductsChanged);
+    SupplierOfflineController.instance.addListener(_onSuppliersChanged);
+    CompanyOfflineController.instance.addListener(_onCompaniesChanged);
+
     _setupInitialData();
+    
+    // Trigger background sync for all data
+    ProductSyncService.instance.syncNow();
+    PurchaseSyncService.instance.syncNow();
   }
 
   void _onLanguageChanged() {
@@ -150,6 +160,18 @@ class _PurchasePageState extends State<PurchasePage>
         );
       });
     }
+  }
+
+  void _onProductsChanged() {
+    if (mounted) _loadProducts();
+  }
+
+  void _onSuppliersChanged() {
+    if (mounted) _loadSuppliers();
+  }
+
+  void _onCompaniesChanged() {
+    if (mounted) _loadCompanies();
   }
 
   void _onPurchaseSettingsChanged() {
@@ -195,19 +217,10 @@ class _PurchasePageState extends State<PurchasePage>
       // Use offline controller for consistent offline-first behavior
       final productEntities = await ProductOfflineController.instance.getAllProducts();
       
-      // Convert ProductEntity to Product domain model
-      final products = productEntities.map((entity) => Product(
-        id: entity.serverId ?? entity.id.toString(),
-        indexNo: entity.indexNo,
-        name: entity.name,
-        companyName: entity.companyName,
-        category: entity.category,
-        purchasePrice: entity.purchasePrice,
-        salesPrice: entity.salesPrice,
-        currentStock: entity.currentStock,
-        createdAt: entity.createdAt,
-        updatedAt: entity.updatedAt,
-      )).toList();
+      // Convert ProductEntity to Product domain model using factory method
+      final products = productEntities
+          .map((entity) => Product.fromProductEntity(entity))
+          .toList();
       
       // Debug: Check for duplicates by name+company
       final uniqueNameCompany = <String>{};
@@ -232,6 +245,7 @@ class _PurchasePageState extends State<PurchasePage>
         // Save to cache for next time
         _cacheDataSource.saveProducts(products);
         print('[DEBUG] Loaded ${products.length} products from offline controller');
+        print('[DEBUG] Products: ${products.map((p) => p.name).take(5).join(", ")}');
       }
     } catch (e) {
       print('[ERROR] Failed to load products: $e');
@@ -1384,6 +1398,9 @@ class _PurchasePageState extends State<PurchasePage>
     _productRefreshSubscription?.cancel();
     _supplierRefreshSubscription?.cancel();
     _companyRefreshSubscription?.cancel();
+    ProductOfflineController.instance.removeListener(_onProductsChanged);
+    SupplierOfflineController.instance.removeListener(_onSuppliersChanged);
+    CompanyOfflineController.instance.removeListener(_onCompaniesChanged);
     LanguageService.instance.removeListener(_onLanguageChanged);
     PurchaseSettingsService.instance.removeListener(_onPurchaseSettingsChanged);
     _animController.dispose();
@@ -2119,32 +2136,41 @@ class _PurchasePageState extends State<PurchasePage>
                           ),
                           // Header text
                           Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                Text(
-                                  'Purchase Records',
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .headlineMedium
-                                      ?.copyWith(
-                                        fontWeight: FontWeight.w800,
-                                        color: const Color(0xFF1B4D3E),
-                                        letterSpacing: 0.5,
-                                        fontSize: 24,
-                                      ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  'Track and manage your purchases',
-                                  style: Theme.of(context).textTheme.bodyMedium
-                                      ?.copyWith(
-                                        color: Colors.black45,
-                                        fontWeight: FontWeight.w400,
-                                        fontSize: 12,
-                                      ),
-                                ),
-                              ],
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    'Purchase Records',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .headlineMedium
+                                        ?.copyWith(
+                                          fontWeight: FontWeight.w800,
+                                          color: const Color(0xFF1B4D3E),
+                                          letterSpacing: 0.5,
+                                          fontSize: MediaQuery.of(context).size.width < 360 ? 20 : 24,
+                                        ),
+                                    textAlign: TextAlign.center,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'Track and manage your purchases',
+                                    style: Theme.of(context).textTheme.bodyMedium
+                                        ?.copyWith(
+                                          color: Colors.black45,
+                                          fontWeight: FontWeight.w400,
+                                          fontSize: MediaQuery.of(context).size.width < 360 ? 11 : 12,
+                                        ),
+                                    textAlign: TextAlign.center,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                           // Settings icon

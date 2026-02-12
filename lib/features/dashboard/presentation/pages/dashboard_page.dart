@@ -248,6 +248,7 @@ class _DashboardViewState extends State<_DashboardView>
     _sessionManager.resetSession();
   }
 
+
   void _navigateToPage(int index) {
     _resetSessionTimer();
     switch (index) {
