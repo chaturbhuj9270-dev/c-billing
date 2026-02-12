@@ -15,6 +15,9 @@ import '../../data/datasources/purchase_cache_datasource.dart';
 import '../../domain/entities/product.dart';
 import '../../offline/controllers/purchase_offline_controller.dart';
 import '../../data/services/purchase_sync_service.dart';
+import '../../../product/offline/controllers/product_offline_controller.dart';
+import '../../../supplier/offline/controllers/supplier_offline_controller.dart';
+import '../../../company/offline/controllers/company_offline_controller.dart';
 import 'purchase_settings_page.dart';
 
 class PurchasePage extends StatefulWidget {
@@ -187,32 +190,51 @@ class _PurchasePageState extends State<PurchasePage>
 
   Future<void> _loadProducts() async {
     try {
-      print('[DEBUG] Loading products from Firestore...');
-      final products = await _inventoryService.getAllProducts();
+      print('[DEBUG] Loading products from offline controller...');
       
-      // Debug: Check for duplicates
-      final uniqueIds = products.map((p) => p.id).toSet();
-      if (uniqueIds.length != products.length) {
-        print('[WARNING] Found duplicate products! Total: ${products.length}, Unique IDs: ${uniqueIds.length}');
-        // Log duplicate IDs
-        final idCounts = <String, int>{};
-        for (final product in products) {
-          idCounts[product.id] = (idCounts[product.id] ?? 0) + 1;
+      // Use offline controller for consistent offline-first behavior
+      final productEntities = await ProductOfflineController.instance.getAllProducts();
+      
+      // Convert ProductEntity to Product domain model
+      final products = productEntities.map((entity) => Product(
+        id: entity.serverId ?? entity.id.toString(),
+        indexNo: entity.indexNo,
+        name: entity.name,
+        companyName: entity.companyName,
+        category: entity.category,
+        purchasePrice: entity.purchasePrice,
+        salesPrice: entity.salesPrice,
+        currentStock: entity.currentStock,
+        createdAt: entity.createdAt,
+        updatedAt: entity.updatedAt,
+      )).toList();
+      
+      // Debug: Check for duplicates by name+company
+      final uniqueNameCompany = <String>{};
+      final duplicates = <String>[];
+      for (final product in products) {
+        final key = '${product.name.toLowerCase()}|${product.companyName.toLowerCase()}';
+        if (uniqueNameCompany.contains(key)) {
+          duplicates.add('${product.name} (${product.companyName})');
+        } else {
+          uniqueNameCompany.add(key);
         }
-        idCounts.forEach((id, count) {
-          if (count > 1) print('[WARNING] Product ID $id appears $count times');
-        });
+      }
+      if (duplicates.isNotEmpty) {
+        print('[WARNING] Found duplicate products by name+company: $duplicates');
       }
       
       if (mounted) {
         setState(() {
           _products = products;
+          _filteredProducts = products;
         });
         // Save to cache for next time
         _cacheDataSource.saveProducts(products);
-        print('[DEBUG] Loaded ${products.length} products from Firestore');
+        print('[DEBUG] Loaded ${products.length} products from offline controller');
       }
     } catch (e) {
+      print('[ERROR] Failed to load products: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('${_localizations.errorLoadingProducts}: $e')),
@@ -223,39 +245,30 @@ class _PurchasePageState extends State<PurchasePage>
 
   Future<void> _loadSuppliers() async {
     try {
-      print('[DEBUG] Loading suppliers from Firestore...');
-      final currentUser = FirebaseAuth.instance.currentUser;
-      if (currentUser == null) return;
-
-      final snapshot = await _firestore
-          .collection('users')
-          .doc(currentUser.uid)
-          .collection('suppliers')
-          .get();
-
-      final freshSuppliers = snapshot.docs
-          .map(
-            (doc) => {
-              'id': doc.id,
-              'firstName': doc['firstName'] ?? '',
-              'lastName': doc['lastName'] ?? '',
-              'fullName': '${doc['firstName'] ?? ''} ${doc['lastName'] ?? ''}'
-                  .trim(),
-            },
-          )
-          .toList();
+      print('[DEBUG] Loading suppliers from offline controller...');
+      
+      // Use offline controller for consistent offline-first behavior
+      final supplierEntities = await SupplierOfflineController.instance.getAllSuppliers();
+      
+      // Convert SupplierEntity to the format expected by the UI
+      final suppliers = supplierEntities.map((entity) => {
+        'id': entity.serverId ?? entity.id.toString(),
+        'firstName': entity.firstName,
+        'lastName': entity.lastName,
+        'fullName': '${entity.firstName} ${entity.lastName}'.trim(),
+      }).toList();
 
       if (mounted) {
         setState(() {
-          _suppliers = freshSuppliers;
+          _suppliers = suppliers;
+          _filteredSuppliers = suppliers;
         });
         // Save to cache for next time
-        _cacheDataSource.saveSuppliers(freshSuppliers);
-        print(
-          '[DEBUG] Loaded ${freshSuppliers.length} suppliers from Firestore',
-        );
+        _cacheDataSource.saveSuppliers(suppliers);
+        print('[DEBUG] Loaded ${suppliers.length} suppliers from offline controller');
       }
     } catch (e) {
+      print('[ERROR] Failed to load suppliers: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -268,31 +281,28 @@ class _PurchasePageState extends State<PurchasePage>
 
   Future<void> _loadCompanies() async {
     try {
-      print('[DEBUG] Loading companies from Firestore...');
-      final currentUser = FirebaseAuth.instance.currentUser;
-      if (currentUser == null) return;
-
-      final snapshot = await _firestore
-          .collection('users')
-          .doc(currentUser.uid)
-          .collection('companies')
-          .get();
-
-      final freshCompanies = snapshot.docs
-          .map((doc) => {'id': doc.id, 'companyName': doc['companyName'] ?? ''})
-          .toList();
+      print('[DEBUG] Loading companies from offline controller...');
+      
+      // Use offline controller for consistent offline-first behavior
+      final companyEntities = await CompanyOfflineController.instance.getAllCompanies();
+      
+      // Convert CompanyEntity to the format expected by the UI
+      final companies = companyEntities.map((entity) => {
+        'id': entity.serverId ?? entity.id.toString(),
+        'companyName': entity.companyName,
+      }).toList();
 
       if (mounted) {
         setState(() {
-          _companies = freshCompanies;
+          _companies = companies;
+          _filteredCompanies = companies;
         });
         // Save to cache for next time
-        _cacheDataSource.saveCompanies(freshCompanies);
-        print(
-          '[DEBUG] Loaded ${freshCompanies.length} companies from Firestore',
-        );
+        _cacheDataSource.saveCompanies(companies);
+        print('[DEBUG] Loaded ${companies.length} companies from offline controller');
       }
     } catch (e) {
+      print('[ERROR] Failed to load companies: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -403,16 +413,22 @@ class _PurchasePageState extends State<PurchasePage>
                   : () async {
                       final dialogContext = context;
                       try {
-                        await _inventoryService.createProduct(
+                        // Use offline controller for consistent offline-first behavior
+                        final productOfflineController = ProductOfflineController.instance;
+                        
+                        // This will throw if duplicate exists
+                        await productOfflineController.addProduct(
                           name: nameController.text.trim(),
                           companyName: '', // No company selection
                           category: '', // No category required
-                          purchasePrice: double.parse(
-                            purchasePriceController.text,
-                          ),
-                          salesPrice: double.parse(salesPriceController.text),
-                          initialStock: 0,
+                          purchasePrice: double.tryParse(purchasePriceController.text) ?? 0.0,
+                          salesPrice: double.tryParse(salesPriceController.text) ?? 0.0,
+                          currentStock: 0,
                         );
+                        
+                        // Notify other screens about the product change
+                        DashboardRefreshService.instance.notifyDataChanged(DataChangeType.product);
+                        
                         if (mounted) {
                           if (dialogContext.mounted) {
                             Navigator.pop(dialogContext);
@@ -446,6 +462,7 @@ class _PurchasePageState extends State<PurchasePage>
                           ScaffoldMessenger.of(dialogContext).showSnackBar(
                             SnackBar(
                               content: Text('${_localizations.error}: $e'),
+                              backgroundColor: Colors.red,
                             ),
                           );
                         }

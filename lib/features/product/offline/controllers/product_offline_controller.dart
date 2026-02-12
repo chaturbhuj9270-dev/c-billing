@@ -27,8 +27,31 @@ class ProductOfflineController extends ChangeNotifier {
 
   // ==================== CREATE ====================
 
+  /// Check if a product with the same name and company already exists
+  /// Returns the existing product if found, null otherwise
+  Future<ProductEntity?> findDuplicateProduct(String name, String companyName) async {
+    final normalizedName = name.trim().toLowerCase();
+    final normalizedCompany = companyName.trim().toLowerCase();
+    
+    // Search for product with matching name and company (case-insensitive)
+    final products = await _isar.productEntitys
+        .filter()
+        .not()
+        .syncStatusEqualTo(SyncStatus.deleted)
+        .findAll();
+    
+    for (final product in products) {
+      if (product.name.trim().toLowerCase() == normalizedName &&
+          product.companyName.trim().toLowerCase() == normalizedCompany) {
+        return product;
+      }
+    }
+    return null;
+  }
+
   /// Add a new product locally (will be synced later)
   /// Sets syncStatus = NEW, does NOT call API
+  /// Throws exception if product with same name+company already exists
   Future<ProductEntity> addProduct({
     int indexNo = 0,
     required String name,
@@ -43,8 +66,18 @@ class ProductOfflineController extends ChangeNotifier {
     String? description,
     String? imageUrl,
     int? minStockLevel,
+    bool skipDuplicateCheck = false,
   }) async {
     debugPrint('[ProductOffline] Adding product: $name');
+    
+    // Check for duplicate product (same name + company)
+    if (!skipDuplicateCheck) {
+      final existingProduct = await findDuplicateProduct(name, companyName);
+      if (existingProduct != null) {
+        debugPrint('[ProductOffline] Duplicate product found: ${existingProduct.name} (${existingProduct.companyName})');
+        throw Exception('Product "${name.trim()}" ${companyName.isNotEmpty ? "from $companyName " : ""}already exists');
+      }
+    }
     
     final product = ProductEntity.create(
       indexNo: indexNo,

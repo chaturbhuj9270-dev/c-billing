@@ -66,6 +66,7 @@ class ProductSyncService extends ChangeNotifier {
   String? _lastError;
   StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
   Timer? _periodicSyncTimer;
+  Timer? _connectivityDebounceTimer;
   
   /// Mutex to prevent concurrent sync operations
   bool _isSyncing = false;
@@ -101,12 +102,19 @@ class ProductSyncService extends ChangeNotifier {
   void initialize() {
     debugPrint('[ProductSync] Initializing...');
     
-    // Listen for connectivity changes
+    // Listen for connectivity changes with debouncing
     _connectivitySubscription = _connectivity.onConnectivityChanged.listen((results) {
       if (_isConnected(results)) {
-        debugPrint('[ProductSync] Network available - triggering sync');
-        // Back online - trigger sync after short delay
-        Future.delayed(const Duration(seconds: 2), () => syncNow());
+        // Cancel any pending debounce timer
+        _connectivityDebounceTimer?.cancel();
+        
+        // Debounce to prevent multiple syncs when connectivity changes rapidly
+        _connectivityDebounceTimer = Timer(const Duration(seconds: 3), () {
+          if (!_isSyncing) {
+            debugPrint('[ProductSync] Network available - triggering sync');
+            syncNow();
+          }
+        });
       }
     });
 
@@ -122,6 +130,7 @@ class ProductSyncService extends ChangeNotifier {
   void dispose() {
     _connectivitySubscription?.cancel();
     _periodicSyncTimer?.cancel();
+    _connectivityDebounceTimer?.cancel();
     super.dispose();
   }
 
