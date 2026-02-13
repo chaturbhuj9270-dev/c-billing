@@ -27,6 +27,13 @@ import 'package:c_billing/features/billing/offline/entities/bill_entity.dart';
 import 'package:c_billing/features/billing/data/services/bill_sync_service.dart';
 import 'package:c_billing/features/product/offline/controllers/product_offline_controller.dart';
 import 'package:c_billing/features/product/data/services/product_sync_service.dart';
+import 'package:c_billing/features/inventory_management/offline/controllers/product_batch_offline_controller.dart';
+import 'package:c_billing/features/inventory_management/offline/controllers/stock_ledger_offline_controller.dart';
+import 'package:c_billing/features/inventory_management/offline/entities/stock_ledger_entity.dart';
+import 'package:c_billing/features/inventory_management/offline/entities/product_batch_entity.dart';
+import 'package:c_billing/features/inventory_management/data/services/product_batch_sync_service.dart';
+import 'package:c_billing/features/inventory_management/data/services/stock_ledger_sync_service.dart';
+import '../widgets/batch_selection_bottom_sheet.dart';
 
 class BillingPage extends StatefulWidget {
   final bool isEmbedded;
@@ -60,6 +67,8 @@ class _BillingPageState extends State<BillingPage> {
   final _receivedAmountController = TextEditingController();
 
   List<BillItem> _billItems = [];
+  /// Maps productId -> selected ProductBatchEntity for batch-aware billing
+  final Map<String, ProductBatchEntity> _batchAssignments = {};
   List<Product> _products = [];
   bool _isLoading = false;
   bool _isSavingBill = false;
@@ -650,7 +659,30 @@ class _BillingPageState extends State<BillingPage> {
         products: _products,
         billItems: _billItems,
         localizations: _localizations,
-        onItemAdded: (product, quantity, price) {
+        onItemAdded: (product, quantity, price) async {
+          // Check if product has multiple batches
+          final batchController = ProductBatchOfflineController.instance;
+          final activeBatches = await batchController.getActiveBatchesSortedByDate(product.id);
+
+          ProductBatchEntity? selectedBatch;
+          if (activeBatches.length > 1 && mounted) {
+            // Show batch selection bottom sheet
+            selectedBatch = await BatchSelectionBottomSheet.show(
+              context,
+              productName: product.name,
+              availableBatches: activeBatches,
+            );
+            if (selectedBatch == null) return; // User cancelled
+          } else if (activeBatches.length == 1) {
+            // Auto-select the only batch (FIFO)
+            selectedBatch = activeBatches.first;
+          }
+          // If no batches exist, proceed without batch assignment (backward compat)
+
+          if (selectedBatch != null) {
+            _batchAssignments[product.id] = selectedBatch;
+          }
+
           final existingIndex = _billItems.indexWhere(
             (item) => item.productId == product.id,
           );
@@ -677,6 +709,7 @@ class _BillingPageState extends State<BillingPage> {
         onItemRemoved: (productId) {
           setState(() {
             _billItems.removeWhere((item) => item.productId == productId);
+            _batchAssignments.remove(productId);
           });
         },
         showSnackbar: _showSnackbar,
@@ -784,16 +817,46 @@ class _BillingPageState extends State<BillingPage> {
         pendingAmount: calculatedPendingAmount > 0 ? calculatedPendingAmount : 0,
       );
 
-      // 4. Update product stock in Isar immediately
+      // 4. Update product stock in Isar and reduce batch stock
+      final batchController = ProductBatchOfflineController.instance;
+      final ledgerController = StockLedgerOfflineController.instance;
+      
       for (final item in _billItems) {
+        // Decrement product-level stock (backward compatible)
         await ProductOfflineController.instance.decrementStock(
           item.productId,
           item.quantity,
         );
+        
+        // Reduce batch stock and record ledger entry
+        final assignedBatch = _batchAssignments[item.productId];
+        if (assignedBatch != null) {
+          final updatedBatch = await batchController.reduceStock(
+            assignedBatch.id,
+            item.quantity.toDouble(),
+          );
+          
+          // Record stock ledger entry for audit trail
+          await ledgerController.recordTransaction(
+            productId: item.productId,
+            productName: item.productName,
+            batchId: assignedBatch.id.toString(),
+            batchNumber: assignedBatch.batchNumber,
+            transactionType: TransactionType.saleOut,
+            quantity: -item.quantity.toDouble(),
+            balanceAfter: updatedBatch?.currentQuantity ?? 0,
+            billId: billEntity.serverId ?? 'local_${billEntity.id}',
+            pricePerUnit: item.sellingPrice,
+            reference: billEntity.billNumber,
+            notes: 'Sale to ${_customerNameController.text.trim().isNotEmpty ? _customerNameController.text.trim() : "Walk-in customer"}',
+          );
+        }
       }
 
       // 5. Trigger background sync
       unawaited(BillSyncService.instance.syncNow());
+      unawaited(ProductBatchSyncService.instance.syncNow());
+      unawaited(StockLedgerSyncService.instance.syncNow());
 
       setState(() => _isSavingBill = false);
 
@@ -847,6 +910,7 @@ class _BillingPageState extends State<BillingPage> {
   void _clearBill() {
     setState(() {
       _billItems.clear();
+      _batchAssignments.clear();
       _customerNameController.clear();
       _customerContactController.clear();
       _notesController.clear();

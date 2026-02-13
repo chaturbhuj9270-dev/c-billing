@@ -14,7 +14,12 @@ import '../../data/repositories/firebase_purchase_repository.dart';
 import '../../data/datasources/purchase_cache_datasource.dart';
 import '../../domain/entities/product.dart';
 import '../../offline/controllers/purchase_offline_controller.dart';
+import '../../offline/controllers/product_batch_offline_controller.dart';
+import '../../offline/controllers/stock_ledger_offline_controller.dart';
+import '../../offline/entities/stock_ledger_entity.dart';
 import '../../data/services/purchase_sync_service.dart';
+import '../../data/services/product_batch_sync_service.dart';
+import '../../data/services/stock_ledger_sync_service.dart';
 import '../../../product/offline/controllers/product_offline_controller.dart';
 import '../../../supplier/offline/controllers/supplier_offline_controller.dart';
 import '../../../company/offline/controllers/company_offline_controller.dart';
@@ -1310,7 +1315,7 @@ class _PurchasePageState extends State<PurchasePage>
       // Save purchase to local Isar (offline-first)
       final offlineController = PurchaseOfflineController.instance;
       
-      await offlineController.addPurchase(
+      final purchase = await offlineController.addPurchase(
         productId: _selectedProduct!.id,
         productName: _selectedProduct!.name,
         supplierId: _selectedSupplier!['id'],
@@ -1328,6 +1333,43 @@ class _PurchasePageState extends State<PurchasePage>
       );
       
       print('[DEBUG] Purchase saved locally');
+
+      // === CREATE PRODUCT BATCH ===
+      final batchController = ProductBatchOfflineController.instance;
+      final batch = await batchController.createBatch(
+        productId: _selectedProduct!.id,
+        productName: _selectedProduct!.name,
+        companyId: _selectedCompany!['id'],
+        companyName: _selectedCompany!['companyName'],
+        supplierId: _selectedSupplier!['id'],
+        supplierName: _selectedSupplier!['fullName'],
+        quantity: quantity.toDouble(),
+        unit: _selectedUnit ?? PurchaseSettingsService.instance.defaultUnit,
+        purchasePrice: price,
+        salesPrice: salesPrice,
+        productionDate: _productionDate,
+        expiryDate: _expiryDate,
+        warrantyMonths: _selectedWarranty ?? 0,
+        notes: _notesController.text.isNotEmpty ? _notesController.text : null,
+        purchaseId: purchase.serverId ?? 'local_${purchase.id}',
+      );
+      print('[DEBUG] Product batch created: ${batch.batchNumber}');
+
+      // === RECORD STOCK LEDGER ENTRY ===
+      final ledgerController = StockLedgerOfflineController.instance;
+      await ledgerController.recordTransaction(
+        productId: _selectedProduct!.id,
+        productName: _selectedProduct!.name,
+        batchId: batch.id.toString(),
+        batchNumber: batch.batchNumber,
+        transactionType: TransactionType.purchaseIn,
+        quantity: quantity.toDouble(),
+        balanceAfter: batch.currentQuantity,
+        purchaseId: purchase.serverId ?? 'local_${purchase.id}',
+        pricePerUnit: price,
+        notes: 'Purchase from ${_selectedCompany!['companyName']} via ${_selectedSupplier!['fullName']}',
+      );
+      print('[DEBUG] Stock ledger entry recorded');
 
       // Update product stock and prices
       final currentUser = FirebaseAuth.instance.currentUser;
@@ -1391,6 +1433,8 @@ class _PurchasePageState extends State<PurchasePage>
       
       // Trigger background sync
       PurchaseSyncService.instance.syncNow();
+      ProductBatchSyncService.instance.syncNow();
+      StockLedgerSyncService.instance.syncNow();
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
