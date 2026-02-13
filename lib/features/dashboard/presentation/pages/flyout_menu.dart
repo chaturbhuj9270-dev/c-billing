@@ -13,7 +13,6 @@ import '../../../company/presentation/pages/company_page.dart';
 import '../../../inventory_management/presentation/pages/purchase_page.dart';
 import '../../../inventory_management/presentation/pages/product_management_page.dart';
 import '../../../shop/presentation/pages/shop_details_page.dart';
-import '../../../billing/presentation/pages/bill_settings_page.dart';
 
 class FlyoutMenu extends StatefulWidget {
   const FlyoutMenu({super.key});
@@ -44,7 +43,6 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
   final List<_MenuItem> _menuItems = [
     _MenuItem(icon: Icons.person_rounded, label: 'Profile', route: 'Profile', color: const Color(0xFF2E7D32)),
     _MenuItem(icon: Icons.store_rounded, label: 'Shop Details', route: 'ShopDetails', color: const Color(0xFF1976D2)),
-    _MenuItem(icon: Icons.receipt_long_rounded, label: 'Bill Settings', route: 'BillSettings', color: const Color(0xFF7B1FA2)),
     _MenuItem(icon: Icons.lock_reset_rounded, label: 'Forgot Password', route: 'ChangePassword', color: const Color(0xFFE65100)),
     _MenuItem(icon: Icons.language_rounded, label: 'Language', route: 'Language', color: const Color(0xFFFF6F00)),
   ];
@@ -251,11 +249,6 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
         case 'ShopDetails':
           Navigator.of(context).push(
             MaterialPageRoute(builder: (_) => const ShopDetailsPage()),
-          );
-          break;
-        case 'BillSettings':
-          Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => const BillSettingsPage()),
           );
           break;
         case 'ChangePassword':

@@ -74,16 +74,30 @@ class _BillSettingsPageState extends State<BillSettingsPage> {
             icon: const Icon(Icons.arrow_back, color: Colors.white),
             onPressed: () => Navigator.pop(context, true), // Return true when back pressed
           ),
-        title: const Text(
-          'Bill Settings',
-          style: TextStyle(
-            fontFamily: 'Literata',
-            fontSize: 20,
-            fontWeight: FontWeight.w600,
-            color: Colors.white,
+          title: const Text(
+            'Bill Settings',
+            style: TextStyle(
+              fontFamily: 'Literata',
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
+              color: Colors.white,
+            ),
           ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text(
+                'Done',
+                style: TextStyle(
+                  fontFamily: 'Literata',
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ],
         ),
-      ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
