@@ -26,6 +26,7 @@ import 'package:c_billing/features/billing/offline/controllers/bill_offline_cont
 import 'package:c_billing/features/billing/offline/entities/bill_entity.dart';
 import 'package:c_billing/features/billing/data/services/bill_sync_service.dart';
 import 'package:c_billing/features/product/offline/controllers/product_offline_controller.dart';
+import 'package:c_billing/features/product/data/services/product_sync_service.dart';
 
 class BillingPage extends StatefulWidget {
   final bool isEmbedded;
@@ -188,13 +189,26 @@ class _BillingPageState extends State<BillingPage> {
   Future<void> _loadProducts({bool showLoader = true}) async {
     try {
       if (showLoader) setState(() => _isLoading = true);
+      
       // Use offline-first controller to get products with stock > 0
-      final allProducts = await ProductOfflineController.instance.getAllProducts();
+      var allProducts = await ProductOfflineController.instance.getAllProducts();
+      
+      // If no products locally, try to sync from Firebase
+      if (allProducts.isEmpty) {
+        debugPrint('[BillingPage] No local products, syncing from Firebase...');
+        await ProductSyncService.instance.forceFullRefresh();
+        allProducts = await ProductOfflineController.instance.getAllProducts();
+        debugPrint('[BillingPage] After sync: ${allProducts.length} products');
+      }
+      
       // Filter products with available stock
       final availableProducts = allProducts
           .map((entity) => Product.fromProductEntity(entity))
           .where((p) => p.currentStock > 0)
           .toList();
+      
+      debugPrint('[BillingPage] Total products: ${allProducts.length}, with stock > 0: ${availableProducts.length}');
+      
       if (mounted) {
         setState(() {
           _products = availableProducts;
@@ -207,6 +221,7 @@ class _BillingPageState extends State<BillingPage> {
         });
       }
     } catch (e) {
+      debugPrint('[BillingPage] Error loading products: $e');
       if (mounted) {
         setState(() => _isLoading = false);
         _showSnackbar(

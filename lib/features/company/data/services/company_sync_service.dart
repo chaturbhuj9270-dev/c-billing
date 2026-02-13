@@ -107,7 +107,28 @@ class CompanySyncService extends ChangeNotifier {
       _checkAndSync();
     });
     
+    // Initial sync - download from server if local is empty
+    _initialSync();
+    
     debugPrint('[CompanySync] Initialized');
+  }
+
+  /// Perform initial sync - download all companies if local database is empty
+  Future<void> _initialSync() async {
+    try {
+      final localCount = await _offlineController.getTotalCount();
+      debugPrint('[CompanySync] Initial sync check: $localCount local companies');
+      
+      if (localCount == 0) {
+        debugPrint('[CompanySync] No local companies, downloading from server...');
+        final results = await _connectivity.checkConnectivity();
+        if (_isConnected(results) && _apiService.isAuthenticated) {
+          await forceFullSync();
+        }
+      }
+    } catch (e) {
+      debugPrint('[CompanySync] Initial sync failed: $e');
+    }
   }
 
   @override

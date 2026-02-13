@@ -18,6 +18,7 @@ import '../../data/services/purchase_sync_service.dart';
 import '../../../product/offline/controllers/product_offline_controller.dart';
 import '../../../supplier/offline/controllers/supplier_offline_controller.dart';
 import '../../../company/offline/controllers/company_offline_controller.dart';
+import '../../../company/data/services/company_sync_service.dart';
 import 'purchase_settings_page.dart';
 
 class PurchasePage extends StatefulWidget {
@@ -284,7 +285,19 @@ class _PurchasePageState extends State<PurchasePage>
       print('[DEBUG] Loading companies from offline controller...');
       
       // Use offline controller for consistent offline-first behavior
-      final companyEntities = await CompanyOfflineController.instance.getAllCompanies();
+      var companyEntities = await CompanyOfflineController.instance.getAllCompanies();
+      
+      // If no companies locally, try to sync from server
+      if (companyEntities.isEmpty) {
+        print('[DEBUG] No local companies found, attempting to sync from server...');
+        try {
+          await CompanySyncService.instance.forceFullSync();
+          companyEntities = await CompanyOfflineController.instance.getAllCompanies();
+          print('[DEBUG] After sync: ${companyEntities.length} companies');
+        } catch (e) {
+          print('[DEBUG] Failed to sync companies from server: $e');
+        }
+      }
       
       // Convert CompanyEntity to the format expected by the UI
       final companies = companyEntities.map((entity) => {
@@ -1316,21 +1329,64 @@ class _PurchasePageState extends State<PurchasePage>
       
       print('[DEBUG] Purchase saved locally');
 
-      // Update product stock and prices in Firestore
+      // Update product stock and prices
       final currentUser = FirebaseAuth.instance.currentUser;
-      if (currentUser != null) {
-        final newStock = _selectedProduct!.currentStock + quantity;
-        await _firestore
-            .collection('users')
-            .doc(currentUser.uid)
-            .collection('products')
-            .doc(_selectedProduct!.id)
-            .update({
-              'purchasePrice': price, 
-              'salesPrice': salesPrice,
-              'currentStock': newStock,
-              'updatedAt': DateTime.now().toIso8601String(),
-            });
+      final productId = _selectedProduct!.id;
+      final newStock = _selectedProduct!.currentStock + quantity;
+      
+      // Check if productId is a valid Firebase document ID (not a local-only ID)
+      // Firebase document IDs are typically 20 characters and alphanumeric
+      final isValidServerId = productId.isNotEmpty && 
+          !productId.startsWith('local_') && 
+          productId.length >= 10;
+      
+      // ALWAYS update local Isar first (offline-first approach)
+      // Find product by serverId or local ID
+      if (isValidServerId) {
+        // Product has serverId - find by serverId and update
+        await ProductOfflineController.instance.incrementStock(productId, quantity);
+        // Also update prices
+        final entity = await ProductOfflineController.instance.getProductByServerId(productId);
+        if (entity != null) {
+          await ProductOfflineController.instance.updateProduct(
+            id: entity.id,
+            purchasePrice: price,
+            salesPrice: salesPrice,
+          );
+        }
+        print('[DEBUG] Updated product locally via serverId');
+      } else {
+        // Product only has local ID
+        final localId = int.tryParse(productId);
+        if (localId != null) {
+          await ProductOfflineController.instance.updateProduct(
+            id: localId,
+            purchasePrice: price,
+            salesPrice: salesPrice,
+            currentStock: newStock,
+          );
+          print('[DEBUG] Updated product locally via localId');
+        }
+      }
+      
+      // Also update Firestore if online and product is synced
+      if (currentUser != null && isValidServerId) {
+        try {
+          await _firestore
+              .collection('users')
+              .doc(currentUser.uid)
+              .collection('products')
+              .doc(productId)
+              .update({
+                'purchasePrice': price, 
+                'salesPrice': salesPrice,
+                'currentStock': newStock,
+                'updatedAt': DateTime.now().toIso8601String(),
+              });
+          print('[DEBUG] Updated product in Firestore');
+        } catch (e) {
+          print('[DEBUG] Failed to update Firestore (will sync later): $e');
+        }
       }
       
       // Trigger background sync
