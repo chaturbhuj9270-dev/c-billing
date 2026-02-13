@@ -89,6 +89,7 @@ class _BillingPageState extends State<BillingPage> {
   // Bill settings
   bool _showCustomerOnBill = true;
   bool _generateBillViaContact = false;
+  String _billType = 'pos'; // 'pos' or 'normal'
 
   @override
   void initState() {
@@ -149,6 +150,7 @@ class _BillingPageState extends State<BillingPage> {
       setState(() {
         _showCustomerOnBill = prefs.getBool('bill_show_customer_details') ?? true;
         _generateBillViaContact = prefs.getBool('bill_generate_via_contact') ?? false;
+        _billType = prefs.getString('bill_type') ?? 'pos';
       });
     }
   }
@@ -1010,7 +1012,40 @@ class _BillingPageState extends State<BillingPage> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // First row - Share and Save PDF
+                    // Primary action based on bill type
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          if (_billType == 'pos') {
+                            _printBillToPOS(bill);
+                          } else {
+                            _printNormalBill(bill);
+                          }
+                        },
+                        icon: Icon(
+                          _billType == 'pos' ? Icons.print : Icons.print_outlined,
+                          size: 18,
+                        ),
+                        label: Text(
+                          _billType == 'pos' 
+                              ? _localizations.printToPOS 
+                              : 'Print Bill',
+                          style: const TextStyle(fontFamily: 'Literata'),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF1B4D3E),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    // Secondary actions row
                     Row(
                       children: [
                         Expanded(
@@ -1057,30 +1092,6 @@ class _BillingPageState extends State<BillingPage> {
                           ),
                         ),
                       ],
-                    ),
-                    const SizedBox(height: 8),
-                    // Second row - Print POS
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        onPressed: () {
-                          Navigator.pop(context);
-                          _printBillToPOS(bill);
-                        },
-                        icon: const Icon(Icons.print, size: 18),
-                        label: Text(
-                          _localizations.printToPOS,
-                          style: const TextStyle(fontFamily: 'Literata'),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF1B4D3E),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                      ),
                     ),
                     const SizedBox(height: 8),
                     // Done button
@@ -1240,6 +1251,35 @@ class _BillingPageState extends State<BillingPage> {
       _showSnackbar('${_localizations.errorPrinting}: $e', isError: true);
     } finally {
       await _printerService.disconnectPrinter();
+    }
+  }
+
+  /// Print normal bill via system print dialog (for regular printers)
+  Future<void> _printNormalBill(Bill bill) async {
+    try {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF1B4D3E)),
+          ),
+        ),
+      );
+
+      final shop = await _shopRepository.getShopDetails();
+      final printData = await _createPrintBillData(bill);
+
+      if (mounted) Navigator.pop(context);
+
+      // Use system print dialog
+      await _pdfService.previewAndPrintPdf(
+        billData: printData,
+        shopDetails: shop,
+      );
+    } catch (e) {
+      if (mounted) Navigator.pop(context);
+      _showSnackbar('${_localizations.errorPrinting}: $e', isError: true);
     }
   }
 

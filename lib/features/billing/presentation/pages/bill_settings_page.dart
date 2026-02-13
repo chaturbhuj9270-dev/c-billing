@@ -13,9 +13,11 @@ class BillSettingsPage extends StatefulWidget {
 class _BillSettingsPageState extends State<BillSettingsPage> {
   static const String _keyShowCustomerOnBill = 'bill_show_customer_details';
   static const String _keyGenerateViaContact = 'bill_generate_via_contact';
+  static const String _keyBillType = 'bill_type'; // 'pos' or 'normal'
   
   bool _showCustomerDetails = true;
   bool _generateViaContact = false;
+  String _billType = 'pos'; // Default to POS printer
   bool _isLoading = true;
 
   @override
@@ -29,6 +31,7 @@ class _BillSettingsPageState extends State<BillSettingsPage> {
     setState(() {
       _showCustomerDetails = prefs.getBool(_keyShowCustomerOnBill) ?? true;
       _generateViaContact = prefs.getBool(_keyGenerateViaContact) ?? false;
+      _billType = prefs.getString(_keyBillType) ?? 'pos';
       _isLoading = false;
     });
   }
@@ -37,6 +40,7 @@ class _BillSettingsPageState extends State<BillSettingsPage> {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_keyShowCustomerOnBill, _showCustomerDetails);
     await prefs.setBool(_keyGenerateViaContact, _generateViaContact);
+    await prefs.setString(_keyBillType, _billType);
     
     // Notify billing page to reload settings immediately
     DashboardRefreshService.instance.notifyDataChanged(DataChangeType.billSettings);
@@ -105,6 +109,16 @@ class _BillSettingsPageState extends State<BillSettingsPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Bill Type Section
+                  _buildSectionCard(
+                    title: 'Bill Type',
+                    icon: Icons.description,
+                    children: [
+                      _buildBillTypeSelector(),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  
                   // Billing Settings Section
                   _buildSectionCard(
                     title: 'Billing Settings',
@@ -275,6 +289,139 @@ class _BillSettingsPageState extends State<BillSettingsPage> {
             activeColor: const Color(0xFF1B4D3E),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildBillTypeSelector() {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Select default bill type for printing',
+            style: TextStyle(
+              fontFamily: 'Literata',
+              fontSize: 13,
+              color: Colors.grey[600],
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _buildBillTypeOption(
+                  title: 'POS Printer',
+                  subtitle: 'Thermal receipt',
+                  icon: Icons.print,
+                  value: 'pos',
+                  isSelected: _billType == 'pos',
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildBillTypeOption(
+                  title: 'Normal Bill',
+                  subtitle: 'PDF format',
+                  icon: Icons.picture_as_pdf,
+                  value: 'normal',
+                  isSelected: _billType == 'normal',
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBillTypeOption({
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required String value,
+    required bool isSelected,
+  }) {
+    return GestureDetector(
+      onTap: () async {
+        setState(() {
+          _billType = value;
+        });
+        await _saveSettings();
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isSelected 
+              ? const Color(0xFF1B4D3E).withOpacity(0.1) 
+              : Colors.grey[50],
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected 
+                ? const Color(0xFF1B4D3E) 
+                : Colors.grey[300]!,
+            width: isSelected ? 2 : 1,
+          ),
+        ),
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: isSelected 
+                    ? const Color(0xFF1B4D3E) 
+                    : Colors.grey[200],
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                icon,
+                color: isSelected ? Colors.white : Colors.grey[600],
+                size: 24,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              title,
+              style: TextStyle(
+                fontFamily: 'Literata',
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: isSelected 
+                    ? const Color(0xFF1B4D3E) 
+                    : Colors.grey[800],
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              subtitle,
+              style: TextStyle(
+                fontFamily: 'Literata',
+                fontSize: 12,
+                color: Colors.grey[600],
+              ),
+            ),
+            const SizedBox(height: 8),
+            if (isSelected)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1B4D3E),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Text(
+                  'Selected',
+                  style: TextStyle(
+                    fontFamily: 'Literata',
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }

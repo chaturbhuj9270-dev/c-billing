@@ -15,7 +15,7 @@ class PdfBillService {
   factory PdfBillService() => _instance;
   PdfBillService._internal();
 
-  /// Generate a PDF document from bill data
+  /// Generate a PDF document from bill data (POS receipt format)
   Future<pw.Document> generateBillPdf({
     required PrintBillData billData,
     required Shop shopDetails,
@@ -42,6 +42,511 @@ class PdfBillService {
     );
 
     return pdf;
+  }
+
+  /// Generate a Normal/Tabular A4 bill PDF (like Krushi Seva Kendra format)
+  Future<pw.Document> generateNormalBillPdf({
+    required PrintBillData billData,
+    required Shop shopDetails,
+  }) async {
+    final pdf = pw.Document();
+
+    // Check if customer details should be shown
+    final prefs = await SharedPreferences.getInstance();
+    final showCustomer = prefs.getBool('bill_show_customer_details') ?? true;
+
+    pdf.addPage(
+      pw.Page(
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.all(24),
+        build: (context) => _buildNormalBillContent(
+          billData,
+          shopDetails,
+          showCustomer,
+        ),
+      ),
+    );
+
+    return pdf;
+  }
+
+  /// Build content for Normal/Tabular A4 bill
+  pw.Widget _buildNormalBillContent(
+    PrintBillData billData,
+    Shop shopDetails,
+    bool showCustomer,
+  ) {
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        // Shop Header with border
+        pw.Container(
+          width: double.infinity,
+          padding: const pw.EdgeInsets.all(16),
+          decoration: pw.BoxDecoration(
+            border: pw.Border.all(color: PdfColors.grey800, width: 1.5),
+          ),
+          child: pw.Column(
+            children: [
+              pw.Text(
+                shopDetails.shopName.isNotEmpty
+                    ? shopDetails.shopName.toUpperCase()
+                    : 'STORE',
+                style: pw.TextStyle(
+                  fontSize: 24,
+                  fontWeight: pw.FontWeight.bold,
+                ),
+              ),
+              if (shopDetails.address.isNotEmpty) ...[
+                pw.SizedBox(height: 6),
+                pw.Text(
+                  shopDetails.address,
+                  style: const pw.TextStyle(fontSize: 12),
+                  textAlign: pw.TextAlign.center,
+                ),
+              ],
+              pw.SizedBox(height: 4),
+              pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.center,
+                children: [
+                  if (shopDetails.phone.isNotEmpty)
+                    pw.Text(
+                      'Ph: ${shopDetails.phone}',
+                      style: const pw.TextStyle(fontSize: 11),
+                    ),
+                  if (shopDetails.phone.isNotEmpty &&
+                      shopDetails.gstNumber != null &&
+                      shopDetails.gstNumber!.isNotEmpty)
+                    pw.Text(' | ', style: const pw.TextStyle(fontSize: 11)),
+                  if (shopDetails.gstNumber != null &&
+                      shopDetails.gstNumber!.isNotEmpty)
+                    pw.Text(
+                      'GSTIN: ${shopDetails.gstNumber}',
+                      style: const pw.TextStyle(fontSize: 11),
+                    ),
+                ],
+              ),
+            ],
+          ),
+        ),
+
+        pw.SizedBox(height: 12),
+
+        // Bill Title
+        pw.Center(
+          child: pw.Container(
+            padding: const pw.EdgeInsets.symmetric(horizontal: 24, vertical: 6),
+            decoration: pw.BoxDecoration(
+              border: pw.Border.all(color: PdfColors.grey800),
+            ),
+            child: pw.Text(
+              'TAX INVOICE / BILL',
+              style: pw.TextStyle(
+                fontSize: 14,
+                fontWeight: pw.FontWeight.bold,
+              ),
+            ),
+          ),
+        ),
+
+        pw.SizedBox(height: 12),
+
+        // Bill Info and Customer Info Row
+        pw.Container(
+          decoration: pw.BoxDecoration(
+            border: pw.Border.all(color: PdfColors.grey400),
+          ),
+          child: pw.Row(
+            children: [
+              // Left side - Bill Details
+              pw.Expanded(
+                child: pw.Container(
+                  padding: const pw.EdgeInsets.all(10),
+                  decoration: const pw.BoxDecoration(
+                    border: pw.Border(
+                      right: pw.BorderSide(color: PdfColors.grey400),
+                    ),
+                  ),
+                  child: pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      _buildInfoRow('Bill No.', billData.billNumber),
+                      pw.SizedBox(height: 4),
+                      _buildInfoRow('Date', _formatDateNormal(billData.dateTime)),
+                      pw.SizedBox(height: 4),
+                      _buildInfoRow('Time', _formatTime(billData.dateTime)),
+                    ],
+                  ),
+                ),
+              ),
+              // Right side - Customer Details
+              pw.Expanded(
+                child: pw.Container(
+                  padding: const pw.EdgeInsets.all(10),
+                  child: pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      if (showCustomer &&
+                          billData.customerName != null &&
+                          billData.customerName!.isNotEmpty) ...[
+                        _buildInfoRow('Customer', billData.customerName!),
+                        pw.SizedBox(height: 4),
+                      ],
+                      if (billData.customerPhone != null &&
+                          billData.customerPhone!.isNotEmpty) ...[
+                        _buildInfoRow('Phone', billData.customerPhone!),
+                        pw.SizedBox(height: 4),
+                      ],
+                      if ((!showCustomer || billData.customerName == null) &&
+                          billData.customerPhone == null)
+                        pw.Text(
+                          'Walk-in Customer',
+                          style: const pw.TextStyle(fontSize: 11),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        pw.SizedBox(height: 16),
+
+        // Items Table
+        pw.Table(
+          border: pw.TableBorder.all(color: PdfColors.grey600),
+          columnWidths: {
+            0: const pw.FixedColumnWidth(40), // Sr.No
+            1: const pw.FlexColumnWidth(4), // Item Name
+            2: const pw.FixedColumnWidth(50), // Qty
+            3: const pw.FixedColumnWidth(70), // Rate
+            4: const pw.FixedColumnWidth(80), // Amount
+          },
+          children: [
+            // Table Header
+            pw.TableRow(
+              decoration: const pw.BoxDecoration(color: PdfColors.grey200),
+              children: [
+                _buildTableHeaderCell('Sr.'),
+                _buildTableHeaderCell('Item Description'),
+                _buildTableHeaderCell('Qty'),
+                _buildTableHeaderCell('Rate (₹)'),
+                _buildTableHeaderCell('Amount (₹)'),
+              ],
+            ),
+            // Table Rows
+            ...billData.items.asMap().entries.map((entry) {
+              final index = entry.key;
+              final item = entry.value;
+              return pw.TableRow(
+                children: [
+                  _buildTableCell('${index + 1}', align: pw.TextAlign.center),
+                  _buildTableCell(item.name),
+                  _buildTableCell('${item.quantity}', align: pw.TextAlign.center),
+                  _buildTableCell(item.rate.toStringAsFixed(2), align: pw.TextAlign.right),
+                  _buildTableCell(item.amount.toStringAsFixed(2), align: pw.TextAlign.right),
+                ],
+              );
+            }),
+          ],
+        ),
+
+        pw.SizedBox(height: 12),
+
+        // Totals Section
+        pw.Row(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            // Left side - Notes or empty
+            pw.Expanded(
+              flex: 2,
+              child: pw.Container(
+                padding: const pw.EdgeInsets.all(10),
+                decoration: pw.BoxDecoration(
+                  border: pw.Border.all(color: PdfColors.grey400),
+                ),
+                child: pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  children: [
+                    pw.Text(
+                      'Terms & Conditions:',
+                      style: pw.TextStyle(
+                        fontSize: 10,
+                        fontWeight: pw.FontWeight.bold,
+                      ),
+                    ),
+                    pw.SizedBox(height: 4),
+                    pw.Text(
+                      '1. Goods once sold will not be taken back.',
+                      style: const pw.TextStyle(fontSize: 9),
+                    ),
+                    pw.Text(
+                      '2. Please check the items before leaving.',
+                      style: const pw.TextStyle(fontSize: 9),
+                    ),
+                    pw.SizedBox(height: 16),
+                    pw.Text(
+                      'Total Items: ${billData.items.length}',
+                      style: pw.TextStyle(
+                        fontSize: 10,
+                        fontWeight: pw.FontWeight.bold,
+                      ),
+                    ),
+                    pw.Text(
+                      'Total Quantity: ${billData.totalQuantity}',
+                      style: pw.TextStyle(
+                        fontSize: 10,
+                        fontWeight: pw.FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            pw.SizedBox(width: 16),
+            // Right side - Amounts
+            pw.Expanded(
+              flex: 1,
+              child: pw.Container(
+                decoration: pw.BoxDecoration(
+                  border: pw.Border.all(color: PdfColors.grey600),
+                ),
+                child: pw.Column(
+                  children: [
+                    _buildAmountRow('Subtotal', billData.subtotal),
+                    if (billData.discountAmount != null &&
+                        billData.discountAmount! > 0)
+                      _buildAmountRow(
+                        'Discount${billData.discountPercent != null ? ' (${billData.discountPercent!.toStringAsFixed(0)}%)' : ''}',
+                        -billData.discountAmount!,
+                        isNegative: true,
+                      ),
+                    pw.Container(
+                      padding: const pw.EdgeInsets.all(8),
+                      decoration: const pw.BoxDecoration(
+                        color: PdfColors.grey200,
+                        border: pw.Border(
+                          top: pw.BorderSide(color: PdfColors.grey600),
+                        ),
+                      ),
+                      child: pw.Row(
+                        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                        children: [
+                          pw.Text(
+                            'GRAND TOTAL',
+                            style: pw.TextStyle(
+                              fontSize: 12,
+                              fontWeight: pw.FontWeight.bold,
+                            ),
+                          ),
+                          pw.Text(
+                            '₹${billData.grandTotal.toStringAsFixed(2)}',
+                            style: pw.TextStyle(
+                              fontSize: 14,
+                              fontWeight: pw.FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (billData.hasPaymentInfo) ...[
+                      _buildAmountRow('Paid', billData.paidAmount ?? 0, color: PdfColors.green700),
+                      if (billData.hasPendingAmount)
+                        _buildAmountRow('Pending', billData.pendingAmount!, color: PdfColors.orange700),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+
+        // Total Due Section
+        if (billData.totalDueAmount != null && billData.totalDueAmount! > 0) ...[
+          pw.SizedBox(height: 12),
+          pw.Container(
+            width: double.infinity,
+            padding: const pw.EdgeInsets.all(10),
+            decoration: pw.BoxDecoration(
+              color: PdfColors.orange50,
+              border: pw.Border.all(color: PdfColors.orange400),
+            ),
+            child: pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+              children: [
+                pw.Text(
+                  'TOTAL DUE AMOUNT',
+                  style: pw.TextStyle(
+                    fontSize: 12,
+                    fontWeight: pw.FontWeight.bold,
+                    color: PdfColors.orange800,
+                  ),
+                ),
+                pw.Text(
+                  '₹${billData.totalDueAmount!.toStringAsFixed(2)}',
+                  style: pw.TextStyle(
+                    fontSize: 14,
+                    fontWeight: pw.FontWeight.bold,
+                    color: PdfColors.orange800,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+
+        pw.SizedBox(height: 24),
+
+        // Signature Section
+        pw.Row(
+          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+          children: [
+            pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.Text(
+                  'Customer Signature',
+                  style: const pw.TextStyle(fontSize: 10),
+                ),
+                pw.SizedBox(height: 20),
+                pw.Container(
+                  width: 120,
+                  decoration: const pw.BoxDecoration(
+                    border: pw.Border(
+                      bottom: pw.BorderSide(color: PdfColors.grey600),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.end,
+              children: [
+                pw.Text(
+                  'For ${shopDetails.shopName.isNotEmpty ? shopDetails.shopName : 'Store'}',
+                  style: pw.TextStyle(
+                    fontSize: 10,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
+                ),
+                pw.SizedBox(height: 20),
+                pw.Text(
+                  'Authorized Signatory',
+                  style: const pw.TextStyle(fontSize: 10),
+                ),
+              ],
+            ),
+          ],
+        ),
+
+        pw.SizedBox(height: 16),
+
+        // Footer
+        pw.Center(
+          child: pw.Text(
+            'Thank you for your business!',
+            style: pw.TextStyle(
+              fontSize: 11,
+              fontWeight: pw.FontWeight.bold,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  pw.Widget _buildInfoRow(String label, String value) {
+    return pw.Row(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        pw.SizedBox(
+          width: 60,
+          child: pw.Text(
+            '$label:',
+            style: pw.TextStyle(
+              fontSize: 11,
+              fontWeight: pw.FontWeight.bold,
+            ),
+          ),
+        ),
+        pw.Expanded(
+          child: pw.Text(
+            value,
+            style: const pw.TextStyle(fontSize: 11),
+          ),
+        ),
+      ],
+    );
+  }
+
+  pw.Widget _buildTableHeaderCell(String text) {
+    return pw.Container(
+      padding: const pw.EdgeInsets.all(6),
+      child: pw.Text(
+        text,
+        style: pw.TextStyle(
+          fontSize: 11,
+          fontWeight: pw.FontWeight.bold,
+        ),
+        textAlign: pw.TextAlign.center,
+      ),
+    );
+  }
+
+  pw.Widget _buildTableCell(String text, {pw.TextAlign align = pw.TextAlign.left}) {
+    return pw.Container(
+      padding: const pw.EdgeInsets.all(6),
+      child: pw.Text(
+        text,
+        style: const pw.TextStyle(fontSize: 10),
+        textAlign: align,
+      ),
+    );
+  }
+
+  pw.Widget _buildAmountRow(String label, double amount, {bool isNegative = false, PdfColor? color}) {
+    return pw.Container(
+      padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      decoration: const pw.BoxDecoration(
+        border: pw.Border(
+          bottom: pw.BorderSide(color: PdfColors.grey300),
+        ),
+      ),
+      child: pw.Row(
+        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+        children: [
+          pw.Text(
+            label,
+            style: pw.TextStyle(fontSize: 10, color: color),
+          ),
+          pw.Text(
+            '${isNegative ? '-' : ''}₹${amount.abs().toStringAsFixed(2)}',
+            style: pw.TextStyle(
+              fontSize: 10,
+              fontWeight: pw.FontWeight.bold,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatDateNormal(DateTime date) {
+    final day = date.day.toString().padLeft(2, '0');
+    final month = date.month.toString().padLeft(2, '0');
+    final year = date.year;
+    return '$day/$month/$year';
+  }
+
+  String _formatTime(DateTime date) {
+    final hour = date.hour > 12
+        ? date.hour - 12
+        : (date.hour == 0 ? 12 : date.hour);
+    final minute = date.minute.toString().padLeft(2, '0');
+    final period = date.hour >= 12 ? 'PM' : 'AM';
+    return '$hour:$minute $period';
   }
 
   pw.Widget _buildBillContent(
@@ -487,10 +992,22 @@ class PdfBillService {
     required PrintBillData billData,
     required Shop shopDetails,
   }) async {
-    final pdf = await generateBillPdf(
-      billData: billData,
-      shopDetails: shopDetails,
-    );
+    // Check bill type setting
+    final prefs = await SharedPreferences.getInstance();
+    final billType = prefs.getString('bill_type') ?? 'pos';
+    
+    final pw.Document pdf;
+    if (billType == 'normal') {
+      pdf = await generateNormalBillPdf(
+        billData: billData,
+        shopDetails: shopDetails,
+      );
+    } else {
+      pdf = await generateBillPdf(
+        billData: billData,
+        shopDetails: shopDetails,
+      );
+    }
 
     final bytes = await pdf.save();
     final dir = await getApplicationDocumentsDirectory();
@@ -510,10 +1027,23 @@ class PdfBillService {
     try {
       debugPrint('[PdfBillService] Starting shareBillAsPdf for bill: ${billData.billNumber}');
       
-      final pdf = await generateBillPdf(
-        billData: billData,
-        shopDetails: shopDetails,
-      );
+      // Check bill type setting
+      final prefs = await SharedPreferences.getInstance();
+      final billType = prefs.getString('bill_type') ?? 'pos';
+      debugPrint('[PdfBillService] Bill type: $billType');
+      
+      final pw.Document pdf;
+      if (billType == 'normal') {
+        pdf = await generateNormalBillPdf(
+          billData: billData,
+          shopDetails: shopDetails,
+        );
+      } else {
+        pdf = await generateBillPdf(
+          billData: billData,
+          shopDetails: shopDetails,
+        );
+      }
       debugPrint('[PdfBillService] PDF generated successfully');
 
       final bytes = await pdf.save();
@@ -549,10 +1079,22 @@ class PdfBillService {
     required PrintBillData billData,
     required Shop shopDetails,
   }) async {
-    final pdf = await generateBillPdf(
-      billData: billData,
-      shopDetails: shopDetails,
-    );
+    // Check bill type setting
+    final prefs = await SharedPreferences.getInstance();
+    final billType = prefs.getString('bill_type') ?? 'pos';
+    
+    final pw.Document pdf;
+    if (billType == 'normal') {
+      pdf = await generateNormalBillPdf(
+        billData: billData,
+        shopDetails: shopDetails,
+      );
+    } else {
+      pdf = await generateBillPdf(
+        billData: billData,
+        shopDetails: shopDetails,
+      );
+    }
 
     await Printing.layoutPdf(
       onLayout: (format) => pdf.save(),
@@ -565,10 +1107,22 @@ class PdfBillService {
     required PrintBillData billData,
     required Shop shopDetails,
   }) async {
-    final pdf = await generateBillPdf(
-      billData: billData,
-      shopDetails: shopDetails,
-    );
+    // Check bill type setting
+    final prefs = await SharedPreferences.getInstance();
+    final billType = prefs.getString('bill_type') ?? 'pos';
+    
+    final pw.Document pdf;
+    if (billType == 'normal') {
+      pdf = await generateNormalBillPdf(
+        billData: billData,
+        shopDetails: shopDetails,
+      );
+    } else {
+      pdf = await generateBillPdf(
+        billData: billData,
+        shopDetails: shopDetails,
+      );
+    }
 
     await Printing.sharePdf(
       bytes: await pdf.save(),
