@@ -1123,20 +1123,17 @@ class PdfBillService {
       final bytes = await pdf.save();
       debugPrint('[PdfBillService] PDF bytes saved, size: ${bytes.length}');
 
-      // Use XFile.fromData to let share_plus handle file creation internally
+      // Write to a temp file first — XFile.fromData is unreliable on some devices
+      final dir = await getTemporaryDirectory();
       final fileName =
           'bill_${billData.billNumber.replaceAll('/', '_')}_${DateTime.now().millisecondsSinceEpoch}.pdf';
-      
-      debugPrint('[PdfBillService] Creating XFile from data with name: $fileName');
-      final xFile = XFile.fromData(
-        Uint8List.fromList(bytes),
-        name: fileName,
-        mimeType: 'application/pdf',
-      );
+      final file = File('${dir.path}/$fileName');
+      await file.writeAsBytes(bytes);
+      debugPrint('[PdfBillService] PDF written to temp file: ${file.path}');
 
       debugPrint('[PdfBillService] Calling Share.shareXFiles...');
       final result = await Share.shareXFiles(
-        [xFile],
+        [XFile(file.path)],
         text: 'Bill ${billData.billNumber} - ${shopDetails.shopName}',
         subject: 'Bill from ${shopDetails.shopName}',
       );

@@ -14,6 +14,8 @@ import 'package:c_billing/features/inventory_management/data/repositories/fireba
 import 'package:c_billing/features/inventory_management/domain/entities/product.dart';
 import 'package:c_billing/features/billing/data/datasources/bill_cache_datasource.dart';
 import 'package:c_billing/core/printing/printing.dart';
+import 'package:printing/printing.dart';
+import 'package:pdf/widgets.dart' as pw;
 import 'package:c_billing/common_widgets/printer_selection_widget.dart';
 import 'package:c_billing/features/shop/data/repositories/shop_repository.dart';
 import 'package:c_billing/features/customer/data/repositories/customer_repository.dart';
@@ -1200,12 +1202,19 @@ class _BillingPageState extends State<BillingPage> {
       final shop = await _shopRepository.getShopDetails();
       final printData = await _createPrintBillData(bill);
 
+      // Dismiss loader before showing share sheet
       if (mounted) Navigator.pop(context);
 
+      // Share — this opens the system share sheet
       await _pdfService.shareBillAsPdf(billData: printData, shopDetails: shop);
     } catch (e) {
-      if (mounted) Navigator.pop(context);
-      _showSnackbar('${_localizations.errorSharingBill}: $e', isError: true);
+      // Only pop if the dialog is still showing (guard against double-pop)
+      if (mounted && Navigator.canPop(context)) {
+        Navigator.pop(context);
+      }
+      if (mounted) {
+        _showSnackbar('${_localizations.errorSharingBill}: $e', isError: true);
+      }
     }
   }
 
@@ -1224,17 +1233,37 @@ class _BillingPageState extends State<BillingPage> {
       final shop = await _shopRepository.getShopDetails();
       final printData = await _createPrintBillData(bill);
 
-      final file = await _pdfService.savePdfToFile(
-        billData: printData,
-        shopDetails: shop,
+      // Dismiss loader before opening system share/save dialog
+      if (mounted) Navigator.pop(context);
+
+      // Use Printing.sharePdf which opens native preview + save dialog
+      final pw.Document pdf;
+      final prefs = await SharedPreferences.getInstance();
+      final billType = prefs.getString('bill_type') ?? 'pos';
+      if (billType == 'normal') {
+        pdf = await _pdfService.generateNormalBillPdf(
+          billData: printData,
+          shopDetails: shop,
+        );
+      } else {
+        pdf = await _pdfService.generateBillPdf(
+          billData: printData,
+          shopDetails: shop,
+        );
+      }
+
+      final bytes = await pdf.save();
+      await Printing.sharePdf(
+        bytes: bytes,
+        filename: 'bill_${bill.id.replaceAll('/', '_')}.pdf',
       );
-
-      if (mounted) Navigator.pop(context);
-
-      _showSnackbar('${_localizations.pdfSaved}: ${file.path.split('/').last}');
     } catch (e) {
-      if (mounted) Navigator.pop(context);
-      _showSnackbar('${_localizations.errorSavingPdf}: $e', isError: true);
+      if (mounted && Navigator.canPop(context)) {
+        Navigator.pop(context);
+      }
+      if (mounted) {
+        _showSnackbar('${_localizations.errorSavingPdf}: $e', isError: true);
+      }
     }
   }
 

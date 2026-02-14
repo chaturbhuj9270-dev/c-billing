@@ -11,11 +11,14 @@ import 'package:c_billing/features/inventory_management/data/repositories/fireba
 import 'package:c_billing/features/billing/data/datasources/bill_cache_datasource.dart';
 import 'package:c_billing/features/billing/presentation/pages/return_bill_page.dart';
 import 'package:c_billing/core/printing/printing.dart';
+import 'package:printing/printing.dart';
+import 'package:pdf/widgets.dart' as pw;
 import 'package:c_billing/common_widgets/printer_selection_widget.dart';
 import 'package:c_billing/features/shop/data/repositories/shop_repository.dart';
 import 'package:c_billing/features/customer/data/repositories/customer_repository.dart';
 import 'package:c_billing/core/services/language_service.dart';
 import 'package:c_billing/core/localization/app_localizations.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:c_billing/features/billing/offline/controllers/bill_offline_controller.dart';
 import 'package:c_billing/features/billing/offline/entities/bill_entity.dart';
 import 'package:c_billing/features/billing/data/services/bill_sync_service.dart';
@@ -703,37 +706,34 @@ class _BillsListPageState extends State<BillsListPage>
       final shop = await _shopRepository.getShopDetails();
       final printData = await _createPrintBillData(bill);
 
-      final file = await _pdfService.savePdfToFile(
-        billData: printData,
-        shopDetails: shop,
-      );
-
-      // Close loading indicator
+      // Close loading indicator before showing native dialog
       if (mounted && loadingDialogShowing) {
         Navigator.pop(context);
         loadingDialogShowing = false;
       }
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              '${_localizations.pdfSaved}: ${file.path.split('/').last}',
-            ),
-            backgroundColor: Colors.green,
-            action: SnackBarAction(
-              label: _localizations.open,
-              textColor: Colors.white,
-              onPressed: () {
-                _pdfService.previewAndPrintPdf(
-                  billData: printData,
-                  shopDetails: shop,
-                );
-              },
-            ),
-          ),
+      // Generate PDF based on bill type setting
+      final prefs = await SharedPreferences.getInstance();
+      final billType = prefs.getString('bill_type') ?? 'pos';
+      final pw.Document pdf;
+      if (billType == 'normal') {
+        pdf = await _pdfService.generateNormalBillPdf(
+          billData: printData,
+          shopDetails: shop,
+        );
+      } else {
+        pdf = await _pdfService.generateBillPdf(
+          billData: printData,
+          shopDetails: shop,
         );
       }
+
+      // Use Printing.sharePdf for native preview + save dialog
+      final bytes = await pdf.save();
+      await Printing.sharePdf(
+        bytes: bytes,
+        filename: 'bill_${bill.id.replaceAll('/', '_')}.pdf',
+      );
     } catch (e) {
       // Close loading indicator only if still showing
       if (mounted && loadingDialogShowing) {
