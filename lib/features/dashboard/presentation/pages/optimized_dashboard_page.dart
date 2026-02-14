@@ -26,6 +26,7 @@ import '../cubit/optimized_dashboard_cubit.dart';
 import '../cubit/optimized_dashboard_state.dart';
 import '../widgets/shimmer_widgets.dart';
 import 'flyout_menu.dart';
+import '../../../settings/presentation/pages/logs_viewer_page.dart';
 
 /// High-performance dashboard page with cache-first loading
 /// Renders instantly with cached data, updates smoothly when fresh data arrives
@@ -439,6 +440,20 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                 icon: Icons.language_rounded,
                 tooltip: 'Language',
                 onTap: _showLanguageDialog,
+              ),
+              // Logs Icon
+              const SizedBox(width: 8),
+              _buildHeaderActionButton(
+                icon: Icons.bug_report_rounded,
+                tooltip: 'View Logs',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const LogsViewerPage(),
+                    ),
+                  );
+                },
               ),
             ],
           ),

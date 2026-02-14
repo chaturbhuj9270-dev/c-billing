@@ -28,6 +28,7 @@ import 'package:c_billing/features/billing/offline/entities/bill_entity.dart';
 import 'package:c_billing/features/billing/data/services/bill_sync_service.dart';
 import 'package:c_billing/features/product/offline/controllers/product_offline_controller.dart';
 import 'package:c_billing/features/product/data/services/product_sync_service.dart';
+import 'package:c_billing/core/services/app_logger.dart';
 import 'package:c_billing/core/services/inventory_integration_service.dart';
 import 'package:c_billing/features/inventory_management/offline/controllers/purchase_batch_offline_controller.dart';
 import 'package:c_billing/features/inventory_management/offline/entities/purchase_batch_entity.dart';
@@ -57,6 +58,7 @@ class _BillingPageState extends State<BillingPage> {
   // Printing services
   final _printerService = PosPrinterService();
   final _pdfService = PdfBillService();
+  final _appLogger = AppLogger();
 
   final _customerNameController = TextEditingController();
   final _customerContactController = TextEditingController();
@@ -1188,7 +1190,15 @@ class _BillingPageState extends State<BillingPage> {
   }
 
   Future<void> _shareBillAsPdf(Bill bill) async {
+    bool loaderShowing = true;
+    final startTime = DateTime.now();
+    _appLogger.info('PDF_SHARE', '════════ START SHARE PDF ════════');
+    _appLogger.info('PDF_SHARE', 'Bill ID: ${bill.id}, Bill Number: ${bill.billNumber}');
+    _appLogger.info('PDF_SHARE', 'Bill Type Setting: $_billType');
+    _appLogger.info('PDF_SHARE', 'Final Amount: ₹${bill.finalAmount}');
+    
     try {
+      _appLogger.debug('PDF_SHARE', 'Step 1: Showing loading dialog...');
       showDialog(
         context: context,
         barrierDismissible: false,
@@ -1198,19 +1208,71 @@ class _BillingPageState extends State<BillingPage> {
           ),
         ),
       );
+      _appLogger.debug('PDF_SHARE', 'Loading dialog displayed');
 
+      _appLogger.debug('PDF_SHARE', 'Step 2: Fetching shop details...');
+      final shopStart = DateTime.now();
       final shop = await _shopRepository.getShopDetails();
+      _appLogger.info('PDF_SHARE', 'Shop details fetched in ${DateTime.now().difference(shopStart).inMilliseconds}ms');
+      _appLogger.debug('PDF_SHARE', 'Shop: ${shop.shopName}, Phone: ${shop.phone}');
+
+      _appLogger.debug('PDF_SHARE', 'Step 3: Creating print bill data...');
+      final printDataStart = DateTime.now();
       final printData = await _createPrintBillData(bill);
+      _appLogger.info('PDF_SHARE', 'Print data created in ${DateTime.now().difference(printDataStart).inMilliseconds}ms');
+      _appLogger.debug('PDF_SHARE', 'Print data - Items: ${printData.items.length}, Total: ₹${printData.grandTotal}');
+
+      _appLogger.debug('PDF_SHARE', 'Step 4: Generating PDF (type: $_billType)...');
+      final pdfGenStart = DateTime.now();
+      final pw.Document pdf;
+      if (_billType == 'normal') {
+        _appLogger.debug('PDF_SHARE', 'Using generateNormalBillPdf...');
+        pdf = await _pdfService.generateNormalBillPdf(
+          billData: printData,
+          shopDetails: shop,
+        );
+      } else {
+        _appLogger.debug('PDF_SHARE', 'Using generateBillPdf (POS)...');
+        pdf = await _pdfService.generateBillPdf(
+          billData: printData,
+          shopDetails: shop,
+        );
+      }
+      _appLogger.info('PDF_SHARE', 'PDF document generated in ${DateTime.now().difference(pdfGenStart).inMilliseconds}ms');
+
+      _appLogger.debug('PDF_SHARE', 'Step 5: Saving PDF to bytes...');
+      final saveStart = DateTime.now();
+      final bytes = await pdf.save();
+      _appLogger.info('PDF_SHARE', 'PDF saved to bytes in ${DateTime.now().difference(saveStart).inMilliseconds}ms');
+      _appLogger.info('PDF_SHARE', 'PDF size: ${bytes.length} bytes (${(bytes.length / 1024).toStringAsFixed(2)} KB)');
 
       // Dismiss loader before showing share sheet
-      if (mounted) Navigator.pop(context);
-
-      // Share — this opens the system share sheet
-      await _pdfService.shareBillAsPdf(billData: printData, shopDetails: shop);
-    } catch (e) {
-      // Only pop if the dialog is still showing (guard against double-pop)
-      if (mounted && Navigator.canPop(context)) {
+      _appLogger.debug('PDF_SHARE', 'Step 6: Dismissing loading dialog...');
+      if (mounted && loaderShowing) {
         Navigator.pop(context);
+        loaderShowing = false;
+        _appLogger.debug('PDF_SHARE', 'Loading dialog dismissed');
+      }
+
+      // Use Printing.sharePdf — reliable native share/preview on all devices
+      _appLogger.debug('PDF_SHARE', 'Step 7: Calling Printing.sharePdf...');
+      final shareStart = DateTime.now();
+      await Printing.sharePdf(
+        bytes: bytes,
+        filename: 'bill_${bill.billNumber.replaceAll('/', '_')}.pdf',
+      );
+      _appLogger.info('PDF_SHARE', 'Printing.sharePdf completed in ${DateTime.now().difference(shareStart).inMilliseconds}ms');
+      
+      final totalTime = DateTime.now().difference(startTime).inMilliseconds;
+      _appLogger.info('PDF_SHARE', '════════ SHARE PDF SUCCESS ════════');
+      _appLogger.info('PDF_SHARE', 'Total execution time: ${totalTime}ms');
+    } catch (e, stackTrace) {
+      _appLogger.error('PDF_SHARE', 'FATAL ERROR during PDF share', error: e, stackTrace: stackTrace);
+      _appLogger.error('PDF_SHARE', '════════ SHARE PDF FAILED ════════');
+      
+      if (mounted && loaderShowing) {
+        Navigator.pop(context);
+        loaderShowing = false;
       }
       if (mounted) {
         _showSnackbar('${_localizations.errorSharingBill}: $e', isError: true);
@@ -1219,7 +1281,14 @@ class _BillingPageState extends State<BillingPage> {
   }
 
   Future<void> _saveBillAsPdf(Bill bill) async {
+    bool loaderShowing = true;
+    final startTime = DateTime.now();
+    _appLogger.info('PDF_SAVE', '════════ START SAVE PDF ════════');
+    _appLogger.info('PDF_SAVE', 'Bill ID: ${bill.id}, Bill Number: ${bill.billNumber}');
+    _appLogger.info('PDF_SAVE', 'Bill Type Setting: $_billType');
+    
     try {
+      _appLogger.debug('PDF_SAVE', 'Step 1: Showing loading dialog...');
       showDialog(
         context: context,
         barrierDismissible: false,
@@ -1230,17 +1299,17 @@ class _BillingPageState extends State<BillingPage> {
         ),
       );
 
+      _appLogger.debug('PDF_SAVE', 'Step 2: Fetching shop details...');
       final shop = await _shopRepository.getShopDetails();
+      _appLogger.debug('PDF_SAVE', 'Shop: ${shop.shopName}');
+      
+      _appLogger.debug('PDF_SAVE', 'Step 3: Creating print data...');
       final printData = await _createPrintBillData(bill);
+      _appLogger.debug('PDF_SAVE', 'Print data created - Items: ${printData.items.length}');
 
-      // Dismiss loader before opening system share/save dialog
-      if (mounted) Navigator.pop(context);
-
-      // Use Printing.sharePdf which opens native preview + save dialog
+      _appLogger.debug('PDF_SAVE', 'Step 4: Generating PDF (type: $_billType)...');
       final pw.Document pdf;
-      final prefs = await SharedPreferences.getInstance();
-      final billType = prefs.getString('bill_type') ?? 'pos';
-      if (billType == 'normal') {
+      if (_billType == 'normal') {
         pdf = await _pdfService.generateNormalBillPdf(
           billData: printData,
           shopDetails: shop,
@@ -1252,14 +1321,34 @@ class _BillingPageState extends State<BillingPage> {
         );
       }
 
+      _appLogger.debug('PDF_SAVE', 'Step 5: Saving PDF to bytes...');
       final bytes = await pdf.save();
+      _appLogger.info('PDF_SAVE', 'PDF size: ${bytes.length} bytes (${(bytes.length / 1024).toStringAsFixed(2)} KB)');
+
+      // Dismiss loader before opening system share/save dialog
+      _appLogger.debug('PDF_SAVE', 'Step 6: Dismissing loading dialog...');
+      if (mounted && loaderShowing) {
+        Navigator.pop(context);
+        loaderShowing = false;
+      }
+
+      // Use Printing.sharePdf — opens native preview + save dialog
+      _appLogger.debug('PDF_SAVE', 'Step 7: Calling Printing.sharePdf...');
       await Printing.sharePdf(
         bytes: bytes,
         filename: 'bill_${bill.id.replaceAll('/', '_')}.pdf',
       );
-    } catch (e) {
-      if (mounted && Navigator.canPop(context)) {
+      
+      final totalTime = DateTime.now().difference(startTime).inMilliseconds;
+      _appLogger.info('PDF_SAVE', '════════ SAVE PDF SUCCESS ════════');
+      _appLogger.info('PDF_SAVE', 'Total time: ${totalTime}ms');
+    } catch (e, stackTrace) {
+      _appLogger.error('PDF_SAVE', 'FATAL ERROR during PDF save', error: e, stackTrace: stackTrace);
+      _appLogger.error('PDF_SAVE', '════════ SAVE PDF FAILED ════════');
+      
+      if (mounted && loaderShowing) {
         Navigator.pop(context);
+        loaderShowing = false;
       }
       if (mounted) {
         _showSnackbar('${_localizations.errorSavingPdf}: $e', isError: true);
@@ -4520,13 +4609,22 @@ class _BatchSelectionSheetState extends State<_BatchSelectionSheet> {
                       child: InkWell(
                         borderRadius: BorderRadius.circular(14),
                         onTap: () {
-                          setState(() {
-                            _selectedBatchIndex = index;
-                            // Set default quantity
-                            final maxAvailable = batch.quantityRemaining - existingQty;
-                            _qtyController.text = maxAvailable > 0 ? '1' : '0';
-                            _qtyError = null;
-                          });
+                          // Add item directly with quantity 1
+                          final maxAvailable = batch.quantityRemaining - existingQty;
+                          if (maxAvailable > 0) {
+                            widget.onBatchSelected(batch, 1);
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  '${widget.localizations.quantityExceedsStock} (0)',
+                                  style: const TextStyle(fontFamily: 'Literata'),
+                                ),
+                                backgroundColor: Colors.red[600],
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                          }
                         },
                         child: Padding(
                           padding: const EdgeInsets.all(14),

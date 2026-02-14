@@ -3,6 +3,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'package:c_billing/core/services/billing_service.dart';
 import 'package:c_billing/core/printing/printing.dart';
+import 'package:printing/printing.dart' as printing_pkg;
+import 'package:pdf/widgets.dart' as pw;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:c_billing/features/billing/data/repositories/firebase_bill_repository.dart';
 import 'package:c_billing/features/billing/domain/entities/bill.dart';
 import 'package:c_billing/features/inventory_management/data/repositories/firebase_product_repository.dart';
@@ -426,15 +429,34 @@ class _ReturnBillPageState extends State<ReturnBillPage>
       final shop = await _shopRepository.getShopDetails();
       final printData = _createReturnPrintData();
 
-      // Close loading indicator
+      // Generate PDF based on bill type setting
+      final prefs = await SharedPreferences.getInstance();
+      final billType = prefs.getString('bill_type') ?? 'pos';
+      final pw.Document pdf;
+      if (billType == 'normal') {
+        pdf = await _pdfService.generateNormalBillPdf(
+          billData: printData,
+          shopDetails: shop,
+        );
+      } else {
+        pdf = await _pdfService.generateBillPdf(
+          billData: printData,
+          shopDetails: shop,
+        );
+      }
+
+      final bytes = await pdf.save();
+
+      // Close loading indicator before showing native share dialog
       if (mounted && loadingDialogShowing) {
         Navigator.pop(context);
         loadingDialogShowing = false;
       }
 
-      await _pdfService.shareBillAsPdf(
-        billData: printData,
-        shopDetails: shop,
+      // Use Printing.sharePdf — reliable native share/preview on all devices
+      await printing_pkg.Printing.sharePdf(
+        bytes: bytes,
+        filename: 'return_bill_${_currentBill!.billNumber.replaceAll('/', '_')}.pdf',
       );
     } catch (e) {
       // Close loading indicator only if still showing

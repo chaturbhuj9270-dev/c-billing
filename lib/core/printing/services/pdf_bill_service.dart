@@ -55,26 +55,18 @@ class PdfBillService {
     final prefs = await SharedPreferences.getInstance();
     final showCustomer = prefs.getBool('bill_show_customer_details') ?? true;
 
-    // Use half A4 height as base — items table will expand if many items
-    final baseHeight = PdfPageFormat.a4.height * 0.5;
-    // Estimate content height: header~90 + billInfo~50 + itemsTable~(items * 18 + 30) + totals~80 + footer~60
-    final estimatedItemsHeight = (billData.items.length * 18.0) + 30.0;
-    final estimatedTotalHeight = 90 + 50 + estimatedItemsHeight + 80 + 60 + 40;
-    final pageHeight = estimatedTotalHeight > baseHeight ? estimatedTotalHeight : baseHeight;
-
+    // Use standard A4 — content will naturally occupy half page for small bills
     pdf.addPage(
       pw.Page(
-        pageFormat: PdfPageFormat.a4.copyWith(
-          height: pageHeight,
-          marginTop: 16,
-          marginBottom: 16,
-          marginLeft: 20,
-          marginRight: 20,
-        ),
-        build: (context) => _buildNormalBillContent(
-          billData,
-          shopDetails,
-          showCustomer,
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.all(20),
+        build: (context) => pw.Align(
+          alignment: pw.Alignment.topCenter,
+          child: _buildNormalBillContent(
+            billData,
+            shopDetails,
+            showCustomer,
+          ),
         ),
       ),
     );

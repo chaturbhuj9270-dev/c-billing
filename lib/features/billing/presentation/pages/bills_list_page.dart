@@ -658,14 +658,37 @@ class _BillsListPageState extends State<BillsListPage>
       final printData = await _createPrintBillData(bill);
       debugPrint('[BillsListPage] Print data created');
 
-      // Close loading indicator
+      // Generate PDF based on bill type setting
+      final prefs = await SharedPreferences.getInstance();
+      final billType = prefs.getString('bill_type') ?? 'pos';
+      debugPrint('[BillsListPage] Generating PDF (billType=$billType)...');
+      final pw.Document pdf;
+      if (billType == 'normal') {
+        pdf = await _pdfService.generateNormalBillPdf(
+          billData: printData,
+          shopDetails: shop,
+        );
+      } else {
+        pdf = await _pdfService.generateBillPdf(
+          billData: printData,
+          shopDetails: shop,
+        );
+      }
+
+      final bytes = await pdf.save();
+      debugPrint('[BillsListPage] PDF generated, size=${bytes.length} bytes');
+
+      // Close loading indicator before showing native share dialog
       if (mounted && loadingDialogShowing) {
         Navigator.pop(context);
         loadingDialogShowing = false;
       }
 
-      debugPrint('[BillsListPage] Calling pdfService.shareBillAsPdf...');
-      await _pdfService.shareBillAsPdf(billData: printData, shopDetails: shop);
+      // Use Printing.sharePdf — reliable native share/preview on all devices
+      await Printing.sharePdf(
+        bytes: bytes,
+        filename: 'bill_${bill.billNumber.replaceAll('/', '_')}.pdf',
+      );
       debugPrint('[BillsListPage] Share completed successfully');
     } catch (e, stackTrace) {
       debugPrint('[BillsListPage] ERROR in _shareBillAsPdf: $e');
