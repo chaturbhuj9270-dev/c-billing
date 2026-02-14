@@ -1457,68 +1457,40 @@ class _BillingPageState extends State<BillingPage> {
     );
   }
 
-  /// Header widget for embedded view with settings button at top right
+  /// Header widget for embedded view
   Widget _buildEmbeddedHeader() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            children: [
-              Text(
-                _localizations.createBill,
+          Text(
+            _localizations.createBill,
+            style: const TextStyle(
+              color: Color(0xFF1B4D3E),
+              fontSize: 22,
+              fontWeight: FontWeight.w700,
+              fontFamily: 'Literata',
+            ),
+          ),
+          if (_billItems.isNotEmpty) ...[
+            const SizedBox(width: 12),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                '${_billItems.length} ${_localizations.items.toLowerCase()}',
                 style: const TextStyle(
                   color: Color(0xFF1B4D3E),
-                  fontSize: 22,
-                  fontWeight: FontWeight.w700,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
                   fontFamily: 'Literata',
                 ),
               ),
-              if (_billItems.isNotEmpty) ...[
-                const SizedBox(width: 12),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1B4D3E).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    '${_billItems.length} ${_localizations.items.toLowerCase()}',
-                    style: const TextStyle(
-                      color: Color(0xFF1B4D3E),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      fontFamily: 'Literata',
-                    ),
-                  ),
-                ),
-              ],
-            ],
-          ),
-          // Settings button
-          Container(
-            decoration: BoxDecoration(
-              color: const Color(0xFF1B4D3E),
-              borderRadius: BorderRadius.circular(10),
             ),
-            child: IconButton(
-              icon: const Icon(Icons.settings, color: Colors.white, size: 22),
-              onPressed: () async {
-                final result = await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const BillSettingsPage(),
-                  ),
-                );
-                // Reload settings when returning if settings changed
-                if (result == true) {
-                  _loadBillSettings();
-                }
-              },
-              tooltip: 'Bill Settings',
-            ),
-          ),
+          ],
         ],
       ),
     );

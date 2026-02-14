@@ -12,6 +12,7 @@ import '../../../inventory_management/presentation/pages/purchase_page.dart';
 import '../../../inventory_management/presentation/pages/purchase_settings_page.dart';
 import '../../../inventory_management/presentation/pages/product_management_page.dart';
 import '../../../billing/presentation/pages/billing_page.dart';
+import '../../../billing/presentation/pages/bill_settings_page.dart';
 import '../../../billing/presentation/pages/bills_list_page.dart';
 import '../../../availability/presentation/pages/availability_page.dart';
 import '../../../../core/services/session_manager.dart';
@@ -354,9 +355,9 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.15),
+                    color: Colors.white.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.white.withOpacity(0.2)),
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(10),
@@ -395,7 +396,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                       Text(
                         _getPageSubtitle(),
                         style: TextStyle(
-                          color: Colors.white.withOpacity(0.7),
+                          color: Colors.white.withValues(alpha: 0.7),
                           fontSize: 11,
                           fontFamily: 'Literata',
                         ),
@@ -404,55 +405,78 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                   ),
                 ),
               ),
-              // Purchase Settings Icon (only show when on Purchase tab)
-              if (_selectedIndex == 4) ...[
+              // Settings Icon (contextual — Bill Settings on Billing tab, Purchase Settings on Purchase tab)
+              if (_selectedIndex == 3 || _selectedIndex == 4) ...[
                 const SizedBox(width: 8),
-                GestureDetector(
+                _buildHeaderActionButton(
+                  icon: Icons.settings_rounded,
+                  tooltip: _selectedIndex == 3 ? 'Bill Settings' : 'Purchase Settings',
                   onTap: () async {
-                    await Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const PurchaseSettingsPage(),
-                      ),
-                    );
-                    // Refresh UI when returning from settings
-                    setState(() {});
+                    if (_selectedIndex == 3) {
+                      final result = await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const BillSettingsPage(),
+                        ),
+                      );
+                      // Trigger rebuild so BillingPage can reload settings
+                      if (result == true && mounted) setState(() {});
+                    } else {
+                      await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const PurchaseSettingsPage(),
+                        ),
+                      );
+                      if (mounted) setState(() {});
+                    }
                   },
-                  child: Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.15),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.white.withOpacity(0.2)),
-                    ),
-                    child: const Icon(
-                      Icons.settings_rounded,
-                      color: Colors.white,
-                      size: 22,
-                    ),
-                  ),
                 ),
               ],
               // Language Icon
-              GestureDetector(
+              const SizedBox(width: 8),
+              _buildHeaderActionButton(
+                icon: Icons.language_rounded,
+                tooltip: 'Language',
                 onTap: _showLanguageDialog,
-                child: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.white.withOpacity(0.2)),
-                  ),
-                  child: const Icon(
-                    Icons.language_rounded,
-                    color: Colors.white,
-                    size: 22,
-                  ),
-                ),
               ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Premium header action button with consistent glassmorphic styling
+  Widget _buildHeaderActionButton({
+    required IconData icon,
+    required String tooltip,
+    required VoidCallback onTap,
+  }) {
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          splashColor: Colors.white.withValues(alpha: 0.15),
+          highlightColor: Colors.white.withValues(alpha: 0.08),
+          child: Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.2),
+              ),
+            ),
+            child: Icon(
+              icon,
+              color: Colors.white,
+              size: 22,
+            ),
           ),
         ),
       ),
