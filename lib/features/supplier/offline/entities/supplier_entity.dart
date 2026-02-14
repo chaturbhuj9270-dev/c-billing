@@ -39,8 +39,8 @@ class SupplierEntity {
   /// Last name
   String lastName;
 
-  /// Supplier code (unique identifier)
-  @Index(unique: true, replace: false, caseSensitive: false)
+  /// Supplier code (indexed for fast lookup)
+  @Index(caseSensitive: false)
   String supplierCode;
 
   /// Contact number (indexed for fast lookup)
@@ -70,7 +70,7 @@ class SupplierEntity {
     required this.firstName,
     this.middleName = '',
     this.lastName = '',
-    required this.supplierCode,
+    this.supplierCode = '',
     required this.contact,
     this.address = '',
     this.isActive = true,
@@ -93,7 +93,7 @@ class SupplierEntity {
     required String firstName,
     String middleName = '',
     String lastName = '',
-    required String supplierCode,
+    String supplierCode = '',
     required String contact,
     String address = '',
     bool isActive = true,

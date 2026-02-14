@@ -33,8 +33,8 @@ class CompanyEntity {
   @Index(type: IndexType.value, caseSensitive: false)
   String companyName;
 
-  /// Company code (unique identifier)
-  @Index(unique: true, replace: false, caseSensitive: false)
+  /// Company code (indexed for fast lookup)
+  @Index(caseSensitive: false)
   String companyCode;
 
   /// Contact number (indexed for fast lookup)
@@ -62,7 +62,7 @@ class CompanyEntity {
   CompanyEntity({
     this.serverId,
     required this.companyName,
-    required this.companyCode,
+    this.companyCode = '',
     this.contact = '',
     this.address = '',
     this.isActive = true,
@@ -75,7 +75,7 @@ class CompanyEntity {
   factory CompanyEntity.create({
     String? serverId,
     required String companyName,
-    required String companyCode,
+    String companyCode = '',
     String contact = '',
     String address = '',
     bool isActive = true,

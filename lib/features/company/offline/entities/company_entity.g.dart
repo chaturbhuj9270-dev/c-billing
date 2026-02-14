@@ -98,7 +98,7 @@ const CompanyEntitySchema = CollectionSchema(
     r'companyCode': IndexSchema(
       id: 6715787695288864042,
       name: r'companyCode',
-      unique: true,
+      unique: false,
       replace: false,
       properties: [
         IndexPropertySchema(
@@ -203,7 +203,7 @@ CompanyEntity _companyEntityDeserialize(
 ) {
   final object = CompanyEntity(
     address: reader.readStringOrNull(offsets[0]) ?? '',
-    companyCode: reader.readString(offsets[1]),
+    companyCode: reader.readStringOrNull(offsets[1]) ?? '',
     companyName: reader.readString(offsets[2]),
     contact: reader.readStringOrNull(offsets[3]) ?? '',
     createdAt: reader.readDateTime(offsets[4]),
@@ -230,7 +230,7 @@ P _companyEntityDeserializeProp<P>(
     case 0:
       return (reader.readStringOrNull(offset) ?? '') as P;
     case 1:
-      return (reader.readString(offset)) as P;
+      return (reader.readStringOrNull(offset) ?? '') as P;
     case 2:
       return (reader.readString(offset)) as P;
     case 3:
@@ -285,65 +285,6 @@ void _companyEntityAttach(
   CompanyEntity object,
 ) {
   object.id = id;
-}
-
-extension CompanyEntityByIndex on IsarCollection<CompanyEntity> {
-  Future<CompanyEntity?> getByCompanyCode(String companyCode) {
-    return getByIndex(r'companyCode', [companyCode]);
-  }
-
-  CompanyEntity? getByCompanyCodeSync(String companyCode) {
-    return getByIndexSync(r'companyCode', [companyCode]);
-  }
-
-  Future<bool> deleteByCompanyCode(String companyCode) {
-    return deleteByIndex(r'companyCode', [companyCode]);
-  }
-
-  bool deleteByCompanyCodeSync(String companyCode) {
-    return deleteByIndexSync(r'companyCode', [companyCode]);
-  }
-
-  Future<List<CompanyEntity?>> getAllByCompanyCode(
-    List<String> companyCodeValues,
-  ) {
-    final values = companyCodeValues.map((e) => [e]).toList();
-    return getAllByIndex(r'companyCode', values);
-  }
-
-  List<CompanyEntity?> getAllByCompanyCodeSync(List<String> companyCodeValues) {
-    final values = companyCodeValues.map((e) => [e]).toList();
-    return getAllByIndexSync(r'companyCode', values);
-  }
-
-  Future<int> deleteAllByCompanyCode(List<String> companyCodeValues) {
-    final values = companyCodeValues.map((e) => [e]).toList();
-    return deleteAllByIndex(r'companyCode', values);
-  }
-
-  int deleteAllByCompanyCodeSync(List<String> companyCodeValues) {
-    final values = companyCodeValues.map((e) => [e]).toList();
-    return deleteAllByIndexSync(r'companyCode', values);
-  }
-
-  Future<Id> putByCompanyCode(CompanyEntity object) {
-    return putByIndex(r'companyCode', object);
-  }
-
-  Id putByCompanyCodeSync(CompanyEntity object, {bool saveLinks = true}) {
-    return putByIndexSync(r'companyCode', object, saveLinks: saveLinks);
-  }
-
-  Future<List<Id>> putAllByCompanyCode(List<CompanyEntity> objects) {
-    return putAllByIndex(r'companyCode', objects);
-  }
-
-  List<Id> putAllByCompanyCodeSync(
-    List<CompanyEntity> objects, {
-    bool saveLinks = true,
-  }) {
-    return putAllByIndexSync(r'companyCode', objects, saveLinks: saveLinks);
-  }
 }
 
 extension CompanyEntityQueryWhereSort

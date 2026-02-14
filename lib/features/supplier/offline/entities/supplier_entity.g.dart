@@ -113,7 +113,7 @@ const SupplierEntitySchema = CollectionSchema(
     r'supplierCode': IndexSchema(
       id: -6908271452855759711,
       name: r'supplierCode',
-      unique: true,
+      unique: false,
       replace: false,
       properties: [
         IndexPropertySchema(
@@ -231,7 +231,7 @@ SupplierEntity _supplierEntityDeserialize(
     lastName: reader.readStringOrNull(offsets[7]) ?? '',
     middleName: reader.readStringOrNull(offsets[8]) ?? '',
     serverId: reader.readStringOrNull(offsets[10]),
-    supplierCode: reader.readString(offsets[11]),
+    supplierCode: reader.readStringOrNull(offsets[11]) ?? '',
     syncStatus:
         _SupplierEntitysyncStatusValueEnumMap[reader.readByteOrNull(
           offsets[12],
@@ -273,7 +273,7 @@ P _supplierEntityDeserializeProp<P>(
     case 10:
       return (reader.readStringOrNull(offset)) as P;
     case 11:
-      return (reader.readString(offset)) as P;
+      return (reader.readStringOrNull(offset) ?? '') as P;
     case 12:
       return (_SupplierEntitysyncStatusValueEnumMap[reader.readByteOrNull(
                 offset,
@@ -314,67 +314,6 @@ void _supplierEntityAttach(
   SupplierEntity object,
 ) {
   object.id = id;
-}
-
-extension SupplierEntityByIndex on IsarCollection<SupplierEntity> {
-  Future<SupplierEntity?> getBySupplierCode(String supplierCode) {
-    return getByIndex(r'supplierCode', [supplierCode]);
-  }
-
-  SupplierEntity? getBySupplierCodeSync(String supplierCode) {
-    return getByIndexSync(r'supplierCode', [supplierCode]);
-  }
-
-  Future<bool> deleteBySupplierCode(String supplierCode) {
-    return deleteByIndex(r'supplierCode', [supplierCode]);
-  }
-
-  bool deleteBySupplierCodeSync(String supplierCode) {
-    return deleteByIndexSync(r'supplierCode', [supplierCode]);
-  }
-
-  Future<List<SupplierEntity?>> getAllBySupplierCode(
-    List<String> supplierCodeValues,
-  ) {
-    final values = supplierCodeValues.map((e) => [e]).toList();
-    return getAllByIndex(r'supplierCode', values);
-  }
-
-  List<SupplierEntity?> getAllBySupplierCodeSync(
-    List<String> supplierCodeValues,
-  ) {
-    final values = supplierCodeValues.map((e) => [e]).toList();
-    return getAllByIndexSync(r'supplierCode', values);
-  }
-
-  Future<int> deleteAllBySupplierCode(List<String> supplierCodeValues) {
-    final values = supplierCodeValues.map((e) => [e]).toList();
-    return deleteAllByIndex(r'supplierCode', values);
-  }
-
-  int deleteAllBySupplierCodeSync(List<String> supplierCodeValues) {
-    final values = supplierCodeValues.map((e) => [e]).toList();
-    return deleteAllByIndexSync(r'supplierCode', values);
-  }
-
-  Future<Id> putBySupplierCode(SupplierEntity object) {
-    return putByIndex(r'supplierCode', object);
-  }
-
-  Id putBySupplierCodeSync(SupplierEntity object, {bool saveLinks = true}) {
-    return putByIndexSync(r'supplierCode', object, saveLinks: saveLinks);
-  }
-
-  Future<List<Id>> putAllBySupplierCode(List<SupplierEntity> objects) {
-    return putAllByIndex(r'supplierCode', objects);
-  }
-
-  List<Id> putAllBySupplierCodeSync(
-    List<SupplierEntity> objects, {
-    bool saveLinks = true,
-  }) {
-    return putAllByIndexSync(r'supplierCode', objects, saveLinks: saveLinks);
-  }
 }
 
 extension SupplierEntityQueryWhereSort

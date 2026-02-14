@@ -28,7 +28,10 @@ class SupplierOfflineController extends ChangeNotifier {
   // ==================== CREATE ====================
 
   /// Check if a supplier code already exists (for uniqueness validation)
+  /// Empty codes are allowed (not enforced as unique)
   Future<bool> isSupplierCodeTaken(String code, {Id? excludeId}) async {
+    if (code.trim().isEmpty) return false; // Empty codes are allowed
+    
     final existing = await _isar.supplierEntitys
         .filter()
         .supplierCodeEqualTo(code, caseSensitive: false)

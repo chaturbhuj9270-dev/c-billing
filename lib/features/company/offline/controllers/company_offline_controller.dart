@@ -30,7 +30,10 @@ class CompanyOfflineController extends ChangeNotifier {
   // ==================== CREATE ====================
 
   /// Check if a company code already exists (for uniqueness validation)
+  /// Empty codes are allowed (not enforced as unique)
   Future<bool> isCompanyCodeTaken(String code, {Id? excludeId}) async {
+    if (code.trim().isEmpty) return false; // Empty codes are allowed
+    
     final existing = await _isar.companyEntitys
         .filter()
         .companyCodeEqualTo(code, caseSensitive: false)
