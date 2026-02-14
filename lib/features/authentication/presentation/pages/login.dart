@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:ui';
 
+import '../../../../core/localization/app_localizations.dart';
+import '../../../../core/services/language_service.dart';
 import '../../../../main.dart' show initializeSyncServices;
 import '../../../dashboard/presentation/pages/optimized_dashboard_page.dart';
 import '../../../../core/services/session_manager.dart';
@@ -24,6 +26,7 @@ class _LoginPageV2State extends State<LoginPageV2>
   final _passwordController = TextEditingController();
   bool _obscure = true;
   bool _loading = false;
+  late AppLocalizations _localizations;
   late final AnimationController _animController;
   late final AnimationController _staggerController;
   late final Animation<Offset> _offsetAnimation;
@@ -43,6 +46,7 @@ class _LoginPageV2State extends State<LoginPageV2>
   @override
   void initState() {
     super.initState();
+    _localizations = AppLocalizations(LanguageService.instance.currentLanguage);
     _animController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 700),
@@ -113,7 +117,7 @@ class _LoginPageV2State extends State<LoginPageV2>
     final password = _passwordController.text;
     if (emailOrPhone.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Enter email/phone and password')),
+        SnackBar(content: Text(_localizations.enterEmailPhone)),
       );
       return;
     }
@@ -135,9 +139,9 @@ class _LoginPageV2State extends State<LoginPageV2>
             print('[CRITICAL] Session expired - logging out user');
             FirebaseAuth.instance.signOut().then((_) {
               if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Session expired. Please login again.'),
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(_localizations.sessionExpired),
                   ),
                 );
                 Navigator.of(
@@ -165,7 +169,7 @@ class _LoginPageV2State extends State<LoginPageV2>
           setState(() => _loading = false);
           ScaffoldMessenger.of(
             context,
-          ).showSnackBar(const SnackBar(content: Text('Login successful')));
+          ).showSnackBar(SnackBar(content: Text(_localizations.loginSuccessful)));
           print('[DEBUG] Session timeout set for 2 hours');
 
           // Check subscription status before navigating
@@ -255,7 +259,7 @@ class _LoginPageV2State extends State<LoginPageV2>
                           ),
                           const SizedBox(height: 5),
                           Text(
-                            'C-BILLING',
+                            _localizations.appName,
                             style: TextStyle(
                               fontFamily: 'Literata',
                               fontSize: 36,
@@ -266,7 +270,7 @@ class _LoginPageV2State extends State<LoginPageV2>
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            'The backbone of your business',
+                            _localizations.backboneOfBusiness,
                             style: TextStyle(
                               fontFamily: 'Literata',
                               fontSize: 14,
@@ -318,8 +322,8 @@ class _LoginPageV2State extends State<LoginPageV2>
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 // Welcome Back Header
-                                const Text(
-                                  'Welcome Back',
+                                Text(
+                                  _localizations.welcomeBack,
                                   style: TextStyle(
                                     fontSize: 28,
                                     fontWeight: FontWeight.w800,
@@ -329,7 +333,7 @@ class _LoginPageV2State extends State<LoginPageV2>
                                 ),
                                 const SizedBox(height: 6),
                                 Text(
-                                  'Sign in to your account',
+                                  _localizations.signInToAccount,
                                   style: TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w400,
@@ -345,7 +349,7 @@ class _LoginPageV2State extends State<LoginPageV2>
                                     opacity: _fieldFadeAnimations[0],
                                     child: _buildAnimatedInputField(
                                       controller: _emailOrPhoneController,
-                                      hintText: 'Email Address',
+                                      hintText: _localizations.emailAddress,
                                       icon: Icons.mail_outline,
                                       keyboardType: TextInputType.emailAddress,
                                     ),
@@ -382,8 +386,8 @@ class _LoginPageV2State extends State<LoginPageV2>
                                           tapTargetSize:
                                               MaterialTapTargetSize.shrinkWrap,
                                         ),
-                                        child: const Text(
-                                          'Forgot password?',
+                                        child: Text(
+                                          _localizations.forgotPasswordQuestion,
                                           style: TextStyle(
                                             color: Color(0xFF1B4D3E),
                                             fontWeight: FontWeight.w600,
@@ -419,7 +423,7 @@ class _LoginPageV2State extends State<LoginPageV2>
                                         horizontal: 16,
                                       ),
                                       child: Text(
-                                        'OR',
+                                        _localizations.orDivider,
                                         style: TextStyle(
                                           color: Colors.grey[600],
                                           fontSize: 12,
@@ -490,8 +494,8 @@ class _LoginPageV2State extends State<LoginPageV2>
                                               },
                                         ),
                                         const SizedBox(width: 12),
-                                        const Text(
-                                          'Continue with Google',
+                                        Text(
+                                          _localizations.continueWithGoogle,
                                           style: TextStyle(
                                             color: Color(0xFF1A1A1A),
                                             fontSize: 15,
@@ -521,7 +525,7 @@ class _LoginPageV2State extends State<LoginPageV2>
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            "Don't have an account? ",
+                            _localizations.dontHaveAccount,
                             style: TextStyle(
                               color: Colors.grey[600],
                               fontSize: 14,
@@ -536,8 +540,8 @@ class _LoginPageV2State extends State<LoginPageV2>
                                 ),
                               );
                             },
-                            child: const Text(
-                              'Sign up',
+                            child: Text(
+                              _localizations.signUp,
                               style: TextStyle(
                                 color: Color(0xFF1B4D3E),
                                 fontSize: 14,
@@ -630,7 +634,7 @@ class _LoginPageV2State extends State<LoginPageV2>
         controller: _passwordController,
         obscureText: _obscure,
         decoration: InputDecoration(
-          hintText: 'Password',
+          hintText: _localizations.password,
           hintStyle: TextStyle(
             color: Colors.grey[400],
             fontSize: 15,
@@ -700,8 +704,8 @@ class _LoginPageV2State extends State<LoginPageV2>
                       strokeWidth: 2,
                     ),
                   )
-                : const Text(
-                    'Sign In',
+                : Text(
+                    _localizations.signIn,
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 16,

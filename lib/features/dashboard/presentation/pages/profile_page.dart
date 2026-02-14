@@ -3,6 +3,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
+import '../../../../core/services/language_service.dart';
+import '../../../../core/localization/app_localizations.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -26,10 +28,12 @@ class _ProfilePageState extends State<ProfilePage> {
   String? _profileImageUrl;
   bool _isLoading = false;
   bool _isSaving = false;
+  late AppLocalizations _localizations;
 
   @override
   void initState() {
     super.initState();
+    _localizations = AppLocalizations(LanguageService.instance.currentLanguage);
     _currentUser = _auth.currentUser;
     _nameController = TextEditingController(text: _currentUser?.displayName ?? '');
     _emailController = TextEditingController(text: _currentUser?.email ?? '');
@@ -97,7 +101,7 @@ class _ProfilePageState extends State<ProfilePage> {
   Future<void> _saveProfile() async {
     if (_nameController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter your name')),
+        SnackBar(content: Text(_localizations.pleaseEnterName)),
       );
       return;
     }
@@ -119,12 +123,12 @@ class _ProfilePageState extends State<ProfilePage> {
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Profile updated successfully')),
+        SnackBar(content: Text(_localizations.profileUpdatedSuccessfully)),
       );
     } catch (e) {
       print('[ERROR] Error saving profile: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error saving profile: $e')),
+        SnackBar(content: Text('${_localizations.errorSavingProfile}: $e')),
       );
     } finally {
       setState(() => _isSaving = false);
@@ -145,8 +149,8 @@ class _ProfilePageState extends State<ProfilePage> {
             color: Color(0xFF1B4D3E),
           ),
         ),
-        title: const Text(
-          'My Profile',
+        title: Text(
+          _localizations.myProfile,
           style: TextStyle(
             color: Color(0xFF1B4D3E),
             fontSize: 22,
@@ -266,31 +270,31 @@ class _ProfilePageState extends State<ProfilePage> {
                     // Form Section
                     _buildFormField(
                       controller: _nameController,
-                      label: 'Full Name',
-                      hint: 'Enter your full name',
+                      label: _localizations.fullName,
+                      hint: _localizations.enterFullName,
                       icon: Icons.person_outline,
                     ),
                     const SizedBox(height: 16),
                     _buildFormField(
                       controller: _emailController,
-                      label: 'Email Address',
-                      hint: 'Your email',
+                      label: _localizations.emailAddress,
+                      hint: _localizations.yourEmail,
                       icon: Icons.email_outlined,
                       readOnly: true,
                     ),
                     const SizedBox(height: 16),
                     _buildFormField(
                       controller: _phoneController,
-                      label: 'Phone Number',
-                      hint: 'Enter your phone number',
+                      label: _localizations.phoneNumber,
+                      hint: _localizations.enterPhoneNumberProfile,
                       icon: Icons.phone_outlined,
                       keyboardType: TextInputType.phone,
                     ),
                     const SizedBox(height: 16),
                     _buildFormField(
                       controller: _addressController,
-                      label: 'Address',
-                      hint: 'Enter your address',
+                      label: _localizations.address,
+                      hint: _localizations.enterAddress,
                       icon: Icons.location_on_outlined,
                     ),
                     const SizedBox(height: 32),
@@ -324,8 +328,8 @@ class _ProfilePageState extends State<ProfilePage> {
                                   ),
                                 ),
                               )
-                            : const Text(
-                                'Save Changes',
+                            : Text(
+                                _localizations.saveChanges,
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                   color: Colors.white,

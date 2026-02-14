@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:ui';
+import '../../../../core/services/language_service.dart';
+import '../../../../core/localization/app_localizations.dart';
 
 class ChangePasswordPage extends StatefulWidget {
   /// If true, shows back button to return to previous screen
@@ -26,6 +28,13 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
   bool _obscureNew = true;
   bool _obscureConfirm = true;
   bool _loading = false;
+  late AppLocalizations _localizations;
+
+  @override
+  void initState() {
+    super.initState();
+    _localizations = AppLocalizations(LanguageService.instance.currentLanguage);
+  }
 
   @override
   void dispose() {
@@ -45,8 +54,8 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
     // Validate passwords match
     if (newPassword != confirmPassword) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('New password and confirm password do not match'),
+        SnackBar(
+          content: Text(_localizations.newPasswordDoNotMatch),
           backgroundColor: Colors.red,
         ),
       );
@@ -56,8 +65,8 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
     // Validate new password is different from old
     if (oldPassword == newPassword) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('New password must be different from old password'),
+        SnackBar(
+          content: Text(_localizations.newPasswordMustDiffer),
           backgroundColor: Colors.orange,
         ),
       );
@@ -89,8 +98,8 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Password updated successfully!'),
+          SnackBar(
+            content: Text(_localizations.passwordUpdated),
             backgroundColor: Color(0xFF2E7D32),
           ),
         );
@@ -103,16 +112,16 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
       String message;
       switch (e.code) {
         case 'wrong-password':
-          message = 'Old password is incorrect';
+          message = _localizations.oldPasswordIncorrect;
           break;
         case 'weak-password':
-          message = 'New password is too weak. Use at least 6 characters.';
+          message = _localizations.newPasswordTooWeak;
           break;
         case 'requires-recent-login':
-          message = 'Please log out and log in again before changing password';
+          message = _localizations.pleaseRelogin;
           break;
         default:
-          message = e.message ?? 'Failed to update password';
+          message = e.message ?? _localizations.failedToUpdatePassword;
       }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -147,8 +156,8 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
           icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text(
-          'Change Password',
+        title: Text(
+          _localizations.changePasswordTitle,
           style: TextStyle(
             color: Colors.white,
             fontSize: 20,
@@ -209,7 +218,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                   const SizedBox(height: 8),
                   Center(
                     child: Text(
-                      'Enter your old password and set a new one',
+                      _localizations.enterOldAndNew,
                       style: TextStyle(
                         fontSize: 14,
                         color: Colors.grey[600],
@@ -246,13 +255,13 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                             // Old Password Field
                             _buildPasswordField(
                               controller: _oldPasswordController,
-                              label: 'Old Password',
-                              hint: 'Enter your current password',
+                              label: _localizations.oldPassword,
+                              hint: _localizations.enterOldPassword,
                               obscure: _obscureOld,
                               onToggle: () => setState(() => _obscureOld = !_obscureOld),
                               validator: (value) {
                                 if (value == null || value.isEmpty) {
-                                  return 'Please enter your old password';
+                                  return _localizations.pleaseEnterOldPassword;
                                 }
                                 return null;
                               },
@@ -262,16 +271,16 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                             // New Password Field
                             _buildPasswordField(
                               controller: _newPasswordController,
-                              label: 'New Password',
-                              hint: 'Enter new password (min 6 characters)',
+                              label: _localizations.newPassword,
+                              hint: _localizations.enterNewPassword,
                               obscure: _obscureNew,
                               onToggle: () => setState(() => _obscureNew = !_obscureNew),
                               validator: (value) {
                                 if (value == null || value.isEmpty) {
-                                  return 'Please enter a new password';
+                                  return _localizations.pleaseEnterNewPassword;
                                 }
                                 if (value.length < 6) {
-                                  return 'Password must be at least 6 characters';
+                                  return _localizations.passwordMinLength;
                                 }
                                 return null;
                               },
@@ -281,16 +290,16 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                             // Confirm Password Field
                             _buildPasswordField(
                               controller: _confirmPasswordController,
-                              label: 'Confirm Password',
-                              hint: 'Re-enter new password',
+                              label: _localizations.confirmPassword,
+                              hint: _localizations.reenterNewPassword,
                               obscure: _obscureConfirm,
                               onToggle: () => setState(() => _obscureConfirm = !_obscureConfirm),
                               validator: (value) {
                                 if (value == null || value.isEmpty) {
-                                  return 'Please confirm your new password';
+                                  return _localizations.pleaseConfirmNewPassword;
                                 }
                                 if (value != _newPasswordController.text) {
-                                  return 'Passwords do not match';
+                                  return _localizations.passwordsDoNotMatch;
                                 }
                                 return null;
                               },
@@ -320,9 +329,9 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                                           strokeWidth: 2,
                                         ),
                                       )
-                                    : const Text(
-                                        'Update Password',
-                                        style: TextStyle(
+                                    : Text(
+                                        _localizations.updatePassword,
+                                        style: const TextStyle(
                                           color: Colors.white,
                                           fontSize: 16,
                                           fontWeight: FontWeight.w600,
@@ -360,7 +369,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              'Password Tips',
+                              _localizations.passwordTips,
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
@@ -371,10 +380,10 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                           ],
                         ),
                         const SizedBox(height: 12),
-                        _buildTipItem('Use at least 6 characters'),
-                        _buildTipItem('Include uppercase and lowercase letters'),
-                        _buildTipItem('Add numbers and special characters'),
-                        _buildTipItem('Avoid using personal information'),
+                        _buildTipItem(_localizations.useAtLeast6Chars),
+                        _buildTipItem(_localizations.includeUpperLower),
+                        _buildTipItem(_localizations.addNumbersSpecial),
+                        _buildTipItem(_localizations.avoidPersonalInfo),
                       ],
                     ),
                   ),

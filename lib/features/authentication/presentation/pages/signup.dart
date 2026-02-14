@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:ui';
+import '../../../../core/localization/app_localizations.dart';
+import '../../../../core/services/language_service.dart';
 import '../../../../core/services/session_manager.dart';
 
 class SignupPage extends StatefulWidget {
@@ -23,6 +25,7 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
   final _confirmController = TextEditingController();
 
   bool _obscure = true;
+  late AppLocalizations _localizations;
   late final AnimationController _animController;
   late final AnimationController _staggerController;
   late final Animation<Offset> _offsetAnimation;
@@ -48,6 +51,7 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
+    _localizations = AppLocalizations(LanguageService.instance.currentLanguage);
     _animController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 700),
@@ -119,7 +123,7 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
     // Validate all required fields
     if (email.isEmpty || contact.isEmpty || pw.isEmpty || cpw.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill in all fields')),
+        SnackBar(content: Text(_localizations.pleaseFillAllFields)),
       );
       return;
     }
@@ -127,14 +131,14 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
     if (pw != cpw) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Passwords do not match')));
+      ).showSnackBar(SnackBar(content: Text(_localizations.passwordsDoNotMatch)));
       return;
     }
 
     // Validate phone number format
     if (!RegExp(r'^[6-9]\d{9}$').hasMatch(contact)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Enter a valid 10-digit phone number')),
+        SnackBar(content: Text(_localizations.enterValid10DigitPhone)),
       );
       return;
     }
@@ -146,7 +150,7 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
           final currentUser = userCredential.user;
           if (currentUser == null) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Account creation failed')),
+              SnackBar(content: Text(_localizations.accountCreationFailed)),
             );
             return;
           }
@@ -180,8 +184,8 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
               FirebaseAuth.instance.signOut().then((_) {
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Session expired. Please login again.'),
+                    SnackBar(
+                      content: Text(_localizations.sessionExpired),
                     ),
                   );
                   Navigator.of(
@@ -194,8 +198,8 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
 
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Account created successfully'),
+                SnackBar(
+                  content: Text(_localizations.accountCreated),
                   backgroundColor: Colors.green,
                 ),
               );
@@ -269,8 +273,8 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
                             ),
                           ),
                           const SizedBox(height: 12),
-                          const Text(
-                            'C-BILLING',
+                          Text(
+                            _localizations.appName,
                             style: TextStyle(
                               fontSize: 32,
                               fontWeight: FontWeight.w900,
@@ -281,7 +285,7 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            'Create your account',
+                            _localizations.createYourAccount,
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w400,
@@ -337,7 +341,7 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
                                   child: FadeTransition(
                                     opacity: _fieldFadeAnimations[0],
                                     child: _buildAnimatedInputField(
-                                      label: 'First Name',
+                                      label: _localizations.firstName,
                                       controller: _firstController,
                                       icon: Icons.person_outline,
                                     ),
@@ -350,7 +354,7 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
                                   child: FadeTransition(
                                     opacity: _fieldFadeAnimations[1],
                                     child: _buildAnimatedInputField(
-                                      label: 'Middle Name',
+                                      label: _localizations.middleName,
                                       controller: _middleController,
                                       icon: Icons.person_outline,
                                     ),
@@ -363,7 +367,7 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
                                   child: FadeTransition(
                                     opacity: _fieldFadeAnimations[2],
                                     child: _buildAnimatedInputField(
-                                      label: 'Last Name',
+                                      label: _localizations.lastName,
                                       controller: _lastController,
                                       icon: Icons.person_outline,
                                     ),
@@ -376,7 +380,7 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
                                   child: FadeTransition(
                                     opacity: _fieldFadeAnimations[3],
                                     child: _buildAnimatedInputField(
-                                      label: 'Email Address',
+                                      label: _localizations.emailAddress,
                                       controller: _emailController,
                                       keyboardType: TextInputType.emailAddress,
                                       icon: Icons.email_outlined,
@@ -390,7 +394,7 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
                                   child: FadeTransition(
                                     opacity: _fieldFadeAnimations[4],
                                     child: _buildAnimatedInputField(
-                                      label: 'Contact Number',
+                                      label: _localizations.contactNumber,
                                       controller: _contactController,
                                       keyboardType: TextInputType.phone,
                                       icon: Icons.phone_outlined,
@@ -404,7 +408,7 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
                                   child: FadeTransition(
                                     opacity: _fieldFadeAnimations[5],
                                     child: _buildAnimatedInputField(
-                                      label: 'Address',
+                                      label: _localizations.address,
                                       controller: _addressController,
                                       keyboardType: TextInputType.streetAddress,
                                       icon: Icons.location_on_outlined,
@@ -427,7 +431,7 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
                                   child: FadeTransition(
                                     opacity: _fieldFadeAnimations[7],
                                     child: _buildAnimatedInputField(
-                                      label: 'Confirm Password',
+                                      label: _localizations.confirmPassword,
                                       controller: _confirmController,
                                       obscureText: true,
                                       icon: Icons.lock_outline,
@@ -452,7 +456,7 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
                                         horizontal: 16,
                                       ),
                                       child: Text(
-                                        'OR',
+                                        _localizations.orDivider,
                                         style: TextStyle(
                                           color: Colors.grey[600],
                                           fontSize: 12,
@@ -476,7 +480,7 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     Text(
-                                      'Already have an account? ',
+                                      _localizations.alreadyHaveAccount,
                                       style: TextStyle(
                                         color: Colors.grey[600],
                                         fontSize: 14,
@@ -485,8 +489,8 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
                                     ),
                                     GestureDetector(
                                       onTap: () => Navigator.of(context).pop(),
-                                      child: const Text(
-                                        'Sign In',
+                                      child: Text(
+                                        _localizations.signIn,
                                         style: TextStyle(
                                           color: Color(0xFF1B4D3E),
                                           fontSize: 14,
@@ -586,7 +590,7 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
         controller: _passwordController,
         obscureText: _obscure,
         decoration: InputDecoration(
-          hintText: 'Password',
+          hintText: _localizations.password,
           hintStyle: TextStyle(
             color: Colors.grey[400],
             fontSize: 14,
@@ -645,8 +649,8 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
               elevation: 0,
               shadowColor: Colors.transparent,
             ),
-            child: const Text(
-              'Create Account',
+            child: Text(
+              _localizations.createAccount,
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../core/services/session_manager.dart';
+import '../../../../core/services/language_service.dart';
+import '../../../../core/localization/app_localizations.dart';
 
 class ShopDetailsPage extends StatefulWidget {
   const ShopDetailsPage({super.key});
@@ -26,12 +28,14 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
   final _auth = FirebaseAuth.instance;
   late final FirebaseFirestore _firestore;
   late SessionManager _sessionManager;
+  late AppLocalizations _localizations;
 
   @override
   void initState() {
     super.initState();
     _firestore = FirebaseFirestore.instance;
     _sessionManager = SessionManager();
+    _localizations = AppLocalizations(LanguageService.instance.currentLanguage);
     _loadShopDetails();
   }
 
@@ -97,9 +101,9 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Shop details saved successfully'),
-            backgroundColor: Color(0xFF4CAF50),
+          SnackBar(
+            content: Text(_localizations.shopDetailsSaved),
+            backgroundColor: const Color(0xFF4CAF50),
           ),
         );
       }
@@ -211,8 +215,8 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
           icon: const Icon(Icons.arrow_back, color: Color(0xFF1B4D3E)),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
-          'Shop Details',
+        title: Text(
+          _localizations.shopDetails,
           style: TextStyle(
             color: Color(0xFF1B4D3E),
             fontSize: 22,
@@ -247,7 +251,7 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Shop Information',
+                      _localizations.shopInformation,
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
@@ -256,21 +260,21 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
                     ),
                     const SizedBox(height: 16),
                     _buildInputField(
-                      label: 'Shop Name',
+                      label: _localizations.shopName,
                       controller: _shopNameController,
                       icon: Icons.storefront_outlined,
                       isRequired: true,
                     ),
                     const SizedBox(height: 16),
                     _buildInputField(
-                      label: 'Owner Name',
+                      label: _localizations.ownerName,
                       controller: _ownerNameController,
                       icon: Icons.person_outline,
                       isRequired: true,
                     ),
                     const SizedBox(height: 16),
                     _buildInputField(
-                      label: 'Email',
+                      label: _localizations.email,
                       controller: _emailController,
                       icon: Icons.email_outlined,
                       keyboardType: TextInputType.emailAddress,
@@ -298,7 +302,7 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Contact Information',
+                      _localizations.contactInformation,
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
@@ -307,7 +311,7 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
                     ),
                     const SizedBox(height: 16),
                     _buildInputField(
-                      label: 'Phone Number',
+                      label: _localizations.phoneNumber,
                       controller: _phoneController,
                       icon: Icons.phone_outlined,
                       keyboardType: TextInputType.phone,
@@ -315,7 +319,7 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
                     ),
                     const SizedBox(height: 16),
                     _buildInputField(
-                      label: 'Address',
+                      label: _localizations.address,
                       controller: _addressController,
                       icon: Icons.location_on_outlined,
                       maxLines: 3,
@@ -323,7 +327,7 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
                     ),
                     const SizedBox(height: 16),
                     _buildInputField(
-                      label: 'Pincode',
+                      label: _localizations.pincode,
                       controller: _pincodeController,
                       icon: Icons.pin_outlined,
                       keyboardType: TextInputType.number,
@@ -352,7 +356,7 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Business Information',
+                      _localizations.businessInformation,
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
@@ -361,7 +365,7 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
                     ),
                     const SizedBox(height: 16),
                     _buildInputField(
-                      label: 'GST Number',
+                      label: _localizations.gstNumber,
                       controller: _gstController,
                       icon: Icons.receipt_outlined,
                     ),
@@ -392,9 +396,9 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
                             ),
                           ),
                         )
-                      : const Text(
-                          'Save Shop Details',
-                          style: TextStyle(
+                      : Text(
+                          _localizations.saveShopDetails,
+                          style: const TextStyle(
                             color: Colors.white,
                             fontSize: 14,
                             fontWeight: FontWeight.w700,

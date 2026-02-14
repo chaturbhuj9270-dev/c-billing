@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:c_billing/core/services/dashboard_refresh_service.dart';
+import 'package:c_billing/core/services/language_service.dart';
+import 'package:c_billing/core/localization/app_localizations.dart';
 
 /// Bill settings page for configuring billing preferences
 class BillSettingsPage extends StatefulWidget {
@@ -19,10 +21,12 @@ class _BillSettingsPageState extends State<BillSettingsPage> {
   bool _generateViaContact = false;
   String _billType = 'pos'; // Default to POS printer
   bool _isLoading = true;
+  late AppLocalizations _localizations;
 
   @override
   void initState() {
     super.initState();
+    _localizations = AppLocalizations(LanguageService.instance.currentLanguage);
     _loadSettings();
   }
 
@@ -49,7 +53,7 @@ class _BillSettingsPageState extends State<BillSettingsPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Settings saved successfully',
+            _localizations.settingsSaved,
             style: const TextStyle(fontFamily: 'Literata'),
           ),
           backgroundColor: const Color(0xFF1B4D3E),
@@ -78,8 +82,8 @@ class _BillSettingsPageState extends State<BillSettingsPage> {
             icon: const Icon(Icons.arrow_back, color: Colors.white),
             onPressed: () => Navigator.pop(context, true), // Return true when back pressed
           ),
-          title: const Text(
-            'Bill Settings',
+          title: Text(
+            _localizations.billSettings,
             style: TextStyle(
               fontFamily: 'Literata',
               fontSize: 20,
@@ -90,9 +94,9 @@ class _BillSettingsPageState extends State<BillSettingsPage> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, true),
-              child: const Text(
-                'Done',
-                style: TextStyle(
+              child: Text(
+                _localizations.done,
+                style: const TextStyle(
                   fontFamily: 'Literata',
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -111,7 +115,7 @@ class _BillSettingsPageState extends State<BillSettingsPage> {
                 children: [
                   // Bill Type Section
                   _buildSectionCard(
-                    title: 'Bill Type',
+                    title: _localizations.billType,
                     icon: Icons.description,
                     children: [
                       _buildBillTypeSelector(),
@@ -121,12 +125,12 @@ class _BillSettingsPageState extends State<BillSettingsPage> {
                   
                   // Billing Settings Section
                   _buildSectionCard(
-                    title: 'Billing Settings',
+                    title: _localizations.billingSettings,
                     icon: Icons.receipt_long,
                     children: [
                       _buildSettingTile(
-                        title: 'Generate Bill via Contact Number',
-                        subtitle: 'Require customer contact number before generating a bill',
+                        title: _localizations.generateBillViaContact,
+                        subtitle: _localizations.requireContactNumber,
                         value: _generateViaContact,
                         onChanged: (value) async {
                           setState(() {
@@ -141,12 +145,12 @@ class _BillSettingsPageState extends State<BillSettingsPage> {
                   
                   // Print Settings Section
                   _buildSectionCard(
-                    title: 'Print Settings',
+                    title: _localizations.printSettings,
                     icon: Icons.print,
                     children: [
                       _buildSettingTile(
-                        title: 'Show Customer Details on Bill',
-                        subtitle: 'Display customer name and phone on printed bills',
+                        title: _localizations.showCustomerDetailsOnBill,
+                        subtitle: _localizations.displayCustomerOnBill,
                         value: _showCustomerDetails,
                         onChanged: (value) async {
                           setState(() {
@@ -173,7 +177,7 @@ class _BillSettingsPageState extends State<BillSettingsPage> {
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(
-                            'When "Generate Bill via Contact Number" is enabled, a valid phone number is required before saving a bill.',
+                            _localizations.contactNumberNote,
                             style: TextStyle(
                               fontFamily: 'Literata',
                               fontSize: 13,
@@ -300,7 +304,7 @@ class _BillSettingsPageState extends State<BillSettingsPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Select default bill type for printing',
+            _localizations.selectDefaultBillType,
             style: TextStyle(
               fontFamily: 'Literata',
               fontSize: 13,
@@ -312,8 +316,8 @@ class _BillSettingsPageState extends State<BillSettingsPage> {
             children: [
               Expanded(
                 child: _buildBillTypeOption(
-                  title: 'POS Printer',
-                  subtitle: 'Thermal receipt',
+                  title: _localizations.posPrinter,
+                  subtitle: _localizations.thermalReceipt,
                   icon: Icons.print,
                   value: 'pos',
                   isSelected: _billType == 'pos',
@@ -322,8 +326,8 @@ class _BillSettingsPageState extends State<BillSettingsPage> {
               const SizedBox(width: 12),
               Expanded(
                 child: _buildBillTypeOption(
-                  title: 'Normal Bill',
-                  subtitle: 'PDF format',
+                  title: _localizations.normalBill,
+                  subtitle: _localizations.pdfFormat,
                   icon: Icons.picture_as_pdf,
                   value: 'normal',
                   isSelected: _billType == 'normal',
@@ -410,9 +414,9 @@ class _BillSettingsPageState extends State<BillSettingsPage> {
                   color: const Color(0xFF1B4D3E),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Text(
-                  'Selected',
-                  style: TextStyle(
+                child: Text(
+                  _localizations.selected,
+                  style: const TextStyle(
                     fontFamily: 'Literata',
                     fontSize: 10,
                     fontWeight: FontWeight.w600,

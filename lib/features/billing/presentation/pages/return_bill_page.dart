@@ -15,6 +15,8 @@ import 'package:c_billing/features/shop/domain/entities/shop.dart';
 import 'package:c_billing/common_widgets/printer_selection_widget.dart';
 import 'package:c_billing/features/billing/offline/controllers/bill_offline_controller.dart';
 import 'package:c_billing/core/services/inventory_integration_service.dart';
+import 'package:c_billing/core/services/language_service.dart';
+import 'package:c_billing/core/localization/app_localizations.dart';
 
 /// Return Bill Page for processing bill returns
 /// Allows searching by bill number or customer mobile and processing returns
@@ -51,10 +53,12 @@ class _ReturnBillPageState extends State<ReturnBillPage>
 
   // Track return quantities for each item (itemId -> quantity to return)
   Map<String, int> _returnQuantities = {};
+  late AppLocalizations _localizations;
 
   @override
   void initState() {
     super.initState();
+    _localizations = AppLocalizations(LanguageService.instance.currentLanguage);
     _firestore = FirebaseFirestore.instance;
 
     _billingService = BillingService(
@@ -146,7 +150,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
             _currentBill = Bill.fromBillEntity(billEntity);
             _initializeReturnQuantities(_currentBill!);
           } else {
-            _errorMessage = 'Bill not found';
+            _errorMessage = _localizations.billNotFound;
           }
         });
       }
@@ -154,7 +158,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
       if (mounted) {
         setState(() {
           _isSearching = false;
-          _errorMessage = 'Error searching bill: $e';
+          _errorMessage = '${_localizations.errorSearchingBill}: $e';
         });
       }
     }
@@ -305,7 +309,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
         } else {
           setState(() {
             _isProcessing = false;
-            _errorMessage = result.errorMessage ?? 'Failed to process return';
+            _errorMessage = result.errorMessage ?? _localizations.failedToProcessReturn;
           });
         }
       }
@@ -313,7 +317,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
       if (mounted) {
         setState(() {
           _isProcessing = false;
-          _errorMessage = 'Error processing return: $e';
+          _errorMessage = '${_localizations.errorProcessingReturn}: $e';
         });
       }
     }
@@ -372,8 +376,8 @@ class _ReturnBillPageState extends State<ReturnBillPage>
                   child: Text(
                     result.message ??
                         (result.success
-                            ? 'Bill printed successfully!'
-                            : 'Failed to print bill'),
+                            ? _localizations.billPrintedSuccessfully
+                            : _localizations.errorPrintingBill),
                   ),
                 ),
               ],
@@ -395,7 +399,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
               children: [
                 const Icon(Icons.error_outline, color: Colors.white),
                 const SizedBox(width: 8),
-                Expanded(child: Text('Print error: $e')),
+                Expanded(child: Text('${_localizations.errorPrintingBill}: $e')),
               ],
             ),
             backgroundColor: Colors.red,
@@ -545,9 +549,9 @@ class _ReturnBillPageState extends State<ReturnBillPage>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Text(
-                        'Return Bill',
-                        style: TextStyle(
+                      Text(
+                        _localizations.returnBill,
+                        style: const TextStyle(
                           color: Colors.white,
                           fontSize: 22,
                           fontWeight: FontWeight.w700,
@@ -556,7 +560,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
                         ),
                       ),
                       Text(
-                        'Process bill returns',
+                        _localizations.processBillReturns,
                         style: TextStyle(
                           color: Colors.white.withOpacity(0.7),
                           fontSize: 11,
@@ -659,9 +663,9 @@ class _ReturnBillPageState extends State<ReturnBillPage>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Search Bill',
-              style: TextStyle(
+            Text(
+              _localizations.searchBill,
+              style: const TextStyle(
                 fontFamily: 'Literata',
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
@@ -670,7 +674,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
             ),
             const SizedBox(height: 4),
             Text(
-              'Enter Bill Number or Customer Mobile Number',
+              _localizations.enterBillOrMobile,
               style: TextStyle(
                 fontFamily: 'Literata',
                 fontSize: 12,
@@ -681,7 +685,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
             TextFormField(
               controller: _searchController,
               decoration: InputDecoration(
-                hintText: 'e.g., BILL-20260205-ABC123 or 9876543210',
+                hintText: _localizations.billOrMobileHint,
                 hintStyle: TextStyle(
                   fontFamily: 'Literata',
                   fontSize: 13,
@@ -717,7 +721,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
               style: const TextStyle(fontFamily: 'Literata', fontSize: 14),
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
-                  return 'Please enter a bill number or mobile number';
+                  return _localizations.pleaseEnterBillOrMobile;
                 }
                 return null;
               },
@@ -750,14 +754,14 @@ class _ReturnBillPageState extends State<ReturnBillPage>
                           ),
                         ),
                       )
-                    : const Row(
+                    : Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.search, size: 20),
-                          SizedBox(width: 8),
+                          const Icon(Icons.search, size: 20),
+                          const SizedBox(width: 8),
                           Text(
-                            'Search & Validate',
-                            style: TextStyle(
+                            _localizations.searchAndValidate,
+                            style: const TextStyle(
                               fontFamily: 'Literata',
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
@@ -899,7 +903,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
                   ),
                 ),
                 child: Text(
-                  bill.returnStatus ? 'Returned' : 'Active',
+                  bill.returnStatus ? _localizations.returnedLabel : _localizations.active,
                   style: TextStyle(
                     fontFamily: 'Literata',
                     fontSize: 11,
@@ -919,7 +923,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
           // Bill Date
           _buildDetailRow(
             Icons.calendar_today,
-            'Bill Date',
+            _localizations.billDate,
             dateFormat.format(bill.billDate),
           ),
 
@@ -928,12 +932,12 @@ class _ReturnBillPageState extends State<ReturnBillPage>
             const SizedBox(height: 12),
             _buildDetailRow(
               Icons.person,
-              'Customer',
+              _localizations.customerName,
               bill.customerName ?? 'N/A',
             ),
             if (bill.customerContact != null) ...[
               const SizedBox(height: 12),
-              _buildDetailRow(Icons.phone, 'Contact', bill.customerContact!),
+              _buildDetailRow(Icons.phone, _localizations.contact, bill.customerContact!),
             ],
           ],
 
@@ -945,9 +949,9 @@ class _ReturnBillPageState extends State<ReturnBillPage>
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'Select Items to Return',
-                style: TextStyle(
+              Text(
+                _localizations.selectItemsToReturn,
+                style: const TextStyle(
                   fontFamily: 'Literata',
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
@@ -968,9 +972,9 @@ class _ReturnBillPageState extends State<ReturnBillPage>
                           color: const Color(0xFF1B4D3E).withOpacity(0.1),
                           borderRadius: BorderRadius.circular(6),
                         ),
-                        child: const Text(
-                          'Select All',
-                          style: TextStyle(
+                        child: Text(
+                          _localizations.selectAll,
+                          style: const TextStyle(
                             fontFamily: 'Literata',
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
@@ -992,7 +996,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
-                          'Clear',
+                          _localizations.clear,
                           style: TextStyle(
                             fontFamily: 'Literata',
                             fontSize: 11,
@@ -1033,7 +1037,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'Items to Return:',
+                        '${_localizations.itemsToReturn}:',
                         style: TextStyle(
                           fontFamily: 'Literata',
                           fontSize: 13,
@@ -1041,7 +1045,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
                         ),
                       ),
                       Text(
-                        '$_totalReturnQuantity qty',
+                        '$_totalReturnQuantity ${_localizations.quantity}',
                         style: TextStyle(
                           fontFamily: 'Literata',
                           fontSize: 13,
@@ -1056,7 +1060,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'Refund Amount:',
+                        '${_localizations.refundAmount}:',
                         style: TextStyle(
                           fontFamily: 'Literata',
                           fontSize: 15,
@@ -1086,7 +1090,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Original Quantity:',
+                '${_localizations.originalQuantity}:',
                 style: TextStyle(
                   fontFamily: 'Literata',
                   fontSize: 13,
@@ -1201,7 +1205,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Returned on',
+                          _localizations.returnedOn,
                           style: TextStyle(
                             fontFamily: 'Literata',
                             fontSize: 11,
@@ -1312,9 +1316,9 @@ class _ReturnBillPageState extends State<ReturnBillPage>
                               color: Colors.grey[400],
                               borderRadius: BorderRadius.circular(4),
                             ),
-                            child: const Text(
-                              'Returned',
-                              style: TextStyle(
+                            child: Text(
+                              _localizations.returnedLabel,
+                              style: const TextStyle(
                                 fontFamily: 'Literata',
                                 fontSize: 9,
                                 fontWeight: FontWeight.w600,
@@ -1333,7 +1337,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
-                              '${item.returnedQuantity} returned',
+                              '${item.returnedQuantity} ${_localizations.returnedLabel}',
                               style: const TextStyle(
                                 fontFamily: 'Literata',
                                 fontSize: 9,
@@ -1474,7 +1478,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
             if (returnQty > 0) ...[
               const SizedBox(height: 8),
               Text(
-                'Refund: ₹${(item.sellingPrice * returnQty).toStringAsFixed(2)}',
+                '${_localizations.refund}: ₹${(item.sellingPrice * returnQty).toStringAsFixed(2)}',
                 style: TextStyle(
                   fontFamily: 'Literata',
                   fontSize: 12,
@@ -1506,7 +1510,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
             Icon(Icons.info_outline, color: Colors.grey[600], size: 20),
             const SizedBox(width: 8),
             Text(
-              'All items have been returned',
+              _localizations.allItemsReturned,
               style: TextStyle(
                 fontFamily: 'Literata',
                 fontSize: 14,
@@ -1532,7 +1536,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
             Icon(Icons.touch_app_outlined, color: Colors.grey[600], size: 20),
             const SizedBox(width: 8),
             Text(
-              'Select items to return',
+              _localizations.selectItemsToReturn,
               style: TextStyle(
                 fontFamily: 'Literata',
                 fontSize: 14,
@@ -1558,10 +1562,10 @@ class _ReturnBillPageState extends State<ReturnBillPage>
           disabledBackgroundColor: Colors.orange[300],
         ),
         child: _isProcessing
-            ? const Row(
+            ? Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  SizedBox(
+                  const SizedBox(
                     height: 20,
                     width: 20,
                     child: CircularProgressIndicator(
@@ -1569,10 +1573,10 @@ class _ReturnBillPageState extends State<ReturnBillPage>
                       valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                     ),
                   ),
-                  SizedBox(width: 12),
+                  const SizedBox(width: 12),
                   Text(
-                    'Processing Return...',
-                    style: TextStyle(
+                    _localizations.processingReturn,
+                    style: const TextStyle(
                       fontFamily: 'Literata',
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -1580,14 +1584,14 @@ class _ReturnBillPageState extends State<ReturnBillPage>
                   ),
                 ],
               )
-            : const Row(
+            : Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.assignment_return, size: 22),
-                  SizedBox(width: 10),
+                  const Icon(Icons.assignment_return, size: 22),
+                  const SizedBox(width: 10),
                   Text(
-                    'Process Return',
-                    style: TextStyle(
+                    _localizations.processReturn,
+                    style: const TextStyle(
                       fontFamily: 'Literata',
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
@@ -1611,6 +1615,8 @@ class _ReturnConfirmationDialog extends StatelessWidget {
     required this.returnQuantities,
     required this.totalRefundAmount,
   });
+
+  AppLocalizations get _localizations => AppLocalizations(LanguageService.instance.currentLanguage);
 
   int get _totalReturnQuantity {
     return returnQuantities.values.fold(0, (sum, qty) => sum + qty);
@@ -1645,10 +1651,10 @@ class _ReturnConfirmationDialog extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
-          const Expanded(
+          Expanded(
             child: Text(
-              'Confirm Return',
-              style: TextStyle(
+              _localizations.confirmReturn,
+              style: const TextStyle(
                 fontFamily: 'Literata',
                 fontWeight: FontWeight.w700,
                 color: Color(0xFF1B4D3E),
@@ -1669,7 +1675,7 @@ class _ReturnConfirmationDialog extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Are you sure you want to return the selected items?',
+                _localizations.confirmReturnMessage,
                 style: TextStyle(
                   fontFamily: 'Literata',
                   fontSize: 14,
@@ -1691,7 +1697,7 @@ class _ReturnConfirmationDialog extends StatelessWidget {
                       children: [
                         Flexible(
                           child: Text(
-                            'Bill Number:',
+                            '${_localizations.billNo}:',
                             style: TextStyle(
                               fontFamily: 'Literata',
                               fontSize: 12,
@@ -1773,7 +1779,7 @@ class _ReturnConfirmationDialog extends StatelessWidget {
                       children: [
                         Flexible(
                           child: Text(
-                            'Items to return:',
+                            '${_localizations.itemsToReturn}:',
                             style: TextStyle(
                               fontFamily: 'Literata',
                               fontSize: 12,
@@ -1800,7 +1806,7 @@ class _ReturnConfirmationDialog extends StatelessWidget {
                       children: [
                         Flexible(
                           child: Text(
-                            'Refund Amount:',
+                            '${_localizations.refundAmount}:',
                             style: TextStyle(
                               fontFamily: 'Literata',
                               fontSize: 14,
@@ -1840,7 +1846,7 @@ class _ReturnConfirmationDialog extends StatelessWidget {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'This will restore the items back to inventory.',
+                        _localizations.restoreToInventory,
                         style: TextStyle(
                           fontFamily: 'Literata',
                           fontSize: 11,
@@ -1859,7 +1865,7 @@ class _ReturnConfirmationDialog extends StatelessWidget {
         TextButton(
           onPressed: () => Navigator.pop(context, false),
           child: Text(
-            'Cancel',
+            _localizations.cancel,
             style: TextStyle(fontFamily: 'Literata', color: Colors.grey[600]),
           ),
         ),
@@ -1872,9 +1878,9 @@ class _ReturnConfirmationDialog extends StatelessWidget {
               borderRadius: BorderRadius.circular(10),
             ),
           ),
-          child: const Text(
-            'Confirm Return',
-            style: TextStyle(
+          child: Text(
+            _localizations.confirmReturn,
+            style: const TextStyle(
               fontFamily: 'Literata',
               fontWeight: FontWeight.w600,
             ),

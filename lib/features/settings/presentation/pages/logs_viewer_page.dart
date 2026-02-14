@@ -5,6 +5,8 @@ import 'package:intl/intl.dart';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:c_billing/core/services/app_logger.dart';
+import 'package:c_billing/core/localization/app_localizations.dart';
+import 'package:c_billing/core/services/language_service.dart';
 
 class LogsViewerPage extends StatefulWidget {
   const LogsViewerPage({super.key});
@@ -16,6 +18,7 @@ class LogsViewerPage extends StatefulWidget {
 class _LogsViewerPageState extends State<LogsViewerPage> {
   final _logger = AppLogger();
   final _searchController = TextEditingController();
+  late AppLocalizations _localizations;
   List<LogEntry> _displayedLogs = [];
   LogLevel? _filterLevel;
   bool _autoScroll = true;
@@ -24,6 +27,7 @@ class _LogsViewerPageState extends State<LogsViewerPage> {
   @override
   void initState() {
     super.initState();
+    _localizations = AppLocalizations(LanguageService.instance.currentLanguage);
     _displayedLogs = _logger.logs;
     
     // Listen to new logs
@@ -86,14 +90,14 @@ class _LogsViewerPageState extends State<LogsViewerPage> {
       
       await Share.shareXFiles(
         [XFile(file.path)],
-        subject: 'C-Billing App Logs',
-        text: 'App logs exported from C-Billing',
+        subject: _localizations.cBillingAppLogs,
+        text: _localizations.appLogsExported,
       );
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error sharing logs: $e'),
+            content: Text('${_localizations.errorSharingLogs}: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -105,8 +109,8 @@ class _LogsViewerPageState extends State<LogsViewerPage> {
     final logsText = _logger.exportLogs();
     Clipboard.setData(ClipboardData(text: logsText));
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Logs copied to clipboard'),
+      SnackBar(
+        content: Text(_localizations.logsCopied),
         duration: Duration(seconds: 2),
       ),
     );
@@ -116,15 +120,15 @@ class _LogsViewerPageState extends State<LogsViewerPage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Clear Logs?', style: TextStyle(fontFamily: 'Literata')),
-        content: const Text(
-          'This will delete all log entries. This action cannot be undone.',
+        title: Text(_localizations.clearLogsConfirm, style: TextStyle(fontFamily: 'Literata')),
+        content: Text(
+          _localizations.clearLogsMessage,
           style: TextStyle(fontFamily: 'Literata'),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel', style: TextStyle(fontFamily: 'Literata')),
+            child: Text(_localizations.cancel, style: TextStyle(fontFamily: 'Literata')),
           ),
           ElevatedButton(
             onPressed: () {
@@ -138,7 +142,7 @@ class _LogsViewerPageState extends State<LogsViewerPage> {
               backgroundColor: Colors.red,
               foregroundColor: Colors.white,
             ),
-            child: const Text('Clear', style: TextStyle(fontFamily: 'Literata')),
+            child: Text(_localizations.clear, style: TextStyle(fontFamily: 'Literata')),
           ),
         ],
       ),
@@ -163,8 +167,8 @@ class _LogsViewerPageState extends State<LogsViewerPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
-        title: const Text(
-          'App Logs',
+        title: Text(
+          _localizations.appLogs,
           style: TextStyle(fontFamily: 'Literata', fontWeight: FontWeight.w700),
         ),
         backgroundColor: const Color(0xFF1B4D3E),
@@ -174,7 +178,7 @@ class _LogsViewerPageState extends State<LogsViewerPage> {
           // Auto-scroll toggle
           IconButton(
             icon: Icon(_autoScroll ? Icons.arrow_downward : Icons.arrow_downward_outlined),
-            tooltip: _autoScroll ? 'Disable Auto-scroll' : 'Enable Auto-scroll',
+            tooltip: _autoScroll ? _localizations.disableAutoScroll : _localizations.enableAutoScroll,
             onPressed: () {
               setState(() {
                 _autoScroll = !_autoScroll;
@@ -184,19 +188,19 @@ class _LogsViewerPageState extends State<LogsViewerPage> {
           // Copy
           IconButton(
             icon: const Icon(Icons.copy),
-            tooltip: 'Copy Logs',
+            tooltip: _localizations.copyLogs,
             onPressed: _copyToClipboard,
           ),
           // Share
           IconButton(
             icon: const Icon(Icons.share),
-            tooltip: 'Share Logs',
+            tooltip: _localizations.shareLogs,
             onPressed: _shareLogs,
           ),
           // Clear
           IconButton(
             icon: const Icon(Icons.delete_outline),
-            tooltip: 'Clear Logs',
+            tooltip: _localizations.clearLogs,
             onPressed: _clearLogs,
           ),
         ],
@@ -221,15 +225,15 @@ class _LogsViewerPageState extends State<LogsViewerPage> {
                 // Stats
                 Row(
                   children: [
-                    _buildStatChip('Total', _logger.logs.length, Colors.grey),
+                    _buildStatChip(_localizations.total, _logger.logs.length, Colors.grey),
                     const SizedBox(width: 8),
-                    _buildStatChip('Debug', _logger.getLogsByLevel(LogLevel.debug).length, Colors.grey),
+                    _buildStatChip(_localizations.debug, _logger.getLogsByLevel(LogLevel.debug).length, Colors.grey),
                     const SizedBox(width: 8),
-                    _buildStatChip('Info', _logger.getLogsByLevel(LogLevel.info).length, Colors.blue),
+                    _buildStatChip(_localizations.info, _logger.getLogsByLevel(LogLevel.info).length, Colors.blue),
                     const SizedBox(width: 8),
-                    _buildStatChip('Warn', _logger.getLogsByLevel(LogLevel.warning).length, Colors.orange),
+                    _buildStatChip(_localizations.warn, _logger.getLogsByLevel(LogLevel.warning).length, Colors.orange),
                     const SizedBox(width: 8),
-                    _buildStatChip('Error', _logger.getLogsByLevel(LogLevel.error).length, Colors.red),
+                    _buildStatChip(_localizations.error, _logger.getLogsByLevel(LogLevel.error).length, Colors.red),
                   ],
                 ),
                 const SizedBox(height: 12),
@@ -242,7 +246,7 @@ class _LogsViewerPageState extends State<LogsViewerPage> {
                         onChanged: (_) => _applyFilters(),
                         style: const TextStyle(fontFamily: 'Literata', fontSize: 14),
                         decoration: InputDecoration(
-                          hintText: 'Search logs...',
+                          hintText: _localizations.searchLogs,
                           hintStyle: TextStyle(color: Colors.grey[500]),
                           prefixIcon: const Icon(Icons.search, size: 20),
                           suffixIcon: _searchController.text.isNotEmpty
@@ -274,10 +278,10 @@ class _LogsViewerPageState extends State<LogsViewerPage> {
                       ),
                       child: DropdownButton<LogLevel?>(
                         value: _filterLevel,
-                        hint: const Text('Level', style: TextStyle(fontFamily: 'Literata', fontSize: 13)),
+                        hint: Text(_localizations.level, style: TextStyle(fontFamily: 'Literata', fontSize: 13)),
                         underline: const SizedBox(),
                         items: [
-                          const DropdownMenuItem(value: null, child: Text('All', style: TextStyle(fontFamily: 'Literata', fontSize: 13))),
+                          DropdownMenuItem(value: null, child: Text(_localizations.all, style: TextStyle(fontFamily: 'Literata', fontSize: 13))),
                           ...LogLevel.values.map((level) => DropdownMenuItem(
                             value: level,
                             child: Text(level.name.toUpperCase(), style: const TextStyle(fontFamily: 'Literata', fontSize: 13)),
@@ -306,7 +310,7 @@ class _LogsViewerPageState extends State<LogsViewerPage> {
                         Icon(Icons.description_outlined, size: 64, color: Colors.grey[400]),
                         const SizedBox(height: 16),
                         Text(
-                          'No logs to display',
+                          _localizations.noLogsToDisplay,
                           style: TextStyle(
                             fontFamily: 'Literata',
                             fontSize: 16,
@@ -452,8 +456,8 @@ class _LogsViewerPageState extends State<LogsViewerPage> {
                 ),
                 if (log.error != null) ...[
                   const SizedBox(height: 8),
-                  const Text(
-                    'Error:',
+                  Text(
+                    '${_localizations.error}:',
                     style: TextStyle(
                       fontFamily: 'Literata',
                       fontWeight: FontWeight.w600,
@@ -473,8 +477,8 @@ class _LogsViewerPageState extends State<LogsViewerPage> {
                 ],
                 if (log.stackTrace != null) ...[
                   const SizedBox(height: 8),
-                  const Text(
-                    'Stack Trace:',
+                  Text(
+                    '${_localizations.stackTrace}:',
                     style: TextStyle(
                       fontFamily: 'Literata',
                       fontWeight: FontWeight.w600,

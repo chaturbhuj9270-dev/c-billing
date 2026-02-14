@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../../../core/services/session_manager.dart';
 import '../../../../core/services/credentials_manager.dart';
 import '../../../../core/services/language_service.dart';
+import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/services/biometric_service.dart';
 import '../../../../core/services/error_logging_service.dart';
 import '../../../../features/authentication/presentation/pages/change_password_page.dart';
@@ -30,6 +31,7 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
   String _selectedLanguage = 'English'; // Default language
   bool _biometricLockEnabled = false;
   bool _canUseBiometrics = false;
+  late AppLocalizations _localizations;
 
   // Animation controllers
   late AnimationController _slideController;
@@ -43,7 +45,7 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
   final List<_MenuItem> _menuItems = [
     _MenuItem(icon: Icons.person_rounded, label: 'Profile', route: 'Profile', color: const Color(0xFF2E7D32)),
     _MenuItem(icon: Icons.store_rounded, label: 'Shop Details', route: 'ShopDetails', color: const Color(0xFF1976D2)),
-    _MenuItem(icon: Icons.lock_reset_rounded, label: 'Forgot Password', route: 'ChangePassword', color: const Color(0xFFE65100)),
+    _MenuItem(icon: Icons.lock_reset_rounded, label: 'Change Password', route: 'ChangePassword', color: const Color(0xFFE65100)),
     _MenuItem(icon: Icons.language_rounded, label: 'Language', route: 'Language', color: const Color(0xFFFF6F00)),
   ];
 
@@ -52,6 +54,7 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
+    _localizations = AppLocalizations(LanguageService.instance.currentLanguage);
     _sessionManager = SessionManager();
     _credentialsManager = CredentialsManager();
     _currentUser = _auth.currentUser;
@@ -168,8 +171,8 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(enabled 
-            ? 'Biometric lock enabled' 
-            : 'Biometric lock disabled'),
+            ? _localizations.biometricEnabled 
+            : _localizations.biometricDisabled),
           backgroundColor: const Color(0xFF2E7D32),
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
@@ -290,7 +293,7 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
             });
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('Language changed to $language'),
+                content: Text('${_localizations.languageChangedTo} $language'),
                 backgroundColor: const Color(0xFF2E7D32),
                 behavior: SnackBarBehavior.floating,
                 shape: RoundedRectangleBorder(
@@ -481,9 +484,9 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
                             ),
                           ),
                           const SizedBox(width: 6),
-                          const Text(
-                            'Online',
-                            style: TextStyle(
+                          Text(
+                            _localizations.online,
+                            style: const TextStyle(
                               color: Colors.white70,
                               fontSize: 11,
                               fontWeight: FontWeight.w500,
@@ -637,7 +640,7 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              'Biometric Lock',
+              _localizations.biometricLock,
               style: TextStyle(
                 color: _biometricLockEnabled 
                     ? biometricColor 
@@ -712,7 +715,7 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
                           ),
                           const SizedBox(width: 6),
                           Text(
-                            'Logs',
+                            _localizations.logs,
                             style: TextStyle(
                               color: Colors.grey[600],
                               fontSize: 13,
@@ -775,7 +778,7 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
             const SizedBox(height: 8),
             // Version number only
             Text(
-              'Version 1.0.0',
+              _localizations.version,
               style: TextStyle(
                 color: Colors.grey[400],
                 fontSize: 12,
@@ -834,9 +837,9 @@ class _LanguageDialog extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
-          const Text(
-            'Select Language',
-            style: TextStyle(
+          Text(
+            AppLocalizations(LanguageService.instance.currentLanguage).selectLanguage,
+            style: const TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.w600,
               fontFamily: 'Literata',
@@ -857,9 +860,9 @@ class _LanguageDialog extends StatelessWidget {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text(
-            'Cancel',
-            style: TextStyle(
+          child: Text(
+            AppLocalizations(LanguageService.instance.currentLanguage).cancel,
+            style: const TextStyle(
               color: Colors.grey,
               fontFamily: 'Literata',
             ),
@@ -987,9 +990,9 @@ class _SettingsDialogState extends State<_SettingsDialog> {
             ),
           ),
           const SizedBox(width: 12),
-          const Text(
-            'Settings',
-            style: TextStyle(
+          Text(
+            AppLocalizations(LanguageService.instance.currentLanguage).settings,
+            style: const TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.w600,
               fontFamily: 'Literata',
@@ -1041,7 +1044,7 @@ class _SettingsDialogState extends State<_SettingsDialog> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Biometric Lock',
+                        AppLocalizations(LanguageService.instance.currentLanguage).biometricLock,
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
@@ -1054,8 +1057,8 @@ class _SettingsDialogState extends State<_SettingsDialog> {
                       const SizedBox(height: 2),
                       Text(
                         widget.canUseBiometrics
-                            ? 'Unlock app with fingerprint/face'
-                            : 'Biometrics not available',
+                            ? AppLocalizations(LanguageService.instance.currentLanguage).unlockWithBiometric
+                            : AppLocalizations(LanguageService.instance.currentLanguage).biometricsNotAvailable,
                         style: TextStyle(
                           fontSize: 12,
                           color: Colors.grey[600],
@@ -1085,9 +1088,9 @@ class _SettingsDialogState extends State<_SettingsDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text(
-            'Close',
-            style: TextStyle(
+          child: Text(
+            AppLocalizations(LanguageService.instance.currentLanguage).close,
+            style: const TextStyle(
               color: Color(0xFF78909C),
               fontFamily: 'Literata',
               fontWeight: FontWeight.w600,

@@ -275,9 +275,9 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
               ),
             ),
             const SizedBox(width: 12),
-            const Text(
-              'Exit App',
-              style: TextStyle(
+            Text(
+              _localizations.exitApp,
+              style: const TextStyle(
                 fontFamily: 'Literata',
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
@@ -286,9 +286,9 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
             ),
           ],
         ),
-        content: const Text(
-          'Are you sure you want to exit the app?',
-          style: TextStyle(
+        content: Text(
+          _localizations.exitAppConfirm,
+          style: const TextStyle(
             fontFamily: 'Literata',
             fontSize: 14,
             color: Colors.black87,
@@ -297,9 +297,9 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text(
-              'Cancel',
-              style: TextStyle(
+            child: Text(
+              _localizations.cancel,
+              style: const TextStyle(
                 fontFamily: 'Literata',
                 color: Colors.grey,
                 fontWeight: FontWeight.w600,
@@ -315,9 +315,9 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                 borderRadius: BorderRadius.circular(8),
               ),
             ),
-            child: const Text(
-              'Exit',
-              style: TextStyle(
+            child: Text(
+              _localizations.exit,
+              style: const TextStyle(
                 fontFamily: 'Literata',
                 fontWeight: FontWeight.w600,
               ),
@@ -410,7 +410,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                 const SizedBox(width: 8),
                 _buildHeaderActionButton(
                   icon: Icons.settings_rounded,
-                  tooltip: _selectedIndex == 3 ? 'Bill Settings' : 'Purchase Settings',
+                  tooltip: _selectedIndex == 3 ? _localizations.billSettings : _localizations.purchaseSettings,
                   onTap: () async {
                     if (_selectedIndex == 3) {
                       final result = await Navigator.push(
@@ -437,14 +437,14 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
               const SizedBox(width: 8),
               _buildHeaderActionButton(
                 icon: Icons.language_rounded,
-                tooltip: 'Language',
+                tooltip: _localizations.language,
                 onTap: _showLanguageDialog,
               ),
               // Logs Icon
               const SizedBox(width: 8),
               _buildHeaderActionButton(
                 icon: Icons.bug_report_rounded,
-                tooltip: 'View Logs',
+                tooltip: _localizations.viewLogs,
                 onTap: () {
                   Navigator.push(
                     context,
@@ -518,9 +518,9 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
               ),
             ),
             const SizedBox(width: 12),
-            const Text(
-              'Select Language',
-              style: TextStyle(
+            Text(
+              _localizations.selectLanguage,
+              style: const TextStyle(
                 fontFamily: 'Literata',
                 fontWeight: FontWeight.w700,
                 fontSize: 18,
@@ -551,7 +551,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Language changed to $language'),
+              content: Text('${_localizations.languageChangedTo} $language'),
               backgroundColor: const Color(0xFF2E7D32),
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(
@@ -726,7 +726,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              'Unable to refresh data. Showing cached data.',
+              _localizations.unableToRefresh,
               style: TextStyle(
                 color: Colors.red[800],
                 fontSize: 12,
@@ -738,7 +738,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
             TextButton(
               onPressed: () =>
                   context.read<OptimizedDashboardCubit>().refresh(),
-              child: const Text('Retry'),
+              child: Text(_localizations.retry),
             ),
         ],
       ),
@@ -754,12 +754,12 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
       case DashboardFilter.thisMonth:
         return DateFormat('MMMM yyyy').format(DateTime.now());
       case DashboardFilter.thisYear:
-        return 'Year ${DateTime.now().year}';
+        return '${_localizations.year} ${DateTime.now().year}';
       case DashboardFilter.custom:
         if (params.startDate != null && params.endDate != null) {
           return '${DateFormat('dd MMM').format(params.startDate!)} - ${DateFormat('dd MMM').format(params.endDate!)}';
         }
-        return 'Custom Range';
+        return '${_localizations.custom} Range';
       case DashboardFilter.all:
         return 'All Time';
     }
@@ -1002,7 +1002,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
               const SizedBox(width: 8),
               _buildFilterChip(
                 DashboardFilter.custom,
-                'Custom',
+                _localizations.custom,
                 Icons.edit_calendar_rounded,
                 state,
               ),
@@ -1224,7 +1224,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
           children: [
             Expanded(
               child: _buildGradientMetricCard(
-                title: 'Returns',
+                title: _localizations.returns,
                 amount: _formatAmount(data.totalReturns),
                 subtitle: '${data.totalReturnedItems} items returned',
                 gradient: const LinearGradient(
@@ -1239,9 +1239,9 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
             const SizedBox(width: 16),
             Expanded(
               child: _buildGradientMetricCard(
-                title: 'Net Sales',
+                title: _localizations.netSales,
                 amount: _formatAmount(data.netSales),
-                subtitle: 'After returns deducted',
+                subtitle: _localizations.afterReturnsDeducted,
                 gradient: const LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
@@ -1404,7 +1404,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            isProfitable ? _localizations.netProfit : 'Loss',
+                            isProfitable ? _localizations.netProfit : _localizations.loss,
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 11,
@@ -1486,9 +1486,9 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'Stock & Payments',
-                style: TextStyle(
+              Text(
+                _localizations.stockAndPayments,
+                style: const TextStyle(
                   color: Color(0xFF1B4D3E),
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
@@ -1542,7 +1542,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Stock Value',
+                        _localizations.stockValue,
                         style: TextStyle(
                           color: Colors.grey[600],
                           fontSize: 11,
@@ -1581,7 +1581,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Pending Amount',
+                        _localizations.pendingAmount,
                         style: TextStyle(
                           color: Colors.grey[600],
                           fontSize: 11,
@@ -1635,9 +1635,9 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'Payment Status',
-                style: TextStyle(
+              Text(
+                _localizations.paymentStatus,
+                style: const TextStyle(
                   color: Color(0xFF1B4D3E),
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
@@ -1650,9 +1650,9 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                   color: const Color(0xFF4CAF50).withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Text(
-                  'Coming Soon',
-                  style: TextStyle(
+                child: Text(
+                  _localizations.comingSoon,
+                  style: const TextStyle(
                     color: Color(0xFF4CAF50),
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
@@ -1664,7 +1664,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
           ),
           const SizedBox(height: 12),
           Text(
-            'Payment tracking and receivables management will be available in the next update.',
+            _localizations.paymentTrackingMessage,
             style: TextStyle(
               color: Colors.grey[600],
               fontSize: 12,
@@ -1939,7 +1939,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
               // Content
               Expanded(
                 child: data.isEmpty
-                    ? _buildEmptyState('No data available')
+                    ? _buildEmptyState(_localizations.noDataAvailableDashboard)
                     : ListView.builder(
                         controller: scrollController,
                         padding: const EdgeInsets.symmetric(vertical: 8),
@@ -2201,7 +2201,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                   overflow: TextOverflow.ellipsis,
                 ),
                 Text(
-                  isOutOfStock ? 'Out of stock!' : 'Only $currentStock left',
+                  isOutOfStock ? _localizations.outOfStockAlert : '${_localizations.onlyLeftInStock} $currentStock',
                   style: TextStyle(
                     fontSize: 11,
                     color: isOutOfStock ? Colors.red : Colors.orange[700],
@@ -2223,9 +2223,9 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                 borderRadius: BorderRadius.circular(8),
               ),
             ),
-            child: const Text(
-              'Order',
-              style: TextStyle(
+            child: Text(
+              _localizations.order,
+              style: const TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
                 color: Color(0xFF1B4D3E),

@@ -420,4 +420,274 @@ class EnglishLocalization {
   static const String searchBatches = 'Search by company, price...';
   static const String productCode = 'Product Code';
   static const String noBatchesFound = 'No batches match your search';
+
+  // ═══════════════════════════════════════════════════
+  // Bill Details Dialog (Bills History)
+  // ═══════════════════════════════════════════════════
+  static const String billDetails = 'Bill Details';
+  static const String soldItems = 'Sold Items';
+  static const String billNo = 'Bill No';
+  static const String mobile = 'Mobile';
+  static const String totalQuantity = 'Total Quantity';
+  static const String billTotalLabel = 'Bill Total';
+  static const String returnDeduction = 'Return Deduction';
+  static const String finalPayable = 'Final Payable';
+  static const String finalAmount = 'Final Amount';
+  static const String fullyReturned = 'Fully Returned';
+  static const String partialReturn = 'Partial Return';
+  static const String statusFullyReturned = 'Status: Fully Returned';
+  static const String includeReturnedItemsInPrint = 'Include Returned Items in Print';
+  static const String returnThisBill = 'Return This Bill';
+  static const String billReturned = 'Bill Returned';
+  static const String paidAmount = 'Paid Amount';
+  static const String selectDateRange = 'Select Date Range';
+  static const String startDate = 'Start Date';
+  static const String endDate = 'End Date';
+  static const String reset = 'Reset';
+  static const String product = 'Product';
+  static const String rate = 'Rate';
+  static const String returnLabel = 'Return';
+  static const String errorLoadingBills = 'Error loading bills';
+  static const String errorSharingBillGeneric = 'Error sharing bill';
+  static const String errorSavingPdfGeneric = 'Error saving PDF';
+  static const String errorPrintingBill = 'Error printing bill';
+  static const String totalReturns = 'Total Returns';
+
+  // ═══════════════════════════════════════════════════
+  // Dashboard Page
+  // ═══════════════════════════════════════════════════
+  static const String exitApp = 'Exit App';
+  static const String exitAppConfirm = 'Are you sure you want to exit the app?';
+  static const String exit = 'Exit';
+  static const String selectLanguage = 'Select Language';
+  static const String languageChangedTo = 'Language changed to';
+  static const String unableToRefresh = 'Unable to refresh data. Showing cached data.';
+  static const String retry = 'Retry';
+  static const String custom = 'Custom';
+  static const String returns = 'Returns';
+  static const String netSales = 'Net Sales';
+  static const String afterReturnsDeducted = 'After returns deducted';
+  static const String stockAndPayments = 'Stock & Payments';
+  static const String paymentStatus = 'Payment Status';
+  static const String comingSoon = 'Coming Soon';
+  static const String paymentTrackingMessage = 'Payment tracking and receivables management will be available in the next update.';
+  static const String loss = 'Loss';
+  static const String billSettings = 'Bill Settings';
+  static const String purchaseSettings = 'Purchase Settings';
+  static const String language = 'Language';
+  static const String viewLogs = 'View Logs';
+  static const String onlyLeftInStock = 'Only left';
+  static const String outOfStockAlert = 'Out of stock!';
+  static const String order = 'Order';
+  static const String noDataAvailableDashboard = 'No data available';
+  static const String year = 'Year';
+
+  // ═══════════════════════════════════════════════════
+  // Return Bill Page
+  // ═══════════════════════════════════════════════════
+  static const String returnBill = 'Return Bill';
+  static const String processBillReturns = 'Process bill returns';
+  static const String searchBill = 'Search Bill';
+  static const String enterBillOrMobile = 'Enter Bill Number or Customer Mobile Number';
+  static const String billOrMobileHint = 'e.g., BILL-20260205-ABC123 or 9876543210';
+  static const String searchAndValidate = 'Search & Validate';
+  static const String pleaseEnterBillOrMobile = 'Please enter a bill number or mobile number';
+  static const String billNotFound = 'Bill not found';
+  static const String errorSearchingBill = 'Error searching bill';
+  static const String allItemsReturned = 'All items have been returned';
+  static const String billDate = 'Bill Date';
+  static const String contact = 'Contact';
+  static const String active = 'Active';
+  static const String returnedLabel = 'Returned';
+  static const String originalQuantity = 'Original Quantity';
+  static const String returnQty = 'Return Qty';
+  static const String refundAmount = 'Refund Amount';
+  static const String selectItemsToReturn = 'Select Items to Return';
+  static const String itemsToReturn = 'Items to return';
+  static const String selectAll = 'Select All';
+  static const String clear = 'Clear';
+  static const String confirmReturn = 'Confirm Return';
+  static const String confirmReturnMessage = 'Are you sure you want to return the selected items?';
+  static const String restoreToInventory = 'This will restore the items back to inventory.';
+  static const String processReturn = 'Process Return';
+  static const String processingReturn = 'Processing Return...';
+  static const String returnProcessedSuccess = 'Return processed successfully!';
+  static const String returnProcessedPrint = 'Return processed! Print or share the receipt before leaving.';
+  static const String failedToProcessReturn = 'Failed to process return';
+  static const String errorProcessingReturn = 'Error processing return';
+  static const String returnedOn = 'Returned on';
+  static const String refund = 'Refund';
+
+  // ═══════════════════════════════════════════════════
+  // Billing Page (additional)
+  // ═══════════════════════════════════════════════════
+  static const String enterPhoneNumber = 'Enter Phone Number';
+  static const String enterCustomerPhone = 'Enter customer phone number';
+  static const String firstNameRequired2 = 'First name is required';
+  static const String lastNameRequired2 = 'Last name is required';
+  static const String saveAndAttach = 'Save & Attach';
+  static const String skip = 'Skip';
+  static const String full = 'Full';
+  static const String continuingWithoutCustomer = 'Continuing without customer';
+  static const String billProcessingFailed = 'Bill processing failed';
+  static const String pleaseEnterValidContact = 'Please enter a valid customer contact number to generate bill';
+  static const String clearPhoneNumber = 'Clear phone number';
+  static const String phoneNumberOptional = 'Phone Number (Optional)';
+  static const String printBill = 'Print Bill';
+  static const String customerNotFoundFor = 'Customer not found for';
+  static const String customerColon = 'Customer:';
+  static const String discountWithPercent = 'Discount';
+
+  // ═══════════════════════════════════════════════════
+  // Bill Settings Page
+  // ═══════════════════════════════════════════════════
+  static const String billingSettings = 'Billing Settings';
+  static const String billType = 'Bill Type';
+  static const String selectDefaultBillType = 'Select default bill type for printing';
+  static const String normalBill = 'Normal Bill';
+  static const String thermalReceipt = 'Thermal receipt';
+  static const String selected = 'Selected';
+  static const String printSettings = 'Print Settings';
+  static const String posPrinter = 'POS Printer';
+  static const String pdfFormat = 'PDF format';
+  static const String showCustomerDetailsOnBill = 'Show Customer Details on Bill';
+  static const String displayCustomerOnBill = 'Display customer name and phone on printed bills';
+  static const String generateBillViaContact = 'Generate Bill via Contact Number';
+  static const String requireContactNumber = 'Require customer contact number before generating a bill';
+  static const String contactNumberNote = 'When "Generate Bill via Contact Number" is enabled, a valid phone number is required before saving a bill.';
+  static const String settingsSaved = 'Settings saved successfully';
+
+  // ═══════════════════════════════════════════════════
+  // Shop Details Page
+  // ═══════════════════════════════════════════════════
+  static const String shopDetails = 'Shop Details';
+  static const String shopInformation = 'Shop Information';
+  static const String shopName = 'Shop Name';
+  static const String businessInformation = 'Business Information';
+  static const String gstNumber = 'GST Number';
+  static const String contactInformation = 'Contact Information';
+  static const String email = 'Email';
+  static const String pincode = 'Pincode';
+  static const String ownerName = 'Owner Name';
+  static const String saveShopDetails = 'Save Shop Details';
+  static const String shopDetailsSaved = 'Shop details saved successfully';
+
+  // ═══════════════════════════════════════════════════
+  // Flyout Menu
+  // ═══════════════════════════════════════════════════
+  static const String profile = 'Profile';
+  static const String settings = 'Settings';
+  static const String inventory = 'Inventory';
+  static const String clients = 'Clients';
+  static const String purchases = 'Purchases';
+  static const String reports = 'Reports';
+  static const String reportsComingSoon = 'Reports page coming soon';
+  static const String invoicesComingSoon = 'Invoices page coming soon';
+  static const String logout = 'Logout';
+  static const String close = 'Close';
+  static const String online = 'Online';
+  static const String forgotPassword = 'Forgot Password';
+  static const String changePassword = 'Change Password';
+  static const String biometricLock = 'Biometric Lock';
+  static const String unlockWithBiometric = 'Unlock app with fingerprint/face';
+  static const String biometricEnabled = 'Biometric lock enabled';
+  static const String biometricDisabled = 'Biometric lock disabled';
+  static const String biometricsNotAvailable = 'Biometrics not available';
+  static const String version = 'Version 1.0.0';
+  static const String user = 'User';
+  static const String logs = 'Logs';
+
+  // ═══════════════════════════════════════════════════
+  // Profile Page
+  // ═══════════════════════════════════════════════════
+  static const String myProfile = 'My Profile';
+  static const String fullName = 'Full Name';
+  static const String enterFullName = 'Enter your full name';
+  static const String emailAddress = 'Email Address';
+  static const String yourEmail = 'Your email';
+  static const String phoneNumber = 'Phone Number';
+  static const String enterPhoneNumberProfile = 'Enter your phone number';
+  static const String enterAddress = 'Enter your address';
+  static const String saveChanges = 'Save Changes';
+  static const String pleaseEnterName = 'Please enter your name';
+  static const String profileUpdatedSuccessfully = 'Profile updated successfully';
+  static const String profileUpdated = 'Profile updated successfully';
+  static const String errorSavingProfile = 'Error saving profile';
+  static const String failedToPickImage = 'Failed to pick image';
+
+  // ═══════════════════════════════════════════════════
+  // Auth Pages (Login/Signup/Change Password)
+  // ═══════════════════════════════════════════════════
+  static const String welcomeBackLogin = 'Welcome Back';
+  static const String signInToAccount = 'Sign in to your account';
+  static const String backboneOfBusiness = 'The backbone of your business';
+  static const String enterEmailPhone = 'Enter email/phone and password';
+  static const String password = 'Password';
+  static const String forgotPasswordQuestion = 'Forgot password?';
+  static const String signIn = 'Sign In';
+  static const String continueWithGoogle = 'Continue with Google';
+  static const String signUp = 'Sign up';
+  static const String orDivider = 'OR';
+  static const String dontHaveAccount = "Don't have an account? ";
+  static const String loginSuccessful = 'Login successful';
+  static const String cBillingAppLogs = 'C-Billing App Logs';
+  static const String authError = 'Auth error';
+  static const String sessionExpired = 'Session expired. Please login again.';
+  static const String createAccount = 'Create Account';
+  static const String createYourAccount = 'Create your account';
+  static const String confirmPassword = 'Confirm Password';
+  static const String alreadyHaveAccount = 'Already have an account? ';
+  static const String accountCreated = 'Account created successfully';
+  static const String accountCreationFailed = 'Account creation failed';
+  static const String passwordsDoNotMatch = 'Passwords do not match';
+  static const String pleaseFillAllFields = 'Please fill in all fields';
+  static const String enterValid10DigitPhone = 'Enter a valid 10-digit phone number';
+  static const String changePasswordTitle = 'Change Password';
+  static const String updateYourPassword = 'Update Your Password';
+  static const String enterOldAndNew = 'Enter your old password and set a new one';
+  static const String oldPassword = 'Old Password';
+  static const String enterOldPassword = 'Enter your current password';
+  static const String newPassword = 'New Password';
+  static const String enterNewPassword = 'Enter new password (min 6 characters)';
+  static const String reenterNewPassword = 'Re-enter new password';
+  static const String updatePassword = 'Update Password';
+  static const String pleaseEnterOldPassword = 'Please enter your old password';
+  static const String pleaseEnterNewPassword = 'Please enter a new password';
+  static const String pleaseConfirmNewPassword = 'Please confirm your new password';
+  static const String newPasswordDoNotMatch = 'New password and confirm password do not match';
+  static const String newPasswordTooWeak = 'New password is too weak. Use at least 6 characters.';
+  static const String newPasswordMustDiffer = 'New password must be different from old password';
+  static const String oldPasswordIncorrect = 'Old password is incorrect';
+  static const String passwordUpdated = 'Password updated successfully!';
+  static const String failedToUpdatePassword = 'Failed to update password';
+  static const String noUserLoggedIn = 'No user logged in';
+  static const String pleaseRelogin = 'Please log out and log in again before changing password';
+  static const String passwordMinLength = 'Password must be at least 6 characters';
+  static const String passwordTips = 'Password Tips';
+  static const String useAtLeast6Chars = 'Use at least 6 characters';
+  static const String includeUpperLower = 'Include uppercase and lowercase letters';
+  static const String addNumbersSpecial = 'Add numbers and special characters';
+  static const String avoidPersonalInfo = 'Avoid using personal information';
+
+  // ═══════════════════════════════════════════════════
+  // Logs Viewer Page
+  // ═══════════════════════════════════════════════════
+  static const String appLogs = 'App Logs';
+  static const String searchLogs = 'Search logs...';
+  static const String clearLogs = 'Clear Logs';
+  static const String clearLogsConfirm = 'Clear Logs?';
+  static const String clearLogsMessage = 'This will delete all log entries. This action cannot be undone.';
+  static const String shareLogs = 'Share Logs';
+  static const String copyLogs = 'Copy Logs';
+  static const String logsCopied = 'Logs copied to clipboard';
+  static const String enableAutoScroll = 'Enable Auto-scroll';
+  static const String disableAutoScroll = 'Disable Auto-scroll';
+  static const String noLogsToDisplay = 'No logs to display';
+  static const String errorSharingLogs = 'Error sharing logs';
+  static const String appLogsExported = 'App logs exported from C-Billing';
+  static const String debug = 'Debug';
+  static const String info = 'Info';
+  static const String warn = 'Warn';
+  static const String level = 'Level';
+  static const String stackTrace = 'Stack Trace';
 }

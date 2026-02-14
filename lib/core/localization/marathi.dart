@@ -423,4 +423,274 @@ class MarathiLocalization {
   static const String searchBatches = 'कंपनी, किंमत ने शोधा...';
   static const String productCode = 'उत्पादन कोड';
   static const String noBatchesFound = 'कोणताही बॅच सापडला नाही';
+
+  // ═══════════════════════════════════════════════════
+  // Bill Details Dialog (Bills History)
+  // ═══════════════════════════════════════════════════
+  static const String billDetails = 'बिल तपशील';
+  static const String soldItems = 'विकलेल्या वस्तू';
+  static const String billNo = 'बिल क्र.';
+  static const String mobile = 'मोबाइल';
+  static const String totalQuantity = 'एकूण प्रमाण';
+  static const String billTotalLabel = 'बिल एकूण';
+  static const String returnDeduction = 'परतावा वजावट';
+  static const String finalPayable = 'अंतिम देय';
+  static const String finalAmount = 'अंतिम रक्कम';
+  static const String fullyReturned = 'पूर्ण परतावा';
+  static const String partialReturn = 'आंशिक परतावा';
+  static const String statusFullyReturned = 'स्थिती: पूर्ण परतावा';
+  static const String includeReturnedItemsInPrint = 'प्रिंटमध्ये परत केलेल्या वस्तू समाविष्ट करा';
+  static const String returnThisBill = 'हे बिल परत करा';
+  static const String billReturned = 'बिल परत केले';
+  static const String paidAmount = 'भरलेली रक्कम';
+  static const String selectDateRange = 'तारीख श्रेणी निवडा';
+  static const String startDate = 'सुरुवातीची तारीख';
+  static const String endDate = 'शेवटची तारीख';
+  static const String reset = 'रीसेट';
+  static const String product = 'उत्पादन';
+  static const String rate = 'दर';
+  static const String returnLabel = 'परतावा';
+  static const String errorLoadingBills = 'बिले लोड करताना त्रुटी';
+  static const String errorSharingBillGeneric = 'बिल शेअर करताना त्रुटी';
+  static const String errorSavingPdfGeneric = 'PDF सेव्ह करताना त्रुटी';
+  static const String errorPrintingBill = 'बिल प्रिंट करताना त्रुटी';
+  static const String totalReturns = 'एकूण परतावा';
+
+  // ═══════════════════════════════════════════════════
+  // Dashboard Page
+  // ═══════════════════════════════════════════════════
+  static const String exitApp = 'अॅप बंद करा';
+  static const String exitAppConfirm = 'तुम्हाला खात्री आहे की तुम्ही अॅप बंद करू इच्छिता?';
+  static const String exit = 'बंद करा';
+  static const String selectLanguage = 'भाषा निवडा';
+  static const String languageChangedTo = 'भाषा बदलली';
+  static const String unableToRefresh = 'डेटा रिफ्रेश करता आला नाही. कॅश डेटा दाखवत आहे.';
+  static const String retry = 'पुन्हा प्रयत्न';
+  static const String custom = 'कस्टम';
+  static const String returns = 'परतावे';
+  static const String netSales = 'निव्वळ विक्री';
+  static const String afterReturnsDeducted = 'परतावे वजा केल्यानंतर';
+  static const String stockAndPayments = 'स्टॉक आणि पेमेंट';
+  static const String paymentStatus = 'पेमेंट स्थिती';
+  static const String comingSoon = 'लवकरच येत आहे';
+  static const String paymentTrackingMessage = 'पेमेंट ट्रॅकिंग आणि प्राप्य व्यवस्थापन पुढील अपडेटमध्ये उपलब्ध होईल.';
+  static const String loss = 'तोटा';
+  static const String billSettings = 'बिल सेटिंग्ज';
+  static const String purchaseSettings = 'खरेदी सेटिंग्ज';
+  static const String language = 'भाषा';
+  static const String viewLogs = 'लॉग पहा';
+  static const String onlyLeftInStock = 'फक्त शिल्लक';
+  static const String outOfStockAlert = 'स्टॉक संपला!';
+  static const String order = 'ऑर्डर';
+  static const String noDataAvailableDashboard = 'कोणताही डेटा उपलब्ध नाही';
+  static const String year = 'वर्ष';
+
+  // ═══════════════════════════════════════════════════
+  // Return Bill Page
+  // ═══════════════════════════════════════════════════
+  static const String returnBill = 'परतावा बिल';
+  static const String processBillReturns = 'बिल परतावा प्रक्रिया';
+  static const String searchBill = 'बिल शोधा';
+  static const String enterBillOrMobile = 'बिल क्रमांक किंवा ग्राहक मोबाइल क्रमांक प्रविष्ट करा';
+  static const String billOrMobileHint = 'उदा., BILL-20260205-ABC123 किंवा 9876543210';
+  static const String searchAndValidate = 'शोधा आणि सत्यापित करा';
+  static const String pleaseEnterBillOrMobile = 'कृपया बिल क्रमांक किंवा मोबाइल क्रमांक प्रविष्ट करा';
+  static const String billNotFound = 'बिल सापडले नाही';
+  static const String errorSearchingBill = 'बिल शोधताना त्रुटी';
+  static const String allItemsReturned = 'सर्व वस्तू परत केल्या आहेत';
+  static const String billDate = 'बिल तारीख';
+  static const String contact = 'संपर्क';
+  static const String active = 'सक्रिय';
+  static const String returnedLabel = 'परत केले';
+  static const String originalQuantity = 'मूळ प्रमाण';
+  static const String returnQty = 'परतावा प्रमाण';
+  static const String refundAmount = 'परतावा रक्कम';
+  static const String selectItemsToReturn = 'परत करण्यासाठी वस्तू निवडा';
+  static const String itemsToReturn = 'परत करायच्या वस्तू';
+  static const String selectAll = 'सर्व निवडा';
+  static const String clear = 'साफ करा';
+  static const String confirmReturn = 'परतावा पुष्टी करा';
+  static const String confirmReturnMessage = 'तुम्हाला खात्री आहे की तुम्ही निवडलेल्या वस्तू परत करू इच्छिता?';
+  static const String restoreToInventory = 'यामुळे वस्तू इन्व्हेंटरीमध्ये परत जातील.';
+  static const String processReturn = 'परतावा प्रक्रिया';
+  static const String processingReturn = 'परतावा प्रक्रिया होत आहे...';
+  static const String returnProcessedSuccess = 'परतावा यशस्वीरीत्या प्रक्रिया झाला!';
+  static const String returnProcessedPrint = 'परतावा प्रक्रिया झाली! जाण्यापूर्वी पावती प्रिंट किंवा शेअर करा.';
+  static const String failedToProcessReturn = 'परतावा प्रक्रिया अपयशी';
+  static const String errorProcessingReturn = 'परतावा प्रक्रियेत त्रुटी';
+  static const String returnedOn = 'परत केल्याची तारीख';
+  static const String refund = 'परतावा';
+
+  // ═══════════════════════════════════════════════════
+  // Billing Page (additional)
+  // ═══════════════════════════════════════════════════
+  static const String enterPhoneNumber = 'फोन क्रमांक प्रविष्ट करा';
+  static const String enterCustomerPhone = 'ग्राहक फोन क्रमांक प्रविष्ट करा';
+  static const String firstNameRequired2 = 'पहिले नाव आवश्यक आहे';
+  static const String lastNameRequired2 = 'आडनाव आवश्यक आहे';
+  static const String saveAndAttach = 'सेव्ह करा आणि जोडा';
+  static const String skip = 'वगळा';
+  static const String full = 'पूर्ण';
+  static const String continuingWithoutCustomer = 'ग्राहकाशिवाय सुरू ठेवत आहे';
+  static const String billProcessingFailed = 'बिल प्रक्रिया अपयशी';
+  static const String pleaseEnterValidContact = 'बिल तयार करण्यासाठी कृपया वैध ग्राहक संपर्क क्रमांक प्रविष्ट करा';
+  static const String clearPhoneNumber = 'फोन क्रमांक साफ करा';
+  static const String phoneNumberOptional = 'फोन क्रमांक (ऐच्छिक)';
+  static const String printBill = 'बिल प्रिंट करा';
+  static const String customerNotFoundFor = 'ग्राहक सापडला नाही';
+  static const String customerColon = 'ग्राहक:';
+  static const String discountWithPercent = 'सूट';
+
+  // ═══════════════════════════════════════════════════
+  // Bill Settings Page
+  // ═══════════════════════════════════════════════════
+  static const String billingSettings = 'बिलिंग सेटिंग्ज';
+  static const String billType = 'बिल प्रकार';
+  static const String selectDefaultBillType = 'प्रिंटिंगसाठी डीफॉल्ट बिल प्रकार निवडा';
+  static const String normalBill = 'सामान्य बिल';
+  static const String thermalReceipt = 'थर्मल पावती';
+  static const String selected = 'निवडलेले';
+  static const String printSettings = 'प्रिंट सेटिंग्ज';
+  static const String posPrinter = 'POS प्रिंटर';
+  static const String pdfFormat = 'PDF स्वरूप';
+  static const String showCustomerDetailsOnBill = 'बिलावर ग्राहक तपशील दाखवा';
+  static const String displayCustomerOnBill = 'प्रिंट बिलावर ग्राहकाचे नाव आणि फोन दाखवा';
+  static const String generateBillViaContact = 'संपर्क क्रमांकाने बिल तयार करा';
+  static const String requireContactNumber = 'बिल तयार करण्यापूर्वी ग्राहक संपर्क क्रमांक आवश्यक करा';
+  static const String contactNumberNote = 'जेव्हा "संपर्क क्रमांकाने बिल तयार करा" सक्षम असते, तेव्हा बिल सेव्ह करण्यापूर्वी वैध फोन क्रमांक आवश्यक आहे.';
+  static const String settingsSaved = 'सेटिंग्ज यशस्वीरीत्या सेव्ह केल्या';
+
+  // ═══════════════════════════════════════════════════
+  // Shop Details Page
+  // ═══════════════════════════════════════════════════
+  static const String shopDetails = 'दुकान तपशील';
+  static const String shopInformation = 'दुकान माहिती';
+  static const String shopName = 'दुकानाचे नाव';
+  static const String businessInformation = 'व्यवसाय माहिती';
+  static const String gstNumber = 'GST क्रमांक';
+  static const String contactInformation = 'संपर्क माहिती';
+  static const String email = 'ईमेल';
+  static const String pincode = 'पिनकोड';
+  static const String ownerName = 'मालकाचे नाव';
+  static const String saveShopDetails = 'दुकान तपशील सेव्ह करा';
+  static const String shopDetailsSaved = 'दुकान तपशील यशस्वीरीत्या सेव्ह केले';
+
+  // ═══════════════════════════════════════════════════
+  // Flyout Menu
+  // ═══════════════════════════════════════════════════
+  static const String profile = 'प्रोफाइल';
+  static const String settings = 'सेटिंग्ज';
+  static const String inventory = 'इन्व्हेंटरी';
+  static const String clients = 'ग्राहक';
+  static const String purchases = 'खरेदी';
+  static const String reports = 'अहवाल';
+  static const String reportsComingSoon = 'अहवाल पृष्ठ लवकरच येत आहे';
+  static const String invoicesComingSoon = 'इनव्हॉइस पृष्ठ लवकरच येत आहे';
+  static const String logout = 'लॉगआउट';
+  static const String close = 'बंद करा';
+  static const String online = 'ऑनलाइन';
+  static const String forgotPassword = 'पासवर्ड विसरलात';
+  static const String changePassword = 'पासवर्ड बदला';
+  static const String biometricLock = 'बायोमेट्रिक लॉक';
+  static const String unlockWithBiometric = 'फिंगरप्रिंट/फेसने अनलॉक करा';
+  static const String biometricEnabled = 'बायोमेट्रिक लॉक सक्षम';
+  static const String biometricDisabled = 'बायोमेट्रिक लॉक अक्षम';
+  static const String biometricsNotAvailable = 'बायोमेट्रिक्स उपलब्ध नाही';
+  static const String version = 'आवृत्ती 1.0.0';
+  static const String user = 'वापरकर्ता';
+  static const String logs = 'लॉग';
+
+  // ═══════════════════════════════════════════════════
+  // Profile Page
+  // ═══════════════════════════════════════════════════
+  static const String myProfile = 'माझी प्रोफाइल';
+  static const String fullName = 'पूर्ण नाव';
+  static const String enterFullName = 'तुमचे पूर्ण नाव प्रविष्ट करा';
+  static const String emailAddress = 'ईमेल पत्ता';
+  static const String yourEmail = 'तुमचा ईमेल';
+  static const String phoneNumber = 'फोन क्रमांक';
+  static const String enterPhoneNumberProfile = 'तुमचा फोन क्रमांक प्रविष्ट करा';
+  static const String enterAddress = 'तुमचा पत्ता प्रविष्ट करा';
+  static const String saveChanges = 'बदल सेव्ह करा';
+  static const String pleaseEnterName = 'कृपया तुमचे नाव प्रविष्ट करा';
+  static const String profileUpdatedSuccessfully = 'प्रोफाइल यशस्वीरीत्या अपडेट केले';
+  static const String profileUpdated = 'प्रोफाइल यशस्वीरीत्या अपडेट केली';
+  static const String errorSavingProfile = 'प्रोफाइल सेव्ह करताना त्रुटी';
+  static const String failedToPickImage = 'प्रतिमा निवडता आली नाही';
+
+  // ═══════════════════════════════════════════════════
+  // Auth Pages (Login/Signup/Change Password)
+  // ═══════════════════════════════════════════════════
+  static const String welcomeBackLogin = 'परत स्वागत आहे';
+  static const String signInToAccount = 'तुमच्या खात्यात साइन इन करा';
+  static const String backboneOfBusiness = 'तुमच्या व्यवसायाचा कणा';
+  static const String enterEmailPhone = 'ईमेल/फोन आणि पासवर्ड प्रविष्ट करा';
+  static const String password = 'पासवर्ड';
+  static const String forgotPasswordQuestion = 'पासवर्ड विसरलात?';
+  static const String signIn = 'साइन इन';
+  static const String continueWithGoogle = 'Google ने सुरू ठेवा';
+  static const String signUp = 'साइन अप';
+  static const String orDivider = 'किंवा';
+  static const String dontHaveAccount = 'खाते नाही? ';
+  static const String loginSuccessful = 'लॉगिन यशस्वी';
+  static const String cBillingAppLogs = 'C-Billing अॅप लॉग्स';
+  static const String authError = 'प्रमाणीकरण त्रुटी';
+  static const String sessionExpired = 'सत्र संपले. कृपया पुन्हा लॉगिन करा.';
+  static const String createAccount = 'खाते तयार करा';
+  static const String createYourAccount = 'तुमचे खाते तयार करा';
+  static const String confirmPassword = 'पासवर्ड पुष्टी करा';
+  static const String alreadyHaveAccount = 'आधीच खाते आहे? ';
+  static const String accountCreated = 'खाते यशस्वीरीत्या तयार केले';
+  static const String accountCreationFailed = 'खाते तयार करणे अपयशी';
+  static const String passwordsDoNotMatch = 'पासवर्ड जुळत नाहीत';
+  static const String pleaseFillAllFields = 'कृपया सर्व फील्ड भरा';
+  static const String enterValid10DigitPhone = 'वैध 10-अंकी फोन क्रमांक प्रविष्ट करा';
+  static const String changePasswordTitle = 'पासवर्ड बदला';
+  static const String updateYourPassword = 'तुमचा पासवर्ड अपडेट करा';
+  static const String enterOldAndNew = 'तुमचा जुना पासवर्ड प्रविष्ट करा आणि नवीन सेट करा';
+  static const String oldPassword = 'जुना पासवर्ड';
+  static const String enterOldPassword = 'तुमचा सध्याचा पासवर्ड प्रविष्ट करा';
+  static const String newPassword = 'नवीन पासवर्ड';
+  static const String enterNewPassword = 'नवीन पासवर्ड प्रविष्ट करा (किमान 6 अक्षरे)';
+  static const String reenterNewPassword = 'नवीन पासवर्ड पुन्हा प्रविष्ट करा';
+  static const String updatePassword = 'पासवर्ड अपडेट करा';
+  static const String pleaseEnterOldPassword = 'कृपया तुमचा जुना पासवर्ड प्रविष्ट करा';
+  static const String pleaseEnterNewPassword = 'कृपया नवीन पासवर्ड प्रविष्ट करा';
+  static const String pleaseConfirmNewPassword = 'कृपया तुमचा नवीन पासवर्ड पुष्टी करा';
+  static const String newPasswordDoNotMatch = 'नवीन पासवर्ड आणि पुष्टी पासवर्ड जुळत नाहीत';
+  static const String newPasswordTooWeak = 'नवीन पासवर्ड खूप कमकुवत आहे. किमान 6 अक्षरे वापरा.';
+  static const String newPasswordMustDiffer = 'नवीन पासवर्ड जुन्या पासवर्डपेक्षा वेगळा असावा';
+  static const String oldPasswordIncorrect = 'जुना पासवर्ड चुकीचा आहे';
+  static const String passwordUpdated = 'पासवर्ड यशस्वीरीत्या अपडेट झाला!';
+  static const String failedToUpdatePassword = 'पासवर्ड अपडेट करण्यात अपयश';
+  static const String noUserLoggedIn = 'कोणताही वापरकर्ता लॉग इन नाही';
+  static const String pleaseRelogin = 'कृपया पासवर्ड बदलण्यापूर्वी लॉग आउट करा आणि पुन्हा लॉग इन करा';
+  static const String passwordMinLength = 'पासवर्ड किमान 6 अक्षरांचा असावा';
+  static const String passwordTips = 'पासवर्ड सूचना';
+  static const String useAtLeast6Chars = 'किमान 6 अक्षरे वापरा';
+  static const String includeUpperLower = 'मोठी आणि लहान अक्षरे समाविष्ट करा';
+  static const String addNumbersSpecial = 'क्रमांक आणि विशेष अक्षरे जोडा';
+  static const String avoidPersonalInfo = 'वैयक्तिक माहिती टाळा';
+
+  // ═══════════════════════════════════════════════════
+  // Logs Viewer Page
+  // ═══════════════════════════════════════════════════
+  static const String appLogs = 'अॅप लॉग';
+  static const String searchLogs = 'लॉग शोधा...';
+  static const String clearLogs = 'लॉग साफ करा';
+  static const String clearLogsConfirm = 'लॉग साफ करा?';
+  static const String clearLogsMessage = 'हे सर्व लॉग प्रविष्ट्या हटवेल. ही क्रिया पूर्ववत करता येणार नाही.';
+  static const String shareLogs = 'लॉग शेअर करा';
+  static const String copyLogs = 'लॉग कॉपी करा';
+  static const String logsCopied = 'लॉग क्लिपबोर्डवर कॉपी केले';
+  static const String enableAutoScroll = 'ऑटो-स्क्रोल सक्षम करा';
+  static const String disableAutoScroll = 'ऑटो-स्क्रोल अक्षम करा';
+  static const String noLogsToDisplay = 'दाखवण्यासाठी कोणतेही लॉग नाहीत';
+  static const String errorSharingLogs = 'लॉग शेअर करताना त्रुटी';
+  static const String appLogsExported = 'C-Billing मधून अॅप लॉग निर्यात';
+  static const String debug = 'डीबग';
+  static const String info = 'माहिती';
+  static const String warn = 'इशारा';
+  static const String level = 'पातळी';
+  static const String stackTrace = 'स्टॅक ट्रेस';
 }

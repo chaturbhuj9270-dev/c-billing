@@ -423,9 +423,9 @@ class _BillingPageState extends State<BillingPage> {
               ),
             ),
             const SizedBox(width: 12),
-            const Text(
-              'Add New Customer',
-              style: TextStyle(
+            Text(
+              _localizations.addNewCustomer,
+              style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
                 color: Color(0xFF1B4D3E),
@@ -442,7 +442,7 @@ class _BillingPageState extends State<BillingPage> {
               children: [
                 if (phoneNumber.isNotEmpty)
                   Text(
-                    'Customer not found for $phoneNumber',
+                    '${_localizations.customerNotFoundFor} $phoneNumber',
                     style: TextStyle(
                       fontSize: 13,
                       color: Colors.grey[600],
@@ -454,7 +454,7 @@ class _BillingPageState extends State<BillingPage> {
                   controller: firstNameController,
                   autofocus: true,
                   decoration: InputDecoration(
-                    labelText: 'First Name *',
+                    labelText: '${_localizations.firstName} *',
                     prefixIcon: const Icon(Icons.person_outline),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -469,7 +469,7 @@ class _BillingPageState extends State<BillingPage> {
                   ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
-                      return 'First name is required';
+                      return _localizations.firstNameRequired2;
                     }
                     return null;
                   },
@@ -478,7 +478,7 @@ class _BillingPageState extends State<BillingPage> {
                 TextFormField(
                   controller: lastNameController,
                   decoration: InputDecoration(
-                    labelText: 'Last Name *',
+                    labelText: '${_localizations.lastName} *',
                     prefixIcon: const Icon(Icons.person_outline),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -493,7 +493,7 @@ class _BillingPageState extends State<BillingPage> {
                   ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
-                      return 'Last name is required';
+                      return _localizations.lastNameRequired2;
                     }
                     return null;
                   },
@@ -503,7 +503,7 @@ class _BillingPageState extends State<BillingPage> {
                   controller: phoneController,
                   keyboardType: TextInputType.phone,
                   decoration: InputDecoration(
-                    labelText: 'Phone Number (Optional)',
+                    labelText: _localizations.phoneNumberOptional,
                     prefixIcon: const Icon(Icons.phone_outlined),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -527,7 +527,7 @@ class _BillingPageState extends State<BillingPage> {
               Navigator.pop(ctx);
             },
             child: Text(
-              'Cancel',
+              _localizations.cancel,
               style: TextStyle(
                 color: Colors.grey[600],
                 fontFamily: 'Literata',
@@ -539,13 +539,13 @@ class _BillingPageState extends State<BillingPage> {
               Navigator.pop(ctx);
               // Continue without customer - just keep the phone number
               _showSnackbar(
-                'Continuing without customer',
+                _localizations.continuingWithoutCustomer,
                 isError: false,
               );
             },
-            child: const Text(
-              'Skip',
-              style: TextStyle(
+            child: Text(
+              _localizations.skip,
+              style: const TextStyle(
                 color: Color(0xFF1B4D3E),
                 fontFamily: 'Literata',
                 fontWeight: FontWeight.w600,
@@ -577,9 +577,9 @@ class _BillingPageState extends State<BillingPage> {
                 borderRadius: BorderRadius.circular(10),
               ),
             ),
-            child: const Text(
-              'Save & Attach',
-              style: TextStyle(
+            child: Text(
+              _localizations.saveAndAttach,
+              style: const TextStyle(
                 color: Colors.white,
                 fontFamily: 'Literata',
                 fontWeight: FontWeight.w600,
@@ -750,7 +750,7 @@ class _BillingPageState extends State<BillingPage> {
       final contact = _customerContactController.text.trim();
       if (contact.isEmpty || contact.length < 10) {
         _showSnackbar(
-          'Please enter a valid customer contact number to generate bill',
+          _localizations.pleaseEnterValidContact,
           isError: true,
         );
         return;
@@ -810,7 +810,7 @@ class _BillingPageState extends State<BillingPage> {
       );
 
       if (!integrationResult.success) {
-        throw Exception(integrationResult.errorMessage ?? 'Bill processing failed');
+        throw Exception(integrationResult.errorMessage ?? _localizations.billProcessingFailed);
       }
 
       debugPrint('[Billing] Bill processed with FIFO: COGS=${integrationResult.totalCOGS}, Profit=${integrationResult.totalProfit}');
@@ -1057,7 +1057,7 @@ class _BillingPageState extends State<BillingPage> {
                         label: Text(
                           _billType == 'pos' 
                               ? _localizations.printToPOS 
-                              : 'Print Bill',
+                              : _localizations.printBill,
                           style: const TextStyle(fontFamily: 'Literata'),
                         ),
                         style: ElevatedButton.styleFrom(
@@ -1460,7 +1460,7 @@ class _BillingPageState extends State<BillingPage> {
                         _loadBillSettings();
                       }
                     },
-                    tooltip: 'Bill Settings',
+                    tooltip: _localizations.billSettings,
                   ),
                 ],
               ),
@@ -1545,7 +1545,7 @@ class _BillingPageState extends State<BillingPage> {
               const SizedBox(width: 12),
               Text(
                 _generateBillViaContact
-                    ? 'Phone Number'
+                    ? _localizations.phoneNumber
                     : _localizations.customerOptional,
                 style: const TextStyle(
                   fontFamily: 'Literata',
@@ -1563,7 +1563,7 @@ class _BillingPageState extends State<BillingPage> {
                     final phone = _customerContactController.text.trim();
                     _showAddCustomerDialog(phone);
                   },
-                  tooltip: 'Add New Customer',
+                  tooltip: _localizations.addNewCustomer,
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
                 ),
@@ -1580,8 +1580,8 @@ class _BillingPageState extends State<BillingPage> {
                   keyboardType: TextInputType.phone,
                   style: const TextStyle(fontFamily: 'Literata', fontSize: 14),
                   decoration: InputDecoration(
-                    labelText: 'Enter Phone Number *',
-                    hintText: 'Enter customer phone number',
+                    labelText: '${_localizations.enterPhoneNumber} *',
+                    hintText: _localizations.enterCustomerPhone,
                     hintStyle: TextStyle(
                       color: Colors.grey[400],
                       fontSize: 13,
@@ -1620,7 +1620,7 @@ class _BillingPageState extends State<BillingPage> {
                                   });
                                 },
                                 color: Colors.grey[600],
-                                tooltip: 'Clear phone number',
+                                tooltip: _localizations.clearPhoneNumber,
                               )
                             : null,
                     contentPadding: const EdgeInsets.symmetric(
@@ -1657,7 +1657,7 @@ class _BillingPageState extends State<BillingPage> {
                         const SizedBox(width: 4),
                         Expanded(
                           child: Text(
-                            'Customer: $_autoFoundCustomerName',
+                            '${_localizations.customerColon} $_autoFoundCustomerName',
                             style: const TextStyle(
                               fontSize: 12,
                               color: Colors.green,
@@ -1791,7 +1791,7 @@ class _BillingPageState extends State<BillingPage> {
                                         });
                                       },
                                       color: Colors.grey[600],
-                                      tooltip: 'Clear phone number',
+                                      tooltip: _localizations.clearPhoneNumber,
                                     )
                                   : null,
                           contentPadding: const EdgeInsets.symmetric(
@@ -1824,7 +1824,7 @@ class _BillingPageState extends State<BillingPage> {
                               const SizedBox(width: 4),
                               Expanded(
                                 child: Text(
-                                  'Customer: $_autoFoundCustomerName',
+                                  '${_localizations.customerColon} $_autoFoundCustomerName',
                                   style: const TextStyle(
                                     fontSize: 12,
                                     color: Colors.green,
@@ -2566,7 +2566,7 @@ class _BillingPageState extends State<BillingPage> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'Discount (${_discountPercent.toStringAsFixed(1)}%)',
+                        '${_localizations.discountWithPercent} (${_discountPercent.toStringAsFixed(1)}%)',
                         style: TextStyle(
                           fontFamily: 'Literata',
                           fontSize: 13,
@@ -2828,7 +2828,7 @@ class _BillingPageState extends State<BillingPage> {
                 _buildQuickAmountChip('25%', _finalAmount * 0.25),
                 _buildQuickAmountChip('50%', _finalAmount * 0.50),
                 _buildQuickAmountChip('75%', _finalAmount * 0.75),
-                _buildQuickAmountChip('Full', _finalAmount),
+                _buildQuickAmountChip(_localizations.full, _finalAmount),
               ],
             ),
           ],

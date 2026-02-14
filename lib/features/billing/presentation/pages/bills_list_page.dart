@@ -300,24 +300,24 @@ class _BillsListPageState extends State<BillsListPage>
                     children: [
                       // Date
                       _buildPreviewRow(
-                        'Date',
+                        _localizations.date,
                         dateFormat.format(bill.billDate),
                       ),
                       const Divider(height: 24),
                       // Customer Info
                       if (bill.hasCustomerInfo) ...[
                         _buildPreviewRow(
-                          'Customer',
+                          _localizations.customerName,
                           bill.customerName ?? 'N/A',
                         ),
                         if (bill.customerContact != null)
-                          _buildPreviewRow('Phone', bill.customerContact!),
+                          _buildPreviewRow(_localizations.mobile, bill.customerContact!),
                         const Divider(height: 24),
                       ],
                       // Items Header
-                      const Text(
-                        'Items',
-                        style: TextStyle(
+                      Text(
+                        _localizations.items,
+                        style: const TextStyle(
                           fontFamily: 'Literata',
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
@@ -387,7 +387,7 @@ class _BillsListPageState extends State<BillsListPage>
                                       ),
                                       const SizedBox(width: 4),
                                       Text(
-                                        'Returned: ${item.returnedQuantity} qty',
+                                        '${_localizations.returnedLabel}: ${item.returnedQuantity} ${_localizations.quantity}',
                                         style: TextStyle(
                                           fontFamily: 'Literata',
                                           fontSize: 11,
@@ -431,7 +431,7 @@ class _BillsListPageState extends State<BillsListPage>
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                'Total Returns (${bill.totalReturnedQuantity} qty)',
+                                '${_localizations.totalReturns} (${bill.totalReturnedQuantity} ${_localizations.quantity})',
                                 style: TextStyle(
                                   fontFamily: 'Literata',
                                   fontSize: 12,
@@ -455,7 +455,7 @@ class _BillsListPageState extends State<BillsListPage>
                       const Divider(height: 24),
                       // Totals
                       _buildPreviewRow(
-                        'Subtotal',
+                        _localizations.subtotal,
                         '₹${bill.totalAmount.toStringAsFixed(2)}',
                       ),
                       if (bill.discountAmount > 0)
@@ -468,9 +468,9 @@ class _BillsListPageState extends State<BillsListPage>
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text(
-                            'Total',
-                            style: TextStyle(
+                          Text(
+                            _localizations.total,
+                            style: const TextStyle(
                               fontFamily: 'Literata',
                               fontSize: 16,
                               fontWeight: FontWeight.w700,
@@ -513,9 +513,9 @@ class _BillsListPageState extends State<BillsListPage>
                               Navigator.pop(dialogContext, 'share');
                             },
                             icon: const Icon(Icons.share, size: 18),
-                            label: const Text(
-                              'Share',
-                              style: TextStyle(fontFamily: 'Literata'),
+                            label: Text(
+                              _localizations.share,
+                              style: const TextStyle(fontFamily: 'Literata'),
                             ),
                             style: OutlinedButton.styleFrom(
                               foregroundColor: const Color(0xFF1B4D3E),
@@ -534,9 +534,9 @@ class _BillsListPageState extends State<BillsListPage>
                               Navigator.pop(dialogContext, 'save');
                             },
                             icon: const Icon(Icons.picture_as_pdf, size: 18),
-                            label: const Text(
-                              'Save PDF',
-                              style: TextStyle(fontFamily: 'Literata'),
+                            label: Text(
+                              _localizations.savePdf,
+                              style: const TextStyle(fontFamily: 'Literata'),
                             ),
                             style: OutlinedButton.styleFrom(
                               foregroundColor: const Color(0xFF1B4D3E),
@@ -666,7 +666,7 @@ class _BillsListPageState extends State<BillsListPage>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error sharing bill: $e'),
+            content: Text('${_localizations.errorSharingBillGeneric}: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -707,7 +707,7 @@ class _BillsListPageState extends State<BillsListPage>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error saving PDF: $e'),
+            content: Text('${_localizations.errorSavingPdfGeneric}: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -753,7 +753,7 @@ class _BillsListPageState extends State<BillsListPage>
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Error loading bills: $e')));
+        ).showSnackBar(SnackBar(content: Text('${_localizations.errorLoadingBills}: $e')));
       }
     }
   }
@@ -876,7 +876,7 @@ class _BillsListPageState extends State<BillsListPage>
       debugPrint('[BillsListPage] ERROR in _shareBillAsPdfWithData: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error sharing bill: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text('${_localizations.errorSharingBillGeneric}: $e'), backgroundColor: Colors.red),
         );
       }
     }
@@ -895,7 +895,7 @@ class _BillsListPageState extends State<BillsListPage>
       debugPrint('[BillsListPage] ERROR in _printBillWithData: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error printing bill: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text('${_localizations.errorPrintingBill}: $e'), backgroundColor: Colors.red),
         );
       }
     }
@@ -1680,9 +1680,9 @@ class _DateRangePickerDialogState extends State<_DateRangePickerDialog> {
     return AlertDialog(
       backgroundColor: Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      title: const Text(
-        'Select Date Range',
-        style: TextStyle(
+      title: Text(
+        AppLocalizations(LanguageService.instance.currentLanguage).selectDateRange,
+        style: const TextStyle(
           fontFamily: 'Literata',
           fontWeight: FontWeight.w700,
           color: Color(0xFF1B4D3E),
@@ -1697,14 +1697,14 @@ class _DateRangePickerDialogState extends State<_DateRangePickerDialog> {
             spacing: 8,
             runSpacing: 8,
             children: [
-              _buildQuickFilter('Today', () {
+              _buildQuickFilter(AppLocalizations(LanguageService.instance.currentLanguage).today, () {
                 final now = DateTime.now();
                 setState(() {
                   _startDate = DateTime(now.year, now.month, now.day);
                   _endDate = DateTime(now.year, now.month, now.day, 23, 59, 59);
                 });
               }),
-              _buildQuickFilter('This Week', () {
+              _buildQuickFilter(AppLocalizations(LanguageService.instance.currentLanguage).thisWeek, () {
                 final now = DateTime.now();
                 final startOfWeek = now.subtract(
                   Duration(days: now.weekday - 1),
@@ -1718,7 +1718,7 @@ class _DateRangePickerDialogState extends State<_DateRangePickerDialog> {
                   _endDate = DateTime(now.year, now.month, now.day, 23, 59, 59);
                 });
               }),
-              _buildQuickFilter('This Month', () {
+              _buildQuickFilter(AppLocalizations(LanguageService.instance.currentLanguage).thisMonth, () {
                 final now = DateTime.now();
                 setState(() {
                   _startDate = DateTime(now.year, now.month, 1);
@@ -1746,7 +1746,7 @@ class _DateRangePickerDialogState extends State<_DateRangePickerDialog> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Start Date',
+                          AppLocalizations(LanguageService.instance.currentLanguage).startDate,
                           style: TextStyle(
                             fontFamily: 'Literata',
                             fontSize: 12,
@@ -1785,7 +1785,7 @@ class _DateRangePickerDialogState extends State<_DateRangePickerDialog> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'End Date',
+                          AppLocalizations(LanguageService.instance.currentLanguage).endDate,
                           style: TextStyle(
                             fontFamily: 'Literata',
                             fontSize: 12,
@@ -1814,9 +1814,9 @@ class _DateRangePickerDialogState extends State<_DateRangePickerDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text(
-            'Cancel',
-            style: TextStyle(fontFamily: 'Literata', color: Colors.grey),
+          child: Text(
+            AppLocalizations(LanguageService.instance.currentLanguage).cancel,
+            style: const TextStyle(fontFamily: 'Literata', color: Colors.grey),
           ),
         ),
         ElevatedButton(
@@ -1831,9 +1831,9 @@ class _DateRangePickerDialogState extends State<_DateRangePickerDialog> {
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color(0xFF1B4D3E),
           ),
-          child: const Text(
-            'Apply',
-            style: TextStyle(fontFamily: 'Literata', color: Colors.white),
+          child: Text(
+            AppLocalizations(LanguageService.instance.currentLanguage).apply,
+            style: const TextStyle(fontFamily: 'Literata', color: Colors.white),
           ),
         ),
       ],
@@ -1888,11 +1888,13 @@ class _BillDetailsDialog extends StatefulWidget {
 class _BillDetailsDialogState extends State<_BillDetailsDialog> {
   late Bill _bill;
   bool _includeReturnsInPrint = true;
+  late AppLocalizations _localizations;
 
   @override
   void initState() {
     super.initState();
     _bill = widget.bill;
+    _localizations = AppLocalizations(LanguageService.instance.currentLanguage);
   }
 
   void _navigateToReturnBill() async {
@@ -1971,9 +1973,9 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog> {
               title: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Bill Details',
-                    style: TextStyle(
+                  Text(
+                    _localizations.billDetails,
+                    style: const TextStyle(
                       fontFamily: 'Literata',
                       fontSize: 20,
                       fontWeight: FontWeight.w700,
@@ -2006,7 +2008,7 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog> {
                             ),
                           ),
                           child: Text(
-                            _isFullyReturned ? 'Fully Returned' : 'Partial Return',
+                            _isFullyReturned ? _localizations.fullyReturned : _localizations.partialReturn,
                             style: TextStyle(
                               fontFamily: 'Literata',
                               fontSize: 10,
@@ -2032,11 +2034,11 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog> {
                   _buildGlassyCard(
                     Column(
                       children: [
-                        _buildDetailRow('Bill No', _bill.billNumber, Icons.receipt_long),
+                        _buildDetailRow(_localizations.billNo, _bill.billNumber, Icons.receipt_long),
                         const SizedBox(height: 12),
                         Container(height: 1, color: Colors.white.withOpacity(0.1)),
                         const SizedBox(height: 12),
-                        _buildDetailRow('Date', dateFormat.format(_bill.billDate), Icons.calendar_today),
+                        _buildDetailRow(_localizations.date, dateFormat.format(_bill.billDate), Icons.calendar_today),
                       ],
                     ),
                   ),
@@ -2048,12 +2050,12 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _buildDetailRow('Customer', _bill.customerName ?? 'N/A', Icons.person),
+                          _buildDetailRow(_localizations.customerName, _bill.customerName ?? 'N/A', Icons.person),
                           if (_bill.customerContact != null) ...[
                             const SizedBox(height: 12),
                             Container(height: 1, color: Colors.white.withOpacity(0.1)),
                             const SizedBox(height: 12),
-                            _buildDetailRow('Mobile', _bill.customerContact!, Icons.phone),
+                            _buildDetailRow(_localizations.mobile, _bill.customerContact!, Icons.phone),
                           ],
                         ],
                       ),
@@ -2069,9 +2071,9 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text(
-                              'Sold Items',
-                              style: TextStyle(
+                            Text(
+                              _localizations.soldItems,
+                              style: const TextStyle(
                                 fontFamily: 'Literata',
                                 fontWeight: FontWeight.w700,
                                 fontSize: 16,
@@ -2100,7 +2102,7 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog> {
                             children: [
                               Expanded(
                                 flex: 3,
-                                child: Text('Product', style: TextStyle(
+                                child: Text(_localizations.product, style: TextStyle(
                                   fontFamily: 'Literata', fontSize: 11,
                                   fontWeight: FontWeight.w600,
                                   color: Colors.white.withOpacity(0.7),
@@ -2108,7 +2110,7 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog> {
                               ),
                               SizedBox(
                                 width: 40,
-                                child: Text('Qty', textAlign: TextAlign.center,
+                                child: Text(_localizations.quantity, textAlign: TextAlign.center,
                                   style: TextStyle(
                                     fontFamily: 'Literata', fontSize: 11,
                                     fontWeight: FontWeight.w600,
@@ -2118,7 +2120,7 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog> {
                               ),
                               SizedBox(
                                 width: 55,
-                                child: Text('Rate', textAlign: TextAlign.right,
+                                child: Text(_localizations.rate, textAlign: TextAlign.right,
                                   style: TextStyle(
                                     fontFamily: 'Literata', fontSize: 11,
                                     fontWeight: FontWeight.w600,
@@ -2128,7 +2130,7 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog> {
                               ),
                               SizedBox(
                                 width: 65,
-                                child: Text('Amount', textAlign: TextAlign.right,
+                                child: Text(_localizations.amount, textAlign: TextAlign.right,
                                   style: TextStyle(
                                     fontFamily: 'Literata', fontSize: 11,
                                     fontWeight: FontWeight.w600,
@@ -2150,7 +2152,7 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog> {
                   // ══════════ Notes ══════════
                   if (_bill.notes != null && _bill.notes!.isNotEmpty) ...[
                     _buildGlassyCard(
-                      _buildDetailRow('Notes', _bill.notes!, Icons.note),
+                      _buildDetailRow(_localizations.notes, _bill.notes!, Icons.note),
                     ),
                     const SizedBox(height: 12),
                   ],
@@ -2161,13 +2163,13 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog> {
                       children: [
                         // Total Quantity
                         _buildTotalDisplayRow(
-                          'Total Quantity',
-                          '${_bill.totalQuantity} items',
+                          _localizations.totalQuantity,
+                          '${_bill.totalQuantity} ${_localizations.items}',
                         ),
                         _buildDivider(),
                         // Subtotal (Gross Total)
                         _buildTotalDisplayRow(
-                          'Subtotal',
+                          _localizations.subtotal,
                           '₹${_bill.totalAmount.toStringAsFixed(2)}',
                         ),
                         // Discount
@@ -2182,7 +2184,7 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog> {
                         _buildDivider(),
                         // Bill Total (before returns)
                         _buildTotalDisplayRow(
-                          'Bill Total',
+                          _localizations.billTotalLabel,
                           '₹${_bill.finalAmount.toStringAsFixed(2)}',
                           isBold: true,
                         ),
@@ -2190,7 +2192,7 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog> {
                         if (_bill.hasAnyReturns) ...[
                           _buildDivider(),
                           _buildTotalDisplayRow(
-                            'Return Deduction (${_bill.totalReturnedQuantity} qty)',
+                            '${_localizations.returnDeduction} (${_bill.totalReturnedQuantity} ${_localizations.quantity})',
                             '-₹${_returnDeduction.toStringAsFixed(2)}',
                             valueColor: Colors.orange,
                           ),
@@ -2200,7 +2202,7 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                _isFullyReturned ? 'Final Payable' : 'Final Payable',
+                                _isFullyReturned ? _localizations.finalPayable : _localizations.finalPayable,
                                 style: TextStyle(
                                   fontFamily: 'Literata',
                                   fontSize: 16,
@@ -2234,7 +2236,7 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog> {
                                   Icon(Icons.info_outline, size: 14, color: Colors.red[300]),
                                   const SizedBox(width: 6),
                                   Text(
-                                    'Status: Fully Returned',
+                                    _localizations.statusFullyReturned,
                                     style: TextStyle(
                                       fontFamily: 'Literata',
                                       fontSize: 12,
@@ -2254,7 +2256,7 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                'Final Amount',
+                                _localizations.finalAmount,
                                 style: TextStyle(
                                   fontFamily: 'Literata',
                                   fontSize: 16,
@@ -2278,14 +2280,14 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog> {
                         if (_bill.paidAmount > 0 || _bill.pendingAmount > 0) ...[
                           _buildDivider(),
                           _buildTotalDisplayRow(
-                            'Paid Amount',
+                            _localizations.paidAmount,
                             '₹${_bill.paidAmount.toStringAsFixed(2)}',
                             valueColor: Colors.greenAccent,
                           ),
                           if (_bill.pendingAmount > 0) ...[
                             const SizedBox(height: 8),
                             _buildTotalDisplayRow(
-                              'Pending Amount',
+                              _localizations.pendingAmount,
                               '₹${_bill.pendingAmount.toStringAsFixed(2)}',
                               valueColor: Colors.orange,
                             ),
@@ -2305,7 +2307,7 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog> {
                           const SizedBox(width: 10),
                           Expanded(
                             child: Text(
-                              'Include Returned Items in Print',
+                              _localizations.includeReturnedItemsInPrint,
                               style: TextStyle(
                                 fontFamily: 'Literata',
                                 fontSize: 13,
@@ -2338,7 +2340,7 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog> {
                       Expanded(
                         child: _buildActionButton(
                           icon: Icons.share,
-                          label: 'Share',
+                          label: _localizations.share,
                           color: const Color(0xFF1B4D3E),
                           onTap: () {
                             final printData = _createPrintData();
@@ -2353,7 +2355,7 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog> {
                       Expanded(
                         child: _buildActionButton(
                           icon: Icons.picture_as_pdf,
-                          label: 'Save PDF',
+                          label: _localizations.savePdf,
                           color: const Color(0xFF1B4D3E),
                           onTap: () {
                             final printData = _createPrintData();
@@ -2370,7 +2372,7 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog> {
                   // Print button
                   _buildActionButton(
                     icon: Icons.print,
-                    label: 'Print Bill',
+                    label: _localizations.printBill,
                     color: const Color(0xFF1B4D3E),
                     filled: true,
                     onTap: () {
@@ -2624,7 +2626,7 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog> {
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
-                        'Return: ${item.returnedQuantity} Qty',
+                        '${_localizations.returnLabel}: ${item.returnedQuantity} ${_localizations.quantity}',
                         style: TextStyle(
                           fontFamily: 'Literata',
                           fontSize: 11,
@@ -2681,7 +2683,7 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog> {
             Icon(Icons.assignment_return, color: Colors.orange[300], size: 22),
             const SizedBox(width: 10),
             Text(
-              'Return This Bill',
+              _localizations.returnThisBill,
               style: TextStyle(
                 fontFamily: 'Literata',
                 fontSize: 16,
@@ -2713,7 +2715,7 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Bill Returned',
+                  _localizations.billReturned,
                   style: TextStyle(
                     fontFamily: 'Literata',
                     fontSize: 14,
