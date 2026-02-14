@@ -33,6 +33,7 @@ import 'package:c_billing/core/services/app_logger.dart';
 import 'package:c_billing/core/services/inventory_integration_service.dart';
 import 'package:c_billing/features/inventory_management/offline/controllers/purchase_batch_offline_controller.dart';
 import 'package:c_billing/features/inventory_management/offline/entities/purchase_batch_entity.dart';
+import 'package:c_billing/features/customer/offline/controllers/customer_offline_controller.dart';
 
 class BillingPage extends StatefulWidget {
   final bool isEmbedded;
@@ -46,6 +47,7 @@ class BillingPage extends StatefulWidget {
 class _BillingPageState extends State<BillingPage> {
   // ignore: unused_field
   late BillingService _billingService;
+  late CustomerTransactionService _customerTransactionService;
   late FirebaseFirestore _firestore;
   late ShopRepository _shopRepository;
   late FirebaseCustomerRepository _customerRepository;
@@ -92,11 +94,15 @@ class _BillingPageState extends State<BillingPage> {
   // FIFO batch data for billing
   List<PurchaseBatchEntity> _availableBatches = [];
   
+  // Customer loading state
+  bool _isLoadingCustomers = false;
+  
   // Customer phone search debounce
   Timer? _phoneSearchDebounceTimer;
   bool _isSearchingCustomer = false;
   String? _autoFoundCustomerName;
   bool _hasPhoneText = false;
+  bool _showAddCustomerPrompt = false;
   
   // Bill settings
   bool _showCustomerOnBill = true;
@@ -120,7 +126,7 @@ class _BillingPageState extends State<BillingPage> {
     final customerTransactionRepository = FirebaseCustomerTransactionRepository(
       firestore: _firestore,
     );
-    final customerTransactionService = CustomerTransactionService(
+    _customerTransactionService = CustomerTransactionService(
       firestore: _firestore,
       customerRepository: _customerRepository,
       transactionRepository: customerTransactionRepository,
@@ -130,7 +136,7 @@ class _BillingPageState extends State<BillingPage> {
       billRepository: FirebaseBillRepository(firestore: _firestore),
       productRepository: FirebaseProductRepository(firestore: _firestore),
       stockRepository: FirebaseStockRepository(firestore: _firestore),
-      customerTransactionService: customerTransactionService,
+      customerTransactionService: _customerTransactionService,
     );
     
     // Listen for customer phone number changes
@@ -252,34 +258,77 @@ class _BillingPageState extends State<BillingPage> {
   }
 
   Future<void> _loadCustomers() async {
+    if (!mounted) return;
+    setState(() => _isLoadingCustomers = true);
+    
     try {
-      final billRepo = FirebaseBillRepository(firestore: _firestore);
-      final snapshot = await _firestore
-          .collection('users')
-          .doc(billRepo.userId)
-          .collection('customers')
-          .get();
-      setState(() {
-        _customers = snapshot.docs
+      // Step 1: Load from local Isar DB first (instant)
+      final localCustomers = await CustomerOfflineController.instance.getAllCustomers();
+      if (localCustomers.isNotEmpty && mounted) {
+        setState(() {
+          _customers = localCustomers.map((entity) {
+            // Parse name parts from entity.name
+            final nameParts = entity.name.split(' ');
+            final firstName = nameParts.isNotEmpty ? nameParts.first : '';
+            final lastName = nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '';
+            return {
+              'id': entity.serverId ?? 'local_${entity.id}',
+              'localId': entity.id,
+              'firstName': firstName,
+              'lastName': lastName,
+              'contact': entity.mobile,
+              'fullName': entity.name,
+              'pendingBalance': entity.currentPendingAmount,
+              'totalPurchases': entity.totalPurchases,
+            };
+          }).toList();
+        });
+        debugPrint('[Billing] Loaded ${localCustomers.length} customers from Isar');
+      }
+      
+      // Step 2: Also fetch from Firebase to get latest data
+      try {
+        final billRepo = FirebaseBillRepository(firestore: _firestore);
+        final snapshot = await _firestore
+            .collection('users')
+            .doc(billRepo.userId)
+            .collection('customers')
+            .get();
+        
+        final firebaseCustomers = snapshot.docs
             .where((doc) {
-              // Filter out inactive/deleted customers
               final data = doc.data();
               final isActive = data['isActive'];
               return isActive != false;
             })
             .map((doc) {
+              final data = doc.data();
               return {
                 'id': doc.id,
-                'firstName': doc['firstName'] ?? '',
-                'lastName': doc['lastName'] ?? '',
-                'contact': doc['contact'] ?? '',
-                'fullName': '${doc['firstName'] ?? ''} ${doc['lastName'] ?? ''}'
-                    .trim(),
+                'firstName': data['firstName'] ?? '',
+                'lastName': data['lastName'] ?? '',
+                'contact': data['contact'] ?? '',
+                'fullName': '${data['firstName'] ?? ''} ${data['lastName'] ?? ''}'.trim(),
+                'pendingBalance': ((data['currentPendingAmount'] ?? data['pendingBalance'] ?? 0) as num).toDouble(),
+                'totalPurchases': ((data['totalPurchaseAmount'] ?? 0) as num).toDouble(),
               };
             }).toList();
-      });
+        
+        if (firebaseCustomers.isNotEmpty && mounted) {
+          setState(() {
+            _customers = firebaseCustomers;
+          });
+          debugPrint('[Billing] Loaded ${firebaseCustomers.length} customers from Firebase');
+        }
+      } catch (e) {
+        debugPrint('[Billing] Firebase customer fetch failed (using local): $e');
+      }
     } catch (e) {
-      debugPrint('[DEBUG] Error loading customers: $e');
+      debugPrint('[Billing] Error loading customers: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _isLoadingCustomers = false);
+      }
     }
   }
 
@@ -301,20 +350,22 @@ class _BillingPageState extends State<BillingPage> {
       setState(() {
         _autoFoundCustomerName = null;
         _selectedCustomer = null;
+        _showAddCustomerPrompt = false;
       });
       return;
     }
     
-    // Validate phone number length (at least 10 digits)
+    // Validate phone number length (exactly 10 digits for search)
     if (phoneNumber.length < 10) {
       setState(() {
         _autoFoundCustomerName = null;
+        _showAddCustomerPrompt = false;
       });
       return;
     }
     
-    // Start new debounce timer (600ms)
-    _phoneSearchDebounceTimer = Timer(const Duration(milliseconds: 600), () {
+    // Start new debounce timer (500ms)
+    _phoneSearchDebounceTimer = Timer(const Duration(milliseconds: 500), () {
       _searchCustomerByPhone(phoneNumber);
     });
   }
@@ -402,10 +453,11 @@ class _BillingPageState extends State<BillingPage> {
           isError: false,
         );
       } else {
-        // Customer not found - just clear the search state, don't show dialog
+        // Customer not found - show "Add Customer?" prompt (never auto-create)
         setState(() {
           _isSearchingCustomer = false;
           _autoFoundCustomerName = null;
+          _showAddCustomerPrompt = true;
         });
       }
     } catch (e) {
@@ -413,13 +465,10 @@ class _BillingPageState extends State<BillingPage> {
       
       setState(() {
         _isSearchingCustomer = false;
+        _showAddCustomerPrompt = false;
       });
       
       debugPrint('[DEBUG] Error searching customer: $e');
-      _showSnackbar(
-        'Error searching customer: ${e.toString()}',
-        isError: true,
-      );
     }
   }
 
@@ -627,6 +676,7 @@ class _BillingPageState extends State<BillingPage> {
     required String phoneNumber,
   }) async {
     try {
+      // Save to Firebase
       final billRepo = FirebaseBillRepository(firestore: _firestore);
       final docRef = await _firestore
           .collection('users')
@@ -646,6 +696,19 @@ class _BillingPageState extends State<BillingPage> {
         'totalPaidAmount': 0.0,
       });
 
+      // Also save to Isar for offline-first consistency
+      try {
+        final offlineCtrl = CustomerOfflineController.instance;
+        final entity = await offlineCtrl.addCustomer(
+          name: '$firstName $lastName'.trim(),
+          mobile: phoneNumber,
+        );
+        // Mark as synced with serverId
+        await offlineCtrl.markAsSynced(entity.id, serverId: docRef.id);
+      } catch (e) {
+        debugPrint('[DEBUG] Isar save for new customer failed (non-critical): $e');
+      }
+
       // Auto-attach customer to bill
       final fullName = '$firstName $lastName'.trim();
       if (mounted) {
@@ -656,9 +719,11 @@ class _BillingPageState extends State<BillingPage> {
             'lastName': lastName,
             'contact': phoneNumber,
             'fullName': fullName,
+            'pendingBalance': 0.0,
           };
           _autoFoundCustomerName = fullName;
           _customerNameController.text = fullName;
+          _showAddCustomerPrompt = false;
           if (phoneNumber.isNotEmpty) {
             _customerContactController.text = phoneNumber;
             _hasPhoneText = true;
@@ -857,7 +922,31 @@ class _BillingPageState extends State<BillingPage> {
 
       debugPrint('[Billing] Bill processed with FIFO: COGS=${integrationResult.totalCOGS}, Profit=${integrationResult.totalProfit}');
 
-      // 3. Trigger background sync
+      // 3. Create ledger/transaction entry for partial payments
+      if (calculatedPendingAmount > 0 && _selectedCustomer != null) {
+        try {
+          final customerId = _selectedCustomer!['id'] as String;
+          final billId = integrationResult.billEntity?.serverId ?? 'local_${integrationResult.billEntity?.id}';
+          
+          // Create ledger entry via CustomerTransactionService
+          final transactionResult = await _customerTransactionService.recordBillGenerated(
+            customerId: customerId,
+            billId: billId,
+            billNumber: billId,
+            billAmount: calculatedPendingAmount,
+          );
+          
+          if (transactionResult.success) {
+            debugPrint('[Billing] Ledger entry created for pending amount: $calculatedPendingAmount');
+          } else {
+            debugPrint('[Billing] Ledger entry failed: ${transactionResult.errorMessage}');
+          }
+        } catch (e) {
+          debugPrint('[Billing] Ledger entry error (non-blocking): $e');
+        }
+      }
+
+      // 4. Trigger background sync
       unawaited(BillSyncService.instance.syncNow());
 
       setState(() => _isSavingBill = false);
@@ -925,6 +1014,8 @@ class _BillingPageState extends State<BillingPage> {
       _autoFoundCustomerName = null;
       _receivedAmount = 0.0;
       _isFullPayment = true;
+      _showAddCustomerPrompt = false;
+      _hasPhoneText = false;
     });
   }
 
@@ -1553,12 +1644,18 @@ class _BillingPageState extends State<BillingPage> {
   }
 
   Widget _buildCustomerSection() {
+    // Determine if customer is required (partial payment selected)
+    final isCustomerRequired = !_isFullPayment;
+    
     return Container(
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
+        border: isCustomerRequired && _selectedCustomer == null
+            ? Border.all(color: Colors.red[300]!, width: 1.5)
+            : null,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.04),
@@ -1585,20 +1682,35 @@ class _BillingPageState extends State<BillingPage> {
                 ),
               ),
               const SizedBox(width: 12),
-              Text(
-                _generateBillViaContact
-                    ? _localizations.phoneNumber
-                    : _localizations.customerOptional,
-                style: const TextStyle(
-                  fontFamily: 'Literata',
-                  fontWeight: FontWeight.w600,
-                  fontSize: 15,
-                  color: Color(0xFF1B4D3E),
+              Expanded(
+                child: Text(
+                  _generateBillViaContact
+                      ? _localizations.phoneNumber
+                      : isCustomerRequired
+                          ? '${_localizations.customerOptional.replaceAll('(Optional)', '')}(Required)'
+                          : _localizations.customerOptional,
+                  style: TextStyle(
+                    fontFamily: 'Literata',
+                    fontWeight: FontWeight.w600,
+                    fontSize: 15,
+                    color: isCustomerRequired && _selectedCustomer == null
+                        ? Colors.red[700]!
+                        : const Color(0xFF1B4D3E),
+                  ),
                 ),
               ),
-              const Spacer(),
-              // Add Customer button (only when not in generate via contact mode)
-              if (!_generateBillViaContact)
+              // Loading indicator for customer list
+              if (_isLoadingCustomers)
+                const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Color(0xFF1B4D3E),
+                  ),
+                ),
+              // Add Customer button
+              if (!_generateBillViaContact && !_isLoadingCustomers)
                 IconButton(
                   icon: const Icon(Icons.person_add, color: Color(0xFF1B4D3E)),
                   onPressed: () {
@@ -1612,7 +1724,95 @@ class _BillingPageState extends State<BillingPage> {
             ],
           ),
           const SizedBox(height: 16),
-          if (_generateBillViaContact) ...[
+          
+          // Show selected customer info card (bold name + balance)
+          if (_selectedCustomer != null && !_generateBillViaContact) ...[
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1B4D3E).withOpacity(0.05),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFF1B4D3E).withOpacity(0.2)),
+              ),
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    backgroundColor: const Color(0xFF1B4D3E),
+                    radius: 20,
+                    child: Text(
+                      (_selectedCustomer!['fullName'] as String? ?? '?')[0].toUpperCase(),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _selectedCustomer!['fullName'] ?? '-',
+                          style: const TextStyle(
+                            fontFamily: 'Literata',
+                            fontWeight: FontWeight.w700,
+                            fontSize: 15,
+                            color: Color(0xFF1B4D3E),
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          _selectedCustomer!['contact'] ?? '-',
+                          style: TextStyle(
+                            fontFamily: 'Literata',
+                            fontSize: 13,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                        if ((_selectedCustomer!['pendingBalance'] as num?)?.toDouble() != null &&
+                            (_selectedCustomer!['pendingBalance'] as num).toDouble() > 0) ...[
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Icon(Icons.account_balance_wallet_outlined, size: 14, color: Colors.orange[700]),
+                              const SizedBox(width: 4),
+                              Text(
+                                'Pending: ₹${(_selectedCustomer!['pendingBalance'] as num).toDouble().toStringAsFixed(2)}',
+                                style: TextStyle(
+                                  fontFamily: 'Literata',
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.orange[700],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () => setState(() {
+                      _selectedCustomer = null;
+                      _customerNameController.clear();
+                      _customerContactController.clear();
+                      _showAddCustomerPrompt = false;
+                    }),
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[200],
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(Icons.close, color: Colors.grey[600], size: 16),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ] else if (_generateBillViaContact) ...[
             // Show only phone number field when generate via contact is enabled
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1712,58 +1912,73 @@ class _BillingPageState extends State<BillingPage> {
                       ],
                     ),
                   ),
+                // "Add Customer?" prompt when phone not found (via contact mode)
+                if (_showAddCustomerPrompt && !_isSearchingCustomer)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 6, left: 4),
+                    child: GestureDetector(
+                      onTap: () {
+                        final phone = _customerContactController.text.trim();
+                        _showAddCustomerDialog(phone);
+                      },
+                      child: Row(
+                        children: [
+                          Icon(Icons.person_add, size: 14, color: Colors.orange[700]),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Customer not found. Add new?',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.orange[700],
+                              fontFamily: 'Literata',
+                              fontWeight: FontWeight.w600,
+                              decoration: TextDecoration.underline,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
               ],
             ),
           ] else ...[
-            // Normal customer section with all fields
-            if (_customers.isNotEmpty) ...[
-              GestureDetector(
-                onTap: _showCustomerPicker,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 12,
+            // Normal customer section — tap to pick or enter manually
+            GestureDetector(
+              onTap: _showCustomerPicker,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 14,
+                ),
+                decoration: BoxDecoration(
+                  border: Border.all(
+                    color: isCustomerRequired
+                        ? Colors.red[300]!
+                        : Colors.grey[300]!,
                   ),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey[300]!),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.search, color: Colors.grey[500], size: 20),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          _selectedCustomer != null
-                              ? _selectedCustomer!['fullName']
-                              : _localizations.searchExistingCustomer,
-                          style: TextStyle(
-                            fontFamily: 'Literata',
-                            color: _selectedCustomer != null
-                                ? Colors.black87
-                                : Colors.grey[500],
-                          ),
+                  borderRadius: BorderRadius.circular(12),
+                  color: Colors.grey[50],
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.search, color: Colors.grey[500], size: 20),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        _localizations.searchExistingCustomer,
+                        style: TextStyle(
+                          fontFamily: 'Literata',
+                          color: Colors.grey[500],
+                          fontSize: 14,
                         ),
                       ),
-                      if (_selectedCustomer != null)
-                        GestureDetector(
-                          onTap: () => setState(() {
-                            _selectedCustomer = null;
-                            _customerNameController.clear();
-                            _customerContactController.clear();
-                          }),
-                          child: Icon(
-                            Icons.close,
-                            color: Colors.grey[500],
-                            size: 18,
-                          ),
-                        ),
-                    ],
-                  ),
+                    ),
+                    Icon(Icons.chevron_right, color: Colors.grey[400], size: 20),
+                  ],
                 ),
               ),
-              const SizedBox(height: 12),
-            ],
+            ),
+            const SizedBox(height: 12),
             Row(
               children: [
                 Expanded(
@@ -1830,6 +2045,7 @@ class _BillingPageState extends State<BillingPage> {
                                           _autoFoundCustomerName = null;
                                           _selectedCustomer = null;
                                           _hasPhoneText = false;
+                                          _showAddCustomerPrompt = false;
                                         });
                                       },
                                       color: Colors.grey[600],
@@ -1877,6 +2093,33 @@ class _BillingPageState extends State<BillingPage> {
                                 ),
                               ),
                             ],
+                          ),
+                        ),
+                      // "Add Customer?" prompt when phone not found
+                      if (_showAddCustomerPrompt && !_isSearchingCustomer)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 6, left: 4),
+                          child: GestureDetector(
+                            onTap: () {
+                              final phone = _customerContactController.text.trim();
+                              _showAddCustomerDialog(phone);
+                            },
+                            child: Row(
+                              children: [
+                                Icon(Icons.person_add, size: 14, color: Colors.orange[700]),
+                                const SizedBox(width: 4),
+                                Text(
+                                  'Customer not found. Add new?',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.orange[700],
+                                    fontFamily: 'Literata',
+                                    fontWeight: FontWeight.w600,
+                                    decoration: TextDecoration.underline,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                     ],
@@ -3277,6 +3520,9 @@ class _BillingPageState extends State<BillingPage> {
   }
 
   void _showCustomerPicker() {
+    // Refresh customers before showing picker
+    _loadCustomers();
+    
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -3289,8 +3535,15 @@ class _BillingPageState extends State<BillingPage> {
             _selectedCustomer = customer;
             _customerNameController.text = customer['fullName'] ?? '';
             _customerContactController.text = customer['contact'] ?? '';
+            _showAddCustomerPrompt = false;
+            _autoFoundCustomerName = customer['fullName'];
           });
           Navigator.pop(ctx);
+        },
+        onAddNew: () {
+          Navigator.pop(ctx);
+          final phone = _customerContactController.text.trim();
+          _showAddCustomerDialog(phone);
         },
       ),
     );
@@ -3918,11 +4171,13 @@ class _AddItemsBottomSheetState extends State<_AddItemsBottomSheet> {
 class _CustomerPickerBottomSheet extends StatefulWidget {
   final List<Map<String, dynamic>> customers;
   final Function(Map<String, dynamic> customer) onCustomerSelected;
+  final VoidCallback? onAddNew;
   final AppLocalizations localizations;
 
   const _CustomerPickerBottomSheet({
     required this.customers,
     required this.onCustomerSelected,
+    this.onAddNew,
     required this.localizations,
   });
 
@@ -4072,6 +4327,40 @@ class _CustomerPickerBottomSheetState
               ),
             ),
             const SizedBox(height: 12),
+            // Add New Customer button
+            if (widget.onAddNew != null)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: GestureDetector(
+                  onTap: widget.onAddNew,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: const Color(0xFF1B4D3E), width: 1.5),
+                      borderRadius: BorderRadius.circular(12),
+                      color: const Color(0xFF1B4D3E).withOpacity(0.05),
+                    ),
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.person_add, color: Color(0xFF1B4D3E), size: 20),
+                        SizedBox(width: 8),
+                        Text(
+                          'Add New Customer',
+                          style: TextStyle(
+                            fontFamily: 'Literata',
+                            color: Color(0xFF1B4D3E),
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            if (widget.onAddNew != null)
+              const SizedBox(height: 12),
             // Customers list
             Expanded(
               child: _filteredCustomers.isEmpty
@@ -4092,6 +4381,20 @@ class _CustomerPickerBottomSheetState
                               color: Colors.grey[600],
                             ),
                           ),
+                          if (widget.onAddNew != null) ...[
+                            const SizedBox(height: 16),
+                            TextButton.icon(
+                              onPressed: widget.onAddNew,
+                              icon: const Icon(Icons.person_add, size: 18),
+                              label: const Text(
+                                'Add New Customer',
+                                style: TextStyle(fontFamily: 'Literata'),
+                              ),
+                              style: TextButton.styleFrom(
+                                foregroundColor: const Color(0xFF1B4D3E),
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                     )
@@ -4146,7 +4449,7 @@ class _CustomerPickerBottomSheetState
                                             customer['fullName'] ?? '',
                                             style: const TextStyle(
                                               fontFamily: 'Literata',
-                                              fontWeight: FontWeight.w600,
+                                              fontWeight: FontWeight.w700,
                                               fontSize: 15,
                                             ),
                                             maxLines: 1,
@@ -4154,7 +4457,7 @@ class _CustomerPickerBottomSheetState
                                           ),
                                           const SizedBox(height: 2),
                                           Text(
-                                            customer['contact'] ?? '',
+                                            customer['contact'] ?? '—',
                                             style: TextStyle(
                                               fontFamily: 'Literata',
                                               color: Colors.grey[600],
@@ -4165,6 +4468,26 @@ class _CustomerPickerBottomSheetState
                                       ),
                                     ),
                                     const SizedBox(width: 8),
+                                    // Show pending balance if > 0
+                                    if ((customer['pendingBalance'] as num?)?.toDouble() != null &&
+                                        (customer['pendingBalance'] as num).toDouble() > 0)
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                        decoration: BoxDecoration(
+                                          color: Colors.red[50],
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        child: Text(
+                                          '₹${(customer['pendingBalance'] as num).toDouble().toStringAsFixed(0)}',
+                                          style: TextStyle(
+                                            fontFamily: 'Literata',
+                                            color: Colors.red[700],
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                      ),
+                                    const SizedBox(width: 4),
                                     Icon(
                                       Icons.chevron_right,
                                       color: Colors.grey[400],
