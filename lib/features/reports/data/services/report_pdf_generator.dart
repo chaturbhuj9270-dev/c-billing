@@ -1,9 +1,12 @@
+import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../domain/models/report_result_model.dart';
 
 /// Professional PDF generator for inventory reports.
@@ -178,6 +181,47 @@ class ReportPdfGenerator {
       onLayout: (_) => pdfBytes,
       name: 'inventory_report_${DateFormat('yyyyMMdd_HHmm').format(DateTime.now())}.pdf',
     );
+  }
+
+  /// Save PDF locally to Documents/Reports/ directory.
+  /// Returns the full file path on success, null on failure.
+  static Future<String?> saveLocally(Uint8List pdfBytes) async {
+    try {
+      final docsDir = await getApplicationDocumentsDirectory();
+      final reportsDir = Directory('${docsDir.path}/Reports');
+      if (!await reportsDir.exists()) {
+        await reportsDir.create(recursive: true);
+      }
+      final timestamp = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
+      final filePath = '${reportsDir.path}/report_$timestamp.pdf';
+      final file = File(filePath);
+      await file.writeAsBytes(pdfBytes);
+      debugPrint('[ReportPdfGenerator] Saved to: $filePath');
+      return filePath;
+    } catch (e) {
+      debugPrint('[ReportPdfGenerator] Save error: $e');
+      return null;
+    }
+  }
+
+  /// Share the PDF via system share sheet using share_plus.
+  static Future<void> shareReport(Uint8List pdfBytes) async {
+    try {
+      // Save to temp for sharing
+      final tempDir = await getTemporaryDirectory();
+      final timestamp = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
+      final tempFile = File('${tempDir.path}/report_$timestamp.pdf');
+      await tempFile.writeAsBytes(pdfBytes);
+
+      await Share.shareXFiles(
+        [XFile(tempFile.path, mimeType: 'application/pdf')],
+        text: 'Inventory Report — C-Billing',
+        subject: 'Inventory Report',
+      );
+    } catch (e) {
+      debugPrint('[ReportPdfGenerator] Share error: $e');
+      rethrow;
+    }
   }
 
   // ── HEADER ──

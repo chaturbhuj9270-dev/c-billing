@@ -9,9 +9,10 @@ import '../../domain/models/report_filter_model.dart';
 /// Repository for querying Isar with optimized, query-level filtering.
 /// Never loads full database into memory — uses Isar where + filter.
 class ReportRepository {
-  final Isar _isar;
+  /// Lazy accessor — avoids crashing if Isar is still initializing.
+  Isar get _isar => IsarService.instance.isar;
 
-  ReportRepository._() : _isar = IsarService.instance.isar;
+  ReportRepository._();
 
   static ReportRepository? _instance;
   static ReportRepository get instance {
