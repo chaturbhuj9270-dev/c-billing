@@ -109,9 +109,18 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
           .get();
       final list = snap.docs.map((d) {
         final data = d.data();
+        // Firebase stores firstName/middleName/lastName, not a single "name"
+        final firstName = (data['firstName'] ?? '').toString().trim();
+        final middleName = (data['middleName'] ?? '').toString().trim();
+        final lastName = (data['lastName'] ?? '').toString().trim();
+        final fullName = [firstName, middleName, lastName]
+            .where((s) => s.isNotEmpty)
+            .join(' ');
         return <String, dynamic>{
           'id': d.id,
-          'name': data['name'] ?? data['supplierName'] ?? '',
+          'name': fullName.isNotEmpty
+              ? fullName
+              : (data['name'] ?? data['supplierName'] ?? 'Unknown'),
           'contact': data['contact'] ?? data['mobile'] ?? '',
           'address': data['address'] ?? '',
           'companyName': data['companyName'] ?? '',
