@@ -257,7 +257,7 @@ class _PurchasePageState extends State<PurchasePage>
       final supplierEntities = await SupplierOfflineController.instance.getAllSuppliers();
       
       // Convert SupplierEntity to the format expected by the UI
-      final suppliers = supplierEntities.map((entity) => {
+      final suppliers = supplierEntities.map((entity) => <String, dynamic>{
         'id': entity.serverId ?? entity.id.toString(),
         'firstName': entity.firstName,
         'lastName': entity.lastName,
@@ -305,7 +305,7 @@ class _PurchasePageState extends State<PurchasePage>
       }
       
       // Convert CompanyEntity to the format expected by the UI
-      final companies = companyEntities.map((entity) => {
+      final companies = companyEntities.map((entity) => <String, dynamic>{
         'id': entity.serverId ?? entity.id.toString(),
         'companyName': entity.companyName,
       }).toList();
