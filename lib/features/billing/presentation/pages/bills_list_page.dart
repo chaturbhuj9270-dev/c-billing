@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:c_billing/core/services/billing_service.dart';
 import 'package:c_billing/features/billing/data/repositories/firebase_bill_repository.dart';
 import 'package:c_billing/features/billing/domain/entities/bill.dart';
+import 'package:c_billing/features/billing/domain/entities/bill_item.dart';
 import 'package:c_billing/features/inventory_management/data/repositories/firebase_product_repository.dart';
 import 'package:c_billing/features/inventory_management/data/repositories/firebase_stock_repository.dart';
 import 'package:c_billing/features/billing/data/datasources/bill_cache_datasource.dart';
@@ -1798,11 +1799,15 @@ class _BillDetailsDialog extends StatefulWidget {
 
 class _BillDetailsDialogState extends State<_BillDetailsDialog> {
   late Bill _bill;
+  bool _includeReturnsInPrint = true;
+  final _pdfService = PdfBillService();
+  late ShopRepository _shopRepository;
 
   @override
   void initState() {
     super.initState();
     _bill = widget.bill;
+    _shopRepository = ShopRepository();
   }
 
   void _navigateToReturnBill() async {
@@ -1814,13 +1819,90 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog> {
     );
 
     if (result == true && mounted) {
-      // Bill was returned successfully
       setState(() {
         _bill = _bill.copyWith(returnStatus: true, returnDate: DateTime.now());
       });
       widget.onBillReturned?.call();
     }
   }
+
+  PrintBillData _createPrintData() {
+    final double? totalDueAmount = _bill.pendingAmount > 0 ? _bill.pendingAmount : null;
+
+    if (_includeReturnsInPrint) {
+      // Include return data as-is from stored bill items
+      return PrintBillData.fromBill(_bill, totalDueAmount: totalDueAmount);
+    } else {
+      // Zero out return quantities for printing without returns
+      final cleanBill = _bill.copyWith(
+        items: _bill.items.map((item) => BillItem(
+          id: item.id,
+          billId: item.billId,
+          productId: item.productId,
+          productName: item.productName,
+          purchasePrice: item.purchasePrice,
+          sellingPrice: item.sellingPrice,
+          quantity: item.quantity,
+          subtotal: item.subtotal,
+          returnedQuantity: 0,
+        )).toList(),
+      );
+      return PrintBillData.fromBill(cleanBill, totalDueAmount: totalDueAmount);
+    }
+  }
+
+  Future<void> _shareBillAsPdf() async {
+    try {
+      final shop = await _shopRepository.getShopDetails().timeout(
+        const Duration(seconds: 5),
+        onTimeout: () => Shop.empty,
+      );
+      final printData = _createPrintData();
+      final prefs = await SharedPreferences.getInstance();
+      final billType = prefs.getString('bill_type') ?? 'pos';
+      final pw.Document pdf;
+      if (billType == 'normal') {
+        pdf = await _pdfService.generateNormalBillPdf(billData: printData, shopDetails: shop);
+      } else {
+        pdf = await _pdfService.generateBillPdf(billData: printData, shopDetails: shop);
+      }
+      final bytes = await pdf.save();
+      if (!mounted) return;
+      await Printing.sharePdf(
+        bytes: bytes,
+        filename: 'bill_${_bill.billNumber.replaceAll(RegExp(r'[^a-zA-Z0-9\-_]'), '_')}.pdf',
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error sharing bill: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
+  Future<void> _printBill() async {
+    try {
+      final shop = await _shopRepository.getShopDetails().timeout(
+        const Duration(seconds: 5),
+        onTimeout: () => Shop.empty,
+      );
+      final printData = _createPrintData();
+      if (!mounted) return;
+      await _pdfService.previewAndPrintPdf(billData: printData, shopDetails: shop);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error printing bill: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
+  /// Calculated totals for display
+  double get _returnDeduction => _bill.totalReturnedAmount;
+  double get _finalPayable => (_bill.finalAmount - _returnDeduction).clamp(0.0, double.infinity);
+  bool get _isFullyReturned => _bill.isFullyReturned;
 
   @override
   Widget build(BuildContext context) {
@@ -1831,9 +1913,7 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog> {
       insetPadding: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
       child: Stack(
         children: [
-          // Glassy background
           Container(color: Colors.black.withOpacity(0.3)),
-          // Main content
           Scaffold(
             backgroundColor: Colors.transparent,
             appBar: AppBar(
@@ -1845,10 +1925,7 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog> {
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.2),
                     shape: BoxShape.circle,
-                    border: Border.all(
-                      color: Colors.white.withOpacity(0.3),
-                      width: 1,
-                    ),
+                    border: Border.all(color: Colors.white.withOpacity(0.3), width: 1),
                   ),
                   child: const Icon(Icons.arrow_back, color: Colors.white),
                 ),
@@ -1876,27 +1953,28 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog> {
                           color: Colors.white.withOpacity(0.7),
                         ),
                       ),
-                      if (_bill.returnStatus) ...[
+                      if (_bill.hasAnyReturns) ...[
                         const SizedBox(width: 8),
                         Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 6,
-                            vertical: 2,
-                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
-                            color: Colors.orange.withOpacity(0.3),
+                            color: _isFullyReturned
+                                ? Colors.red.withOpacity(0.3)
+                                : Colors.orange.withOpacity(0.3),
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(
-                              color: Colors.orange.withOpacity(0.5),
+                              color: _isFullyReturned
+                                  ? Colors.red.withOpacity(0.5)
+                                  : Colors.orange.withOpacity(0.5),
                             ),
                           ),
-                          child: const Text(
-                            'Returned',
+                          child: Text(
+                            _isFullyReturned ? 'Fully Returned' : 'Partial Return',
                             style: TextStyle(
                               fontFamily: 'Literata',
                               fontSize: 10,
                               fontWeight: FontWeight.w600,
-                              color: Colors.orange,
+                              color: _isFullyReturned ? Colors.red[300] : Colors.orange,
                             ),
                           ),
                         ),
@@ -1913,194 +1991,356 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Date card
+                  // ══════════ Bill Info ══════════
                   _buildGlassyCard(
-                    _buildDetailRow(
-                      'Date',
-                      dateFormat.format(_bill.billDate),
-                      Icons.calendar_today,
+                    Column(
+                      children: [
+                        _buildDetailRow('Bill No', _bill.billNumber, Icons.receipt_long),
+                        const SizedBox(height: 12),
+                        Container(height: 1, color: Colors.white.withOpacity(0.1)),
+                        const SizedBox(height: 12),
+                        _buildDetailRow('Date', dateFormat.format(_bill.billDate), Icons.calendar_today),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 12),
-                  // Customer info section
+
+                  // ══════════ Customer Info ══════════
                   if (_bill.hasCustomerInfo) ...[
                     _buildGlassyCard(
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _buildDetailRow(
-                            'Customer',
-                            _bill.customerName ?? 'N/A',
-                            Icons.person,
-                          ),
+                          _buildDetailRow('Customer', _bill.customerName ?? 'N/A', Icons.person),
                           if (_bill.customerContact != null) ...[
                             const SizedBox(height: 12),
-                            Container(
-                              height: 1,
-                              color: Colors.white.withOpacity(0.1),
-                            ),
+                            Container(height: 1, color: Colors.white.withOpacity(0.1)),
                             const SizedBox(height: 12),
-                            _buildDetailRow(
-                              'Contact',
-                              _bill.customerContact!,
-                              Icons.phone,
-                            ),
+                            _buildDetailRow('Mobile', _bill.customerContact!, Icons.phone),
                           ],
                         ],
                       ),
                     ),
                     const SizedBox(height: 12),
                   ],
-                  // Items section
+
+                  // ══════════ Items Section ══════════
                   _buildGlassyCard(
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'Items',
-                          style: TextStyle(
-                            fontFamily: 'Literata',
-                            fontWeight: FontWeight.w700,
-                            fontSize: 16,
-                            color: Colors.white,
-                          ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              'Sold Items',
+                              style: TextStyle(
+                                fontFamily: 'Literata',
+                                fontWeight: FontWeight.w700,
+                                fontSize: 16,
+                                color: Colors.white,
+                              ),
+                            ),
+                            Text(
+                              '${_bill.items.length} items',
+                              style: TextStyle(
+                                fontFamily: 'Literata',
+                                fontSize: 12,
+                                color: Colors.white.withOpacity(0.6),
+                              ),
+                            ),
+                          ],
                         ),
                         const SizedBox(height: 12),
-                        ..._bill.items.map(
-                          (item) => Column(
+                        // Items table header
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.08),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Row(
                             children: [
-                              _buildItemRow(item),
-                              if (_bill.items.last != item) ...[
-                                const SizedBox(height: 8),
-                              ],
+                              Expanded(
+                                flex: 3,
+                                child: Text('Product', style: TextStyle(
+                                  fontFamily: 'Literata', fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white.withOpacity(0.7),
+                                )),
+                              ),
+                              SizedBox(
+                                width: 40,
+                                child: Text('Qty', textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontFamily: 'Literata', fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.white.withOpacity(0.7),
+                                  ),
+                                ),
+                              ),
+                              SizedBox(
+                                width: 55,
+                                child: Text('Rate', textAlign: TextAlign.right,
+                                  style: TextStyle(
+                                    fontFamily: 'Literata', fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.white.withOpacity(0.7),
+                                  ),
+                                ),
+                              ),
+                              SizedBox(
+                                width: 65,
+                                child: Text('Amount', textAlign: TextAlign.right,
+                                  style: TextStyle(
+                                    fontFamily: 'Literata', fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.white.withOpacity(0.7),
+                                  ),
+                                ),
+                              ),
                             ],
                           ),
                         ),
+                        const SizedBox(height: 8),
+                        // Items list
+                        ..._bill.items.map((item) => _buildItemRow(item)),
                       ],
                     ),
                   ),
                   const SizedBox(height: 12),
-                  // Notes section
+
+                  // ══════════ Notes ══════════
                   if (_bill.notes != null && _bill.notes!.isNotEmpty) ...[
                     _buildGlassyCard(
                       _buildDetailRow('Notes', _bill.notes!, Icons.note),
                     ),
                     const SizedBox(height: 12),
                   ],
-                  // Totals section
+
+                  // ══════════ Totals Section ══════════
                   _buildGlassyCard(
                     Column(
                       children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'Total Quantity:',
-                              style: TextStyle(
-                                fontFamily: 'Literata',
-                                fontSize: 14,
-                                color: Colors.white.withOpacity(0.8),
-                              ),
-                            ),
-                            Text(
-                              '${_bill.totalQuantity} items',
-                              style: const TextStyle(
-                                fontFamily: 'Literata',
-                                fontWeight: FontWeight.w600,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ],
+                        // Total Quantity
+                        _buildTotalDisplayRow(
+                          'Total Quantity',
+                          '${_bill.totalQuantity} items',
                         ),
-                        const SizedBox(height: 12),
-                        Container(
-                          height: 1,
-                          color: Colors.white.withOpacity(0.1),
+                        _buildDivider(),
+                        // Subtotal (Gross Total)
+                        _buildTotalDisplayRow(
+                          'Subtotal',
+                          '₹${_bill.totalAmount.toStringAsFixed(2)}',
                         ),
-                        const SizedBox(height: 12),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'Subtotal:',
-                              style: TextStyle(
-                                fontFamily: 'Literata',
-                                fontSize: 14,
-                                color: Colors.white.withOpacity(0.8),
-                              ),
-                            ),
-                            Text(
-                              '₹${_bill.totalAmount.toStringAsFixed(2)}',
-                              style: TextStyle(
-                                fontFamily: 'Literata',
-                                fontSize: 14,
-                                color: Colors.white.withOpacity(0.9),
-                              ),
-                            ),
-                          ],
-                        ),
+                        // Discount
                         if (_bill.discountAmount > 0) ...[
                           const SizedBox(height: 8),
+                          _buildTotalDisplayRow(
+                            'Discount (${_bill.discountPercent.toStringAsFixed(1)}%)',
+                            '-₹${_bill.discountAmount.toStringAsFixed(2)}',
+                            valueColor: Colors.greenAccent,
+                          ),
+                        ],
+                        _buildDivider(),
+                        // Bill Total (before returns)
+                        _buildTotalDisplayRow(
+                          'Bill Total',
+                          '₹${_bill.finalAmount.toStringAsFixed(2)}',
+                          isBold: true,
+                        ),
+                        // Return Deduction (if any returns)
+                        if (_bill.hasAnyReturns) ...[
+                          _buildDivider(),
+                          _buildTotalDisplayRow(
+                            'Return Deduction (${_bill.totalReturnedQuantity} qty)',
+                            '-₹${_returnDeduction.toStringAsFixed(2)}',
+                            valueColor: Colors.orange,
+                          ),
+                          _buildDivider(),
+                          // Final Payable
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                'Discount (${_bill.discountPercent.toStringAsFixed(1)}%):',
+                                _isFullyReturned ? 'Final Payable' : 'Final Payable',
                                 style: TextStyle(
                                   fontFamily: 'Literata',
-                                  fontSize: 14,
-                                  color: Colors.greenAccent.withOpacity(0.9),
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                  color: _isFullyReturned ? Colors.red[300] : Colors.white,
                                 ),
                               ),
                               Text(
-                                '-₹${_bill.discountAmount.toStringAsFixed(2)}',
+                                _isFullyReturned ? '₹0.00' : '₹${_finalPayable.toStringAsFixed(2)}',
                                 style: TextStyle(
                                   fontFamily: 'Literata',
-                                  fontSize: 14,
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w800,
+                                  color: _isFullyReturned ? Colors.red[300] : Colors.white,
+                                ),
+                              ),
+                            ],
+                          ),
+                          if (_isFullyReturned) ...[
+                            const SizedBox(height: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: Colors.red.withOpacity(0.15),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: Colors.red.withOpacity(0.3)),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.info_outline, size: 14, color: Colors.red[300]),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    'Status: Fully Returned',
+                                    style: TextStyle(
+                                      fontFamily: 'Literata',
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.red[300],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ],
+                        // Show final amount when no returns
+                        if (!_bill.hasAnyReturns) ...[
+                          _buildDivider(),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Final Amount',
+                                style: TextStyle(
+                                  fontFamily: 'Literata',
+                                  fontSize: 16,
                                   fontWeight: FontWeight.w600,
-                                  color: Colors.greenAccent,
+                                  color: Colors.white.withOpacity(0.9),
+                                ),
+                              ),
+                              Text(
+                                '₹${_bill.finalAmount.toStringAsFixed(2)}',
+                                style: const TextStyle(
+                                  fontFamily: 'Literata',
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.white,
                                 ),
                               ),
                             ],
                           ),
                         ],
-                        const SizedBox(height: 12),
-                        Container(
-                          height: 1,
-                          color: Colors.white.withOpacity(0.1),
-                        ),
-                        const SizedBox(height: 12),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'Final Amount:',
-                              style: TextStyle(
-                                fontFamily: 'Literata',
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.white.withOpacity(0.9),
-                              ),
-                            ),
-                            Text(
-                              '₹${_bill.finalAmount.toStringAsFixed(2)}',
-                              style: const TextStyle(
-                                fontFamily: 'Literata',
-                                fontSize: 22,
-                                fontWeight: FontWeight.w800,
-                                color: Colors.white,
-                              ),
+                        // Payment info
+                        if (_bill.paidAmount > 0 || _bill.pendingAmount > 0) ...[
+                          _buildDivider(),
+                          _buildTotalDisplayRow(
+                            'Paid Amount',
+                            '₹${_bill.paidAmount.toStringAsFixed(2)}',
+                            valueColor: Colors.greenAccent,
+                          ),
+                          if (_bill.pendingAmount > 0) ...[
+                            const SizedBox(height: 8),
+                            _buildTotalDisplayRow(
+                              'Pending Amount',
+                              '₹${_bill.pendingAmount.toStringAsFixed(2)}',
+                              valueColor: Colors.orange,
                             ),
                           ],
-                        ),
+                        ],
                       ],
                     ),
                   ),
                   const SizedBox(height: 16),
+
+                  // ══════════ Include Returns Toggle ══════════
+                  if (_bill.hasAnyReturns) ...[
+                    _buildGlassyCard(
+                      Row(
+                        children: [
+                          Icon(Icons.assignment_return, size: 20, color: Colors.orange[300]),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              'Include Returned Items in Print',
+                              style: TextStyle(
+                                fontFamily: 'Literata',
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white.withOpacity(0.9),
+                              ),
+                            ),
+                          ),
+                          Transform.scale(
+                            scale: 0.85,
+                            child: Switch(
+                              value: _includeReturnsInPrint,
+                              onChanged: (v) => setState(() => _includeReturnsInPrint = v),
+                              activeColor: Colors.orange,
+                              activeTrackColor: Colors.orange.withOpacity(0.3),
+                              inactiveThumbColor: Colors.grey[400],
+                              inactiveTrackColor: Colors.grey.withOpacity(0.3),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+
+                  // ══════════ Action Buttons ══════════
+                  // Share & Save PDF row
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildActionButton(
+                          icon: Icons.share,
+                          label: 'Share',
+                          color: const Color(0xFF1B4D3E),
+                          onTap: () {
+                            Navigator.pop(context);
+                            _shareBillAsPdf();
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: _buildActionButton(
+                          icon: Icons.picture_as_pdf,
+                          label: 'Save PDF',
+                          color: const Color(0xFF1B4D3E),
+                          onTap: () {
+                            Navigator.pop(context);
+                            _shareBillAsPdf();
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  // Print button
+                  _buildActionButton(
+                    icon: Icons.print,
+                    label: 'Print Bill',
+                    color: const Color(0xFF1B4D3E),
+                    filled: true,
+                    onTap: () {
+                      Navigator.pop(context);
+                      _printBill();
+                    },
+                  ),
+                  const SizedBox(height: 10),
+
                   // Return Bill Button
-                  if (!_bill.returnStatus)
+                  if (!_bill.returnStatus && _bill.hasReturnableItems)
                     _buildReturnBillButton()
-                  else
+                  else if (_bill.returnStatus)
                     _buildReturnedInfoCard(),
                   const SizedBox(height: 24),
                 ],
@@ -2108,6 +2348,81 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildDivider() {
+    return Column(
+      children: [
+        const SizedBox(height: 12),
+        Container(height: 1, color: Colors.white.withOpacity(0.1)),
+        const SizedBox(height: 12),
+      ],
+    );
+  }
+
+  Widget _buildTotalDisplayRow(String label, String value, {Color? valueColor, bool isBold = false}) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontFamily: 'Literata',
+            fontSize: 14,
+            fontWeight: isBold ? FontWeight.w700 : FontWeight.normal,
+            color: valueColor ?? Colors.white.withOpacity(0.8),
+          ),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            fontFamily: 'Literata',
+            fontSize: isBold ? 16 : 14,
+            fontWeight: isBold ? FontWeight.w700 : FontWeight.w600,
+            color: valueColor ?? Colors.white.withOpacity(0.9),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildActionButton({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+    bool filled = false,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
+        decoration: BoxDecoration(
+          color: filled ? color.withOpacity(0.4) : Colors.white.withOpacity(0.08),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: filled ? color.withOpacity(0.6) : Colors.white.withOpacity(0.2),
+            width: 1.5,
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: filled ? Colors.white : Colors.white.withOpacity(0.8), size: 20),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: TextStyle(
+                fontFamily: 'Literata',
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: filled ? Colors.white : Colors.white.withOpacity(0.8),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -2165,98 +2480,134 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog> {
     );
   }
 
-  Widget _buildItemRow(item) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.08),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.white.withOpacity(0.1), width: 1),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      item.productName,
-                      style: const TextStyle(
-                        fontFamily: 'Literata',
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
-                    ),
-                    Text(
-                      '₹${item.sellingPrice.toStringAsFixed(2)} × ${item.quantity}',
-                      style: TextStyle(
-                        fontFamily: 'Literata',
-                        fontSize: 12,
-                        color: Colors.white.withOpacity(0.6),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Text(
-                '₹${item.subtotal.toStringAsFixed(2)}',
-                style: const TextStyle(
-                  fontFamily: 'Literata',
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white,
-                ),
-              ),
-            ],
+  Widget _buildItemRow(BillItem item) {
+    final bool hasReturn = item.returnedQuantity > 0;
+    final bool isFullReturn = item.isFullyReturned;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(isFullReturn ? 0.04 : 0.08),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: hasReturn
+                ? Colors.orange.withOpacity(0.3)
+                : Colors.white.withOpacity(0.1),
+            width: 1,
           ),
-          // Show returned quantity if any
-          if (item.returnedQuantity > 0) ...[
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: Colors.orange.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(6),
-                border: Border.all(color: Colors.orange.withOpacity(0.4)),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.assignment_return,
-                        size: 14,
-                        color: Colors.orange[300],
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        'Returned: ${item.returnedQuantity} qty',
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Sold line
+            Row(
+              children: [
+                Expanded(
+                  flex: 3,
+                  child: Text(
+                    item.productName,
+                    style: TextStyle(
+                      fontFamily: 'Literata',
+                      fontWeight: FontWeight.w600,
+                      color: isFullReturn ? Colors.white.withOpacity(0.4) : Colors.white,
+                      decoration: isFullReturn ? TextDecoration.lineThrough : null,
+                      decorationColor: Colors.orange.withOpacity(0.7),
+                      decorationThickness: 2,
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  width: 40,
+                  child: Text(
+                    '${item.quantity}',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontFamily: 'Literata',
+                      fontSize: 13,
+                      color: isFullReturn ? Colors.white.withOpacity(0.4) : Colors.white.withOpacity(0.8),
+                      decoration: isFullReturn ? TextDecoration.lineThrough : null,
+                      decorationColor: Colors.orange.withOpacity(0.7),
+                      decorationThickness: 2,
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  width: 55,
+                  child: Text(
+                    '₹${item.sellingPrice.toStringAsFixed(0)}',
+                    textAlign: TextAlign.right,
+                    style: TextStyle(
+                      fontFamily: 'Literata',
+                      fontSize: 12,
+                      color: Colors.white.withOpacity(0.6),
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  width: 65,
+                  child: Text(
+                    '₹${item.subtotal.toStringAsFixed(2)}',
+                    textAlign: TextAlign.right,
+                    style: TextStyle(
+                      fontFamily: 'Literata',
+                      fontWeight: FontWeight.w700,
+                      color: isFullReturn ? Colors.white.withOpacity(0.4) : Colors.white,
+                      decoration: isFullReturn ? TextDecoration.lineThrough : null,
+                      decorationColor: Colors.orange.withOpacity(0.7),
+                      decorationThickness: 2,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            // Return line (if any)
+            if (hasReturn) ...[
+              const SizedBox(height: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                decoration: BoxDecoration(
+                  color: Colors.orange.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: Colors.orange.withOpacity(0.3)),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.assignment_return, size: 13, color: Colors.orange[300]),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        'Return: ${item.returnedQuantity} Qty',
                         style: TextStyle(
                           fontFamily: 'Literata',
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
                           color: Colors.orange[300],
+                          decoration: TextDecoration.lineThrough,
+                          decorationColor: Colors.orange.withOpacity(0.5),
+                          decorationThickness: 1.5,
                         ),
                       ),
-                    ],
-                  ),
-                  Text(
-                    '-₹${(item.sellingPrice * item.returnedQuantity).toStringAsFixed(2)}',
-                    style: TextStyle(
-                      fontFamily: 'Literata',
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.orange[300],
                     ),
-                  ),
-                ],
+                    Text(
+                      '(-₹${(item.sellingPrice * item.returnedQuantity).toStringAsFixed(2)})',
+                      style: TextStyle(
+                        fontFamily: 'Literata',
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.orange[300],
+                        decoration: TextDecoration.lineThrough,
+                        decorationColor: Colors.orange.withOpacity(0.5),
+                        decorationThickness: 1.5,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
