@@ -153,9 +153,20 @@ class _BillsListPageState extends State<BillsListPage>
 
   Future<void> _printBill(Bill bill) async {
     // Show bill preview dialog first
-    final shouldPrint = await _showPrintPreviewDialog(bill);
-    if (shouldPrint != true || !mounted) return;
+    final action = await _showPrintPreviewDialog(bill);
+    if (!mounted || action == null || action == 'cancel') return;
 
+    // Handle share/save actions from preview dialog
+    if (action == 'share') {
+      _shareBillAsPdf(bill);
+      return;
+    }
+    if (action == 'save') {
+      _saveBillAsPdf(bill);
+      return;
+    }
+
+    // action == 'print' → proceed with POS printer selection
     // Show printer selection
     final selectedPrinter = await PrinterSelectionWidget.show(context);
     if (selectedPrinter == null || !mounted) return;
@@ -222,10 +233,10 @@ class _BillsListPageState extends State<BillsListPage>
     }
   }
 
-  Future<bool?> _showPrintPreviewDialog(Bill bill) {
+  Future<String?> _showPrintPreviewDialog(Bill bill) {
     final dateFormat = DateFormat('dd MMM yyyy, hh:mm a');
 
-    return showDialog<bool>(
+    return showDialog<String>(
       context: context,
       builder: (dialogContext) => Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -275,7 +286,7 @@ class _BillsListPageState extends State<BillsListPage>
                     ),
                     IconButton(
                       icon: const Icon(Icons.close, color: Colors.white),
-                      onPressed: () => Navigator.pop(context, false),
+                      onPressed: () => Navigator.pop(dialogContext),
                     ),
                   ],
                 ),
@@ -499,8 +510,7 @@ class _BillsListPageState extends State<BillsListPage>
                         Expanded(
                           child: OutlinedButton.icon(
                             onPressed: () {
-                              Navigator.pop(dialogContext);
-                              _shareBillAsPdf(bill);
+                              Navigator.pop(dialogContext, 'share');
                             },
                             icon: const Icon(Icons.share, size: 18),
                             label: const Text(
@@ -521,8 +531,7 @@ class _BillsListPageState extends State<BillsListPage>
                         Expanded(
                           child: OutlinedButton.icon(
                             onPressed: () {
-                              Navigator.pop(dialogContext);
-                              _saveBillAsPdf(bill);
+                              Navigator.pop(dialogContext, 'save');
                             },
                             icon: const Icon(Icons.picture_as_pdf, size: 18),
                             label: const Text(
@@ -547,7 +556,7 @@ class _BillsListPageState extends State<BillsListPage>
                       children: [
                         Expanded(
                           child: OutlinedButton(
-                            onPressed: () => Navigator.pop(dialogContext, false),
+                            onPressed: () => Navigator.pop(dialogContext, 'cancel'),
                             style: OutlinedButton.styleFrom(
                               padding: const EdgeInsets.symmetric(vertical: 12),
                               side: BorderSide(color: Colors.grey[400]!),
@@ -567,7 +576,7 @@ class _BillsListPageState extends State<BillsListPage>
                         const SizedBox(width: 8),
                         Expanded(
                           child: ElevatedButton.icon(
-                            onPressed: () => Navigator.pop(dialogContext, true),
+                            onPressed: () => Navigator.pop(dialogContext, 'print'),
                             icon: const Icon(Icons.print, size: 18),
                             label: Text(
                               _localizations.print,
@@ -812,22 +821,34 @@ class _BillsListPageState extends State<BillsListPage>
     _loadBills();
   }
 
-  void _showBillDetails(Bill bill) {
-    showDialog(
+  void _showBillDetails(Bill bill) async {
+    final result = await showDialog<_BillDialogResult>(
       context: context,
-      builder: (dialogContext) => _BillDetailsDialog(
-        bill: bill,
-        onBillReturned: () {
-          _loadBills();
-        },
-        onShareBill: (printData) {
-          _shareBillAsPdfWithData(printData);
-        },
-        onPrintBill: (printData) {
-          _printBillWithData(printData);
-        },
-      ),
+      builder: (dialogContext) => _BillDetailsDialog(bill: bill),
     );
+
+    if (!mounted || result == null) return;
+
+    switch (result.action) {
+      case _BillDialogAction.share:
+        if (result.printData != null) {
+          _shareBillAsPdfWithData(result.printData!);
+        }
+        break;
+      case _BillDialogAction.savePdf:
+        if (result.printData != null) {
+          _shareBillAsPdfWithData(result.printData!);
+        }
+        break;
+      case _BillDialogAction.print:
+        if (result.printData != null) {
+          _printBillWithData(result.printData!);
+        }
+        break;
+      case _BillDialogAction.billReturned:
+        _loadBills();
+        break;
+    }
   }
 
   /// Share bill as PDF using pre-built PrintBillData (called from bill details dialog)
@@ -1842,17 +1863,22 @@ class _DateRangePickerDialogState extends State<_DateRangePickerDialog> {
   }
 }
 
+/// Actions that can be triggered from the bill details dialog
+enum _BillDialogAction { share, savePdf, print, billReturned }
+
+/// Result returned from the bill details dialog
+class _BillDialogResult {
+  final _BillDialogAction action;
+  final PrintBillData? printData;
+
+  const _BillDialogResult({required this.action, this.printData});
+}
+
 class _BillDetailsDialog extends StatefulWidget {
   final Bill bill;
-  final VoidCallback? onBillReturned;
-  final void Function(PrintBillData printData)? onShareBill;
-  final void Function(PrintBillData printData)? onPrintBill;
 
   const _BillDetailsDialog({
     required this.bill,
-    this.onBillReturned,
-    this.onShareBill,
-    this.onPrintBill,
   });
 
   @override
@@ -1881,7 +1907,7 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog> {
       setState(() {
         _bill = _bill.copyWith(returnStatus: true, returnDate: DateTime.now());
       });
-      widget.onBillReturned?.call();
+      Navigator.pop(context, const _BillDialogResult(action: _BillDialogAction.billReturned));
     }
   }
 
@@ -2316,8 +2342,10 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog> {
                           color: const Color(0xFF1B4D3E),
                           onTap: () {
                             final printData = _createPrintData();
-                            Navigator.pop(context);
-                            widget.onShareBill?.call(printData);
+                            Navigator.pop(context, _BillDialogResult(
+                              action: _BillDialogAction.share,
+                              printData: printData,
+                            ));
                           },
                         ),
                       ),
@@ -2329,8 +2357,10 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog> {
                           color: const Color(0xFF1B4D3E),
                           onTap: () {
                             final printData = _createPrintData();
-                            Navigator.pop(context);
-                            widget.onShareBill?.call(printData);
+                            Navigator.pop(context, _BillDialogResult(
+                              action: _BillDialogAction.savePdf,
+                              printData: printData,
+                            ));
                           },
                         ),
                       ),
@@ -2345,8 +2375,10 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog> {
                     filled: true,
                     onTap: () {
                       final printData = _createPrintData();
-                      Navigator.pop(context);
-                      widget.onPrintBill?.call(printData);
+                      Navigator.pop(context, _BillDialogResult(
+                        action: _BillDialogAction.print,
+                        printData: printData,
+                      ));
                     },
                   ),
                   const SizedBox(height: 10),
