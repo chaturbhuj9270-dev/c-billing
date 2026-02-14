@@ -1,0 +1,100 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║            FIREBASE PHONE AUTH - QUICK FIX (3 STEPS)                       ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+ERROR: operation-not-allowed - Phone authentication disabled
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+STEP 1: Get Android SHA-1 Certificate
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Run this command:
+  cd android
+  ./gradlew signingReport
+
+Look for output like:
+  SHA1: AB:CD:EF:12:34:56:78:90:AB:CD:EF:12:34:56:78:90:AB:CD:EF:12
+
+Copy the SHA1 value (include colons)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+STEP 2: Add SHA-1 to Firebase Console
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Go to: https://console.firebase.google.com/
+2. Select project: "c-billing"
+3. Click: Project Settings (gear icon)
+4. Select: Your apps → Android app (c_billing)
+5. Scroll down: "SHA certificate fingerprints"
+6. Click: "Add fingerprint"
+7. Paste: The SHA1 value from Step 1
+8. Click: "Save"
+9. WAIT: 2-3 minutes for changes to propagate
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+STEP 3: Enable Phone Authentication
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Go to: https://console.firebase.google.com/
+2. Select project: "c-billing"
+3. Click: Build → Authentication
+4. Click: Sign-in method
+5. Click: "Phone" 
+6. Toggle: Enable (switch to ON)
+7. Click: "Save"
+8. WAIT: 2-3 minutes for changes to propagate
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+STEP 4: Test the App
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Run these commands:
+  flutter clean
+  flutter pub get
+  flutter run
+
+Test with phone number: +919876543210
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+OPTIONAL: Add Test Phone Numbers
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Avoid SMS charges during testing:
+
+1. In Firebase Console
+2. Authentication → Sign-in method → Phone
+3. Scroll: "Test phone numbers"
+4. Click: "Add phone number"
+5. Enter: +919876543210
+6. Enter any 6-digit OTP: 123456
+7. Firebase will display this OTP during testing
+
+When testing with this number, the OTP will be shown in Firebase Console
+instead of sending a real SMS.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+COMMON ISSUES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+❌ Still getting "operation-not-allowed"?
+   → Wait 5 minutes and refresh Firebase Console
+   → Verify SHA-1 is exactly correct (with colons)
+   → Check it appears in Firebase Console
+
+❌ Getting "invalid-cert-hash"?
+   → Your SHA-1 is not registered
+   → Follow Step 2 again, make sure it's exactly correct
+
+❌ Phone number not working?
+   → Use format: +91XXXXXXXXXX (must be +91 and 10 digits)
+   → Or use test number: +919876543210
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Questions? Check: FIREBASE_PHONE_AUTH_FIX.md
