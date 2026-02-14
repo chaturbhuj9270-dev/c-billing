@@ -14,6 +14,9 @@ import '../../data/repositories/firebase_stock_repository.dart';
 import '../../data/repositories/firebase_purchase_repository.dart';
 import '../../data/datasources/product_cache_datasource.dart';
 import '../../domain/entities/product.dart';
+import '../../domain/entities/grouped_product.dart';
+import '../../offline/controllers/purchase_batch_offline_controller.dart';
+import '../../offline/entities/purchase_batch_entity.dart';
 import '../../../product/offline/controllers/product_offline_controller.dart';
 import '../../../product/offline/entities/product_entity.dart';
 import '../../../product/data/services/product_sync_service.dart';
@@ -48,6 +51,13 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
   
   // Latest purchase info for each product
   Map<String, Map<String, dynamic>> _latestPurchases = {};
+
+  // Grouped view mode
+  bool _isGroupedView = true;
+  List<GroupedProduct> _groupedProducts = [];
+  List<GroupedProduct> _filteredGroupedProducts = [];
+  List<PurchaseBatchEntity> _allBatches = [];
+  StreamSubscription<List<PurchaseBatchEntity>>? _batchStreamSubscription;
 
   // Localization variables
   late AppLocalizations _localizations;
@@ -86,6 +96,7 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
     _checkUserAuthentication();
     _setupInitialData();
     _setupOfflineStream();
+    _setupBatchStream();
   }
 
   void _onLanguageChanged() {
@@ -100,6 +111,7 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
   void dispose() {
     LanguageService.instance.removeListener(_onLanguageChanged);
     _productStreamSubscription?.cancel();
+    _batchStreamSubscription?.cancel();
     _scrollController.dispose();
     super.dispose();
   }
@@ -207,6 +219,73 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
     if (mounted && count != _unsyncedCount) {
       setState(() => _unsyncedCount = count);
     }
+  }
+
+  /// Setup batch stream for real-time grouped view updates
+  void _setupBatchStream() {
+    final batchController = PurchaseBatchOfflineController.instance;
+
+    _batchStreamSubscription = batchController
+        .watchAllBatches(includeConsumed: false)
+        .listen(
+      (batches) {
+        if (mounted) {
+          _allBatches = batches;
+          _rebuildGroupedProducts();
+        }
+      },
+      onError: (e) {
+        print('[ERROR] Batch stream error: $e');
+      },
+    );
+  }
+
+  /// Rebuild grouped product list from batches + products
+  void _rebuildGroupedProducts() {
+    // Find products that have NO batches (e.g., only initial stock)
+    final productIdsInBatches = _allBatches.map((b) => b.productId).toSet();
+    final productsWithoutBatches = _products.where(
+      (p) => !productIdsInBatches.contains(p.id),
+    ).toList();
+
+    final grouped = GroupedProduct.buildFromBatches(
+      _allBatches,
+      productsWithoutBatches: productsWithoutBatches,
+    );
+
+    setState(() {
+      _groupedProducts = grouped;
+      _applyGroupedFilters();
+    });
+  }
+
+  /// Apply filters to grouped products
+  void _applyGroupedFilters() {
+    _filteredGroupedProducts = _groupedProducts.where((group) {
+      // Name filter
+      if (_filterName.isNotEmpty &&
+          !group.productName.toLowerCase().contains(_filterName.toLowerCase())) {
+        return false;
+      }
+
+      // Price range filter (check if any sub-entry matches)
+      if (_filterMinPrice != null && group.maxPurchasePrice < _filterMinPrice!) {
+        return false;
+      }
+      if (_filterMaxPrice != null && group.minPurchasePrice > _filterMaxPrice!) {
+        return false;
+      }
+
+      // Stock range filter
+      if (_filterMinStock != null && group.totalStock < _filterMinStock!) {
+        return false;
+      }
+      if (_filterMaxStock != null && group.totalStock > _filterMaxStock!) {
+        return false;
+      }
+
+      return true;
+    }).toList();
   }
 
   Future<void> _loadProducts() async {
@@ -347,6 +426,9 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
 
       return true;
     }).toList();
+
+    // Also rebuild grouped filters when flat filters change
+    _applyGroupedFilters();
   }
 
   void _clearFilters() {
@@ -1302,6 +1384,49 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
   }
 
   Widget _buildStatsCards() {
+    if (_isGroupedView) {
+      final totalGroups = _filteredGroupedProducts.length;
+      final totalStock = _filteredGroupedProducts.fold<int>(
+          0, (sum, g) => sum + g.totalStock);
+      final outOfStockGroups =
+          _filteredGroupedProducts.where((g) => g.totalStock == 0).length;
+
+      return Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Expanded(
+              child: _buildStatCard(
+                title: _localizations.totalProducts,
+                value: totalGroups,
+                icon: Icons.inventory_2,
+                iconColor: const Color(0xFF1B4D3E),
+                backgroundColor: const Color(0xFF1B4D3E).withOpacity(0.1),
+              ),
+            ),
+            Expanded(
+              child: _buildStatCard(
+                title: 'Total Stock',
+                value: totalStock,
+                icon: Icons.widgets_rounded,
+                iconColor: Colors.blue,
+                backgroundColor: Colors.blue.withOpacity(0.1),
+              ),
+            ),
+            Expanded(
+              child: _buildStatCard(
+                title: _localizations.outOfStock,
+                value: outOfStockGroups,
+                icon: Icons.warning_amber,
+                iconColor: Colors.red,
+                backgroundColor: Colors.red.withOpacity(0.1),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     final outOfStockCount = _products.where((p) => p.currentStock == 0).length;
 
     return Padding(
@@ -1404,6 +1529,25 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
         centerTitle: false,
         titleSpacing: 12,
         actions: [
+          // View toggle button
+          Padding(
+            padding: const EdgeInsets.only(right: 4),
+            child: IconButton(
+              onPressed: () {
+                setState(() {
+                  _isGroupedView = !_isGroupedView;
+                  if (_isGroupedView) {
+                    _rebuildGroupedProducts();
+                  }
+                });
+              },
+              icon: Icon(
+                _isGroupedView ? Icons.view_list_rounded : Icons.layers_rounded,
+                size: 22,
+              ),
+              tooltip: _isGroupedView ? 'Flat View' : 'Grouped View',
+            ),
+          ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12),
             child: Center(
@@ -1464,7 +1608,9 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
               children: [
                 _buildStatsCards(),
                 Expanded(
-                  child: _filteredProducts.isEmpty
+                  child: _isGroupedView
+                      ? _buildGroupedProductList()
+                      : _filteredProducts.isEmpty
                       ? Center(
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
@@ -1779,7 +1925,386 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
       ),
     );
   }
-  
+
+  Widget _buildGroupedProductList() {
+    if (_filteredGroupedProducts.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.search_off, size: 64, color: Colors.grey[400]),
+            const SizedBox(height: 16),
+            Text(
+              _localizations.noProductsMatchFilter,
+              style: TextStyle(
+                fontSize: 18,
+                color: Colors.grey[600],
+                fontFamily: 'Literata',
+              ),
+            ),
+            const SizedBox(height: 12),
+            ElevatedButton(
+              onPressed: _clearFilters,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF1B4D3E),
+              ),
+              child: Text(_localizations.clearFilters),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: _filteredGroupedProducts.length,
+      itemBuilder: (context, index) {
+        final group = _filteredGroupedProducts[index];
+        final isLow = group.isLowStock();
+
+        return Card(
+          margin: const EdgeInsets.only(bottom: 12),
+          elevation: 2,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Theme(
+            data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+            child: ExpansionTile(
+              tilePadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 8,
+              ),
+              childrenPadding: EdgeInsets.zero,
+              leading: CircleAvatar(
+                backgroundColor: isLow
+                    ? Colors.red.withOpacity(0.15)
+                    : const Color(0xFF1B4D3E).withOpacity(0.15),
+                child: Icon(
+                  Icons.inventory_2_rounded,
+                  color: isLow ? Colors.red : const Color(0xFF1B4D3E),
+                  size: 20,
+                ),
+              ),
+              title: Text(
+                group.productName,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  fontFamily: 'Literata',
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              subtitle: Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isLow
+                            ? Colors.red.withOpacity(0.15)
+                            : Colors.green.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        'Stock: ${group.totalStock}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          fontFamily: 'Literata',
+                          color: isLow ? Colors.red : Colors.green[700],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    if (group.hasMultipleVariants)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.withOpacity(0.12),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          '${group.variantCount} batches',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                            fontFamily: 'Literata',
+                            color: Colors.blue[700],
+                          ),
+                        ),
+                      ),
+                    const Spacer(),
+                    if (group.companies.isNotEmpty)
+                      Flexible(
+                        child: Text(
+                          group.companies.join(', '),
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Colors.grey[600],
+                            fontFamily: 'Literata',
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              children: [
+                // Summary bar
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 10,
+                  ),
+                  color: const Color(0xFF1B4D3E).withOpacity(0.06),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      _buildGroupInfoChip(
+                        Icons.shopping_cart_outlined,
+                        group.purchasePriceRange,
+                        'Purchase',
+                      ),
+                      _buildGroupInfoChip(
+                        Icons.sell_outlined,
+                        group.salesPriceRange,
+                        'Sell',
+                      ),
+                      _buildGroupInfoChip(
+                        Icons.account_balance_wallet_outlined,
+                        '₹${group.totalStockValue.toStringAsFixed(0)}',
+                        'Value',
+                      ),
+                    ],
+                  ),
+                ),
+                // Batch details table header
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[100],
+                    border: Border(
+                      bottom: BorderSide(color: Colors.grey[300]!),
+                    ),
+                  ),
+                  child: const Row(
+                    children: [
+                      Expanded(
+                        flex: 3,
+                        child: Text(
+                          'Company',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            fontFamily: 'Literata',
+                            color: Color(0xFF1B4D3E),
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        flex: 2,
+                        child: Text(
+                          'Date',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            fontFamily: 'Literata',
+                            color: Color(0xFF1B4D3E),
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                      Expanded(
+                        flex: 2,
+                        child: Text(
+                          'Price',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            fontFamily: 'Literata',
+                            color: Color(0xFF1B4D3E),
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                      Expanded(
+                        flex: 2,
+                        child: Text(
+                          'Sell ₹',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            fontFamily: 'Literata',
+                            color: Color(0xFF1B4D3E),
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                      Expanded(
+                        flex: 1,
+                        child: Text(
+                          'Qty',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            fontFamily: 'Literata',
+                            color: Color(0xFF1B4D3E),
+                          ),
+                          textAlign: TextAlign.end,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                // Batch rows
+                ...group.subEntries.asMap().entries.map((mapEntry) {
+                  final i = mapEntry.key;
+                  final entry = mapEntry.value;
+                  final isEven = i % 2 == 0;
+
+                  return Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isEven ? Colors.white : Colors.grey[50],
+                      border: Border(
+                        bottom: BorderSide(
+                          color: Colors.grey[200]!,
+                          width: 0.5,
+                        ),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          flex: 3,
+                          child: Text(
+                            entry.companyName.isNotEmpty
+                                ? entry.companyName
+                                : '—',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontFamily: 'Literata',
+                              fontWeight: FontWeight.w500,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        Expanded(
+                          flex: 2,
+                          child: Text(
+                            entry.formattedDate,
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontFamily: 'Literata',
+                              color: Colors.grey[700],
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                        Expanded(
+                          flex: 2,
+                          child: Text(
+                            '₹${entry.purchasePrice.toStringAsFixed(0)}',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontFamily: 'Literata',
+                              fontWeight: FontWeight.w500,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                        Expanded(
+                          flex: 2,
+                          child: Text(
+                            '₹${entry.salesPrice.toStringAsFixed(0)}',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontFamily: 'Literata',
+                              fontWeight: FontWeight.w600,
+                              color: Colors.green[700],
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                        Expanded(
+                          flex: 1,
+                          child: Text(
+                            '${entry.stockQuantity}',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontFamily: 'Literata',
+                              fontWeight: FontWeight.w700,
+                              color: entry.stockQuantity <= 5
+                                  ? Colors.red
+                                  : Colors.black87,
+                            ),
+                            textAlign: TextAlign.end,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
+                const SizedBox(height: 4),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildGroupInfoChip(IconData icon, String value, String label) {
+    return Column(
+      children: [
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 14, color: const Color(0xFF1B4D3E)),
+            const SizedBox(width: 4),
+            Text(
+              value,
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                fontFamily: 'Literata',
+                color: Color(0xFF1B4D3E),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 2),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 10,
+            fontFamily: 'Literata',
+            color: Colors.grey[600],
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildLatestPurchaseInfo(String productId) {
     final purchaseData = _latestPurchases[productId];
     if (purchaseData == null) return const SizedBox.shrink();

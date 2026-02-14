@@ -49,9 +49,31 @@ class ProductOfflineController extends ChangeNotifier {
     return null;
   }
 
+  /// Get the next available product code (indexNo).
+  /// Scans all non-deleted products and returns max(indexNo) + 1.
+  /// If no products exist, starts at 1.
+  Future<int> _getNextIndexNo() async {
+    final allProducts = await _isar.productEntitys
+        .filter()
+        .not()
+        .syncStatusEqualTo(SyncStatus.deleted)
+        .findAll();
+    
+    if (allProducts.isEmpty) return 1;
+    
+    int maxIndex = 0;
+    for (final p in allProducts) {
+      if (p.indexNo > maxIndex) {
+        maxIndex = p.indexNo;
+      }
+    }
+    return maxIndex + 1;
+  }
+
   /// Add a new product locally (will be synced later)
   /// Sets syncStatus = NEW, does NOT call API
   /// Throws exception if product with same name+company already exists
+  /// Automatically generates indexNo (product code) if not provided or 0.
   Future<ProductEntity> addProduct({
     int indexNo = 0,
     required String name,
@@ -81,8 +103,12 @@ class ProductOfflineController extends ChangeNotifier {
       }
     }
     
+    // Auto-generate product code if not provided
+    final effectiveIndexNo = indexNo > 0 ? indexNo : await _getNextIndexNo();
+    debugPrint('[ProductOffline] Assigned product code: $effectiveIndexNo');
+
     final product = ProductEntity.create(
-      indexNo: indexNo,
+      indexNo: effectiveIndexNo,
       name: name,
       companyName: companyName,
       category: category,

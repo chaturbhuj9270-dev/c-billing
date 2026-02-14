@@ -27,6 +27,8 @@ import 'package:c_billing/features/billing/data/services/bill_sync_service.dart'
 import 'package:c_billing/features/product/offline/controllers/product_offline_controller.dart';
 import 'package:c_billing/features/product/data/services/product_sync_service.dart';
 import 'package:c_billing/core/services/inventory_integration_service.dart';
+import 'package:c_billing/features/inventory_management/offline/controllers/purchase_batch_offline_controller.dart';
+import 'package:c_billing/features/inventory_management/offline/entities/purchase_batch_entity.dart';
 
 class BillingPage extends StatefulWidget {
   final bool isEmbedded;
@@ -81,6 +83,9 @@ class _BillingPageState extends State<BillingPage> {
   final _indexNoFocusNode = FocusNode();
   Timer? _debounceTimer;
   Map<int, Product> _productByIndexNo = {};
+  
+  // FIFO batch data for billing
+  List<PurchaseBatchEntity> _availableBatches = [];
   
   // Customer phone search debounce
   Timer? _phoneSearchDebounceTimer;
@@ -208,11 +213,19 @@ class _BillingPageState extends State<BillingPage> {
           .where((p) => p.currentStock > 0)
           .toList();
       
-      debugPrint('[BillingPage] Total products: ${allProducts.length}, with stock > 0: ${availableProducts.length}');
+      // Load FIFO batch data for billing
+      final batches = await PurchaseBatchOfflineController.instance
+          .getAllBatches(includeConsumed: false);
+      
+      debugPrint('[BillingPage] Total products: ${allProducts.length}, with stock > 0: ${availableProducts.length}, batches: ${batches.length}');
       
       if (mounted) {
         setState(() {
           _products = availableProducts;
+          _availableBatches = batches
+              .where((b) => b.quantityRemaining > 0)
+              .toList()
+            ..sort((a, b) => a.purchaseDate.compareTo(b.purchaseDate)); // FIFO order
           // Build index lookup map for fast product search
           _productByIndexNo = {
             for (final product in _products)
@@ -650,6 +663,7 @@ class _BillingPageState extends State<BillingPage> {
       builder: (ctx) => _AddItemsBottomSheet(
         products: _products,
         billItems: _billItems,
+        availableBatches: _availableBatches,
         localizations: _localizations,
         onItemAdded: (product, quantity, price) {
           final existingIndex = _billItems.indexWhere(
@@ -1831,6 +1845,7 @@ class _BillingPageState extends State<BillingPage> {
   }
 
   /// Add product by index number directly from the Create Bill page
+  /// Uses FIFO: picks the oldest batch's selling price automatically
   void _addProductByIndexNoOnPage() {
     final indexText = _indexNoController.text.trim();
     if (indexText.isEmpty) return;
@@ -1852,7 +1867,14 @@ class _BillingPageState extends State<BillingPage> {
       return;
     }
 
-    if (product.currentStock <= 0) {
+    // Check FIFO batch stock first
+    final productBatches = _availableBatches
+        .where((b) => b.productId == product.id && b.quantityRemaining > 0)
+        .toList();
+    final batchStock = productBatches.fold<int>(0, (s, b) => s + b.quantityRemaining);
+    final effectiveStock = batchStock > 0 ? batchStock : product.currentStock;
+
+    if (effectiveStock <= 0) {
       _showSnackbar(
         '${product.name} ${_localizations.outOfStock}',
         isError: true,
@@ -1861,6 +1883,11 @@ class _BillingPageState extends State<BillingPage> {
       return;
     }
 
+    // FIFO: use oldest batch's selling price
+    final fifoPrice = productBatches.isNotEmpty
+        ? productBatches.first.sellingPrice
+        : product.salesPrice;
+
     // Add product — increment quantity if already in cart
     final existingIndex = _billItems.indexWhere(
       (item) => item.productId == product.id,
@@ -1868,7 +1895,7 @@ class _BillingPageState extends State<BillingPage> {
     setState(() {
       if (existingIndex != -1) {
         final existing = _billItems[existingIndex];
-        if (existing.quantity < product.currentStock) {
+        if (existing.quantity < effectiveStock) {
           _billItems[existingIndex] = BillItem.create(
             productId: product.id,
             productName: product.name,
@@ -1877,7 +1904,7 @@ class _BillingPageState extends State<BillingPage> {
           );
         } else {
           _showSnackbar(
-            '${_localizations.maxStock}: ${product.currentStock}',
+            '${_localizations.maxStock}: $effectiveStock',
             isError: true,
           );
           _indexNoController.clear();
@@ -1888,7 +1915,7 @@ class _BillingPageState extends State<BillingPage> {
           BillItem.create(
             productId: product.id,
             productName: product.name,
-            sellingPrice: product.salesPrice,
+            sellingPrice: fifoPrice,
             quantity: 1,
           ),
         );
@@ -2194,7 +2221,12 @@ class _BillingPageState extends State<BillingPage> {
                             _buildQtyButton(
                               icon: Icons.add,
                               onPressed: () {
-                                if (item.quantity < product.currentStock) {
+                                // Use FIFO batch stock if available
+                                final batchStock = _availableBatches
+                                    .where((b) => b.productId == item.productId && b.quantityRemaining > 0)
+                                    .fold<int>(0, (s, b) => s + b.quantityRemaining);
+                                final maxStock = batchStock > 0 ? batchStock : product.currentStock;
+                                if (item.quantity < maxStock) {
                                   setState(() {
                                     _billItems[index] = BillItem.create(
                                       productId: item.productId,
@@ -2205,7 +2237,7 @@ class _BillingPageState extends State<BillingPage> {
                                   });
                                 } else {
                                   _showSnackbar(
-                                    '${_localizations.maxStock}: ${product.currentStock}',
+                                    '${_localizations.maxStock}: $maxStock',
                                     isError: true,
                                   );
                                 }
@@ -3128,9 +3160,11 @@ class _BillingPageState extends State<BillingPage> {
 }
 
 /// Bottom sheet widget for adding multiple items to the bill
+/// Uses FIFO batch data: shows batches grouped by product with per-batch prices
 class _AddItemsBottomSheet extends StatefulWidget {
   final List<Product> products;
   final List<BillItem> billItems;
+  final List<PurchaseBatchEntity> availableBatches;
   final Function(Product product, int quantity, double price) onItemAdded;
   final Function(String productId) onItemRemoved;
   final Function(String message, {bool isError}) showSnackbar;
@@ -3139,6 +3173,7 @@ class _AddItemsBottomSheet extends StatefulWidget {
   const _AddItemsBottomSheet({
     required this.products,
     required this.billItems,
+    required this.availableBatches,
     required this.onItemAdded,
     required this.onItemRemoved,
     required this.showSnackbar,
@@ -3150,7 +3185,8 @@ class _AddItemsBottomSheet extends StatefulWidget {
 }
 
 class _AddItemsBottomSheetState extends State<_AddItemsBottomSheet> {
-  late List<Product> _filteredProducts;
+  late List<_FifoBillableItem> _allBillableItems;
+  late List<_FifoBillableItem> _filteredItems;
   final _searchController = TextEditingController();
 
   // Track quantities for each product in this session
@@ -3160,13 +3196,86 @@ class _AddItemsBottomSheetState extends State<_AddItemsBottomSheet> {
   @override
   void initState() {
     super.initState();
-    _filteredProducts = widget.products;
+    _buildBillableItems();
 
     // Initialize with existing bill items
     for (final item in widget.billItems) {
       _quantities[item.productId] = item.quantity;
       _prices[item.productId] = item.sellingPrice;
     }
+  }
+
+  /// Build a unified list of billable items from FIFO batches + products.
+  /// Products with batches get their stock/price from the FIFO system.
+  /// Products without batches fall back to product-level data.
+  void _buildBillableItems() {
+    final items = <_FifoBillableItem>[];
+    final productIdsWithBatches = <String>{};
+
+    // Group batches by productId, sorted FIFO (oldest first)
+    final batchesByProduct = <String, List<PurchaseBatchEntity>>{};
+    for (final batch in widget.availableBatches) {
+      if (batch.quantityRemaining > 0) {
+        batchesByProduct
+            .putIfAbsent(batch.productId, () => [])
+            .add(batch);
+      }
+    }
+
+    // For each product that has batches, create billable items
+    for (final entry in batchesByProduct.entries) {
+      final productId = entry.key;
+      final batches = entry.value;
+      productIdsWithBatches.add(productId);
+
+      // Sort FIFO (oldest first)
+      batches.sort((a, b) => a.purchaseDate.compareTo(b.purchaseDate));
+
+      // Find matching product for indexNo
+      final product = widget.products.cast<Product?>().firstWhere(
+        (p) => p!.id == productId,
+        orElse: () => null,
+      );
+
+      final totalBatchStock = batches.fold<int>(0, (s, b) => s + b.quantityRemaining);
+      // FIFO: use oldest batch's selling price as the default
+      final fifoPrice = batches.first.sellingPrice;
+
+      items.add(_FifoBillableItem(
+        productId: productId,
+        productName: batches.first.productName,
+        companyName: batches.first.companyName,
+        sellingPrice: fifoPrice,
+        totalStock: totalBatchStock,
+        indexNo: product?.indexNo ?? 0,
+        category: product?.category ?? batches.first.category,
+        batches: batches,
+        hasFifoBatches: true,
+      ));
+    }
+
+    // Add products that have NO batches (fallback to product-level data)
+    for (final product in widget.products) {
+      if (!productIdsWithBatches.contains(product.id) && product.currentStock > 0) {
+        items.add(_FifoBillableItem(
+          productId: product.id,
+          productName: product.name,
+          companyName: product.companyName,
+          sellingPrice: product.salesPrice,
+          totalStock: product.currentStock,
+          indexNo: product.indexNo,
+          category: product.category,
+          batches: [],
+          hasFifoBatches: false,
+        ));
+      }
+    }
+
+    // Sort by product name
+    items.sort((a, b) => a.productName.toLowerCase().compareTo(b.productName.toLowerCase()));
+
+    _allBillableItems = items;
+    _filteredItems = items;
   }
 
   @override
@@ -3178,61 +3287,110 @@ class _AddItemsBottomSheetState extends State<_AddItemsBottomSheet> {
   void _filterProducts(String query) {
     setState(() {
       if (query.isEmpty) {
-        _filteredProducts = widget.products;
+        _filteredItems = _allBillableItems;
       } else {
         final lowerQuery = query.toLowerCase();
-        // Also allow searching by index number
         final indexNo = int.tryParse(query);
-        _filteredProducts = widget.products
+        _filteredItems = _allBillableItems
             .where(
-              (p) =>
-                  p.name.toLowerCase().contains(lowerQuery) ||
-                  p.companyName.toLowerCase().contains(lowerQuery) ||
-                  p.category.toLowerCase().contains(lowerQuery) ||
-                  (indexNo != null && p.indexNo == indexNo),
+              (item) =>
+                  item.productName.toLowerCase().contains(lowerQuery) ||
+                  item.companyName.toLowerCase().contains(lowerQuery) ||
+                  item.category.toLowerCase().contains(lowerQuery) ||
+                  (indexNo != null && item.indexNo == indexNo),
             )
             .toList();
       }
     });
   }
 
-  void _incrementQuantity(Product product) {
-    final currentQty = _quantities[product.id] ?? 0;
-    if (currentQty < product.currentStock) {
+  void _incrementQuantity(_FifoBillableItem item) {
+    final currentQty = _quantities[item.productId] ?? 0;
+    if (currentQty < item.totalStock) {
       setState(() {
-        _quantities[product.id] = currentQty + 1;
-        _prices[product.id] ??= product.salesPrice;
+        _quantities[item.productId] = currentQty + 1;
+        _prices[item.productId] ??= item.sellingPrice;
       });
-      widget.onItemAdded(
-        product,
-        _quantities[product.id]!,
-        _prices[product.id]!,
+      // Find matching Product for callback
+      final product = widget.products.cast<Product?>().firstWhere(
+        (p) => p!.id == item.productId,
+        orElse: () => null,
       );
+      if (product != null) {
+        widget.onItemAdded(
+          product,
+          _quantities[item.productId]!,
+          _prices[item.productId]!,
+        );
+      } else {
+        // Create a temporary Product for the callback
+        final tempProduct = Product(
+          id: item.productId,
+          indexNo: item.indexNo,
+          name: item.productName,
+          companyName: item.companyName,
+          category: item.category,
+          purchasePrice: 0,
+          salesPrice: item.sellingPrice,
+          currentStock: item.totalStock,
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+        );
+        widget.onItemAdded(
+          tempProduct,
+          _quantities[item.productId]!,
+          _prices[item.productId]!,
+        );
+      }
     } else {
       widget.showSnackbar(
-        '${widget.localizations.maxStock}: ${product.currentStock}',
+        '${widget.localizations.maxStock}: ${item.totalStock}',
         isError: true,
       );
     }
   }
 
-  void _decrementQuantity(Product product) {
-    final currentQty = _quantities[product.id] ?? 0;
+  void _decrementQuantity(_FifoBillableItem item) {
+    final currentQty = _quantities[item.productId] ?? 0;
     if (currentQty > 1) {
       setState(() {
-        _quantities[product.id] = currentQty - 1;
+        _quantities[item.productId] = currentQty - 1;
       });
-      widget.onItemAdded(
-        product,
-        _quantities[product.id]!,
-        _prices[product.id]!,
+      final product = widget.products.cast<Product?>().firstWhere(
+        (p) => p!.id == item.productId,
+        orElse: () => null,
       );
+      if (product != null) {
+        widget.onItemAdded(
+          product,
+          _quantities[item.productId]!,
+          _prices[item.productId]!,
+        );
+      } else {
+        final tempProduct = Product(
+          id: item.productId,
+          indexNo: item.indexNo,
+          name: item.productName,
+          companyName: item.companyName,
+          category: item.category,
+          purchasePrice: 0,
+          salesPrice: item.sellingPrice,
+          currentStock: item.totalStock,
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+        );
+        widget.onItemAdded(
+          tempProduct,
+          _quantities[item.productId]!,
+          _prices[item.productId]!,
+        );
+      }
     } else if (currentQty == 1) {
       setState(() {
-        _quantities.remove(product.id);
-        _prices.remove(product.id);
+        _quantities.remove(item.productId);
+        _prices.remove(item.productId);
       });
-      widget.onItemRemoved(product.id);
+      widget.onItemRemoved(item.productId);
     }
   }
 
@@ -3363,9 +3521,9 @@ class _AddItemsBottomSheetState extends State<_AddItemsBottomSheet> {
               ),
             ),
             const SizedBox(height: 12),
-            // Products list
+            // Products list (FIFO batch-aware)
             Expanded(
-              child: _filteredProducts.isEmpty
+              child: _filteredItems.isEmpty
                   ? Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -3389,10 +3547,10 @@ class _AddItemsBottomSheetState extends State<_AddItemsBottomSheet> {
                   : ListView.builder(
                       controller: controller,
                       padding: const EdgeInsets.symmetric(horizontal: 16),
-                      itemCount: _filteredProducts.length,
+                      itemCount: _filteredItems.length,
                       itemBuilder: (context, index) {
-                        final product = _filteredProducts[index];
-                        final qty = _quantities[product.id] ?? 0;
+                        final item = _filteredItems[index];
+                        final qty = _quantities[item.productId] ?? 0;
                         final isAdded = qty > 0;
 
                         return Container(
@@ -3423,8 +3581,8 @@ class _AddItemsBottomSheetState extends State<_AddItemsBottomSheet> {
                                   ),
                                   child: Center(
                                     child: Text(
-                                      product.indexNo > 0
-                                          ? '${product.indexNo}'
+                                      item.indexNo > 0
+                                          ? '${item.indexNo}'
                                           : '#',
                                       style: const TextStyle(
                                         color: Colors.white,
@@ -3436,14 +3594,14 @@ class _AddItemsBottomSheetState extends State<_AddItemsBottomSheet> {
                                   ),
                                 ),
                                 const SizedBox(width: 12),
-                                // Product details
+                                // Product details with FIFO info
                                 Expanded(
                                   child: Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        product.name,
+                                        item.productName,
                                         style: const TextStyle(
                                           fontFamily: 'Literata',
                                           fontWeight: FontWeight.w600,
@@ -3452,11 +3610,24 @@ class _AddItemsBottomSheetState extends State<_AddItemsBottomSheet> {
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
                                       ),
-                                      const SizedBox(height: 2),
+                                      if (item.companyName.isNotEmpty) ...[
+                                        const SizedBox(height: 1),
+                                        Text(
+                                          item.companyName,
+                                          style: TextStyle(
+                                            fontFamily: 'Literata',
+                                            fontSize: 11,
+                                            color: Colors.grey[600],
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ],
+                                      const SizedBox(height: 3),
                                       Row(
                                         children: [
                                           Text(
-                                            '₹${product.salesPrice.toStringAsFixed(0)}',
+                                            '₹${item.sellingPrice.toStringAsFixed(0)}',
                                             style: const TextStyle(
                                               fontFamily: 'Literata',
                                               fontWeight: FontWeight.w700,
@@ -3464,30 +3635,52 @@ class _AddItemsBottomSheetState extends State<_AddItemsBottomSheet> {
                                               color: Color(0xFF1B4D3E),
                                             ),
                                           ),
-                                          const SizedBox(width: 8),
+                                          if (item.hasFifoBatches && item.batches.length > 1) ...[
+                                            const SizedBox(width: 4),
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(
+                                                horizontal: 5,
+                                                vertical: 1,
+                                              ),
+                                              decoration: BoxDecoration(
+                                                color: Colors.blue.withValues(alpha: 0.1),
+                                                borderRadius: BorderRadius.circular(4),
+                                              ),
+                                              child: Text(
+                                                'FIFO',
+                                                style: TextStyle(
+                                                  fontFamily: 'Literata',
+                                                  fontSize: 9,
+                                                  fontWeight: FontWeight.w700,
+                                                  color: Colors.blue[700],
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                          const SizedBox(width: 6),
                                           Container(
                                             padding: const EdgeInsets.symmetric(
                                               horizontal: 6,
                                               vertical: 2,
                                             ),
                                             decoration: BoxDecoration(
-                                              color: product.currentStock > 10
+                                              color: item.totalStock > 10
                                                   ? Colors.green[50]
-                                                  : product.currentStock > 0
+                                                  : item.totalStock > 0
                                                   ? Colors.orange[50]
                                                   : Colors.red[50],
                                               borderRadius:
                                                   BorderRadius.circular(4),
                                             ),
                                             child: Text(
-                                              '${product.currentStock} left',
+                                              '${item.totalStock} left',
                                               style: TextStyle(
                                                 fontFamily: 'Literata',
                                                 fontSize: 10,
                                                 fontWeight: FontWeight.w600,
-                                                color: product.currentStock > 10
+                                                color: item.totalStock > 10
                                                     ? Colors.green[700]
-                                                    : product.currentStock > 0
+                                                    : item.totalStock > 0
                                                     ? Colors.orange[700]
                                                     : Colors.red[700],
                                               ),
@@ -3495,6 +3688,34 @@ class _AddItemsBottomSheetState extends State<_AddItemsBottomSheet> {
                                           ),
                                         ],
                                       ),
+                                      // Show batch breakdown if multiple batches
+                                      if (item.hasFifoBatches && item.batches.length > 1) ...[
+                                        const SizedBox(height: 4),
+                                        ...item.batches.take(3).map((batch) => Padding(
+                                          padding: const EdgeInsets.only(top: 1),
+                                          child: Text(
+                                            '${batch.companyName.isNotEmpty ? batch.companyName : "—"} · ₹${batch.sellingPrice.toStringAsFixed(0)} · ${batch.quantityRemaining} pcs · ${DateFormat('dd/MM/yy').format(batch.purchaseDate)}',
+                                            style: TextStyle(
+                                              fontFamily: 'Literata',
+                                              fontSize: 10,
+                                              color: Colors.grey[500],
+                                            ),
+                                          ),
+                                        )),
+                                        if (item.batches.length > 3)
+                                          Padding(
+                                            padding: const EdgeInsets.only(top: 1),
+                                            child: Text(
+                                              '+${item.batches.length - 3} more batches',
+                                              style: TextStyle(
+                                                fontFamily: 'Literata',
+                                                fontSize: 10,
+                                                color: Colors.blue[400],
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                            ),
+                                          ),
+                                      ],
                                     ],
                                   ),
                                 ),
@@ -3507,7 +3728,7 @@ class _AddItemsBottomSheetState extends State<_AddItemsBottomSheet> {
                                       border: Border.all(
                                         color: const Color(
                                           0xFF1B4D3E,
-                                        ).withOpacity(0.3),
+                                        ).withValues(alpha: 0.3),
                                       ),
                                     ),
                                     child: Row(
@@ -3516,7 +3737,7 @@ class _AddItemsBottomSheetState extends State<_AddItemsBottomSheet> {
                                         _buildControlButton(
                                           icon: Icons.remove,
                                           onTap: () =>
-                                              _decrementQuantity(product),
+                                              _decrementQuantity(item),
                                         ),
                                         Container(
                                           constraints: const BoxConstraints(
@@ -3535,7 +3756,7 @@ class _AddItemsBottomSheetState extends State<_AddItemsBottomSheet> {
                                         _buildControlButton(
                                           icon: Icons.add,
                                           onTap: () =>
-                                              _incrementQuantity(product),
+                                              _incrementQuantity(item),
                                         ),
                                       ],
                                     ),
@@ -3546,8 +3767,8 @@ class _AddItemsBottomSheetState extends State<_AddItemsBottomSheet> {
                                     borderRadius: BorderRadius.circular(8),
                                     child: InkWell(
                                       borderRadius: BorderRadius.circular(8),
-                                      onTap: product.currentStock > 0
-                                          ? () => _incrementQuantity(product)
+                                      onTap: item.totalStock > 0
+                                          ? () => _incrementQuantity(item)
                                           : null,
                                       child: Container(
                                         padding: const EdgeInsets.symmetric(
@@ -3921,4 +4142,30 @@ class _CustomerPickerBottomSheetState
       ),
     );
   }
+}
+
+/// Represents a billable item in the Add Items sheet.
+/// Wraps product data with FIFO batch information.
+class _FifoBillableItem {
+  final String productId;
+  final String productName;
+  final String companyName;
+  final double sellingPrice; // FIFO: oldest batch's selling price
+  final int totalStock; // Sum of all batch quantityRemaining
+  final int indexNo;
+  final String category;
+  final List<PurchaseBatchEntity> batches; // FIFO-sorted batches
+  final bool hasFifoBatches;
+
+  const _FifoBillableItem({
+    required this.productId,
+    required this.productName,
+    required this.companyName,
+    required this.sellingPrice,
+    required this.totalStock,
+    required this.indexNo,
+    required this.category,
+    required this.batches,
+    required this.hasFifoBatches,
+  });
 }
