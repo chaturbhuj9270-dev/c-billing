@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/services/session_manager.dart';
+import '../../../../core/services/dashboard_refresh_service.dart';
 import '../../data/services/purchase_return_service.dart';
 import '../../domain/entities/purchase_return.dart';
 
@@ -294,6 +295,8 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
       if (result.success) {
         _showSnackbar('Purchase return processed successfully!', false);
         _resetForm();
+        // Notify dashboard to refresh data
+        DashboardRefreshService.instance.notifyDataChanged(DataChangeType.purchaseReturn);
         // Refresh history
         _loadReturnHistory();
       } else {

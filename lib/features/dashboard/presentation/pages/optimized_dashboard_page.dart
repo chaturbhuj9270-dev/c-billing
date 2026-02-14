@@ -819,7 +819,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const BillsListPage()),
-            ),
+            ).then((_) => _onDataChanged()),
           ),
           const SizedBox(width: 12),
           _buildQuickStatItem(
@@ -831,7 +831,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const ProductManagementPage()),
-            ),
+            ).then((_) => _onDataChanged()),
           ),
           const SizedBox(width: 12),
           _buildQuickStatItem(
@@ -843,7 +843,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const SupplierPage()),
-            ),
+            ).then((_) => _onDataChanged()),
           ),
           const SizedBox(width: 12),
           _buildQuickStatItem(
@@ -855,25 +855,25 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const CompanyPage()),
-            ),
+            ).then((_) => _onDataChanged()),
           ),
           const SizedBox(width: 12),
           _buildQuickStatItem(
             icon: Icons.keyboard_return_rounded,
-            value: '',
+            value: '${data.totalReturnedItems}',
             label: 'P. Return',
             color: const Color(0xFFE65100),
-            isLoading: false,
+            isLoading: isLoading,
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(
                   builder: (_) => const PurchaseReturnScreen()),
-            ),
+            ).then((_) => _onDataChanged()),
           ),
           const SizedBox(width: 12),
           _buildQuickStatItem(
             icon: Icons.assessment_outlined,
-            value: '',
+            value: '—',
             label: 'Reports',
             color: const Color(0xFF0277BD),
             isLoading: false,
@@ -881,7 +881,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
               context,
               MaterialPageRoute(
                   builder: (_) => const ReportPage()),
-            ),
+            ).then((_) => _onDataChanged()),
           ),
         ],
       ),

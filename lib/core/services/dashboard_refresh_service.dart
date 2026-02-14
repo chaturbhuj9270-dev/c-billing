@@ -10,6 +10,7 @@ enum DataChangeType {
   product,
   bill,
   purchase,
+  purchaseReturn,
   billSettings,
 }
 
@@ -44,6 +45,7 @@ class DashboardRefreshService {
   final StreamController<void> _productChangeController = StreamController<void>.broadcast();
   final StreamController<void> _billChangeController = StreamController<void>.broadcast();
   final StreamController<void> _purchaseChangeController = StreamController<void>.broadcast();
+  final StreamController<void> _purchaseReturnChangeController = StreamController<void>.broadcast();
   final StreamController<void> _billSettingsChangeController = StreamController<void>.broadcast();
   
   /// Stream that emits when any data changes (for dashboard)
@@ -66,6 +68,9 @@ class DashboardRefreshService {
   
   /// Stream that emits when purchase data changes
   Stream<void> get onPurchaseChanged => _purchaseChangeController.stream;
+  
+  /// Stream that emits when purchase return data changes
+  Stream<void> get onPurchaseReturnChanged => _purchaseReturnChangeController.stream;
   
   /// Stream that emits when bill settings change
   Stream<void> get onBillSettingsChanged => _billSettingsChangeController.stream;
@@ -100,6 +105,9 @@ class DashboardRefreshService {
         case DataChangeType.purchase:
           _purchaseChangeController.add(null);
           break;
+        case DataChangeType.purchaseReturn:
+          _purchaseReturnChangeController.add(null);
+          break;
         case DataChangeType.billSettings:
           _billSettingsChangeController.add(null);
           break;
@@ -113,6 +121,7 @@ class DashboardRefreshService {
       _productChangeController.add(null);
       _billChangeController.add(null);
       _purchaseChangeController.add(null);
+      _purchaseReturnChangeController.add(null);
       _billSettingsChangeController.add(null);
       print('[DashboardRefreshService] All data changed - notifying all listeners');
     }
@@ -127,6 +136,7 @@ class DashboardRefreshService {
     _productChangeController.close();
     _billChangeController.close();
     _purchaseChangeController.close();
+    _purchaseReturnChangeController.close();
     _billSettingsChangeController.close();
   }
 }
