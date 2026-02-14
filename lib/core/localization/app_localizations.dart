@@ -5709,4 +5709,128 @@ class AppLocalizations {
       default: return EnglishLocalization.stackTrace;
     }
   }
+
+  // ═══════════════════════════════════════════════════
+  // Owner Signature
+  // ═══════════════════════════════════════════════════
+
+  String get ownerSignature {
+    switch (languageCode) {
+      case 'Hindi': return HindiLocalization.ownerSignature;
+      case 'Marathi': return MarathiLocalization.ownerSignature;
+      default: return EnglishLocalization.ownerSignature;
+    }
+  }
+
+  String get noSignatureAdded {
+    switch (languageCode) {
+      case 'Hindi': return HindiLocalization.noSignatureAdded;
+      case 'Marathi': return MarathiLocalization.noSignatureAdded;
+      default: return EnglishLocalization.noSignatureAdded;
+    }
+  }
+
+  String get addSignature {
+    switch (languageCode) {
+      case 'Hindi': return HindiLocalization.addSignature;
+      case 'Marathi': return MarathiLocalization.addSignature;
+      default: return EnglishLocalization.addSignature;
+    }
+  }
+
+  String get updateSignature {
+    switch (languageCode) {
+      case 'Hindi': return HindiLocalization.updateSignature;
+      case 'Marathi': return MarathiLocalization.updateSignature;
+      default: return EnglishLocalization.updateSignature;
+    }
+  }
+
+  String get removeSignature {
+    switch (languageCode) {
+      case 'Hindi': return HindiLocalization.removeSignature;
+      case 'Marathi': return MarathiLocalization.removeSignature;
+      default: return EnglishLocalization.removeSignature;
+    }
+  }
+
+  String get removeSignatureConfirm {
+    switch (languageCode) {
+      case 'Hindi': return HindiLocalization.removeSignatureConfirm;
+      case 'Marathi': return MarathiLocalization.removeSignatureConfirm;
+      default: return EnglishLocalization.removeSignatureConfirm;
+    }
+  }
+
+  String get drawSignature {
+    switch (languageCode) {
+      case 'Hindi': return HindiLocalization.drawSignature;
+      case 'Marathi': return MarathiLocalization.drawSignature;
+      default: return EnglishLocalization.drawSignature;
+    }
+  }
+
+  String get signatureInstructions {
+    switch (languageCode) {
+      case 'Hindi': return HindiLocalization.signatureInstructions;
+      case 'Marathi': return MarathiLocalization.signatureInstructions;
+      default: return EnglishLocalization.signatureInstructions;
+    }
+  }
+
+  String get signAbove {
+    switch (languageCode) {
+      case 'Hindi': return HindiLocalization.signAbove;
+      case 'Marathi': return MarathiLocalization.signAbove;
+      default: return EnglishLocalization.signAbove;
+    }
+  }
+
+  String get saveSignature {
+    switch (languageCode) {
+      case 'Hindi': return HindiLocalization.saveSignature;
+      case 'Marathi': return MarathiLocalization.saveSignature;
+      default: return EnglishLocalization.saveSignature;
+    }
+  }
+
+  String get signatureSaved {
+    switch (languageCode) {
+      case 'Hindi': return HindiLocalization.signatureSaved;
+      case 'Marathi': return MarathiLocalization.signatureSaved;
+      default: return EnglishLocalization.signatureSaved;
+    }
+  }
+
+  String get signatureRemoved {
+    switch (languageCode) {
+      case 'Hindi': return HindiLocalization.signatureRemoved;
+      case 'Marathi': return MarathiLocalization.signatureRemoved;
+      default: return EnglishLocalization.signatureRemoved;
+    }
+  }
+
+  String get signatureSaveFailed {
+    switch (languageCode) {
+      case 'Hindi': return HindiLocalization.signatureSaveFailed;
+      case 'Marathi': return MarathiLocalization.signatureSaveFailed;
+      default: return EnglishLocalization.signatureSaveFailed;
+    }
+  }
+
+  String get pleaseDrawSignature {
+    switch (languageCode) {
+      case 'Hindi': return HindiLocalization.pleaseDrawSignature;
+      case 'Marathi': return MarathiLocalization.pleaseDrawSignature;
+      default: return EnglishLocalization.pleaseDrawSignature;
+    }
+  }
+
+  String get remove {
+    switch (languageCode) {
+      case 'Hindi': return HindiLocalization.remove;
+      case 'Marathi': return MarathiLocalization.remove;
+      default: return EnglishLocalization.remove;
+    }
+  }
 }

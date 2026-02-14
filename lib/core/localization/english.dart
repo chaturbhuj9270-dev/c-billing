@@ -690,4 +690,23 @@ class EnglishLocalization {
   static const String warn = 'Warn';
   static const String level = 'Level';
   static const String stackTrace = 'Stack Trace';
+
+  // ═══════════════════════════════════════════════════
+  // Owner Signature
+  // ═══════════════════════════════════════════════════
+  static const String ownerSignature = 'Owner Signature';
+  static const String noSignatureAdded = 'No Signature Added';
+  static const String addSignature = 'Add Signature';
+  static const String updateSignature = 'Update Signature';
+  static const String removeSignature = 'Remove Signature';
+  static const String removeSignatureConfirm = 'Are you sure you want to remove your signature? It will no longer appear on printed bills.';
+  static const String drawSignature = 'Draw Signature';
+  static const String signatureInstructions = 'Draw your signature below using your finger';
+  static const String signAbove = 'Sign Above';
+  static const String saveSignature = 'Save Signature';
+  static const String signatureSaved = 'Signature saved successfully';
+  static const String signatureRemoved = 'Signature removed';
+  static const String signatureSaveFailed = 'Failed to save signature. Please try again.';
+  static const String pleaseDrawSignature = 'Please draw your signature first';
+  static const String remove = 'Remove';
 }

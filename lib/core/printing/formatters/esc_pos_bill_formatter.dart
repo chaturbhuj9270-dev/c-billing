@@ -86,7 +86,7 @@ class EscPosBillFormatter {
     b.addAll(_buildTotals(billData));
 
     // 6 — Footer
-    b.addAll(_buildFooter(billData));
+    b.addAll(await _buildFooter(billData));
 
     // 7 — Feed & cut
     b.addAll(EscPosCommands.feedLines(config.feedLines));
@@ -318,8 +318,8 @@ class EscPosBillFormatter {
     return b;
   }
 
-  /// Footer — notes + thank-you
-  List<int> _buildFooter(PrintBillData d) {
+  /// Footer — notes + signature label + thank-you
+  Future<List<int>> _buildFooter(PrintBillData d) async {
     final b = <int>[];
     b.addAll(_lf());
 
@@ -328,6 +328,22 @@ class EscPosBillFormatter {
         b.addAll(_center(line));
       }
       b.addAll(_lf());
+    }
+
+    // Owner signature label (if signature exists in settings)
+    final prefs = await SharedPreferences.getInstance();
+    final hasSignature = prefs.getString('owner_signature_base64');
+    if (hasSignature != null && hasSignature.isNotEmpty) {
+      b.addAll(_lf());
+      b.addAll(_thinDiv());
+      b.addAll(_lf());
+      // Right-aligned "Authorized Signature" block
+      b.addAll(EscPosCommands.alignRight);
+      b.addAll(EscPosCommands.boldOn);
+      b.addAll(_enc('Authorized Signature'));
+      b.addAll(EscPosCommands.lineFeed);
+      b.addAll(EscPosCommands.boldOff);
+      b.addAll(EscPosCommands.alignLeft);
     }
 
     b.addAll(_thinDiv());

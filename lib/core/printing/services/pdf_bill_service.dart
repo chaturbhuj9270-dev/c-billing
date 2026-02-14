@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -8,6 +9,7 @@ import 'package:printing/printing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/print_bill_data.dart';
 import '../../../features/shop/domain/entities/shop.dart';
+import '../../services/signature_service.dart';
 
 /// Service for generating PDF bills and sharing them
 class PdfBillService {
@@ -28,16 +30,49 @@ class PdfBillService {
     final generateViaContact =
         prefs.getBool('bill_generate_via_contact') ?? false;
 
+    // Load owner signature raw bytes
+    Uint8List? sigBytes;
+    int sigW = 0;
+    int sigH = 0;
+    try {
+      final result = await SignatureService().getSignatureRaw();
+      if (result != null) {
+        sigBytes = result.bytes;
+        sigW = result.width;
+        sigH = result.height;
+      }
+    } catch (e) {
+      debugPrint('[PdfBillService] Could not load signature: $e');
+    }
+
     pdf.addPage(
       pw.Page(
         pageFormat: PdfPageFormat.roll80,
         margin: const pw.EdgeInsets.all(16),
-        build: (context) => _buildBillContent(
-          billData,
-          shopDetails,
-          showCustomer,
-          generateViaContact,
-        ),
+        build: (context) {
+          // Build PdfImage inside page context (needs document reference)
+          pw.ImageProvider? sigImage;
+          if (sigBytes != null && sigW > 0 && sigH > 0) {
+            try {
+              final pdfImg = PdfImage(
+                context.document,
+                image: sigBytes,
+                width: sigW,
+                height: sigH,
+              );
+              sigImage = pw.ImageProxy(pdfImg);
+            } catch (e) {
+              debugPrint('[PdfBillService] Signature image error: $e');
+            }
+          }
+          return _buildBillContent(
+            billData,
+            shopDetails,
+            showCustomer,
+            generateViaContact,
+            signatureImage: sigImage,
+          );
+        },
       ),
     );
 
@@ -55,31 +90,64 @@ class PdfBillService {
     final prefs = await SharedPreferences.getInstance();
     final showCustomer = prefs.getBool('bill_show_customer_details') ?? true;
 
+    // Load owner signature raw bytes
+    Uint8List? sigBytes;
+    int sigW = 0;
+    int sigH = 0;
+    try {
+      final result = await SignatureService().getSignatureRaw();
+      if (result != null) {
+        sigBytes = result.bytes;
+        sigW = result.width;
+        sigH = result.height;
+      }
+    } catch (e) {
+      debugPrint('[PdfBillService] Could not load signature: $e');
+    }
+
     // Use standard A4 — content will naturally occupy half page for small bills
     pdf.addPage(
       pw.Page(
         pageFormat: PdfPageFormat.a4,
         margin: const pw.EdgeInsets.all(20),
-        build: (context) => pw.Align(
-          alignment: pw.Alignment.topCenter,
-          child: _buildNormalBillContent(
-            billData,
-            shopDetails,
-            showCustomer,
-          ),
-        ),
+        build: (context) {
+          // Build PdfImage inside page context (needs document reference)
+          pw.ImageProvider? sigImage;
+          if (sigBytes != null && sigW > 0 && sigH > 0) {
+            try {
+              final pdfImg = PdfImage(
+                context.document,
+                image: sigBytes,
+                width: sigW,
+                height: sigH,
+              );
+              sigImage = pw.ImageProxy(pdfImg);
+            } catch (e) {
+              debugPrint('[PdfBillService] Signature image error: $e');
+            }
+          }
+          return pw.Align(
+            alignment: pw.Alignment.topCenter,
+            child: _buildNormalBillContent(
+              billData,
+              shopDetails,
+              showCustomer,
+              signatureImage: sigImage,
+            ),
+          );
+        },
       ),
     );
 
     return pdf;
   }
 
-  /// Build content for Normal/Tabular bill (Krushi Seva Kendra style — half A4 compact)
   pw.Widget _buildNormalBillContent(
     PrintBillData billData,
     Shop shopDetails,
-    bool showCustomer,
-  ) {
+    bool showCustomer, {
+    pw.ImageProvider? signatureImage,
+  }) {
     final borderSide = pw.BorderSide(color: PdfColors.grey800, width: 0.8);
     final thinBorder = pw.BorderSide(color: PdfColors.grey600, width: 0.5);
 
@@ -490,7 +558,18 @@ class PdfBillService {
                         fontWeight: pw.FontWeight.bold,
                       ),
                     ),
-                    pw.SizedBox(height: 16),
+                    if (signatureImage != null) ...[
+                      pw.SizedBox(height: 4),
+                      pw.Container(
+                        width: 100,
+                        height: 40,
+                        child: pw.Image(
+                          signatureImage,
+                          fit: pw.BoxFit.contain,
+                        ),
+                      ),
+                    ] else
+                      pw.SizedBox(height: 16),
                     pw.Text(
                       'Authorized Signatory',
                       style: const pw.TextStyle(fontSize: 8),
@@ -619,8 +698,9 @@ class PdfBillService {
     PrintBillData billData,
     Shop shopDetails,
     bool showCustomer,
-    bool generateViaContact,
-  ) {
+    bool generateViaContact, {
+    pw.ImageProvider? signatureImage,
+  }) {
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
@@ -1004,6 +1084,37 @@ class PdfBillService {
         pw.SizedBox(height: 16),
         pw.Divider(thickness: 0.3),
         pw.SizedBox(height: 8),
+
+        // Owner Signature (if available)
+        if (signatureImage != null) ...[
+          pw.Align(
+            alignment: pw.Alignment.centerRight,
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.end,
+              children: [
+                pw.Container(
+                  width: 80,
+                  height: 35,
+                  child: pw.Image(
+                    signatureImage,
+                    fit: pw.BoxFit.contain,
+                  ),
+                ),
+                pw.SizedBox(height: 2),
+                pw.Text(
+                  'Authorized Signature',
+                  style: pw.TextStyle(
+                    fontSize: 8,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          pw.SizedBox(height: 8),
+          pw.Divider(thickness: 0.3),
+          pw.SizedBox(height: 8),
+        ],
 
         // Footer
         pw.Center(

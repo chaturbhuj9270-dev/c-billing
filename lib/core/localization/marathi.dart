@@ -693,4 +693,23 @@ class MarathiLocalization {
   static const String warn = 'इशारा';
   static const String level = 'पातळी';
   static const String stackTrace = 'स्टॅक ट्रेस';
+
+  // ═══════════════════════════════════════════════════
+  // Owner Signature
+  // ═══════════════════════════════════════════════════
+  static const String ownerSignature = 'मालकाची सही';
+  static const String noSignatureAdded = 'कोणतीही सही जोडलेली नाही';
+  static const String addSignature = 'सही जोडा';
+  static const String updateSignature = 'सही अपडेट करा';
+  static const String removeSignature = 'सही काढा';
+  static const String removeSignatureConfirm = 'तुम्ही तुमची सही काढून टाकू इच्छिता? ती यापुढे प्रिंट केलेल्या बिलांवर दिसणार नाही.';
+  static const String drawSignature = 'सही करा';
+  static const String signatureInstructions = 'खाली बोटाने आपली सही करा';
+  static const String signAbove = 'वर सही करा';
+  static const String saveSignature = 'सही जतन करा';
+  static const String signatureSaved = 'सही यशस्वीरित्या जतन केली';
+  static const String signatureRemoved = 'सही काढली';
+  static const String signatureSaveFailed = 'सही जतन करण्यात अयशस्वी. कृपया पुन्हा प्रयत्न करा.';
+  static const String pleaseDrawSignature = 'कृपया प्रथम आपली सही करा';
+  static const String remove = 'काढा';
 }

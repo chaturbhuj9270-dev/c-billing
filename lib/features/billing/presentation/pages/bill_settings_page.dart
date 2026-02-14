@@ -1,8 +1,12 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:c_billing/core/services/dashboard_refresh_service.dart';
 import 'package:c_billing/core/services/language_service.dart';
+import 'package:c_billing/core/services/signature_service.dart';
 import 'package:c_billing/core/localization/app_localizations.dart';
+import 'package:c_billing/common_widgets/signature_pad_screen.dart';
 
 /// Bill settings page for configuring billing preferences
 class BillSettingsPage extends StatefulWidget {
@@ -23,6 +27,10 @@ class _BillSettingsPageState extends State<BillSettingsPage> {
   bool _isLoading = true;
   late AppLocalizations _localizations;
 
+  // Signature state
+  bool _hasSignature = false;
+  Uint8List? _signatureBytes;
+
   @override
   void initState() {
     super.initState();
@@ -38,6 +46,7 @@ class _BillSettingsPageState extends State<BillSettingsPage> {
       _billType = prefs.getString(_keyBillType) ?? 'pos';
       _isLoading = false;
     });
+    await _loadSignature();
   }
 
   Future<void> _saveSettings() async {
@@ -63,6 +72,95 @@ class _BillSettingsPageState extends State<BillSettingsPage> {
           ),
         ),
       );
+    }
+  }
+
+  Future<void> _loadSignature() async {
+    final service = SignatureService();
+    final has = await service.hasSignature();
+    Uint8List? bytes;
+    if (has) {
+      bytes = await service.getSignatureBytes();
+    }
+    if (mounted) {
+      setState(() {
+        _hasSignature = has;
+        _signatureBytes = bytes;
+      });
+    }
+  }
+
+  Future<void> _openSignaturePad() async {
+    final saved = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(builder: (_) => const SignaturePadScreen()),
+    );
+    if (saved == true) {
+      await _loadSignature();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              _localizations.signatureSaved,
+              style: const TextStyle(fontFamily: 'Literata'),
+            ),
+            backgroundColor: const Color(0xFF1B4D3E),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _removeSignature() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(
+          _localizations.removeSignature,
+          style: const TextStyle(fontFamily: 'Literata', fontWeight: FontWeight.w600),
+        ),
+        content: Text(
+          _localizations.removeSignatureConfirm,
+          style: const TextStyle(fontFamily: 'Literata'),
+        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(
+              _localizations.cancel,
+              style: const TextStyle(fontFamily: 'Literata', color: Colors.grey),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(
+              _localizations.remove,
+              style: const TextStyle(fontFamily: 'Literata', color: Colors.red),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      await SignatureService().removeSignature();
+      await _loadSignature();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              _localizations.signatureRemoved,
+              style: const TextStyle(fontFamily: 'Literata'),
+            ),
+            backgroundColor: Colors.orange[700],
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+        );
+      }
     }
   }
 
@@ -158,6 +256,113 @@ class _BillSettingsPageState extends State<BillSettingsPage> {
                           });
                           await _saveSettings();
                         },
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Owner Signature Section
+                  _buildSectionCard(
+                    title: _localizations.ownerSignature,
+                    icon: Icons.draw,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          children: [
+                            // Signature preview box
+                            Container(
+                              width: double.infinity,
+                              height: 120,
+                              decoration: BoxDecoration(
+                                color: Colors.grey[50],
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: Colors.grey[300]!, width: 1),
+                              ),
+                              child: _hasSignature && _signatureBytes != null
+                                  ? ClipRRect(
+                                      borderRadius: BorderRadius.circular(11),
+                                      child: Image.memory(
+                                        _signatureBytes!,
+                                        fit: BoxFit.contain,
+                                      ),
+                                    )
+                                  : Center(
+                                      child: Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(Icons.draw_outlined, size: 32, color: Colors.grey[400]),
+                                          const SizedBox(height: 8),
+                                          Text(
+                                            _localizations.noSignatureAdded,
+                                            style: TextStyle(
+                                              fontFamily: 'Literata',
+                                              fontSize: 13,
+                                              color: Colors.grey[500],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                            ),
+                            const SizedBox(height: 12),
+                            // Action buttons
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: ElevatedButton.icon(
+                                    onPressed: _openSignaturePad,
+                                    icon: Icon(
+                                      _hasSignature ? Icons.edit : Icons.add,
+                                      size: 18,
+                                    ),
+                                    label: Text(
+                                      _hasSignature
+                                          ? _localizations.updateSignature
+                                          : _localizations.addSignature,
+                                      style: const TextStyle(
+                                        fontFamily: 'Literata',
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: const Color(0xFF1B4D3E),
+                                      foregroundColor: Colors.white,
+                                      padding: const EdgeInsets.symmetric(vertical: 12),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                if (_hasSignature) ...[
+                                  const SizedBox(width: 12),
+                                  OutlinedButton.icon(
+                                    onPressed: _removeSignature,
+                                    icon: const Icon(Icons.delete_outline, size: 18),
+                                    label: Text(
+                                      _localizations.remove,
+                                      style: const TextStyle(
+                                        fontFamily: 'Literata',
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor: Colors.red,
+                                      side: const BorderSide(color: Colors.red),
+                                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),

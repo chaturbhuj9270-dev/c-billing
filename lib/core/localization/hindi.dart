@@ -692,4 +692,23 @@ class HindiLocalization {
   static const String warn = 'चेतावनी';
   static const String level = 'स्तर';
   static const String stackTrace = 'स्टैक ट्रेस';
+
+  // ═══════════════════════════════════════════════════
+  // Owner Signature
+  // ═══════════════════════════════════════════════════
+  static const String ownerSignature = 'मालिक हस्ताक्षर';
+  static const String noSignatureAdded = 'कोई हस्ताक्षर नहीं जोड़ा गया';
+  static const String addSignature = 'हस्ताक्षर जोड़ें';
+  static const String updateSignature = 'हस्ताक्षर अपडेट करें';
+  static const String removeSignature = 'हस्ताक्षर हटाएं';
+  static const String removeSignatureConfirm = 'क्या आप वाकई अपना हस्ताक्षर हटाना चाहते हैं? यह अब प्रिंट किए गए बिलों पर नहीं दिखाई देगा।';
+  static const String drawSignature = 'हस्ताक्षर करें';
+  static const String signatureInstructions = 'नीचे अपनी उंगली से हस्ताक्षर करें';
+  static const String signAbove = 'ऊपर हस्ताक्षर करें';
+  static const String saveSignature = 'हस्ताक्षर सहेजें';
+  static const String signatureSaved = 'हस्ताक्षर सफलतापूर्वक सहेजा गया';
+  static const String signatureRemoved = 'हस्ताक्षर हटाया गया';
+  static const String signatureSaveFailed = 'हस्ताक्षर सहेजने में विफल। कृपया पुनः प्रयास करें।';
+  static const String pleaseDrawSignature = 'कृपया पहले अपना हस्ताक्षर करें';
+  static const String remove = 'हटाएं';
 }
