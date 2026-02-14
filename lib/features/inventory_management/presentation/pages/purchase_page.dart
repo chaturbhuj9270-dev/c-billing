@@ -209,6 +209,8 @@ class _PurchasePageState extends State<PurchasePage>
         currentStock: entity.currentStock,
         createdAt: entity.createdAt,
         updatedAt: entity.updatedAt,
+        defaultSupplierId: entity.defaultSupplierId,
+        defaultSupplierName: entity.defaultSupplierName,
       )).toList();
       
       // Debug: Check for duplicates by name+company
@@ -331,6 +333,8 @@ class _PurchasePageState extends State<PurchasePage>
     final nameController = TextEditingController();
     final purchasePriceController = TextEditingController();
     final salesPriceController = TextEditingController();
+    Map<String, dynamic>? dialogSelectedCompany;
+    Map<String, dynamic>? dialogSelectedSupplier;
 
     showDialog(
       context: context,
@@ -368,6 +372,88 @@ class _PurchasePageState extends State<PurchasePage>
                         color: Color(0xFF1B4D3E),
                         width: 2,
                       ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                // Company selector
+                InkWell(
+                  onTap: () async {
+                    final company = await _showInlineCompanyPicker(context);
+                    if (company != null) {
+                      setDialogState(() {
+                        dialogSelectedCompany = company;
+                      });
+                    }
+                  },
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: dialogSelectedCompany != null ? const Color(0xFF1B4D3E) : Colors.grey[400]!,
+                        width: dialogSelectedCompany != null ? 2 : 1,
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.business, color: dialogSelectedCompany != null ? const Color(0xFF1B4D3E) : Colors.grey, size: 20),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            dialogSelectedCompany?['companyName'] ?? _localizations.selectCompany,
+                            style: TextStyle(
+                              fontFamily: 'Literata',
+                              color: dialogSelectedCompany != null ? Colors.black87 : Colors.grey[600],
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                        Icon(Icons.arrow_drop_down, color: Colors.grey[600]),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                // Supplier selector
+                InkWell(
+                  onTap: () async {
+                    final supplier = await _showInlineSupplierPicker(context);
+                    if (supplier != null) {
+                      setDialogState(() {
+                        dialogSelectedSupplier = supplier;
+                      });
+                    }
+                  },
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: dialogSelectedSupplier != null ? const Color(0xFF1B4D3E) : Colors.grey[400]!,
+                        width: dialogSelectedSupplier != null ? 2 : 1,
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.person, color: dialogSelectedSupplier != null ? const Color(0xFF1B4D3E) : Colors.grey, size: 20),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            dialogSelectedSupplier?['fullName'] ?? _localizations.selectSupplier,
+                            style: TextStyle(
+                              fontFamily: 'Literata',
+                              color: dialogSelectedSupplier != null ? Colors.black87 : Colors.grey[600],
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                        Icon(Icons.arrow_drop_down, color: Colors.grey[600]),
+                      ],
                     ),
                   ),
                 ),
@@ -433,11 +519,13 @@ class _PurchasePageState extends State<PurchasePage>
                         // This will throw if duplicate exists
                         await productOfflineController.addProduct(
                           name: nameController.text.trim(),
-                          companyName: '', // No company selection
+                          companyName: dialogSelectedCompany?['companyName'] ?? '',
                           category: '', // No category required
                           purchasePrice: double.tryParse(purchasePriceController.text) ?? 0.0,
                           salesPrice: double.tryParse(salesPriceController.text) ?? 0.0,
                           currentStock: 0,
+                          defaultSupplierId: dialogSelectedSupplier?['id'],
+                          defaultSupplierName: dialogSelectedSupplier?['fullName'],
                         );
                         
                         // Notify other screens about the product change
@@ -458,6 +546,13 @@ class _PurchasePageState extends State<PurchasePage>
                               _salesPriceController.text = _selectedProduct!
                                   .salesPrice
                                   .toString();
+                              // Auto-populate company and supplier from the newly created product
+                              if (dialogSelectedCompany != null) {
+                                _selectedCompany = dialogSelectedCompany;
+                              }
+                              if (dialogSelectedSupplier != null) {
+                                _selectedSupplier = dialogSelectedSupplier;
+                              }
                             });
                           }
                           if (mounted) {
@@ -498,6 +593,122 @@ class _PurchasePageState extends State<PurchasePage>
           ],
         ),
       ),
+    );
+  }
+
+  /// Inline company picker for use inside dialogs
+  Future<Map<String, dynamic>?> _showInlineCompanyPicker(BuildContext parentContext) async {
+    return await showDialog<Map<String, dynamic>>(
+      context: parentContext,
+      builder: (context) {
+        var filtered = _companies.toList();
+        return StatefulBuilder(
+          builder: (context, setPickerState) => AlertDialog(
+            backgroundColor: Colors.white,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            title: Text(_localizations.selectCompany, style: const TextStyle(fontFamily: 'Literata', fontWeight: FontWeight.w700, color: Color(0xFF1B4D3E), fontSize: 16)),
+            content: SizedBox(
+              width: double.maxFinite,
+              height: 300,
+              child: Column(
+                children: [
+                  TextField(
+                    decoration: InputDecoration(
+                      hintText: _localizations.searchByCompany,
+                      prefixIcon: const Icon(Icons.search, size: 20),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      isDense: true,
+                    ),
+                    onChanged: (q) {
+                      setPickerState(() {
+                        filtered = _companies.where((c) =>
+                          (c['companyName'] as String? ?? '').toLowerCase().contains(q.toLowerCase())
+                        ).toList();
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  Expanded(
+                    child: filtered.isEmpty
+                      ? Center(child: Text(_localizations.noCompaniesFound, style: TextStyle(color: Colors.grey[500], fontFamily: 'Literata')))
+                      : ListView.builder(
+                          itemCount: filtered.length,
+                          itemBuilder: (context, index) {
+                            final company = filtered[index];
+                            return ListTile(
+                              dense: true,
+                              leading: const Icon(Icons.business, color: Color(0xFF1B4D3E), size: 20),
+                              title: Text(company['companyName'] ?? '', style: const TextStyle(fontFamily: 'Literata', fontSize: 14)),
+                              onTap: () => Navigator.pop(context, company),
+                            );
+                          },
+                        ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  /// Inline supplier picker for use inside dialogs
+  Future<Map<String, dynamic>?> _showInlineSupplierPicker(BuildContext parentContext) async {
+    return await showDialog<Map<String, dynamic>>(
+      context: parentContext,
+      builder: (context) {
+        var filtered = _suppliers.toList();
+        return StatefulBuilder(
+          builder: (context, setPickerState) => AlertDialog(
+            backgroundColor: Colors.white,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            title: Text(_localizations.selectSupplier, style: const TextStyle(fontFamily: 'Literata', fontWeight: FontWeight.w700, color: Color(0xFF1B4D3E), fontSize: 16)),
+            content: SizedBox(
+              width: double.maxFinite,
+              height: 300,
+              child: Column(
+                children: [
+                  TextField(
+                    decoration: InputDecoration(
+                      hintText: _localizations.searchBySupplier,
+                      prefixIcon: const Icon(Icons.search, size: 20),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      isDense: true,
+                    ),
+                    onChanged: (q) {
+                      setPickerState(() {
+                        filtered = _suppliers.where((s) =>
+                          (s['fullName'] as String? ?? '').toLowerCase().contains(q.toLowerCase())
+                        ).toList();
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  Expanded(
+                    child: filtered.isEmpty
+                      ? Center(child: Text(_localizations.noSuppliersFound, style: TextStyle(color: Colors.grey[500], fontFamily: 'Literata')))
+                      : ListView.builder(
+                          itemCount: filtered.length,
+                          itemBuilder: (context, index) {
+                            final supplier = filtered[index];
+                            return ListTile(
+                              dense: true,
+                              leading: const Icon(Icons.person, color: Color(0xFF1B4D3E), size: 20),
+                              title: Text(supplier['fullName'] ?? '', style: const TextStyle(fontFamily: 'Literata', fontSize: 14)),
+                              onTap: () => Navigator.pop(context, supplier),
+                            );
+                          },
+                        ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -708,6 +919,29 @@ class _PurchasePageState extends State<PurchasePage>
                                 setState(() {
                                   _selectedProduct = product;
                                   _priceController.text = product.purchasePrice.toString();
+                                  _salesPriceController.text = product.salesPrice.toString();
+                                  
+                                  // Auto-populate company from product
+                                  if (product.companyName.isNotEmpty) {
+                                    final matchingCompany = _companies.firstWhere(
+                                      (c) => (c['companyName'] as String?)?.toLowerCase() == product.companyName.toLowerCase(),
+                                      orElse: () => <String, dynamic>{},
+                                    );
+                                    if (matchingCompany.isNotEmpty) {
+                                      _selectedCompany = matchingCompany;
+                                    }
+                                  }
+                                  
+                                  // Auto-populate supplier from product's default supplier
+                                  if (product.defaultSupplierId != null && product.defaultSupplierId!.isNotEmpty) {
+                                    final matchingSupplier = _suppliers.firstWhere(
+                                      (s) => s['id'] == product.defaultSupplierId,
+                                      orElse: () => <String, dynamic>{},
+                                    );
+                                    if (matchingSupplier.isNotEmpty) {
+                                      _selectedSupplier = matchingSupplier;
+                                    }
+                                  }
                                 });
                                 Navigator.pop(context);
                               },
@@ -1343,17 +1577,19 @@ class _PurchasePageState extends State<PurchasePage>
       
       if (currentUser != null && isValidServerId) {
         try {
+          // Only update purchasePrice; keep salesPrice from product creation
+          final updateData = <String, dynamic>{
+            'purchasePrice': price,
+            'currentStock': newStock,
+            'updatedAt': DateTime.now().toIso8601String(),
+          };
+          
           await _firestore
               .collection('users')
               .doc(currentUser.uid)
               .collection('products')
               .doc(productId)
-              .update({
-                'purchasePrice': price, 
-                'salesPrice': salesPrice,
-                'currentStock': newStock,
-                'updatedAt': DateTime.now().toIso8601String(),
-              });
+              .update(updateData);
           print('[DEBUG] Updated product in Firestore');
         } catch (e) {
           print('[DEBUG] Failed to update Firestore (will sync later): $e');

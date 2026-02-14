@@ -10,6 +10,8 @@ class Product {
   final int currentStock;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final String? defaultSupplierId;
+  final String? defaultSupplierName;
 
   Product({
     required this.id,
@@ -22,6 +24,8 @@ class Product {
     required this.currentStock,
     required this.createdAt,
     required this.updatedAt,
+    this.defaultSupplierId,
+    this.defaultSupplierName,
   });
 
   // Factory constructor to create from ProductEntity (Isar offline entity)
@@ -37,6 +41,8 @@ class Product {
       currentStock: entity.currentStock ?? 0,
       createdAt: entity.createdAt ?? DateTime.now(),
       updatedAt: entity.updatedAt ?? DateTime.now(),
+      defaultSupplierId: entity.defaultSupplierId,
+      defaultSupplierName: entity.defaultSupplierName,
     );
   }
 
@@ -58,6 +64,8 @@ class Product {
         updatedAt: json['updatedAt'] != null
             ? DateTime.parse(json['updatedAt'] as String)
             : DateTime.now(),
+        defaultSupplierId: json['defaultSupplierId'] as String?,
+        defaultSupplierName: json['defaultSupplierName'] as String?,
       );
     } catch (e) {
       print('[ERROR] Failed to parse Product from JSON: $json');
@@ -91,6 +99,8 @@ class Product {
       'currentStock': currentStock,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
+      'defaultSupplierId': defaultSupplierId,
+      'defaultSupplierName': defaultSupplierName,
     };
   }
 
@@ -106,6 +116,8 @@ class Product {
     int? currentStock,
     DateTime? createdAt,
     DateTime? updatedAt,
+    String? defaultSupplierId,
+    String? defaultSupplierName,
   }) {
     return Product(
       id: id ?? this.id,
@@ -118,6 +130,8 @@ class Product {
       currentStock: currentStock ?? this.currentStock,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      defaultSupplierId: defaultSupplierId ?? this.defaultSupplierId,
+      defaultSupplierName: defaultSupplierName ?? this.defaultSupplierName,
     );
   }
 

@@ -17,6 +17,8 @@ import '../../domain/entities/product.dart';
 import '../../../product/offline/controllers/product_offline_controller.dart';
 import '../../../product/offline/entities/product_entity.dart';
 import '../../../product/data/services/product_sync_service.dart';
+import '../../../supplier/offline/controllers/supplier_offline_controller.dart';
+import '../../../company/offline/controllers/company_offline_controller.dart';
 
 class ProductManagementPage extends StatefulWidget {
   final bool isEmbedded;
@@ -177,6 +179,8 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
             currentStock: e.currentStock,
             createdAt: e.createdAt,
             updatedAt: e.updatedAt,
+            defaultSupplierId: e.defaultSupplierId,
+            defaultSupplierName: e.defaultSupplierName,
           )).toList();
           
           setState(() {
@@ -896,179 +900,404 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
     final purchasePriceController = TextEditingController();
     final salesPriceController = TextEditingController();
     final initialStockController = TextEditingController(text: '0');
+    Map<String, dynamic>? dialogSelectedCompany;
+    Map<String, dynamic>? dialogSelectedSupplier;
+    List<Map<String, dynamic>> dialogCompanies = [];
+    List<Map<String, dynamic>> dialogSuppliers = [];
+
+    // Load companies and suppliers
+    loadCompaniesAndSuppliers() async {
+      final companyEntities = await CompanyOfflineController.instance.getAllCompanies();
+      dialogCompanies = companyEntities.map((e) => {
+        'id': e.serverId ?? e.id.toString(),
+        'companyName': e.companyName,
+      }).toList();
+
+      final supplierEntities = await SupplierOfflineController.instance.getAllSuppliers();
+      dialogSuppliers = supplierEntities.map((e) => {
+        'id': e.serverId ?? e.id.toString(),
+        'firstName': e.firstName,
+        'lastName': e.lastName,
+        'fullName': '${e.firstName} ${e.lastName}'.trim(),
+      }).toList();
+    }
+
+    loadCompaniesAndSuppliers();
 
     showDialog(
       context: context,
-      builder: (context) => BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: AlertDialog(
-          backgroundColor: Colors.white.withValues(alpha: 0.95),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-            side: BorderSide(
-              color: Colors.white.withValues(alpha: 0.3),
-              width: 1.5,
-            ),
-          ),
-          title: Text(
-            _localizations.addNewProduct,
-            style: const TextStyle(
-              fontFamily: 'Literata',
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF1B4D3E),
-            ),
-          ),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: nameController,
-                  decoration: InputDecoration(
-                    labelText: _localizations.productName,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: Color(0xFF1B4D3E),
-                        width: 2,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: categoryController,
-                  decoration: InputDecoration(
-                    labelText: _localizations.category,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: Color(0xFF1B4D3E),
-                        width: 2,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: purchasePriceController,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    labelText: _localizations.purchasePrice,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: Color(0xFF1B4D3E),
-                        width: 2,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: salesPriceController,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    labelText: _localizations.salesPrice,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: Color(0xFF1B4D3E),
-                        width: 2,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: initialStockController,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    labelText: _localizations.initialStock,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: Color(0xFF1B4D3E),
-                        width: 2,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(
-                _localizations.cancel,
-                style: const TextStyle(
-                  fontFamily: 'Literata',
-                  color: Colors.grey,
-                ),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: AlertDialog(
+            backgroundColor: Colors.white.withValues(alpha: 0.95),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+              side: BorderSide(
+                color: Colors.white.withValues(alpha: 0.3),
+                width: 1.5,
               ),
             ),
-            ElevatedButton(
-              onPressed: () async {
-                try {
-                  // Offline-first: Save to Isar immediately
-                  final offlineController = ProductOfflineController.instance;
-                  await offlineController.addProduct(
-                    name: nameController.text,
-                    companyName: '',
-                    category: categoryController.text,
-                    purchasePrice: double.parse(purchasePriceController.text),
-                    salesPrice: double.parse(salesPriceController.text),
-                    currentStock: int.parse(initialStockController.text),
-                  );
-                  
-                  // Notify dashboard to refresh
-                  DashboardRefreshService.instance.notifyDataChanged(DataChangeType.product);
-                  
-                  // Trigger background sync if online
-                  ProductSyncService.instance.syncNow();
-                  
-                  if (mounted) {
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(_localizations.productAddedSuccessfully),
-                        backgroundColor: const Color(0xFF1B4D3E),
+            title: Text(
+              _localizations.addNewProduct,
+              style: const TextStyle(
+                fontFamily: 'Literata',
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF1B4D3E),
+              ),
+            ),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: nameController,
+                    decoration: InputDecoration(
+                      labelText: _localizations.productName,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
                       ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(
+                          color: Color(0xFF1B4D3E),
+                          width: 2,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  // Company selector
+                  InkWell(
+                    onTap: () async {
+                      final company = await _showCompanyPickerDialog(context, dialogCompanies);
+                      if (company != null) {
+                        setDialogState(() {
+                          dialogSelectedCompany = company;
+                        });
+                      }
+                    },
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          color: dialogSelectedCompany != null ? const Color(0xFF1B4D3E) : Colors.grey[400]!,
+                          width: dialogSelectedCompany != null ? 2 : 1,
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.business, color: dialogSelectedCompany != null ? const Color(0xFF1B4D3E) : Colors.grey, size: 20),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              dialogSelectedCompany?['companyName'] ?? _localizations.selectCompany,
+                              style: TextStyle(
+                                fontFamily: 'Literata',
+                                color: dialogSelectedCompany != null ? Colors.black87 : Colors.grey[600],
+                                fontSize: 14,
+                              ),
+                            ),
+                          ),
+                          Icon(Icons.arrow_drop_down, color: Colors.grey[600]),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  // Supplier selector
+                  InkWell(
+                    onTap: () async {
+                      final supplier = await _showSupplierPickerDialog(context, dialogSuppliers);
+                      if (supplier != null) {
+                        setDialogState(() {
+                          dialogSelectedSupplier = supplier;
+                        });
+                      }
+                    },
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          color: dialogSelectedSupplier != null ? const Color(0xFF1B4D3E) : Colors.grey[400]!,
+                          width: dialogSelectedSupplier != null ? 2 : 1,
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.person, color: dialogSelectedSupplier != null ? const Color(0xFF1B4D3E) : Colors.grey, size: 20),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              dialogSelectedSupplier?['fullName'] ?? _localizations.selectSupplier,
+                              style: TextStyle(
+                                fontFamily: 'Literata',
+                                color: dialogSelectedSupplier != null ? Colors.black87 : Colors.grey[600],
+                                fontSize: 14,
+                              ),
+                            ),
+                          ),
+                          Icon(Icons.arrow_drop_down, color: Colors.grey[600]),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: categoryController,
+                    decoration: InputDecoration(
+                      labelText: _localizations.category,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(
+                          color: Color(0xFF1B4D3E),
+                          width: 2,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: purchasePriceController,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      labelText: _localizations.purchasePrice,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(
+                          color: Color(0xFF1B4D3E),
+                          width: 2,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: salesPriceController,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      labelText: _localizations.salesPrice,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(
+                          color: Color(0xFF1B4D3E),
+                          width: 2,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: initialStockController,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      labelText: _localizations.initialStock,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(
+                          color: Color(0xFF1B4D3E),
+                          width: 2,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text(
+                  _localizations.cancel,
+                  style: const TextStyle(
+                    fontFamily: 'Literata',
+                    color: Colors.grey,
+                  ),
+                ),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  try {
+                    // Offline-first: Save to Isar immediately
+                    final offlineController = ProductOfflineController.instance;
+                    await offlineController.addProduct(
+                      name: nameController.text,
+                      companyName: dialogSelectedCompany?['companyName'] ?? '',
+                      category: categoryController.text,
+                      purchasePrice: double.parse(purchasePriceController.text),
+                      salesPrice: double.parse(salesPriceController.text),
+                      currentStock: int.parse(initialStockController.text),
+                      defaultSupplierId: dialogSelectedSupplier?['id'],
+                      defaultSupplierName: dialogSelectedSupplier?['fullName'],
+                    );
+                    
+                    // Notify dashboard to refresh
+                    DashboardRefreshService.instance.notifyDataChanged(DataChangeType.product);
+                    
+                    // Trigger background sync if online
+                    ProductSyncService.instance.syncNow();
+                    
+                    if (mounted) {
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(_localizations.productAddedSuccessfully),
+                          backgroundColor: const Color(0xFF1B4D3E),
+                        ),
+                      );
+                    }
+                  } catch (e) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('${_localizations.error}: $e')),
                     );
                   }
-                } catch (e) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('${_localizations.error}: $e')),
-                  );
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF1B4D3E),
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF1B4D3E),
+                ),
+                child: Text(
+                  _localizations.add,
+                  style: TextStyle(fontFamily: 'Literata', color: Colors.white),
+                ),
               ),
-              child: Text(
-                _localizations.add,
-                style: TextStyle(fontFamily: 'Literata', color: Colors.white),
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
+    );
+  }
+
+  /// Company picker dialog for product creation
+  Future<Map<String, dynamic>?> _showCompanyPickerDialog(BuildContext parentContext, List<Map<String, dynamic>> companies) async {
+    return await showDialog<Map<String, dynamic>>(
+      context: parentContext,
+      builder: (context) {
+        var filtered = companies.toList();
+        return StatefulBuilder(
+          builder: (context, setPickerState) => AlertDialog(
+            backgroundColor: Colors.white,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            title: Text(_localizations.selectCompany, style: const TextStyle(fontFamily: 'Literata', fontWeight: FontWeight.w700, color: Color(0xFF1B4D3E), fontSize: 16)),
+            content: SizedBox(
+              width: double.maxFinite,
+              height: 300,
+              child: Column(
+                children: [
+                  TextField(
+                    decoration: InputDecoration(
+                      hintText: _localizations.searchByCompany,
+                      prefixIcon: const Icon(Icons.search, size: 20),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      isDense: true,
+                    ),
+                    onChanged: (q) {
+                      setPickerState(() {
+                        filtered = companies.where((c) =>
+                          (c['companyName'] as String? ?? '').toLowerCase().contains(q.toLowerCase())
+                        ).toList();
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  Expanded(
+                    child: filtered.isEmpty
+                      ? Center(child: Text(_localizations.noCompaniesFound, style: TextStyle(color: Colors.grey[500], fontFamily: 'Literata')))
+                      : ListView.builder(
+                          itemCount: filtered.length,
+                          itemBuilder: (context, index) {
+                            final company = filtered[index];
+                            return ListTile(
+                              dense: true,
+                              leading: const Icon(Icons.business, color: Color(0xFF1B4D3E), size: 20),
+                              title: Text(company['companyName'] ?? '', style: const TextStyle(fontFamily: 'Literata', fontSize: 14)),
+                              onTap: () => Navigator.pop(context, company),
+                            );
+                          },
+                        ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  /// Supplier picker dialog for product creation
+  Future<Map<String, dynamic>?> _showSupplierPickerDialog(BuildContext parentContext, List<Map<String, dynamic>> suppliers) async {
+    return await showDialog<Map<String, dynamic>>(
+      context: parentContext,
+      builder: (context) {
+        var filtered = suppliers.toList();
+        return StatefulBuilder(
+          builder: (context, setPickerState) => AlertDialog(
+            backgroundColor: Colors.white,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            title: Text(_localizations.selectSupplier, style: const TextStyle(fontFamily: 'Literata', fontWeight: FontWeight.w700, color: Color(0xFF1B4D3E), fontSize: 16)),
+            content: SizedBox(
+              width: double.maxFinite,
+              height: 300,
+              child: Column(
+                children: [
+                  TextField(
+                    decoration: InputDecoration(
+                      hintText: _localizations.searchBySupplier,
+                      prefixIcon: const Icon(Icons.search, size: 20),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      isDense: true,
+                    ),
+                    onChanged: (q) {
+                      setPickerState(() {
+                        filtered = suppliers.where((s) =>
+                          (s['fullName'] as String? ?? '').toLowerCase().contains(q.toLowerCase())
+                        ).toList();
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  Expanded(
+                    child: filtered.isEmpty
+                      ? Center(child: Text(_localizations.noSuppliersFound, style: TextStyle(color: Colors.grey[500], fontFamily: 'Literata')))
+                      : ListView.builder(
+                          itemCount: filtered.length,
+                          itemBuilder: (context, index) {
+                            final supplier = filtered[index];
+                            return ListTile(
+                              dense: true,
+                              leading: const Icon(Icons.person, color: Color(0xFF1B4D3E), size: 20),
+                              title: Text(supplier['fullName'] ?? '', style: const TextStyle(fontFamily: 'Literata', fontSize: 14)),
+                              onTap: () => Navigator.pop(context, supplier),
+                            );
+                          },
+                        ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 

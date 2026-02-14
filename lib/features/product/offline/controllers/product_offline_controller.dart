@@ -67,6 +67,8 @@ class ProductOfflineController extends ChangeNotifier {
     String? imageUrl,
     int? minStockLevel,
     bool skipDuplicateCheck = false,
+    String? defaultSupplierId,
+    String? defaultSupplierName,
   }) async {
     debugPrint('[ProductOffline] Adding product: $name');
     
@@ -94,6 +96,8 @@ class ProductOfflineController extends ChangeNotifier {
       description: description,
       imageUrl: imageUrl,
       minStockLevel: minStockLevel,
+      defaultSupplierId: defaultSupplierId,
+      defaultSupplierName: defaultSupplierName,
     );
 
     await _isar.writeTxn(() async {

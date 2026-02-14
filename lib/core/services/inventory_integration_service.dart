@@ -138,6 +138,7 @@ class InventoryIntegrationService {
       debugPrint('[Integration] PurchaseBatch created: ${fifoResult.batch?.id}');
 
       // 3. Update ProductEntity stock and prices
+      // Only update purchasePrice to latest cost; keep salesPrice from product creation
       // Try by serverId first, then by local ID
       final isValidServerId = productId.isNotEmpty &&
           !productId.startsWith('local_') &&
@@ -151,7 +152,8 @@ class InventoryIntegrationService {
           await _productController.updateProduct(
             id: entity.id,
             purchasePrice: purchasePrice,
-            salesPrice: salesPrice,
+            // Only update salesPrice if it was 0 (not yet set)
+            salesPrice: entity.salesPrice == 0 ? salesPrice : null,
           );
         }
       } else {
@@ -164,7 +166,8 @@ class InventoryIntegrationService {
             await _productController.updateProduct(
               id: entity.id,
               purchasePrice: purchasePrice,
-              salesPrice: salesPrice,
+              // Only update salesPrice if it was 0 (not yet set)
+              salesPrice: entity.salesPrice == 0 ? salesPrice : null,
               currentStock: newStock,
             );
           }

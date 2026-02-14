@@ -82,6 +82,12 @@ class ProductEntity {
   /// Optional: Product image URL
   String? imageUrl;
 
+  /// Default supplier ID (for auto-population on purchase page)
+  String? defaultSupplierId;
+
+  /// Default supplier name (for display)
+  String? defaultSupplierName;
+
   ProductEntity({
     this.serverId,
     this.indexNo = 0,
@@ -100,6 +106,8 @@ class ProductEntity {
     this.minStockLevel,
     this.description,
     this.imageUrl,
+    this.defaultSupplierId,
+    this.defaultSupplierName,
   });
 
   /// Factory constructor for creating new product with defaults
@@ -119,6 +127,8 @@ class ProductEntity {
     String? description,
     String? imageUrl,
     int? minStockLevel,
+    String? defaultSupplierId,
+    String? defaultSupplierName,
   }) {
     final now = DateTime.now();
     return ProductEntity(
@@ -139,6 +149,8 @@ class ProductEntity {
       description: description,
       imageUrl: imageUrl,
       minStockLevel: minStockLevel,
+      defaultSupplierId: defaultSupplierId,
+      defaultSupplierName: defaultSupplierName,
     );
   }
 
@@ -163,6 +175,8 @@ class ProductEntity {
       description: data['description'] as String?,
       imageUrl: data['imageUrl'] as String?,
       minStockLevel: (data['minStockLevel'] as num?)?.toInt(),
+      defaultSupplierId: data['defaultSupplierId'] as String?,
+      defaultSupplierName: data['defaultSupplierName'] as String?,
     );
   }
 
@@ -183,6 +197,8 @@ class ProductEntity {
       'description': description,
       'imageUrl': imageUrl,
       'minStockLevel': minStockLevel,
+      'defaultSupplierId': defaultSupplierId,
+      'defaultSupplierName': defaultSupplierName,
       'updatedAt': updatedAt.toIso8601String(),
       'createdAt': createdAt.toIso8601String(),
     };
@@ -210,6 +226,8 @@ class ProductEntity {
       'description': description,
       'imageUrl': imageUrl,
       'minStockLevel': minStockLevel,
+      'defaultSupplierId': defaultSupplierId,
+      'defaultSupplierName': defaultSupplierName,
     };
   }
 
@@ -233,6 +251,8 @@ class ProductEntity {
     String? description,
     String? imageUrl,
     int? minStockLevel,
+    String? defaultSupplierId,
+    String? defaultSupplierName,
   }) {
     final entity = ProductEntity(
       serverId: serverId ?? this.serverId,
@@ -252,6 +272,8 @@ class ProductEntity {
       description: description ?? this.description,
       imageUrl: imageUrl ?? this.imageUrl,
       minStockLevel: minStockLevel ?? this.minStockLevel,
+      defaultSupplierId: defaultSupplierId ?? this.defaultSupplierId,
+      defaultSupplierName: defaultSupplierName ?? this.defaultSupplierName,
     );
     entity.id = id ?? this.id;
     return entity;
