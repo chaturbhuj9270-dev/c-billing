@@ -11,6 +11,7 @@ import 'package:c_billing/features/billing/domain/entities/bill.dart';
 import 'package:c_billing/features/inventory_management/data/repositories/firebase_product_repository.dart';
 import 'package:c_billing/features/inventory_management/data/repositories/firebase_stock_repository.dart';
 import 'package:c_billing/features/shop/data/repositories/shop_repository.dart';
+import 'package:c_billing/features/shop/domain/entities/shop.dart';
 import 'package:c_billing/common_widgets/printer_selection_widget.dart';
 import 'package:c_billing/features/billing/offline/controllers/bill_offline_controller.dart';
 import 'package:c_billing/core/services/inventory_integration_service.dart';
@@ -412,59 +413,36 @@ class _ReturnBillPageState extends State<ReturnBillPage>
   Future<void> _handleShareBill() async {
     if (_currentBill == null) return;
 
-    bool loadingDialogShowing = false;
     try {
-      // Show loading indicator
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => const Center(
-          child: CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-          ),
-        ),
+      // 1. Get shop details with timeout
+      final shop = await _shopRepository.getShopDetails().timeout(
+        const Duration(seconds: 5),
+        onTimeout: () => Shop.empty,
       );
-      loadingDialogShowing = true;
 
-      final shop = await _shopRepository.getShopDetails();
+      // 2. Create return print data (synchronous)
       final printData = _createReturnPrintData();
 
-      // Generate PDF based on bill type setting
+      // 3. Generate PDF based on bill type setting
       final prefs = await SharedPreferences.getInstance();
       final billType = prefs.getString('bill_type') ?? 'pos';
       final pw.Document pdf;
       if (billType == 'normal') {
-        pdf = await _pdfService.generateNormalBillPdf(
-          billData: printData,
-          shopDetails: shop,
-        );
+        pdf = await _pdfService.generateNormalBillPdf(billData: printData, shopDetails: shop);
       } else {
-        pdf = await _pdfService.generateBillPdf(
-          billData: printData,
-          shopDetails: shop,
-        );
+        pdf = await _pdfService.generateBillPdf(billData: printData, shopDetails: shop);
       }
 
       final bytes = await pdf.save();
+      if (!mounted) return;
 
-      // Close loading indicator before showing native share dialog
-      if (mounted && loadingDialogShowing) {
-        Navigator.pop(context);
-        loadingDialogShowing = false;
-      }
-
-      // Use Printing.sharePdf — reliable native share/preview on all devices
+      // 4. Share via native share sheet
       await printing_pkg.Printing.sharePdf(
         bytes: bytes,
-        filename: 'return_bill_${_currentBill!.billNumber.replaceAll('/', '_')}.pdf',
+        filename: 'return_bill_${_currentBill!.billNumber.replaceAll(RegExp(r'[^a-zA-Z0-9\-_]'), '_')}.pdf',
       );
     } catch (e) {
       // Close loading indicator only if still showing
-      if (mounted && loadingDialogShowing) {
-        Navigator.pop(context);
-        loadingDialogShowing = false;
-      }
-
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

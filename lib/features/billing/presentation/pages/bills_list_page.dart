@@ -15,6 +15,7 @@ import 'package:printing/printing.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:c_billing/common_widgets/printer_selection_widget.dart';
 import 'package:c_billing/features/shop/data/repositories/shop_repository.dart';
+import 'package:c_billing/features/shop/domain/entities/shop.dart';
 import 'package:c_billing/features/customer/data/repositories/customer_repository.dart';
 import 'package:c_billing/core/services/language_service.dart';
 import 'package:c_billing/core/localization/app_localizations.dart';
@@ -32,11 +33,13 @@ class BillsListPage extends StatefulWidget {
 
 class _BillsListPageState extends State<BillsListPage>
     with SingleTickerProviderStateMixin {
+  // ignore: unused_field
   late BillingService _billingService;
   late FirebaseFirestore _firestore;
   late AnimationController _animController;
   late Animation<Offset> _offsetAnimation;
   late Animation<double> _opacityAnimation;
+  // ignore: unused_field
   final _cacheDataSource = BillCacheDataSource();
 
   // Localization
@@ -46,6 +49,7 @@ class _BillsListPageState extends State<BillsListPage>
   final _printerService = PosPrinterService();
   final _pdfService = PdfBillService();
   late ShopRepository _shopRepository;
+  // ignore: unused_field
   late FirebaseCustomerRepository _customerRepository;
   String? _printingBillId; // Track which bill is being printed
 
@@ -140,24 +144,9 @@ class _BillsListPageState extends State<BillsListPage>
     setState(() {}); // Rebuild UI with new language
   }
 
-  /// Create PrintBillData with customer's total due amount
-  Future<PrintBillData> _createPrintBillData(Bill bill) async {
-    double? totalDueAmount;
-
-    // Get customer's total pending balance if customer ID exists
-    if (bill.customerId != null && bill.customerId!.isNotEmpty) {
-      try {
-        final customer = await _customerRepository.getCustomerById(
-          bill.customerId!,
-        );
-        if (customer != null) {
-          totalDueAmount = customer.currentPendingAmount;
-        }
-      } catch (e) {
-        print('[DEBUG] Error fetching customer pending balance: $e');
-      }
-    }
-
+  /// Create PrintBillData from bill — no network calls, uses bill data directly
+  PrintBillData _createPrintBillData(Bill bill) {
+    final double? totalDueAmount = bill.pendingAmount > 0 ? bill.pendingAmount : null;
     return PrintBillData.fromBill(bill, totalDueAmount: totalDueAmount);
   }
 
@@ -195,7 +184,7 @@ class _BillsListPageState extends State<BillsListPage>
       final shop = await _shopRepository.getShopDetails();
 
       // Create print data from bill
-      final printData = await _createPrintBillData(bill);
+      final printData = _createPrintBillData(bill);
 
       // Print the bill
       final printResult = await _printerService.printBill(
@@ -237,7 +226,7 @@ class _BillsListPageState extends State<BillsListPage>
 
     return showDialog<bool>(
       context: context,
-      builder: (context) => Dialog(
+      builder: (dialogContext) => Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         child: Container(
           constraints: const BoxConstraints(maxWidth: 400, maxHeight: 600),
@@ -509,7 +498,7 @@ class _BillsListPageState extends State<BillsListPage>
                         Expanded(
                           child: OutlinedButton.icon(
                             onPressed: () {
-                              Navigator.pop(context);
+                              Navigator.pop(dialogContext);
                               _shareBillAsPdf(bill);
                             },
                             icon: const Icon(Icons.share, size: 18),
@@ -531,7 +520,7 @@ class _BillsListPageState extends State<BillsListPage>
                         Expanded(
                           child: OutlinedButton.icon(
                             onPressed: () {
-                              Navigator.pop(context);
+                              Navigator.pop(dialogContext);
                               _saveBillAsPdf(bill);
                             },
                             icon: const Icon(Icons.picture_as_pdf, size: 18),
@@ -557,7 +546,7 @@ class _BillsListPageState extends State<BillsListPage>
                       children: [
                         Expanded(
                           child: OutlinedButton(
-                            onPressed: () => Navigator.pop(context, false),
+                            onPressed: () => Navigator.pop(dialogContext, false),
                             style: OutlinedButton.styleFrom(
                               padding: const EdgeInsets.symmetric(vertical: 12),
                               side: BorderSide(color: Colors.grey[400]!),
@@ -577,7 +566,7 @@ class _BillsListPageState extends State<BillsListPage>
                         const SizedBox(width: 8),
                         Expanded(
                           child: ElevatedButton.icon(
-                            onPressed: () => Navigator.pop(context, true),
+                            onPressed: () => Navigator.pop(dialogContext, true),
                             icon: const Icon(Icons.print, size: 18),
                             label: Text(
                               _localizations.print,
@@ -634,76 +623,40 @@ class _BillsListPageState extends State<BillsListPage>
   }
 
   Future<void> _shareBillAsPdf(Bill bill) async {
-    bool loadingDialogShowing = false;
     try {
-      debugPrint('[BillsListPage] Starting _shareBillAsPdf for bill: ${bill.billNumber}');
-      
-      // Show loading indicator
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => const Center(
-          child: CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF1B4D3E)),
-          ),
-        ),
+      // 1. Get shop details with timeout
+      final shop = await _shopRepository.getShopDetails().timeout(
+        const Duration(seconds: 5),
+        onTimeout: () => Shop.empty,
       );
-      loadingDialogShowing = true;
 
-      debugPrint('[BillsListPage] Getting shop details...');
-      final shop = await _shopRepository.getShopDetails();
-      debugPrint('[BillsListPage] Shop: ${shop.shopName}');
-      
-      debugPrint('[BillsListPage] Creating print data...');
-      final printData = await _createPrintBillData(bill);
-      debugPrint('[BillsListPage] Print data created');
+      // 2. Create print data (synchronous)
+      final printData = _createPrintBillData(bill);
 
-      // Generate PDF based on bill type setting
+      // 3. Generate PDF based on bill type setting
       final prefs = await SharedPreferences.getInstance();
       final billType = prefs.getString('bill_type') ?? 'pos';
-      debugPrint('[BillsListPage] Generating PDF (billType=$billType)...');
       final pw.Document pdf;
       if (billType == 'normal') {
-        pdf = await _pdfService.generateNormalBillPdf(
-          billData: printData,
-          shopDetails: shop,
-        );
+        pdf = await _pdfService.generateNormalBillPdf(billData: printData, shopDetails: shop);
       } else {
-        pdf = await _pdfService.generateBillPdf(
-          billData: printData,
-          shopDetails: shop,
-        );
+        pdf = await _pdfService.generateBillPdf(billData: printData, shopDetails: shop);
       }
-
       final bytes = await pdf.save();
-      debugPrint('[BillsListPage] PDF generated, size=${bytes.length} bytes');
 
-      // Close loading indicator before showing native share dialog
-      if (mounted && loadingDialogShowing) {
-        Navigator.pop(context);
-        loadingDialogShowing = false;
-      }
+      if (!mounted) return;
 
-      // Use Printing.sharePdf — reliable native share/preview on all devices
+      // 4. Share via native share sheet
       await Printing.sharePdf(
         bytes: bytes,
-        filename: 'bill_${bill.billNumber.replaceAll('/', '_')}.pdf',
+        filename: 'bill_${bill.billNumber.replaceAll(RegExp(r'[^a-zA-Z0-9\-_]'), '_')}.pdf',
       );
-      debugPrint('[BillsListPage] Share completed successfully');
-    } catch (e, stackTrace) {
+    } catch (e) {
       debugPrint('[BillsListPage] ERROR in _shareBillAsPdf: $e');
-      debugPrint('[BillsListPage] Stack trace: $stackTrace');
-      
-      // Close loading indicator only if still showing
-      if (mounted && loadingDialogShowing) {
-        Navigator.pop(context);
-        loadingDialogShowing = false;
-      }
-
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('${_localizations.errorSharingBill}: $e'),
+            content: Text('Error sharing bill: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -712,58 +665,35 @@ class _BillsListPageState extends State<BillsListPage>
   }
 
   Future<void> _saveBillAsPdf(Bill bill) async {
-    bool loadingDialogShowing = false;
     try {
-      // Show loading indicator
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => const Center(
-          child: CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF1B4D3E)),
-          ),
-        ),
+      // 1. Get shop details with timeout
+      final shop = await _shopRepository.getShopDetails().timeout(
+        const Duration(seconds: 5),
+        onTimeout: () => Shop.empty,
       );
-      loadingDialogShowing = true;
 
-      final shop = await _shopRepository.getShopDetails();
-      final printData = await _createPrintBillData(bill);
+      // 2. Create print data (synchronous)
+      final printData = _createPrintBillData(bill);
 
-      // Close loading indicator before showing native dialog
-      if (mounted && loadingDialogShowing) {
-        Navigator.pop(context);
-        loadingDialogShowing = false;
-      }
-
-      // Generate PDF based on bill type setting
+      // 3. Generate PDF based on bill type setting
       final prefs = await SharedPreferences.getInstance();
       final billType = prefs.getString('bill_type') ?? 'pos';
       final pw.Document pdf;
       if (billType == 'normal') {
-        pdf = await _pdfService.generateNormalBillPdf(
-          billData: printData,
-          shopDetails: shop,
-        );
+        pdf = await _pdfService.generateNormalBillPdf(billData: printData, shopDetails: shop);
       } else {
-        pdf = await _pdfService.generateBillPdf(
-          billData: printData,
-          shopDetails: shop,
-        );
+        pdf = await _pdfService.generateBillPdf(billData: printData, shopDetails: shop);
       }
 
-      // Use Printing.sharePdf for native preview + save dialog
       final bytes = await pdf.save();
+      if (!mounted) return;
+
+      // 4. Open native save/share dialog
       await Printing.sharePdf(
         bytes: bytes,
-        filename: 'bill_${bill.id.replaceAll('/', '_')}.pdf',
+        filename: 'bill_${bill.id.replaceAll(RegExp(r'[^a-zA-Z0-9\-_]'), '_')}.pdf',
       );
     } catch (e) {
-      // Close loading indicator only if still showing
-      if (mounted && loadingDialogShowing) {
-        Navigator.pop(context);
-        loadingDialogShowing = false;
-      }
-
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

@@ -18,6 +18,7 @@ import 'package:printing/printing.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:c_billing/common_widgets/printer_selection_widget.dart';
 import 'package:c_billing/features/shop/data/repositories/shop_repository.dart';
+import 'package:c_billing/features/shop/domain/entities/shop.dart';
 import 'package:c_billing/features/customer/data/repositories/customer_repository.dart';
 import 'package:c_billing/features/customer/data/repositories/customer_transaction_repository.dart';
 import 'package:c_billing/core/services/language_service.dart';
@@ -885,24 +886,10 @@ class _BillingPageState extends State<BillingPage> {
     });
   }
 
-  /// Create PrintBillData with customer's total due amount
-  Future<PrintBillData> _createPrintBillData(Bill bill) async {
-    double? totalDueAmount;
-
-    // Get customer's total pending balance if customer ID exists
-    if (bill.customerId != null && bill.customerId!.isNotEmpty) {
-      try {
-        final customer = await _customerRepository.getCustomerById(
-          bill.customerId!,
-        );
-        if (customer != null) {
-          totalDueAmount = customer.currentPendingAmount;
-        }
-      } catch (e) {
-        print('[DEBUG] Error fetching customer pending balance: $e');
-      }
-    }
-
+  /// Create PrintBillData from bill — no network calls, uses bill data directly
+  PrintBillData _createPrintBillData(Bill bill) {
+    // Use bill's own pending amount as totalDueAmount (already computed at bill creation time)
+    final double? totalDueAmount = bill.pendingAmount > 0 ? bill.pendingAmount : null;
     return PrintBillData.fromBill(bill, totalDueAmount: totalDueAmount);
   }
 
@@ -925,7 +912,7 @@ class _BillingPageState extends State<BillingPage> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => Dialog(
+      builder: (dialogContext) => Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         child: Container(
           constraints: const BoxConstraints(maxWidth: 400, maxHeight: 650),
@@ -1056,7 +1043,7 @@ class _BillingPageState extends State<BillingPage> {
                       width: double.infinity,
                       child: ElevatedButton.icon(
                         onPressed: () {
-                          Navigator.pop(context);
+                          Navigator.pop(dialogContext);
                           if (_billType == 'pos') {
                             _printBillToPOS(bill);
                           } else {
@@ -1090,7 +1077,7 @@ class _BillingPageState extends State<BillingPage> {
                         Expanded(
                           child: OutlinedButton.icon(
                             onPressed: () {
-                              Navigator.pop(context);
+                              Navigator.pop(dialogContext);
                               _shareBillAsPdf(bill);
                             },
                             icon: const Icon(Icons.share, size: 18),
@@ -1112,7 +1099,7 @@ class _BillingPageState extends State<BillingPage> {
                         Expanded(
                           child: OutlinedButton.icon(
                             onPressed: () {
-                              Navigator.pop(context);
+                              Navigator.pop(dialogContext);
                               _saveBillAsPdf(bill);
                             },
                             icon: const Icon(Icons.picture_as_pdf, size: 18),
@@ -1137,7 +1124,7 @@ class _BillingPageState extends State<BillingPage> {
                     SizedBox(
                       width: double.infinity,
                       child: TextButton(
-                        onPressed: () => Navigator.pop(context),
+                        onPressed: () => Navigator.pop(dialogContext),
                         child: Text(
                           _localizations.done,
                           style: TextStyle(
@@ -1190,168 +1177,83 @@ class _BillingPageState extends State<BillingPage> {
   }
 
   Future<void> _shareBillAsPdf(Bill bill) async {
-    bool loaderShowing = true;
-    final startTime = DateTime.now();
-    _appLogger.info('PDF_SHARE', '════════ START SHARE PDF ════════');
-    _appLogger.info('PDF_SHARE', 'Bill ID: ${bill.id}, Bill Number: ${bill.billNumber}');
-    _appLogger.info('PDF_SHARE', 'Bill Type Setting: $_billType');
-    _appLogger.info('PDF_SHARE', 'Final Amount: ₹${bill.finalAmount}');
-    
     try {
-      _appLogger.debug('PDF_SHARE', 'Step 1: Showing loading dialog...');
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => const Center(
-          child: CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF1B4D3E)),
-          ),
-        ),
+      _appLogger.info('PDF_SHARE', 'Starting share for bill: ${bill.billNumber}, type: $_billType');
+
+      // 1. Get shop details with timeout
+      final shop = await _shopRepository.getShopDetails().timeout(
+        const Duration(seconds: 5),
+        onTimeout: () {
+          _appLogger.warning('PDF_SHARE', 'Shop details timeout — using empty shop');
+          return Shop.empty;
+        },
       );
-      _appLogger.debug('PDF_SHARE', 'Loading dialog displayed');
 
-      _appLogger.debug('PDF_SHARE', 'Step 2: Fetching shop details...');
-      final shopStart = DateTime.now();
-      final shop = await _shopRepository.getShopDetails();
-      _appLogger.info('PDF_SHARE', 'Shop details fetched in ${DateTime.now().difference(shopStart).inMilliseconds}ms');
-      _appLogger.debug('PDF_SHARE', 'Shop: ${shop.shopName}, Phone: ${shop.phone}');
+      // 2. Create print data (synchronous — no network calls)
+      final printData = _createPrintBillData(bill);
+      _appLogger.debug('PDF_SHARE', 'Print data: ${printData.items.length} items, total: ${printData.grandTotal}');
 
-      _appLogger.debug('PDF_SHARE', 'Step 3: Creating print bill data...');
-      final printDataStart = DateTime.now();
-      final printData = await _createPrintBillData(bill);
-      _appLogger.info('PDF_SHARE', 'Print data created in ${DateTime.now().difference(printDataStart).inMilliseconds}ms');
-      _appLogger.debug('PDF_SHARE', 'Print data - Items: ${printData.items.length}, Total: ₹${printData.grandTotal}');
-
-      _appLogger.debug('PDF_SHARE', 'Step 4: Generating PDF (type: $_billType)...');
-      final pdfGenStart = DateTime.now();
+      // 3. Generate PDF
       final pw.Document pdf;
       if (_billType == 'normal') {
-        _appLogger.debug('PDF_SHARE', 'Using generateNormalBillPdf...');
-        pdf = await _pdfService.generateNormalBillPdf(
-          billData: printData,
-          shopDetails: shop,
-        );
+        pdf = await _pdfService.generateNormalBillPdf(billData: printData, shopDetails: shop);
       } else {
-        _appLogger.debug('PDF_SHARE', 'Using generateBillPdf (POS)...');
-        pdf = await _pdfService.generateBillPdf(
-          billData: printData,
-          shopDetails: shop,
-        );
+        pdf = await _pdfService.generateBillPdf(billData: printData, shopDetails: shop);
       }
-      _appLogger.info('PDF_SHARE', 'PDF document generated in ${DateTime.now().difference(pdfGenStart).inMilliseconds}ms');
-
-      _appLogger.debug('PDF_SHARE', 'Step 5: Saving PDF to bytes...');
-      final saveStart = DateTime.now();
       final bytes = await pdf.save();
-      _appLogger.info('PDF_SHARE', 'PDF saved to bytes in ${DateTime.now().difference(saveStart).inMilliseconds}ms');
-      _appLogger.info('PDF_SHARE', 'PDF size: ${bytes.length} bytes (${(bytes.length / 1024).toStringAsFixed(2)} KB)');
+      _appLogger.info('PDF_SHARE', 'PDF generated: ${bytes.length} bytes');
 
-      // Dismiss loader before showing share sheet
-      _appLogger.debug('PDF_SHARE', 'Step 6: Dismissing loading dialog...');
-      if (mounted && loaderShowing) {
-        Navigator.pop(context);
-        loaderShowing = false;
-        _appLogger.debug('PDF_SHARE', 'Loading dialog dismissed');
-      }
+      if (!mounted) return;
 
-      // Use Printing.sharePdf — reliable native share/preview on all devices
-      _appLogger.debug('PDF_SHARE', 'Step 7: Calling Printing.sharePdf...');
-      final shareStart = DateTime.now();
+      // 4. Share via native share sheet
       await Printing.sharePdf(
         bytes: bytes,
-        filename: 'bill_${bill.billNumber.replaceAll('/', '_')}.pdf',
+        filename: 'bill_${bill.billNumber.replaceAll(RegExp(r'[^a-zA-Z0-9\-_]'), '_')}.pdf',
       );
-      _appLogger.info('PDF_SHARE', 'Printing.sharePdf completed in ${DateTime.now().difference(shareStart).inMilliseconds}ms');
-      
-      final totalTime = DateTime.now().difference(startTime).inMilliseconds;
-      _appLogger.info('PDF_SHARE', '════════ SHARE PDF SUCCESS ════════');
-      _appLogger.info('PDF_SHARE', 'Total execution time: ${totalTime}ms');
+      _appLogger.info('PDF_SHARE', 'Share completed');
     } catch (e, stackTrace) {
-      _appLogger.error('PDF_SHARE', 'FATAL ERROR during PDF share', error: e, stackTrace: stackTrace);
-      _appLogger.error('PDF_SHARE', '════════ SHARE PDF FAILED ════════');
-      
-      if (mounted && loaderShowing) {
-        Navigator.pop(context);
-        loaderShowing = false;
-      }
+      _appLogger.error('PDF_SHARE', 'Share failed: $e', error: e, stackTrace: stackTrace);
       if (mounted) {
-        _showSnackbar('${_localizations.errorSharingBill}: $e', isError: true);
+        _showSnackbar('Error sharing bill: $e', isError: true);
       }
     }
   }
 
   Future<void> _saveBillAsPdf(Bill bill) async {
-    bool loaderShowing = true;
-    final startTime = DateTime.now();
-    _appLogger.info('PDF_SAVE', '════════ START SAVE PDF ════════');
-    _appLogger.info('PDF_SAVE', 'Bill ID: ${bill.id}, Bill Number: ${bill.billNumber}');
-    _appLogger.info('PDF_SAVE', 'Bill Type Setting: $_billType');
-    
     try {
-      _appLogger.debug('PDF_SAVE', 'Step 1: Showing loading dialog...');
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => const Center(
-          child: CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF1B4D3E)),
-          ),
-        ),
+      _appLogger.info('PDF_SAVE', 'Starting save for bill: ${bill.billNumber}, type: $_billType');
+
+      // 1. Get shop details with timeout
+      final shop = await _shopRepository.getShopDetails().timeout(
+        const Duration(seconds: 5),
+        onTimeout: () => Shop.empty,
       );
 
-      _appLogger.debug('PDF_SAVE', 'Step 2: Fetching shop details...');
-      final shop = await _shopRepository.getShopDetails();
-      _appLogger.debug('PDF_SAVE', 'Shop: ${shop.shopName}');
-      
-      _appLogger.debug('PDF_SAVE', 'Step 3: Creating print data...');
-      final printData = await _createPrintBillData(bill);
-      _appLogger.debug('PDF_SAVE', 'Print data created - Items: ${printData.items.length}');
+      // 2. Create print data (synchronous)
+      final printData = _createPrintBillData(bill);
 
-      _appLogger.debug('PDF_SAVE', 'Step 4: Generating PDF (type: $_billType)...');
+      // 3. Generate PDF
       final pw.Document pdf;
       if (_billType == 'normal') {
-        pdf = await _pdfService.generateNormalBillPdf(
-          billData: printData,
-          shopDetails: shop,
-        );
+        pdf = await _pdfService.generateNormalBillPdf(billData: printData, shopDetails: shop);
       } else {
-        pdf = await _pdfService.generateBillPdf(
-          billData: printData,
-          shopDetails: shop,
-        );
+        pdf = await _pdfService.generateBillPdf(billData: printData, shopDetails: shop);
       }
-
-      _appLogger.debug('PDF_SAVE', 'Step 5: Saving PDF to bytes...');
       final bytes = await pdf.save();
-      _appLogger.info('PDF_SAVE', 'PDF size: ${bytes.length} bytes (${(bytes.length / 1024).toStringAsFixed(2)} KB)');
+      _appLogger.info('PDF_SAVE', 'PDF generated: ${bytes.length} bytes');
 
-      // Dismiss loader before opening system share/save dialog
-      _appLogger.debug('PDF_SAVE', 'Step 6: Dismissing loading dialog...');
-      if (mounted && loaderShowing) {
-        Navigator.pop(context);
-        loaderShowing = false;
-      }
+      if (!mounted) return;
 
-      // Use Printing.sharePdf — opens native preview + save dialog
-      _appLogger.debug('PDF_SAVE', 'Step 7: Calling Printing.sharePdf...');
+      // 4. Open native save/share dialog
       await Printing.sharePdf(
         bytes: bytes,
-        filename: 'bill_${bill.id.replaceAll('/', '_')}.pdf',
+        filename: 'bill_${bill.id.replaceAll(RegExp(r'[^a-zA-Z0-9\-_]'), '_')}.pdf',
       );
-      
-      final totalTime = DateTime.now().difference(startTime).inMilliseconds;
-      _appLogger.info('PDF_SAVE', '════════ SAVE PDF SUCCESS ════════');
-      _appLogger.info('PDF_SAVE', 'Total time: ${totalTime}ms');
+      _appLogger.info('PDF_SAVE', 'Save completed');
     } catch (e, stackTrace) {
-      _appLogger.error('PDF_SAVE', 'FATAL ERROR during PDF save', error: e, stackTrace: stackTrace);
-      _appLogger.error('PDF_SAVE', '════════ SAVE PDF FAILED ════════');
-      
-      if (mounted && loaderShowing) {
-        Navigator.pop(context);
-        loaderShowing = false;
-      }
+      _appLogger.error('PDF_SAVE', 'Save failed: $e', error: e, stackTrace: stackTrace);
       if (mounted) {
-        _showSnackbar('${_localizations.errorSavingPdf}: $e', isError: true);
+        _showSnackbar('Error saving PDF: $e', isError: true);
       }
     }
   }
@@ -1384,7 +1286,7 @@ class _BillingPageState extends State<BillingPage> {
       }
 
       final shop = await _shopRepository.getShopDetails();
-      final printData = await _createPrintBillData(bill);
+      final printData = _createPrintBillData(bill);
 
       final printResult = await _printerService.printBill(
         billData: printData,
@@ -1410,20 +1312,13 @@ class _BillingPageState extends State<BillingPage> {
   /// Print normal bill via system print dialog (for regular printers)
   Future<void> _printNormalBill(Bill bill) async {
     try {
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => const Center(
-          child: CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF1B4D3E)),
-          ),
-        ),
+      final shop = await _shopRepository.getShopDetails().timeout(
+        const Duration(seconds: 5),
+        onTimeout: () => Shop.empty,
       );
+      final printData = _createPrintBillData(bill);
 
-      final shop = await _shopRepository.getShopDetails();
-      final printData = await _createPrintBillData(bill);
-
-      if (mounted) Navigator.pop(context);
+      if (!mounted) return;
 
       // Use system print dialog
       await _pdfService.previewAndPrintPdf(
@@ -1431,8 +1326,9 @@ class _BillingPageState extends State<BillingPage> {
         shopDetails: shop,
       );
     } catch (e) {
-      if (mounted) Navigator.pop(context);
-      _showSnackbar('${_localizations.errorPrinting}: $e', isError: true);
+      if (mounted) {
+        _showSnackbar('${_localizations.errorPrinting}: $e', isError: true);
+      }
     }
   }
 
