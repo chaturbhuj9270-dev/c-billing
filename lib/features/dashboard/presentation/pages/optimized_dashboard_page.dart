@@ -27,6 +27,7 @@ import '../widgets/shimmer_widgets.dart';
 import 'flyout_menu.dart';
 import '../../../settings/presentation/pages/logs_viewer_page.dart';
 import '../../../purchase_return/presentation/pages/purchase_return_screen.dart';
+import '../../../reports/presentation/pages/report_page.dart';
 
 /// High-performance dashboard page with cache-first loading
 /// Renders instantly with cached data, updates smoothly when fresh data arrives
@@ -867,6 +868,19 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
               context,
               MaterialPageRoute(
                   builder: (_) => const PurchaseReturnScreen()),
+            ),
+          ),
+          const SizedBox(width: 12),
+          _buildQuickStatItem(
+            icon: Icons.assessment_outlined,
+            value: '',
+            label: 'Reports',
+            color: const Color(0xFF0277BD),
+            isLoading: false,
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (_) => const ReportPage()),
             ),
           ),
         ],
