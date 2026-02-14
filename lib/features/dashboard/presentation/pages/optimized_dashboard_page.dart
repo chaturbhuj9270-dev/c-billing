@@ -26,6 +26,7 @@ import '../cubit/optimized_dashboard_state.dart';
 import '../widgets/shimmer_widgets.dart';
 import 'flyout_menu.dart';
 import '../../../settings/presentation/pages/logs_viewer_page.dart';
+import '../../../purchase_return/presentation/pages/purchase_return_screen.dart';
 
 /// High-performance dashboard page with cache-first loading
 /// Renders instantly with cached data, updates smoothly when fresh data arrives
@@ -853,6 +854,19 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const CompanyPage()),
+            ),
+          ),
+          const SizedBox(width: 12),
+          _buildQuickStatItem(
+            icon: Icons.keyboard_return_rounded,
+            value: '',
+            label: 'P. Return',
+            color: const Color(0xFFE65100),
+            isLoading: false,
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (_) => const PurchaseReturnScreen()),
             ),
           ),
         ],
