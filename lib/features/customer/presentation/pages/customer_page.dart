@@ -74,16 +74,46 @@ class _CustomerPageState extends State<CustomerPage> {
     // 1. Load from cache immediately for < 0.5s loading
     final cached = await _cacheDataSource.getCachedCustomers();
     if (cached != null && mounted) {
+      // Filter out inactive/deleted from cache too
+      final activeCached = cached.where((c) {
+        final isActive = c['isActive'];
+        return isActive != false;
+      }).toList();
       setState(() {
-        _customers = cached;
-        _filteredCustomers = List.from(_customers);
-        _applySorting();
+        _customers = activeCached;
+        _applyFilterImmediate();
       });
       print('[DEBUG] Loaded ${_customers.length} customers from cache');
     }
 
     // 2. Fetch from Firestore in background
     _loadCustomers();
+  }
+
+  /// Apply filter immediately without debounce - for programmatic use
+  void _applyFilterImmediate() {
+    final query = _filterController.text.toLowerCase();
+    if (query.isEmpty) {
+      _filteredCustomers = List.from(_customers);
+    } else {
+      _filteredCustomers = _customers.where((customer) {
+        final firstName = (customer['firstName'] ?? '')
+            .toString()
+            .toLowerCase();
+        final lastName = (customer['lastName'] ?? '')
+            .toString()
+            .toLowerCase();
+        final contact = (customer['contact'] ?? '')
+            .toString()
+            .toLowerCase();
+
+        return firstName.contains(query) ||
+            lastName.contains(query) ||
+            contact.contains(query);
+      }).toList();
+    }
+    _applySorting();
+    print('[DEBUG] Immediate filter: ${_filteredCustomers.length} of ${_customers.length}');
   }
 
   void _filterCustomers() {
@@ -95,35 +125,10 @@ class _CustomerPageState extends State<CustomerPage> {
       print(
         '[DEBUG] Filtering customers with query: ${_filterController.text}',
       );
-      final query = _filterController.text.toLowerCase();
 
       setState(() {
-        if (query.isEmpty) {
-          _filteredCustomers = _customers;
-        } else {
-          _filteredCustomers = _customers.where((customer) {
-            final firstName = (customer['firstName'] ?? '')
-                .toString()
-                .toLowerCase();
-            final lastName = (customer['lastName'] ?? '')
-                .toString()
-                .toLowerCase();
-            final contact = (customer['contact'] ?? '')
-                .toString()
-                .toLowerCase();
-
-            return firstName.contains(query) ||
-                lastName.contains(query) ||
-                contact.contains(query);
-          }).toList();
-        }
-
-        // Apply sorting
-        _applySorting();
+        _applyFilterImmediate();
       });
-      print(
-        '[DEBUG] Filtered results: ${_filteredCustomers.length} of ${_customers.length}',
-      );
     });
   }
 
@@ -174,23 +179,56 @@ class _CustomerPageState extends State<CustomerPage> {
       }
 
       print('[DEBUG] Fetching customers for user: ${currentUser.uid}');
+      // Don't use orderBy to avoid composite index requirement
+      // Sort in memory instead
       final snapshot = await _firestore
           .collection('users')
           .doc(currentUser.uid)
           .collection('customers')
-          .orderBy('createdAt', descending: true)
           .get();
 
       print('[DEBUG] Loaded ${snapshot.docs.length} customers from Firestore');
 
       final freshCustomers = snapshot.docs
           .map((doc) => {'id': doc.id, ...doc.data()})
+          .where((doc) {
+            // Filter out inactive/deleted customers
+            final isActive = doc['isActive'];
+            if (isActive == false) return false;
+            return true;
+          })
           .toList();
+      
+      // Sort by createdAt in memory (descending, newest first)
+      freshCustomers.sort((a, b) {
+        final aCreatedAt = a['createdAt'];
+        final bCreatedAt = b['createdAt'];
+        if (aCreatedAt == null && bCreatedAt == null) return 0;
+        if (aCreatedAt == null) return 1;
+        if (bCreatedAt == null) return -1;
+        // Handle both Timestamp and String types
+        DateTime aDate;
+        DateTime bDate;
+        if (aCreatedAt is Timestamp) {
+          aDate = aCreatedAt.toDate();
+        } else {
+          aDate = DateTime.tryParse(aCreatedAt.toString()) ?? DateTime(2000);
+        }
+        if (bCreatedAt is Timestamp) {
+          bDate = bCreatedAt.toDate();
+        } else {
+          bDate = DateTime.tryParse(bCreatedAt.toString()) ?? DateTime(2000);
+        }
+        return bDate.compareTo(aDate);
+      });
+
+      print('[DEBUG] After filtering active customers: ${freshCustomers.length}');
 
       if (mounted) {
         setState(() {
           _customers = freshCustomers;
-          _filterCustomers(); // This handles _filteredCustomers and sorting
+          // Update filtered list directly instead of using debounced _filterCustomers
+          _applyFilterImmediate();
           _isLoading = false;
         });
 
@@ -542,7 +580,7 @@ class _CustomerPageState extends State<CustomerPage> {
               'contact': contact,
               'address': address,
             };
-            _filterCustomers();
+            _applyFilterImmediate();
           });
           _cacheDataSource.saveCustomers(_customers);
         }
@@ -585,7 +623,7 @@ class _CustomerPageState extends State<CustomerPage> {
         
         setState(() {
           _customers.insert(0, tempCustomerData);
-          _filterCustomers();
+          _applyFilterImmediate();
         });
         _cacheDataSource.saveCustomers(_customers);
         
@@ -695,7 +733,7 @@ class _CustomerPageState extends State<CustomerPage> {
       // Optimistic delete
       setState(() {
         _customers.removeWhere((c) => c['id'] == customerId);
-        _filterCustomers();
+        _applyFilterImmediate();
       });
       _cacheDataSource.saveCustomers(_customers);
 
@@ -813,7 +851,11 @@ class _CustomerPageState extends State<CustomerPage> {
           ),
         ),
       ),
-      body: _filteredCustomers.isEmpty
+      body: _isLoading && _customers.isEmpty
+          ? const Center(
+              child: CircularProgressIndicator(color: Color(0xFF1B4D3E)),
+            )
+          : _customers.isEmpty
           ? Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -825,17 +867,15 @@ class _CustomerPageState extends State<CustomerPage> {
                       color: const Color(0xFF1B4D3E).withOpacity(0.1),
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child: Icon(
+                    child: const Icon(
                       Icons.people_outline,
                       size: 50,
-                      color: const Color(0xFF1B4D3E),
+                      color: Color(0xFF1B4D3E),
                     ),
                   ),
                   const SizedBox(height: 20),
                   Text(
-                    _filterController.text.isEmpty
-                        ? _localizations.noCustomersYet
-                        : _localizations.noResultsFound,
+                    _localizations.noCustomersYet,
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
@@ -845,9 +885,7 @@ class _CustomerPageState extends State<CustomerPage> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    _filterController.text.isEmpty
-                        ? _localizations.createFirstCustomer
-                        : _localizations.tryDifferentSearch,
+                    _localizations.createFirstCustomer,
                     style: TextStyle(
                       fontSize: 14,
                       color: Colors.grey[500],
@@ -976,16 +1014,48 @@ class _CustomerPageState extends State<CustomerPage> {
                 ),
                 // Customer list
                 Expanded(
-                  child: ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: _filteredCustomers.length,
-                    itemBuilder: (context, index) {
-                      final customer = _filteredCustomers[index];
-                      return RepaintBoundary(
-                        child: _buildCustomerCard(customer),
-                      );
-                    },
-                  ),
+                  child: _filteredCustomers.isEmpty
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.search_off,
+                                size: 48,
+                                color: Colors.grey[400],
+                              ),
+                              const SizedBox(height: 12),
+                              Text(
+                                _localizations.noResultsFound,
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.grey[600],
+                                  fontFamily: 'Literata',
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                _localizations.tryDifferentSearch,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.grey[500],
+                                  fontFamily: 'Literata',
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      : ListView.builder(
+                          padding: const EdgeInsets.all(16),
+                          itemCount: _filteredCustomers.length,
+                          itemBuilder: (context, index) {
+                            final customer = _filteredCustomers[index];
+                            return RepaintBoundary(
+                              child: _buildCustomerCard(customer),
+                            );
+                          },
+                        ),
                 ),
               ],
             ),

@@ -260,16 +260,23 @@ class _BillingPageState extends State<BillingPage> {
           .collection('customers')
           .get();
       setState(() {
-        _customers = snapshot.docs.map((doc) {
-          return {
-            'id': doc.id,
-            'firstName': doc['firstName'] ?? '',
-            'lastName': doc['lastName'] ?? '',
-            'contact': doc['contact'] ?? '',
-            'fullName': '${doc['firstName'] ?? ''} ${doc['lastName'] ?? ''}'
-                .trim(),
-          };
-        }).toList();
+        _customers = snapshot.docs
+            .where((doc) {
+              // Filter out inactive/deleted customers
+              final data = doc.data();
+              final isActive = data['isActive'];
+              return isActive != false;
+            })
+            .map((doc) {
+              return {
+                'id': doc.id,
+                'firstName': doc['firstName'] ?? '',
+                'lastName': doc['lastName'] ?? '',
+                'contact': doc['contact'] ?? '',
+                'fullName': '${doc['firstName'] ?? ''} ${doc['lastName'] ?? ''}'
+                    .trim(),
+              };
+            }).toList();
       });
     } catch (e) {
       debugPrint('[DEBUG] Error loading customers: $e');
@@ -312,7 +319,7 @@ class _BillingPageState extends State<BillingPage> {
     });
   }
 
-  /// Search for customer by phone number
+  /// Search for customer by phone number using local _customers list
   Future<void> _searchCustomerByPhone(String phoneNumber) async {
     if (!mounted) return;
     
@@ -324,52 +331,74 @@ class _BillingPageState extends State<BillingPage> {
     try {
       // Normalize phone number - remove spaces, dashes, and country code for comparison
       final normalizedPhone = phoneNumber.replaceAll(RegExp(r'[\s\-\(\)\+]'), '');
+      final last10Digits = normalizedPhone.length >= 10
+          ? normalizedPhone.substring(normalizedPhone.length - 10)
+          : normalizedPhone;
       
-      // Try exact match first
-      var customer = await _customerRepository.getCustomerByContact(phoneNumber);
+      // Search through local _customers list (already loaded from Firestore)
+      Map<String, dynamic>? foundCustomer;
       
-      // If not found, try normalized search (last 10 digits)
-      if (customer == null && normalizedPhone.length >= 10) {
-        final last10Digits = normalizedPhone.substring(normalizedPhone.length - 10);
+      for (final c in _customers) {
+        final customerContact = (c['contact'] ?? '').toString();
         
+        // Try exact match first
+        if (customerContact == phoneNumber) {
+          foundCustomer = c;
+          break;
+        }
+        
+        // Try normalized match (last 10 digits)
+        final customerNormalized = customerContact.replaceAll(RegExp(r'[\s\-\(\)\+]'), '');
+        if (customerNormalized.length >= 10 && last10Digits.length >= 10) {
+          final customerLast10 = customerNormalized.substring(customerNormalized.length - 10);
+          if (customerLast10 == last10Digits) {
+            foundCustomer = c;
+            break;
+          }
+        }
+      }
+      
+      // If not found locally, try Firestore repository as fallback
+      if (foundCustomer == null) {
         try {
-          // Search through all customers and match last 10 digits
-          final allCustomers = await _customerRepository.getAllCustomers();
-          for (final c in allCustomers) {
-            final customerNormalized = c.contact.replaceAll(RegExp(r'[\s\-\(\)\+]'), '');
-            if (customerNormalized.length >= 10) {
-              final customerLast10 = customerNormalized.substring(customerNormalized.length - 10);
-              if (customerLast10 == last10Digits) {
-                customer = c;
-                break;
-              }
-            }
+          final customer = await _customerRepository.getCustomerByContact(phoneNumber);
+          if (customer != null) {
+            foundCustomer = {
+              'id': customer.id,
+              'firstName': customer.firstName,
+              'lastName': customer.lastName,
+              'contact': customer.contact,
+              'fullName': '${customer.firstName} ${customer.lastName}'.trim(),
+            };
           }
         } catch (e) {
-          // If getAllCustomers fails, just continue without fuzzy matching
-          debugPrint('[DEBUG] Could not fetch all customers for fuzzy match: $e');
+          debugPrint('[DEBUG] Firestore customer search fallback failed: $e');
         }
       }
       
       if (!mounted) return;
       
-      if (customer != null) {
+      if (foundCustomer != null) {
+        // Ensure fullName is populated
+        final fullName = foundCustomer['fullName'] ?? 
+            '${foundCustomer['firstName'] ?? ''} ${foundCustomer['lastName'] ?? ''}'.trim();
+        
         // Customer found - auto-attach to bill
         setState(() {
           _selectedCustomer = {
-            'id': customer!.id,
-            'firstName': customer.firstName,
-            'lastName': customer.lastName,
-            'contact': customer.contact,
-            'fullName': '${customer.firstName} ${customer.lastName}'.trim(),
+            'id': foundCustomer!['id'],
+            'firstName': foundCustomer['firstName'] ?? '',
+            'lastName': foundCustomer['lastName'] ?? '',
+            'contact': foundCustomer['contact'] ?? '',
+            'fullName': fullName,
           };
-          _autoFoundCustomerName = _selectedCustomer!['fullName'];
-          _customerNameController.text = _autoFoundCustomerName!;
+          _autoFoundCustomerName = fullName;
+          _customerNameController.text = fullName;
           _isSearchingCustomer = false;
         });
         
         _showSnackbar(
-          'Customer found: ${_autoFoundCustomerName}',
+          'Customer found: $fullName',
           isError: false,
         );
       } else {
@@ -751,6 +780,19 @@ class _BillingPageState extends State<BillingPage> {
       if (contact.isEmpty || contact.length < 10) {
         _showSnackbar(
           _localizations.pleaseEnterValidContact,
+          isError: true,
+        );
+        return;
+      }
+    }
+
+    // Validate customer details are required for partial payment
+    if (!_isFullPayment && _selectedCustomer == null) {
+      final customerName = _customerNameController.text.trim();
+      final customerContact = _customerContactController.text.trim();
+      if (customerName.isEmpty || customerContact.isEmpty || customerContact.length < 10) {
+        _showSnackbar(
+          'Customer details (name & phone) are required for partial payment',
           isError: true,
         );
         return;
@@ -2697,6 +2739,12 @@ class _BillingPageState extends State<BillingPage> {
                         _receivedAmount = 0.0;
                         _receivedAmountController.clear();
                       });
+                      // Prompt user to select customer if not already selected
+                      if (_selectedCustomer == null && 
+                          _customerNameController.text.trim().isEmpty &&
+                          !_generateBillViaContact) {
+                        _showCustomerPicker();
+                      }
                     },
                   ),
                 ),
@@ -2838,28 +2886,39 @@ class _BillingPageState extends State<BillingPage> {
               _pendingAmount > 0 &&
               _selectedCustomer == null) ...[
             const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: Colors.amber[50],
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.amber[200]!),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.info_outline, size: 18, color: Colors.amber[700]),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      _localizations.selectCustomerForPending,
-                      style: TextStyle(
-                        fontFamily: 'Literata',
-                        fontSize: 12,
-                        color: Colors.amber[800],
+            GestureDetector(
+              onTap: () {
+                if (_generateBillViaContact) {
+                  // Focus the phone field
+                } else {
+                  _showCustomerPicker();
+                }
+              },
+              child: Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.red[50],
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.red[200]!),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.warning_amber_rounded, size: 18, color: Colors.red[700]),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Customer details required for partial payment. Tap to select.',
+                        style: TextStyle(
+                          fontFamily: 'Literata',
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.red[800],
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                    Icon(Icons.arrow_forward_ios, size: 14, color: Colors.red[700]),
+                  ],
+                ),
               ),
             ),
           ],
