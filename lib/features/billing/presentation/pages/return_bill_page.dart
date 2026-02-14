@@ -10,6 +10,7 @@ import 'package:c_billing/features/inventory_management/data/repositories/fireba
 import 'package:c_billing/features/shop/data/repositories/shop_repository.dart';
 import 'package:c_billing/common_widgets/printer_selection_widget.dart';
 import 'package:c_billing/features/billing/offline/controllers/bill_offline_controller.dart';
+import 'package:c_billing/core/services/inventory_integration_service.dart';
 
 /// Return Bill Page for processing bill returns
 /// Allows searching by bill number or customer mobile and processing returns
@@ -205,10 +206,51 @@ class _ReturnBillPageState extends State<ReturnBillPage>
     });
 
     try {
+      // Process return via old BillingService (Firebase transactions for stock/bill updates)
       final result = await _billingService.processReturn(
         billId: _currentBill!.id,
         returnItems: _returnQuantities,
       );
+
+      // Also process via FIFO Integration (restore batches + ledger entries + local stock)
+      if (result.success) {
+        try {
+          final returnItemDetails = <ReturnItemDetail>[];
+          for (final item in _currentBill!.items) {
+            final returnQty = _returnQuantities[item.id] ?? 0;
+            if (returnQty > 0) {
+              returnItemDetails.add(ReturnItemDetail(
+                productId: item.productId,
+                productName: item.productName,
+                returnQuantity: returnQty,
+                costPrice: item.purchasePrice,
+                sellingPrice: item.sellingPrice,
+                batchId: 'BILL_${_currentBill!.id}_${item.productId}',
+              ));
+            }
+          }
+
+          if (returnItemDetails.isNotEmpty) {
+            // Find the local bill ID for updating the local entity
+            final localBills = await BillOfflineController.instance.getAllBills();
+            final localBill = localBills.firstWhere(
+              (b) => b.serverId == _currentBill!.id,
+              orElse: () => localBills.first,
+            );
+
+            await InventoryIntegrationService.instance.processReturn(
+              billId: _currentBill!.id,
+              billLocalId: localBill.id,
+              returnItems: returnItemDetails,
+              notes: 'Return for bill: ${_currentBill!.billNumber}',
+            );
+            debugPrint('[ReturnBill] FIFO return processed successfully');
+          }
+        } catch (e) {
+          debugPrint('[ReturnBill] FIFO return processing failed (Firebase return succeeded): $e');
+          // Don't fail the whole return - Firebase already processed it
+        }
+      }
 
       if (mounted) {
         if (result.success) {

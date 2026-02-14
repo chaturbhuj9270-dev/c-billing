@@ -13,12 +13,12 @@ import '../../data/repositories/firebase_stock_repository.dart';
 import '../../data/repositories/firebase_purchase_repository.dart';
 import '../../data/datasources/purchase_cache_datasource.dart';
 import '../../domain/entities/product.dart';
-import '../../offline/controllers/purchase_offline_controller.dart';
 import '../../data/services/purchase_sync_service.dart';
 import '../../../product/offline/controllers/product_offline_controller.dart';
 import '../../../supplier/offline/controllers/supplier_offline_controller.dart';
 import '../../../company/offline/controllers/company_offline_controller.dart';
 import '../../../company/data/services/company_sync_service.dart';
+import '../../../../core/services/inventory_integration_service.dart';
 import 'purchase_settings_page.dart';
 
 class PurchasePage extends StatefulWidget {
@@ -32,6 +32,7 @@ class PurchasePage extends StatefulWidget {
 
 class _PurchasePageState extends State<PurchasePage>
     with SingleTickerProviderStateMixin {
+  // ignore: unused_field
   late InventoryService _inventoryService;
   late FirebaseFirestore _firestore;
   late AnimationController _animController;
@@ -1307,10 +1308,9 @@ class _PurchasePageState extends State<PurchasePage>
     setState(() => _isLoading = true);
 
     try {
-      // Save purchase to local Isar (offline-first)
-      final offlineController = PurchaseOfflineController.instance;
-      
-      await offlineController.addPurchase(
+      // Use InventoryIntegrationService for unified processing:
+      // Creates PurchaseEntity + PurchaseBatch (FIFO) + StockLedger + updates Product stock/prices
+      final integrationResult = await InventoryIntegrationService.instance.processPurchase(
         productId: _selectedProduct!.id,
         productName: _selectedProduct!.name,
         supplierId: _selectedSupplier!['id'],
@@ -1326,50 +1326,21 @@ class _PurchasePageState extends State<PurchasePage>
         warrantyMonths: _selectedWarranty ?? 0,
         notes: _notesController.text.isNotEmpty ? _notesController.text : null,
       );
-      
-      print('[DEBUG] Purchase saved locally');
 
-      // Update product stock and prices
+      if (!integrationResult.success) {
+        throw Exception(integrationResult.errorMessage ?? 'Purchase processing failed');
+      }
+      
+      print('[DEBUG] Purchase fully processed: PurchaseEntity + PurchaseBatch + StockLedger + Product stock updated');
+      
+      // Also update Firestore if online and product is synced
       final currentUser = FirebaseAuth.instance.currentUser;
       final productId = _selectedProduct!.id;
       final newStock = _selectedProduct!.currentStock + quantity;
-      
-      // Check if productId is a valid Firebase document ID (not a local-only ID)
-      // Firebase document IDs are typically 20 characters and alphanumeric
       final isValidServerId = productId.isNotEmpty && 
           !productId.startsWith('local_') && 
           productId.length >= 10;
       
-      // ALWAYS update local Isar first (offline-first approach)
-      // Find product by serverId or local ID
-      if (isValidServerId) {
-        // Product has serverId - find by serverId and update
-        await ProductOfflineController.instance.incrementStock(productId, quantity);
-        // Also update prices
-        final entity = await ProductOfflineController.instance.getProductByServerId(productId);
-        if (entity != null) {
-          await ProductOfflineController.instance.updateProduct(
-            id: entity.id,
-            purchasePrice: price,
-            salesPrice: salesPrice,
-          );
-        }
-        print('[DEBUG] Updated product locally via serverId');
-      } else {
-        // Product only has local ID
-        final localId = int.tryParse(productId);
-        if (localId != null) {
-          await ProductOfflineController.instance.updateProduct(
-            id: localId,
-            purchasePrice: price,
-            salesPrice: salesPrice,
-            currentStock: newStock,
-          );
-          print('[DEBUG] Updated product locally via localId');
-        }
-      }
-      
-      // Also update Firestore if online and product is synced
       if (currentUser != null && isValidServerId) {
         try {
           await _firestore

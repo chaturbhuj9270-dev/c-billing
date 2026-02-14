@@ -22,11 +22,11 @@ import 'package:c_billing/core/services/language_service.dart';
 import 'package:c_billing/core/localization/app_localizations.dart';
 import 'package:c_billing/features/billing/presentation/pages/bill_settings_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:c_billing/features/billing/offline/controllers/bill_offline_controller.dart';
 import 'package:c_billing/features/billing/offline/entities/bill_entity.dart';
 import 'package:c_billing/features/billing/data/services/bill_sync_service.dart';
 import 'package:c_billing/features/product/offline/controllers/product_offline_controller.dart';
 import 'package:c_billing/features/product/data/services/product_sync_service.dart';
+import 'package:c_billing/core/services/inventory_integration_service.dart';
 
 class BillingPage extends StatefulWidget {
   final bool isEmbedded;
@@ -38,6 +38,7 @@ class BillingPage extends StatefulWidget {
 }
 
 class _BillingPageState extends State<BillingPage> {
+  // ignore: unused_field
   late BillingService _billingService;
   late FirebaseFirestore _firestore;
   late ShopRepository _shopRepository;
@@ -736,7 +737,7 @@ class _BillingPageState extends State<BillingPage> {
     setState(() => _isSavingBill = true);
 
     try {
-      // === OFFLINE-FIRST APPROACH ===
+      // === INTEGRATED OFFLINE-FIRST APPROACH (FIFO) ===
       // 1. Calculate payment status
       final actualPaidAmount = _isFullPayment ? _finalAmount : _receivedAmount;
       final calculatedPendingAmount = _finalAmount - actualPaidAmount;
@@ -749,20 +750,9 @@ class _BillingPageState extends State<BillingPage> {
         paymentStatus = BillPaymentStatus.pending;
       }
 
-      // 2. Convert bill items to embedded format
-      final embeddedItems = _billItems.map((item) => BillItemEmbedded(
-        itemId: item.id.isNotEmpty ? item.id : 'item_${DateTime.now().millisecondsSinceEpoch}_${item.productId}',
-        productId: item.productId,
-        productName: item.productName,
-        purchasePrice: item.purchasePrice,
-        sellingPrice: item.sellingPrice,
-        quantity: item.quantity,
-        subtotal: item.subtotal,
-        returnedQuantity: item.returnedQuantity,
-      )).toList();
-
-      // 3. Create bill entity for Isar
-      final billEntity = await BillOfflineController.instance.addBill(
+      // 2. Use InventoryIntegrationService for unified processing:
+      // Creates BillEntity + FIFO batch deductions + StockLedger entries + updates Product stock
+      final integrationResult = await InventoryIntegrationService.instance.processBill(
         customerId: _selectedCustomer?['id'],
         customerName: _customerNameController.text.trim().isNotEmpty
             ? _customerNameController.text.trim()
@@ -770,7 +760,7 @@ class _BillingPageState extends State<BillingPage> {
         customerContact: _customerContactController.text.trim().isNotEmpty
             ? _customerContactController.text.trim()
             : _selectedCustomer?['contact'],
-        items: embeddedItems,
+        items: _billItems,
         totalQuantity: _totalQuantity,
         totalAmount: _totalAmount,
         discountAmount: _discountAmount,
@@ -784,15 +774,13 @@ class _BillingPageState extends State<BillingPage> {
         pendingAmount: calculatedPendingAmount > 0 ? calculatedPendingAmount : 0,
       );
 
-      // 4. Update product stock in Isar immediately
-      for (final item in _billItems) {
-        await ProductOfflineController.instance.decrementStock(
-          item.productId,
-          item.quantity,
-        );
+      if (!integrationResult.success) {
+        throw Exception(integrationResult.errorMessage ?? 'Bill processing failed');
       }
 
-      // 5. Trigger background sync
+      debugPrint('[Billing] Bill processed with FIFO: COGS=${integrationResult.totalCOGS}, Profit=${integrationResult.totalProfit}');
+
+      // 3. Trigger background sync
       unawaited(BillSyncService.instance.syncNow());
 
       setState(() => _isSavingBill = false);
@@ -804,7 +792,7 @@ class _BillingPageState extends State<BillingPage> {
       final savedItems = List<BillItem>.from(_billItems);
 
       // Convert to domain Bill for print/share dialog
-      final createdBill = Bill.fromBillEntity(billEntity);
+      final createdBill = Bill.fromBillEntity(integrationResult.billEntity!);
 
       _clearBill();
 
