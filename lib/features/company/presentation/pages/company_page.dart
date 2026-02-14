@@ -245,9 +245,46 @@ class _CompanyPageState extends State<CompanyPage> {
     _isEditing = false;
   }
 
-  void _showAddCompanyBottomSheet() {
+  /// Generate next company code by finding highest existing code and adding 1
+  Future<String> _generateNextCompanyCode() async {
+    try {
+      // Get all companies from local list (already loaded)
+      if (_companies.isEmpty) {
+        return '1'; // First company
+      }
+
+      // Extract numeric codes from existing companies
+      int maxCode = 0;
+      for (var company in _companies) {
+        final code = company['companyCode'] as String?;
+        if (code != null && code.isNotEmpty) {
+          // Try to parse as integer
+          final numericCode = int.tryParse(code);
+          if (numericCode != null && numericCode > maxCode) {
+            maxCode = numericCode;
+          }
+        }
+      }
+
+      // Return next code
+      return '${maxCode + 1}';
+    } catch (e) {
+      print('[ERROR] Failed to generate company code: $e');
+      return '1';
+    }
+  }
+
+  Future<void> _showAddCompanyBottomSheet() async {
     print('[DEBUG] Opening add company bottom sheet');
     _clearForm();
+    
+    // Auto-generate next company code
+    final nextCode = await _generateNextCompanyCode();
+    _companyCodeController.text = nextCode;
+    print('[DEBUG] Auto-generated company code: $nextCode');
+    
+    if (!mounted) return;
+    
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -344,12 +381,13 @@ class _CompanyPageState extends State<CompanyPage> {
             isRequired: true,
           ),
           const SizedBox(height: 16),
-          // Company Code
+          // Company Code (auto-generated for new, editable for existing)
           _buildInputField(
             label: _localizations.companyCode,
             controller: _companyCodeController,
             icon: Icons.qr_code_rounded,
             isRequired: true,
+            isReadOnly: !_isEditing, // Read-only when adding new company
           ),
           const SizedBox(height: 16),
           // Contact Number
@@ -733,9 +771,9 @@ class _CompanyPageState extends State<CompanyPage> {
           color: Colors.transparent,
           borderRadius: BorderRadius.circular(20),
           child: InkWell(
-            onTap: () {
+            onTap: () async {
               print('[DEBUG] FAB pressed to add company');
-              _showAddCompanyBottomSheet();
+              await _showAddCompanyBottomSheet();
             },
             borderRadius: BorderRadius.circular(20),
             splashColor: Colors.white.withOpacity(0.2),
@@ -1052,8 +1090,8 @@ class _CompanyPageState extends State<CompanyPage> {
   Widget _buildCompanyCard(Map<String, dynamic> company) {
     final companyName = company['companyName'] ?? _localizations.unknownCompany;
     final companyCode = company['companyCode'] ?? '';
-    final contact = company['contact'] ?? 'N/A';
-    final address = company['address'] ?? 'N/A';
+    final contact = company['contact'] as String?;
+    final address = company['address'] as String?;
     final companyId = company['id'] ?? '';
 
     const accentColors = [
@@ -1072,171 +1110,234 @@ class _CompanyPageState extends State<CompanyPage> {
 
     return GestureDetector(
       onTap: () => _showEditCompanyBottomSheet(company),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          margin: const EdgeInsets.only(bottom: 14),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.04),
-                blurRadius: 10,
-                offset: const Offset(0, 2),
-              ),
-              BoxShadow(
-                color: Colors.black.withOpacity(0.12),
-                blurRadius: 20,
-                offset: const Offset(0, 8),
-              ),
-            ],
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: Colors.grey.withValues(alpha: 0.08),
+            width: 1,
           ),
-          child: Padding(
-            padding: const EdgeInsets.all(14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Top Row: Avatar + Details + Menu
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Circular gradient avatar
-                    Container(
-                      width: 52,
-                      height: 52,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [accentColor, accentColor.withOpacity(0.7)],
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: accentColor.withOpacity(0.3),
-                            blurRadius: 12,
-                            offset: const Offset(0, 4),
-                          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.03),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.06),
+              blurRadius: 16,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Top Row: Avatar + Details + Menu
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Circular gradient avatar with enhanced shadow
+                  Container(
+                    width: 54,
+                    height: 54,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          accentColor,
+                          accentColor.withValues(alpha: 0.75),
                         ],
                       ),
-                      child: Center(
-                        child: Text(
-                          initials,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 22,
-                            fontWeight: FontWeight.w700,
-                            fontFamily: 'Literata',
-                          ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: accentColor.withValues(alpha: 0.25),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Center(
+                      child: Text(
+                        initials,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 22,
+                          fontWeight: FontWeight.w700,
+                          fontFamily: 'Literata',
+                          letterSpacing: 0.5,
                         ),
                       ),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            companyName,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                              color: Color(0xFF1B4D3E),
-                              fontFamily: 'Literata',
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Company name with improved typography
+                        Text(
+                          companyName,
+                          style: const TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF1B4D3E),
+                            fontFamily: 'Literata',
+                            height: 1.3,
+                            letterSpacing: -0.2,
                           ),
-                          if (companyCode.isNotEmpty) ...[
-                            const SizedBox(height: 4),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF1B4D3E).withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(6),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        // Company code badge with enhanced styling
+                        if (companyCode.isNotEmpty) ...[
+                          const SizedBox(height: 5),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 9,
+                              vertical: 3,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF1B4D3E).withValues(alpha: 0.08),
+                              borderRadius: BorderRadius.circular(7),
+                              border: Border.all(
+                                color: const Color(0xFF1B4D3E).withValues(alpha: 0.12),
+                                width: 1,
                               ),
-                              child: Text(
-                                companyCode,
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                  color: const Color(0xFF1B4D3E).withOpacity(0.8),
-                                  fontFamily: 'Literata',
-                                ),
+                            ),
+                            child: Text(
+                              companyCode,
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: const Color(0xFF1B4D3E).withValues(alpha: 0.85),
+                                fontFamily: 'Literata',
+                                letterSpacing: 0.3,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  // Enhanced menu button
+                  PopupMenuButton(
+                    color: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 12,
+                    shadowColor: Colors.black.withValues(alpha: 0.15),
+                    itemBuilder: (context) => [
+                      PopupMenuItem(
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.edit_outlined,
+                              color: accentColor,
+                              size: 19,
+                            ),
+                            const SizedBox(width: 10),
+                            Text(
+                              _localizations.edit,
+                              style: const TextStyle(
+                                fontFamily: 'Literata',
+                                fontSize: 14,
                               ),
                             ),
                           ],
-                        ],
-                      ),
-                    ),
-                    PopupMenuButton(
-                      color: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      elevation: 8,
-                      itemBuilder: (context) => [
-                        PopupMenuItem(
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.edit_outlined,
-                                color: accentColor,
-                                size: 18,
-                              ),
-                              const SizedBox(width: 8),
-                              Text(_localizations.edit),
-                            ],
-                          ),
-                          onTap: () => Future.delayed(
-                            const Duration(milliseconds: 100),
-                            () => _showEditCompanyBottomSheet(company),
-                          ),
                         ),
-                        PopupMenuItem(
-                          child: Row(
-                            children: [
-                              const Icon(
-                                Icons.delete_outline,
+                        onTap: () => Future.delayed(
+                          const Duration(milliseconds: 100),
+                          () => _showEditCompanyBottomSheet(company),
+                        ),
+                      ),
+                      PopupMenuItem(
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.delete_outline,
+                              color: Colors.red,
+                              size: 19,
+                            ),
+                            const SizedBox(width: 10),
+                            Text(
+                              _localizations.delete,
+                              style: const TextStyle(
                                 color: Colors.red,
-                                size: 18,
+                                fontFamily: 'Literata',
+                                fontSize: 14,
                               ),
-                              const SizedBox(width: 8),
-                              Text(
-                                _localizations.delete,
-                                style: const TextStyle(color: Colors.red),
-                              ),
-                            ],
-                          ),
-                          onTap: () => _deleteCompany(
-                            company['id'],
-                            localId: company['localId'] as int?,
-                          ),
+                            ),
+                          ],
                         ),
-                      ],
-                      icon: Icon(Icons.more_vert, color: accentColor, size: 20),
-                    ),
-                  ],
-                ),
-                // Contact section
-                if (contact != 'N/A') ...[
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.phone_outlined,
-                        size: 13,
-                        color: Colors.grey[600],
+                        onTap: () => _deleteCompany(
+                          company['id'],
+                          localId: company['localId'] as int?,
+                        ),
                       ),
-                      const SizedBox(width: 6),
+                    ],
+                    icon: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: accentColor.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(
+                        Icons.more_vert,
+                        color: accentColor,
+                        size: 18,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              // Contact section - only show if contact exists and is not empty
+              if (contact != null && contact.isNotEmpty) ...[
+                const SizedBox(height: 14),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8F9FA),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: Colors.grey.withValues(alpha: 0.08),
+                      width: 1,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF1B4D3E).withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(
+                          Icons.phone_outlined,
+                          size: 15,
+                          color: const Color(0xFF1B4D3E).withValues(alpha: 0.7),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
                       Expanded(
                         child: Text(
                           contact,
                           style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey[700],
+                            fontSize: 13,
+                            color: Colors.grey[800],
                             fontFamily: 'Literata',
+                            fontWeight: FontWeight.w500,
+                            letterSpacing: 0.2,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -1244,43 +1345,56 @@ class _CompanyPageState extends State<CompanyPage> {
                       ),
                     ],
                   ),
-                ],
-                // Address section - only show if address exists
-                if (address != 'N/A') ...[
-                  const SizedBox(height: 12),
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[50],
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Icon(
-                          Icons.location_on_outlined,
-                          size: 13,
-                          color: Colors.grey[600],
-                        ),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: Text(
-                            address,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey[700],
-                              fontFamily: 'Literata',
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
+                ),
+              ],
+              // Address section - only show if address exists and is not empty
+              if (address != null && address.isNotEmpty) ...[
+                const SizedBox(height: 10),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8F9FA),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: Colors.grey.withValues(alpha: 0.08),
+                      width: 1,
                     ),
                   ),
-                ],
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF1B4D3E).withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(
+                          Icons.location_on_outlined,
+                          size: 15,
+                          color: const Color(0xFF1B4D3E).withValues(alpha: 0.7),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          address,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey[800],
+                            fontFamily: 'Literata',
+                            height: 1.4,
+                            letterSpacing: 0.1,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ],
-            ),
+            ],
           ),
         ),
       ),
@@ -1294,14 +1408,32 @@ class _CompanyPageState extends State<CompanyPage> {
     TextInputType keyboardType = TextInputType.text,
     int maxLines = 1,
     bool isRequired = false,
+    bool isReadOnly = false,
   }) {
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
       maxLines: maxLines,
       maxLength: (label == _localizations.contactNumber) ? 10 : null,
+      readOnly: isReadOnly,
+      style: isReadOnly
+          ? TextStyle(
+              color: Colors.grey[600],
+              fontFamily: 'Literata',
+            )
+          : null,
       decoration: InputDecoration(
         labelText: isRequired ? '$label *' : label,
+        suffixIcon: isReadOnly
+            ? Tooltip(
+                message: 'Auto-generated',
+                child: Icon(
+                  Icons.lock_outline,
+                  size: 18,
+                  color: Colors.grey[500],
+                ),
+              )
+            : null,
         prefixIcon: Icon(icon, color: Colors.grey[600]),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -1316,7 +1448,7 @@ class _CompanyPageState extends State<CompanyPage> {
           borderSide: const BorderSide(color: Color(0xFF1B4D3E), width: 2),
         ),
         filled: true,
-        fillColor: Colors.grey[50],
+        fillColor: isReadOnly ? Colors.grey[100] : Colors.grey[50],
       ),
       validator: isRequired
           ? (value) {
