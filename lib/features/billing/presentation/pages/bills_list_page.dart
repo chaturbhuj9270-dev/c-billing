@@ -815,14 +815,69 @@ class _BillsListPageState extends State<BillsListPage>
   void _showBillDetails(Bill bill) {
     showDialog(
       context: context,
-      builder: (context) => _BillDetailsDialog(
+      builder: (dialogContext) => _BillDetailsDialog(
         bill: bill,
         onBillReturned: () {
-          // Refresh the bills list after a return
           _loadBills();
+        },
+        onShareBill: (printData) {
+          _shareBillAsPdfWithData(printData);
+        },
+        onPrintBill: (printData) {
+          _printBillWithData(printData);
         },
       ),
     );
+  }
+
+  /// Share bill as PDF using pre-built PrintBillData (called from bill details dialog)
+  Future<void> _shareBillAsPdfWithData(PrintBillData printData) async {
+    try {
+      final shop = await _shopRepository.getShopDetails().timeout(
+        const Duration(seconds: 5),
+        onTimeout: () => Shop.empty,
+      );
+      final prefs = await SharedPreferences.getInstance();
+      final billType = prefs.getString('bill_type') ?? 'pos';
+      final pw.Document pdf;
+      if (billType == 'normal') {
+        pdf = await _pdfService.generateNormalBillPdf(billData: printData, shopDetails: shop);
+      } else {
+        pdf = await _pdfService.generateBillPdf(billData: printData, shopDetails: shop);
+      }
+      final bytes = await pdf.save();
+      if (!mounted) return;
+      await Printing.sharePdf(
+        bytes: bytes,
+        filename: 'bill_${printData.billNumber.replaceAll(RegExp(r'[^a-zA-Z0-9\-_]'), '_')}.pdf',
+      );
+    } catch (e) {
+      debugPrint('[BillsListPage] ERROR in _shareBillAsPdfWithData: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error sharing bill: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
+  /// Print bill using pre-built PrintBillData (called from bill details dialog)
+  Future<void> _printBillWithData(PrintBillData printData) async {
+    try {
+      final shop = await _shopRepository.getShopDetails().timeout(
+        const Duration(seconds: 5),
+        onTimeout: () => Shop.empty,
+      );
+      if (!mounted) return;
+      await _pdfService.previewAndPrintPdf(billData: printData, shopDetails: shop);
+    } catch (e) {
+      debugPrint('[BillsListPage] ERROR in _printBillWithData: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error printing bill: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
   }
 
   @override
@@ -1790,8 +1845,15 @@ class _DateRangePickerDialogState extends State<_DateRangePickerDialog> {
 class _BillDetailsDialog extends StatefulWidget {
   final Bill bill;
   final VoidCallback? onBillReturned;
+  final void Function(PrintBillData printData)? onShareBill;
+  final void Function(PrintBillData printData)? onPrintBill;
 
-  const _BillDetailsDialog({required this.bill, this.onBillReturned});
+  const _BillDetailsDialog({
+    required this.bill,
+    this.onBillReturned,
+    this.onShareBill,
+    this.onPrintBill,
+  });
 
   @override
   State<_BillDetailsDialog> createState() => _BillDetailsDialogState();
@@ -1800,14 +1862,11 @@ class _BillDetailsDialog extends StatefulWidget {
 class _BillDetailsDialogState extends State<_BillDetailsDialog> {
   late Bill _bill;
   bool _includeReturnsInPrint = true;
-  final _pdfService = PdfBillService();
-  late ShopRepository _shopRepository;
 
   @override
   void initState() {
     super.initState();
     _bill = widget.bill;
-    _shopRepository = ShopRepository();
   }
 
   void _navigateToReturnBill() async {
@@ -1848,54 +1907,6 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog> {
         )).toList(),
       );
       return PrintBillData.fromBill(cleanBill, totalDueAmount: totalDueAmount);
-    }
-  }
-
-  Future<void> _shareBillAsPdf() async {
-    try {
-      final shop = await _shopRepository.getShopDetails().timeout(
-        const Duration(seconds: 5),
-        onTimeout: () => Shop.empty,
-      );
-      final printData = _createPrintData();
-      final prefs = await SharedPreferences.getInstance();
-      final billType = prefs.getString('bill_type') ?? 'pos';
-      final pw.Document pdf;
-      if (billType == 'normal') {
-        pdf = await _pdfService.generateNormalBillPdf(billData: printData, shopDetails: shop);
-      } else {
-        pdf = await _pdfService.generateBillPdf(billData: printData, shopDetails: shop);
-      }
-      final bytes = await pdf.save();
-      if (!mounted) return;
-      await Printing.sharePdf(
-        bytes: bytes,
-        filename: 'bill_${_bill.billNumber.replaceAll(RegExp(r'[^a-zA-Z0-9\-_]'), '_')}.pdf',
-      );
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error sharing bill: $e'), backgroundColor: Colors.red),
-        );
-      }
-    }
-  }
-
-  Future<void> _printBill() async {
-    try {
-      final shop = await _shopRepository.getShopDetails().timeout(
-        const Duration(seconds: 5),
-        onTimeout: () => Shop.empty,
-      );
-      final printData = _createPrintData();
-      if (!mounted) return;
-      await _pdfService.previewAndPrintPdf(billData: printData, shopDetails: shop);
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error printing bill: $e'), backgroundColor: Colors.red),
-        );
-      }
     }
   }
 
@@ -2304,8 +2315,9 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog> {
                           label: 'Share',
                           color: const Color(0xFF1B4D3E),
                           onTap: () {
+                            final printData = _createPrintData();
                             Navigator.pop(context);
-                            _shareBillAsPdf();
+                            widget.onShareBill?.call(printData);
                           },
                         ),
                       ),
@@ -2316,8 +2328,9 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog> {
                           label: 'Save PDF',
                           color: const Color(0xFF1B4D3E),
                           onTap: () {
+                            final printData = _createPrintData();
                             Navigator.pop(context);
-                            _shareBillAsPdf();
+                            widget.onShareBill?.call(printData);
                           },
                         ),
                       ),
@@ -2331,8 +2344,9 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog> {
                     color: const Color(0xFF1B4D3E),
                     filled: true,
                     onTap: () {
+                      final printData = _createPrintData();
                       Navigator.pop(context);
-                      _printBill();
+                      widget.onPrintBill?.call(printData);
                     },
                   ),
                   const SizedBox(height: 10),
