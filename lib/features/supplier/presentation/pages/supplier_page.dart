@@ -313,8 +313,45 @@ class _SupplierPageState extends State<SupplierPage> {
     }
   }
 
-  void _showAddSupplierBottomSheet() {
+  /// Generate next supplier code by finding highest existing code and adding 1
+  Future<String> _generateNextSupplierCode() async {
+    try {
+      // Get all suppliers from local list (already loaded)
+      if (_suppliers.isEmpty) {
+        return '1'; // First supplier
+      }
+
+      // Extract numeric codes from existing suppliers
+      int maxCode = 0;
+      for (var supplier in _suppliers) {
+        final code = supplier['supplierCode'] as String?;
+        if (code != null && code.isNotEmpty) {
+          // Try to parse as integer
+          final numericCode = int.tryParse(code);
+          if (numericCode != null && numericCode > maxCode) {
+            maxCode = numericCode;
+          }
+        }
+      }
+
+      // Return next code
+      return '${maxCode + 1}';
+    } catch (e) {
+      print('[ERROR] Failed to generate supplier code: $e');
+      return '1';
+    }
+  }
+
+  Future<void> _showAddSupplierBottomSheet() async {
     _clearForm();
+    
+    // Auto-generate next supplier code
+    final nextCode = await _generateNextSupplierCode();
+    _supplierCodeController.text = nextCode;
+    print('[DEBUG] Auto-generated supplier code: $nextCode');
+    
+    if (!mounted) return;
+    
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -425,12 +462,13 @@ class _SupplierPageState extends State<SupplierPage> {
             isRequired: true,
           ),
           const SizedBox(height: 16),
-          // Supplier Code
+          // Supplier Code (auto-generated for new, editable for existing)
           _buildInputField(
             label: _localizations.supplierCode,
             controller: _supplierCodeController,
             icon: Icons.qr_code_rounded,
             isRequired: true,
+            isReadOnly: !_isEditing, // Read-only when adding new supplier
           ),
           const SizedBox(height: 16),
           // Contact Number
@@ -524,6 +562,7 @@ class _SupplierPageState extends State<SupplierPage> {
     bool isRequired = false,
     TextInputType keyboardType = TextInputType.text,
     int maxLines = 1,
+    bool isReadOnly = false,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -550,8 +589,25 @@ class _SupplierPageState extends State<SupplierPage> {
           maxLines: maxLines,
           minLines: maxLines,
           maxLength: (label == _localizations.contactNumber) ? 10 : null,
+          readOnly: isReadOnly,
+          style: isReadOnly
+              ? TextStyle(
+                  color: Colors.grey[600],
+                  fontFamily: 'Literata',
+                )
+              : null,
           decoration: InputDecoration(
             prefixIcon: Icon(icon, color: Colors.grey[600]),
+            suffixIcon: isReadOnly
+                ? Tooltip(
+                    message: 'Auto-generated',
+                    child: Icon(
+                      Icons.lock_outline,
+                      size: 18,
+                      color: Colors.grey[500],
+                    ),
+                  )
+                : null,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(color: Colors.grey[300]!),
@@ -569,7 +625,7 @@ class _SupplierPageState extends State<SupplierPage> {
               vertical: 12,
             ),
             filled: true,
-            fillColor: Colors.grey[50],
+            fillColor: isReadOnly ? Colors.grey[100] : Colors.grey[50],
           ),
           validator: (value) {
             if (isRequired && (value == null || value.isEmpty)) {
@@ -843,7 +899,9 @@ class _SupplierPageState extends State<SupplierPage> {
           ],
         ),
         child: FloatingActionButton(
-          onPressed: _showAddSupplierBottomSheet,
+          onPressed: () async {
+            await _showAddSupplierBottomSheet();
+          },
           backgroundColor: Colors.transparent,
           elevation: 0,
           child: const Icon(Icons.add, color: Colors.white),
