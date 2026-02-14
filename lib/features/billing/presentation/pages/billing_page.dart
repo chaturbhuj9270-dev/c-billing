@@ -665,33 +665,37 @@ class _BillingPageState extends State<BillingPage> {
         billItems: _billItems,
         availableBatches: _availableBatches,
         localizations: _localizations,
-        onItemAdded: (product, quantity, price) {
+        onBatchItemAdded: (productId, productName, companyName, batchLocalId, sellingPrice, purchasePrice, quantity, maxStock) {
+          // Use a unique key: productId + batchLocalId (or just productId if no batch)
+          final uniqueKey = batchLocalId != null ? '${productId}_batch_$batchLocalId' : productId;
           final existingIndex = _billItems.indexWhere(
-            (item) => item.productId == product.id,
+            (item) => item.productId == uniqueKey,
           );
           setState(() {
             if (existingIndex != -1) {
               _billItems[existingIndex] = BillItem.create(
-                productId: product.id,
-                productName: product.name,
-                sellingPrice: price,
+                productId: uniqueKey,
+                productName: companyName.isNotEmpty ? '$productName ($companyName)' : productName,
+                sellingPrice: sellingPrice,
+                purchasePrice: purchasePrice,
                 quantity: quantity,
               );
             } else {
               _billItems.add(
                 BillItem.create(
-                  productId: product.id,
-                  productName: product.name,
-                  sellingPrice: price,
+                  productId: uniqueKey,
+                  productName: companyName.isNotEmpty ? '$productName ($companyName)' : productName,
+                  sellingPrice: sellingPrice,
+                  purchasePrice: purchasePrice,
                   quantity: quantity,
                 ),
               );
             }
           });
         },
-        onItemRemoved: (productId) {
+        onItemRemoved: (uniqueKey) {
           setState(() {
-            _billItems.removeWhere((item) => item.productId == productId);
+            _billItems.removeWhere((item) => item.productId == uniqueKey);
           });
         },
         showSnackbar: _showSnackbar,
@@ -766,6 +770,18 @@ class _BillingPageState extends State<BillingPage> {
 
       // 2. Use InventoryIntegrationService for unified processing:
       // Creates BillEntity + FIFO batch deductions + StockLedger entries + updates Product stock
+      // Transform bill items: extract real productId from batch-specific keys (e.g., "prodId_batch_123" → "prodId")
+      final processableItems = _billItems.map((item) {
+        final realProductId = item.productId.split('_batch_').first;
+        return BillItem.create(
+          productId: realProductId,
+          productName: item.productName,
+          sellingPrice: item.sellingPrice,
+          purchasePrice: item.purchasePrice,
+          quantity: item.quantity,
+        );
+      }).toList();
+
       final integrationResult = await InventoryIntegrationService.instance.processBill(
         customerId: _selectedCustomer?['id'],
         customerName: _customerNameController.text.trim().isNotEmpty
@@ -774,7 +790,7 @@ class _BillingPageState extends State<BillingPage> {
         customerContact: _customerContactController.text.trim().isNotEmpty
             ? _customerContactController.text.trim()
             : _selectedCustomer?['contact'],
-        items: _billItems,
+        items: processableItems,
         totalQuantity: _totalQuantity,
         totalAmount: _totalAmount,
         discountAmount: _discountAmount,
@@ -832,7 +848,9 @@ class _BillingPageState extends State<BillingPage> {
   void _updateLocalStock(List<BillItem> savedItems) {
     setState(() {
       for (final item in savedItems) {
-        final index = _products.indexWhere((p) => p.id == item.productId);
+        // Extract real productId from batch-specific key
+        final realProductId = item.productId.split('_batch_').first;
+        final index = _products.indexWhere((p) => p.id == realProductId);
         if (index != -1) {
           final p = _products[index];
           final newStock = p.currentStock - item.quantity;
@@ -1870,7 +1888,8 @@ class _BillingPageState extends State<BillingPage> {
     // Check FIFO batch stock first
     final productBatches = _availableBatches
         .where((b) => b.productId == product.id && b.quantityRemaining > 0)
-        .toList();
+        .toList()
+      ..sort((a, b) => a.purchaseDate.compareTo(b.purchaseDate));
     final batchStock = productBatches.fold<int>(0, (s, b) => s + b.quantityRemaining);
     final effectiveStock = batchStock > 0 ? batchStock : product.currentStock;
 
@@ -1883,23 +1902,78 @@ class _BillingPageState extends State<BillingPage> {
       return;
     }
 
-    // FIFO: use oldest batch's selling price
-    final fifoPrice = productBatches.isNotEmpty
-        ? productBatches.first.sellingPrice
-        : product.salesPrice;
+    // Show batch selection for all products with batches
+    if (productBatches.isNotEmpty) {
+      _indexNoController.clear();
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (ctx) => _BatchSelectionSheet(
+          productName: product.name,
+          productCode: product.indexNo,
+          batches: productBatches,
+          localizations: _localizations,
+          existingBillItems: _billItems,
+          onBatchSelected: (batch, quantity) {
+            final uniqueKey = '${product.id}_batch_${batch.id}';
+            final existingIndex = _billItems.indexWhere(
+              (item) => item.productId == uniqueKey,
+            );
+            setState(() {
+              final displayName = batch.companyName.isNotEmpty
+                  ? '${product.name} (${batch.companyName})'
+                  : product.name;
+              if (existingIndex != -1) {
+                _billItems[existingIndex] = BillItem.create(
+                  productId: uniqueKey,
+                  productName: displayName,
+                  sellingPrice: batch.sellingPrice,
+                  purchasePrice: batch.purchasePrice,
+                  quantity: quantity,
+                );
+              } else {
+                _billItems.add(
+                  BillItem.create(
+                    productId: uniqueKey,
+                    productName: displayName,
+                    sellingPrice: batch.sellingPrice,
+                    purchasePrice: batch.purchasePrice,
+                    quantity: quantity,
+                  ),
+                );
+              }
+            });
+            Navigator.pop(ctx);
+            _showSnackbar('${_localizations.added}: ${product.name}', isError: false);
+          },
+        ),
+      );
+      _indexNoFocusNode.requestFocus();
+      return;
+    }
+
+    // No batches — fallback to product-level data
+    final fifoPrice = product.salesPrice;
+    final fifoPurchasePrice = product.purchasePrice;
+    final uniqueKey = product.id;
+    final displayName = product.companyName.isNotEmpty
+        ? '${product.name} (${product.companyName})'
+        : product.name;
 
     // Add product — increment quantity if already in cart
     final existingIndex = _billItems.indexWhere(
-      (item) => item.productId == product.id,
+      (item) => item.productId == uniqueKey,
     );
     setState(() {
       if (existingIndex != -1) {
         final existing = _billItems[existingIndex];
         if (existing.quantity < effectiveStock) {
           _billItems[existingIndex] = BillItem.create(
-            productId: product.id,
-            productName: product.name,
+            productId: uniqueKey,
+            productName: displayName,
             sellingPrice: existing.sellingPrice,
+            purchasePrice: fifoPurchasePrice,
             quantity: existing.quantity + 1,
           );
         } else {
@@ -1913,9 +1987,10 @@ class _BillingPageState extends State<BillingPage> {
       } else {
         _billItems.add(
           BillItem.create(
-            productId: product.id,
-            productName: product.name,
+            productId: uniqueKey,
+            productName: displayName,
             sellingPrice: fifoPrice,
+            purchasePrice: fifoPurchasePrice,
             quantity: 1,
           ),
         );
@@ -2122,10 +2197,12 @@ class _BillingPageState extends State<BillingPage> {
             separatorBuilder: (_, __) => const Divider(height: 1),
             itemBuilder: (context, index) {
               final item = _billItems[index];
+              // Parse batch-specific key to find the real product
+              final realProductId = item.productId.split('_batch_').first;
               final product = _products.firstWhere(
-                (p) => p.id == item.productId,
+                (p) => p.id == realProductId,
                 orElse: () => Product(
-                  id: item.productId,
+                  id: realProductId,
                   indexNo: 0,
                   name: item.productName,
                   companyName: '',
@@ -2221,11 +2298,27 @@ class _BillingPageState extends State<BillingPage> {
                             _buildQtyButton(
                               icon: Icons.add,
                               onPressed: () {
-                                // Use FIFO batch stock if available
-                                final batchStock = _availableBatches
-                                    .where((b) => b.productId == item.productId && b.quantityRemaining > 0)
-                                    .fold<int>(0, (s, b) => s + b.quantityRemaining);
-                                final maxStock = batchStock > 0 ? batchStock : product.currentStock;
+                                // Parse batch-specific key: productId_batch_localId
+                                final parts = item.productId.split('_batch_');
+                                final realProductId = parts.first;
+                                final batchLocalId = parts.length > 1 ? int.tryParse(parts.last) : null;
+                                
+                                int maxStock;
+                                if (batchLocalId != null) {
+                                  // Specific batch — use that batch's remaining quantity
+                                  final batch = _availableBatches.cast<PurchaseBatchEntity?>().firstWhere(
+                                    (b) => b!.id == batchLocalId && b.quantityRemaining > 0,
+                                    orElse: () => null,
+                                  );
+                                  maxStock = batch?.quantityRemaining ?? 0;
+                                } else {
+                                  // No batch info — use total batch stock or product stock
+                                  final batchStock = _availableBatches
+                                      .where((b) => b.productId == realProductId && b.quantityRemaining > 0)
+                                      .fold<int>(0, (s, b) => s + b.quantityRemaining);
+                                  maxStock = batchStock > 0 ? batchStock : product.currentStock;
+                                }
+                                
                                 if (item.quantity < maxStock) {
                                   setState(() {
                                     _billItems[index] = BillItem.create(
@@ -3160,13 +3253,14 @@ class _BillingPageState extends State<BillingPage> {
 }
 
 /// Bottom sheet widget for adding multiple items to the bill
-/// Uses FIFO batch data: shows batches grouped by product with per-batch prices
+/// Step 1: Shows products grouped by name with total stock
+/// Step 2: When tapping a product, shows batch selection for specific stock entry
 class _AddItemsBottomSheet extends StatefulWidget {
   final List<Product> products;
   final List<BillItem> billItems;
   final List<PurchaseBatchEntity> availableBatches;
-  final Function(Product product, int quantity, double price) onItemAdded;
-  final Function(String productId) onItemRemoved;
+  final Function(String productId, String productName, String companyName, int? batchLocalId, double sellingPrice, double purchasePrice, int quantity, int maxStock) onBatchItemAdded;
+  final Function(String uniqueKey) onItemRemoved;
   final Function(String message, {bool isError}) showSnackbar;
   final AppLocalizations localizations;
 
@@ -3174,7 +3268,7 @@ class _AddItemsBottomSheet extends StatefulWidget {
     required this.products,
     required this.billItems,
     required this.availableBatches,
-    required this.onItemAdded,
+    required this.onBatchItemAdded,
     required this.onItemRemoved,
     required this.showSnackbar,
     required this.localizations,
@@ -3185,97 +3279,65 @@ class _AddItemsBottomSheet extends StatefulWidget {
 }
 
 class _AddItemsBottomSheetState extends State<_AddItemsBottomSheet> {
-  late List<_FifoBillableItem> _allBillableItems;
-  late List<_FifoBillableItem> _filteredItems;
+  late List<_GroupedBillingProduct> _allGroupedProducts;
+  late List<_GroupedBillingProduct> _filteredGroups;
   final _searchController = TextEditingController();
-
-  // Track quantities for each product in this session
-  Map<String, int> _quantities = {};
-  Map<String, double> _prices = {};
 
   @override
   void initState() {
     super.initState();
-    _buildBillableItems();
-
-    // Initialize with existing bill items
-    for (final item in widget.billItems) {
-      _quantities[item.productId] = item.quantity;
-      _prices[item.productId] = item.sellingPrice;
-    }
+    _buildGroupedProducts();
   }
 
-  /// Build a unified list of billable items from FIFO batches + products.
-  /// Products with batches get their stock/price from the FIFO system.
-  /// Products without batches fall back to product-level data.
-  void _buildBillableItems() {
-    final items = <_FifoBillableItem>[];
+  /// Build grouped products: group by product name (lowercase), aggregate all batches
+  void _buildGroupedProducts() {
+    final Map<String, _GroupedBillingProduct> groups = {};
     final productIdsWithBatches = <String>{};
 
-    // Group batches by productId, sorted FIFO (oldest first)
-    final batchesByProduct = <String, List<PurchaseBatchEntity>>{};
+    // Group batches by product name (normalized)
     for (final batch in widget.availableBatches) {
-      if (batch.quantityRemaining > 0) {
-        batchesByProduct
-            .putIfAbsent(batch.productId, () => [])
-            .add(batch);
+      if (batch.quantityRemaining <= 0) continue;
+      productIdsWithBatches.add(batch.productId);
+
+      final normalizedName = batch.productName.trim().toLowerCase();
+      if (groups.containsKey(normalizedName)) {
+        groups[normalizedName]!.batches.add(batch);
+      } else {
+        // Find matching product for indexNo
+        final product = widget.products.cast<Product?>().firstWhere(
+          (p) => p!.id == batch.productId,
+          orElse: () => null,
+        );
+        groups[normalizedName] = _GroupedBillingProduct(
+          productName: batch.productName.trim(),
+          indexNo: product?.indexNo ?? 0,
+          category: product?.category ?? batch.category,
+          batches: [batch],
+        );
       }
     }
 
-    // For each product that has batches, create billable items
-    for (final entry in batchesByProduct.entries) {
-      final productId = entry.key;
-      final batches = entry.value;
-      productIdsWithBatches.add(productId);
-
-      // Sort FIFO (oldest first)
-      batches.sort((a, b) => a.purchaseDate.compareTo(b.purchaseDate));
-
-      // Find matching product for indexNo
-      final product = widget.products.cast<Product?>().firstWhere(
-        (p) => p!.id == productId,
-        orElse: () => null,
-      );
-
-      final totalBatchStock = batches.fold<int>(0, (s, b) => s + b.quantityRemaining);
-      // FIFO: use oldest batch's selling price as the default
-      final fifoPrice = batches.first.sellingPrice;
-
-      items.add(_FifoBillableItem(
-        productId: productId,
-        productName: batches.first.productName,
-        companyName: batches.first.companyName,
-        sellingPrice: fifoPrice,
-        totalStock: totalBatchStock,
-        indexNo: product?.indexNo ?? 0,
-        category: product?.category ?? batches.first.category,
-        batches: batches,
-        hasFifoBatches: true,
-      ));
-    }
-
-    // Add products that have NO batches (fallback to product-level data)
+    // Add products that have no batch entries (fallback to product-level data)
     for (final product in widget.products) {
       if (!productIdsWithBatches.contains(product.id) && product.currentStock > 0) {
-        items.add(_FifoBillableItem(
-          productId: product.id,
-          productName: product.name,
-          companyName: product.companyName,
-          sellingPrice: product.salesPrice,
-          totalStock: product.currentStock,
-          indexNo: product.indexNo,
-          category: product.category,
-          batches: [],
-          hasFifoBatches: false,
-        ));
+        final normalizedName = product.name.trim().toLowerCase();
+        if (!groups.containsKey(normalizedName)) {
+          groups[normalizedName] = _GroupedBillingProduct(
+            productName: product.name.trim(),
+            indexNo: product.indexNo,
+            category: product.category,
+            batches: [],
+            fallbackProduct: product,
+          );
+        }
       }
     }
 
-    // Sort by product name
-    items.sort((a, b) => a.productName.toLowerCase().compareTo(b.productName.toLowerCase()));
+    final items = groups.values.toList()
+      ..sort((a, b) => a.productName.toLowerCase().compareTo(b.productName.toLowerCase()));
 
-    _allBillableItems = items;
-    _filteredItems = items;
+    _allGroupedProducts = items;
+    _filteredGroups = items;
   }
 
   @override
@@ -3287,16 +3349,16 @@ class _AddItemsBottomSheetState extends State<_AddItemsBottomSheet> {
   void _filterProducts(String query) {
     setState(() {
       if (query.isEmpty) {
-        _filteredItems = _allBillableItems;
+        _filteredGroups = _allGroupedProducts;
       } else {
         final lowerQuery = query.toLowerCase();
         final indexNo = int.tryParse(query);
-        _filteredItems = _allBillableItems
+        _filteredGroups = _allGroupedProducts
             .where(
               (item) =>
                   item.productName.toLowerCase().contains(lowerQuery) ||
-                  item.companyName.toLowerCase().contains(lowerQuery) ||
                   item.category.toLowerCase().contains(lowerQuery) ||
+                  item.allCompanyNames.any((c) => c.toLowerCase().contains(lowerQuery)) ||
                   (indexNo != null && item.indexNo == indexNo),
             )
             .toList();
@@ -3304,97 +3366,93 @@ class _AddItemsBottomSheetState extends State<_AddItemsBottomSheet> {
     });
   }
 
-  void _incrementQuantity(_FifoBillableItem item) {
-    final currentQty = _quantities[item.productId] ?? 0;
-    if (currentQty < item.totalStock) {
-      setState(() {
-        _quantities[item.productId] = currentQty + 1;
-        _prices[item.productId] ??= item.sellingPrice;
-      });
-      // Find matching Product for callback
-      final product = widget.products.cast<Product?>().firstWhere(
-        (p) => p!.id == item.productId,
-        orElse: () => null,
-      );
-      if (product != null) {
-        widget.onItemAdded(
-          product,
-          _quantities[item.productId]!,
-          _prices[item.productId]!,
-        );
-      } else {
-        // Create a temporary Product for the callback
-        final tempProduct = Product(
-          id: item.productId,
-          indexNo: item.indexNo,
-          name: item.productName,
-          companyName: item.companyName,
-          category: item.category,
-          purchasePrice: 0,
-          salesPrice: item.sellingPrice,
-          currentStock: item.totalStock,
-          createdAt: DateTime.now(),
-          updatedAt: DateTime.now(),
-        );
-        widget.onItemAdded(
-          tempProduct,
-          _quantities[item.productId]!,
-          _prices[item.productId]!,
-        );
-      }
-    } else {
-      widget.showSnackbar(
-        '${widget.localizations.maxStock}: ${item.totalStock}',
-        isError: true,
-      );
+  /// Count total items added to bill
+  int get _totalItems {
+    int count = 0;
+    for (final item in widget.billItems) {
+      count += item.quantity;
     }
+    return count;
   }
 
-  void _decrementQuantity(_FifoBillableItem item) {
-    final currentQty = _quantities[item.productId] ?? 0;
-    if (currentQty > 1) {
-      setState(() {
-        _quantities[item.productId] = currentQty - 1;
-      });
-      final product = widget.products.cast<Product?>().firstWhere(
-        (p) => p!.id == item.productId,
-        orElse: () => null,
-      );
-      if (product != null) {
-        widget.onItemAdded(
-          product,
-          _quantities[item.productId]!,
-          _prices[item.productId]!,
-        );
-      } else {
-        final tempProduct = Product(
-          id: item.productId,
-          indexNo: item.indexNo,
-          name: item.productName,
-          companyName: item.companyName,
-          category: item.category,
-          purchasePrice: 0,
-          salesPrice: item.sellingPrice,
-          currentStock: item.totalStock,
-          createdAt: DateTime.now(),
-          updatedAt: DateTime.now(),
-        );
-        widget.onItemAdded(
-          tempProduct,
-          _quantities[item.productId]!,
-          _prices[item.productId]!,
-        );
+  /// Check if any batch from this product group is already in the bill
+  int _getGroupQuantityInBill(_GroupedBillingProduct group) {
+    int total = 0;
+    for (final billItem in widget.billItems) {
+      // Check if bill item belongs to this product group
+      for (final batch in group.batches) {
+        final uniqueKey = '${batch.productId}_batch_${batch.id}';
+        if (billItem.productId == uniqueKey) {
+          total += billItem.quantity;
+        }
       }
-    } else if (currentQty == 1) {
-      setState(() {
-        _quantities.remove(item.productId);
-        _prices.remove(item.productId);
-      });
-      widget.onItemRemoved(item.productId);
+      // Also check fallback product
+      if (group.fallbackProduct != null && billItem.productId == group.fallbackProduct!.id) {
+        total += billItem.quantity;
+      }
     }
+    return total;
   }
 
-  int get _totalItems => _quantities.values.fold(0, (sum, qty) => sum + qty);
+  void _showBatchSelection(_GroupedBillingProduct group) {
+    // Fallback product with no batches — add directly
+    if (group.batches.isEmpty && group.fallbackProduct != null) {
+      final product = group.fallbackProduct!;
+      final existingQty = widget.billItems
+          .where((item) => item.productId == product.id)
+          .fold<int>(0, (s, item) => s + item.quantity);
+      
+      if (existingQty < product.currentStock) {
+        widget.onBatchItemAdded(
+          product.id,
+          product.name,
+          product.companyName,
+          null,
+          product.salesPrice,
+          product.purchasePrice,
+          existingQty + 1,
+          product.currentStock,
+        );
+        setState(() {});
+        widget.showSnackbar('${widget.localizations.added}: ${product.name}', isError: false);
+      } else {
+        widget.showSnackbar(
+          '${widget.localizations.maxStock}: ${product.currentStock}',
+          isError: true,
+        );
+      }
+      return;
+    }
+
+    // Has batches (1 or more) — always show batch selection bottom sheet
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => _BatchSelectionSheet(
+        productName: group.productName,
+        productCode: group.indexNo,
+        batches: group.batches,
+        localizations: widget.localizations,
+        existingBillItems: widget.billItems,
+        onBatchSelected: (batch, quantity) {
+          widget.onBatchItemAdded(
+            batch.productId,
+            batch.productName,
+            batch.companyName,
+            batch.id,
+            batch.sellingPrice,
+            batch.purchasePrice,
+            quantity,
+            batch.quantityRemaining,
+          );
+          setState(() {});
+          Navigator.pop(ctx);
+          widget.showSnackbar('${widget.localizations.added}: ${batch.productName}', isError: false);
+        },
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -3521,9 +3579,9 @@ class _AddItemsBottomSheetState extends State<_AddItemsBottomSheet> {
               ),
             ),
             const SizedBox(height: 12),
-            // Products list (FIFO batch-aware)
+            // Grouped products list (Step 1)
             Expanded(
-              child: _filteredItems.isEmpty
+              child: _filteredGroups.isEmpty
                   ? Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -3547,11 +3605,12 @@ class _AddItemsBottomSheetState extends State<_AddItemsBottomSheet> {
                   : ListView.builder(
                       controller: controller,
                       padding: const EdgeInsets.symmetric(horizontal: 16),
-                      itemCount: _filteredItems.length,
+                      itemCount: _filteredGroups.length,
                       itemBuilder: (context, index) {
-                        final item = _filteredItems[index];
-                        final qty = _quantities[item.productId] ?? 0;
-                        final isAdded = qty > 0;
+                        final group = _filteredGroups[index];
+                        final qtyInBill = _getGroupQuantityInBill(group);
+                        final isAdded = qtyInBill > 0;
+                        final hasMultipleBatches = group.batches.length > 1;
 
                         return Container(
                           margin: const EdgeInsets.only(bottom: 8),
@@ -3567,238 +3626,192 @@ class _AddItemsBottomSheetState extends State<_AddItemsBottomSheet> {
                               width: isAdded ? 1.5 : 1,
                             ),
                           ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(12),
-                            child: Row(
-                              children: [
-                                // Product index number badge
-                                Container(
-                                  width: 44,
-                                  height: 44,
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFF1B4D3E),
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: Center(
-                                    child: Text(
-                                      item.indexNo > 0
-                                          ? '${item.indexNo}'
-                                          : '#',
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.w700,
-                                        fontSize: 14,
-                                        fontFamily: 'Literata',
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(12),
+                              onTap: () => _showBatchSelection(group),
+                              child: Padding(
+                                padding: const EdgeInsets.all(12),
+                                child: Row(
+                                  children: [
+                                    // Product index number badge
+                                    Container(
+                                      width: 44,
+                                      height: 44,
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFF1B4D3E),
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      child: Center(
+                                        child: Text(
+                                          group.indexNo > 0
+                                              ? '${group.indexNo}'
+                                              : '#',
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 14,
+                                            fontFamily: 'Literata',
+                                          ),
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                // Product details with FIFO info
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        item.productName,
-                                        style: const TextStyle(
-                                          fontFamily: 'Literata',
-                                          fontWeight: FontWeight.w600,
-                                          fontSize: 14,
-                                        ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                      if (item.companyName.isNotEmpty) ...[
-                                        const SizedBox(height: 1),
-                                        Text(
-                                          item.companyName,
-                                          style: TextStyle(
-                                            fontFamily: 'Literata',
-                                            fontSize: 11,
-                                            color: Colors.grey[600],
-                                          ),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ],
-                                      const SizedBox(height: 3),
-                                      Row(
+                                    const SizedBox(width: 12),
+                                    // Product details
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
                                           Text(
-                                            '₹${item.sellingPrice.toStringAsFixed(0)}',
+                                            group.productName,
                                             style: const TextStyle(
                                               fontFamily: 'Literata',
-                                              fontWeight: FontWeight.w700,
-                                              fontSize: 13,
-                                              color: Color(0xFF1B4D3E),
+                                              fontWeight: FontWeight.w600,
+                                              fontSize: 14,
                                             ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
                                           ),
-                                          if (item.hasFifoBatches && item.batches.length > 1) ...[
-                                            const SizedBox(width: 4),
-                                            Container(
-                                              padding: const EdgeInsets.symmetric(
-                                                horizontal: 5,
-                                                vertical: 1,
-                                              ),
-                                              decoration: BoxDecoration(
-                                                color: Colors.blue.withValues(alpha: 0.1),
-                                                borderRadius: BorderRadius.circular(4),
-                                              ),
-                                              child: Text(
-                                                'FIFO',
-                                                style: TextStyle(
-                                                  fontFamily: 'Literata',
-                                                  fontSize: 9,
-                                                  fontWeight: FontWeight.w700,
-                                                  color: Colors.blue[700],
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                          const SizedBox(width: 6),
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 6,
-                                              vertical: 2,
-                                            ),
-                                            decoration: BoxDecoration(
-                                              color: item.totalStock > 10
-                                                  ? Colors.green[50]
-                                                  : item.totalStock > 0
-                                                  ? Colors.orange[50]
-                                                  : Colors.red[50],
-                                              borderRadius:
-                                                  BorderRadius.circular(4),
-                                            ),
-                                            child: Text(
-                                              '${item.totalStock} left',
+                                          const SizedBox(height: 3),
+                                          // Company names (show unique companies)
+                                          if (group.allCompanyNames.isNotEmpty) ...[
+                                            Text(
+                                              group.allCompanyNames.join(', '),
                                               style: TextStyle(
                                                 fontFamily: 'Literata',
-                                                fontSize: 10,
-                                                fontWeight: FontWeight.w600,
-                                                color: item.totalStock > 10
-                                                    ? Colors.green[700]
-                                                    : item.totalStock > 0
-                                                    ? Colors.orange[700]
-                                                    : Colors.red[700],
+                                                fontSize: 11,
+                                                color: Colors.grey[600],
                                               ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
                                             ),
+                                            const SizedBox(height: 3),
+                                          ],
+                                          Row(
+                                            children: [
+                                              // Price range
+                                              Text(
+                                                group.priceRangeDisplay,
+                                                style: const TextStyle(
+                                                  fontFamily: 'Literata',
+                                                  fontWeight: FontWeight.w700,
+                                                  fontSize: 13,
+                                                  color: Color(0xFF1B4D3E),
+                                                ),
+                                              ),
+                                              // Variant count badge
+                                              if (hasMultipleBatches) ...[
+                                                const SizedBox(width: 6),
+                                                Container(
+                                                  padding: const EdgeInsets.symmetric(
+                                                    horizontal: 6,
+                                                    vertical: 2,
+                                                  ),
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.blue.withValues(alpha: 0.1),
+                                                    borderRadius: BorderRadius.circular(4),
+                                                  ),
+                                                  child: Text(
+                                                    '${group.batches.length} ${widget.localizations.variants}',
+                                                    style: TextStyle(
+                                                      fontFamily: 'Literata',
+                                                      fontSize: 9,
+                                                      fontWeight: FontWeight.w700,
+                                                      color: Colors.blue[700],
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                              const SizedBox(width: 6),
+                                              // Total stock badge
+                                              Container(
+                                                padding: const EdgeInsets.symmetric(
+                                                  horizontal: 6,
+                                                  vertical: 2,
+                                                ),
+                                                decoration: BoxDecoration(
+                                                  color: group.totalStock > 10
+                                                      ? Colors.green[50]
+                                                      : group.totalStock > 0
+                                                      ? Colors.orange[50]
+                                                      : Colors.red[50],
+                                                  borderRadius: BorderRadius.circular(4),
+                                                ),
+                                                child: Text(
+                                                  '${group.totalStock} left',
+                                                  style: TextStyle(
+                                                    fontFamily: 'Literata',
+                                                    fontSize: 10,
+                                                    fontWeight: FontWeight.w600,
+                                                    color: group.totalStock > 10
+                                                        ? Colors.green[700]
+                                                        : group.totalStock > 0
+                                                        ? Colors.orange[700]
+                                                        : Colors.red[700],
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
                                           ),
                                         ],
                                       ),
-                                      // Show batch breakdown if multiple batches
-                                      if (item.hasFifoBatches && item.batches.length > 1) ...[
-                                        const SizedBox(height: 4),
-                                        ...item.batches.take(3).map((batch) => Padding(
-                                          padding: const EdgeInsets.only(top: 1),
-                                          child: Text(
-                                            '${batch.companyName.isNotEmpty ? batch.companyName : "—"} · ₹${batch.sellingPrice.toStringAsFixed(0)} · ${batch.quantityRemaining} pcs · ${DateFormat('dd/MM/yy').format(batch.purchaseDate)}',
-                                            style: TextStyle(
-                                              fontFamily: 'Literata',
-                                              fontSize: 10,
-                                              color: Colors.grey[500],
-                                            ),
-                                          ),
-                                        )),
-                                        if (item.batches.length > 3)
-                                          Padding(
-                                            padding: const EdgeInsets.only(top: 1),
-                                            child: Text(
-                                              '+${item.batches.length - 3} more batches',
-                                              style: TextStyle(
-                                                fontFamily: 'Literata',
-                                                fontSize: 10,
-                                                color: Colors.blue[400],
-                                                fontWeight: FontWeight.w500,
-                                              ),
-                                            ),
-                                          ),
-                                      ],
-                                    ],
-                                  ),
-                                ),
-                                // Quantity controls
-                                if (isAdded)
-                                  Container(
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(8),
-                                      border: Border.all(
-                                        color: const Color(
-                                          0xFF1B4D3E,
-                                        ).withValues(alpha: 0.3),
-                                      ),
                                     ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        _buildControlButton(
-                                          icon: Icons.remove,
-                                          onTap: () =>
-                                              _decrementQuantity(item),
-                                        ),
-                                        Container(
-                                          constraints: const BoxConstraints(
-                                            minWidth: 32,
-                                          ),
-                                          alignment: Alignment.center,
-                                          child: Text(
-                                            '$qty',
-                                            style: const TextStyle(
-                                              fontFamily: 'Literata',
-                                              fontWeight: FontWeight.w700,
-                                              fontSize: 14,
-                                            ),
-                                          ),
-                                        ),
-                                        _buildControlButton(
-                                          icon: Icons.add,
-                                          onTap: () =>
-                                              _incrementQuantity(item),
-                                        ),
-                                      ],
-                                    ),
-                                  )
-                                else
-                                  Material(
-                                    color: const Color(0xFF1B4D3E),
-                                    borderRadius: BorderRadius.circular(8),
-                                    child: InkWell(
-                                      borderRadius: BorderRadius.circular(8),
-                                      onTap: item.totalStock > 0
-                                          ? () => _incrementQuantity(item)
-                                          : null,
-                                      child: Container(
+                                    const SizedBox(width: 8),
+                                    // Action area
+                                    if (isAdded)
+                                      Container(
                                         padding: const EdgeInsets.symmetric(
-                                          horizontal: 14,
-                                          vertical: 8,
+                                          horizontal: 10,
+                                          vertical: 6,
                                         ),
-                                        child: const Row(
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFF1B4D3E),
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        child: Row(
                                           mainAxisSize: MainAxisSize.min,
                                           children: [
-                                            Icon(
-                                              Icons.add,
+                                            const Icon(
+                                              Icons.check,
                                               color: Colors.white,
-                                              size: 18,
+                                              size: 16,
                                             ),
-                                            SizedBox(width: 4),
+                                            const SizedBox(width: 4),
                                             Text(
-                                              'Add',
-                                              style: TextStyle(
+                                              '$qtyInBill',
+                                              style: const TextStyle(
                                                 fontFamily: 'Literata',
                                                 color: Colors.white,
-                                                fontWeight: FontWeight.w600,
+                                                fontWeight: FontWeight.w700,
                                                 fontSize: 13,
                                               ),
                                             ),
                                           ],
                                         ),
+                                      )
+                                    else
+                                      Container(
+                                        padding: const EdgeInsets.all(8),
+                                        decoration: BoxDecoration(
+                                          color: hasMultipleBatches
+                                              ? Colors.blue[50]
+                                              : const Color(0xFF1B4D3E).withOpacity(0.1),
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        child: Icon(
+                                          hasMultipleBatches
+                                              ? Icons.expand_more
+                                              : Icons.add,
+                                          color: hasMultipleBatches
+                                              ? Colors.blue[700]
+                                              : const Color(0xFF1B4D3E),
+                                          size: 20,
+                                        ),
                                       ),
-                                    ),
-                                  ),
-                              ],
+                                  ],
+                                ),
+                              ),
                             ),
                           ),
                         );
@@ -3850,23 +3863,6 @@ class _AddItemsBottomSheetState extends State<_AddItemsBottomSheet> {
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildControlButton({
-    required IconData icon,
-    required VoidCallback onTap,
-  }) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(6),
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.all(6),
-          child: Icon(icon, size: 18, color: const Color(0xFF1B4D3E)),
         ),
       ),
     );
@@ -4146,26 +4142,673 @@ class _CustomerPickerBottomSheetState
 
 /// Represents a billable item in the Add Items sheet.
 /// Wraps product data with FIFO batch information.
-class _FifoBillableItem {
-  final String productId;
+/// Groups products by name, aggregating all batches across companies/prices.
+class _GroupedBillingProduct {
   final String productName;
-  final String companyName;
-  final double sellingPrice; // FIFO: oldest batch's selling price
-  final int totalStock; // Sum of all batch quantityRemaining
   final int indexNo;
   final String category;
-  final List<PurchaseBatchEntity> batches; // FIFO-sorted batches
-  final bool hasFifoBatches;
+  final List<PurchaseBatchEntity> batches; // All batches for this product name (FIFO sorted)
+  final Product? fallbackProduct; // For products without batch data
 
-  const _FifoBillableItem({
-    required this.productId,
+  _GroupedBillingProduct({
     required this.productName,
-    required this.companyName,
-    required this.sellingPrice,
-    required this.totalStock,
     required this.indexNo,
     required this.category,
     required this.batches,
-    required this.hasFifoBatches,
+    this.fallbackProduct,
+  }) {
+    // Sort batches FIFO (oldest first)
+    batches.sort((a, b) => a.purchaseDate.compareTo(b.purchaseDate));
+  }
+
+  /// Total stock across all batches
+  int get totalStock {
+    if (batches.isNotEmpty) {
+      return batches.fold<int>(0, (s, b) => s + b.quantityRemaining);
+    }
+    return fallbackProduct?.currentStock ?? 0;
+  }
+
+  /// All unique company names across batches
+  List<String> get allCompanyNames {
+    final names = <String>{};
+    for (final batch in batches) {
+      if (batch.companyName.isNotEmpty) {
+        names.add(batch.companyName);
+      }
+    }
+    if (names.isEmpty && fallbackProduct != null && fallbackProduct!.companyName.isNotEmpty) {
+      names.add(fallbackProduct!.companyName);
+    }
+    return names.toList();
+  }
+
+  /// Price range display: single price or range
+  String get priceRangeDisplay {
+    if (batches.isEmpty) {
+      return '₹${fallbackProduct?.salesPrice.toStringAsFixed(0) ?? '0'}';
+    }
+    final prices = batches.map((b) => b.sellingPrice).toSet().toList()..sort();
+    if (prices.length == 1) {
+      return '₹${prices.first.toStringAsFixed(0)}';
+    }
+    return '₹${prices.first.toStringAsFixed(0)} - ₹${prices.last.toStringAsFixed(0)}';
+  }
+}
+
+/// Bottom sheet for selecting a specific batch/stock entry from a product
+/// Step 2 of the billing flow: shows all available stock entries
+class _BatchSelectionSheet extends StatefulWidget {
+  final String productName;
+  final int productCode;
+  final List<PurchaseBatchEntity> batches;
+  final AppLocalizations localizations;
+  final List<BillItem> existingBillItems;
+  final Function(PurchaseBatchEntity batch, int quantity) onBatchSelected;
+
+  const _BatchSelectionSheet({
+    required this.productName,
+    this.productCode = 0,
+    required this.batches,
+    required this.localizations,
+    required this.existingBillItems,
+    required this.onBatchSelected,
   });
+
+  @override
+  State<_BatchSelectionSheet> createState() => _BatchSelectionSheetState();
+}
+
+class _BatchSelectionSheetState extends State<_BatchSelectionSheet> {
+  int? _selectedBatchIndex;
+  final _qtyController = TextEditingController(text: '1');
+  final _batchSearchController = TextEditingController();
+  String? _qtyError;
+  late List<PurchaseBatchEntity> _filteredBatches;
+
+  @override
+  void initState() {
+    super.initState();
+    _filteredBatches = widget.batches;
+  }
+
+  @override
+  void dispose() {
+    _qtyController.dispose();
+    _batchSearchController.dispose();
+    super.dispose();
+  }
+
+  void _filterBatches(String query) {
+    setState(() {
+      _selectedBatchIndex = null;
+      if (query.isEmpty) {
+        _filteredBatches = widget.batches;
+      } else {
+        final lowerQuery = query.toLowerCase();
+        _filteredBatches = widget.batches.where((batch) {
+          return batch.companyName.toLowerCase().contains(lowerQuery) ||
+              batch.sellingPrice.toStringAsFixed(0).contains(lowerQuery) ||
+              batch.purchasePrice.toStringAsFixed(0).contains(lowerQuery) ||
+              DateFormat('dd MMM yyyy').format(batch.purchaseDate).toLowerCase().contains(lowerQuery) ||
+              (batch.supplierName?.toLowerCase().contains(lowerQuery) ?? false);
+        }).toList();
+      }
+    });
+  }
+
+  int _getExistingQtyForBatch(PurchaseBatchEntity batch) {
+    final uniqueKey = '${batch.productId}_batch_${batch.id}';
+    return widget.existingBillItems
+        .where((item) => item.productId == uniqueKey)
+        .fold<int>(0, (s, item) => s + item.quantity);
+  }
+
+  void _validateQuantity() {
+    if (_selectedBatchIndex == null) return;
+    final batch = widget.batches[_selectedBatchIndex!];
+    final existingQty = _getExistingQtyForBatch(batch);
+    final maxAvailable = batch.quantityRemaining - existingQty;
+    final qty = int.tryParse(_qtyController.text) ?? 0;
+    
+    setState(() {
+      if (qty <= 0) {
+        _qtyError = widget.localizations.pleaseEnterValidNumber;
+      } else if (qty > maxAvailable) {
+        _qtyError = '${widget.localizations.quantityExceedsStock} ($maxAvailable)';
+      } else {
+        _qtyError = null;
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return DraggableScrollableSheet(
+      initialChildSize: 0.7,
+      maxChildSize: 0.9,
+      minChildSize: 0.4,
+      builder: (_, controller) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          children: [
+            // Handle bar
+            const SizedBox(height: 12),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            // Header
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Row(
+                children: [
+                  // Product code badge
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1B4D3E),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Center(
+                      child: Text(
+                        widget.productCode > 0 ? '${widget.productCode}' : '#',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 15,
+                          fontFamily: 'Literata',
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          widget.productName,
+                          style: const TextStyle(
+                            fontFamily: 'Literata',
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF1B4D3E),
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        Row(
+                          children: [
+                            Text(
+                              widget.localizations.chooseSpecificBatch,
+                              style: const TextStyle(
+                                fontFamily: 'Literata',
+                                fontSize: 12,
+                                color: Colors.grey,
+                              ),
+                            ),
+                            if (widget.productCode > 0) ...[
+                              const SizedBox(width: 6),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(
+                                  '#${widget.productCode}',
+                                  style: const TextStyle(
+                                    fontFamily: 'Literata',
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w700,
+                                    color: Color(0xFF1B4D3E),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // Search bar for batches
+            if (widget.batches.length > 1)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: TextField(
+                  controller: _batchSearchController,
+                  onChanged: _filterBatches,
+                  style: const TextStyle(fontFamily: 'Literata', fontSize: 14),
+                  decoration: InputDecoration(
+                    hintText: widget.localizations.searchBatches,
+                    hintStyle: TextStyle(color: Colors.grey[500]),
+                    prefixIcon: const Icon(
+                      Icons.search,
+                      color: Color(0xFF1B4D3E),
+                      size: 20,
+                    ),
+                    suffixIcon: _batchSearchController.text.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear, size: 18),
+                            onPressed: () {
+                              _batchSearchController.clear();
+                              _filterBatches('');
+                            },
+                          )
+                        : null,
+                    filled: true,
+                    fillColor: const Color(0xFFF5F5F5),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 12,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                ),
+              ),
+            // Available entries label
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+              child: Row(
+                children: [
+                  Text(
+                    widget.localizations.availableEntries,
+                    style: TextStyle(
+                      fontFamily: 'Literata',
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey[700],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      '${_filteredBatches.length}',
+                      style: const TextStyle(
+                        fontFamily: 'Literata',
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF1B4D3E),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 10),
+            // Batch entries list
+            Expanded(
+              child: _filteredBatches.isEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.search_off, size: 48, color: Colors.grey[400]),
+                          const SizedBox(height: 12),
+                          Text(
+                            widget.localizations.noBatchesFound,
+                            style: TextStyle(
+                              fontFamily: 'Literata',
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : ListView.builder(
+                controller: controller,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                itemCount: _filteredBatches.length,
+                itemBuilder: (context, index) {
+                  final batch = _filteredBatches[index];
+                  final isSelected = _selectedBatchIndex == index;
+                  // Check if this is the oldest batch (FIFO recommended)
+                  final isOldest = widget.batches.isNotEmpty && batch.id == widget.batches.first.id;
+                  final existingQty = _getExistingQtyForBatch(batch);
+                  final alreadyInBill = existingQty > 0;
+
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 10),
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? const Color(0xFFE3F2FD)
+                          : alreadyInBill
+                              ? const Color(0xFFE8F5E9)
+                              : Colors.white,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: isSelected
+                            ? Colors.blue
+                            : alreadyInBill
+                                ? const Color(0xFF1B4D3E)
+                                : Colors.grey[200]!,
+                        width: isSelected || alreadyInBill ? 1.5 : 1,
+                      ),
+                      boxShadow: isSelected
+                          ? [
+                              BoxShadow(
+                                color: Colors.blue.withOpacity(0.15),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ]
+                          : null,
+                    ),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(14),
+                        onTap: () {
+                          setState(() {
+                            _selectedBatchIndex = index;
+                            // Set default quantity
+                            final maxAvailable = batch.quantityRemaining - existingQty;
+                            _qtyController.text = maxAvailable > 0 ? '1' : '0';
+                            _qtyError = null;
+                          });
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.all(14),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Top row: Company + badges
+                              Row(
+                                children: [
+                                  // Company icon
+                                  Container(
+                                    width: 36,
+                                    height: 36,
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Center(
+                                      child: Text(
+                                        batch.companyName.isNotEmpty
+                                            ? batch.companyName[0].toUpperCase()
+                                            : '?',
+                                        style: const TextStyle(
+                                          fontFamily: 'Literata',
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 14,
+                                          color: Color(0xFF1B4D3E),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          batch.companyName.isNotEmpty
+                                              ? batch.companyName
+                                              : '—',
+                                          style: const TextStyle(
+                                            fontFamily: 'Literata',
+                                            fontWeight: FontWeight.w600,
+                                            fontSize: 14,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        Text(
+                                          '${widget.localizations.purchasedOn}: ${DateFormat('dd MMM yyyy').format(batch.purchaseDate)}',
+                                          style: TextStyle(
+                                            fontFamily: 'Literata',
+                                            fontSize: 11,
+                                            color: Colors.grey[600],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  // Badges
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                    children: [
+                                      if (isOldest)
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 6,
+                                            vertical: 2,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: Colors.amber[50],
+                                            borderRadius: BorderRadius.circular(4),
+                                            border: Border.all(color: Colors.amber[300]!),
+                                          ),
+                                          child: Text(
+                                            widget.localizations.fifoRecommended,
+                                            style: TextStyle(
+                                              fontFamily: 'Literata',
+                                              fontSize: 9,
+                                              fontWeight: FontWeight.w700,
+                                              color: Colors.amber[800],
+                                            ),
+                                          ),
+                                        ),
+                                      if (alreadyInBill) ...[
+                                        const SizedBox(height: 4),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 6,
+                                            vertical: 2,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: Colors.green[50],
+                                            borderRadius: BorderRadius.circular(4),
+                                          ),
+                                          child: Text(
+                                            '✓ $existingQty in bill',
+                                            style: TextStyle(
+                                              fontFamily: 'Literata',
+                                              fontSize: 9,
+                                              fontWeight: FontWeight.w600,
+                                              color: Colors.green[700],
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 10),
+                              // Price row + Stock
+                              Row(
+                                children: [
+                                  // Sell price
+                                  _buildBatchInfoChip(
+                                    label: widget.localizations.sellPrice,
+                                    value: '₹${batch.sellingPrice.toStringAsFixed(0)}',
+                                    color: const Color(0xFF1B4D3E),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  // Cost price
+                                  _buildBatchInfoChip(
+                                    label: widget.localizations.costPrice,
+                                    value: '₹${batch.purchasePrice.toStringAsFixed(0)}',
+                                    color: Colors.grey[700]!,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  // Stock
+                                  _buildBatchInfoChip(
+                                    label: widget.localizations.stock,
+                                    value: '${batch.quantityRemaining} ${batch.unit}',
+                                    color: batch.quantityRemaining > 10
+                                        ? Colors.green[700]!
+                                        : Colors.orange[700]!,
+                                  ),
+                                ],
+                              ),
+                              // Quantity input + Add button (shown when selected)
+                              if (isSelected) ...[
+                                const SizedBox(height: 12),
+                                Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: Colors.blue[50],
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Column(
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: TextField(
+                                              controller: _qtyController,
+                                              keyboardType: TextInputType.number,
+                                              onChanged: (_) => _validateQuantity(),
+                                              style: const TextStyle(
+                                                fontFamily: 'Literata',
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                              decoration: InputDecoration(
+                                                labelText: widget.localizations.enterQuantity,
+                                                labelStyle: TextStyle(
+                                                  fontSize: 12,
+                                                  color: Colors.grey[600],
+                                                ),
+                                                errorText: _qtyError,
+                                                errorStyle: const TextStyle(fontSize: 10),
+                                                contentPadding: const EdgeInsets.symmetric(
+                                                  horizontal: 12,
+                                                  vertical: 10,
+                                                ),
+                                                border: OutlineInputBorder(
+                                                  borderRadius: BorderRadius.circular(8),
+                                                  borderSide: BorderSide(color: Colors.grey[300]!),
+                                                ),
+                                                focusedBorder: OutlineInputBorder(
+                                                  borderRadius: BorderRadius.circular(8),
+                                                  borderSide: const BorderSide(
+                                                    color: Color(0xFF1B4D3E),
+                                                    width: 1.5,
+                                                  ),
+                                                ),
+                                                filled: true,
+                                                fillColor: Colors.white,
+                                                suffixText: '/ ${batch.quantityRemaining - existingQty}',
+                                                suffixStyle: TextStyle(
+                                                  fontSize: 12,
+                                                  color: Colors.grey[500],
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 12),
+                                          ElevatedButton.icon(
+                                            onPressed: _qtyError == null &&
+                                                    _qtyController.text.isNotEmpty &&
+                                                    (int.tryParse(_qtyController.text) ?? 0) > 0
+                                                ? () {
+                                                    final qty = int.parse(_qtyController.text);
+                                                    widget.onBatchSelected(batch, existingQty + qty);
+                                                  }
+                                                : null,
+                                            icon: const Icon(Icons.add_shopping_cart, size: 18),
+                                            label: Text(
+                                              widget.localizations.addToBill,
+                                              style: const TextStyle(
+                                                fontFamily: 'Literata',
+                                                fontWeight: FontWeight.w600,
+                                                fontSize: 13,
+                                              ),
+                                            ),
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: const Color(0xFF1B4D3E),
+                                              foregroundColor: Colors.white,
+                                              padding: const EdgeInsets.symmetric(
+                                                horizontal: 16,
+                                                vertical: 12,
+                                              ),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius: BorderRadius.circular(10),
+                                              ),
+                                              elevation: 0,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBatchInfoChip({
+    required String label,
+    required String value,
+    required Color color,
+  }) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.05),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: color.withOpacity(0.2)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                fontFamily: 'Literata',
+                fontSize: 9,
+                color: Colors.grey[600],
+              ),
+            ),
+            Text(
+              value,
+              style: TextStyle(
+                fontFamily: 'Literata',
+                fontWeight: FontWeight.w700,
+                fontSize: 13,
+                color: color,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }

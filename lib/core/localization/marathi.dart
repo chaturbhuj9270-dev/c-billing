@@ -402,4 +402,25 @@ class MarathiLocalization {
   static const String callSupport = 'सपोर्ट कॉल करा';
   static const String securePayment = 'सुरक्षित पेमेंट';
   static const String couldNotOpenWhatsApp = 'व्हॉट्सअॅप उघडता आला नाही';
+
+  // Billing - Batch Selection
+  static const String selectStockEntry = 'स्टॉक एंट्री निवडा';
+  static const String chooseSpecificBatch = 'बिलामध्ये जोडण्यासाठी विशिष्ट बॅच निवडा';
+  static const String availableEntries = 'उपलब्ध एंट्री';
+  static const String batch = 'बॅच';
+  static const String purchasedOn = 'खरेदी';
+  static const String pcsAvailable = 'नग उपलब्ध';
+  static const String sellPrice = 'विक्री किंमत';
+  static const String costPrice = 'खर्च किंमत';
+  static const String fifoRecommended = 'FIFO शिफारस';
+  static const String oldestBatch = 'सर्वात जुना बॅच';
+  static const String selectThisEntry = 'निवडा';
+  static const String enterQuantity = 'प्रमाण टाका';
+  static const String quantityExceedsStock = 'प्रमाण उपलब्ध स्टॉकपेक्षा जास्त आहे';
+  static const String addToBill = 'बिलामध्ये जोडा';
+  static const String variants = 'प्रकार';
+  static const String totalAvailable = 'एकूण उपलब्ध';
+  static const String searchBatches = 'कंपनी, किंमत ने शोधा...';
+  static const String productCode = 'उत्पादन कोड';
+  static const String noBatchesFound = 'कोणताही बॅच सापडला नाही';
 }

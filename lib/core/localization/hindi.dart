@@ -401,4 +401,25 @@ class HindiLocalization {
   static const String callSupport = 'सहायता कॉल करें';
   static const String securePayment = 'सुरक्षित भुगतान';
   static const String couldNotOpenWhatsApp = 'व्हाट्सएप नहीं खोल सका';
+
+  // Billing - Batch Selection
+  static const String selectStockEntry = 'स्टॉक एंट्री चुनें';
+  static const String chooseSpecificBatch = 'बिल में जोड़ने के लिए विशिष्ट बैच चुनें';
+  static const String availableEntries = 'उपलब्ध एंट्रीज़';
+  static const String batch = 'बैच';
+  static const String purchasedOn = 'खरीदा';
+  static const String pcsAvailable = 'पीस उपलब्ध';
+  static const String sellPrice = 'बिक्री मूल्य';
+  static const String costPrice = 'लागत मूल्य';
+  static const String fifoRecommended = 'FIFO अनुशंसित';
+  static const String oldestBatch = 'सबसे पुराना बैच';
+  static const String selectThisEntry = 'चुनें';
+  static const String enterQuantity = 'मात्रा दर्ज करें';
+  static const String quantityExceedsStock = 'मात्रा उपलब्ध स्टॉक से अधिक है';
+  static const String addToBill = 'बिल में जोड़ें';
+  static const String variants = 'वेरिएंट';
+  static const String totalAvailable = 'कुल उपलब्ध';
+  static const String searchBatches = 'कंपनी, कीमत से खोजें...';
+  static const String productCode = 'उत्पाद कोड';
+  static const String noBatchesFound = 'कोई बैच नहीं मिला';
 }

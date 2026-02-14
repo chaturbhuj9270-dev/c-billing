@@ -399,4 +399,25 @@ class EnglishLocalization {
   static const String callSupport = 'Call Support';
   static const String securePayment = 'Secure Payment';
   static const String couldNotOpenWhatsApp = 'Could not open WhatsApp';
+
+  // Billing - Batch Selection
+  static const String selectStockEntry = 'Select Stock Entry';
+  static const String chooseSpecificBatch = 'Choose a specific batch to add to bill';
+  static const String availableEntries = 'Available Entries';
+  static const String batch = 'Batch';
+  static const String purchasedOn = 'Purchased on';
+  static const String pcsAvailable = 'pcs available';
+  static const String sellPrice = 'Sell Price';
+  static const String costPrice = 'Cost Price';
+  static const String fifoRecommended = 'FIFO Recommended';
+  static const String oldestBatch = 'Oldest Batch';
+  static const String selectThisEntry = 'Select';
+  static const String enterQuantity = 'Enter Quantity';
+  static const String quantityExceedsStock = 'Quantity exceeds available stock';
+  static const String addToBill = 'Add to Bill';
+  static const String variants = 'variants';
+  static const String totalAvailable = 'Total Available';
+  static const String searchBatches = 'Search by company, price...';
+  static const String productCode = 'Product Code';
+  static const String noBatchesFound = 'No batches match your search';
 }
