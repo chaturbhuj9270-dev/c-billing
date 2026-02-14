@@ -7,8 +7,8 @@ class SubscriptionService {
   factory SubscriptionService() => _instance;
   SubscriptionService._internal();
 
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  FirebaseFirestore get _firestore => FirebaseFirestore.instance;
+  FirebaseAuth get _auth => FirebaseAuth.instance;
 
   /// Subscription price in INR
   static const double subscriptionPrice = 3999.0;
@@ -76,7 +76,7 @@ class SubscriptionService {
       return isValid;
     } catch (e) {
       print('[SubscriptionService] Error checking subscription: $e');
-      return false;
+      return true; // Grant access on error/timeout to avoid blocking user
     }
   }
 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:ui';
 
+import '../../../../main.dart' show initializeSyncServices;
 import '../../../dashboard/presentation/pages/optimized_dashboard_page.dart';
 import '../../../../core/services/session_manager.dart';
 import '../../../../core/services/credentials_manager.dart';
@@ -124,6 +125,9 @@ class _LoginPageV2State extends State<LoginPageV2>
         .signInWithEmailAndPassword(email: emailOrPhone, password: password)
         .then((cred) {
           print('[DEBUG] Login successful for user: ${cred.user?.uid}');
+
+          // Start sync services now that user is authenticated
+          initializeSyncServices();
 
           // Initialize session with 2-hour timeout
           final sessionManager = SessionManager();

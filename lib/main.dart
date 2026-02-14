@@ -22,49 +22,62 @@ Future<void> main() async {
   // Initialize error logging service early to capture all errors
   ErrorLoggingService.initialize();
   
-  await di.init();
-  
-  // Initialize CredentialsManager early
-  await CredentialsManager().init();
-  
-  // Initialize LanguageService
-  await LanguageService.instance.init();
-  
-  // Initialize PurchaseSettingsService
-  await PurchaseSettingsService.instance.init();
-  
-  // Initialize Firebase FIRST (before services that depend on it)
+  // Firebase MUST be initialized before runApp because services
+  // like SubscriptionService access FirebaseFirestore.instance at construction time
   try {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
   } catch (e) {
-    // Continue anyway for development; Firebase features will fail at runtime
     debugPrint('Firebase init error: $e');
   }
   
-  // Initialize Isar database for offline-first support
-  await IsarService.instance.initialize();
-  
-  // Initialize Customer Sync Service (after Firebase is ready)
-  CustomerSyncService.instance.initialize();
-  
-  // Initialize Product Sync Service (after Firebase is ready)
-  ProductSyncService.instance.initialize();
-  
-  // Initialize Supplier Sync Service (after Firebase is ready)
-  SupplierSyncService.instance.initialize();
-  
-  // Initialize Company Sync Service (after Firebase is ready)
-  CompanySyncService.instance.initialize();
-  
-  // Initialize Purchase Sync Service (after Firebase is ready)
-  PurchaseSyncService.instance.initialize();
-  
-  // Initialize Bill Sync Service (after Firebase is ready)
-  BillSyncService.instance.initialize();
-  
+  // Run app — splash screen renders while remaining services init
   runApp(const MyApp());
+}
+
+/// Initialize non-Firebase services. Called from SplashPage so the UI is visible.
+Future<void> initializeServices() async {
+  try {
+    await di.init();
+  } catch (e) {
+    debugPrint('DI init error: $e');
+  }
+  
+  try {
+    await CredentialsManager().init();
+  } catch (e) {
+    debugPrint('CredentialsManager init error: $e');
+  }
+  
+  try {
+    await LanguageService.instance.init();
+  } catch (e) {
+    debugPrint('LanguageService init error: $e');
+  }
+  
+  try {
+    await PurchaseSettingsService.instance.init();
+  } catch (e) {
+    debugPrint('PurchaseSettingsService init error: $e');
+  }
+  
+  // Initialize Isar database for offline-first support
+  try {
+    await IsarService.instance.initialize();
+  } catch (e) {
+    debugPrint('Isar init error: $e');
+  }
+}
+
+/// Initialize sync services. Call ONLY after user is authenticated.
+void initializeSyncServices() {
+  CustomerSyncService.instance.initialize();
+  ProductSyncService.instance.initialize();
+  SupplierSyncService.instance.initialize();
+  CompanySyncService.instance.initialize();
+  PurchaseSyncService.instance.initialize();
+  BillSyncService.instance.initialize();
 }
 
 class MyApp extends StatelessWidget {

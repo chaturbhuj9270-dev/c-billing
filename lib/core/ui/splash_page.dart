@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+import '../../main.dart' show initializeServices, initializeSyncServices;
 import '../../features/authentication/presentation/pages/login.dart';
 import '../../features/dashboard/presentation/pages/optimized_dashboard_page.dart';
 import '../../core/services/biometric_service.dart';
@@ -44,8 +45,20 @@ class _SplashPageState extends State<SplashPage> {
 
   Future<void> _initializeApp() async {
     try {
-      // Initialize credentials manager
+      // Initialize all services FIRST (splash screen is visible during this)
+      await initializeServices();
+
+      // Re-initialize after services are ready
+      _credentialsManager = CredentialsManager();
       await _credentialsManager.init();
+      if (mounted) {
+        setState(() {
+          _localizations = AppLocalizations.of(
+            LanguageService.instance.currentLanguage,
+          );
+        });
+      }
+
       print('[DEBUG] Splash page - checking for stored credentials');
 
       // Check if user has valid stored credentials
@@ -58,12 +71,14 @@ class _SplashPageState extends State<SplashPage> {
           print(
             '[DEBUG] Firebase user already authenticated: ${currentUser.uid}',
           );
+          // Start sync services now that user is authenticated
+          initializeSyncServices();
           // Go directly to dashboard
           _goToDashboard();
           return;
         }
 
-        // Try to auto-login with stored credentials
+        // Try to auto-login with stored credentials (with timeout)
         await _attemptAutoLogin();
       } else {
         print('[DEBUG] No stored credentials found, going to login');
@@ -91,12 +106,15 @@ class _SplashPageState extends State<SplashPage> {
 
       print('[DEBUG] Attempting auto-login with email: ***');
 
-      // Attempt Firebase login with stored credentials
+      // Attempt Firebase login with stored credentials (with timeout)
       final userCredential = await FirebaseAuth.instance
-          .signInWithEmailAndPassword(email: email, password: password);
+          .signInWithEmailAndPassword(email: email, password: password)
+          .timeout(const Duration(seconds: 8));
 
       if (userCredential.user != null) {
         print('[DEBUG] Auto-login successful for: ${userCredential.user!.uid}');
+        // Start sync services now that user is authenticated
+        initializeSyncServices();
         _goToDashboard();
       } else {
         print('[ERROR] Auto-login failed: user is null');
@@ -107,6 +125,9 @@ class _SplashPageState extends State<SplashPage> {
       // Clear invalid credentials
       await _credentialsManager.clearCredentials();
       _timer = Timer(const Duration(seconds: 1), _goToLogin);
+    } on TimeoutException catch (_) {
+      print('[ERROR] Auto-login timed out - going to login');
+      _timer = Timer(const Duration(milliseconds: 500), _goToLogin);
     } catch (e) {
       print('[ERROR] Unexpected error during auto-login: $e');
       _timer = Timer(const Duration(seconds: 1), _goToLogin);
@@ -201,7 +222,8 @@ class _SplashPageState extends State<SplashPage> {
     try {
       print('[DEBUG] Checking subscription status...');
       final isSubscriptionValid = await _subscriptionService
-          .isSubscriptionValid();
+          .isSubscriptionValid()
+          .timeout(const Duration(seconds: 5), onTimeout: () => true);
 
       if (!isSubscriptionValid) {
         print(

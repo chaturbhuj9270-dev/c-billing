@@ -9,7 +9,7 @@ class DashboardInventoryService {
   static final DashboardInventoryService _instance = DashboardInventoryService._internal();
   
   late InventoryService _inventoryService;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  FirebaseFirestore get _firestore => FirebaseFirestore.instance;
 
   DashboardInventoryService._internal() {
     _initializeService();
