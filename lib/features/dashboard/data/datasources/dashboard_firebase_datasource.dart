@@ -92,9 +92,18 @@ class DashboardFirebaseDataSource {
       final purchaseMetrics = _calculatePurchaseMetrics(purchasesSnapshot);
       final stockMetrics = _calculateStockMetrics(productsSnapshot);
 
+      // Net Sales = Gross Sales - Returns
+      final netSales = salesMetrics.totalAmount - salesMetrics.totalReturns;
+
       // Debug: Log calculated metrics
       print(
-        '[DashboardFirebaseDataSource] Total Sales: ${salesMetrics.totalAmount}',
+        '[DashboardFirebaseDataSource] Gross Sales: ${salesMetrics.totalAmount}',
+      );
+      print(
+        '[DashboardFirebaseDataSource] Returns: ${salesMetrics.totalReturns}',
+      );
+      print(
+        '[DashboardFirebaseDataSource] Net Sales: $netSales',
       );
       print(
         '[DashboardFirebaseDataSource] Total Purchases: ${purchaseMetrics.totalAmount}',
@@ -103,10 +112,10 @@ class DashboardFirebaseDataSource {
         '[DashboardFirebaseDataSource] Profit: ${salesMetrics.totalProfit}',
       );
 
-      // Use profit calculated from sales (sale price after discount - purchase price)
+      // Use profit calculated from net sales (after returns)
       final profit = salesMetrics.totalProfit;
-      final profitPercentage = salesMetrics.totalAmount > 0
-          ? (profit / salesMetrics.totalAmount) * 100
+      final profitPercentage = netSales > 0
+          ? (profit / netSales) * 100
           : 0.0;
 
       stopwatch.stop();
@@ -124,6 +133,9 @@ class DashboardFirebaseDataSource {
         totalSales: salesMetrics.totalAmount,
         totalBillsCount: salesMetrics.count,
         totalItemsSold: salesMetrics.itemCount,
+        totalReturns: salesMetrics.totalReturns,
+        totalReturnedItems: salesMetrics.totalReturnedItems,
+        netSales: netSales,
         totalPurchases: purchaseMetrics.totalAmount,
         purchaseOrders: purchaseMetrics.count,
         purchaseQty: purchaseMetrics.itemCount,
@@ -131,6 +143,7 @@ class DashboardFirebaseDataSource {
         profitPercentage: profitPercentage,
         stockValue: stockMetrics.stockValue,
         lowStockCount: stockMetrics.lowStockCount,
+        totalPendingAmount: salesMetrics.totalPending,
         lastUpdated: DateTime.now(),
         isFromCache: false,
       );
@@ -226,12 +239,15 @@ class DashboardFirebaseDataSource {
   }
 
   /// Calculate sales metrics from bills snapshot
-  /// Uses finalAmount (after discount) for total sales
-  /// Calculates profit as: (selling price - purchase price) * quantity - discount portion
+  /// CORRECTLY handles returns: deducts returnedQuantity from profit calculation
+  /// Uses finalAmount (after discount) for gross sales
   _SalesMetrics _calculateSalesMetrics(QuerySnapshot billsSnapshot) {
     double totalAmount = 0; // Total after discounts (finalAmount)
+    double totalReturns = 0;
     double totalProfit = 0;
+    double totalPending = 0;
     int itemCount = 0;
+    int totalReturnedItems = 0;
 
     for (var doc in billsSnapshot.docs) {
       final data = doc.data() as Map<String, dynamic>?;
@@ -240,6 +256,9 @@ class DashboardFirebaseDataSource {
         final finalAmount = (data['finalAmount'] as num?)?.toDouble();
         final billTotalAmount = (data['totalAmount'] as num?)?.toDouble() ?? 0;
         totalAmount += finalAmount ?? billTotalAmount;
+        
+        // Track pending amount
+        totalPending += (data['pendingAmount'] as num?)?.toDouble() ?? 0;
 
         // Calculate discount ratio for this bill
         final discountAmount =
@@ -248,34 +267,38 @@ class DashboardFirebaseDataSource {
             ? discountAmount / billTotalAmount
             : 0.0;
 
-        // Process items to calculate profit
+        // Process items to calculate profit (accounting for returns)
         final items = data['items'] as List<dynamic>? ?? [];
         for (var item in items) {
           final quantity = (item['quantity'] as num?)?.toInt() ?? 0;
+          final returnedQty = (item['returnedQuantity'] as num?)?.toInt() ?? 0;
+          final netSoldQty = quantity - returnedQty;
           final sellingPrice = (item['sellingPrice'] as num?)?.toDouble() ?? 0;
           final purchasePrice =
               (item['purchasePrice'] as num?)?.toDouble() ?? 0;
-          final subtotal =
-              (item['subtotal'] as num?)?.toDouble() ??
-              (sellingPrice * quantity);
 
           itemCount += quantity;
+          totalReturnedItems += returnedQty;
 
-          // Profit = (selling price - purchase price) * quantity - proportional discount
-          final itemRevenue = subtotal;
-          final itemCost = purchasePrice * quantity;
-          final itemDiscountPortion = itemRevenue * discountRatio;
-          final itemProfit = itemRevenue - itemDiscountPortion - itemCost;
-          totalProfit += itemProfit;
+          // Return amount = returnedQty × sellingPrice × (1 - discountRatio)
+          totalReturns += returnedQty * sellingPrice * (1 - discountRatio);
+
+          // Profit from NET sold items only (excluding returned)
+          final netRevenue = netSoldQty * sellingPrice * (1 - discountRatio);
+          final netCost = netSoldQty * purchasePrice;
+          totalProfit += (netRevenue - netCost);
         }
       }
     }
 
     return _SalesMetrics(
       totalAmount: totalAmount,
+      totalReturns: totalReturns,
       count: billsSnapshot.docs.length,
       itemCount: itemCount,
+      totalReturnedItems: totalReturnedItems,
       totalProfit: totalProfit,
+      totalPending: totalPending,
     );
   }
 
@@ -321,15 +344,21 @@ class DashboardFirebaseDataSource {
 /// Internal class for sales metrics calculation
 class _SalesMetrics {
   final double totalAmount;
+  final double totalReturns;
   final int count;
   final int itemCount;
+  final int totalReturnedItems;
   final double totalProfit;
+  final double totalPending;
 
   _SalesMetrics({
     required this.totalAmount,
+    required this.totalReturns,
     required this.count,
     required this.itemCount,
+    required this.totalReturnedItems,
     required this.totalProfit,
+    required this.totalPending,
   });
 }
 

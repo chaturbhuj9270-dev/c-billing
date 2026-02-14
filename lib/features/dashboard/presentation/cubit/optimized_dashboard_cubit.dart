@@ -1,23 +1,28 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/dashboard_summary.dart';
 import '../../domain/repositories/dashboard_repository_interface.dart';
 import '../../data/repositories/dashboard_repository_impl.dart';
 import 'optimized_dashboard_state.dart';
 
-/// High-performance Dashboard Cubit with cache-first strategy
+/// High-performance Dashboard Cubit with Isar-first reactive strategy
 /// 
-/// Key optimizations:
-/// 1. Synchronously loads cached data before any async operations
-/// 2. Emits UI-ready state immediately (no blocking on Firebase)
-/// 3. Background refresh with smooth state transitions
-/// 4. Minimal and incremental state updates to prevent unnecessary rebuilds
+/// Key features:
+/// 1. Synchronously loads cached data before any async operations (instant UI)
+/// 2. Fetches fresh data from local Isar DB (< 5ms)
+/// 3. Reactive: auto-refreshes when bills/purchases/batches change in Isar
+/// 4. DashboardRefreshService events trigger recalculation too
+/// 5. Debounced updates prevent excessive rebuilds
 class OptimizedDashboardCubit extends Cubit<OptimizedDashboardState> {
   final DashboardRepositoryImpl _repository;
-  StreamSubscription<DashboardSummary>? _subscription;
+  StreamSubscription<DashboardSummary>? _realtimeSubscription;
   
   /// Track if initial load has completed
   bool _isInitialized = false;
+  
+  /// Debounce timer for rapid successive updates
+  Timer? _debounceTimer;
 
   OptimizedDashboardCubit({
     DashboardRepositoryImpl? repository,
@@ -42,7 +47,7 @@ class OptimizedDashboardCubit extends Cubit<OptimizedDashboardState> {
   }
 
   /// Initialize the dashboard - call this after widget is built
-  /// Fetches fresh data in background while UI is already rendered
+  /// Fetches fresh data from Isar and starts reactive subscription
   Future<void> initialize() async {
     if (_isInitialized) return;
     _isInitialized = true;
@@ -66,22 +71,22 @@ class OptimizedDashboardCubit extends Cubit<OptimizedDashboardState> {
         }
       }
 
-      // Fetch fresh data in background
+      // Fetch fresh data from Isar (instant)
       await _refreshData(showRefreshIndicator: state.hasData);
 
+      // Start reactive Isar watchers — auto-refresh on any data change
+      _subscribeToRealtimeUpdates();
+
       stopwatch.stop();
-      print('[OptimizedDashboardCubit] Initialize completed in ${stopwatch.elapsedMilliseconds}ms');
+      debugPrint('[DashboardCubit] Initialize completed in ${stopwatch.elapsedMilliseconds}ms');
     } catch (e) {
-      print('[OptimizedDashboardCubit] Initialize error: $e');
+      debugPrint('[DashboardCubit] Initialize error: $e');
       _handleError(e);
     }
   }
 
   /// Load dashboard with current parameters
-  /// Uses cache-first strategy
   Future<void> loadDashboard() async {
-    final stopwatch = Stopwatch()..start();
-
     // If we have cached data, show it immediately with refreshing indicator
     if (state.hasData) {
       final currentState = state as DashboardReadyState;
@@ -91,7 +96,7 @@ class OptimizedDashboardCubit extends Cubit<OptimizedDashboardState> {
     try {
       final data = await _repository.getDashboardSummary(
         params: state.params,
-        forceRefresh: false, // Use cache-first
+        forceRefresh: false,
       );
 
       emit(DashboardReadyState(
@@ -100,23 +105,24 @@ class OptimizedDashboardCubit extends Cubit<OptimizedDashboardState> {
         isRefreshing: false,
         lastUpdated: DateTime.now(),
       ));
-
-      stopwatch.stop();
-      print('[OptimizedDashboardCubit] Load completed in ${stopwatch.elapsedMilliseconds}ms');
     } catch (e) {
       _handleError(e);
     }
   }
 
-  /// Force refresh from network
+  /// Force refresh from Isar (called by pull-to-refresh or DashboardRefreshService)
   Future<void> refresh() async {
-    // Mark as refreshing but keep existing data visible
-    if (state.hasData) {
-      final currentState = state as DashboardReadyState;
-      emit(currentState.withRefreshing(true));
-    }
+    // Debounce rapid refresh calls (e.g., multiple data changes in quick succession)
+    _debounceTimer?.cancel();
+    _debounceTimer = Timer(const Duration(milliseconds: 200), () async {
+      // Mark as refreshing but keep existing data visible
+      if (state.hasData) {
+        final currentState = state as DashboardReadyState;
+        emit(currentState.withRefreshing(true));
+      }
 
-    await _refreshData(showRefreshIndicator: true);
+      await _refreshData(showRefreshIndicator: true);
+    });
   }
 
   /// Change filter and reload data
@@ -131,15 +137,13 @@ class OptimizedDashboardCubit extends Cubit<OptimizedDashboardState> {
     final cachedData = _repository.getCachedSummary(params: newParams);
     
     if (cachedData != null) {
-      // Have cached data - show it immediately
       emit(DashboardReadyState(
         params: newParams,
         data: cachedData,
-        isRefreshing: true, // Will fetch fresh
+        isRefreshing: true,
         lastUpdated: cachedData.lastUpdated,
       ));
     } else if (state.hasData) {
-      // No cache but have current data - keep showing it
       emit(DashboardReadyState(
         params: newParams,
         data: state.data!,
@@ -147,12 +151,14 @@ class OptimizedDashboardCubit extends Cubit<OptimizedDashboardState> {
         lastUpdated: state.lastUpdated,
       ));
     } else {
-      // No data at all - show initial state
       emit(DashboardInitialState(params: newParams));
     }
 
-    // Fetch fresh data
+    // Fetch fresh data from Isar
     await _refreshData(showRefreshIndicator: true);
+    
+    // Re-subscribe with new params
+    _subscribeToRealtimeUpdates();
   }
 
   /// Set custom date range
@@ -183,9 +189,12 @@ class OptimizedDashboardCubit extends Cubit<OptimizedDashboardState> {
     }
 
     await _refreshData(showRefreshIndicator: true);
+    
+    // Re-subscribe with new params
+    _subscribeToRealtimeUpdates();
   }
 
-  /// Internal method to refresh data from Firebase
+  /// Internal method to refresh data from Isar
   Future<void> _refreshData({required bool showRefreshIndicator}) async {
     try {
       final data = await _repository.getDashboardSummary(
@@ -202,6 +211,30 @@ class OptimizedDashboardCubit extends Cubit<OptimizedDashboardState> {
     } catch (e) {
       _handleError(e);
     }
+  }
+
+  /// Subscribe to real-time Isar updates
+  /// Isar's watchLazy() fires whenever bills/purchases/batches change locally
+  void _subscribeToRealtimeUpdates() {
+    _realtimeSubscription?.cancel();
+    _realtimeSubscription = _repository
+        .watchDashboardSummary(params: state.params)
+        .listen(
+          (data) {
+            // Only emit if data actually changed (Equatable comparison)
+            if (data != state.data) {
+              emit(DashboardReadyState(
+                params: state.params,
+                data: data,
+                isRefreshing: false,
+                lastUpdated: DateTime.now(),
+              ));
+            }
+          },
+          onError: (e) {
+            debugPrint('[DashboardCubit] Realtime stream error: $e');
+          },
+        );
   }
 
   /// Handle errors gracefully
@@ -225,28 +258,12 @@ class OptimizedDashboardCubit extends Cubit<OptimizedDashboardState> {
     }
   }
 
-  /// Subscribe to real-time updates (optional)
-  void subscribeToUpdates() {
-    _subscription?.cancel();
-    _subscription = _repository
-        .watchDashboardSummary(params: state.params)
-        .listen(
-          (data) {
-            emit(DashboardReadyState(
-              params: state.params,
-              data: data,
-              isRefreshing: false,
-              lastUpdated: DateTime.now(),
-            ));
-          },
-          onError: (e) => _handleError(e),
-        );
-  }
-
   @override
   Future<void> close() {
-    _subscription?.cancel();
+    _debounceTimer?.cancel();
+    _realtimeSubscription?.cancel();
     _repository.dispose();
     return super.close();
   }
 }
+

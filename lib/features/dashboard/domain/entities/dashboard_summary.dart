@@ -2,6 +2,11 @@ import 'package:equatable/equatable.dart';
 
 /// Domain entity representing dashboard summary data
 /// This is the core business model for dashboard metrics
+/// 
+/// Key formulas:
+///   Net Sales = Total Sales (finalAmount) - Total Returns
+///   Profit = Net Sales - Purchase Cost of sold (non-returned) items
+///   Stock Value = Sum of (batch.quantityRemaining × batch.purchasePrice) for all unconsumed batches
 class DashboardSummary extends Equatable {
   final int invoicesCount;
   final int clientsCount;
@@ -9,16 +14,36 @@ class DashboardSummary extends Equatable {
   final int suppliersCount;
   final int purchasesCount;
   final int companiesCount;
+  
+  /// Gross sales amount (sum of finalAmount from all bills in period)
   final double totalSales;
   final int totalBillsCount;
   final int totalItemsSold;
+  
+  /// Total returned amount (returnedQty × sellingPrice, proportional discount applied)
+  final double totalReturns;
+  
+  /// Total returned item count
+  final int totalReturnedItems;
+  
+  /// Net Sales = totalSales - totalReturns
+  final double netSales;
+  
   final double totalPurchases;
   final int purchaseOrders;
   final int purchaseQty;
+  
+  /// Profit = Net Sales - Purchase Cost of sold (non-returned) items
   final double profit;
   final double profitPercentage;
+  
+  /// Stock value computed from batch quantityRemaining × purchasePrice
   final double stockValue;
   final int lowStockCount;
+  
+  /// Total pending amount across all bills (unpaid / partially paid)
+  final double totalPendingAmount;
+  
   final DateTime lastUpdated;
   final bool isFromCache;
 
@@ -32,6 +57,9 @@ class DashboardSummary extends Equatable {
     this.totalSales = 0,
     this.totalBillsCount = 0,
     this.totalItemsSold = 0,
+    this.totalReturns = 0,
+    this.totalReturnedItems = 0,
+    this.netSales = 0,
     this.totalPurchases = 0,
     this.purchaseOrders = 0,
     this.purchaseQty = 0,
@@ -39,6 +67,7 @@ class DashboardSummary extends Equatable {
     this.profitPercentage = 0,
     this.stockValue = 0,
     this.lowStockCount = 0,
+    this.totalPendingAmount = 0,
     required this.lastUpdated,
     this.isFromCache = false,
   });
@@ -64,6 +93,9 @@ class DashboardSummary extends Equatable {
     double? totalSales,
     int? totalBillsCount,
     int? totalItemsSold,
+    double? totalReturns,
+    int? totalReturnedItems,
+    double? netSales,
     double? totalPurchases,
     int? purchaseOrders,
     int? purchaseQty,
@@ -71,6 +103,7 @@ class DashboardSummary extends Equatable {
     double? profitPercentage,
     double? stockValue,
     int? lowStockCount,
+    double? totalPendingAmount,
     DateTime? lastUpdated,
     bool? isFromCache,
   }) {
@@ -84,6 +117,9 @@ class DashboardSummary extends Equatable {
       totalSales: totalSales ?? this.totalSales,
       totalBillsCount: totalBillsCount ?? this.totalBillsCount,
       totalItemsSold: totalItemsSold ?? this.totalItemsSold,
+      totalReturns: totalReturns ?? this.totalReturns,
+      totalReturnedItems: totalReturnedItems ?? this.totalReturnedItems,
+      netSales: netSales ?? this.netSales,
       totalPurchases: totalPurchases ?? this.totalPurchases,
       purchaseOrders: purchaseOrders ?? this.purchaseOrders,
       purchaseQty: purchaseQty ?? this.purchaseQty,
@@ -91,6 +127,7 @@ class DashboardSummary extends Equatable {
       profitPercentage: profitPercentage ?? this.profitPercentage,
       stockValue: stockValue ?? this.stockValue,
       lowStockCount: lowStockCount ?? this.lowStockCount,
+      totalPendingAmount: totalPendingAmount ?? this.totalPendingAmount,
       lastUpdated: lastUpdated ?? this.lastUpdated,
       isFromCache: isFromCache ?? this.isFromCache,
     );
@@ -108,6 +145,9 @@ class DashboardSummary extends Equatable {
       'totalSales': totalSales,
       'totalBillsCount': totalBillsCount,
       'totalItemsSold': totalItemsSold,
+      'totalReturns': totalReturns,
+      'totalReturnedItems': totalReturnedItems,
+      'netSales': netSales,
       'totalPurchases': totalPurchases,
       'purchaseOrders': purchaseOrders,
       'purchaseQty': purchaseQty,
@@ -115,6 +155,7 @@ class DashboardSummary extends Equatable {
       'profitPercentage': profitPercentage,
       'stockValue': stockValue,
       'lowStockCount': lowStockCount,
+      'totalPendingAmount': totalPendingAmount,
       'lastUpdated': lastUpdated.toIso8601String(),
     };
   }
@@ -131,6 +172,9 @@ class DashboardSummary extends Equatable {
       totalSales: (json['totalSales'] as num?)?.toDouble() ?? 0,
       totalBillsCount: json['totalBillsCount'] as int? ?? 0,
       totalItemsSold: json['totalItemsSold'] as int? ?? 0,
+      totalReturns: (json['totalReturns'] as num?)?.toDouble() ?? 0,
+      totalReturnedItems: json['totalReturnedItems'] as int? ?? 0,
+      netSales: (json['netSales'] as num?)?.toDouble() ?? 0,
       totalPurchases: (json['totalPurchases'] as num?)?.toDouble() ?? 0,
       purchaseOrders: json['purchaseOrders'] as int? ?? 0,
       purchaseQty: json['purchaseQty'] as int? ?? 0,
@@ -138,6 +182,7 @@ class DashboardSummary extends Equatable {
       profitPercentage: (json['profitPercentage'] as num?)?.toDouble() ?? 0,
       stockValue: (json['stockValue'] as num?)?.toDouble() ?? 0,
       lowStockCount: json['lowStockCount'] as int? ?? 0,
+      totalPendingAmount: (json['totalPendingAmount'] as num?)?.toDouble() ?? 0,
       lastUpdated: json['lastUpdated'] != null
           ? DateTime.parse(json['lastUpdated'] as String)
           : DateTime.now(),
@@ -156,6 +201,9 @@ class DashboardSummary extends Equatable {
         totalSales,
         totalBillsCount,
         totalItemsSold,
+        totalReturns,
+        totalReturnedItems,
+        netSales,
         totalPurchases,
         purchaseOrders,
         purchaseQty,
@@ -163,6 +211,7 @@ class DashboardSummary extends Equatable {
         profitPercentage,
         stockValue,
         lowStockCount,
+        totalPendingAmount,
         lastUpdated,
         isFromCache,
       ];

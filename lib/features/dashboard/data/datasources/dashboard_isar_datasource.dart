@@ -1,0 +1,395 @@
+import 'dart:async';
+import 'package:flutter/foundation.dart';
+import 'package:isar_community/isar.dart';
+import '../../../../core/services/isar_service.dart';
+import '../../../billing/offline/controllers/bill_offline_controller.dart';
+import '../../../billing/offline/entities/bill_entity.dart';
+import '../../../customer/offline/controllers/customer_offline_controller.dart';
+import '../../../inventory_management/offline/controllers/purchase_offline_controller.dart';
+import '../../../inventory_management/offline/entities/purchase_batch_entity.dart';
+import '../../../inventory_management/offline/entities/purchase_entity.dart';
+import '../../../product/offline/controllers/product_offline_controller.dart';
+import '../../../supplier/offline/controllers/supplier_offline_controller.dart';
+import '../../../company/offline/controllers/company_offline_controller.dart';
+import '../../domain/entities/dashboard_summary.dart';
+import '../../domain/repositories/dashboard_repository_interface.dart';
+
+/// Ultra-fast Isar-based dashboard datasource
+/// All calculations are from local Isar DB — instant, offline-capable, and accurate.
+///
+/// Key fixes over the old Firebase datasource:
+/// 1. Returns are properly deducted from sales/profit
+/// 2. Stock value uses batch quantityRemaining × purchasePrice (not product-level)
+/// 3. Pending amounts are tracked
+/// 4. Reactive streams via Isar watchLazy()
+class DashboardIsarDataSource {
+  static DashboardIsarDataSource? _instance;
+
+  Isar get _isar => IsarService.instance.isar;
+
+  DashboardIsarDataSource._();
+
+  static DashboardIsarDataSource get instance {
+    _instance ??= DashboardIsarDataSource._();
+    return _instance!;
+  }
+
+  /// Debounce timer for reactive updates
+  Timer? _debounceTimer;
+  
+  /// Active stream subscriptions for Isar watchers
+  final List<StreamSubscription> _watchSubscriptions = [];
+
+  /// Fetch dashboard summary from local Isar DB
+  /// All calculations are local — typically completes in < 5ms
+  Future<DashboardSummary> fetchDashboardSummary({
+    required DashboardParams params,
+  }) async {
+    final stopwatch = Stopwatch()..start();
+    final (startDate, endDate) = params.getDateRange();
+
+    // Execute ALL local queries in parallel for maximum speed
+    final results = await Future.wait([
+      // Counts — instant from Isar (0-5)
+      CustomerOfflineController.instance.getTotalCount(),
+      ProductOfflineController.instance.getTotalCount(),
+      SupplierOfflineController.instance.getTotalCount(),
+      CompanyOfflineController.instance.getTotalCount(),
+      BillOfflineController.instance.getTotalCount(),
+      PurchaseOfflineController.instance.getTotalCount(),
+      // Period-specific data (6-8)
+      _getSalesDataForPeriod(startDate, endDate),
+      _getPurchaseDataForPeriod(startDate, endDate),
+      _getStockDataFromBatches(),
+      // Pending amounts (9)
+      _getTotalPendingAmount(),
+    ]);
+
+    // Extract counts
+    final customersCount = results[0] as int;
+    final productsCount = results[1] as int;
+    final suppliersCount = results[2] as int;
+    final companiesCount = results[3] as int;
+    final billsCount = results[4] as int;
+    final purchasesCount = results[5] as int;
+
+    // Extract sales data (with returns properly deducted)
+    final salesData = results[6] as _SalesResult;
+
+    // Extract purchase data
+    final purchaseData = results[7] as _PurchaseResult;
+
+    // Extract stock data (from batches)
+    final stockData = results[8] as _StockResult;
+
+    // Extract pending amount
+    final totalPendingAmount = results[9] as double;
+
+    // Net Sales = Gross Sales - Returns
+    final netSales = salesData.grossSales - salesData.totalReturns;
+
+    // Profit = Revenue from sold (non-returned) items - Cost of sold (non-returned) items
+    final profit = salesData.netProfit;
+    final profitPercentage = netSales > 0 ? (profit / netSales) * 100 : 0.0;
+
+    stopwatch.stop();
+    debugPrint(
+      '[DashboardIsarDS] Data loaded in ${stopwatch.elapsedMicroseconds}μs '
+      '(${stopwatch.elapsedMilliseconds}ms) | '
+      'GrossSales: ${salesData.grossSales.toStringAsFixed(0)}, '
+      'Returns: ${salesData.totalReturns.toStringAsFixed(0)}, '
+      'NetSales: ${netSales.toStringAsFixed(0)}, '
+      'Profit: ${profit.toStringAsFixed(0)}',
+    );
+
+    return DashboardSummary(
+      invoicesCount: billsCount,
+      clientsCount: customersCount,
+      productsCount: productsCount,
+      suppliersCount: suppliersCount,
+      purchasesCount: purchasesCount,
+      companiesCount: companiesCount,
+      totalSales: salesData.grossSales,
+      totalBillsCount: salesData.billCount,
+      totalItemsSold: salesData.totalItemsSold,
+      totalReturns: salesData.totalReturns,
+      totalReturnedItems: salesData.totalReturnedItems,
+      netSales: netSales,
+      totalPurchases: purchaseData.totalAmount,
+      purchaseOrders: purchaseData.orderCount,
+      purchaseQty: purchaseData.totalQty,
+      profit: profit,
+      profitPercentage: profitPercentage,
+      stockValue: stockData.stockValue,
+      lowStockCount: stockData.lowStockCount,
+      totalPendingAmount: totalPendingAmount,
+      lastUpdated: DateTime.now(),
+      isFromCache: false,
+    );
+  }
+
+  /// Create a reactive stream that emits new DashboardSummary whenever
+  /// bills, purchases, or batches change in the local Isar DB.
+  /// Uses Isar's watchLazy() + debounce to avoid excessive recalculations.
+  Stream<DashboardSummary> watchDashboardSummary({
+    required DashboardParams params,
+  }) {
+    late StreamController<DashboardSummary> controller;
+
+    controller = StreamController<DashboardSummary>(
+      onListen: () async {
+        // Emit initial data immediately
+        try {
+          final initial = await fetchDashboardSummary(params: params);
+          if (!controller.isClosed) {
+            controller.add(initial);
+          }
+        } catch (e) {
+          debugPrint('[DashboardIsarDS] Error fetching initial data: $e');
+        }
+
+        // Watch Isar collections for changes
+        void onCollectionChanged() {
+          _debounceTimer?.cancel();
+          _debounceTimer = Timer(const Duration(milliseconds: 300), () async {
+            try {
+              final updated = await fetchDashboardSummary(params: params);
+              if (!controller.isClosed) {
+                controller.add(updated);
+              }
+            } catch (e) {
+              debugPrint('[DashboardIsarDS] Error in watch update: $e');
+            }
+          });
+        }
+
+        // Watch all relevant collections
+        _watchSubscriptions.add(
+          _isar.billEntitys.watchLazy().listen((_) => onCollectionChanged()),
+        );
+        _watchSubscriptions.add(
+          _isar.purchaseEntitys.watchLazy().listen((_) => onCollectionChanged()),
+        );
+        _watchSubscriptions.add(
+          _isar.purchaseBatchEntitys.watchLazy().listen((_) => onCollectionChanged()),
+        );
+      },
+      onCancel: () {
+        _debounceTimer?.cancel();
+        for (final sub in _watchSubscriptions) {
+          sub.cancel();
+        }
+        _watchSubscriptions.clear();
+        controller.close();
+      },
+    );
+
+    return controller.stream;
+  }
+
+  // ==================== SALES CALCULATION ====================
+
+  /// Calculate sales metrics for the given period.
+  /// CORRECTLY handles:
+  /// - Partial/full returns (deducts returnedQuantity from sold quantity)
+  /// - Discount proportioning per item
+  /// - Profit based on net sold items only
+  Future<_SalesResult> _getSalesDataForPeriod(
+    DateTime? startDate,
+    DateTime? endDate,
+  ) async {
+    final bills = await BillOfflineController.instance.getBillsByDateRange(
+      startDate ?? DateTime(2000),
+      endDate ?? DateTime.now().add(const Duration(days: 1)),
+    );
+
+    double grossSales = 0;
+    double totalReturns = 0;
+    double netProfit = 0;
+    int totalItemsSold = 0;
+    int totalReturnedItems = 0;
+
+    for (final bill in bills) {
+      // Gross sales = sum of finalAmount (already includes discount)
+      grossSales += bill.finalAmount;
+
+      // Calculate discount ratio for proportional return calculation
+      final billTotalAmount = bill.totalAmount; // pre-discount total
+      final discountRatio = billTotalAmount > 0
+          ? bill.discountAmount / billTotalAmount
+          : 0.0;
+
+      for (final item in bill.items) {
+        final qty = item.quantity;
+        final returnedQty = item.returnedQuantity;
+        final netSoldQty = qty - returnedQty;
+        final sellingPrice = item.sellingPrice;
+        final purchasePrice = item.purchasePrice;
+
+        totalItemsSold += qty;
+        totalReturnedItems += returnedQty;
+
+        // Return amount = returnedQty × sellingPrice × (1 - discountRatio)
+        // This accounts for the proportional discount that was applied at sale
+        final returnAmount = returnedQty * sellingPrice * (1 - discountRatio);
+        totalReturns += returnAmount;
+
+        // Profit from this item = revenue from NET sold items - cost of NET sold items
+        // Revenue = netSoldQty × sellingPrice × (1 - discountRatio)
+        // Cost = netSoldQty × purchasePrice
+        final netRevenue = netSoldQty * sellingPrice * (1 - discountRatio);
+        final netCost = netSoldQty * purchasePrice;
+        netProfit += (netRevenue - netCost);
+      }
+    }
+
+    return _SalesResult(
+      grossSales: grossSales,
+      totalReturns: totalReturns,
+      netProfit: netProfit,
+      billCount: bills.length,
+      totalItemsSold: totalItemsSold,
+      totalReturnedItems: totalReturnedItems,
+    );
+  }
+
+  // ==================== PURCHASE CALCULATION ====================
+
+  Future<_PurchaseResult> _getPurchaseDataForPeriod(
+    DateTime? startDate,
+    DateTime? endDate,
+  ) async {
+    final purchases = await PurchaseOfflineController.instance
+        .getPurchasesByDateRange(
+      startDate ?? DateTime(2000),
+      endDate ?? DateTime.now().add(const Duration(days: 1)),
+    );
+
+    double totalAmount = 0;
+    int totalQty = 0;
+
+    for (final purchase in purchases) {
+      totalAmount += purchase.totalAmount;
+      totalQty += purchase.quantity;
+    }
+
+    return _PurchaseResult(
+      totalAmount: totalAmount,
+      orderCount: purchases.length,
+      totalQty: totalQty,
+    );
+  }
+
+  // ==================== STOCK CALCULATION ====================
+
+  /// Stock value from BATCHES (not product-level currentStock).
+  /// Sum of (quantityRemaining × purchasePrice) for all unconsumed batches.
+  /// This is the accurate FIFO-based stock valuation.
+  Future<_StockResult> _getStockDataFromBatches() async {
+    // Query unconsumed batches directly from Isar
+    final batches = await _isar.purchaseBatchEntitys
+        .filter()
+        .isConsumedEqualTo(false)
+        .not()
+        .syncStatusEqualTo(BatchSyncStatus.deleted)
+        .findAll();
+
+    double stockValue = 0;
+    int lowStockCount = 0;
+
+    // Track per-product remaining stock for low stock detection
+    final productStockMap = <String, int>{};
+
+    for (final batch in batches) {
+      stockValue += batch.quantityRemaining * batch.purchasePrice;
+
+      // Accumulate total remaining stock per product
+      productStockMap[batch.productId] =
+          (productStockMap[batch.productId] ?? 0) + batch.quantityRemaining;
+    }
+
+    // Count products with low stock (> 0 but < 10)
+    for (final entry in productStockMap.entries) {
+      if (entry.value > 0 && entry.value < 10) {
+        lowStockCount++;
+      }
+    }
+
+    return _StockResult(
+      stockValue: stockValue,
+      lowStockCount: lowStockCount,
+    );
+  }
+
+  // ==================== PENDING AMOUNTS ====================
+
+  /// Sum of pendingAmount from all bills with pending/partiallyPaid status
+  Future<double> _getTotalPendingAmount() async {
+    final pendingBills = await _isar.billEntitys
+        .filter()
+        .not()
+        .syncStatusEqualTo(BillSyncStatus.deleted)
+        .group((q) => q
+            .paymentStatusEqualTo(BillPaymentStatus.pending)
+            .or()
+            .paymentStatusEqualTo(BillPaymentStatus.partiallyPaid))
+        .findAll();
+
+    double total = 0;
+    for (final bill in pendingBills) {
+      total += bill.pendingAmount;
+    }
+    return total;
+  }
+
+  /// Dispose resources
+  void dispose() {
+    _debounceTimer?.cancel();
+    for (final sub in _watchSubscriptions) {
+      sub.cancel();
+    }
+    _watchSubscriptions.clear();
+  }
+}
+
+// ==================== Internal Result Classes ====================
+
+class _SalesResult {
+  final double grossSales;
+  final double totalReturns;
+  final double netProfit;
+  final int billCount;
+  final int totalItemsSold;
+  final int totalReturnedItems;
+
+  const _SalesResult({
+    required this.grossSales,
+    required this.totalReturns,
+    required this.netProfit,
+    required this.billCount,
+    required this.totalItemsSold,
+    required this.totalReturnedItems,
+  });
+}
+
+class _PurchaseResult {
+  final double totalAmount;
+  final int orderCount;
+  final int totalQty;
+
+  const _PurchaseResult({
+    required this.totalAmount,
+    required this.orderCount,
+    required this.totalQty,
+  });
+}
+
+class _StockResult {
+  final double stockValue;
+  final int lowStockCount;
+
+  const _StockResult({
+    required this.stockValue,
+    required this.lowStockCount,
+  });
+}

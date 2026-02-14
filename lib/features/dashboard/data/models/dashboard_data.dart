@@ -12,6 +12,9 @@ class DashboardData extends Equatable {
   final double totalSales;
   final int totalBillsCount;
   final int totalItemsSold;
+  final double totalReturns;
+  final int totalReturnedItems;
+  final double netSales;
   final double totalPurchases;
   final int purchaseOrders;
   final int purchaseQty;
@@ -19,6 +22,7 @@ class DashboardData extends Equatable {
   final double profitPercentage;
   final double stockValue;
   final int lowStockCount;
+  final double totalPendingAmount;
 
   const DashboardData({
     this.invoicesCount = 0,
@@ -31,6 +35,9 @@ class DashboardData extends Equatable {
     this.totalSales = 0,
     this.totalBillsCount = 0,
     this.totalItemsSold = 0,
+    this.totalReturns = 0,
+    this.totalReturnedItems = 0,
+    this.netSales = 0,
     this.totalPurchases = 0,
     this.purchaseOrders = 0,
     this.purchaseQty = 0,
@@ -38,6 +45,7 @@ class DashboardData extends Equatable {
     this.profitPercentage = 0,
     this.stockValue = 0,
     this.lowStockCount = 0,
+    this.totalPendingAmount = 0,
   });
 
   /// Empty dashboard data
@@ -54,6 +62,9 @@ class DashboardData extends Equatable {
     double? totalSales,
     int? totalBillsCount,
     int? totalItemsSold,
+    double? totalReturns,
+    int? totalReturnedItems,
+    double? netSales,
     double? totalPurchases,
     int? purchaseOrders,
     int? purchaseQty,
@@ -61,6 +72,7 @@ class DashboardData extends Equatable {
     double? profitPercentage,
     double? stockValue,
     int? lowStockCount,
+    double? totalPendingAmount,
   }) {
     return DashboardData(
       invoicesCount: invoicesCount ?? this.invoicesCount,
@@ -73,6 +85,9 @@ class DashboardData extends Equatable {
       totalSales: totalSales ?? this.totalSales,
       totalBillsCount: totalBillsCount ?? this.totalBillsCount,
       totalItemsSold: totalItemsSold ?? this.totalItemsSold,
+      totalReturns: totalReturns ?? this.totalReturns,
+      totalReturnedItems: totalReturnedItems ?? this.totalReturnedItems,
+      netSales: netSales ?? this.netSales,
       totalPurchases: totalPurchases ?? this.totalPurchases,
       purchaseOrders: purchaseOrders ?? this.purchaseOrders,
       purchaseQty: purchaseQty ?? this.purchaseQty,
@@ -80,6 +95,7 @@ class DashboardData extends Equatable {
       profitPercentage: profitPercentage ?? this.profitPercentage,
       stockValue: stockValue ?? this.stockValue,
       lowStockCount: lowStockCount ?? this.lowStockCount,
+      totalPendingAmount: totalPendingAmount ?? this.totalPendingAmount,
     );
   }
 
@@ -95,6 +111,9 @@ class DashboardData extends Equatable {
     totalSales,
     totalBillsCount,
     totalItemsSold,
+    totalReturns,
+    totalReturnedItems,
+    netSales,
     totalPurchases,
     purchaseOrders,
     purchaseQty,
@@ -102,5 +121,6 @@ class DashboardData extends Equatable {
     profitPercentage,
     stockValue,
     lowStockCount,
+    totalPendingAmount,
   ];
 }

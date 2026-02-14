@@ -61,6 +61,8 @@ class DashboardOfflineRepository {
     final totalSalesAmount = salesData['totalAmount'] as double;
     final totalBillsCount = salesData['billsCount'] as int;
     final totalItemsSold = salesData['itemsSold'] as int;
+    final totalReturns = salesData['totalReturns'] as double;
+    final totalPending = salesData['totalPending'] as double;
 
     // Extract purchase data
     final purchaseData = results[7] as Map<String, dynamic>;
@@ -73,10 +75,11 @@ class DashboardOfflineRepository {
     final stockValue = stockData['stockValue'] as double;
     final lowStockCount = stockData['lowStockCount'] as int;
 
-    // Calculate profit
-    final profit = totalSalesAmount - totalPurchaseAmount;
-    final profitPercentage = totalSalesAmount > 0
-        ? (profit / totalSalesAmount) * 100
+    // Calculate profit from net sales (after returns)
+    final netSales = totalSalesAmount - totalReturns;
+    final profit = salesData['netProfit'] as double;
+    final profitPercentage = netSales > 0
+        ? (profit / netSales) * 100
         : 0.0;
 
     stopwatch.stop();
@@ -95,6 +98,9 @@ class DashboardOfflineRepository {
       totalSales: totalSalesAmount,
       totalBillsCount: totalBillsCount,
       totalItemsSold: totalItemsSold,
+      totalReturns: totalReturns,
+      totalReturnedItems: salesData['returnedItems'] as int,
+      netSales: netSales,
       totalPurchases: totalPurchaseAmount,
       purchaseOrders: purchaseOrdersCount,
       purchaseQty: totalPurchaseQty,
@@ -102,10 +108,12 @@ class DashboardOfflineRepository {
       profitPercentage: profitPercentage,
       stockValue: stockValue,
       lowStockCount: lowStockCount,
+      totalPendingAmount: totalPending,
     );
   }
 
   /// Get sales data for the specified period
+  /// CORRECTLY handles returns: deducts returnedQuantity from sales and profit
   Future<Map<String, dynamic>> _getSalesDataForPeriod(
     DateTime? startDate,
     DateTime? endDate,
@@ -115,23 +123,53 @@ class DashboardOfflineRepository {
       endDate ?? DateTime.now().add(const Duration(days: 1)),
     );
 
-    double totalAmount = 0;
+    double grossAmount = 0;
+    double totalReturns = 0;
+    double netProfit = 0;
     int itemsSold = 0;
+    int returnedItems = 0;
+    double totalPending = 0;
 
     for (final bill in bills) {
-      // Use finalAmount (after discounts) for accurate sales calculation
-      totalAmount += bill.finalAmount;
+      // Gross sales = sum of finalAmount (after discounts)
+      grossAmount += bill.finalAmount;
       
-      // Sum up quantities from all items
+      // Track pending amounts
+      totalPending += bill.pendingAmount;
+
+      // Calculate discount ratio for proportional return calculation
+      final discountRatio = bill.totalAmount > 0
+          ? bill.discountAmount / bill.totalAmount
+          : 0.0;
+
+      // Sum up quantities from all items, accounting for returns
       for (final item in bill.items) {
-        itemsSold += item.quantity;
+        final qty = item.quantity;
+        final returnedQty = item.returnedQuantity;
+        final netSoldQty = qty - returnedQty;
+        
+        itemsSold += qty;
+        returnedItems += returnedQty;
+        
+        // Return amount = returnedQty × sellingPrice × (1 - discountRatio)
+        final returnAmount = returnedQty * item.sellingPrice * (1 - discountRatio);
+        totalReturns += returnAmount;
+        
+        // Profit from net sold items only
+        final netRevenue = netSoldQty * item.sellingPrice * (1 - discountRatio);
+        final netCost = netSoldQty * item.purchasePrice;
+        netProfit += (netRevenue - netCost);
       }
     }
 
     return {
-      'totalAmount': totalAmount,
+      'totalAmount': grossAmount,
+      'totalReturns': totalReturns,
+      'netProfit': netProfit,
       'billsCount': bills.length,
       'itemsSold': itemsSold,
+      'returnedItems': returnedItems,
+      'totalPending': totalPending,
     };
   }
 

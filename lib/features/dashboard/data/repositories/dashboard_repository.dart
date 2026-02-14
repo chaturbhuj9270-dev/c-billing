@@ -102,16 +102,39 @@ class DashboardRepository {
     final purchasesSnapshot = results[7] as QuerySnapshot;
     final productsSnapshot = results[8] as QuerySnapshot;
 
-    // Calculate sales data
+    // Calculate sales data (with return deductions)
     double totalSalesAmount = 0;
+    double totalReturnsAmount = 0;
+    double totalProfitAmount = 0;
+    double totalPendingAmt = 0;
     int totalItemsSold = 0;
+    int totalReturnedItemsCount = 0;
     for (var doc in billsSnapshot.docs) {
       final data = doc.data() as Map<String, dynamic>?;
       if (data != null) {
-        totalSalesAmount += (data['totalAmount'] as num?)?.toDouble() ?? 0;
+        final finalAmt = (data['finalAmount'] as num?)?.toDouble();
+        final billTotal = (data['totalAmount'] as num?)?.toDouble() ?? 0;
+        totalSalesAmount += finalAmt ?? billTotal;
+        totalPendingAmt += (data['pendingAmount'] as num?)?.toDouble() ?? 0;
+        
+        final discountAmt = (data['discountAmount'] as num?)?.toDouble() ?? 0;
+        final discountRatio = billTotal > 0 ? discountAmt / billTotal : 0.0;
+        
         final items = data['items'] as List<dynamic>? ?? [];
         for (var item in items) {
-          totalItemsSold += (item['quantity'] as num?)?.toInt() ?? 0;
+          final qty = (item['quantity'] as num?)?.toInt() ?? 0;
+          final returnedQty = (item['returnedQuantity'] as num?)?.toInt() ?? 0;
+          final netSoldQty = qty - returnedQty;
+          final sellingPrice = (item['sellingPrice'] as num?)?.toDouble() ?? 0;
+          final purchasePrice = (item['purchasePrice'] as num?)?.toDouble() ?? 0;
+          
+          totalItemsSold += qty;
+          totalReturnedItemsCount += returnedQty;
+          totalReturnsAmount += returnedQty * sellingPrice * (1 - discountRatio);
+          
+          final netRevenue = netSoldQty * sellingPrice * (1 - discountRatio);
+          final netCost = netSoldQty * purchasePrice;
+          totalProfitAmount += (netRevenue - netCost);
         }
       }
     }
@@ -140,10 +163,11 @@ class DashboardRepository {
       }
     }
 
-    // Calculate profit
-    final profit = totalSalesAmount - totalPurchaseAmount;
-    final profitPercentage = totalSalesAmount > 0
-        ? (profit / totalSalesAmount) * 100
+    // Calculate profit from net sales (after returns)
+    final netSalesAmount = totalSalesAmount - totalReturnsAmount;
+    final profit = totalProfitAmount;
+    final profitPercentage = netSalesAmount > 0
+        ? (profit / netSalesAmount) * 100
         : 0.0;
 
     stopwatch.stop();
@@ -162,6 +186,9 @@ class DashboardRepository {
       totalSales: totalSalesAmount,
       totalBillsCount: billsSnapshot.docs.length,
       totalItemsSold: totalItemsSold,
+      totalReturns: totalReturnsAmount,
+      totalReturnedItems: totalReturnedItemsCount,
+      netSales: netSalesAmount,
       totalPurchases: totalPurchaseAmount,
       purchaseOrders: purchasesSnapshot.docs.length,
       purchaseQty: totalPurchaseQty,
@@ -169,6 +196,7 @@ class DashboardRepository {
       profitPercentage: profitPercentage,
       stockValue: stockValue,
       lowStockCount: lowStockCount,
+      totalPendingAmount: totalPendingAmt,
     );
 
     // Store in cache

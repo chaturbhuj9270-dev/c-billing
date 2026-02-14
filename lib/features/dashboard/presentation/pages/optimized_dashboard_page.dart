@@ -4,7 +4,6 @@ import 'package:flutter/services.dart';
 import 'dart:ui';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../customer/presentation/pages/customer_page.dart';
 import '../../../supplier/presentation/pages/supplier_page.dart';
 import '../../../company/presentation/pages/company_page.dart';
@@ -21,7 +20,7 @@ import '../../../../core/services/dashboard_refresh_service.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../../domain/entities/dashboard_summary.dart';
 import '../../domain/repositories/dashboard_repository_interface.dart';
-import '../../data/repositories/dashboard_repository.dart';
+import '../../data/repositories/dashboard_offline_repository.dart';
 import '../cubit/optimized_dashboard_cubit.dart';
 import '../cubit/optimized_dashboard_state.dart';
 import '../widgets/shimmer_widgets.dart';
@@ -65,8 +64,8 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
 
-  // Real data for quick insights
-  final DashboardRepository _repository = DashboardRepository();
+  // Real data for quick insights (using offline repository for consistency)
+  final DashboardOfflineRepository _repository = DashboardOfflineRepository.instance;
   List<Map<String, dynamic>> _upcomingPayments = [];
   List<Map<String, dynamic>> _topProducts = [];
   List<Map<String, dynamic>> _pendingPayments = [];
@@ -630,7 +629,6 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
     // Get data (from ready state, error state with cache, or empty)
     final data = state.data ?? DashboardSummary.empty;
     final isRefreshing = state.isRefreshing;
-    final isFromCache = state.isFromCache;
 
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(),
@@ -1183,38 +1181,77 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
   }
 
   Widget _buildMetricsRow(DashboardSummary data, bool isLoading) {
-    return Row(
+    return Column(
       children: [
-        Expanded(
-          child: _buildGradientMetricCard(
-            title: _localizations.totalSales,
-            amount: _formatAmount(data.totalSales),
-            subtitle:
-                '${_localizations.bills}: ${data.totalBillsCount} • ${_localizations.items}: ${data.totalItemsSold}',
-            gradient: const LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [Color(0xFF667eea), Color(0xFF764ba2)],
+        Row(
+          children: [
+            Expanded(
+              child: _buildGradientMetricCard(
+                title: _localizations.totalSales,
+                amount: _formatAmount(data.totalSales),
+                subtitle:
+                    '${_localizations.bills}: ${data.totalBillsCount} • ${_localizations.items}: ${data.totalItemsSold}',
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Color(0xFF667eea), Color(0xFF764ba2)],
+                ),
+                icon: Icons.trending_up_rounded,
+                isLoading: isLoading,
+              ),
             ),
-            icon: Icons.trending_up_rounded,
-            isLoading: isLoading,
-          ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: _buildGradientMetricCard(
+                title: _localizations.totalPurchase,
+                amount: _formatAmount(data.totalPurchases),
+                subtitle:
+                    '${_localizations.orders}: ${data.purchaseOrders} • ${_localizations.qty}: ${data.purchaseQty}',
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Color(0xFF757575), Color(0xFF424242)],
+                ),
+                icon: Icons.shopping_bag_rounded,
+                isLoading: isLoading,
+              ),
+            ),
+          ],
         ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: _buildGradientMetricCard(
-            title: _localizations.totalPurchase,
-            amount: _formatAmount(data.totalPurchases),
-            subtitle:
-                '${_localizations.orders}: ${data.purchaseOrders} • ${_localizations.qty}: ${data.purchaseQty}',
-            gradient: const LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [Color(0xFF757575), Color(0xFF424242)],
+        const SizedBox(height: 16),
+        // Returns & Net Sales row
+        Row(
+          children: [
+            Expanded(
+              child: _buildGradientMetricCard(
+                title: 'Returns',
+                amount: _formatAmount(data.totalReturns),
+                subtitle: '${data.totalReturnedItems} items returned',
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Color(0xFFEF5350), Color(0xFFC62828)],
+                ),
+                icon: Icons.assignment_return_rounded,
+                isLoading: isLoading,
+              ),
             ),
-            icon: Icons.shopping_bag_rounded,
-            isLoading: isLoading,
-          ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: _buildGradientMetricCard(
+                title: 'Net Sales',
+                amount: _formatAmount(data.netSales),
+                subtitle: 'After returns deducted',
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Color(0xFF2E7D32), Color(0xFF1B5E20)],
+                ),
+                icon: Icons.account_balance_wallet_rounded,
+                isLoading: isLoading,
+              ),
+            ),
+          ],
         ),
       ],
     );
@@ -1450,7 +1487,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text(
-                'Stock Overview',
+                'Stock & Payments',
                 style: TextStyle(
                   color: Color(0xFF1B4D3E),
                   fontSize: 14,
@@ -1535,14 +1572,16 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                 child: Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF667eea).withOpacity(0.05),
+                    color: data.totalPendingAmount > 0
+                        ? const Color(0xFFEF5350).withOpacity(0.05)
+                        : const Color(0xFF667eea).withOpacity(0.05),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Total Products',
+                        'Pending Amount',
                         style: TextStyle(
                           color: Colors.grey[600],
                           fontSize: 11,
@@ -1553,10 +1592,12 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                       AnimatedSwitcher(
                         duration: const Duration(milliseconds: 200),
                         child: Text(
-                          '${data.productsCount}',
-                          key: ValueKey(data.productsCount),
-                          style: const TextStyle(
-                            color: Color(0xFF667eea),
+                          _formatAmount(data.totalPendingAmount),
+                          key: ValueKey(data.totalPendingAmount),
+                          style: TextStyle(
+                            color: data.totalPendingAmount > 0
+                                ? const Color(0xFFEF5350)
+                                : const Color(0xFF667eea),
                             fontSize: 18,
                             fontWeight: FontWeight.w700,
                             fontFamily: 'Literata',
@@ -1948,7 +1989,6 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
   DateTime? _parseDate(dynamic value) {
     if (value == null) return null;
     if (value is DateTime) return value;
-    if (value is Timestamp) return value.toDate();
     if (value is String) {
       try {
         return DateTime.parse(value);
