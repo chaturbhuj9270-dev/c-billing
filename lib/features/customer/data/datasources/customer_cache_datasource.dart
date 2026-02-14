@@ -17,7 +17,9 @@ class CustomerCacheDataSource {
     final serializableCustomers = customers.map((customer) {
       final map = Map<String, dynamic>.from(customer);
       map.forEach((key, value) {
-        if (value is Timestamp) {
+        if (value is DateTime) {
+          map[key] = value.toIso8601String();
+        } else if (value is Timestamp) {
           map[key] = value.toDate().toIso8601String();
         } else if (value is FieldValue) {
           // FieldValue can't be easily converted, use current time as placeholder
