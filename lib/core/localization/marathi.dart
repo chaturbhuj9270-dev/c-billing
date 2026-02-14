@@ -196,6 +196,14 @@ class MarathiLocalization {
   static const String supplierAddedSuccessfully =
       'पुरवठादार यशस्वीरीत्या जोडला';
   static const String companyAddedSuccessfully = 'कंपनी यशस्वीरीत्या जोडली';
+  static const String supplierCode = 'पुरवठादार कोड';
+  static const String companyCode = 'कंपनी कोड';
+  static const String supplierCodeRequired = 'पुरवठादार कोड आवश्यक आहे';
+  static const String companyCodeRequired = 'कंपनी कोड आवश्यक आहे';
+  static const String supplierCodeAlreadyExists = 'हा पुरवठादार कोड आधीपासून अस्तित्वात आहे';
+  static const String companyCodeAlreadyExists = 'हा कंपनी कोड आधीपासून अस्तित्वात आहे';
+  static const String addYourFirstCompany = 'सुरू करण्यासाठी तुमची पहिली कंपनी जोडा';
+  static const String addCompanyNow = 'कंपनी जोडा';
   static const String errorAddingSupplier = 'पुरवठादार जोडण्यात त्रुटी';
   static const String errorAddingCompany = 'कंपनी जोडण्यात त्रुटी';
   static const String pleaseSelectProduct = 'कृपया उत्पादन निवडा';

@@ -3530,4 +3530,93 @@ class AppLocalizations {
         return EnglishLocalization.couldNotOpenWhatsApp;
     }
   }
+
+  // Supplier/Company Code fields
+  String get supplierCode {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.supplierCode;
+      case 'Marathi':
+        return MarathiLocalization.supplierCode;
+      default:
+        return EnglishLocalization.supplierCode;
+    }
+  }
+
+  String get companyCode {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.companyCode;
+      case 'Marathi':
+        return MarathiLocalization.companyCode;
+      default:
+        return EnglishLocalization.companyCode;
+    }
+  }
+
+  String get supplierCodeRequired {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.supplierCodeRequired;
+      case 'Marathi':
+        return MarathiLocalization.supplierCodeRequired;
+      default:
+        return EnglishLocalization.supplierCodeRequired;
+    }
+  }
+
+  String get companyCodeRequired {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.companyCodeRequired;
+      case 'Marathi':
+        return MarathiLocalization.companyCodeRequired;
+      default:
+        return EnglishLocalization.companyCodeRequired;
+    }
+  }
+
+  String get supplierCodeAlreadyExists {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.supplierCodeAlreadyExists;
+      case 'Marathi':
+        return MarathiLocalization.supplierCodeAlreadyExists;
+      default:
+        return EnglishLocalization.supplierCodeAlreadyExists;
+    }
+  }
+
+  String get companyCodeAlreadyExists {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.companyCodeAlreadyExists;
+      case 'Marathi':
+        return MarathiLocalization.companyCodeAlreadyExists;
+      default:
+        return EnglishLocalization.companyCodeAlreadyExists;
+    }
+  }
+
+  String get addYourFirstCompany {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.addYourFirstCompany;
+      case 'Marathi':
+        return MarathiLocalization.addYourFirstCompany;
+      default:
+        return EnglishLocalization.addYourFirstCompany;
+    }
+  }
+
+  String get addCompanyNow {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.addCompanyNow;
+      case 'Marathi':
+        return MarathiLocalization.addCompanyNow;
+      default:
+        return EnglishLocalization.addCompanyNow;
+    }
+  }
 }

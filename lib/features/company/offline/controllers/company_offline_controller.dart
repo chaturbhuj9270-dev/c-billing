@@ -29,15 +29,37 @@ class CompanyOfflineController extends ChangeNotifier {
 
   // ==================== CREATE ====================
 
+  /// Check if a company code already exists (for uniqueness validation)
+  Future<bool> isCompanyCodeTaken(String code, {Id? excludeId}) async {
+    final existing = await _isar.companyEntitys
+        .filter()
+        .companyCodeEqualTo(code, caseSensitive: false)
+        .not()
+        .syncStatusEqualTo(CompanySyncStatus.deleted)
+        .findAll();
+    if (excludeId != null) {
+      return existing.any((e) => e.id != excludeId);
+    }
+    return existing.isNotEmpty;
+  }
+
   /// Add a new company locally
   /// Sets syncStatus to NEW for background sync
   Future<CompanyEntity> addCompany({
     required String companyName,
+    required String companyCode,
     String contact = '',
     String address = '',
   }) async {
+    // Validate uniqueness of company code
+    final codeTaken = await isCompanyCodeTaken(companyCode);
+    if (codeTaken) {
+      throw Exception('Company code "$companyCode" already exists');
+    }
+
     final company = CompanyEntity.create(
       companyName: companyName,
+      companyCode: companyCode,
       contact: contact,
       address: address,
       syncStatus: CompanySyncStatus.newRecord,
@@ -121,6 +143,7 @@ class CompanyOfflineController extends ChangeNotifier {
   Future<CompanyEntity?> updateCompany({
     required Id id,
     String? companyName,
+    String? companyCode,
     String? contact,
     String? address,
     bool? isActive,
@@ -129,6 +152,14 @@ class CompanyOfflineController extends ChangeNotifier {
     if (existing == null) {
       debugPrint('[CompanyOffline] Company not found: $id');
       return null;
+    }
+
+    // Validate uniqueness of company code if changed
+    if (companyCode != null && companyCode != existing.companyCode) {
+      final codeTaken = await isCompanyCodeTaken(companyCode, excludeId: id);
+      if (codeTaken) {
+        throw Exception('Company code "$companyCode" already exists');
+      }
     }
 
     // Determine new syncStatus
@@ -150,6 +181,7 @@ class CompanyOfflineController extends ChangeNotifier {
 
     final updated = existing.copyWith(
       companyName: companyName,
+      companyCode: companyCode,
       contact: contact,
       address: address,
       isActive: isActive,

@@ -22,6 +22,7 @@ class _SupplierPageState extends State<SupplierPage> {
   final _firstNameController = TextEditingController();
   final _middleNameController = TextEditingController();
   final _lastNameController = TextEditingController();
+  final _supplierCodeController = TextEditingController();
   final _contactController = TextEditingController();
   final _addressController = TextEditingController();
   final _searchController = TextEditingController();
@@ -80,6 +81,7 @@ class _SupplierPageState extends State<SupplierPage> {
     _firstNameController.dispose();
     _middleNameController.dispose();
     _lastNameController.dispose();
+    _supplierCodeController.dispose();
     _contactController.dispose();
     _addressController.dispose();
     LanguageService.instance.removeListener(_onLanguageChanged);
@@ -157,10 +159,14 @@ class _SupplierPageState extends State<SupplierPage> {
             final address = (supplier['address'] ?? '')
                 .toString()
                 .toLowerCase();
+            final supplierCode = (supplier['supplierCode'] ?? '')
+                .toString()
+                .toLowerCase();
             return firstName.contains(query) ||
                 lastName.contains(query) ||
                 contact.contains(query) ||
-                address.contains(query);
+                address.contains(query) ||
+                supplierCode.contains(query);
           }).toList();
         }
         _applySorting();
@@ -295,6 +301,7 @@ class _SupplierPageState extends State<SupplierPage> {
         _firstNameController.clear();
         _middleNameController.clear();
         _lastNameController.clear();
+        _supplierCodeController.clear();
         _contactController.clear();
         _addressController.clear();
         _editingSupplierId = null;
@@ -415,6 +422,14 @@ class _SupplierPageState extends State<SupplierPage> {
             label: _localizations.lastName,
             controller: _lastNameController,
             icon: Icons.person_outline,
+            isRequired: true,
+          ),
+          const SizedBox(height: 16),
+          // Supplier Code
+          _buildInputField(
+            label: _localizations.supplierCode,
+            controller: _supplierCodeController,
+            icon: Icons.qr_code_rounded,
             isRequired: true,
           ),
           const SizedBox(height: 16),
@@ -578,6 +593,7 @@ class _SupplierPageState extends State<SupplierPage> {
       _firstNameController.text = supplier['firstName'] ?? '';
       _middleNameController.text = supplier['middleName'] ?? '';
       _lastNameController.text = supplier['lastName'] ?? '';
+      _supplierCodeController.text = supplier['supplierCode'] ?? '';
       _contactController.text = supplier['contact'] ?? '';
       _addressController.text = supplier['address'] ?? '';
     } catch (e) {
@@ -615,6 +631,7 @@ class _SupplierPageState extends State<SupplierPage> {
             firstName: _firstNameController.text,
             middleName: _middleNameController.text,
             lastName: _lastNameController.text,
+            supplierCode: _supplierCodeController.text.trim(),
             contact: _contactController.text,
             address: _addressController.text,
           );
@@ -632,6 +649,7 @@ class _SupplierPageState extends State<SupplierPage> {
           firstName: _firstNameController.text,
           middleName: _middleNameController.text,
           lastName: _lastNameController.text,
+          supplierCode: _supplierCodeController.text.trim(),
           contact: _contactController.text,
           address: _addressController.text,
         );
@@ -1010,6 +1028,7 @@ class _SupplierPageState extends State<SupplierPage> {
     final firstName = supplier['firstName'] ?? '';
     final contact = supplier['contact'] ?? 'N/A';
     final address = supplier['address'] ?? 'N/A';
+    final supplierCode = supplier['supplierCode'] ?? '';
     final supplierId = supplier['id'] ?? '';
 
     final accentColors = [
@@ -1101,6 +1120,25 @@ class _SupplierPageState extends State<SupplierPage> {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
+                          if (supplierCode.isNotEmpty) ...[
+                            const SizedBox(height: 4),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                supplierCode,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: const Color(0xFF1B4D3E).withOpacity(0.8),
+                                  fontFamily: 'Literata',
+                                ),
+                              ),
+                            ),
+                          ],
                           const SizedBox(height: 6),
                           Row(
                             children: [

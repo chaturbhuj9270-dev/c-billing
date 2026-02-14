@@ -60,14 +60,19 @@ const SupplierEntitySchema = CollectionSchema(
       name: r'serverId',
       type: IsarType.string,
     ),
-    r'syncStatus': PropertySchema(
+    r'supplierCode': PropertySchema(
       id: 11,
+      name: r'supplierCode',
+      type: IsarType.string,
+    ),
+    r'syncStatus': PropertySchema(
+      id: 12,
       name: r'syncStatus',
       type: IsarType.byte,
       enumMap: _SupplierEntitysyncStatusEnumValueMap,
     ),
     r'updatedAt': PropertySchema(
-      id: 12,
+      id: 13,
       name: r'updatedAt',
       type: IsarType.dateTime,
     ),
@@ -101,6 +106,19 @@ const SupplierEntitySchema = CollectionSchema(
         IndexPropertySchema(
           name: r'firstName',
           type: IndexType.value,
+          caseSensitive: false,
+        ),
+      ],
+    ),
+    r'supplierCode': IndexSchema(
+      id: -6908271452855759711,
+      name: r'supplierCode',
+      unique: true,
+      replace: false,
+      properties: [
+        IndexPropertySchema(
+          name: r'supplierCode',
+          type: IndexType.hash,
           caseSensitive: false,
         ),
       ],
@@ -172,6 +190,7 @@ int _supplierEntityEstimateSize(
       bytesCount += 3 + value.length * 3;
     }
   }
+  bytesCount += 3 + object.supplierCode.length * 3;
   return bytesCount;
 }
 
@@ -192,8 +211,9 @@ void _supplierEntitySerialize(
   writer.writeString(offsets[8], object.middleName);
   writer.writeBool(offsets[9], object.needsSync);
   writer.writeString(offsets[10], object.serverId);
-  writer.writeByte(offsets[11], object.syncStatus.index);
-  writer.writeDateTime(offsets[12], object.updatedAt);
+  writer.writeString(offsets[11], object.supplierCode);
+  writer.writeByte(offsets[12], object.syncStatus.index);
+  writer.writeDateTime(offsets[13], object.updatedAt);
 }
 
 SupplierEntity _supplierEntityDeserialize(
@@ -211,12 +231,13 @@ SupplierEntity _supplierEntityDeserialize(
     lastName: reader.readStringOrNull(offsets[7]) ?? '',
     middleName: reader.readStringOrNull(offsets[8]) ?? '',
     serverId: reader.readStringOrNull(offsets[10]),
+    supplierCode: reader.readString(offsets[11]),
     syncStatus:
         _SupplierEntitysyncStatusValueEnumMap[reader.readByteOrNull(
-          offsets[11],
+          offsets[12],
         )] ??
         SupplierSyncStatus.newRecord,
-    updatedAt: reader.readDateTime(offsets[12]),
+    updatedAt: reader.readDateTime(offsets[13]),
   );
   object.id = id;
   return object;
@@ -252,12 +273,14 @@ P _supplierEntityDeserializeProp<P>(
     case 10:
       return (reader.readStringOrNull(offset)) as P;
     case 11:
+      return (reader.readString(offset)) as P;
+    case 12:
       return (_SupplierEntitysyncStatusValueEnumMap[reader.readByteOrNull(
                 offset,
               )] ??
               SupplierSyncStatus.newRecord)
           as P;
-    case 12:
+    case 13:
       return (reader.readDateTime(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -291,6 +314,67 @@ void _supplierEntityAttach(
   SupplierEntity object,
 ) {
   object.id = id;
+}
+
+extension SupplierEntityByIndex on IsarCollection<SupplierEntity> {
+  Future<SupplierEntity?> getBySupplierCode(String supplierCode) {
+    return getByIndex(r'supplierCode', [supplierCode]);
+  }
+
+  SupplierEntity? getBySupplierCodeSync(String supplierCode) {
+    return getByIndexSync(r'supplierCode', [supplierCode]);
+  }
+
+  Future<bool> deleteBySupplierCode(String supplierCode) {
+    return deleteByIndex(r'supplierCode', [supplierCode]);
+  }
+
+  bool deleteBySupplierCodeSync(String supplierCode) {
+    return deleteByIndexSync(r'supplierCode', [supplierCode]);
+  }
+
+  Future<List<SupplierEntity?>> getAllBySupplierCode(
+    List<String> supplierCodeValues,
+  ) {
+    final values = supplierCodeValues.map((e) => [e]).toList();
+    return getAllByIndex(r'supplierCode', values);
+  }
+
+  List<SupplierEntity?> getAllBySupplierCodeSync(
+    List<String> supplierCodeValues,
+  ) {
+    final values = supplierCodeValues.map((e) => [e]).toList();
+    return getAllByIndexSync(r'supplierCode', values);
+  }
+
+  Future<int> deleteAllBySupplierCode(List<String> supplierCodeValues) {
+    final values = supplierCodeValues.map((e) => [e]).toList();
+    return deleteAllByIndex(r'supplierCode', values);
+  }
+
+  int deleteAllBySupplierCodeSync(List<String> supplierCodeValues) {
+    final values = supplierCodeValues.map((e) => [e]).toList();
+    return deleteAllByIndexSync(r'supplierCode', values);
+  }
+
+  Future<Id> putBySupplierCode(SupplierEntity object) {
+    return putByIndex(r'supplierCode', object);
+  }
+
+  Id putBySupplierCodeSync(SupplierEntity object, {bool saveLinks = true}) {
+    return putByIndexSync(r'supplierCode', object, saveLinks: saveLinks);
+  }
+
+  Future<List<Id>> putAllBySupplierCode(List<SupplierEntity> objects) {
+    return putAllByIndex(r'supplierCode', objects);
+  }
+
+  List<Id> putAllBySupplierCodeSync(
+    List<SupplierEntity> objects, {
+    bool saveLinks = true,
+  }) {
+    return putAllByIndexSync(r'supplierCode', objects, saveLinks: saveLinks);
+  }
 }
 
 extension SupplierEntityQueryWhereSort
@@ -621,6 +705,61 @@ extension SupplierEntityQueryWhere
             )
             .addWhereClause(
               IndexWhereClause.lessThan(indexName: r'firstName', upper: ['']),
+            );
+      }
+    });
+  }
+
+  QueryBuilder<SupplierEntity, SupplierEntity, QAfterWhereClause>
+  supplierCodeEqualTo(String supplierCode) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(
+        IndexWhereClause.equalTo(
+          indexName: r'supplierCode',
+          value: [supplierCode],
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<SupplierEntity, SupplierEntity, QAfterWhereClause>
+  supplierCodeNotEqualTo(String supplierCode) {
+    return QueryBuilder.apply(this, (query) {
+      if (query.whereSort == Sort.asc) {
+        return query
+            .addWhereClause(
+              IndexWhereClause.between(
+                indexName: r'supplierCode',
+                lower: [],
+                upper: [supplierCode],
+                includeUpper: false,
+              ),
+            )
+            .addWhereClause(
+              IndexWhereClause.between(
+                indexName: r'supplierCode',
+                lower: [supplierCode],
+                includeLower: false,
+                upper: [],
+              ),
+            );
+      } else {
+        return query
+            .addWhereClause(
+              IndexWhereClause.between(
+                indexName: r'supplierCode',
+                lower: [supplierCode],
+                includeLower: false,
+                upper: [],
+              ),
+            )
+            .addWhereClause(
+              IndexWhereClause.between(
+                indexName: r'supplierCode',
+                lower: [],
+                upper: [supplierCode],
+                includeUpper: false,
+              ),
             );
       }
     });
@@ -2024,6 +2163,147 @@ extension SupplierEntityQueryFilter
   }
 
   QueryBuilder<SupplierEntity, SupplierEntity, QAfterFilterCondition>
+  supplierCodeEqualTo(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'supplierCode',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<SupplierEntity, SupplierEntity, QAfterFilterCondition>
+  supplierCodeGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'supplierCode',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<SupplierEntity, SupplierEntity, QAfterFilterCondition>
+  supplierCodeLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'supplierCode',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<SupplierEntity, SupplierEntity, QAfterFilterCondition>
+  supplierCodeBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'supplierCode',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<SupplierEntity, SupplierEntity, QAfterFilterCondition>
+  supplierCodeStartsWith(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.startsWith(
+          property: r'supplierCode',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<SupplierEntity, SupplierEntity, QAfterFilterCondition>
+  supplierCodeEndsWith(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.endsWith(
+          property: r'supplierCode',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<SupplierEntity, SupplierEntity, QAfterFilterCondition>
+  supplierCodeContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.contains(
+          property: r'supplierCode',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<SupplierEntity, SupplierEntity, QAfterFilterCondition>
+  supplierCodeMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.matches(
+          property: r'supplierCode',
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<SupplierEntity, SupplierEntity, QAfterFilterCondition>
+  supplierCodeIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'supplierCode', value: ''),
+      );
+    });
+  }
+
+  QueryBuilder<SupplierEntity, SupplierEntity, QAfterFilterCondition>
+  supplierCodeIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(property: r'supplierCode', value: ''),
+      );
+    });
+  }
+
+  QueryBuilder<SupplierEntity, SupplierEntity, QAfterFilterCondition>
   syncStatusEqualTo(SupplierSyncStatus value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
@@ -2288,6 +2568,20 @@ extension SupplierEntityQuerySortBy
   }
 
   QueryBuilder<SupplierEntity, SupplierEntity, QAfterSortBy>
+  sortBySupplierCode() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'supplierCode', Sort.asc);
+    });
+  }
+
+  QueryBuilder<SupplierEntity, SupplierEntity, QAfterSortBy>
+  sortBySupplierCodeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'supplierCode', Sort.desc);
+    });
+  }
+
+  QueryBuilder<SupplierEntity, SupplierEntity, QAfterSortBy>
   sortBySyncStatus() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'syncStatus', Sort.asc);
@@ -2475,6 +2769,20 @@ extension SupplierEntityQuerySortThenBy
   }
 
   QueryBuilder<SupplierEntity, SupplierEntity, QAfterSortBy>
+  thenBySupplierCode() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'supplierCode', Sort.asc);
+    });
+  }
+
+  QueryBuilder<SupplierEntity, SupplierEntity, QAfterSortBy>
+  thenBySupplierCodeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'supplierCode', Sort.desc);
+    });
+  }
+
+  QueryBuilder<SupplierEntity, SupplierEntity, QAfterSortBy>
   thenBySyncStatus() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'syncStatus', Sort.asc);
@@ -2588,6 +2896,13 @@ extension SupplierEntityQueryWhereDistinct
   }
 
   QueryBuilder<SupplierEntity, SupplierEntity, QDistinct>
+  distinctBySupplierCode({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'supplierCode', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<SupplierEntity, SupplierEntity, QDistinct>
   distinctBySyncStatus() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'syncStatus');
@@ -2674,6 +2989,13 @@ extension SupplierEntityQueryProperty
   QueryBuilder<SupplierEntity, String?, QQueryOperations> serverIdProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'serverId');
+    });
+  }
+
+  QueryBuilder<SupplierEntity, String, QQueryOperations>
+  supplierCodeProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'supplierCode');
     });
   }
 

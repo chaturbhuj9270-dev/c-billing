@@ -195,6 +195,14 @@ class HindiLocalization {
   static const String supplierAddedSuccessfully =
       'आपूर्तिकर्ता सफलतापूर्वक जोड़ा गया';
   static const String companyAddedSuccessfully = 'कंपनी सफलतापूर्वक जोड़ी गई';
+  static const String supplierCode = 'आपूर्तिकर्ता कोड';
+  static const String companyCode = 'कंपनी कोड';
+  static const String supplierCodeRequired = 'आपूर्तिकर्ता कोड आवश्यक है';
+  static const String companyCodeRequired = 'कंपनी कोड आवश्यक है';
+  static const String supplierCodeAlreadyExists = 'यह आपूर्तिकर्ता कोड पहले से मौजूद है';
+  static const String companyCodeAlreadyExists = 'यह कंपनी कोड पहले से मौजूद है';
+  static const String addYourFirstCompany = 'शुरू करने के लिए अपनी पहली कंपनी जोड़ें';
+  static const String addCompanyNow = 'कंपनी जोड़ें';
   static const String errorAddingSupplier = 'आपूर्तिकर्ता जोड़ने में त्रुटि';
   static const String errorAddingCompany = 'कंपनी जोड़ने में त्रुटि';
   static const String pleaseSelectProduct = 'कृपया एक उत्पाद चुनें';

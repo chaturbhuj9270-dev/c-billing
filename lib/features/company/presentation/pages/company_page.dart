@@ -20,12 +20,14 @@ class CompanyPage extends StatefulWidget {
 
 class _CompanyPageState extends State<CompanyPage> {
   final _companyNameController = TextEditingController();
+  final _companyCodeController = TextEditingController();
   final _contactController = TextEditingController();
   final _addressController = TextEditingController();
   final _searchController = TextEditingController();
 
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
+  bool _isInitialLoading = true;
   bool _isEditing = false;
   String? _editingCompanyId;
   int? _editingCompanyLocalId; // Local Isar ID for offline-first
@@ -74,6 +76,7 @@ class _CompanyPageState extends State<CompanyPage> {
       setState(() {
         if (cachedCompanies != null) {
           _companies = cachedCompanies;
+          _isInitialLoading = false;
           _filterAndSortCompanies();
         }
       });
@@ -97,6 +100,7 @@ class _CompanyPageState extends State<CompanyPage> {
           
           setState(() {
             _companies = companies;
+            _isInitialLoading = false;
             _filterAndSortCompanies();
           });
           
@@ -144,10 +148,12 @@ class _CompanyPageState extends State<CompanyPage> {
                 .toString()
                 .toLowerCase();
             final address = (company['address'] ?? '').toString().toLowerCase();
+            final companyCode = (company['companyCode'] ?? '').toString().toLowerCase();
             return name.contains(query) ||
                 contact.contains(query) ||
                 contactPerson.contains(query) ||
-                address.contains(query);
+                address.contains(query) ||
+                companyCode.contains(query);
           }).toList();
         }
         _applyCompanySorting();
@@ -231,6 +237,7 @@ class _CompanyPageState extends State<CompanyPage> {
 
   void _clearForm() {
     _companyNameController.clear();
+    _companyCodeController.clear();
     _contactController.clear();
     _addressController.clear();
     _editingCompanyId = null;
@@ -337,6 +344,14 @@ class _CompanyPageState extends State<CompanyPage> {
             isRequired: true,
           ),
           const SizedBox(height: 16),
+          // Company Code
+          _buildInputField(
+            label: _localizations.companyCode,
+            controller: _companyCodeController,
+            icon: Icons.qr_code_rounded,
+            isRequired: true,
+          ),
+          const SizedBox(height: 16),
           // Contact Number
           _buildInputField(
             label: _localizations.contactNumber,
@@ -426,6 +441,7 @@ class _CompanyPageState extends State<CompanyPage> {
 
   void _editCompany(Map<String, dynamic> company) {
     _companyNameController.text = company['companyName'] ?? '';
+    _companyCodeController.text = company['companyCode'] ?? '';
     _contactController.text = company['contact'] ?? '';
     _addressController.text = company['address'] ?? '';
     _editingCompanyId = company['id'];
@@ -461,6 +477,7 @@ class _CompanyPageState extends State<CompanyPage> {
           await offlineController.updateCompany(
             id: localId,
             companyName: _companyNameController.text.trim(),
+            companyCode: _companyCodeController.text.trim(),
             contact: _contactController.text.trim(),
             address: _addressController.text.trim(),
           );
@@ -476,6 +493,7 @@ class _CompanyPageState extends State<CompanyPage> {
         // Add new company to Isar
         await offlineController.addCompany(
           companyName: _companyNameController.text.trim(),
+          companyCode: _companyCodeController.text.trim(),
           contact: _contactController.text.trim(),
           address: _addressController.text.trim(),
         );
@@ -600,6 +618,7 @@ class _CompanyPageState extends State<CompanyPage> {
     _companyStreamSubscription?.cancel();
     _filterDebounceTimer?.cancel();
     _companyNameController.dispose();
+    _companyCodeController.dispose();
     _contactController.dispose();
     _addressController.dispose();
     _searchController.dispose();
@@ -740,15 +759,193 @@ class _CompanyPageState extends State<CompanyPage> {
           ),
         ),
       ),
-      body: Column(
-        children: [
-          // Search bar + Sort button
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
+      body: _isInitialLoading
+          ? const Center(
+              child: CircularProgressIndicator(
+                color: Color(0xFF1B4D3E),
+              ),
+            )
+          : _companies.isEmpty && !_isLoading
+              ? _buildEmptyState()
+              : _buildCompanyListBody(),
+    );
+  }
+
+  /// Clean empty state widget when no companies exist
+  Widget _buildEmptyState() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isTablet = constraints.maxWidth > 600;
+        final iconSize = isTablet ? 120.0 : 90.0;
+        final titleSize = isTablet ? 22.0 : 18.0;
+        final subtitleSize = isTablet ? 16.0 : 14.0;
+
+        return Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Expanded(
-                  child: Container(
+                Container(
+                  width: iconSize,
+                  height: iconSize,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        const Color(0xFF1B4D3E).withOpacity(0.12),
+                        const Color(0xFF2E7D32).withOpacity(0.08),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(iconSize * 0.25),
+                  ),
+                  child: Icon(
+                    Icons.business_outlined,
+                    size: iconSize * 0.5,
+                    color: const Color(0xFF1B4D3E).withOpacity(0.4),
+                  ),
+                ),
+                const SizedBox(height: 28),
+                Text(
+                  _localizations.noCompaniesAvailable,
+                  style: TextStyle(
+                    fontSize: titleSize,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.grey[800],
+                    fontFamily: 'Literata',
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 10),
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: isTablet ? 80 : 32),
+                  child: Text(
+                    _localizations.addYourFirstCompany,
+                    style: TextStyle(
+                      fontSize: subtitleSize,
+                      color: Colors.grey[500],
+                      fontFamily: 'Literata',
+                      height: 1.4,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                const SizedBox(height: 32),
+                ElevatedButton.icon(
+                  onPressed: _showAddCompanyBottomSheet,
+                  icon: const Icon(Icons.add_rounded, size: 20),
+                  label: Text(
+                    _localizations.addCompanyNow,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      fontFamily: 'Literata',
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF1B4D3E),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 28,
+                      vertical: 14,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    elevation: 4,
+                    shadowColor: const Color(0xFF1B4D3E).withOpacity(0.3),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  /// Main company list body with search bar and responsive list
+  Widget _buildCompanyListBody() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isTablet = constraints.maxWidth > 600;
+        final horizontalPadding = isTablet ? 24.0 : 16.0;
+
+        return Column(
+          children: [
+            // Search bar + Sort button
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 16),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Container(
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.grey[300]!, width: 1),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.04),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: _searchController,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontFamily: 'Literata',
+                                color: Color(0xFF1B4D3E),
+                              ),
+                              decoration: InputDecoration(
+                                hintText: _localizations.searchCompanies,
+                                hintStyle: TextStyle(
+                                  color: Colors.grey[400],
+                                  fontFamily: 'Literata',
+                                ),
+                                prefixIcon: Icon(
+                                  Icons.search_rounded,
+                                  color: Colors.grey[600],
+                                  size: 20,
+                                ),
+                                suffixIcon: _searchController.text.isNotEmpty
+                                    ? GestureDetector(
+                                        onTap: () {
+                                          _searchController.clear();
+                                        },
+                                        child: Icon(
+                                          Icons.close,
+                                          color: Colors.grey[600],
+                                          size: 18,
+                                        ),
+                                      )
+                                    : null,
+                                border: InputBorder.none,
+                                contentPadding: const EdgeInsets.symmetric(
+                                  vertical: 12,
+                                ),
+                                isDense: true,
+                              ),
+                              onChanged: (_) {
+                                setState(() {});
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  // Sort button
+                  Container(
+                    width: 44,
                     height: 44,
                     decoration: BoxDecoration(
                       color: Colors.white,
@@ -762,156 +959,99 @@ class _CompanyPageState extends State<CompanyPage> {
                         ),
                       ],
                     ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            controller: _searchController,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontFamily: 'Literata',
-                              color: Color(0xFF1B4D3E),
-                            ),
-                            decoration: InputDecoration(
-                              hintText: _localizations.searchCompanies,
-                              hintStyle: TextStyle(
-                                color: Colors.grey[400],
-                                fontFamily: 'Literata',
-                              ),
-                              prefixIcon: Icon(
-                                Icons.search_rounded,
-                                color: Colors.grey[600],
-                                size: 20,
-                              ),
-                              suffixIcon: _searchController.text.isNotEmpty
-                                  ? GestureDetector(
-                                      onTap: () {
-                                        _searchController.clear();
-                                      },
-                                      child: Icon(
-                                        Icons.close,
-                                        color: Colors.grey[600],
-                                        size: 18,
-                                      ),
-                                    )
-                                  : null,
-                              border: InputBorder.none,
-                              contentPadding: const EdgeInsets.symmetric(
-                                vertical: 12,
-                              ),
-                              isDense: true,
-                            ),
-                            onChanged: (_) {
-                              setState(() {});
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                // Sort button
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.grey[300]!, width: 1),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.04),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: _toggleSort,
-                      borderRadius: BorderRadius.circular(11),
-                      child: Center(
-                        child: Icon(
-                          _isSortAscending
-                              ? Icons.arrow_upward_rounded
-                              : Icons.arrow_downward_rounded,
-                          color: const Color(0xFF1B4D3E),
-                          size: 20,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          // List or empty state
-          Expanded(
-            child: _filteredCompanies.isEmpty
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          width: 100,
-                          height: 100,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF1B4D3E).withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: _toggleSort,
+                        borderRadius: BorderRadius.circular(11),
+                        child: Center(
                           child: Icon(
-                            Icons.business_outlined,
-                            size: 50,
-                            color: const Color(0xFF1B4D3E).withOpacity(0.3),
+                            _isSortAscending
+                                ? Icons.arrow_upward_rounded
+                                : Icons.arrow_downward_rounded,
+                            color: const Color(0xFF1B4D3E),
+                            size: 20,
                           ),
                         ),
-                        const SizedBox(height: 20),
-                        Text(
-                          _companies.isEmpty
-                              ? _localizations.noCompaniesYet
-                              : _localizations.noResultsFound,
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.grey[700],
-                            fontFamily: 'Literata',
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          _companies.isEmpty
-                              ? _localizations.createFirstCompany
-                              : _localizations.tryDifferentSearch,
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey[500],
-                            fontFamily: 'Literata',
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
-                  )
-                : ListView.builder(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
-                    ),
-                    itemCount: _filteredCompanies.length,
-                    itemBuilder: (context, index) {
-                      final company = _filteredCompanies[index];
-                      return RepaintBoundary(child: _buildCompanyCard(company));
-                    },
                   ),
-          ),
-        ],
-      ),
+                ],
+              ),
+            ),
+            // List or search-empty state
+            Expanded(
+              child: _filteredCompanies.isEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.search_off_rounded,
+                            size: 48,
+                            color: Colors.grey[400],
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            _localizations.noResultsFound,
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.grey[700],
+                              fontFamily: 'Literata',
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            _localizations.tryDifferentSearch,
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.grey[500],
+                              fontFamily: 'Literata',
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : isTablet
+                      ? GridView.builder(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: horizontalPadding,
+                            vertical: 8,
+                          ),
+                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: constraints.maxWidth > 900 ? 3 : 2,
+                            crossAxisSpacing: 14,
+                            mainAxisSpacing: 14,
+                            childAspectRatio: 1.8,
+                          ),
+                          itemCount: _filteredCompanies.length,
+                          itemBuilder: (context, index) {
+                            final company = _filteredCompanies[index];
+                            return RepaintBoundary(child: _buildCompanyCard(company));
+                          },
+                        )
+                      : ListView.builder(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: horizontalPadding,
+                            vertical: 8,
+                          ),
+                          itemCount: _filteredCompanies.length,
+                          itemBuilder: (context, index) {
+                            final company = _filteredCompanies[index];
+                            return RepaintBoundary(child: _buildCompanyCard(company));
+                          },
+                        ),
+            ),
+          ],
+        );
+      },
     );
   }
 
   Widget _buildCompanyCard(Map<String, dynamic> company) {
     final companyName = company['companyName'] ?? _localizations.unknownCompany;
+    final companyCode = company['companyCode'] ?? '';
     final contact = company['contact'] ?? 'N/A';
     final address = company['address'] ?? 'N/A';
     final companyId = company['id'] ?? '';
@@ -1008,6 +1148,25 @@ class _CompanyPageState extends State<CompanyPage> {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
+                          if (companyCode.isNotEmpty) ...[
+                            const SizedBox(height: 4),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                companyCode,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: const Color(0xFF1B4D3E).withOpacity(0.8),
+                                  fontFamily: 'Literata',
+                                ),
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                     ),

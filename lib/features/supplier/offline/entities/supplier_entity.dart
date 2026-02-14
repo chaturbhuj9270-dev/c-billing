@@ -39,6 +39,10 @@ class SupplierEntity {
   /// Last name
   String lastName;
 
+  /// Supplier code (unique identifier)
+  @Index(unique: true, replace: false, caseSensitive: false)
+  String supplierCode;
+
   /// Contact number (indexed for fast lookup)
   @Index()
   String contact;
@@ -66,6 +70,7 @@ class SupplierEntity {
     required this.firstName,
     this.middleName = '',
     this.lastName = '',
+    required this.supplierCode,
     required this.contact,
     this.address = '',
     this.isActive = true,
@@ -88,6 +93,7 @@ class SupplierEntity {
     required String firstName,
     String middleName = '',
     String lastName = '',
+    required String supplierCode,
     required String contact,
     String address = '',
     bool isActive = true,
@@ -99,6 +105,7 @@ class SupplierEntity {
       firstName: firstName,
       middleName: middleName,
       lastName: lastName,
+      supplierCode: supplierCode,
       contact: contact,
       address: address,
       isActive: isActive,
@@ -116,6 +123,7 @@ class SupplierEntity {
       firstName: data['firstName'] as String? ?? '',
       middleName: data['middleName'] as String? ?? '',
       lastName: data['lastName'] as String? ?? '',
+      supplierCode: data['supplierCode'] as String? ?? '',
       contact: data['contact'] as String? ?? '',
       address: data['address'] as String? ?? '',
       isActive: data['isActive'] as bool? ?? true,
@@ -132,6 +140,7 @@ class SupplierEntity {
       'firstName': firstName,
       'middleName': middleName,
       'lastName': lastName,
+      'supplierCode': supplierCode,
       'contact': contact,
       'address': address,
       'isActive': isActive,
@@ -148,6 +157,7 @@ class SupplierEntity {
       'firstName': firstName,
       'middleName': middleName,
       'lastName': lastName,
+      'supplierCode': supplierCode,
       'contact': contact,
       'address': address,
       'isActive': isActive,
@@ -165,6 +175,7 @@ class SupplierEntity {
     String? firstName,
     String? middleName,
     String? lastName,
+    String? supplierCode,
     String? contact,
     String? address,
     bool? isActive,
@@ -177,6 +188,7 @@ class SupplierEntity {
       firstName: firstName ?? this.firstName,
       middleName: middleName ?? this.middleName,
       lastName: lastName ?? this.lastName,
+      supplierCode: supplierCode ?? this.supplierCode,
       contact: contact ?? this.contact,
       address: address ?? this.address,
       isActive: isActive ?? this.isActive,
@@ -196,6 +208,6 @@ class SupplierEntity {
 
   @override
   String toString() {
-    return 'SupplierEntity(id: $id, serverId: $serverId, name: $fullName, syncStatus: $syncStatus)';
+    return 'SupplierEntity(id: $id, serverId: $serverId, code: $supplierCode, name: $fullName, syncStatus: $syncStatus)';
   }
 }

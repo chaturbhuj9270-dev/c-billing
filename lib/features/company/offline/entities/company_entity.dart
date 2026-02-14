@@ -33,6 +33,10 @@ class CompanyEntity {
   @Index(type: IndexType.value, caseSensitive: false)
   String companyName;
 
+  /// Company code (unique identifier)
+  @Index(unique: true, replace: false, caseSensitive: false)
+  String companyCode;
+
   /// Contact number (indexed for fast lookup)
   @Index()
   String contact;
@@ -58,6 +62,7 @@ class CompanyEntity {
   CompanyEntity({
     this.serverId,
     required this.companyName,
+    required this.companyCode,
     this.contact = '',
     this.address = '',
     this.isActive = true,
@@ -70,6 +75,7 @@ class CompanyEntity {
   factory CompanyEntity.create({
     String? serverId,
     required String companyName,
+    required String companyCode,
     String contact = '',
     String address = '',
     bool isActive = true,
@@ -79,6 +85,7 @@ class CompanyEntity {
     return CompanyEntity(
       serverId: serverId,
       companyName: companyName,
+      companyCode: companyCode,
       contact: contact,
       address: address,
       isActive: isActive,
@@ -94,6 +101,7 @@ class CompanyEntity {
     return CompanyEntity(
       serverId: data['id'] as String?,
       companyName: data['companyName'] as String? ?? '',
+      companyCode: data['companyCode'] as String? ?? '',
       contact: data['contact'] as String? ?? '',
       address: data['address'] as String? ?? '',
       isActive: data['isActive'] as bool? ?? true,
@@ -108,6 +116,7 @@ class CompanyEntity {
     return {
       'id': serverId,
       'companyName': companyName,
+      'companyCode': companyCode,
       'contact': contact,
       'address': address,
       'isActive': isActive,
@@ -122,6 +131,7 @@ class CompanyEntity {
       'id': serverId ?? 'local_$id',
       'localId': id,
       'companyName': companyName,
+      'companyCode': companyCode,
       'contact': contact,
       'address': address,
       'isActive': isActive,
@@ -137,6 +147,7 @@ class CompanyEntity {
     Id? id,
     String? serverId,
     String? companyName,
+    String? companyCode,
     String? contact,
     String? address,
     bool? isActive,
@@ -147,6 +158,7 @@ class CompanyEntity {
     final entity = CompanyEntity(
       serverId: serverId ?? this.serverId,
       companyName: companyName ?? this.companyName,
+      companyCode: companyCode ?? this.companyCode,
       contact: contact ?? this.contact,
       address: address ?? this.address,
       isActive: isActive ?? this.isActive,
@@ -166,6 +178,6 @@ class CompanyEntity {
 
   @override
   String toString() {
-    return 'CompanyEntity(id: $id, serverId: $serverId, name: $companyName, syncStatus: $syncStatus)';
+    return 'CompanyEntity(id: $id, serverId: $serverId, code: $companyCode, name: $companyName, syncStatus: $syncStatus)';
   }
 }

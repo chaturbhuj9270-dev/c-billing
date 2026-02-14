@@ -18,41 +18,46 @@ const CompanyEntitySchema = CollectionSchema(
   id: 7732127242476929416,
   properties: {
     r'address': PropertySchema(id: 0, name: r'address', type: IsarType.string),
-    r'companyName': PropertySchema(
+    r'companyCode': PropertySchema(
       id: 1,
+      name: r'companyCode',
+      type: IsarType.string,
+    ),
+    r'companyName': PropertySchema(
+      id: 2,
       name: r'companyName',
       type: IsarType.string,
     ),
-    r'contact': PropertySchema(id: 2, name: r'contact', type: IsarType.string),
+    r'contact': PropertySchema(id: 3, name: r'contact', type: IsarType.string),
     r'createdAt': PropertySchema(
-      id: 3,
+      id: 4,
       name: r'createdAt',
       type: IsarType.dateTime,
     ),
-    r'isActive': PropertySchema(id: 4, name: r'isActive', type: IsarType.bool),
+    r'isActive': PropertySchema(id: 5, name: r'isActive', type: IsarType.bool),
     r'isMarkedForDeletion': PropertySchema(
-      id: 5,
+      id: 6,
       name: r'isMarkedForDeletion',
       type: IsarType.bool,
     ),
     r'needsSync': PropertySchema(
-      id: 6,
+      id: 7,
       name: r'needsSync',
       type: IsarType.bool,
     ),
     r'serverId': PropertySchema(
-      id: 7,
+      id: 8,
       name: r'serverId',
       type: IsarType.string,
     ),
     r'syncStatus': PropertySchema(
-      id: 8,
+      id: 9,
       name: r'syncStatus',
       type: IsarType.byte,
       enumMap: _CompanyEntitysyncStatusEnumValueMap,
     ),
     r'updatedAt': PropertySchema(
-      id: 9,
+      id: 10,
       name: r'updatedAt',
       type: IsarType.dateTime,
     ),
@@ -86,6 +91,19 @@ const CompanyEntitySchema = CollectionSchema(
         IndexPropertySchema(
           name: r'companyName',
           type: IndexType.value,
+          caseSensitive: false,
+        ),
+      ],
+    ),
+    r'companyCode': IndexSchema(
+      id: 6715787695288864042,
+      name: r'companyCode',
+      unique: true,
+      replace: false,
+      properties: [
+        IndexPropertySchema(
+          name: r'companyCode',
+          type: IndexType.hash,
           caseSensitive: false,
         ),
       ],
@@ -146,6 +164,7 @@ int _companyEntityEstimateSize(
 ) {
   var bytesCount = offsets.last;
   bytesCount += 3 + object.address.length * 3;
+  bytesCount += 3 + object.companyCode.length * 3;
   bytesCount += 3 + object.companyName.length * 3;
   bytesCount += 3 + object.contact.length * 3;
   {
@@ -164,15 +183,16 @@ void _companyEntitySerialize(
   Map<Type, List<int>> allOffsets,
 ) {
   writer.writeString(offsets[0], object.address);
-  writer.writeString(offsets[1], object.companyName);
-  writer.writeString(offsets[2], object.contact);
-  writer.writeDateTime(offsets[3], object.createdAt);
-  writer.writeBool(offsets[4], object.isActive);
-  writer.writeBool(offsets[5], object.isMarkedForDeletion);
-  writer.writeBool(offsets[6], object.needsSync);
-  writer.writeString(offsets[7], object.serverId);
-  writer.writeByte(offsets[8], object.syncStatus.index);
-  writer.writeDateTime(offsets[9], object.updatedAt);
+  writer.writeString(offsets[1], object.companyCode);
+  writer.writeString(offsets[2], object.companyName);
+  writer.writeString(offsets[3], object.contact);
+  writer.writeDateTime(offsets[4], object.createdAt);
+  writer.writeBool(offsets[5], object.isActive);
+  writer.writeBool(offsets[6], object.isMarkedForDeletion);
+  writer.writeBool(offsets[7], object.needsSync);
+  writer.writeString(offsets[8], object.serverId);
+  writer.writeByte(offsets[9], object.syncStatus.index);
+  writer.writeDateTime(offsets[10], object.updatedAt);
 }
 
 CompanyEntity _companyEntityDeserialize(
@@ -183,17 +203,18 @@ CompanyEntity _companyEntityDeserialize(
 ) {
   final object = CompanyEntity(
     address: reader.readStringOrNull(offsets[0]) ?? '',
-    companyName: reader.readString(offsets[1]),
-    contact: reader.readStringOrNull(offsets[2]) ?? '',
-    createdAt: reader.readDateTime(offsets[3]),
-    isActive: reader.readBoolOrNull(offsets[4]) ?? true,
-    serverId: reader.readStringOrNull(offsets[7]),
+    companyCode: reader.readString(offsets[1]),
+    companyName: reader.readString(offsets[2]),
+    contact: reader.readStringOrNull(offsets[3]) ?? '',
+    createdAt: reader.readDateTime(offsets[4]),
+    isActive: reader.readBoolOrNull(offsets[5]) ?? true,
+    serverId: reader.readStringOrNull(offsets[8]),
     syncStatus:
         _CompanyEntitysyncStatusValueEnumMap[reader.readByteOrNull(
-          offsets[8],
+          offsets[9],
         )] ??
         CompanySyncStatus.newRecord,
-    updatedAt: reader.readDateTime(offsets[9]),
+    updatedAt: reader.readDateTime(offsets[10]),
   );
   object.id = id;
   return object;
@@ -211,24 +232,26 @@ P _companyEntityDeserializeProp<P>(
     case 1:
       return (reader.readString(offset)) as P;
     case 2:
-      return (reader.readStringOrNull(offset) ?? '') as P;
+      return (reader.readString(offset)) as P;
     case 3:
-      return (reader.readDateTime(offset)) as P;
+      return (reader.readStringOrNull(offset) ?? '') as P;
     case 4:
-      return (reader.readBoolOrNull(offset) ?? true) as P;
+      return (reader.readDateTime(offset)) as P;
     case 5:
-      return (reader.readBool(offset)) as P;
+      return (reader.readBoolOrNull(offset) ?? true) as P;
     case 6:
       return (reader.readBool(offset)) as P;
     case 7:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 8:
+      return (reader.readStringOrNull(offset)) as P;
+    case 9:
       return (_CompanyEntitysyncStatusValueEnumMap[reader.readByteOrNull(
                 offset,
               )] ??
               CompanySyncStatus.newRecord)
           as P;
-    case 9:
+    case 10:
       return (reader.readDateTime(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -262,6 +285,65 @@ void _companyEntityAttach(
   CompanyEntity object,
 ) {
   object.id = id;
+}
+
+extension CompanyEntityByIndex on IsarCollection<CompanyEntity> {
+  Future<CompanyEntity?> getByCompanyCode(String companyCode) {
+    return getByIndex(r'companyCode', [companyCode]);
+  }
+
+  CompanyEntity? getByCompanyCodeSync(String companyCode) {
+    return getByIndexSync(r'companyCode', [companyCode]);
+  }
+
+  Future<bool> deleteByCompanyCode(String companyCode) {
+    return deleteByIndex(r'companyCode', [companyCode]);
+  }
+
+  bool deleteByCompanyCodeSync(String companyCode) {
+    return deleteByIndexSync(r'companyCode', [companyCode]);
+  }
+
+  Future<List<CompanyEntity?>> getAllByCompanyCode(
+    List<String> companyCodeValues,
+  ) {
+    final values = companyCodeValues.map((e) => [e]).toList();
+    return getAllByIndex(r'companyCode', values);
+  }
+
+  List<CompanyEntity?> getAllByCompanyCodeSync(List<String> companyCodeValues) {
+    final values = companyCodeValues.map((e) => [e]).toList();
+    return getAllByIndexSync(r'companyCode', values);
+  }
+
+  Future<int> deleteAllByCompanyCode(List<String> companyCodeValues) {
+    final values = companyCodeValues.map((e) => [e]).toList();
+    return deleteAllByIndex(r'companyCode', values);
+  }
+
+  int deleteAllByCompanyCodeSync(List<String> companyCodeValues) {
+    final values = companyCodeValues.map((e) => [e]).toList();
+    return deleteAllByIndexSync(r'companyCode', values);
+  }
+
+  Future<Id> putByCompanyCode(CompanyEntity object) {
+    return putByIndex(r'companyCode', object);
+  }
+
+  Id putByCompanyCodeSync(CompanyEntity object, {bool saveLinks = true}) {
+    return putByIndexSync(r'companyCode', object, saveLinks: saveLinks);
+  }
+
+  Future<List<Id>> putAllByCompanyCode(List<CompanyEntity> objects) {
+    return putAllByIndex(r'companyCode', objects);
+  }
+
+  List<Id> putAllByCompanyCodeSync(
+    List<CompanyEntity> objects, {
+    bool saveLinks = true,
+  }) {
+    return putAllByIndexSync(r'companyCode', objects, saveLinks: saveLinks);
+  }
 }
 
 extension CompanyEntityQueryWhereSort
@@ -596,6 +678,61 @@ extension CompanyEntityQueryWhere
             )
             .addWhereClause(
               IndexWhereClause.lessThan(indexName: r'companyName', upper: ['']),
+            );
+      }
+    });
+  }
+
+  QueryBuilder<CompanyEntity, CompanyEntity, QAfterWhereClause>
+  companyCodeEqualTo(String companyCode) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(
+        IndexWhereClause.equalTo(
+          indexName: r'companyCode',
+          value: [companyCode],
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<CompanyEntity, CompanyEntity, QAfterWhereClause>
+  companyCodeNotEqualTo(String companyCode) {
+    return QueryBuilder.apply(this, (query) {
+      if (query.whereSort == Sort.asc) {
+        return query
+            .addWhereClause(
+              IndexWhereClause.between(
+                indexName: r'companyCode',
+                lower: [],
+                upper: [companyCode],
+                includeUpper: false,
+              ),
+            )
+            .addWhereClause(
+              IndexWhereClause.between(
+                indexName: r'companyCode',
+                lower: [companyCode],
+                includeLower: false,
+                upper: [],
+              ),
+            );
+      } else {
+        return query
+            .addWhereClause(
+              IndexWhereClause.between(
+                indexName: r'companyCode',
+                lower: [companyCode],
+                includeLower: false,
+                upper: [],
+              ),
+            )
+            .addWhereClause(
+              IndexWhereClause.between(
+                indexName: r'companyCode',
+                lower: [],
+                upper: [companyCode],
+                includeUpper: false,
+              ),
             );
       }
     });
@@ -994,6 +1131,147 @@ extension CompanyEntityQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         FilterCondition.greaterThan(property: r'address', value: ''),
+      );
+    });
+  }
+
+  QueryBuilder<CompanyEntity, CompanyEntity, QAfterFilterCondition>
+  companyCodeEqualTo(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'companyCode',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<CompanyEntity, CompanyEntity, QAfterFilterCondition>
+  companyCodeGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'companyCode',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<CompanyEntity, CompanyEntity, QAfterFilterCondition>
+  companyCodeLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'companyCode',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<CompanyEntity, CompanyEntity, QAfterFilterCondition>
+  companyCodeBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'companyCode',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<CompanyEntity, CompanyEntity, QAfterFilterCondition>
+  companyCodeStartsWith(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.startsWith(
+          property: r'companyCode',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<CompanyEntity, CompanyEntity, QAfterFilterCondition>
+  companyCodeEndsWith(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.endsWith(
+          property: r'companyCode',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<CompanyEntity, CompanyEntity, QAfterFilterCondition>
+  companyCodeContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.contains(
+          property: r'companyCode',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<CompanyEntity, CompanyEntity, QAfterFilterCondition>
+  companyCodeMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.matches(
+          property: r'companyCode',
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<CompanyEntity, CompanyEntity, QAfterFilterCondition>
+  companyCodeIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'companyCode', value: ''),
+      );
+    });
+  }
+
+  QueryBuilder<CompanyEntity, CompanyEntity, QAfterFilterCondition>
+  companyCodeIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(property: r'companyCode', value: ''),
       );
     });
   }
@@ -1709,6 +1987,19 @@ extension CompanyEntityQuerySortBy
     });
   }
 
+  QueryBuilder<CompanyEntity, CompanyEntity, QAfterSortBy> sortByCompanyCode() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'companyCode', Sort.asc);
+    });
+  }
+
+  QueryBuilder<CompanyEntity, CompanyEntity, QAfterSortBy>
+  sortByCompanyCodeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'companyCode', Sort.desc);
+    });
+  }
+
   QueryBuilder<CompanyEntity, CompanyEntity, QAfterSortBy> sortByCompanyName() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'companyName', Sort.asc);
@@ -1838,6 +2129,19 @@ extension CompanyEntityQuerySortThenBy
   QueryBuilder<CompanyEntity, CompanyEntity, QAfterSortBy> thenByAddressDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'address', Sort.desc);
+    });
+  }
+
+  QueryBuilder<CompanyEntity, CompanyEntity, QAfterSortBy> thenByCompanyCode() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'companyCode', Sort.asc);
+    });
+  }
+
+  QueryBuilder<CompanyEntity, CompanyEntity, QAfterSortBy>
+  thenByCompanyCodeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'companyCode', Sort.desc);
     });
   }
 
@@ -1981,6 +2285,14 @@ extension CompanyEntityQueryWhereDistinct
     });
   }
 
+  QueryBuilder<CompanyEntity, CompanyEntity, QDistinct> distinctByCompanyCode({
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'companyCode', caseSensitive: caseSensitive);
+    });
+  }
+
   QueryBuilder<CompanyEntity, CompanyEntity, QDistinct> distinctByCompanyName({
     bool caseSensitive = true,
   }) {
@@ -2054,6 +2366,12 @@ extension CompanyEntityQueryProperty
   QueryBuilder<CompanyEntity, String, QQueryOperations> addressProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'address');
+    });
+  }
+
+  QueryBuilder<CompanyEntity, String, QQueryOperations> companyCodeProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'companyCode');
     });
   }
 

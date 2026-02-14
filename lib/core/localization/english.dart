@@ -193,6 +193,14 @@ class EnglishLocalization {
   static const String companyNameIsRequired = 'Company name is required';
   static const String supplierAddedSuccessfully = 'Supplier added successfully';
   static const String companyAddedSuccessfully = 'Company added successfully';
+  static const String supplierCode = 'Supplier Code';
+  static const String companyCode = 'Company Code';
+  static const String supplierCodeRequired = 'Supplier code is required';
+  static const String companyCodeRequired = 'Company code is required';
+  static const String supplierCodeAlreadyExists = 'This supplier code already exists';
+  static const String companyCodeAlreadyExists = 'This company code already exists';
+  static const String addYourFirstCompany = 'Add your first company to get started';
+  static const String addCompanyNow = 'Add Company';
   static const String errorAddingSupplier = 'Error adding supplier';
   static const String errorAddingCompany = 'Error adding company';
   static const String pleaseSelectProduct = 'Please select a product';

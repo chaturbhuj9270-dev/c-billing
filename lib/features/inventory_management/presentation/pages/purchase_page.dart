@@ -67,10 +67,12 @@ class _PurchasePageState extends State<PurchasePage>
   // For adding new supplier/company
   final _newSupplierFirstNameController = TextEditingController();
   final _newSupplierLastNameController = TextEditingController();
+  final _newSupplierCodeController = TextEditingController();
   final _newSupplierContactController = TextEditingController();
   final _newSupplierAddressController = TextEditingController();
 
   final _newCompanyNameController = TextEditingController();
+  final _newCompanyCodeController = TextEditingController();
   final _newCompanyContactController = TextEditingController();
   final _newCompanyAddressController = TextEditingController();
 
@@ -1659,9 +1661,11 @@ class _PurchasePageState extends State<PurchasePage>
     _companySearchController.dispose();
     _newSupplierFirstNameController.dispose();
     _newSupplierLastNameController.dispose();
+    _newSupplierCodeController.dispose();
     _newSupplierContactController.dispose();
     _newSupplierAddressController.dispose();
     _newCompanyNameController.dispose();
+    _newCompanyCodeController.dispose();
     _newCompanyContactController.dispose();
     _newCompanyAddressController.dispose();
     _productionDateController.dispose();
@@ -1886,6 +1890,7 @@ class _PurchasePageState extends State<PurchasePage>
   void _showAddSupplierDialog() {
     _newSupplierFirstNameController.clear();
     _newSupplierLastNameController.clear();
+    _newSupplierCodeController.clear();
     _newSupplierContactController.clear();
     _newSupplierAddressController.clear();
 
@@ -1963,6 +1968,32 @@ class _PurchasePageState extends State<PurchasePage>
                 ),
                 const SizedBox(height: 12),
                 TextField(
+                  controller: _newSupplierCodeController,
+                  onChanged: (_) => setDialogState(() {}),
+                  decoration: InputDecoration(
+                    labelText: '${_localizations.supplierCode} *',
+                    prefixIcon: const Icon(Icons.qr_code_rounded),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(
+                        color: Color(0xFF1B4D3E),
+                        width: 2,
+                      ),
+                    ),
+                    errorBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Colors.red, width: 2),
+                    ),
+                    errorText: _newSupplierCodeController.text.isEmpty
+                        ? _localizations.supplierCodeRequired
+                        : null,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
                   controller: _newSupplierContactController,
                   keyboardType: TextInputType.phone,
                   maxLength: 10,
@@ -2020,13 +2051,15 @@ class _PurchasePageState extends State<PurchasePage>
               style: ElevatedButton.styleFrom(
                 backgroundColor:
                     (_newSupplierFirstNameController.text.trim().isEmpty ||
-                        _newSupplierLastNameController.text.trim().isEmpty)
+                        _newSupplierLastNameController.text.trim().isEmpty ||
+                        _newSupplierCodeController.text.trim().isEmpty)
                     ? Colors.grey[400]
                     : const Color(0xFF1B4D3E),
               ),
               onPressed:
                   (_newSupplierFirstNameController.text.trim().isEmpty ||
-                      _newSupplierLastNameController.text.trim().isEmpty)
+                      _newSupplierLastNameController.text.trim().isEmpty ||
+                      _newSupplierCodeController.text.trim().isEmpty)
                   ? null
                   : () => _saveNewSupplier(context),
               child: Text(
@@ -2074,6 +2107,7 @@ class _PurchasePageState extends State<PurchasePage>
             'id': supplierId,
             'firstName': firstName,
             'lastName': lastName,
+            'supplierCode': _newSupplierCodeController.text.trim(),
             'contact': contact,
             'address': _newSupplierAddressController.text.trim(),
             'createdAt': FieldValue.serverTimestamp(),
@@ -2107,6 +2141,7 @@ class _PurchasePageState extends State<PurchasePage>
 
   void _showAddCompanyDialog() {
     _newCompanyNameController.clear();
+    _newCompanyCodeController.clear();
     _newCompanyContactController.clear();
     _newCompanyAddressController.clear();
 
@@ -2153,6 +2188,32 @@ class _PurchasePageState extends State<PurchasePage>
                     ),
                     errorText: _newCompanyNameController.text.isEmpty
                         ? _localizations.companyNameRequired
+                        : null,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _newCompanyCodeController,
+                  onChanged: (_) => setDialogState(() {}),
+                  decoration: InputDecoration(
+                    labelText: '${_localizations.companyCode} *',
+                    prefixIcon: const Icon(Icons.qr_code_rounded),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(
+                        color: Color(0xFF1B4D3E),
+                        width: 2,
+                      ),
+                    ),
+                    errorBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Colors.red, width: 2),
+                    ),
+                    errorText: _newCompanyCodeController.text.isEmpty
+                        ? _localizations.companyCodeRequired
                         : null,
                   ),
                 ),
@@ -2213,11 +2274,13 @@ class _PurchasePageState extends State<PurchasePage>
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: _newCompanyNameController.text.trim().isEmpty
+                backgroundColor: (_newCompanyNameController.text.trim().isEmpty ||
+                    _newCompanyCodeController.text.trim().isEmpty)
                     ? Colors.grey[400]
                     : const Color(0xFF1B4D3E),
               ),
-              onPressed: _newCompanyNameController.text.trim().isEmpty
+              onPressed: (_newCompanyNameController.text.trim().isEmpty ||
+                  _newCompanyCodeController.text.trim().isEmpty)
                   ? null
                   : () => _saveNewCompany(context),
               child: Text(
@@ -2262,6 +2325,7 @@ class _PurchasePageState extends State<PurchasePage>
           .set({
             'id': companyId,
             'companyName': companyName,
+            'companyCode': _newCompanyCodeController.text.trim(),
             'contact': _newCompanyContactController.text.trim(),
             'address': _newCompanyAddressController.text.trim(),
             'createdAt': FieldValue.serverTimestamp(),

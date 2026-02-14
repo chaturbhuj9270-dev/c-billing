@@ -27,22 +27,44 @@ class SupplierOfflineController extends ChangeNotifier {
 
   // ==================== CREATE ====================
 
+  /// Check if a supplier code already exists (for uniqueness validation)
+  Future<bool> isSupplierCodeTaken(String code, {Id? excludeId}) async {
+    final existing = await _isar.supplierEntitys
+        .filter()
+        .supplierCodeEqualTo(code, caseSensitive: false)
+        .not()
+        .syncStatusEqualTo(SupplierSyncStatus.deleted)
+        .findAll();
+    if (excludeId != null) {
+      return existing.any((e) => e.id != excludeId);
+    }
+    return existing.isNotEmpty;
+  }
+
   /// Add a new supplier locally (will be synced later)
   /// Sets syncStatus = NEW, does NOT call API
   Future<SupplierEntity> addSupplier({
     required String firstName,
     String middleName = '',
     String lastName = '',
+    required String supplierCode,
     required String contact,
     String address = '',
     bool isActive = true,
   }) async {
-    debugPrint('[SupplierOffline] Adding supplier: $firstName $lastName');
+    debugPrint('[SupplierOffline] Adding supplier: $firstName $lastName (code: $supplierCode)');
+    
+    // Validate uniqueness of supplier code
+    final codeTaken = await isSupplierCodeTaken(supplierCode);
+    if (codeTaken) {
+      throw Exception('Supplier code "$supplierCode" already exists');
+    }
     
     final supplier = SupplierEntity.create(
       firstName: firstName,
       middleName: middleName,
       lastName: lastName,
+      supplierCode: supplierCode,
       contact: contact,
       address: address,
       isActive: isActive,
@@ -133,6 +155,7 @@ class SupplierOfflineController extends ChangeNotifier {
     String? firstName,
     String? middleName,
     String? lastName,
+    String? supplierCode,
     String? contact,
     String? address,
     bool? isActive,
@@ -141,6 +164,14 @@ class SupplierOfflineController extends ChangeNotifier {
     if (existing == null) {
       debugPrint('[SupplierOffline] Supplier not found: $id');
       return null;
+    }
+
+    // Validate uniqueness of supplier code if changed
+    if (supplierCode != null && supplierCode != existing.supplierCode) {
+      final codeTaken = await isSupplierCodeTaken(supplierCode, excludeId: id);
+      if (codeTaken) {
+        throw Exception('Supplier code "$supplierCode" already exists');
+      }
     }
 
     // Determine new syncStatus
@@ -164,6 +195,7 @@ class SupplierOfflineController extends ChangeNotifier {
       firstName: firstName,
       middleName: middleName,
       lastName: lastName,
+      supplierCode: supplierCode,
       contact: contact,
       address: address,
       isActive: isActive,
