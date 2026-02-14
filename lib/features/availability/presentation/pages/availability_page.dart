@@ -8,6 +8,9 @@ import 'package:c_billing/features/product/offline/controllers/product_offline_c
 import 'package:c_billing/features/product/data/services/product_sync_service.dart';
 import 'package:c_billing/features/inventory_management/domain/entities/product.dart';
 import 'package:c_billing/features/inventory_management/domain/entities/report_item.dart';
+import 'package:c_billing/features/inventory_management/domain/entities/grouped_product.dart';
+import 'package:c_billing/features/inventory_management/offline/controllers/purchase_batch_offline_controller.dart';
+import 'package:c_billing/features/inventory_management/offline/entities/purchase_batch_entity.dart';
 import 'package:c_billing/features/availability/presentation/pages/report_preview_screen.dart';
 
 class AvailabilityPage extends StatefulWidget {
@@ -34,6 +37,12 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
   // Filter states
   String _stockFilter = 'all'; // all, in_stock, low_stock, out_of_stock
 
+  // Batch-level data for grouped view
+  List<PurchaseBatchEntity> _allBatches = [];
+  List<GroupedProduct> _groupedProducts = [];
+  List<GroupedProduct> _filteredGroupedProducts = [];
+  StreamSubscription<List<PurchaseBatchEntity>>? _batchStreamSubscription;
+
   @override
   void initState() {
     super.initState();
@@ -56,9 +65,80 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
     ProductOfflineController.instance.addListener(_onProductsChanged);
     
     _loadProducts();
+    _setupBatchStream();
     
     // Trigger sync in background
     ProductSyncService.instance.syncNow();
+  }
+
+  /// Setup batch stream for real-time updates
+  void _setupBatchStream() {
+    final batchController = PurchaseBatchOfflineController.instance;
+    _batchStreamSubscription = batchController
+        .watchAllBatches(includeConsumed: false)
+        .listen(
+      (batches) {
+        if (mounted) {
+          _allBatches = batches;
+          _rebuildGroupedProducts();
+        }
+      },
+      onError: (e) {
+        print('[ERROR] Batch stream error: $e');
+      },
+    );
+  }
+
+  /// Rebuild grouped product list from batches + products
+  void _rebuildGroupedProducts() {
+    // Products with no batches
+    final batchProductIds = _allBatches.map((b) => b.productId).toSet();
+    final productsWithoutBatches = _products.where(
+      (p) => !batchProductIds.contains(p.id),
+    ).toList();
+
+    _groupedProducts = GroupedProduct.buildFromBatches(
+      _allBatches,
+      productsWithoutBatches: productsWithoutBatches,
+    );
+
+    _applyGroupedFilters();
+    if (mounted) setState(() {});
+  }
+
+  void _applyGroupedFilters() {
+    _filteredGroupedProducts = _groupedProducts.where((group) {
+      // Search filter
+      if (_searchQuery.isNotEmpty) {
+        final query = _searchQuery.toLowerCase();
+        final nameMatch = group.productName.toLowerCase().contains(query);
+        final companyMatch = group.companies.any(
+          (c) => c.toLowerCase().contains(query),
+        );
+        if (!nameMatch && !companyMatch) return false;
+      }
+
+      // Stock filter
+      switch (_stockFilter) {
+        case 'in_stock':
+          return group.totalStock > 10;
+        case 'low_stock':
+          return group.totalStock > 0 && group.totalStock <= 10;
+        case 'out_of_stock':
+          return group.totalStock == 0;
+        default:
+          return true;
+      }
+    }).toList();
+
+    // Sort: critical first
+    _filteredGroupedProducts.sort((a, b) {
+      if (a.totalStock == 0 && b.totalStock > 0) return -1;
+      if (b.totalStock == 0 && a.totalStock > 0) return 1;
+      if (a.totalStock <= 10 && b.totalStock > 10) return -1;
+      if (b.totalStock <= 10 && a.totalStock > 10) return 1;
+      return a.productName.compareTo(b.productName);
+    });
   }
   
   void _onProductsChanged() {
@@ -77,6 +157,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
   void dispose() {
     _productRefreshSubscription?.cancel();
     _purchaseRefreshSubscription?.cancel();
+    _batchStreamSubscription?.cancel();
     ProductOfflineController.instance.removeListener(_onProductsChanged);
     LanguageService.instance.removeListener(_onLanguageChanged);
     _searchController.dispose();
@@ -123,7 +204,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                     Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                        color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Icon(
@@ -353,7 +434,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: isSelected
-              ? const Color(0xFF1B4D3E).withOpacity(0.1)
+              ? const Color(0xFF1B4D3E).withValues(alpha: 0.1)
               : Colors.grey[50],
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
@@ -366,7 +447,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: iconColor.withOpacity(0.1),
+                color: iconColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(icon, color: iconColor, size: 20),
@@ -429,7 +510,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
         decoration: BoxDecoration(
-          color: isSelected ? color.withOpacity(0.1) : Colors.grey[50],
+          color: isSelected ? color.withValues(alpha: 0.1) : Colors.grey[50],
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected ? color : Colors.grey[200]!,
@@ -543,6 +624,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
         setState(() {
           _products = products;
           _applyFilters();
+          _rebuildGroupedProducts();
           _isLoading = false;
         });
       }
@@ -595,6 +677,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
     setState(() {
       _searchQuery = query;
       _applyFilters();
+      _applyGroupedFilters();
     });
   }
 
@@ -602,57 +685,130 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
     setState(() {
       _stockFilter = filter;
       _applyFilters();
+      _applyGroupedFilters();
     });
   }
 
   Widget _buildStatsCards() {
-    final totalProducts = _products.length;
-    final inStock = _products.where((p) => p.currentStock > 10).length;
-    final lowStock = _products
-        .where((p) => p.currentStock > 0 && p.currentStock <= 10)
+    final totalProducts = _groupedProducts.length;
+    final totalBatches = _allBatches.length;
+    final inStock = _groupedProducts.where((g) => g.totalStock > 10).length;
+    final lowStock = _groupedProducts
+        .where((g) => g.totalStock > 0 && g.totalStock <= 10)
         .length;
-    final outOfStock = _products.where((p) => p.currentStock == 0).length;
+    final outOfStock = _groupedProducts.where((g) => g.totalStock == 0).length;
+    // Count batches with low stock (<=5 qty remaining)
+    final lowBatches = _allBatches.where((b) => b.quantityRemaining > 0 && b.quantityRemaining <= 5).length;
 
     return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Row(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+      child: Column(
         children: [
-          Expanded(
-            child: _buildStatCard(
-              title: _localizations.totalProducts,
-              value: totalProducts,
-              icon: Icons.inventory_2,
-              iconColor: const Color(0xFF1B4D3E),
-              backgroundColor: const Color(0xFF1B4D3E).withOpacity(0.1),
-            ),
+          Row(
+            children: [
+              Expanded(
+                child: _buildStatCard(
+                  title: _localizations.totalProducts,
+                  value: totalProducts,
+                  icon: Icons.inventory_2_rounded,
+                  iconColor: const Color(0xFF1B4D3E),
+                  backgroundColor: const Color(0xFF1B4D3E).withValues(alpha: 0.08),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildStatCard(
+                  title: _localizations.inStock,
+                  value: inStock,
+                  icon: Icons.check_circle_rounded,
+                  iconColor: Colors.green,
+                  backgroundColor: Colors.green.withValues(alpha: 0.08),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildStatCard(
+                  title: _localizations.lowStock,
+                  value: lowStock,
+                  icon: Icons.warning_rounded,
+                  iconColor: Colors.orange,
+                  backgroundColor: Colors.orange.withValues(alpha: 0.08),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildStatCard(
+                  title: _localizations.outOfStock,
+                  value: outOfStock,
+                  icon: Icons.error_rounded,
+                  iconColor: Colors.red,
+                  backgroundColor: Colors.red.withValues(alpha: 0.08),
+                ),
+              ),
+            ],
           ),
-          Expanded(
-            child: _buildStatCard(
-              title: _localizations.inStock,
-              value: inStock,
-              icon: Icons.check_circle,
-              iconColor: Colors.green,
-              backgroundColor: Colors.green.withOpacity(0.1),
+          if (totalBatches > 0 || lowBatches > 0) ...[
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: lowBatches > 0
+                    ? Colors.orange.withValues(alpha: 0.06)
+                    : const Color(0xFF1B4D3E).withValues(alpha: 0.04),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: lowBatches > 0
+                      ? Colors.orange.withValues(alpha: 0.2)
+                      : Colors.grey.withValues(alpha: 0.1),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.layers_rounded,
+                    size: 16,
+                    color: const Color(0xFF1B4D3E).withValues(alpha: 0.7),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    '$totalBatches ${_localizations.batch}',
+                    style: const TextStyle(
+                      fontFamily: 'Literata',
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF1B4D3E),
+                    ),
+                  ),
+                  if (lowBatches > 0) ...[
+                    const Spacer(),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.warning_amber_rounded, size: 13, color: Colors.orange),
+                          const SizedBox(width: 4),
+                          Text(
+                            '$lowBatches ${_localizations.lowStock}',
+                            style: const TextStyle(
+                              fontFamily: 'Literata',
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.orange,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ],
+              ),
             ),
-          ),
-          Expanded(
-            child: _buildStatCard(
-              title: _localizations.lowStock,
-              value: lowStock,
-              icon: Icons.warning,
-              iconColor: Colors.orange,
-              backgroundColor: Colors.orange.withOpacity(0.1),
-            ),
-          ),
-          Expanded(
-            child: _buildStatCard(
-              title: _localizations.outOfStock,
-              value: outOfStock,
-              icon: Icons.error,
-              iconColor: Colors.red,
-              backgroundColor: Colors.red.withOpacity(0.1),
-            ),
-          ),
+          ],
         ],
       ),
     );
@@ -665,41 +821,42 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
     required Color iconColor,
     required Color backgroundColor,
   }) {
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 2, vertical: 4),
-      child: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: backgroundColor,
-          borderRadius: BorderRadius.circular(12),
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: iconColor.withValues(alpha: 0.12),
         ),
-        child: Column(
-          children: [
-            Icon(icon, color: iconColor, size: 16),
-            const SizedBox(height: 4),
-            Text(
-              value.toString(),
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                fontFamily: 'Literata',
-              ),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, color: iconColor, size: 18),
+          const SizedBox(height: 6),
+          Text(
+            value.toString(),
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w800,
+              fontFamily: 'Literata',
+              color: iconColor,
             ),
-            const SizedBox(height: 2),
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: 9,
-                color: Colors.grey[600],
-                fontFamily: 'Literata',
-                fontWeight: FontWeight.w500,
-              ),
-              textAlign: TextAlign.center,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 3),
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 9,
+              color: Colors.grey[700],
+              fontFamily: 'Literata',
+              fontWeight: FontWeight.w600,
             ),
-          ],
-        ),
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
       ),
     );
   }
@@ -784,26 +941,34 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
   }
 
   Widget _buildProductsList() {
-    if (_filteredProducts.isEmpty) {
+    if (_filteredGroupedProducts.isEmpty) {
       return Expanded(
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                Icons.inventory_2_outlined,
-                size: 64,
-                color: Colors.grey[400],
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.grey.withValues(alpha: 0.08),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.inventory_2_outlined,
+                  size: 56,
+                  color: Colors.grey[400],
+                ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
               Text(
                 _searchQuery.isEmpty
                     ? _localizations.noProductsFound
                     : _localizations.noProductsMatch,
                 style: TextStyle(
-                  fontSize: 18,
+                  fontSize: 17,
                   color: Colors.grey[600],
                   fontFamily: 'Literata',
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ],
@@ -814,196 +979,558 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
 
     return Expanded(
       child: ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: _filteredProducts.length,
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+        itemCount: _filteredGroupedProducts.length,
         itemBuilder: (context, index) {
-          final product = _filteredProducts[index];
-          final stockLevel = _getStockLevel(product.currentStock);
+          final group = _filteredGroupedProducts[index];
+          return _buildGroupedProductCard(group);
+        },
+      ),
+    );
+  }
 
-          return Card(
-            margin: const EdgeInsets.only(bottom: 12),
-            elevation: 2,
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      // Product index badge
-                      Container(
-                        width: 36,
-                        height: 36,
-                        decoration: BoxDecoration(
-                          color: stockLevel['color'] as Color,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Center(
-                          child: Text(
-                            product.indexNo > 0 ? '${product.indexNo}' : '#',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w700,
-                              fontSize: 12,
-                              fontFamily: 'Literata',
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              product.name,
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                fontFamily: 'Literata',
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              product.category,
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey[600],
-                                fontFamily: 'Literata',
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: (stockLevel['color'] as Color).withOpacity(
-                            0.1,
-                          ),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          stockLevel['label'] as String,
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
-                            color: stockLevel['color'] as Color,
-                            fontFamily: 'Literata',
-                          ),
-                        ),
-                      ),
-                    ],
+  Widget _buildGroupedProductCard(GroupedProduct group) {
+    final stockLevel = _getStockLevel(group.totalStock);
+    final stockColor = stockLevel['color'] as Color;
+    final stockLabel = stockLevel['label'] as String;
+    final hasMultipleBatches = group.hasMultipleVariants;
+    // Count low-stock batches in this group
+    final lowBatchCount = group.subEntries.where((e) => e.stockQuantity > 0 && e.stockQuantity <= 5).length;
+    final outBatchCount = group.subEntries.where((e) => e.stockQuantity == 0).length;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: group.totalStock == 0
+              ? Colors.red.withValues(alpha: 0.25)
+              : group.totalStock <= 10
+                  ? Colors.orange.withValues(alpha: 0.2)
+                  : Colors.grey.withValues(alpha: 0.1),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+          childrenPadding: EdgeInsets.zero,
+          shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+          collapsedShape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+          leading: Container(
+            width: 46,
+            height: 46,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  stockColor,
+                  stockColor.withValues(alpha: 0.7),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(13),
+              boxShadow: [
+                BoxShadow(
+                  color: stockColor.withValues(alpha: 0.25),
+                  blurRadius: 8,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: Center(
+              child: Text(
+                '${group.totalStock}',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                  fontFamily: 'Literata',
+                ),
+              ),
+            ),
+          ),
+          title: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  group.productName,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    fontFamily: 'Literata',
+                    color: Color(0xFF1B4D3E),
+                    height: 1.2,
                   ),
-                  const SizedBox(height: 12),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+          subtitle: Padding(
+            padding: const EdgeInsets.only(top: 6),
+            child: Wrap(
+              spacing: 6,
+              runSpacing: 4,
+              children: [
+                // Stock status badge
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: stockColor.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: stockColor.withValues(alpha: 0.2),
+                    ),
+                  ),
+                  child: Text(
+                    stockLabel,
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: stockColor,
+                      fontFamily: 'Literata',
+                    ),
+                  ),
+                ),
+                // Batch count badge
+                if (hasMultipleBatches)
                   Container(
-                    padding: const EdgeInsets.all(12),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
-                      color: Colors.grey[50],
+                      color: Colors.blue.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: Colors.blue.withValues(alpha: 0.15),
+                      ),
+                    ),
+                    child: Text(
+                      '${group.variantCount} ${_localizations.batch}',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.blue[700],
+                        fontFamily: 'Literata',
+                      ),
+                    ),
+                  ),
+                // Low batch warning badge
+                if (lowBatchCount > 0)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: Colors.orange.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: Colors.orange.withValues(alpha: 0.2),
+                      ),
                     ),
                     child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              _localizations.currentStock,
-                              style: TextStyle(
-                                fontSize: 10,
-                                color: Colors.grey[600],
-                                fontFamily: 'Literata',
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              '${product.currentStock} ${_localizations.units}',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                                color: stockLevel['color'] as Color,
-                                fontFamily: 'Literata',
-                              ),
-                            ),
-                          ],
-                        ),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Text(
-                              _localizations.stockValue,
-                              style: TextStyle(
-                                fontSize: 10,
-                                color: Colors.grey[600],
-                                fontFamily: 'Literata',
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              '₹${product.getStockValue().toStringAsFixed(0)}',
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                                color: Color(0xFF1B4D3E),
-                                fontFamily: 'Literata',
-                              ),
-                            ),
-                          ],
+                        const Icon(Icons.warning_amber_rounded, size: 11, color: Colors.orange),
+                        const SizedBox(width: 3),
+                        Text(
+                          '$lowBatchCount ${_localizations.lowStock}',
+                          style: const TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.orange,
+                            fontFamily: 'Literata',
+                          ),
                         ),
                       ],
                     ),
                   ),
-                  if (product.currentStock <= 10)
-                    Container(
-                      margin: const EdgeInsets.only(top: 8),
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: product.currentStock == 0
-                            ? Colors.red.withOpacity(0.1)
-                            : Colors.orange.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(6),
+                // Out of stock batch badge
+                if (outBatchCount > 0 && group.totalStock > 0)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: Colors.red.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: Colors.red.withValues(alpha: 0.15),
                       ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            product.currentStock == 0
-                                ? Icons.error_outline
-                                : Icons.warning_amber,
-                            color: product.currentStock == 0
-                                ? Colors.red
-                                : Colors.orange,
-                            size: 16,
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.error_outline, size: 11, color: Colors.red),
+                        const SizedBox(width: 3),
+                        Text(
+                          '$outBatchCount empty',
+                          style: const TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.red,
+                            fontFamily: 'Literata',
                           ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              product.currentStock == 0
-                                  ? _localizations.outOfStockMessage
-                                  : _localizations.lowStockMessage,
-                              style: TextStyle(
-                                fontSize: 10,
-                                color: product.currentStock == 0
-                                    ? Colors.red[700]
-                                    : Colors.orange[700],
-                                fontFamily: 'Literata',
+                        ),
+                      ],
+                    ),
+                  ),
+                // Company names
+                if (group.companies.isNotEmpty)
+                  Text(
+                    group.companies.join(', '),
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Colors.grey[500],
+                      fontFamily: 'Literata',
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+              ],
+            ),
+          ),
+          children: [
+            // Summary bar with stock value & price range
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              color: const Color(0xFF1B4D3E).withValues(alpha: 0.04),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _buildInfoChip(
+                    Icons.shopping_cart_outlined,
+                    group.purchasePriceRange,
+                    'Purchase',
+                  ),
+                  Container(
+                    width: 1,
+                    height: 28,
+                    color: Colors.grey.withValues(alpha: 0.2),
+                  ),
+                  _buildInfoChip(
+                    Icons.sell_outlined,
+                    group.salesPriceRange,
+                    'Sell',
+                  ),
+                  Container(
+                    width: 1,
+                    height: 28,
+                    color: Colors.grey.withValues(alpha: 0.2),
+                  ),
+                  _buildInfoChip(
+                    Icons.account_balance_wallet_outlined,
+                    '₹${group.totalStockValue.toStringAsFixed(0)}',
+                    _localizations.stockValue,
+                  ),
+                ],
+              ),
+            ),
+            // Batch header
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.grey[100],
+                border: Border(
+                  bottom: BorderSide(color: Colors.grey[300]!),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    flex: 3,
+                    child: Text(
+                      _localizations.company,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        fontFamily: 'Literata',
+                        color: Colors.grey[700],
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    flex: 2,
+                    child: Text(
+                      _localizations.date,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        fontFamily: 'Literata',
+                        color: Colors.grey[700],
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                  Expanded(
+                    flex: 2,
+                    child: Text(
+                      '${_localizations.sellPrice} ₹',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        fontFamily: 'Literata',
+                        color: Colors.grey[700],
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                  const Expanded(
+                    flex: 2,
+                    child: Text(
+                      'Qty',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        fontFamily: 'Literata',
+                        color: Color(0xFF1B4D3E),
+                      ),
+                      textAlign: TextAlign.end,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // Batch rows
+            ...group.subEntries.asMap().entries.map((mapEntry) {
+              final i = mapEntry.key;
+              final entry = mapEntry.value;
+              final isEven = i % 2 == 0;
+              final isLowBatch = entry.stockQuantity > 0 && entry.stockQuantity <= 5;
+              final isOutBatch = entry.stockQuantity == 0;
+
+              return Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  color: isOutBatch
+                      ? Colors.red.withValues(alpha: 0.04)
+                      : isLowBatch
+                          ? Colors.orange.withValues(alpha: 0.04)
+                          : isEven
+                              ? Colors.white
+                              : Colors.grey[50],
+                  border: Border(
+                    bottom: BorderSide(
+                      color: Colors.grey.withValues(alpha: 0.12),
+                      width: 0.5,
+                    ),
+                    left: BorderSide(
+                      color: isOutBatch
+                          ? Colors.red
+                          : isLowBatch
+                              ? Colors.orange
+                              : Colors.transparent,
+                      width: isOutBatch || isLowBatch ? 3 : 0,
+                    ),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      flex: 3,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            entry.companyName.isNotEmpty ? entry.companyName : '—',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontFamily: 'Literata',
+                              fontWeight: FontWeight.w500,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          if (isLowBatch || isOutBatch)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 2),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    isOutBatch ? Icons.error_outline : Icons.warning_amber_rounded,
+                                    size: 10,
+                                    color: isOutBatch ? Colors.red : Colors.orange,
+                                  ),
+                                  const SizedBox(width: 3),
+                                  Text(
+                                    isOutBatch ? _localizations.outOfStock : _localizations.lowStock,
+                                    style: TextStyle(
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.w600,
+                                      fontFamily: 'Literata',
+                                      color: isOutBatch ? Colors.red : Colors.orange,
+                                    ),
+                                  ),
+                                ],
                               ),
+                            ),
+                        ],
+                      ),
+                    ),
+                    Expanded(
+                      flex: 2,
+                      child: Text(
+                        entry.formattedDate,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontFamily: 'Literata',
+                          color: Colors.grey[700],
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    Expanded(
+                      flex: 2,
+                      child: Text(
+                        '₹${entry.salesPrice.toStringAsFixed(0)}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontFamily: 'Literata',
+                          fontWeight: FontWeight.w600,
+                          color: Colors.green[700],
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    Expanded(
+                      flex: 2,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          if (isLowBatch || isOutBatch)
+                            Container(
+                              width: 6,
+                              height: 6,
+                              margin: const EdgeInsets.only(right: 5),
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: isOutBatch ? Colors.red : Colors.orange,
+                              ),
+                            ),
+                          Text(
+                            '${entry.stockQuantity}',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontFamily: 'Literata',
+                              fontWeight: FontWeight.w800,
+                              color: isOutBatch
+                                  ? Colors.red
+                                  : isLowBatch
+                                      ? Colors.orange
+                                      : Colors.black87,
                             ),
                           ),
                         ],
                       ),
                     ),
-                ],
+                  ],
+                ),
+              );
+            }),
+            // Low stock alert banner at bottom of expanded card
+            if (group.totalStock == 0)
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.red.withValues(alpha: 0.06),
+                  borderRadius: const BorderRadius.only(
+                    bottomLeft: Radius.circular(15),
+                    bottomRight: Radius.circular(15),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.error_outline, color: Colors.red, size: 16),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        _localizations.outOfStockMessage,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Colors.red[700],
+                          fontFamily: 'Literata',
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            else if (group.totalStock <= 10)
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.orange.withValues(alpha: 0.06),
+                  borderRadius: const BorderRadius.only(
+                    bottomLeft: Radius.circular(15),
+                    bottomRight: Radius.circular(15),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 16),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        _localizations.lowStockMessage,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Colors.orange[700],
+                          fontFamily: 'Literata',
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoChip(IconData icon, String value, String label) {
+    return Column(
+      children: [
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 14, color: const Color(0xFF1B4D3E)),
+            const SizedBox(width: 4),
+            Text(
+              value,
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                fontFamily: 'Literata',
+                color: Color(0xFF1B4D3E),
               ),
             ),
-          );
-        },
-      ),
+          ],
+        ),
+        const SizedBox(height: 2),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 10,
+            fontFamily: 'Literata',
+            color: Colors.grey[600],
+          ),
+        ),
+      ],
     );
   }
 
@@ -1057,7 +1584,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
             icon: Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: const Icon(
