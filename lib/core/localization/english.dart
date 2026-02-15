@@ -262,6 +262,7 @@ class EnglishLocalization {
   static const String pleaseEnterValidNumber = 'Please enter a valid number';
   static const String errorSavingBill = 'Error saving bill';
   static const String pdfSaved = 'PDF saved';
+  static const String preparingPdf = 'Preparing PDF';
   static const String errorSavingPdf = 'Error saving PDF';
   static const String errorSharingBill = 'Error sharing bill';
   static const String failedToConnect = 'Failed to connect';

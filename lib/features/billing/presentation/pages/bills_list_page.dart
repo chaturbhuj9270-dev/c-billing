@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:c_billing/core/services/billing_service.dart';
 import 'package:c_billing/features/billing/data/repositories/firebase_bill_repository.dart';
 import 'package:c_billing/features/billing/domain/entities/bill.dart';
@@ -12,15 +13,12 @@ import 'package:c_billing/features/inventory_management/data/repositories/fireba
 import 'package:c_billing/features/billing/data/datasources/bill_cache_datasource.dart';
 import 'package:c_billing/features/billing/presentation/pages/return_bill_page.dart';
 import 'package:c_billing/core/printing/printing.dart';
-import 'package:printing/printing.dart';
-import 'package:pdf/widgets.dart' as pw;
 import 'package:c_billing/common_widgets/printer_selection_widget.dart';
 import 'package:c_billing/features/shop/data/repositories/shop_repository.dart';
 import 'package:c_billing/features/shop/domain/entities/shop.dart';
 import 'package:c_billing/features/customer/data/repositories/customer_repository.dart';
 import 'package:c_billing/core/services/language_service.dart';
 import 'package:c_billing/core/localization/app_localizations.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:c_billing/features/billing/offline/controllers/bill_offline_controller.dart';
 import 'package:c_billing/features/billing/offline/entities/bill_entity.dart';
 import 'package:c_billing/features/billing/data/services/bill_sync_service.dart';
@@ -53,6 +51,7 @@ class _BillsListPageState extends State<BillsListPage>
   // ignore: unused_field
   late FirebaseCustomerRepository _customerRepository;
   String? _printingBillId; // Track which bill is being printed
+  bool _isProcessingPdf = false; // Track PDF generation/share/save operations
 
   List<Bill> _bills = [];
   List<Bill> _filteredBills = [];
@@ -633,34 +632,17 @@ class _BillsListPageState extends State<BillsListPage>
   }
 
   Future<void> _shareBillAsPdf(Bill bill) async {
+    setState(() => _isProcessingPdf = true);
     try {
-      // 1. Get shop details with timeout
       final shop = await _shopRepository.getShopDetails().timeout(
         const Duration(seconds: 5),
         onTimeout: () => Shop.empty,
       );
-
-      // 2. Create print data (synchronous)
       final printData = _createPrintBillData(bill);
-
-      // 3. Generate PDF based on bill type setting
-      final prefs = await SharedPreferences.getInstance();
-      final billType = prefs.getString('bill_type') ?? 'pos';
-      final pw.Document pdf;
-      if (billType == 'normal') {
-        pdf = await _pdfService.generateNormalBillPdf(billData: printData, shopDetails: shop);
-      } else {
-        pdf = await _pdfService.generateBillPdf(billData: printData, shopDetails: shop);
-      }
-      final bytes = await pdf.save();
-
       if (!mounted) return;
 
-      // 4. Share via native share sheet
-      await Printing.sharePdf(
-        bytes: bytes,
-        filename: 'bill_${bill.billNumber.replaceAll(RegExp(r'[^a-zA-Z0-9\-_]'), '_')}.pdf',
-      );
+      // Use PdfBillService.shareBillAsPdf which uses Share.shareXFiles (native share sheet)
+      await _pdfService.shareBillAsPdf(billData: printData, shopDetails: shop);
     } catch (e) {
       debugPrint('[BillsListPage] ERROR in _shareBillAsPdf: $e');
       if (mounted) {
@@ -671,39 +653,45 @@ class _BillsListPageState extends State<BillsListPage>
           ),
         );
       }
+    } finally {
+      if (mounted) setState(() => _isProcessingPdf = false);
     }
   }
 
   Future<void> _saveBillAsPdf(Bill bill) async {
+    setState(() => _isProcessingPdf = true);
     try {
-      // 1. Get shop details with timeout
       final shop = await _shopRepository.getShopDetails().timeout(
         const Duration(seconds: 5),
         onTimeout: () => Shop.empty,
       );
-
-      // 2. Create print data (synchronous)
       final printData = _createPrintBillData(bill);
-
-      // 3. Generate PDF based on bill type setting
-      final prefs = await SharedPreferences.getInstance();
-      final billType = prefs.getString('bill_type') ?? 'pos';
-      final pw.Document pdf;
-      if (billType == 'normal') {
-        pdf = await _pdfService.generateNormalBillPdf(billData: printData, shopDetails: shop);
-      } else {
-        pdf = await _pdfService.generateBillPdf(billData: printData, shopDetails: shop);
-      }
-
-      final bytes = await pdf.save();
       if (!mounted) return;
 
-      // 4. Open native save/share dialog
-      await Printing.sharePdf(
-        bytes: bytes,
-        filename: 'bill_${bill.id.replaceAll(RegExp(r'[^a-zA-Z0-9\-_]'), '_')}.pdf',
-      );
+      // Save to Documents/Bills/ directory
+      final file = await _pdfService.savePdfToFile(billData: printData, shopDetails: shop);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${_localizations.pdfSaved}: ${file.path.split('/').last}'),
+            backgroundColor: const Color(0xFF1B4D3E),
+            duration: const Duration(seconds: 3),
+            action: SnackBarAction(
+              label: _localizations.share,
+              textColor: Colors.white,
+              onPressed: () async {
+                await Share.shareXFiles(
+                  [XFile(file.path)],
+                  text: 'Bill ${bill.billNumber}',
+                );
+              },
+            ),
+          ),
+        );
+      }
     } catch (e) {
+      debugPrint('[BillsListPage] ERROR in _saveBillAsPdf: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -712,6 +700,8 @@ class _BillsListPageState extends State<BillsListPage>
           ),
         );
       }
+    } finally {
+      if (mounted) setState(() => _isProcessingPdf = false);
     }
   }
 
@@ -837,7 +827,7 @@ class _BillsListPageState extends State<BillsListPage>
         break;
       case _BillDialogAction.savePdf:
         if (result.printData != null) {
-          _shareBillAsPdfWithData(result.printData!);
+          _saveBillAsPdfWithData(result.printData!);
         }
         break;
       case _BillDialogAction.print:
@@ -853,25 +843,16 @@ class _BillsListPageState extends State<BillsListPage>
 
   /// Share bill as PDF using pre-built PrintBillData (called from bill details dialog)
   Future<void> _shareBillAsPdfWithData(PrintBillData printData) async {
+    setState(() => _isProcessingPdf = true);
     try {
       final shop = await _shopRepository.getShopDetails().timeout(
         const Duration(seconds: 5),
         onTimeout: () => Shop.empty,
       );
-      final prefs = await SharedPreferences.getInstance();
-      final billType = prefs.getString('bill_type') ?? 'pos';
-      final pw.Document pdf;
-      if (billType == 'normal') {
-        pdf = await _pdfService.generateNormalBillPdf(billData: printData, shopDetails: shop);
-      } else {
-        pdf = await _pdfService.generateBillPdf(billData: printData, shopDetails: shop);
-      }
-      final bytes = await pdf.save();
       if (!mounted) return;
-      await Printing.sharePdf(
-        bytes: bytes,
-        filename: 'bill_${printData.billNumber.replaceAll(RegExp(r'[^a-zA-Z0-9\-_]'), '_')}.pdf',
-      );
+
+      // Use PdfBillService.shareBillAsPdf which uses Share.shareXFiles (native share sheet)
+      await _pdfService.shareBillAsPdf(billData: printData, shopDetails: shop);
     } catch (e) {
       debugPrint('[BillsListPage] ERROR in _shareBillAsPdfWithData: $e');
       if (mounted) {
@@ -879,11 +860,58 @@ class _BillsListPageState extends State<BillsListPage>
           SnackBar(content: Text('${_localizations.errorSharingBillGeneric}: $e'), backgroundColor: Colors.red),
         );
       }
+    } finally {
+      if (mounted) setState(() => _isProcessingPdf = false);
+    }
+  }
+
+  /// Save bill as PDF locally using pre-built PrintBillData (called from bill details dialog)
+  Future<void> _saveBillAsPdfWithData(PrintBillData printData) async {
+    setState(() => _isProcessingPdf = true);
+    try {
+      final shop = await _shopRepository.getShopDetails().timeout(
+        const Duration(seconds: 5),
+        onTimeout: () => Shop.empty,
+      );
+      if (!mounted) return;
+
+      // Save to Documents directory
+      final file = await _pdfService.savePdfToFile(billData: printData, shopDetails: shop);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${_localizations.pdfSaved}: ${file.path.split('/').last}'),
+            backgroundColor: const Color(0xFF1B4D3E),
+            duration: const Duration(seconds: 3),
+            action: SnackBarAction(
+              label: _localizations.share,
+              textColor: Colors.white,
+              onPressed: () async {
+                await Share.shareXFiles(
+                  [XFile(file.path)],
+                  text: 'Bill ${printData.billNumber}',
+                );
+              },
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('[BillsListPage] ERROR in _saveBillAsPdfWithData: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('${_localizations.errorSavingPdfGeneric}: $e'), backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isProcessingPdf = false);
     }
   }
 
   /// Print bill using pre-built PrintBillData (called from bill details dialog)
   Future<void> _printBillWithData(PrintBillData printData) async {
+    setState(() => _isProcessingPdf = true);
     try {
       final shop = await _shopRepository.getShopDetails().timeout(
         const Duration(seconds: 5),
@@ -898,6 +926,8 @@ class _BillsListPageState extends State<BillsListPage>
           SnackBar(content: Text('${_localizations.errorPrintingBill}: $e'), backgroundColor: Colors.red),
         );
       }
+    } finally {
+      if (mounted) setState(() => _isProcessingPdf = false);
     }
   }
 
@@ -994,24 +1024,72 @@ class _BillsListPageState extends State<BillsListPage>
           ),
         ),
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : FadeTransition(
-              opacity: _opacityAnimation,
-              child: SlideTransition(
-                position: _offsetAnimation,
-                child: Column(
-                  children: [
-                    // Stats cards
-                    _buildStatsSection(),
-                    // Search and filter
-                    _buildSearchAndFilterSection(),
-                    // Bills list
-                    Expanded(child: _buildBillsList()),
-                  ],
+      body: Stack(
+        children: [
+          _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : FadeTransition(
+                  opacity: _opacityAnimation,
+                  child: SlideTransition(
+                    position: _offsetAnimation,
+                    child: Column(
+                      children: [
+                        // Stats cards
+                        _buildStatsSection(),
+                        // Search and filter
+                        _buildSearchAndFilterSection(),
+                        // Bills list
+                        Expanded(child: _buildBillsList()),
+                      ],
+                    ),
+                  ),
+                ),
+          // Loading overlay for PDF operations
+          if (_isProcessingPdf)
+            Container(
+              color: Colors.black.withValues(alpha: 0.3),
+              child: Center(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.15),
+                        blurRadius: 20,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const SizedBox(
+                        width: 40,
+                        height: 40,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 3,
+                          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF1B4D3E)),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        '${_localizations.preparingPdf}...',
+                        style: const TextStyle(
+                          fontFamily: 'Literata',
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF1B4D3E),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
+        ],
+      ),
     );
   }
 

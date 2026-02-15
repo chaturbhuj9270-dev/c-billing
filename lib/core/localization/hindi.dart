@@ -262,6 +262,7 @@ class HindiLocalization {
   static const String pleaseEnterValidNumber = 'कृपया वैध नंबर दर्ज करें';
   static const String errorSavingBill = 'बिल सहेजने में त्रुटि';
   static const String pdfSaved = 'PDF सहेजी गई';
+  static const String preparingPdf = 'PDF तैयार हो रहा है';
   static const String errorSavingPdf = 'PDF सहेजने में त्रुटि';
   static const String errorSharingBill = 'बिल साझा करने में त्रुटि';
   static const String failedToConnect = 'कनेक्ट करने में विफल';

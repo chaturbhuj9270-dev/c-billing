@@ -264,6 +264,7 @@ class MarathiLocalization {
   static const String pleaseEnterValidNumber = 'कृपया वैध नंबर प्रविष्ट करा';
   static const String errorSavingBill = 'बिल सेव्ह करण्यात त्रुटी';
   static const String pdfSaved = 'PDF सेव्ह झाली';
+  static const String preparingPdf = 'PDF तयार होत आहे';
   static const String errorSavingPdf = 'PDF सेव्ह करण्यात त्रुटी';
   static const String errorSharingBill = 'बिल शेअर करण्यात त्रुटी';
   static const String failedToConnect = 'कनेक्ट करण्यात अपयश';

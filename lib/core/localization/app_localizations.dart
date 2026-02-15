@@ -2349,6 +2349,17 @@ class AppLocalizations {
     }
   }
 
+  String get preparingPdf {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.preparingPdf;
+      case 'Marathi':
+        return MarathiLocalization.preparingPdf;
+      default:
+        return EnglishLocalization.preparingPdf;
+    }
+  }
+
   String get errorSavingPdf {
     switch (languageCode) {
       case 'Hindi':
