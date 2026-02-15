@@ -28,6 +28,7 @@ import 'flyout_menu.dart';
 import '../../../settings/presentation/pages/logs_viewer_page.dart';
 import '../../../purchase_return/presentation/pages/purchase_return_screen.dart';
 import '../../../reports/presentation/pages/report_page.dart';
+import '../../../../common_widgets/action_menu.dart';
 
 /// High-performance dashboard page with cache-first loading
 /// Renders instantly with cached data, updates smoothly when fresh data arrives
@@ -407,47 +408,33 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                   ),
                 ),
               ),
-              // Settings Icon (contextual — Bill Settings on Billing tab, Purchase Settings on Purchase tab)
-              if (_selectedIndex == 3 || _selectedIndex == 4) ...[
-                const SizedBox(width: 8),
-                _buildHeaderActionButton(
-                  icon: Icons.settings_rounded,
-                  tooltip: _selectedIndex == 3 ? _localizations.billSettings : _localizations.purchaseSettings,
-                  onTap: () async {
-                    if (_selectedIndex == 3) {
-                      final result = await Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const BillSettingsPage(),
-                        ),
-                      );
-                      // Trigger rebuild so BillingPage can reload settings
-                      if (result == true && mounted) setState(() {});
-                    } else {
-                      await Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const PurchaseSettingsPage(),
-                        ),
-                      );
-                      if (mounted) setState(() {});
-                    }
-                  },
-                ),
-              ],
-              // Language Icon
-              const SizedBox(width: 8),
-              _buildHeaderActionButton(
-                icon: Icons.language_rounded,
-                tooltip: _localizations.language,
-                onTap: _showLanguageDialog,
-              ),
-              // Logs Icon
-              const SizedBox(width: 8),
-              _buildHeaderActionButton(
-                icon: Icons.bug_report_rounded,
-                tooltip: _localizations.viewLogs,
-                onTap: () {
+              // Action Menu (Settings, Language, Bug Report) - Three dots menu
+              ActionMenu(
+                menuColor: const Color(0xFF1B4D3E),
+                iconColor: Colors.white,
+                onSettingsTap: (_selectedIndex == 3 || _selectedIndex == 4)
+                    ? () async {
+                        if (_selectedIndex == 3) {
+                          final result = await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const BillSettingsPage(),
+                            ),
+                          );
+                          if (result == true && mounted) setState(() {});
+                        } else {
+                          await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const PurchaseSettingsPage(),
+                            ),
+                          );
+                          if (mounted) setState(() {});
+                        }
+                      }
+                    : null,
+                onLanguageTap: _showLanguageDialog,
+                onBugReportTap: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
