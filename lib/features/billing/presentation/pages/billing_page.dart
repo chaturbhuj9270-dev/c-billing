@@ -35,6 +35,7 @@ import 'package:c_billing/core/services/inventory_integration_service.dart';
 import 'package:c_billing/features/inventory_management/offline/controllers/purchase_batch_offline_controller.dart';
 import 'package:c_billing/features/inventory_management/offline/entities/purchase_batch_entity.dart';
 import 'package:c_billing/features/customer/offline/controllers/customer_offline_controller.dart';
+import 'package:c_billing/features/billing/domain/entities/bill_tax_settings.dart';
 
 class BillingPage extends StatefulWidget {
   final bool isEmbedded;
@@ -110,6 +111,21 @@ class _BillingPageState extends State<BillingPage> {
   bool _generateBillViaContact = false;
   String _billType = 'pos'; // 'pos' or 'normal'
 
+  // GST/Tax settings
+  BillTaxSettings _taxSettings = BillTaxSettings.defaultSettings;
+  GstMode _gstMode = GstMode.noGst;
+
+  /// Computed tax breakdown based on current subtotal and GST mode
+  TaxBreakdown? get _taxBreakdown {
+    if (_gstMode == GstMode.noGst || !_taxSettings.hasAnyTaxEnabled) {
+      return null;
+    }
+    return _taxSettings.calculateTax(
+      subtotal: _totalAmount,
+      gstMode: _gstMode,
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -165,11 +181,14 @@ class _BillingPageState extends State<BillingPage> {
   
   Future<void> _loadBillSettings() async {
     final prefs = await SharedPreferences.getInstance();
+    final taxSettings = await BillTaxSettings.load();
     if (mounted) {
       setState(() {
         _showCustomerOnBill = prefs.getBool('bill_show_customer_details') ?? true;
         _generateBillViaContact = prefs.getBool('bill_generate_via_contact') ?? false;
         _billType = prefs.getString('bill_type') ?? 'pos';
+        _taxSettings = taxSettings;
+        _gstMode = taxSettings.defaultGstMode;
       });
     }
   }
@@ -828,7 +847,15 @@ class _BillingPageState extends State<BillingPage> {
     return 0.0;
   }
 
-  double get _finalAmount => _totalAmount - _discountAmount;
+  double get _finalAmount {
+    final subtotalAfterDiscount = _totalAmount - _discountAmount;
+    // For exclusive GST, tax is added on top
+    if (_gstMode == GstMode.excludeGst && _taxBreakdown != null) {
+      return subtotalAfterDiscount + _taxBreakdown!.totalTaxAmount;
+    }
+    // For inclusive GST or no GST, price already contains tax or no tax
+    return subtotalAfterDiscount;
+  }
 
   // Computed pending amount based on received amount
   double get _pendingAmount {
@@ -918,6 +945,16 @@ class _BillingPageState extends State<BillingPage> {
         paymentStatus: paymentStatus,
         paidAmount: actualPaidAmount > 0 ? actualPaidAmount : 0,
         pendingAmount: calculatedPendingAmount > 0 ? calculatedPendingAmount : 0,
+        isGstApplied: _taxBreakdown != null && _gstMode != GstMode.noGst,
+        isTaxInclusive: _gstMode == GstMode.includeGst,
+        cgstPercent: _taxBreakdown?.cgstPercent ?? 0.0,
+        sgstPercent: _taxBreakdown?.sgstPercent ?? 0.0,
+        otherTaxPercent: _taxBreakdown?.otherTaxPercent ?? 0.0,
+        otherTaxName: _taxBreakdown?.otherTaxName,
+        cgstAmount: _taxBreakdown?.cgstAmount ?? 0.0,
+        sgstAmount: _taxBreakdown?.sgstAmount ?? 0.0,
+        otherTaxAmount: _taxBreakdown?.otherTaxAmount ?? 0.0,
+        totalTaxAmount: _taxBreakdown?.totalTaxAmount ?? 0.0,
       );
 
       if (!integrationResult.success) {
@@ -1020,6 +1057,8 @@ class _BillingPageState extends State<BillingPage> {
       _isFullPayment = true;
       _showAddCustomerPrompt = false;
       _hasPhoneText = false;
+      // Reset GST mode to default from settings
+      _gstMode = _taxSettings.defaultGstMode;
     });
   }
 
@@ -1134,6 +1173,45 @@ class _BillingPageState extends State<BillingPage> {
                           '-₹${bill.discountAmount.toStringAsFixed(2)}',
                           valueColor: Colors.green,
                         ),
+                      ],
+                      if (bill.isGstApplied && bill.totalTaxAmount > 0) ...[
+                        const Divider(height: 12),
+                        if (bill.cgstAmount > 0)
+                          _buildSuccessDialogRow(
+                            '${_localizations.cgst} (${bill.cgstPercent.toStringAsFixed(1)}%)',
+                            '₹${bill.cgstAmount.toStringAsFixed(2)}',
+                            valueColor: Colors.orange[700],
+                          ),
+                        if (bill.sgstAmount > 0)
+                          _buildSuccessDialogRow(
+                            '${_localizations.sgst} (${bill.sgstPercent.toStringAsFixed(1)}%)',
+                            '₹${bill.sgstAmount.toStringAsFixed(2)}',
+                            valueColor: Colors.orange[700],
+                          ),
+                        if (bill.otherTaxAmount > 0)
+                          _buildSuccessDialogRow(
+                            '${bill.otherTaxName.isNotEmpty ? bill.otherTaxName : _localizations.totalTax} (${bill.otherTaxPercent.toStringAsFixed(1)}%)',
+                            '₹${bill.otherTaxAmount.toStringAsFixed(2)}',
+                            valueColor: Colors.orange[700],
+                          ),
+                        _buildSuccessDialogRow(
+                          _localizations.totalTax,
+                          '₹${bill.totalTaxAmount.toStringAsFixed(2)}',
+                          valueColor: Colors.orange[800],
+                        ),
+                        if (bill.isTaxInclusive)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 2),
+                            child: Text(
+                              _localizations.pricesInclusiveOfGst,
+                              style: TextStyle(
+                                fontFamily: 'Literata',
+                                fontSize: 11,
+                                fontStyle: FontStyle.italic,
+                                color: Colors.grey[500],
+                              ),
+                            ),
+                          ),
                       ],
                       const SizedBox(height: 8),
                       Row(
@@ -1488,6 +1566,7 @@ class _BillingPageState extends State<BillingPage> {
                   _buildAddItemsSection(),
                   if (_billItems.isNotEmpty) _buildBillItemsSection(),
                   if (_billItems.isNotEmpty) _buildDiscountSection(),
+                  if (_billItems.isNotEmpty && _taxSettings.hasAnyTaxEnabled) _buildGstModeSection(),
                   if (_billItems.isNotEmpty) _buildPaymentSection(),
                   const SizedBox(height: 100),
                 ],
@@ -1503,6 +1582,8 @@ class _BillingPageState extends State<BillingPage> {
                   SliverToBoxAdapter(child: _buildBillItemsSection()),
                 if (_billItems.isNotEmpty)
                   SliverToBoxAdapter(child: _buildDiscountSection()),
+                if (_billItems.isNotEmpty && _taxSettings.hasAnyTaxEnabled)
+                  SliverToBoxAdapter(child: _buildGstModeSection()),
                 if (_billItems.isNotEmpty)
                   SliverToBoxAdapter(child: _buildPaymentSection()),
                 const SliverToBoxAdapter(child: SizedBox(height: 100)),
@@ -2839,7 +2920,7 @@ class _BillingPageState extends State<BillingPage> {
             ],
           ),
           // Summary
-          if (_discountAmount > 0) ...[
+          if (_discountAmount > 0 || _taxBreakdown != null) ...[
             const SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.all(12),
@@ -2870,29 +2951,82 @@ class _BillingPageState extends State<BillingPage> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 6),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        '${_localizations.discountWithPercent} (${_discountPercent.toStringAsFixed(1)}%)',
-                        style: TextStyle(
-                          fontFamily: 'Literata',
-                          fontSize: 13,
-                          color: Colors.green[700],
+                  if (_discountAmount > 0) ...[
+                    const SizedBox(height: 6),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          '${_localizations.discountWithPercent} (${_discountPercent.toStringAsFixed(1)}%)',
+                          style: TextStyle(
+                            fontFamily: 'Literata',
+                            fontSize: 13,
+                            color: Colors.green[700],
+                          ),
+                        ),
+                        Text(
+                          '-₹${_discountAmount.toStringAsFixed(2)}',
+                          style: TextStyle(
+                            fontFamily: 'Literata',
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.green[700],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                  // GST breakdown
+                  if (_taxBreakdown != null) ...[
+                    const Divider(height: 16),
+                    if (_gstMode == GstMode.includeGst)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 6),
+                        child: Text(
+                          _localizations.pricesInclusiveOfGst,
+                          style: TextStyle(
+                            fontFamily: 'Literata',
+                            fontSize: 11,
+                            fontStyle: FontStyle.italic,
+                            color: Colors.grey[600],
+                          ),
                         ),
                       ),
-                      Text(
-                        '-₹${_discountAmount.toStringAsFixed(2)}',
-                        style: TextStyle(
-                          fontFamily: 'Literata',
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.green[700],
+                    if (_taxBreakdown!.cgstPercent > 0)
+                      _buildTaxRow(
+                        '${_localizations.cgst} (${_taxBreakdown!.cgstPercent.toStringAsFixed(1)}%)',
+                        _taxBreakdown!.cgstAmount,
+                      ),
+                    if (_taxBreakdown!.sgstPercent > 0)
+                      _buildTaxRow(
+                        '${_localizations.sgst} (${_taxBreakdown!.sgstPercent.toStringAsFixed(1)}%)',
+                        _taxBreakdown!.sgstAmount,
+                      ),
+                    if (_taxBreakdown!.otherTaxPercent > 0)
+                      _buildTaxRow(
+                        '${_taxBreakdown!.otherTaxName.isNotEmpty ? _taxBreakdown!.otherTaxName : _localizations.totalTax} (${_taxBreakdown!.otherTaxPercent.toStringAsFixed(1)}%)',
+                        _taxBreakdown!.otherTaxAmount,
+                      ),
+                    const SizedBox(height: 4),
+                    _buildTaxRow(
+                      _localizations.totalTax,
+                      _taxBreakdown!.totalTaxAmount,
+                      isBold: true,
+                    ),
+                    if (_gstMode == GstMode.excludeGst)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Text(
+                          _localizations.gstExtra,
+                          style: TextStyle(
+                            fontFamily: 'Literata',
+                            fontSize: 11,
+                            fontStyle: FontStyle.italic,
+                            color: Colors.orange[700],
+                          ),
                         ),
                       ),
-                    ],
-                  ),
+                  ],
                   const Divider(height: 16),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -2922,6 +3056,158 @@ class _BillingPageState extends State<BillingPage> {
             ),
           ],
         ],
+      ),
+    );
+  }
+
+  /// Helper widget for displaying a tax row in the summary
+  Widget _buildTaxRow(String label, double amount, {bool isBold = false}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontFamily: 'Literata',
+              fontSize: 13,
+              fontWeight: isBold ? FontWeight.w600 : FontWeight.normal,
+              color: Colors.orange[800],
+            ),
+          ),
+          Text(
+            '₹${amount.toStringAsFixed(2)}',
+            style: TextStyle(
+              fontFamily: 'Literata',
+              fontSize: 13,
+              fontWeight: isBold ? FontWeight.w600 : FontWeight.normal,
+              color: Colors.orange[800],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// GST mode selection section
+  Widget _buildGstModeSection() {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: Colors.orange.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  Icons.receipt_long_outlined,
+                  color: Colors.orange[800],
+                  size: 18,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Text(
+                _localizations.gstCalculationMode,
+                style: const TextStyle(
+                  fontFamily: 'Literata',
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF1B4D3E),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          // GST Mode chips
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _buildGstModeChip(
+                label: _localizations.billWithoutGst,
+                mode: GstMode.noGst,
+                icon: Icons.money_off,
+              ),
+              _buildGstModeChip(
+                label: _localizations.includeGstInTotal,
+                mode: GstMode.includeGst,
+                icon: Icons.arrow_downward,
+              ),
+              _buildGstModeChip(
+                label: _localizations.excludeGstFromTotal,
+                mode: GstMode.excludeGst,
+                icon: Icons.arrow_upward,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGstModeChip({
+    required String label,
+    required GstMode mode,
+    required IconData icon,
+  }) {
+    final isSelected = _gstMode == mode;
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _gstMode = mode;
+        });
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? Colors.orange.withOpacity(0.15)
+              : Colors.grey[100],
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected ? Colors.orange : Colors.grey[300]!,
+            width: isSelected ? 1.5 : 1,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 16,
+              color: isSelected ? Colors.orange[800] : Colors.grey[600],
+            ),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                fontFamily: 'Literata',
+                fontSize: 12,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                color: isSelected ? Colors.orange[800] : Colors.grey[700],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

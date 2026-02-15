@@ -46,6 +46,16 @@ class BillOfflineController extends ChangeNotifier {
     BillPaymentStatus paymentStatus = BillPaymentStatus.paid,
     double paidAmount = 0.0,
     double pendingAmount = 0.0,
+    bool isGstApplied = false,
+    bool isTaxInclusive = false,
+    double cgstPercent = 0.0,
+    double sgstPercent = 0.0,
+    double otherTaxPercent = 0.0,
+    String? otherTaxName,
+    double cgstAmount = 0.0,
+    double sgstAmount = 0.0,
+    double otherTaxAmount = 0.0,
+    double totalTaxAmount = 0.0,
   }) async {
     final bill = BillEntity.create(
       customerId: customerId,
@@ -62,6 +72,16 @@ class BillOfflineController extends ChangeNotifier {
       paymentStatus: paymentStatus,
       paidAmount: paidAmount,
       pendingAmount: pendingAmount,
+      isGstApplied: isGstApplied,
+      isTaxInclusive: isTaxInclusive,
+      cgstPercent: cgstPercent,
+      sgstPercent: sgstPercent,
+      otherTaxPercent: otherTaxPercent,
+      otherTaxName: otherTaxName,
+      cgstAmount: cgstAmount,
+      sgstAmount: sgstAmount,
+      otherTaxAmount: otherTaxAmount,
+      totalTaxAmount: totalTaxAmount,
       syncStatus: BillSyncStatus.newRecord,
     );
 

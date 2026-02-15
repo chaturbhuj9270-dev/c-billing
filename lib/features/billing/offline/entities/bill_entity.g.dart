@@ -22,108 +22,158 @@ const BillEntitySchema = CollectionSchema(
       name: r'billDate',
       type: IsarType.dateTime,
     ),
-    r'createdAt': PropertySchema(
+    r'cgstAmount': PropertySchema(
       id: 1,
+      name: r'cgstAmount',
+      type: IsarType.double,
+    ),
+    r'cgstPercent': PropertySchema(
+      id: 2,
+      name: r'cgstPercent',
+      type: IsarType.double,
+    ),
+    r'createdAt': PropertySchema(
+      id: 3,
       name: r'createdAt',
       type: IsarType.dateTime,
     ),
     r'customerContact': PropertySchema(
-      id: 2,
+      id: 4,
       name: r'customerContact',
       type: IsarType.string,
     ),
     r'customerId': PropertySchema(
-      id: 3,
+      id: 5,
       name: r'customerId',
       type: IsarType.string,
     ),
     r'customerName': PropertySchema(
-      id: 4,
+      id: 6,
       name: r'customerName',
       type: IsarType.string,
     ),
     r'discountAmount': PropertySchema(
-      id: 5,
+      id: 7,
       name: r'discountAmount',
       type: IsarType.double,
     ),
     r'discountPercent': PropertySchema(
-      id: 6,
+      id: 8,
       name: r'discountPercent',
       type: IsarType.double,
     ),
     r'finalAmount': PropertySchema(
-      id: 7,
+      id: 9,
       name: r'finalAmount',
       type: IsarType.double,
     ),
+    r'isGstApplied': PropertySchema(
+      id: 10,
+      name: r'isGstApplied',
+      type: IsarType.bool,
+    ),
     r'isMarkedForDeletion': PropertySchema(
-      id: 8,
+      id: 11,
       name: r'isMarkedForDeletion',
       type: IsarType.bool,
     ),
+    r'isTaxInclusive': PropertySchema(
+      id: 12,
+      name: r'isTaxInclusive',
+      type: IsarType.bool,
+    ),
     r'items': PropertySchema(
-      id: 9,
+      id: 13,
       name: r'items',
       type: IsarType.objectList,
 
       target: r'BillItemEmbedded',
     ),
     r'needsSync': PropertySchema(
-      id: 10,
+      id: 14,
       name: r'needsSync',
       type: IsarType.bool,
     ),
-    r'notes': PropertySchema(id: 11, name: r'notes', type: IsarType.string),
+    r'notes': PropertySchema(id: 15, name: r'notes', type: IsarType.string),
+    r'otherTaxAmount': PropertySchema(
+      id: 16,
+      name: r'otherTaxAmount',
+      type: IsarType.double,
+    ),
+    r'otherTaxName': PropertySchema(
+      id: 17,
+      name: r'otherTaxName',
+      type: IsarType.string,
+    ),
+    r'otherTaxPercent': PropertySchema(
+      id: 18,
+      name: r'otherTaxPercent',
+      type: IsarType.double,
+    ),
     r'paidAmount': PropertySchema(
-      id: 12,
+      id: 19,
       name: r'paidAmount',
       type: IsarType.double,
     ),
     r'paymentStatus': PropertySchema(
-      id: 13,
+      id: 20,
       name: r'paymentStatus',
       type: IsarType.byte,
       enumMap: _BillEntitypaymentStatusEnumValueMap,
     ),
     r'pendingAmount': PropertySchema(
-      id: 14,
+      id: 21,
       name: r'pendingAmount',
       type: IsarType.double,
     ),
     r'returnDate': PropertySchema(
-      id: 15,
+      id: 22,
       name: r'returnDate',
       type: IsarType.dateTime,
     ),
     r'returnStatus': PropertySchema(
-      id: 16,
+      id: 23,
       name: r'returnStatus',
       type: IsarType.bool,
     ),
     r'serverId': PropertySchema(
-      id: 17,
+      id: 24,
       name: r'serverId',
       type: IsarType.string,
     ),
+    r'sgstAmount': PropertySchema(
+      id: 25,
+      name: r'sgstAmount',
+      type: IsarType.double,
+    ),
+    r'sgstPercent': PropertySchema(
+      id: 26,
+      name: r'sgstPercent',
+      type: IsarType.double,
+    ),
     r'syncStatus': PropertySchema(
-      id: 18,
+      id: 27,
       name: r'syncStatus',
       type: IsarType.byte,
       enumMap: _BillEntitysyncStatusEnumValueMap,
     ),
     r'totalAmount': PropertySchema(
-      id: 19,
+      id: 28,
       name: r'totalAmount',
       type: IsarType.double,
     ),
     r'totalQuantity': PropertySchema(
-      id: 20,
+      id: 29,
       name: r'totalQuantity',
       type: IsarType.long,
     ),
+    r'totalTaxAmount': PropertySchema(
+      id: 30,
+      name: r'totalTaxAmount',
+      type: IsarType.double,
+    ),
     r'updatedAt': PropertySchema(
-      id: 21,
+      id: 31,
       name: r'updatedAt',
       type: IsarType.dateTime,
     ),
@@ -253,6 +303,12 @@ int _billEntityEstimateSize(
     }
   }
   {
+    final value = object.otherTaxName;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
+  {
     final value = object.serverId;
     if (value != null) {
       bytesCount += 3 + value.length * 3;
@@ -268,32 +324,42 @@ void _billEntitySerialize(
   Map<Type, List<int>> allOffsets,
 ) {
   writer.writeDateTime(offsets[0], object.billDate);
-  writer.writeDateTime(offsets[1], object.createdAt);
-  writer.writeString(offsets[2], object.customerContact);
-  writer.writeString(offsets[3], object.customerId);
-  writer.writeString(offsets[4], object.customerName);
-  writer.writeDouble(offsets[5], object.discountAmount);
-  writer.writeDouble(offsets[6], object.discountPercent);
-  writer.writeDouble(offsets[7], object.finalAmount);
-  writer.writeBool(offsets[8], object.isMarkedForDeletion);
+  writer.writeDouble(offsets[1], object.cgstAmount);
+  writer.writeDouble(offsets[2], object.cgstPercent);
+  writer.writeDateTime(offsets[3], object.createdAt);
+  writer.writeString(offsets[4], object.customerContact);
+  writer.writeString(offsets[5], object.customerId);
+  writer.writeString(offsets[6], object.customerName);
+  writer.writeDouble(offsets[7], object.discountAmount);
+  writer.writeDouble(offsets[8], object.discountPercent);
+  writer.writeDouble(offsets[9], object.finalAmount);
+  writer.writeBool(offsets[10], object.isGstApplied);
+  writer.writeBool(offsets[11], object.isMarkedForDeletion);
+  writer.writeBool(offsets[12], object.isTaxInclusive);
   writer.writeObjectList<BillItemEmbedded>(
-    offsets[9],
+    offsets[13],
     allOffsets,
     BillItemEmbeddedSchema.serialize,
     object.items,
   );
-  writer.writeBool(offsets[10], object.needsSync);
-  writer.writeString(offsets[11], object.notes);
-  writer.writeDouble(offsets[12], object.paidAmount);
-  writer.writeByte(offsets[13], object.paymentStatus.index);
-  writer.writeDouble(offsets[14], object.pendingAmount);
-  writer.writeDateTime(offsets[15], object.returnDate);
-  writer.writeBool(offsets[16], object.returnStatus);
-  writer.writeString(offsets[17], object.serverId);
-  writer.writeByte(offsets[18], object.syncStatus.index);
-  writer.writeDouble(offsets[19], object.totalAmount);
-  writer.writeLong(offsets[20], object.totalQuantity);
-  writer.writeDateTime(offsets[21], object.updatedAt);
+  writer.writeBool(offsets[14], object.needsSync);
+  writer.writeString(offsets[15], object.notes);
+  writer.writeDouble(offsets[16], object.otherTaxAmount);
+  writer.writeString(offsets[17], object.otherTaxName);
+  writer.writeDouble(offsets[18], object.otherTaxPercent);
+  writer.writeDouble(offsets[19], object.paidAmount);
+  writer.writeByte(offsets[20], object.paymentStatus.index);
+  writer.writeDouble(offsets[21], object.pendingAmount);
+  writer.writeDateTime(offsets[22], object.returnDate);
+  writer.writeBool(offsets[23], object.returnStatus);
+  writer.writeString(offsets[24], object.serverId);
+  writer.writeDouble(offsets[25], object.sgstAmount);
+  writer.writeDouble(offsets[26], object.sgstPercent);
+  writer.writeByte(offsets[27], object.syncStatus.index);
+  writer.writeDouble(offsets[28], object.totalAmount);
+  writer.writeLong(offsets[29], object.totalQuantity);
+  writer.writeDouble(offsets[30], object.totalTaxAmount);
+  writer.writeDateTime(offsets[31], object.updatedAt);
 }
 
 BillEntity _billEntityDeserialize(
@@ -304,38 +370,48 @@ BillEntity _billEntityDeserialize(
 ) {
   final object = BillEntity(
     billDate: reader.readDateTime(offsets[0]),
-    createdAt: reader.readDateTime(offsets[1]),
-    customerContact: reader.readStringOrNull(offsets[2]),
-    customerId: reader.readStringOrNull(offsets[3]),
-    customerName: reader.readStringOrNull(offsets[4]),
-    discountAmount: reader.readDoubleOrNull(offsets[5]) ?? 0.0,
-    discountPercent: reader.readDoubleOrNull(offsets[6]) ?? 0.0,
-    finalAmount: reader.readDoubleOrNull(offsets[7]) ?? 0.0,
+    cgstAmount: reader.readDoubleOrNull(offsets[1]) ?? 0.0,
+    cgstPercent: reader.readDoubleOrNull(offsets[2]) ?? 0.0,
+    createdAt: reader.readDateTime(offsets[3]),
+    customerContact: reader.readStringOrNull(offsets[4]),
+    customerId: reader.readStringOrNull(offsets[5]),
+    customerName: reader.readStringOrNull(offsets[6]),
+    discountAmount: reader.readDoubleOrNull(offsets[7]) ?? 0.0,
+    discountPercent: reader.readDoubleOrNull(offsets[8]) ?? 0.0,
+    finalAmount: reader.readDoubleOrNull(offsets[9]) ?? 0.0,
+    isGstApplied: reader.readBoolOrNull(offsets[10]) ?? false,
+    isTaxInclusive: reader.readBoolOrNull(offsets[12]) ?? false,
     items:
         reader.readObjectList<BillItemEmbedded>(
-          offsets[9],
+          offsets[13],
           BillItemEmbeddedSchema.deserialize,
           allOffsets,
           BillItemEmbedded(),
         ) ??
         const [],
-    notes: reader.readStringOrNull(offsets[11]),
-    paidAmount: reader.readDoubleOrNull(offsets[12]) ?? 0.0,
+    notes: reader.readStringOrNull(offsets[15]),
+    otherTaxAmount: reader.readDoubleOrNull(offsets[16]) ?? 0.0,
+    otherTaxName: reader.readStringOrNull(offsets[17]),
+    otherTaxPercent: reader.readDoubleOrNull(offsets[18]) ?? 0.0,
+    paidAmount: reader.readDoubleOrNull(offsets[19]) ?? 0.0,
     paymentStatus:
         _BillEntitypaymentStatusValueEnumMap[reader.readByteOrNull(
-          offsets[13],
+          offsets[20],
         )] ??
         BillPaymentStatus.paid,
-    pendingAmount: reader.readDoubleOrNull(offsets[14]) ?? 0.0,
-    returnDate: reader.readDateTimeOrNull(offsets[15]),
-    returnStatus: reader.readBoolOrNull(offsets[16]) ?? false,
-    serverId: reader.readStringOrNull(offsets[17]),
+    pendingAmount: reader.readDoubleOrNull(offsets[21]) ?? 0.0,
+    returnDate: reader.readDateTimeOrNull(offsets[22]),
+    returnStatus: reader.readBoolOrNull(offsets[23]) ?? false,
+    serverId: reader.readStringOrNull(offsets[24]),
+    sgstAmount: reader.readDoubleOrNull(offsets[25]) ?? 0.0,
+    sgstPercent: reader.readDoubleOrNull(offsets[26]) ?? 0.0,
     syncStatus:
-        _BillEntitysyncStatusValueEnumMap[reader.readByteOrNull(offsets[18])] ??
+        _BillEntitysyncStatusValueEnumMap[reader.readByteOrNull(offsets[27])] ??
         BillSyncStatus.newRecord,
-    totalAmount: reader.readDoubleOrNull(offsets[19]) ?? 0.0,
-    totalQuantity: reader.readLongOrNull(offsets[20]) ?? 0,
-    updatedAt: reader.readDateTime(offsets[21]),
+    totalAmount: reader.readDoubleOrNull(offsets[28]) ?? 0.0,
+    totalQuantity: reader.readLongOrNull(offsets[29]) ?? 0,
+    totalTaxAmount: reader.readDoubleOrNull(offsets[30]) ?? 0.0,
+    updatedAt: reader.readDateTime(offsets[31]),
   );
   object.id = id;
   return object;
@@ -351,22 +427,30 @@ P _billEntityDeserializeProp<P>(
     case 0:
       return (reader.readDateTime(offset)) as P;
     case 1:
-      return (reader.readDateTime(offset)) as P;
+      return (reader.readDoubleOrNull(offset) ?? 0.0) as P;
     case 2:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readDoubleOrNull(offset) ?? 0.0) as P;
     case 3:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readDateTime(offset)) as P;
     case 4:
       return (reader.readStringOrNull(offset)) as P;
     case 5:
-      return (reader.readDoubleOrNull(offset) ?? 0.0) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 6:
-      return (reader.readDoubleOrNull(offset) ?? 0.0) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 7:
       return (reader.readDoubleOrNull(offset) ?? 0.0) as P;
     case 8:
-      return (reader.readBool(offset)) as P;
+      return (reader.readDoubleOrNull(offset) ?? 0.0) as P;
     case 9:
+      return (reader.readDoubleOrNull(offset) ?? 0.0) as P;
+    case 10:
+      return (reader.readBoolOrNull(offset) ?? false) as P;
+    case 11:
+      return (reader.readBool(offset)) as P;
+    case 12:
+      return (reader.readBoolOrNull(offset) ?? false) as P;
+    case 13:
       return (reader.readObjectList<BillItemEmbedded>(
                 offset,
                 BillItemEmbeddedSchema.deserialize,
@@ -375,37 +459,49 @@ P _billEntityDeserializeProp<P>(
               ) ??
               const [])
           as P;
-    case 10:
+    case 14:
       return (reader.readBool(offset)) as P;
-    case 11:
+    case 15:
       return (reader.readStringOrNull(offset)) as P;
-    case 12:
+    case 16:
       return (reader.readDoubleOrNull(offset) ?? 0.0) as P;
-    case 13:
+    case 17:
+      return (reader.readStringOrNull(offset)) as P;
+    case 18:
+      return (reader.readDoubleOrNull(offset) ?? 0.0) as P;
+    case 19:
+      return (reader.readDoubleOrNull(offset) ?? 0.0) as P;
+    case 20:
       return (_BillEntitypaymentStatusValueEnumMap[reader.readByteOrNull(
                 offset,
               )] ??
               BillPaymentStatus.paid)
           as P;
-    case 14:
+    case 21:
       return (reader.readDoubleOrNull(offset) ?? 0.0) as P;
-    case 15:
+    case 22:
       return (reader.readDateTimeOrNull(offset)) as P;
-    case 16:
+    case 23:
       return (reader.readBoolOrNull(offset) ?? false) as P;
-    case 17:
+    case 24:
       return (reader.readStringOrNull(offset)) as P;
-    case 18:
+    case 25:
+      return (reader.readDoubleOrNull(offset) ?? 0.0) as P;
+    case 26:
+      return (reader.readDoubleOrNull(offset) ?? 0.0) as P;
+    case 27:
       return (_BillEntitysyncStatusValueEnumMap[reader.readByteOrNull(
                 offset,
               )] ??
               BillSyncStatus.newRecord)
           as P;
-    case 19:
+    case 28:
       return (reader.readDoubleOrNull(offset) ?? 0.0) as P;
-    case 20:
+    case 29:
       return (reader.readLongOrNull(offset) ?? 0) as P;
-    case 21:
+    case 30:
+      return (reader.readDoubleOrNull(offset) ?? 0.0) as P;
+    case 31:
       return (reader.readDateTime(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -1071,6 +1167,157 @@ extension BillEntityQueryFilter
           includeLower: includeLower,
           upper: upper,
           includeUpper: includeUpper,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<BillEntity, BillEntity, QAfterFilterCondition> cgstAmountEqualTo(
+    double value, {
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'cgstAmount',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<BillEntity, BillEntity, QAfterFilterCondition>
+  cgstAmountGreaterThan(
+    double value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'cgstAmount',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<BillEntity, BillEntity, QAfterFilterCondition>
+  cgstAmountLessThan(
+    double value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'cgstAmount',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<BillEntity, BillEntity, QAfterFilterCondition> cgstAmountBetween(
+    double lower,
+    double upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'cgstAmount',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+
+          epsilon: epsilon,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<BillEntity, BillEntity, QAfterFilterCondition>
+  cgstPercentEqualTo(double value, {double epsilon = Query.epsilon}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'cgstPercent',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<BillEntity, BillEntity, QAfterFilterCondition>
+  cgstPercentGreaterThan(
+    double value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'cgstPercent',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<BillEntity, BillEntity, QAfterFilterCondition>
+  cgstPercentLessThan(
+    double value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'cgstPercent',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<BillEntity, BillEntity, QAfterFilterCondition>
+  cgstPercentBetween(
+    double lower,
+    double upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'cgstPercent',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+
+          epsilon: epsilon,
         ),
       );
     });
@@ -1898,10 +2145,28 @@ extension BillEntityQueryFilter
   }
 
   QueryBuilder<BillEntity, BillEntity, QAfterFilterCondition>
+  isGstAppliedEqualTo(bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'isGstApplied', value: value),
+      );
+    });
+  }
+
+  QueryBuilder<BillEntity, BillEntity, QAfterFilterCondition>
   isMarkedForDeletionEqualTo(bool value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         FilterCondition.equalTo(property: r'isMarkedForDeletion', value: value),
+      );
+    });
+  }
+
+  QueryBuilder<BillEntity, BillEntity, QAfterFilterCondition>
+  isTaxInclusiveEqualTo(bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'isTaxInclusive', value: value),
       );
     });
   }
@@ -2127,6 +2392,315 @@ extension BillEntityQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         FilterCondition.greaterThan(property: r'notes', value: ''),
+      );
+    });
+  }
+
+  QueryBuilder<BillEntity, BillEntity, QAfterFilterCondition>
+  otherTaxAmountEqualTo(double value, {double epsilon = Query.epsilon}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'otherTaxAmount',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<BillEntity, BillEntity, QAfterFilterCondition>
+  otherTaxAmountGreaterThan(
+    double value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'otherTaxAmount',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<BillEntity, BillEntity, QAfterFilterCondition>
+  otherTaxAmountLessThan(
+    double value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'otherTaxAmount',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<BillEntity, BillEntity, QAfterFilterCondition>
+  otherTaxAmountBetween(
+    double lower,
+    double upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'otherTaxAmount',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+
+          epsilon: epsilon,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<BillEntity, BillEntity, QAfterFilterCondition>
+  otherTaxNameIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const FilterCondition.isNull(property: r'otherTaxName'),
+      );
+    });
+  }
+
+  QueryBuilder<BillEntity, BillEntity, QAfterFilterCondition>
+  otherTaxNameIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const FilterCondition.isNotNull(property: r'otherTaxName'),
+      );
+    });
+  }
+
+  QueryBuilder<BillEntity, BillEntity, QAfterFilterCondition>
+  otherTaxNameEqualTo(String? value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'otherTaxName',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<BillEntity, BillEntity, QAfterFilterCondition>
+  otherTaxNameGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'otherTaxName',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<BillEntity, BillEntity, QAfterFilterCondition>
+  otherTaxNameLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'otherTaxName',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<BillEntity, BillEntity, QAfterFilterCondition>
+  otherTaxNameBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'otherTaxName',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<BillEntity, BillEntity, QAfterFilterCondition>
+  otherTaxNameStartsWith(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.startsWith(
+          property: r'otherTaxName',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<BillEntity, BillEntity, QAfterFilterCondition>
+  otherTaxNameEndsWith(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.endsWith(
+          property: r'otherTaxName',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<BillEntity, BillEntity, QAfterFilterCondition>
+  otherTaxNameContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.contains(
+          property: r'otherTaxName',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<BillEntity, BillEntity, QAfterFilterCondition>
+  otherTaxNameMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.matches(
+          property: r'otherTaxName',
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<BillEntity, BillEntity, QAfterFilterCondition>
+  otherTaxNameIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'otherTaxName', value: ''),
+      );
+    });
+  }
+
+  QueryBuilder<BillEntity, BillEntity, QAfterFilterCondition>
+  otherTaxNameIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(property: r'otherTaxName', value: ''),
+      );
+    });
+  }
+
+  QueryBuilder<BillEntity, BillEntity, QAfterFilterCondition>
+  otherTaxPercentEqualTo(double value, {double epsilon = Query.epsilon}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'otherTaxPercent',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<BillEntity, BillEntity, QAfterFilterCondition>
+  otherTaxPercentGreaterThan(
+    double value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'otherTaxPercent',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<BillEntity, BillEntity, QAfterFilterCondition>
+  otherTaxPercentLessThan(
+    double value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'otherTaxPercent',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<BillEntity, BillEntity, QAfterFilterCondition>
+  otherTaxPercentBetween(
+    double lower,
+    double upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'otherTaxPercent',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+
+          epsilon: epsilon,
+        ),
       );
     });
   }
@@ -2583,6 +3157,157 @@ extension BillEntityQueryFilter
     });
   }
 
+  QueryBuilder<BillEntity, BillEntity, QAfterFilterCondition> sgstAmountEqualTo(
+    double value, {
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'sgstAmount',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<BillEntity, BillEntity, QAfterFilterCondition>
+  sgstAmountGreaterThan(
+    double value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'sgstAmount',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<BillEntity, BillEntity, QAfterFilterCondition>
+  sgstAmountLessThan(
+    double value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'sgstAmount',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<BillEntity, BillEntity, QAfterFilterCondition> sgstAmountBetween(
+    double lower,
+    double upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'sgstAmount',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+
+          epsilon: epsilon,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<BillEntity, BillEntity, QAfterFilterCondition>
+  sgstPercentEqualTo(double value, {double epsilon = Query.epsilon}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'sgstPercent',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<BillEntity, BillEntity, QAfterFilterCondition>
+  sgstPercentGreaterThan(
+    double value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'sgstPercent',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<BillEntity, BillEntity, QAfterFilterCondition>
+  sgstPercentLessThan(
+    double value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'sgstPercent',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<BillEntity, BillEntity, QAfterFilterCondition>
+  sgstPercentBetween(
+    double lower,
+    double upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'sgstPercent',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+
+          epsilon: epsilon,
+        ),
+      );
+    });
+  }
+
   QueryBuilder<BillEntity, BillEntity, QAfterFilterCondition> syncStatusEqualTo(
     BillSyncStatus value,
   ) {
@@ -2768,6 +3493,81 @@ extension BillEntityQueryFilter
     });
   }
 
+  QueryBuilder<BillEntity, BillEntity, QAfterFilterCondition>
+  totalTaxAmountEqualTo(double value, {double epsilon = Query.epsilon}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'totalTaxAmount',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<BillEntity, BillEntity, QAfterFilterCondition>
+  totalTaxAmountGreaterThan(
+    double value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'totalTaxAmount',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<BillEntity, BillEntity, QAfterFilterCondition>
+  totalTaxAmountLessThan(
+    double value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'totalTaxAmount',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<BillEntity, BillEntity, QAfterFilterCondition>
+  totalTaxAmountBetween(
+    double lower,
+    double upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'totalTaxAmount',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+
+          epsilon: epsilon,
+        ),
+      );
+    });
+  }
+
   QueryBuilder<BillEntity, BillEntity, QAfterFilterCondition> updatedAtEqualTo(
     DateTime value,
   ) {
@@ -2851,6 +3651,30 @@ extension BillEntityQuerySortBy
   QueryBuilder<BillEntity, BillEntity, QAfterSortBy> sortByBillDateDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'billDate', Sort.desc);
+    });
+  }
+
+  QueryBuilder<BillEntity, BillEntity, QAfterSortBy> sortByCgstAmount() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'cgstAmount', Sort.asc);
+    });
+  }
+
+  QueryBuilder<BillEntity, BillEntity, QAfterSortBy> sortByCgstAmountDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'cgstAmount', Sort.desc);
+    });
+  }
+
+  QueryBuilder<BillEntity, BillEntity, QAfterSortBy> sortByCgstPercent() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'cgstPercent', Sort.asc);
+    });
+  }
+
+  QueryBuilder<BillEntity, BillEntity, QAfterSortBy> sortByCgstPercentDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'cgstPercent', Sort.desc);
     });
   }
 
@@ -2941,6 +3765,18 @@ extension BillEntityQuerySortBy
     });
   }
 
+  QueryBuilder<BillEntity, BillEntity, QAfterSortBy> sortByIsGstApplied() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isGstApplied', Sort.asc);
+    });
+  }
+
+  QueryBuilder<BillEntity, BillEntity, QAfterSortBy> sortByIsGstAppliedDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isGstApplied', Sort.desc);
+    });
+  }
+
   QueryBuilder<BillEntity, BillEntity, QAfterSortBy>
   sortByIsMarkedForDeletion() {
     return QueryBuilder.apply(this, (query) {
@@ -2952,6 +3788,19 @@ extension BillEntityQuerySortBy
   sortByIsMarkedForDeletionDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'isMarkedForDeletion', Sort.desc);
+    });
+  }
+
+  QueryBuilder<BillEntity, BillEntity, QAfterSortBy> sortByIsTaxInclusive() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isTaxInclusive', Sort.asc);
+    });
+  }
+
+  QueryBuilder<BillEntity, BillEntity, QAfterSortBy>
+  sortByIsTaxInclusiveDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isTaxInclusive', Sort.desc);
     });
   }
 
@@ -2976,6 +3825,44 @@ extension BillEntityQuerySortBy
   QueryBuilder<BillEntity, BillEntity, QAfterSortBy> sortByNotesDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'notes', Sort.desc);
+    });
+  }
+
+  QueryBuilder<BillEntity, BillEntity, QAfterSortBy> sortByOtherTaxAmount() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'otherTaxAmount', Sort.asc);
+    });
+  }
+
+  QueryBuilder<BillEntity, BillEntity, QAfterSortBy>
+  sortByOtherTaxAmountDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'otherTaxAmount', Sort.desc);
+    });
+  }
+
+  QueryBuilder<BillEntity, BillEntity, QAfterSortBy> sortByOtherTaxName() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'otherTaxName', Sort.asc);
+    });
+  }
+
+  QueryBuilder<BillEntity, BillEntity, QAfterSortBy> sortByOtherTaxNameDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'otherTaxName', Sort.desc);
+    });
+  }
+
+  QueryBuilder<BillEntity, BillEntity, QAfterSortBy> sortByOtherTaxPercent() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'otherTaxPercent', Sort.asc);
+    });
+  }
+
+  QueryBuilder<BillEntity, BillEntity, QAfterSortBy>
+  sortByOtherTaxPercentDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'otherTaxPercent', Sort.desc);
     });
   }
 
@@ -3051,6 +3938,30 @@ extension BillEntityQuerySortBy
     });
   }
 
+  QueryBuilder<BillEntity, BillEntity, QAfterSortBy> sortBySgstAmount() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'sgstAmount', Sort.asc);
+    });
+  }
+
+  QueryBuilder<BillEntity, BillEntity, QAfterSortBy> sortBySgstAmountDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'sgstAmount', Sort.desc);
+    });
+  }
+
+  QueryBuilder<BillEntity, BillEntity, QAfterSortBy> sortBySgstPercent() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'sgstPercent', Sort.asc);
+    });
+  }
+
+  QueryBuilder<BillEntity, BillEntity, QAfterSortBy> sortBySgstPercentDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'sgstPercent', Sort.desc);
+    });
+  }
+
   QueryBuilder<BillEntity, BillEntity, QAfterSortBy> sortBySyncStatus() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'syncStatus', Sort.asc);
@@ -3087,6 +3998,19 @@ extension BillEntityQuerySortBy
     });
   }
 
+  QueryBuilder<BillEntity, BillEntity, QAfterSortBy> sortByTotalTaxAmount() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'totalTaxAmount', Sort.asc);
+    });
+  }
+
+  QueryBuilder<BillEntity, BillEntity, QAfterSortBy>
+  sortByTotalTaxAmountDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'totalTaxAmount', Sort.desc);
+    });
+  }
+
   QueryBuilder<BillEntity, BillEntity, QAfterSortBy> sortByUpdatedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'updatedAt', Sort.asc);
@@ -3111,6 +4035,30 @@ extension BillEntityQuerySortThenBy
   QueryBuilder<BillEntity, BillEntity, QAfterSortBy> thenByBillDateDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'billDate', Sort.desc);
+    });
+  }
+
+  QueryBuilder<BillEntity, BillEntity, QAfterSortBy> thenByCgstAmount() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'cgstAmount', Sort.asc);
+    });
+  }
+
+  QueryBuilder<BillEntity, BillEntity, QAfterSortBy> thenByCgstAmountDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'cgstAmount', Sort.desc);
+    });
+  }
+
+  QueryBuilder<BillEntity, BillEntity, QAfterSortBy> thenByCgstPercent() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'cgstPercent', Sort.asc);
+    });
+  }
+
+  QueryBuilder<BillEntity, BillEntity, QAfterSortBy> thenByCgstPercentDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'cgstPercent', Sort.desc);
     });
   }
 
@@ -3213,6 +4161,18 @@ extension BillEntityQuerySortThenBy
     });
   }
 
+  QueryBuilder<BillEntity, BillEntity, QAfterSortBy> thenByIsGstApplied() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isGstApplied', Sort.asc);
+    });
+  }
+
+  QueryBuilder<BillEntity, BillEntity, QAfterSortBy> thenByIsGstAppliedDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isGstApplied', Sort.desc);
+    });
+  }
+
   QueryBuilder<BillEntity, BillEntity, QAfterSortBy>
   thenByIsMarkedForDeletion() {
     return QueryBuilder.apply(this, (query) {
@@ -3224,6 +4184,19 @@ extension BillEntityQuerySortThenBy
   thenByIsMarkedForDeletionDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'isMarkedForDeletion', Sort.desc);
+    });
+  }
+
+  QueryBuilder<BillEntity, BillEntity, QAfterSortBy> thenByIsTaxInclusive() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isTaxInclusive', Sort.asc);
+    });
+  }
+
+  QueryBuilder<BillEntity, BillEntity, QAfterSortBy>
+  thenByIsTaxInclusiveDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isTaxInclusive', Sort.desc);
     });
   }
 
@@ -3248,6 +4221,44 @@ extension BillEntityQuerySortThenBy
   QueryBuilder<BillEntity, BillEntity, QAfterSortBy> thenByNotesDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'notes', Sort.desc);
+    });
+  }
+
+  QueryBuilder<BillEntity, BillEntity, QAfterSortBy> thenByOtherTaxAmount() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'otherTaxAmount', Sort.asc);
+    });
+  }
+
+  QueryBuilder<BillEntity, BillEntity, QAfterSortBy>
+  thenByOtherTaxAmountDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'otherTaxAmount', Sort.desc);
+    });
+  }
+
+  QueryBuilder<BillEntity, BillEntity, QAfterSortBy> thenByOtherTaxName() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'otherTaxName', Sort.asc);
+    });
+  }
+
+  QueryBuilder<BillEntity, BillEntity, QAfterSortBy> thenByOtherTaxNameDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'otherTaxName', Sort.desc);
+    });
+  }
+
+  QueryBuilder<BillEntity, BillEntity, QAfterSortBy> thenByOtherTaxPercent() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'otherTaxPercent', Sort.asc);
+    });
+  }
+
+  QueryBuilder<BillEntity, BillEntity, QAfterSortBy>
+  thenByOtherTaxPercentDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'otherTaxPercent', Sort.desc);
     });
   }
 
@@ -3323,6 +4334,30 @@ extension BillEntityQuerySortThenBy
     });
   }
 
+  QueryBuilder<BillEntity, BillEntity, QAfterSortBy> thenBySgstAmount() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'sgstAmount', Sort.asc);
+    });
+  }
+
+  QueryBuilder<BillEntity, BillEntity, QAfterSortBy> thenBySgstAmountDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'sgstAmount', Sort.desc);
+    });
+  }
+
+  QueryBuilder<BillEntity, BillEntity, QAfterSortBy> thenBySgstPercent() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'sgstPercent', Sort.asc);
+    });
+  }
+
+  QueryBuilder<BillEntity, BillEntity, QAfterSortBy> thenBySgstPercentDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'sgstPercent', Sort.desc);
+    });
+  }
+
   QueryBuilder<BillEntity, BillEntity, QAfterSortBy> thenBySyncStatus() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'syncStatus', Sort.asc);
@@ -3359,6 +4394,19 @@ extension BillEntityQuerySortThenBy
     });
   }
 
+  QueryBuilder<BillEntity, BillEntity, QAfterSortBy> thenByTotalTaxAmount() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'totalTaxAmount', Sort.asc);
+    });
+  }
+
+  QueryBuilder<BillEntity, BillEntity, QAfterSortBy>
+  thenByTotalTaxAmountDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'totalTaxAmount', Sort.desc);
+    });
+  }
+
   QueryBuilder<BillEntity, BillEntity, QAfterSortBy> thenByUpdatedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'updatedAt', Sort.asc);
@@ -3377,6 +4425,18 @@ extension BillEntityQueryWhereDistinct
   QueryBuilder<BillEntity, BillEntity, QDistinct> distinctByBillDate() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'billDate');
+    });
+  }
+
+  QueryBuilder<BillEntity, BillEntity, QDistinct> distinctByCgstAmount() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'cgstAmount');
+    });
+  }
+
+  QueryBuilder<BillEntity, BillEntity, QDistinct> distinctByCgstPercent() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'cgstPercent');
     });
   }
 
@@ -3431,10 +4491,22 @@ extension BillEntityQueryWhereDistinct
     });
   }
 
+  QueryBuilder<BillEntity, BillEntity, QDistinct> distinctByIsGstApplied() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'isGstApplied');
+    });
+  }
+
   QueryBuilder<BillEntity, BillEntity, QDistinct>
   distinctByIsMarkedForDeletion() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'isMarkedForDeletion');
+    });
+  }
+
+  QueryBuilder<BillEntity, BillEntity, QDistinct> distinctByIsTaxInclusive() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'isTaxInclusive');
     });
   }
 
@@ -3449,6 +4521,26 @@ extension BillEntityQueryWhereDistinct
   }) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'notes', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<BillEntity, BillEntity, QDistinct> distinctByOtherTaxAmount() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'otherTaxAmount');
+    });
+  }
+
+  QueryBuilder<BillEntity, BillEntity, QDistinct> distinctByOtherTaxName({
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'otherTaxName', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<BillEntity, BillEntity, QDistinct> distinctByOtherTaxPercent() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'otherTaxPercent');
     });
   }
 
@@ -3490,6 +4582,18 @@ extension BillEntityQueryWhereDistinct
     });
   }
 
+  QueryBuilder<BillEntity, BillEntity, QDistinct> distinctBySgstAmount() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'sgstAmount');
+    });
+  }
+
+  QueryBuilder<BillEntity, BillEntity, QDistinct> distinctBySgstPercent() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'sgstPercent');
+    });
+  }
+
   QueryBuilder<BillEntity, BillEntity, QDistinct> distinctBySyncStatus() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'syncStatus');
@@ -3505,6 +4609,12 @@ extension BillEntityQueryWhereDistinct
   QueryBuilder<BillEntity, BillEntity, QDistinct> distinctByTotalQuantity() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'totalQuantity');
+    });
+  }
+
+  QueryBuilder<BillEntity, BillEntity, QDistinct> distinctByTotalTaxAmount() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'totalTaxAmount');
     });
   }
 
@@ -3526,6 +4636,18 @@ extension BillEntityQueryProperty
   QueryBuilder<BillEntity, DateTime, QQueryOperations> billDateProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'billDate');
+    });
+  }
+
+  QueryBuilder<BillEntity, double, QQueryOperations> cgstAmountProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'cgstAmount');
+    });
+  }
+
+  QueryBuilder<BillEntity, double, QQueryOperations> cgstPercentProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'cgstPercent');
     });
   }
 
@@ -3572,10 +4694,22 @@ extension BillEntityQueryProperty
     });
   }
 
+  QueryBuilder<BillEntity, bool, QQueryOperations> isGstAppliedProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'isGstApplied');
+    });
+  }
+
   QueryBuilder<BillEntity, bool, QQueryOperations>
   isMarkedForDeletionProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'isMarkedForDeletion');
+    });
+  }
+
+  QueryBuilder<BillEntity, bool, QQueryOperations> isTaxInclusiveProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'isTaxInclusive');
     });
   }
 
@@ -3595,6 +4729,24 @@ extension BillEntityQueryProperty
   QueryBuilder<BillEntity, String?, QQueryOperations> notesProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'notes');
+    });
+  }
+
+  QueryBuilder<BillEntity, double, QQueryOperations> otherTaxAmountProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'otherTaxAmount');
+    });
+  }
+
+  QueryBuilder<BillEntity, String?, QQueryOperations> otherTaxNameProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'otherTaxName');
+    });
+  }
+
+  QueryBuilder<BillEntity, double, QQueryOperations> otherTaxPercentProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'otherTaxPercent');
     });
   }
 
@@ -3635,6 +4787,18 @@ extension BillEntityQueryProperty
     });
   }
 
+  QueryBuilder<BillEntity, double, QQueryOperations> sgstAmountProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'sgstAmount');
+    });
+  }
+
+  QueryBuilder<BillEntity, double, QQueryOperations> sgstPercentProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'sgstPercent');
+    });
+  }
+
   QueryBuilder<BillEntity, BillSyncStatus, QQueryOperations>
   syncStatusProperty() {
     return QueryBuilder.apply(this, (query) {
@@ -3651,6 +4815,12 @@ extension BillEntityQueryProperty
   QueryBuilder<BillEntity, int, QQueryOperations> totalQuantityProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'totalQuantity');
+    });
+  }
+
+  QueryBuilder<BillEntity, double, QQueryOperations> totalTaxAmountProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'totalTaxAmount');
     });
   }
 

@@ -5737,4 +5737,223 @@ class AppLocalizations {
       default: return EnglishLocalization.reportIssue;
     }
   }
+
+  // ═══════════════════════════════════════════════════
+  // GST / Tax Settings
+  // ═══════════════════════════════════════════════════
+  String get taxSettings {
+    switch (languageCode) {
+      case 'Hindi': return HindiLocalization.taxSettings;
+      case 'Marathi': return MarathiLocalization.taxSettings;
+      default: return EnglishLocalization.taxSettings;
+    }
+  }
+
+  String get taxConfiguration {
+    switch (languageCode) {
+      case 'Hindi': return HindiLocalization.taxConfiguration;
+      case 'Marathi': return MarathiLocalization.taxConfiguration;
+      default: return EnglishLocalization.taxConfiguration;
+    }
+  }
+
+  String get enableCgst {
+    switch (languageCode) {
+      case 'Hindi': return HindiLocalization.enableCgst;
+      case 'Marathi': return MarathiLocalization.enableCgst;
+      default: return EnglishLocalization.enableCgst;
+    }
+  }
+
+  String get enableSgst {
+    switch (languageCode) {
+      case 'Hindi': return HindiLocalization.enableSgst;
+      case 'Marathi': return MarathiLocalization.enableSgst;
+      default: return EnglishLocalization.enableSgst;
+    }
+  }
+
+  String get enableOtherTax {
+    switch (languageCode) {
+      case 'Hindi': return HindiLocalization.enableOtherTax;
+      case 'Marathi': return MarathiLocalization.enableOtherTax;
+      default: return EnglishLocalization.enableOtherTax;
+    }
+  }
+
+  String get cgstPercent {
+    switch (languageCode) {
+      case 'Hindi': return HindiLocalization.cgstPercent;
+      case 'Marathi': return MarathiLocalization.cgstPercent;
+      default: return EnglishLocalization.cgstPercent;
+    }
+  }
+
+  String get sgstPercent {
+    switch (languageCode) {
+      case 'Hindi': return HindiLocalization.sgstPercent;
+      case 'Marathi': return MarathiLocalization.sgstPercent;
+      default: return EnglishLocalization.sgstPercent;
+    }
+  }
+
+  String get otherTaxName {
+    switch (languageCode) {
+      case 'Hindi': return HindiLocalization.otherTaxName;
+      case 'Marathi': return MarathiLocalization.otherTaxName;
+      default: return EnglishLocalization.otherTaxName;
+    }
+  }
+
+  String get otherTaxPercent {
+    switch (languageCode) {
+      case 'Hindi': return HindiLocalization.otherTaxPercent;
+      case 'Marathi': return MarathiLocalization.otherTaxPercent;
+      default: return EnglishLocalization.otherTaxPercent;
+    }
+  }
+
+  String get defaultGstMode {
+    switch (languageCode) {
+      case 'Hindi': return HindiLocalization.defaultGstMode;
+      case 'Marathi': return MarathiLocalization.defaultGstMode;
+      default: return EnglishLocalization.defaultGstMode;
+    }
+  }
+
+  String get includeGstInTotal {
+    switch (languageCode) {
+      case 'Hindi': return HindiLocalization.includeGstInTotal;
+      case 'Marathi': return MarathiLocalization.includeGstInTotal;
+      default: return EnglishLocalization.includeGstInTotal;
+    }
+  }
+
+  String get excludeGstFromTotal {
+    switch (languageCode) {
+      case 'Hindi': return HindiLocalization.excludeGstFromTotal;
+      case 'Marathi': return MarathiLocalization.excludeGstFromTotal;
+      default: return EnglishLocalization.excludeGstFromTotal;
+    }
+  }
+
+  String get includeGstSubtitle {
+    switch (languageCode) {
+      case 'Hindi': return HindiLocalization.includeGstSubtitle;
+      case 'Marathi': return MarathiLocalization.includeGstSubtitle;
+      default: return EnglishLocalization.includeGstSubtitle;
+    }
+  }
+
+  String get excludeGstSubtitle {
+    switch (languageCode) {
+      case 'Hindi': return HindiLocalization.excludeGstSubtitle;
+      case 'Marathi': return MarathiLocalization.excludeGstSubtitle;
+      default: return EnglishLocalization.excludeGstSubtitle;
+    }
+  }
+
+  String get billWithoutGst {
+    switch (languageCode) {
+      case 'Hindi': return HindiLocalization.billWithoutGst;
+      case 'Marathi': return MarathiLocalization.billWithoutGst;
+      default: return EnglishLocalization.billWithoutGst;
+    }
+  }
+
+  String get billWithGst {
+    switch (languageCode) {
+      case 'Hindi': return HindiLocalization.billWithGst;
+      case 'Marathi': return MarathiLocalization.billWithGst;
+      default: return EnglishLocalization.billWithGst;
+    }
+  }
+
+  String get gstCalculationMode {
+    switch (languageCode) {
+      case 'Hindi': return HindiLocalization.gstCalculationMode;
+      case 'Marathi': return MarathiLocalization.gstCalculationMode;
+      default: return EnglishLocalization.gstCalculationMode;
+    }
+  }
+
+  String get taxMode {
+    switch (languageCode) {
+      case 'Hindi': return HindiLocalization.taxMode;
+      case 'Marathi': return MarathiLocalization.taxMode;
+      default: return EnglishLocalization.taxMode;
+    }
+  }
+
+  String get cgst {
+    switch (languageCode) {
+      case 'Hindi': return HindiLocalization.cgst;
+      case 'Marathi': return MarathiLocalization.cgst;
+      default: return EnglishLocalization.cgst;
+    }
+  }
+
+  String get sgst {
+    switch (languageCode) {
+      case 'Hindi': return HindiLocalization.sgst;
+      case 'Marathi': return MarathiLocalization.sgst;
+      default: return EnglishLocalization.sgst;
+    }
+  }
+
+  String get totalTax {
+    switch (languageCode) {
+      case 'Hindi': return HindiLocalization.totalTax;
+      case 'Marathi': return MarathiLocalization.totalTax;
+      default: return EnglishLocalization.totalTax;
+    }
+  }
+
+  String get taxableValue {
+    switch (languageCode) {
+      case 'Hindi': return HindiLocalization.taxableValue;
+      case 'Marathi': return MarathiLocalization.taxableValue;
+      default: return EnglishLocalization.taxableValue;
+    }
+  }
+
+  String get pricesInclusiveOfGst {
+    switch (languageCode) {
+      case 'Hindi': return HindiLocalization.pricesInclusiveOfGst;
+      case 'Marathi': return MarathiLocalization.pricesInclusiveOfGst;
+      default: return EnglishLocalization.pricesInclusiveOfGst;
+    }
+  }
+
+  String get gstExtra {
+    switch (languageCode) {
+      case 'Hindi': return HindiLocalization.gstExtra;
+      case 'Marathi': return MarathiLocalization.gstExtra;
+      default: return EnglishLocalization.gstExtra;
+    }
+  }
+
+  String get enterValidPercentage {
+    switch (languageCode) {
+      case 'Hindi': return HindiLocalization.enterValidPercentage;
+      case 'Marathi': return MarathiLocalization.enterValidPercentage;
+      default: return EnglishLocalization.enterValidPercentage;
+    }
+  }
+
+  String get taxPercentageInputs {
+    switch (languageCode) {
+      case 'Hindi': return HindiLocalization.taxPercentageInputs;
+      case 'Marathi': return MarathiLocalization.taxPercentageInputs;
+      default: return EnglishLocalization.taxPercentageInputs;
+    }
+  }
+
+  String get taxToggles {
+    switch (languageCode) {
+      case 'Hindi': return HindiLocalization.taxToggles;
+      case 'Marathi': return MarathiLocalization.taxToggles;
+      default: return EnglishLocalization.taxToggles;
+    }
+  }
 }

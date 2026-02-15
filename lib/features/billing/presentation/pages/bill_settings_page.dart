@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:c_billing/core/services/dashboard_refresh_service.dart';
 import 'package:c_billing/core/services/language_service.dart';
 import 'package:c_billing/core/localization/app_localizations.dart';
+import 'package:c_billing/features/billing/domain/entities/bill_tax_settings.dart';
 
 /// Bill settings page for configuring billing preferences
 class BillSettingsPage extends StatefulWidget {
@@ -23,6 +24,13 @@ class _BillSettingsPageState extends State<BillSettingsPage> {
   bool _isLoading = true;
   late AppLocalizations _localizations;
 
+  // GST/Tax settings
+  BillTaxSettings _taxSettings = BillTaxSettings.defaultSettings;
+  final _cgstController = TextEditingController();
+  final _sgstController = TextEditingController();
+  final _otherTaxNameController = TextEditingController();
+  final _otherTaxPercentController = TextEditingController();
+
   @override
   void initState() {
     super.initState();
@@ -30,12 +38,27 @@ class _BillSettingsPageState extends State<BillSettingsPage> {
     _loadSettings();
   }
 
+  @override
+  void dispose() {
+    _cgstController.dispose();
+    _sgstController.dispose();
+    _otherTaxNameController.dispose();
+    _otherTaxPercentController.dispose();
+    super.dispose();
+  }
+
   Future<void> _loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
+    final taxSettings = await BillTaxSettings.load();
     setState(() {
       _showCustomerDetails = prefs.getBool(_keyShowCustomerOnBill) ?? true;
       _generateViaContact = prefs.getBool(_keyGenerateViaContact) ?? false;
       _billType = prefs.getString(_keyBillType) ?? 'pos';
+      _taxSettings = taxSettings;
+      _cgstController.text = taxSettings.cgstPercent > 0 ? taxSettings.cgstPercent.toString() : '';
+      _sgstController.text = taxSettings.sgstPercent > 0 ? taxSettings.sgstPercent.toString() : '';
+      _otherTaxNameController.text = taxSettings.otherTaxName;
+      _otherTaxPercentController.text = taxSettings.otherTaxPercent > 0 ? taxSettings.otherTaxPercent.toString() : '';
       _isLoading = false;
     });
   }
@@ -45,6 +68,7 @@ class _BillSettingsPageState extends State<BillSettingsPage> {
     await prefs.setBool(_keyShowCustomerOnBill, _showCustomerDetails);
     await prefs.setBool(_keyGenerateViaContact, _generateViaContact);
     await prefs.setString(_keyBillType, _billType);
+    await _taxSettings.save();
     
     // Notify billing page to reload settings immediately
     DashboardRefreshService.instance.notifyDataChanged(DataChangeType.billSettings);
@@ -161,6 +185,134 @@ class _BillSettingsPageState extends State<BillSettingsPage> {
                       ),
                     ],
                   ),
+                  const SizedBox(height: 16),
+                  
+                  // ═══════════════════════════════════════
+                  // GST / Tax Settings Section
+                  // ═══════════════════════════════════════
+                  _buildSectionCard(
+                    title: _localizations.taxSettings,
+                    icon: Icons.receipt_long_outlined,
+                    children: [
+                      // Tax Toggles
+                      _buildSettingTile(
+                        title: _localizations.enableCgst,
+                        subtitle: _localizations.cgstPercent,
+                        value: _taxSettings.enableCgst,
+                        onChanged: (value) async {
+                          setState(() {
+                            _taxSettings = _taxSettings.copyWith(enableCgst: value);
+                          });
+                          await _saveSettings();
+                        },
+                      ),
+                      if (_taxSettings.enableCgst)
+                        _buildPercentageInput(
+                          controller: _cgstController,
+                          label: _localizations.cgstPercent,
+                          onChanged: (val) async {
+                            final percent = double.tryParse(val) ?? 0.0;
+                            if (percent >= 0 && percent <= 100) {
+                              _taxSettings = _taxSettings.copyWith(cgstPercent: percent);
+                              await _saveSettings();
+                            }
+                          },
+                        ),
+                      const Divider(height: 1),
+                      _buildSettingTile(
+                        title: _localizations.enableSgst,
+                        subtitle: _localizations.sgstPercent,
+                        value: _taxSettings.enableSgst,
+                        onChanged: (value) async {
+                          setState(() {
+                            _taxSettings = _taxSettings.copyWith(enableSgst: value);
+                          });
+                          await _saveSettings();
+                        },
+                      ),
+                      if (_taxSettings.enableSgst)
+                        _buildPercentageInput(
+                          controller: _sgstController,
+                          label: _localizations.sgstPercent,
+                          onChanged: (val) async {
+                            final percent = double.tryParse(val) ?? 0.0;
+                            if (percent >= 0 && percent <= 100) {
+                              _taxSettings = _taxSettings.copyWith(sgstPercent: percent);
+                              await _saveSettings();
+                            }
+                          },
+                        ),
+                      const Divider(height: 1),
+                      _buildSettingTile(
+                        title: _localizations.enableOtherTax,
+                        subtitle: _localizations.otherTaxPercent,
+                        value: _taxSettings.enableOtherTax,
+                        onChanged: (value) async {
+                          setState(() {
+                            _taxSettings = _taxSettings.copyWith(enableOtherTax: value);
+                          });
+                          await _saveSettings();
+                        },
+                      ),
+                      if (_taxSettings.enableOtherTax) ...[
+                        _buildTextInput(
+                          controller: _otherTaxNameController,
+                          label: _localizations.otherTaxName,
+                          onChanged: (val) async {
+                            _taxSettings = _taxSettings.copyWith(otherTaxName: val);
+                            await _saveSettings();
+                          },
+                        ),
+                        _buildPercentageInput(
+                          controller: _otherTaxPercentController,
+                          label: _localizations.otherTaxPercent,
+                          onChanged: (val) async {
+                            final percent = double.tryParse(val) ?? 0.0;
+                            if (percent >= 0 && percent <= 100) {
+                              _taxSettings = _taxSettings.copyWith(otherTaxPercent: percent);
+                              await _saveSettings();
+                            }
+                          },
+                        ),
+                      ],
+                    ],
+                  ),
+                  
+                  if (_taxSettings.hasAnyTaxEnabled) ...[
+                    const SizedBox(height: 16),
+                    // Default GST Mode
+                    _buildSectionCard(
+                      title: _localizations.defaultGstMode,
+                      icon: Icons.calculate_outlined,
+                      children: [
+                        _buildRadioTile(
+                          title: _localizations.includeGstInTotal,
+                          subtitle: _localizations.includeGstSubtitle,
+                          value: true,
+                          groupValue: _taxSettings.defaultIncludeTax,
+                          onChanged: (val) async {
+                            setState(() {
+                              _taxSettings = _taxSettings.copyWith(defaultIncludeTax: val);
+                            });
+                            await _saveSettings();
+                          },
+                        ),
+                        const Divider(height: 1),
+                        _buildRadioTile(
+                          title: _localizations.excludeGstFromTotal,
+                          subtitle: _localizations.excludeGstSubtitle,
+                          value: false,
+                          groupValue: _taxSettings.defaultIncludeTax,
+                          onChanged: (val) async {
+                            setState(() {
+                              _taxSettings = _taxSettings.copyWith(defaultIncludeTax: val);
+                            });
+                            await _saveSettings();
+                          },
+                        ),
+                      ],
+                    ),
+                  ],
                   const SizedBox(height: 16),
                   
                   // Info card
@@ -424,6 +576,190 @@ class _BillSettingsPageState extends State<BillSettingsPage> {
                   ),
                 ),
               ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Builds a percentage input field for tax configuration
+  Widget _buildPercentageInput({
+    required TextEditingController controller,
+    required String label,
+    required ValueChanged<String> onChanged,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        children: [
+          Expanded(
+            flex: 2,
+            child: Text(
+              label,
+              style: TextStyle(
+                fontFamily: 'Literata',
+                fontSize: 14,
+                color: Colors.grey[700],
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            flex: 1,
+            child: TextField(
+              controller: controller,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontFamily: 'Literata',
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF1B4D3E),
+              ),
+              decoration: InputDecoration(
+                suffixText: '%',
+                suffixStyle: TextStyle(
+                  fontFamily: 'Literata',
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey[600],
+                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                filled: true,
+                fillColor: const Color(0xFF1B4D3E).withOpacity(0.05),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide(color: Colors.grey[300]!),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide(color: Colors.grey[300]!),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: const BorderSide(color: Color(0xFF1B4D3E), width: 1.5),
+                ),
+              ),
+              onChanged: onChanged,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Builds a text input field (e.g., for other tax name)
+  Widget _buildTextInput({
+    required TextEditingController controller,
+    required String label,
+    required ValueChanged<String> onChanged,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: TextField(
+        controller: controller,
+        style: const TextStyle(
+          fontFamily: 'Literata',
+          fontSize: 14,
+          color: Color(0xFF1B4D3E),
+        ),
+        decoration: InputDecoration(
+          labelText: label,
+          labelStyle: TextStyle(
+            fontFamily: 'Literata',
+            fontSize: 13,
+            color: Colors.grey[600],
+          ),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          filled: true,
+          fillColor: const Color(0xFF1B4D3E).withOpacity(0.05),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: BorderSide(color: Colors.grey[300]!),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: BorderSide(color: Colors.grey[300]!),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: const BorderSide(color: Color(0xFF1B4D3E), width: 1.5),
+          ),
+        ),
+        onChanged: onChanged,
+      ),
+    );
+  }
+
+  /// Builds a radio button tile for GST mode selection
+  Widget _buildRadioTile<T>({
+    required String title,
+    required String subtitle,
+    required T value,
+    required T groupValue,
+    required ValueChanged<T> onChanged,
+  }) {
+    final isSelected = value == groupValue;
+    return InkWell(
+      onTap: () => onChanged(value),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontFamily: 'Literata',
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: isSelected
+                          ? const Color(0xFF1B4D3E)
+                          : Colors.grey[800],
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontFamily: 'Literata',
+                      fontSize: 13,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 16),
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: isSelected
+                      ? const Color(0xFF1B4D3E)
+                      : Colors.grey[400]!,
+                  width: isSelected ? 2 : 1.5,
+                ),
+              ),
+              child: isSelected
+                  ? Center(
+                      child: Container(
+                        width: 12,
+                        height: 12,
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Color(0xFF1B4D3E),
+                        ),
+                      ),
+                    )
+                  : null,
+            ),
           ],
         ),
       ),

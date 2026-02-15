@@ -694,6 +694,37 @@ class HindiLocalization {
   static const String level = 'स्तर';
   static const String stackTrace = 'स्टैक ट्रेस';
 
+  // ═══════════════════════════════════════════════════
+  // GST / Tax Settings
+  // ═══════════════════════════════════════════════════
+  static const String taxSettings = 'कर / GST सेटिंग्स';
+  static const String taxConfiguration = 'कर कॉन्फ़िगरेशन';
+  static const String enableCgst = 'CGST सक्रिय करें';
+  static const String enableSgst = 'SGST सक्रिय करें';
+  static const String enableOtherTax = 'अन्य कर सक्रिय करें';
+  static const String cgstPercent = 'CGST प्रतिशत';
+  static const String sgstPercent = 'SGST प्रतिशत';
+  static const String otherTaxName = 'अन्य कर का नाम';
+  static const String otherTaxPercent = 'अन्य कर प्रतिशत';
+  static const String defaultGstMode = 'डिफ़ॉल्ट GST मोड';
+  static const String includeGstInTotal = 'कुल में GST शामिल करें';
+  static const String excludeGstFromTotal = 'कुल से GST अलग रखें';
+  static const String includeGstSubtitle = 'आइटम की कीमतों में पहले से GST शामिल है';
+  static const String excludeGstSubtitle = 'उप-कुल के ऊपर GST जोड़ा गया';
+  static const String billWithoutGst = 'बिना GST का बिल';
+  static const String billWithGst = 'GST के साथ बिल';
+  static const String gstCalculationMode = 'GST गणना मोड';
+  static const String taxMode = 'कर मोड';
+  static const String cgst = 'CGST';
+  static const String sgst = 'SGST';
+  static const String totalTax = 'कुल कर';
+  static const String taxableValue = 'कर योग्य मूल्य';
+  static const String pricesInclusiveOfGst = 'कीमतों में GST शामिल है';
+  static const String gstExtra = 'GST अतिरिक्त';
+  static const String enterValidPercentage = 'वैध प्रतिशत दर्ज करें (0-100)';
+  static const String taxPercentageInputs = 'कर प्रतिशत इनपुट';
+  static const String taxToggles = 'कर टॉगल';
+
   // Action Menu
   static const String options = 'विकल्प';
   static const String reportIssue = 'समस्या रिपोर्ट करें';

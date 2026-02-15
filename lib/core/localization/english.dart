@@ -692,6 +692,37 @@ class EnglishLocalization {
   static const String level = 'Level';
   static const String stackTrace = 'Stack Trace';
 
+  // ═══════════════════════════════════════════════════
+  // GST / Tax Settings
+  // ═══════════════════════════════════════════════════
+  static const String taxSettings = 'Tax / GST Settings';
+  static const String taxConfiguration = 'Tax Configuration';
+  static const String enableCgst = 'Enable CGST';
+  static const String enableSgst = 'Enable SGST';
+  static const String enableOtherTax = 'Enable Other Tax';
+  static const String cgstPercent = 'CGST Percentage';
+  static const String sgstPercent = 'SGST Percentage';
+  static const String otherTaxName = 'Other Tax Name';
+  static const String otherTaxPercent = 'Other Tax Percentage';
+  static const String defaultGstMode = 'Default GST Mode';
+  static const String includeGstInTotal = 'Include GST in Total';
+  static const String excludeGstFromTotal = 'Exclude GST from Total';
+  static const String includeGstSubtitle = 'Item prices already include GST (extracted for display)';
+  static const String excludeGstSubtitle = 'GST added on top of subtotal';
+  static const String billWithoutGst = 'Bill Without GST';
+  static const String billWithGst = 'Bill With GST';
+  static const String gstCalculationMode = 'GST Calculation Mode';
+  static const String taxMode = 'Tax Mode';
+  static const String cgst = 'CGST';
+  static const String sgst = 'SGST';
+  static const String totalTax = 'Total Tax';
+  static const String taxableValue = 'Taxable Value';
+  static const String pricesInclusiveOfGst = 'Prices Inclusive of GST';
+  static const String gstExtra = 'GST Extra';
+  static const String enterValidPercentage = 'Enter valid percentage (0-100)';
+  static const String taxPercentageInputs = 'Tax Percentage Inputs';
+  static const String taxToggles = 'Tax Toggles';
+
   // Action Menu
   static const String options = 'Options';
   static const String reportIssue = 'Report Issue';

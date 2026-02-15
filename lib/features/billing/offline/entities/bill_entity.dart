@@ -140,6 +140,37 @@ class BillEntity {
   /// Amount still pending
   double pendingAmount;
 
+  // ═══════════════ GST Fields ═══════════════
+  /// Whether GST was applied to this bill
+  bool isGstApplied;
+
+  /// Whether GST is inclusive (true) or exclusive (false)
+  bool isTaxInclusive;
+
+  /// CGST percentage applied
+  double cgstPercent;
+
+  /// SGST percentage applied
+  double sgstPercent;
+
+  /// Other tax percentage applied
+  double otherTaxPercent;
+
+  /// Other tax name
+  String? otherTaxName;
+
+  /// Calculated CGST amount
+  double cgstAmount;
+
+  /// Calculated SGST amount
+  double sgstAmount;
+
+  /// Calculated other tax amount
+  double otherTaxAmount;
+
+  /// Total tax amount
+  double totalTaxAmount;
+
   /// Sync status for delta sync
   @Index()
   @Enumerated(EnumType.ordinal)
@@ -170,6 +201,16 @@ class BillEntity {
     this.paymentStatus = BillPaymentStatus.paid,
     this.paidAmount = 0.0,
     this.pendingAmount = 0.0,
+    this.isGstApplied = false,
+    this.isTaxInclusive = false,
+    this.cgstPercent = 0.0,
+    this.sgstPercent = 0.0,
+    this.otherTaxPercent = 0.0,
+    this.otherTaxName,
+    this.cgstAmount = 0.0,
+    this.sgstAmount = 0.0,
+    this.otherTaxAmount = 0.0,
+    this.totalTaxAmount = 0.0,
     this.syncStatus = BillSyncStatus.newRecord,
     required this.createdAt,
     required this.updatedAt,
@@ -194,6 +235,16 @@ class BillEntity {
     BillPaymentStatus paymentStatus = BillPaymentStatus.paid,
     double paidAmount = 0.0,
     double pendingAmount = 0.0,
+    bool isGstApplied = false,
+    bool isTaxInclusive = false,
+    double cgstPercent = 0.0,
+    double sgstPercent = 0.0,
+    double otherTaxPercent = 0.0,
+    String? otherTaxName,
+    double cgstAmount = 0.0,
+    double sgstAmount = 0.0,
+    double otherTaxAmount = 0.0,
+    double totalTaxAmount = 0.0,
     BillSyncStatus syncStatus = BillSyncStatus.newRecord,
   }) {
     final now = DateTime.now();
@@ -215,6 +266,16 @@ class BillEntity {
       paymentStatus: paymentStatus,
       paidAmount: paidAmount,
       pendingAmount: pendingAmount,
+      isGstApplied: isGstApplied,
+      isTaxInclusive: isTaxInclusive,
+      cgstPercent: cgstPercent,
+      sgstPercent: sgstPercent,
+      otherTaxPercent: otherTaxPercent,
+      otherTaxName: otherTaxName,
+      cgstAmount: cgstAmount,
+      sgstAmount: sgstAmount,
+      otherTaxAmount: otherTaxAmount,
+      totalTaxAmount: totalTaxAmount,
       syncStatus: syncStatus,
       createdAt: now,
       updatedAt: now,
@@ -254,6 +315,16 @@ class BillEntity {
       paymentStatus: _parsePaymentStatus(data['paymentStatus'] as String?),
       paidAmount: (data['paidAmount'] as num?)?.toDouble() ?? 0.0,
       pendingAmount: (data['pendingAmount'] as num?)?.toDouble() ?? 0.0,
+      isGstApplied: data['isGstApplied'] as bool? ?? false,
+      isTaxInclusive: data['isTaxInclusive'] as bool? ?? false,
+      cgstPercent: (data['cgstPercent'] as num?)?.toDouble() ?? 0.0,
+      sgstPercent: (data['sgstPercent'] as num?)?.toDouble() ?? 0.0,
+      otherTaxPercent: (data['otherTaxPercent'] as num?)?.toDouble() ?? 0.0,
+      otherTaxName: data['otherTaxName'] as String?,
+      cgstAmount: (data['cgstAmount'] as num?)?.toDouble() ?? 0.0,
+      sgstAmount: (data['sgstAmount'] as num?)?.toDouble() ?? 0.0,
+      otherTaxAmount: (data['otherTaxAmount'] as num?)?.toDouble() ?? 0.0,
+      totalTaxAmount: (data['totalTaxAmount'] as num?)?.toDouble() ?? 0.0,
       syncStatus: BillSyncStatus.synced,
       createdAt: data['createdAt'] != null
           ? DateTime.tryParse(data['createdAt'].toString()) ?? now
@@ -322,6 +393,16 @@ class BillEntity {
       'paymentStatus': paymentStatus.name,
       'paidAmount': paidAmount,
       'pendingAmount': pendingAmount,
+      'isGstApplied': isGstApplied,
+      'isTaxInclusive': isTaxInclusive,
+      'cgstPercent': cgstPercent,
+      'sgstPercent': sgstPercent,
+      'otherTaxPercent': otherTaxPercent,
+      'otherTaxName': otherTaxName,
+      'cgstAmount': cgstAmount,
+      'sgstAmount': sgstAmount,
+      'otherTaxAmount': otherTaxAmount,
+      'totalTaxAmount': totalTaxAmount,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': DateTime.now().toIso8601String(),
     };
@@ -350,6 +431,16 @@ class BillEntity {
     BillPaymentStatus? paymentStatus,
     double? paidAmount,
     double? pendingAmount,
+    bool? isGstApplied,
+    bool? isTaxInclusive,
+    double? cgstPercent,
+    double? sgstPercent,
+    double? otherTaxPercent,
+    String? otherTaxName,
+    double? cgstAmount,
+    double? sgstAmount,
+    double? otherTaxAmount,
+    double? totalTaxAmount,
     BillSyncStatus? syncStatus,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -372,6 +463,16 @@ class BillEntity {
       paymentStatus: paymentStatus ?? this.paymentStatus,
       paidAmount: paidAmount ?? this.paidAmount,
       pendingAmount: pendingAmount ?? this.pendingAmount,
+      isGstApplied: isGstApplied ?? this.isGstApplied,
+      isTaxInclusive: isTaxInclusive ?? this.isTaxInclusive,
+      cgstPercent: cgstPercent ?? this.cgstPercent,
+      sgstPercent: sgstPercent ?? this.sgstPercent,
+      otherTaxPercent: otherTaxPercent ?? this.otherTaxPercent,
+      otherTaxName: otherTaxName ?? this.otherTaxName,
+      cgstAmount: cgstAmount ?? this.cgstAmount,
+      sgstAmount: sgstAmount ?? this.sgstAmount,
+      otherTaxAmount: otherTaxAmount ?? this.otherTaxAmount,
+      totalTaxAmount: totalTaxAmount ?? this.totalTaxAmount,
       syncStatus: syncStatus ?? this.syncStatus,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? DateTime.now(),

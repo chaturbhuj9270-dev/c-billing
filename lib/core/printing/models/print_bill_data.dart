@@ -76,6 +76,37 @@ class PrintBillData {
   /// Customer's total due amount (running balance)
   final double? totalDueAmount;
 
+  // ═══════════════════ GST Fields ═══════════════════
+  /// Whether GST was applied
+  final bool isGstApplied;
+
+  /// Whether GST is inclusive
+  final bool isTaxInclusive;
+
+  /// CGST percentage
+  final double cgstPercent;
+
+  /// SGST percentage
+  final double sgstPercent;
+
+  /// Other tax percentage
+  final double otherTaxPercent;
+
+  /// Other tax name
+  final String otherTaxName;
+
+  /// CGST amount
+  final double cgstAmount;
+
+  /// SGST amount
+  final double sgstAmount;
+
+  /// Other tax amount
+  final double otherTaxAmount;
+
+  /// Total tax amount
+  final double totalTaxAmount;
+
   const PrintBillData({
     required this.billNumber,
     required this.dateTime,
@@ -95,6 +126,16 @@ class PrintBillData {
     this.paidAmount,
     this.pendingAmount,
     this.totalDueAmount,
+    this.isGstApplied = false,
+    this.isTaxInclusive = false,
+    this.cgstPercent = 0.0,
+    this.sgstPercent = 0.0,
+    this.otherTaxPercent = 0.0,
+    this.otherTaxName = '',
+    this.cgstAmount = 0.0,
+    this.sgstAmount = 0.0,
+    this.otherTaxAmount = 0.0,
+    this.totalTaxAmount = 0.0,
   });
 
   /// Create from Bill entity
@@ -126,6 +167,16 @@ class PrintBillData {
       paidAmount: paidAmount,
       pendingAmount: pendingAmount,
       totalDueAmount: totalDueAmount,
+      isGstApplied: (bill.isGstApplied as bool?) ?? false,
+      isTaxInclusive: (bill.isTaxInclusive as bool?) ?? false,
+      cgstPercent: (bill.cgstPercent as double?) ?? 0.0,
+      sgstPercent: (bill.sgstPercent as double?) ?? 0.0,
+      otherTaxPercent: (bill.otherTaxPercent as double?) ?? 0.0,
+      otherTaxName: (bill.otherTaxName as String?) ?? '',
+      cgstAmount: (bill.cgstAmount as double?) ?? 0.0,
+      sgstAmount: (bill.sgstAmount as double?) ?? 0.0,
+      otherTaxAmount: (bill.otherTaxAmount as double?) ?? 0.0,
+      totalTaxAmount: (bill.totalTaxAmount as double?) ?? 0.0,
     );
   }
 
@@ -154,6 +205,9 @@ class PrintBillData {
 
   /// Check if there's pending amount
   bool get hasPendingAmount => pendingAmount != null && pendingAmount! > 0;
+
+  /// Whether GST breakdown should be displayed
+  bool get hasGst => isGstApplied && totalTaxAmount > 0;
 
   Map<String, dynamic> toJson() {
     return {

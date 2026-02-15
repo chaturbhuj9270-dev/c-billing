@@ -41,6 +41,37 @@ class Bill {
   /// Amount still pending for this bill
   final double pendingAmount;
 
+  // ═══════════════════ GST Fields ═══════════════════
+  /// Whether GST was applied to this bill
+  final bool isGstApplied;
+
+  /// Whether GST is inclusive (true) or exclusive (false)
+  final bool isTaxInclusive;
+
+  /// CGST percentage applied
+  final double cgstPercent;
+
+  /// SGST percentage applied
+  final double sgstPercent;
+
+  /// Other tax percentage applied
+  final double otherTaxPercent;
+
+  /// Other tax name (e.g., "Cess")
+  final String otherTaxName;
+
+  /// Calculated CGST amount
+  final double cgstAmount;
+
+  /// Calculated SGST amount
+  final double sgstAmount;
+
+  /// Calculated other tax amount
+  final double otherTaxAmount;
+
+  /// Total tax amount (CGST + SGST + Other)
+  final double totalTaxAmount;
+
   Bill({
     required this.id,
     this.customerId,
@@ -61,6 +92,16 @@ class Bill {
     this.paymentStatus = PaymentStatus.paid,
     this.paidAmount = 0.0,
     this.pendingAmount = 0.0,
+    this.isGstApplied = false,
+    this.isTaxInclusive = false,
+    this.cgstPercent = 0.0,
+    this.sgstPercent = 0.0,
+    this.otherTaxPercent = 0.0,
+    this.otherTaxName = '',
+    this.cgstAmount = 0.0,
+    this.sgstAmount = 0.0,
+    this.otherTaxAmount = 0.0,
+    this.totalTaxAmount = 0.0,
   });
 
   /// Factory constructor to create from JSON (for Firebase)
@@ -108,6 +149,16 @@ class Bill {
         paymentStatus: _parsePaymentStatus(json['paymentStatus'] as String?),
         paidAmount: ((json['paidAmount'] ?? 0) as num).toDouble(),
         pendingAmount: ((json['pendingAmount'] ?? 0) as num).toDouble(),
+        isGstApplied: (json['isGstApplied'] ?? false) as bool,
+        isTaxInclusive: (json['isTaxInclusive'] ?? false) as bool,
+        cgstPercent: ((json['cgstPercent'] ?? 0) as num).toDouble(),
+        sgstPercent: ((json['sgstPercent'] ?? 0) as num).toDouble(),
+        otherTaxPercent: ((json['otherTaxPercent'] ?? 0) as num).toDouble(),
+        otherTaxName: (json['otherTaxName'] ?? '') as String,
+        cgstAmount: ((json['cgstAmount'] ?? 0) as num).toDouble(),
+        sgstAmount: ((json['sgstAmount'] ?? 0) as num).toDouble(),
+        otherTaxAmount: ((json['otherTaxAmount'] ?? 0) as num).toDouble(),
+        totalTaxAmount: ((json['totalTaxAmount'] ?? 0) as num).toDouble(),
       );
     } catch (e) {
       print('[ERROR] Failed to parse Bill from JSON: $json');
@@ -185,6 +236,16 @@ class Bill {
       paymentStatus: paymentStatus,
       paidAmount: entity.paidAmount,
       pendingAmount: entity.pendingAmount,
+      isGstApplied: entity.isGstApplied,
+      isTaxInclusive: entity.isTaxInclusive,
+      cgstPercent: entity.cgstPercent,
+      sgstPercent: entity.sgstPercent,
+      otherTaxPercent: entity.otherTaxPercent,
+      otherTaxName: entity.otherTaxName ?? '',
+      cgstAmount: entity.cgstAmount,
+      sgstAmount: entity.sgstAmount,
+      otherTaxAmount: entity.otherTaxAmount,
+      totalTaxAmount: entity.totalTaxAmount,
     );
   }
 
@@ -224,6 +285,16 @@ class Bill {
       'paymentStatus': paymentStatus.name,
       'paidAmount': paidAmount,
       'pendingAmount': pendingAmount,
+      'isGstApplied': isGstApplied,
+      'isTaxInclusive': isTaxInclusive,
+      'cgstPercent': cgstPercent,
+      'sgstPercent': sgstPercent,
+      'otherTaxPercent': otherTaxPercent,
+      'otherTaxName': otherTaxName,
+      'cgstAmount': cgstAmount,
+      'sgstAmount': sgstAmount,
+      'otherTaxAmount': otherTaxAmount,
+      'totalTaxAmount': totalTaxAmount,
     };
   }
 
@@ -248,6 +319,16 @@ class Bill {
     PaymentStatus? paymentStatus,
     double? paidAmount,
     double? pendingAmount,
+    bool? isGstApplied,
+    bool? isTaxInclusive,
+    double? cgstPercent,
+    double? sgstPercent,
+    double? otherTaxPercent,
+    String? otherTaxName,
+    double? cgstAmount,
+    double? sgstAmount,
+    double? otherTaxAmount,
+    double? totalTaxAmount,
   }) {
     return Bill(
       id: id ?? this.id,
@@ -269,6 +350,16 @@ class Bill {
       paymentStatus: paymentStatus ?? this.paymentStatus,
       paidAmount: paidAmount ?? this.paidAmount,
       pendingAmount: pendingAmount ?? this.pendingAmount,
+      isGstApplied: isGstApplied ?? this.isGstApplied,
+      isTaxInclusive: isTaxInclusive ?? this.isTaxInclusive,
+      cgstPercent: cgstPercent ?? this.cgstPercent,
+      sgstPercent: sgstPercent ?? this.sgstPercent,
+      otherTaxPercent: otherTaxPercent ?? this.otherTaxPercent,
+      otherTaxName: otherTaxName ?? this.otherTaxName,
+      cgstAmount: cgstAmount ?? this.cgstAmount,
+      sgstAmount: sgstAmount ?? this.sgstAmount,
+      otherTaxAmount: otherTaxAmount ?? this.otherTaxAmount,
+      totalTaxAmount: totalTaxAmount ?? this.totalTaxAmount,
     );
   }
 

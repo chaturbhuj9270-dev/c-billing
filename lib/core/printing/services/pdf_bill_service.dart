@@ -375,6 +375,49 @@ class PdfBillService {
                             ? ' (${billData.discountPercent!.toStringAsFixed(0)}%)'
                             : '',
                       ),
+                    // GST breakdown rows
+                    if (billData.hasGst) ...[
+                      if (billData.cgstAmount > 0)
+                        _buildCompactAmountRow(
+                          'CGST (${billData.cgstPercent.toStringAsFixed(1)}%)',
+                          billData.cgstAmount,
+                          border: thinBorder,
+                          color: PdfColors.orange800,
+                        ),
+                      if (billData.sgstAmount > 0)
+                        _buildCompactAmountRow(
+                          'SGST (${billData.sgstPercent.toStringAsFixed(1)}%)',
+                          billData.sgstAmount,
+                          border: thinBorder,
+                          color: PdfColors.orange800,
+                        ),
+                      if (billData.otherTaxAmount > 0)
+                        _buildCompactAmountRow(
+                          '${billData.otherTaxName.isNotEmpty ? billData.otherTaxName : "TAX"} (${billData.otherTaxPercent.toStringAsFixed(1)}%)',
+                          billData.otherTaxAmount,
+                          border: thinBorder,
+                          color: PdfColors.orange800,
+                        ),
+                      _buildCompactAmountRow(
+                        'TOTAL TAX',
+                        billData.totalTaxAmount,
+                        border: thinBorder,
+                        bold: true,
+                        color: PdfColors.orange900,
+                      ),
+                      if (billData.isTaxInclusive)
+                        pw.Container(
+                          padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          child: pw.Text(
+                            '* Prices inclusive of GST',
+                            style: pw.TextStyle(
+                              fontSize: 6,
+                              fontStyle: pw.FontStyle.italic,
+                              color: PdfColors.grey600,
+                            ),
+                          ),
+                        ),
+                    ],
                     // Sub Total
                     _buildCompactAmountRow(
                       'SUB TOTAL',
@@ -932,6 +975,44 @@ class PdfBillService {
             'Discount (${billData.discountPercent?.toStringAsFixed(0) ?? '0'}%)',
             -(billData.discountAmount ?? 0),
           ),
+        ],
+        // GST breakdown
+        if (billData.hasGst) ...[
+          pw.SizedBox(height: 6),
+          pw.Divider(thickness: 0.3),
+          pw.SizedBox(height: 4),
+          if (billData.cgstAmount > 0)
+            _buildTotalRow(
+              'CGST (${billData.cgstPercent.toStringAsFixed(1)}%)',
+              billData.cgstAmount,
+            ),
+          if (billData.sgstAmount > 0) ...[
+            pw.SizedBox(height: 2),
+            _buildTotalRow(
+              'SGST (${billData.sgstPercent.toStringAsFixed(1)}%)',
+              billData.sgstAmount,
+            ),
+          ],
+          if (billData.otherTaxAmount > 0) ...[
+            pw.SizedBox(height: 2),
+            _buildTotalRow(
+              '${billData.otherTaxName.isNotEmpty ? billData.otherTaxName : "Tax"} (${billData.otherTaxPercent.toStringAsFixed(1)}%)',
+              billData.otherTaxAmount,
+            ),
+          ],
+          pw.SizedBox(height: 2),
+          _buildTotalRow('Total Tax', billData.totalTaxAmount),
+          if (billData.isTaxInclusive) ...[
+            pw.SizedBox(height: 2),
+            pw.Text(
+              '* Prices inclusive of GST',
+              style: pw.TextStyle(
+                fontSize: 8,
+                fontStyle: pw.FontStyle.italic,
+                color: PdfColors.grey600,
+              ),
+            ),
+          ],
         ],
         pw.SizedBox(height: 8),
         pw.Divider(thickness: 0.5),

@@ -695,6 +695,37 @@ class MarathiLocalization {
   static const String level = 'पातळी';
   static const String stackTrace = 'स्टॅक ट्रेस';
 
+  // ═══════════════════════════════════════════════════
+  // GST / Tax Settings
+  // ═══════════════════════════════════════════════════
+  static const String taxSettings = 'कर / GST सेटिंग्ज';
+  static const String taxConfiguration = 'कर कॉन्फिगरेशन';
+  static const String enableCgst = 'CGST सक्रिय करा';
+  static const String enableSgst = 'SGST सक्रिय करा';
+  static const String enableOtherTax = 'अन्य कर सक्रिय करा';
+  static const String cgstPercent = 'CGST टक्केवारी';
+  static const String sgstPercent = 'SGST टक्केवारी';
+  static const String otherTaxName = 'अन्य कराचे नाव';
+  static const String otherTaxPercent = 'अन्य कर टक्केवारी';
+  static const String defaultGstMode = 'डीफॉल्ट GST मोड';
+  static const String includeGstInTotal = 'एकूणमध्ये GST समाविष्ट करा';
+  static const String excludeGstFromTotal = 'एकूणातून GST वेगळा ठेवा';
+  static const String includeGstSubtitle = 'आयटमच्या किमतींमध्ये आधीच GST समाविष्ट आहे';
+  static const String excludeGstSubtitle = 'उप-एकूणावर GST जोडला';
+  static const String billWithoutGst = 'GST शिवाय बिल';
+  static const String billWithGst = 'GST सह बिल';
+  static const String gstCalculationMode = 'GST गणना मोड';
+  static const String taxMode = 'कर मोड';
+  static const String cgst = 'CGST';
+  static const String sgst = 'SGST';
+  static const String totalTax = 'एकूण कर';
+  static const String taxableValue = 'करपात्र मूल्य';
+  static const String pricesInclusiveOfGst = 'किमतींमध्ये GST समाविष्ट आहे';
+  static const String gstExtra = 'GST अतिरिक्त';
+  static const String enterValidPercentage = 'वैध टक्केवारी प्रविष्ट करा (0-100)';
+  static const String taxPercentageInputs = 'कर टक्केवारी इनपुट';
+  static const String taxToggles = 'कर टॉगल';
+
   // Action Menu
   static const String options = 'पर्याय';
   static const String reportIssue = 'समस्या रिपोर्ट करा';
