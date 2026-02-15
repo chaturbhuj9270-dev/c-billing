@@ -775,7 +775,8 @@ class _BillingPageState extends State<BillingPage> {
             if (existingIndex != -1) {
               _billItems[existingIndex] = BillItem.create(
                 productId: uniqueKey,
-                productName: companyName.isNotEmpty ? '$productName ($companyName)' : productName,
+                productName: productName,
+                companyName: companyName.isNotEmpty ? companyName : null,
                 sellingPrice: sellingPrice,
                 purchasePrice: purchasePrice,
                 quantity: quantity,
@@ -784,7 +785,8 @@ class _BillingPageState extends State<BillingPage> {
               _billItems.add(
                 BillItem.create(
                   productId: uniqueKey,
-                  productName: companyName.isNotEmpty ? '$productName ($companyName)' : productName,
+                  productName: productName,
+                  companyName: companyName.isNotEmpty ? companyName : null,
                   sellingPrice: sellingPrice,
                   purchasePrice: purchasePrice,
                   quantity: quantity,
@@ -889,6 +891,7 @@ class _BillingPageState extends State<BillingPage> {
         return BillItem.create(
           productId: realProductId,
           productName: item.productName,
+          companyName: item.companyName,
           sellingPrice: item.sellingPrice,
           purchasePrice: item.purchasePrice,
           quantity: item.quantity,
@@ -2211,13 +2214,11 @@ class _BillingPageState extends State<BillingPage> {
               (item) => item.productId == uniqueKey,
             );
             setState(() {
-              final displayName = batch.companyName.isNotEmpty
-                  ? '${product.name} (${batch.companyName})'
-                  : product.name;
               if (existingIndex != -1) {
                 _billItems[existingIndex] = BillItem.create(
                   productId: uniqueKey,
-                  productName: displayName,
+                  productName: product.name,
+                  companyName: batch.companyName.isNotEmpty ? batch.companyName : null,
                   sellingPrice: batch.sellingPrice,
                   purchasePrice: batch.purchasePrice,
                   quantity: quantity,
@@ -2226,7 +2227,8 @@ class _BillingPageState extends State<BillingPage> {
                 _billItems.add(
                   BillItem.create(
                     productId: uniqueKey,
-                    productName: displayName,
+                    productName: product.name,
+                    companyName: batch.companyName.isNotEmpty ? batch.companyName : null,
                     sellingPrice: batch.sellingPrice,
                     purchasePrice: batch.purchasePrice,
                     quantity: quantity,
@@ -2247,9 +2249,6 @@ class _BillingPageState extends State<BillingPage> {
     final fifoPrice = product.salesPrice;
     final fifoPurchasePrice = product.purchasePrice;
     final uniqueKey = product.id;
-    final displayName = product.companyName.isNotEmpty
-        ? '${product.name} (${product.companyName})'
-        : product.name;
 
     // Add product — increment quantity if already in cart
     final existingIndex = _billItems.indexWhere(
@@ -2261,7 +2260,8 @@ class _BillingPageState extends State<BillingPage> {
         if (existing.quantity < effectiveStock) {
           _billItems[existingIndex] = BillItem.create(
             productId: uniqueKey,
-            productName: displayName,
+            productName: product.name,
+            companyName: product.companyName.isNotEmpty ? product.companyName : null,
             sellingPrice: existing.sellingPrice,
             purchasePrice: fifoPurchasePrice,
             quantity: existing.quantity + 1,
@@ -2278,7 +2278,8 @@ class _BillingPageState extends State<BillingPage> {
         _billItems.add(
           BillItem.create(
             productId: uniqueKey,
-            productName: displayName,
+            productName: product.name,
+            companyName: product.companyName.isNotEmpty ? product.companyName : null,
             sellingPrice: fifoPrice,
             purchasePrice: fifoPurchasePrice,
             quantity: 1,
@@ -2564,7 +2565,9 @@ class _BillingPageState extends State<BillingPage> {
                                     _billItems[index] = BillItem.create(
                                       productId: item.productId,
                                       productName: item.productName,
+                                      companyName: item.companyName,
                                       sellingPrice: item.sellingPrice,
+                                      purchasePrice: item.purchasePrice,
                                       quantity: item.quantity - 1,
                                     );
                                   });
@@ -2614,7 +2617,9 @@ class _BillingPageState extends State<BillingPage> {
                                     _billItems[index] = BillItem.create(
                                       productId: item.productId,
                                       productName: item.productName,
+                                      companyName: item.companyName,
                                       sellingPrice: item.sellingPrice,
+                                      purchasePrice: item.purchasePrice,
                                       quantity: item.quantity + 1,
                                     );
                                   });

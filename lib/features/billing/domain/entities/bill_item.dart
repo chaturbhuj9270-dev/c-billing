@@ -4,6 +4,7 @@ class BillItem {
   final String billId;
   final String productId;
   final String productName;
+  final String? companyName; // Product company/brand name
   final double
   purchasePrice; // Cost price at time of sale for profit calculation
   final double sellingPrice;
@@ -16,6 +17,7 @@ class BillItem {
     required this.billId,
     required this.productId,
     required this.productName,
+    this.companyName,
     this.purchasePrice = 0.0,
     required this.sellingPrice,
     required this.quantity,
@@ -44,6 +46,7 @@ class BillItem {
         billId: (json['billId'] ?? '') as String,
         productId: (json['productId'] ?? '') as String,
         productName: (json['productName'] ?? '') as String,
+        companyName: json['companyName'] as String?,
         purchasePrice: ((json['purchasePrice'] ?? 0) as num).toDouble(),
         sellingPrice: ((json['sellingPrice'] ?? 0) as num).toDouble(),
         quantity: (json['quantity'] ?? 0) as int,
@@ -58,6 +61,7 @@ class BillItem {
         billId: json['billId']?.toString() ?? '',
         productId: json['productId']?.toString() ?? '',
         productName: json['productName']?.toString() ?? 'Unknown Product',
+        companyName: json['companyName']?.toString(),
         purchasePrice: 0.0,
         sellingPrice: 0.0,
         quantity: 0,
@@ -74,6 +78,7 @@ class BillItem {
       'billId': billId,
       'productId': productId,
       'productName': productName,
+      'companyName': companyName,
       'purchasePrice': purchasePrice,
       'sellingPrice': sellingPrice,
       'quantity': quantity,
@@ -88,6 +93,7 @@ class BillItem {
     String? billId,
     String? productId,
     String? productName,
+    String? companyName,
     double? purchasePrice,
     double? sellingPrice,
     int? quantity,
@@ -99,6 +105,7 @@ class BillItem {
       billId: billId ?? this.billId,
       productId: productId ?? this.productId,
       productName: productName ?? this.productName,
+      companyName: companyName ?? this.companyName,
       purchasePrice: purchasePrice ?? this.purchasePrice,
       sellingPrice: sellingPrice ?? this.sellingPrice,
       quantity: quantity ?? this.quantity,
@@ -113,6 +120,7 @@ class BillItem {
     String billId = '',
     required String productId,
     required String productName,
+    String? companyName,
     double purchasePrice = 0.0,
     required double sellingPrice,
     required int quantity,
@@ -123,6 +131,7 @@ class BillItem {
       billId: billId,
       productId: productId,
       productName: productName,
+      companyName: companyName,
       purchasePrice: purchasePrice,
       sellingPrice: sellingPrice,
       quantity: quantity,

@@ -1,6 +1,7 @@
 /// Model representing a single item for printing on POS bill
 class PrintBillItem {
   final String name;
+  final String? companyName; // Product company/brand name
   final int quantity;
   final double rate;
   final double amount;
@@ -8,6 +9,7 @@ class PrintBillItem {
 
   const PrintBillItem({
     required this.name,
+    this.companyName,
     required this.quantity,
     required this.rate,
     required this.amount,
@@ -27,6 +29,7 @@ class PrintBillItem {
   factory PrintBillItem.fromBillItem(dynamic billItem) {
     return PrintBillItem(
       name: billItem.productName as String,
+      companyName: billItem.companyName as String?,
       quantity: billItem.quantity as int,
       rate: billItem.sellingPrice as double,
       amount: billItem.subtotal as double,
@@ -37,6 +40,7 @@ class PrintBillItem {
   Map<String, dynamic> toJson() {
     return {
       'name': name,
+      'companyName': companyName,
       'quantity': quantity,
       'rate': rate,
       'amount': amount,

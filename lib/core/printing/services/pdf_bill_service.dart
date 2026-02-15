@@ -261,7 +261,27 @@ class PdfBillService {
                 return pw.TableRow(
                   children: [
                     _buildCompactCell('${index + 1}', align: pw.TextAlign.center),
-                    _buildCompactCell(item.name),
+                    pw.Padding(
+                      padding: const pw.EdgeInsets.all(4),
+                      child: pw.Column(
+                        crossAxisAlignment: pw.CrossAxisAlignment.start,
+                        children: [
+                          pw.Text(
+                            item.name,
+                            style: const pw.TextStyle(fontSize: 9),
+                          ),
+                          if (item.companyName != null && item.companyName!.isNotEmpty)
+                            pw.Text(
+                              item.companyName!,
+                              style: pw.TextStyle(
+                                fontSize: 7,
+                                color: PdfColors.grey700,
+                                fontStyle: pw.FontStyle.italic,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
                     _buildCompactCell('${item.quantity}', align: pw.TextAlign.center),
                     _buildCompactCell(item.rate.toStringAsFixed(2), align: pw.TextAlign.right),
                     _buildCompactCell(item.amount.toStringAsFixed(2), align: pw.TextAlign.right),
@@ -650,6 +670,7 @@ class PdfBillService {
                 pw.Text(
                   'Ph: ${shopDetails.phone}',
                   style: const pw.TextStyle(fontSize: 10),
+                  textAlign: pw.TextAlign.center,
                 ),
               ],
               if (shopDetails.gstNumber != null &&
@@ -658,6 +679,7 @@ class PdfBillService {
                 pw.Text(
                   'GSTIN: ${shopDetails.gstNumber}',
                   style: const pw.TextStyle(fontSize: 10),
+                  textAlign: pw.TextAlign.center,
                 ),
               ],
             ],
@@ -780,9 +802,23 @@ class PdfBillService {
                 children: [
                   pw.Expanded(
                     flex: 3,
-                    child: pw.Text(
-                      item.name,
-                      style: const pw.TextStyle(fontSize: 10),
+                    child: pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.start,
+                      children: [
+                        pw.Text(
+                          item.name,
+                          style: const pw.TextStyle(fontSize: 10),
+                        ),
+                        if (item.companyName != null && item.companyName!.isNotEmpty)
+                          pw.Text(
+                            item.companyName!,
+                            style: pw.TextStyle(
+                              fontSize: 8,
+                              color: PdfColors.grey700,
+                              fontStyle: pw.FontStyle.italic,
+                            ),
+                          ),
+                      ],
                     ),
                   ),
                   pw.SizedBox(
