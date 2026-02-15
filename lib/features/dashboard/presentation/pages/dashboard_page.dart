@@ -256,7 +256,12 @@ class _DashboardViewState extends State<_DashboardView>
       case 1:
         Navigator.of(
           context,
-        ).push(MaterialPageRoute(builder: (_) => const CustomerPage()));
+        ).push(MaterialPageRoute(builder: (_) => const CustomerPage())).then((_) {
+          if (mounted) {
+            context.read<DashboardCubit>().refresh();
+            _loadExpandableSectionData();
+          }
+        });
         break;
       case 2:
         ScaffoldMessenger.of(context).showSnackBar(
@@ -266,12 +271,22 @@ class _DashboardViewState extends State<_DashboardView>
       case 3:
         Navigator.of(
           context,
-        ).push(MaterialPageRoute(builder: (_) => const BillingPage()));
+        ).push(MaterialPageRoute(builder: (_) => const BillingPage())).then((_) {
+          if (mounted) {
+            context.read<DashboardCubit>().refresh();
+            _loadExpandableSectionData();
+          }
+        });
         break;
       case 4:
         Navigator.of(
           context,
-        ).push(MaterialPageRoute(builder: (_) => const PurchasePage()));
+        ).push(MaterialPageRoute(builder: (_) => const PurchasePage())).then((_) {
+          if (mounted) {
+            context.read<DashboardCubit>().refresh();
+            _loadExpandableSectionData();
+          }
+        });
         break;
     }
   }
@@ -1534,43 +1549,40 @@ class _DashboardViewState extends State<_DashboardView>
   }) {
     return GestureDetector(
       onTap: () {
+        Widget? targetPage;
         switch (label) {
           case 'Invoices':
-            Navigator.of(
-              context,
-            ).push(MaterialPageRoute(builder: (_) => const BillsListPage()));
+            targetPage = const BillsListPage();
             break;
           case 'Clients':
-            Navigator.of(
-              context,
-            ).push(MaterialPageRoute(builder: (_) => const CustomerPage()));
+            targetPage = const CustomerPage();
             break;
           case 'Products':
-            Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const ProductManagementPage()),
-            );
+            targetPage = const ProductManagementPage();
             break;
           case 'Suppliers':
-            Navigator.of(
-              context,
-            ).push(MaterialPageRoute(builder: (_) => const SupplierPage()));
+            targetPage = const SupplierPage();
             break;
           case 'Purchases':
-            Navigator.of(
-              context,
-            ).push(MaterialPageRoute(builder: (_) => const PurchasePage()));
+            targetPage = const PurchasePage();
             break;
           case 'Companies':
-            Navigator.of(
-              context,
-            ).push(MaterialPageRoute(builder: (_) => const CompanyPage()));
+            targetPage = const CompanyPage();
             break;
           case 'Inventory':
           case 'Low Stock':
-            Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const ProductManagementPage()),
-            );
+            targetPage = const ProductManagementPage();
             break;
+        }
+        if (targetPage != null) {
+          Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => targetPage!),
+          ).then((_) {
+            if (mounted) {
+              context.read<DashboardCubit>().refresh();
+              _loadExpandableSectionData();
+            }
+          });
         }
       },
       child: Container(
@@ -1981,7 +1993,12 @@ class _DashboardViewState extends State<_DashboardView>
         GestureDetector(
           onTap: () => Navigator.of(context).push(
             MaterialPageRoute(builder: (_) => const ProductManagementPage()),
-          ),
+          ).then((_) {
+            if (mounted) {
+              context.read<DashboardCubit>().refresh();
+              _loadExpandableSectionData();
+            }
+          }),
           child: _buildViewAllButton(
             'Go to Inventory',
             Icons.inventory_2_rounded,

@@ -38,6 +38,7 @@ class _SupplierPageState extends State<SupplierPage> {
   
   // Offline-first support
   StreamSubscription<List<SupplierEntity>>? _supplierStreamSubscription;
+  StreamSubscription<QuerySnapshot>? _firestoreStreamSubscription;
   int _unsyncedCount = 0;
 
   // Search, sort, and filter variables
@@ -61,6 +62,7 @@ class _SupplierPageState extends State<SupplierPage> {
     _checkUserAuthentication();
     _setupInitialData();
     _setupOfflineStream();
+    _setupFirestoreStream();
     _searchController.addListener(_filterAndSearchSuppliers);
   }
 
@@ -77,6 +79,7 @@ class _SupplierPageState extends State<SupplierPage> {
     _isNavigatingAway = true; // Signal async operations to stop
     _filterDebounceTimer?.cancel();
     _supplierStreamSubscription?.cancel();
+    _firestoreStreamSubscription?.cancel();
     _searchController.dispose();
     _firstNameController.dispose();
     _middleNameController.dispose();
@@ -246,7 +249,7 @@ class _SupplierPageState extends State<SupplierPage> {
         setState(() => _isLoading = true);
       }
 
-      print('[DEBUG] Loading suppliers from Firestore...');
+      print('[DEBUG] Loading suppliers from Firestore (one-time)...');
       final currentUser = _auth.currentUser;
       if (currentUser == null) {
         print('[ERROR] No authenticated user - cannot load suppliers');
@@ -293,6 +296,42 @@ class _SupplierPageState extends State<SupplierPage> {
         );
       }
     }
+  }
+
+  /// Setup real-time Firestore stream for cross-device synchronization
+  void _setupFirestoreStream() {
+    final currentUser = _auth.currentUser;
+    if (currentUser == null) return;
+
+    _firestoreStreamSubscription = _firestore
+        .collection('users')
+        .doc(currentUser.uid)
+        .collection('suppliers')
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .listen(
+      (snapshot) async {
+        if (!mounted || _isNavigatingAway) return;
+
+        print('[Supplier] Firestore stream: ${snapshot.docs.length} docs (${snapshot.docChanges.length} changes)');
+
+        final freshSuppliers = snapshot.docs
+            .map((doc) => {'id': doc.id, ...doc.data()})
+            .toList();
+
+        // Import to Isar — the Isar stream listener auto-updates the UI
+        await SupplierOfflineController.instance.importFromServer(freshSuppliers);
+
+        // Update cache
+        if (mounted && !_isNavigatingAway) {
+          _cacheDataSource.saveSuppliers(freshSuppliers);
+          setState(() => _isLoading = false);
+        }
+      },
+      onError: (e) {
+        print('[ERROR] Firestore supplier stream error: $e');
+      },
+    );
   }
 
   void _clearForm() {

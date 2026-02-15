@@ -47,6 +47,7 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
   
   // Offline-first support
   StreamSubscription<List<ProductEntity>>? _productStreamSubscription;
+  StreamSubscription<QuerySnapshot>? _firestoreProductStreamSubscription;
   int _unsyncedCount = 0;
 
   // Cross-page refresh subscriptions
@@ -102,6 +103,7 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
     _setupOfflineStream();
     _setupBatchStream();
     _setupCrossPageRefresh();
+    _setupFirestoreProductStream();
   }
 
   void _onLanguageChanged() {
@@ -116,6 +118,7 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
   void dispose() {
     LanguageService.instance.removeListener(_onLanguageChanged);
     _productStreamSubscription?.cancel();
+    _firestoreProductStreamSubscription?.cancel();
     _batchStreamSubscription?.cancel();
     _purchaseChangeSubscription?.cancel();
     _productChangeSubscription?.cancel();
@@ -376,6 +379,42 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
     } catch (e) {
       print('[ERROR] Failed to import products to Isar: $e');
     }
+  }
+
+  /// Setup real-time Firestore stream for cross-device product synchronization
+  void _setupFirestoreProductStream() {
+    final currentUser = _auth.currentUser;
+    if (currentUser == null) return;
+
+    _firestoreProductStreamSubscription = _firestore
+        .collection('users')
+        .doc(currentUser.uid)
+        .collection('products')
+        .snapshots()
+        .listen(
+      (snapshot) async {
+        if (!mounted) return;
+
+        print('[Product] Firestore stream: ${snapshot.docs.length} docs (${snapshot.docChanges.length} changes)');
+
+        final serverProducts = snapshot.docs.map((doc) {
+          final data = doc.data();
+          return <String, dynamic>{
+            'id': doc.id,
+            ...data,
+          };
+        }).toList();
+
+        // Import to Isar — the Isar stream listener auto-updates the UI
+        await ProductOfflineController.instance.importFromServer(serverProducts);
+
+        // Trigger sync for any local-only changes
+        ProductSyncService.instance.syncNow();
+      },
+      onError: (e) {
+        print('[ERROR] Firestore product stream error: $e');
+      },
+    );
   }
   
   Future<void> _loadLatestPurchases(List<Product> products) async {

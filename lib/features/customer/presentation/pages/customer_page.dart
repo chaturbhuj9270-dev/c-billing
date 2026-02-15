@@ -44,6 +44,8 @@ class _CustomerPageState extends State<CustomerPage> {
 
   // Isar stream for real-time updates
   StreamSubscription<List<CustomerEntity>>? _customerStreamSub;
+  // Firestore stream for cross-device real-time sync
+  StreamSubscription<QuerySnapshot>? _firestoreStreamSub;
 
   // Services
   final _auth = FirebaseAuth.instance;
@@ -66,12 +68,14 @@ class _CustomerPageState extends State<CustomerPage> {
     _checkUserAuthentication();
     _setupIsarStream();
     _fetchFromFirebase();
+    _setupFirestoreStream();
   }
 
   @override
   void dispose() {
     _isNavigatingAway = true;
     _customerStreamSub?.cancel();
+    _firestoreStreamSub?.cancel();
     _searchDebounce?.cancel();
     _searchController.dispose();
     _firstNameController.dispose();
@@ -209,6 +213,65 @@ class _CustomerPageState extends State<CustomerPage> {
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  /// Setup real-time Firestore stream for cross-device synchronization
+  void _setupFirestoreStream() {
+    final currentUser = _auth.currentUser;
+    if (currentUser == null) return;
+
+    _firestoreStreamSub = _firestore
+        .collection('users')
+        .doc(currentUser.uid)
+        .collection('customers')
+        .snapshots()
+        .listen(
+      (snapshot) async {
+        if (!mounted || _isNavigatingAway) return;
+
+        debugPrint('[Customer] Firestore stream: ${snapshot.docs.length} docs (${snapshot.docChanges.length} changes)');
+
+        final serverList = snapshot.docs.where((doc) {
+          final data = doc.data();
+          return data['isActive'] != false;
+        }).map((doc) {
+          final data = doc.data();
+          final firstName = (data['firstName'] ?? '').toString();
+          final middleName = (data['middleName'] ?? '').toString();
+          final lastName = (data['lastName'] ?? '').toString();
+          final fullName = [firstName, middleName, lastName]
+              .where((s) => s.isNotEmpty)
+              .join(' ');
+
+          return <String, dynamic>{
+            'id': doc.id,
+            'name': fullName,
+            'mobile': data['contact'] ?? '',
+            'address': data['address'] ?? '',
+            'email': data['email'] ?? '',
+            'currentPendingAmount': data['currentPendingAmount'] ?? data['pendingBalance'] ?? 0,
+            'totalPurchases': data['totalPurchaseAmount'] ?? data['totalPurchases'] ?? 0,
+            'updatedAt': data['updatedAt'] is Timestamp
+                ? (data['updatedAt'] as Timestamp).toDate().toIso8601String()
+                : data['updatedAt']?.toString() ?? '',
+            'createdAt': data['createdAt'] is Timestamp
+                ? (data['createdAt'] as Timestamp).toDate().toIso8601String()
+                : data['createdAt']?.toString() ?? '',
+          };
+        }).toList();
+
+        // Import into Isar — the stream listener auto-updates the UI
+        await CustomerOfflineController.instance.importFromServer(serverList);
+
+        // Cache for next time
+        if (_customers.isNotEmpty && mounted) {
+          _cacheDataSource.saveCustomers(_customers);
+        }
+      },
+      onError: (e) {
+        debugPrint('[ERROR] Firestore customer stream error: $e');
+      },
+    );
   }
 
   // ━━━ SEARCH & SORT ━━━

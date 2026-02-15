@@ -40,6 +40,7 @@ class _CompanyPageState extends State<CompanyPage> {
   
   // Offline-first support
   StreamSubscription<List<CompanyEntity>>? _companyStreamSubscription;
+  StreamSubscription<QuerySnapshot>? _firestoreStreamSubscription;
   int _unsyncedCount = 0;
 
   final _auth = FirebaseAuth.instance;
@@ -58,6 +59,7 @@ class _CompanyPageState extends State<CompanyPage> {
     _setupInitialData();
     _searchController.addListener(_filterAndSearchCompanies);
     _setupOfflineStream();
+    _setupFirestoreStream();
   }
 
   void _onLanguageChanged() {
@@ -189,7 +191,7 @@ class _CompanyPageState extends State<CompanyPage> {
 
   Future<void> _loadCompanies() async {
     try {
-      print('[DEBUG] Loading companies from Firestore...');
+      print('[DEBUG] Loading companies from Firestore (one-time)...');
       final currentUser = _auth.currentUser;
       if (currentUser == null) {
         print('[ERROR] No authenticated user - cannot load companies');
@@ -233,6 +235,41 @@ class _CompanyPageState extends State<CompanyPage> {
         );
       }
     }
+  }
+
+  /// Setup real-time Firestore stream for cross-device synchronization
+  void _setupFirestoreStream() {
+    final currentUser = _auth.currentUser;
+    if (currentUser == null) return;
+
+    _firestoreStreamSubscription = _firestore
+        .collection('users')
+        .doc(currentUser.uid)
+        .collection('companies')
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .listen(
+      (snapshot) async {
+        if (!mounted || _isNavigatingAway) return;
+
+        print('[Company] Firestore stream: ${snapshot.docs.length} docs (${snapshot.docChanges.length} changes)');
+
+        final freshCompanies = snapshot.docs
+            .map((doc) => {'id': doc.id, ...doc.data()})
+            .toList();
+
+        // Import to Isar — the Isar stream listener auto-updates the UI
+        await CompanyOfflineController.instance.importFromServer(freshCompanies);
+
+        // Update cache
+        if (mounted && !_isNavigatingAway) {
+          _cacheDataSource.saveCompanies(freshCompanies);
+        }
+      },
+      onError: (e) {
+        print('[ERROR] Firestore company stream error: $e');
+      },
+    );
   }
 
   void _clearForm() {
@@ -654,6 +691,7 @@ class _CompanyPageState extends State<CompanyPage> {
   void dispose() {
     _isNavigatingAway = true;
     _companyStreamSubscription?.cancel();
+    _firestoreStreamSubscription?.cancel();
     _filterDebounceTimer?.cancel();
     _companyNameController.dispose();
     _companyCodeController.dispose();
