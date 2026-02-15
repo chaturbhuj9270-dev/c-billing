@@ -690,4 +690,8 @@ class EnglishLocalization {
   static const String warn = 'Warn';
   static const String level = 'Level';
   static const String stackTrace = 'Stack Trace';
+
+  // Action Menu
+  static const String options = 'Options';
+  static const String reportIssue = 'Report Issue';
 }

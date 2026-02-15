@@ -693,4 +693,8 @@ class MarathiLocalization {
   static const String warn = 'इशारा';
   static const String level = 'पातळी';
   static const String stackTrace = 'स्टॅक ट्रेस';
+
+  // Action Menu
+  static const String options = 'पर्याय';
+  static const String reportIssue = 'समस्या रिपोर्ट करा';
 }

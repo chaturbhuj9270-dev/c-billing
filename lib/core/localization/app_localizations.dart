@@ -5709,4 +5709,21 @@ class AppLocalizations {
       default: return EnglishLocalization.stackTrace;
     }
   }
+
+  // Action Menu
+  String get options {
+    switch (languageCode) {
+      case 'Hindi': return HindiLocalization.options;
+      case 'Marathi': return MarathiLocalization.options;
+      default: return EnglishLocalization.options;
+    }
+  }
+
+  String get reportIssue {
+    switch (languageCode) {
+      case 'Hindi': return HindiLocalization.reportIssue;
+      case 'Marathi': return MarathiLocalization.reportIssue;
+      default: return EnglishLocalization.reportIssue;
+    }
+  }
 }

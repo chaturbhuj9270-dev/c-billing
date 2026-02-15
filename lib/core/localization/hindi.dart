@@ -692,4 +692,8 @@ class HindiLocalization {
   static const String warn = 'चेतावनी';
   static const String level = 'स्तर';
   static const String stackTrace = 'स्टैक ट्रेस';
+
+  // Action Menu
+  static const String options = 'विकल्प';
+  static const String reportIssue = 'समस्या रिपोर्ट करें';
 }

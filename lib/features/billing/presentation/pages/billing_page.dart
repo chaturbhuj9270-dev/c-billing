@@ -17,6 +17,7 @@ import 'package:c_billing/core/printing/printing.dart';
 import 'package:printing/printing.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:c_billing/common_widgets/printer_selection_widget.dart';
+import 'package:c_billing/common_widgets/action_menu.dart';
 import 'package:c_billing/features/shop/data/repositories/shop_repository.dart';
 import 'package:c_billing/features/shop/domain/entities/shop.dart';
 import 'package:c_billing/features/customer/data/repositories/customer_repository.dart';
@@ -1578,10 +1579,11 @@ class _BillingPageState extends State<BillingPage> {
                       ),
                     ),
                   const SizedBox(width: 8),
-                  // Settings button
-                  IconButton(
-                    icon: const Icon(Icons.settings, color: Colors.white, size: 24),
-                    onPressed: () async {
+                  // Action Menu (Settings, Language, Bug Report)
+                  ActionMenu(
+                    menuColor: const Color(0xFF1B4D3E),
+                    iconColor: Colors.white,
+                    onSettingsTap: () async {
                       final result = await Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -1593,7 +1595,24 @@ class _BillingPageState extends State<BillingPage> {
                         _loadBillSettings();
                       }
                     },
-                    tooltip: _localizations.billSettings,
+                    onLanguageTap: () {
+                      // Will be implemented by dashboard's language switching
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Language change is available in Dashboard'),
+                          duration: Duration(seconds: 2),
+                        ),
+                      );
+                    },
+                    onBugReportTap: () {
+                      // Will be implemented with bug reporting service
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Bug report feature coming soon'),
+                          duration: Duration(seconds: 2),
+                        ),
+                      );
+                    },
                   ),
                 ],
               ),

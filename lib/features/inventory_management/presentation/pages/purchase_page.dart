@@ -19,6 +19,7 @@ import '../../../supplier/offline/controllers/supplier_offline_controller.dart';
 import '../../../company/offline/controllers/company_offline_controller.dart';
 import '../../../company/data/services/company_sync_service.dart';
 import '../../../../core/services/inventory_integration_service.dart';
+import '../../../../common_widgets/action_menu.dart';
 import 'purchase_settings_page.dart';
 
 class PurchasePage extends StatefulWidget {
@@ -2474,9 +2475,11 @@ class _PurchasePageState extends State<PurchasePage>
                               ],
                             ),
                           ),
-                          // Settings icon
-                          GestureDetector(
-                            onTap: () async {
+                          // Action Menu (Settings, Language, Bug Report)
+                          ActionMenu(
+                            menuColor: const Color(0xFF1B4D3E),
+                            iconColor: const Color(0xFF1B4D3E),
+                            onSettingsTap: () async {
                               await Navigator.push(
                                 context,
                                 MaterialPageRoute(
@@ -2486,19 +2489,24 @@ class _PurchasePageState extends State<PurchasePage>
                               // Refresh UI when returning from settings
                               setState(() {});
                             },
-                            child: Container(
-                              width: 36,
-                              height: 36,
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF1B4D3E).withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: const Icon(
-                                Icons.settings_rounded,
-                                size: 20,
-                                color: Color(0xFF1B4D3E),
-                              ),
-                            ),
+                            onLanguageTap: () {
+                              // Will be implemented by dashboard's language switching
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Language change is available in Dashboard'),
+                                  duration: Duration(seconds: 2),
+                                ),
+                              );
+                            },
+                            onBugReportTap: () {
+                              // Will be implemented with bug reporting service
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Bug report feature coming soon'),
+                                  duration: Duration(seconds: 2),
+                                ),
+                              );
+                            },
                           ),
                         ],
                       ),
