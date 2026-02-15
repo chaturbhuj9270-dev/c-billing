@@ -331,6 +331,9 @@ class _CustomerPageState extends State<CustomerPage> {
         }
         DashboardRefreshService.instance
             .notifyDataChanged(DataChangeType.customer);
+        
+        // Trigger background sync for the update
+        CustomerSyncService.instance.syncNow();
 
         _clearForm();
         if (mounted && context.mounted) {

@@ -15,6 +15,7 @@ import '../../data/datasources/purchase_cache_datasource.dart';
 import '../../domain/entities/product.dart';
 import '../../data/services/purchase_sync_service.dart';
 import '../../../product/offline/controllers/product_offline_controller.dart';
+import '../../../product/data/services/product_sync_service.dart';
 import '../../../supplier/offline/controllers/supplier_offline_controller.dart';
 import '../../../company/offline/controllers/company_offline_controller.dart';
 import '../../../company/data/services/company_sync_service.dart';
@@ -533,6 +534,9 @@ class _PurchasePageState extends State<PurchasePage>
                         
                         // Notify other screens about the product change
                         DashboardRefreshService.instance.notifyDataChanged(DataChangeType.product);
+                        
+                        // Trigger background sync if online
+                        ProductSyncService.instance.syncNow();
                         
                         if (mounted) {
                           if (dialogContext.mounted) {

@@ -90,37 +90,74 @@ class CustomerEntity {
     );
   }
 
-  /// Create from domain Customer model
+  /// Create from server/domain Customer data
+  /// Handles both flat format (name, mobile) and Firebase format (firstName, lastName, contact)
   factory CustomerEntity.fromCustomer(Map<String, dynamic> customer) {
     final now = DateTime.now();
+    
+    // Build name: prefer pre-built 'name' field, otherwise join firstName/middleName/lastName
+    String name;
+    if (customer['name'] != null && (customer['name'] as String).isNotEmpty) {
+      name = customer['name'] as String;
+    } else {
+      final firstName = (customer['firstName'] ?? '').toString();
+      final middleName = (customer['middleName'] ?? '').toString();
+      final lastName = (customer['lastName'] ?? '').toString();
+      name = [firstName, middleName, lastName]
+          .where((s) => s.isNotEmpty)
+          .join(' ');
+    }
+    
+    // Mobile: prefer 'mobile', fallback to 'contact'
+    final mobile = (customer['mobile'] ?? customer['contact'] ?? '').toString();
+    
+    // Pending amount
+    final pendingAmount = (customer['currentPendingAmount'] as num?)?.toDouble()
+        ?? (customer['pendingBalance'] as num?)?.toDouble()
+        ?? 0.0;
+    
+    // Total purchases
+    final totalPurchases = (customer['totalPurchases'] as num?)?.toDouble()
+        ?? (customer['totalPurchaseAmount'] as num?)?.toDouble()
+        ?? 0.0;
+    
     return CustomerEntity(
       serverId: customer['id'] as String?,
-      name: customer['name'] as String? ?? '',
-      mobile: customer['mobile'] as String? ?? '',
+      name: name,
+      mobile: mobile,
       address: customer['address'] as String?,
       email: customer['email'] as String?,
-      currentPendingAmount: (customer['currentPendingAmount'] as num?)?.toDouble() ?? 0.0,
-      totalPurchases: (customer['totalPurchases'] as num?)?.toDouble() ?? 0.0,
+      currentPendingAmount: pendingAmount,
+      totalPurchases: totalPurchases,
       isSynced: true, // From server, so it's synced
-      isDeleted: false,
+      isDeleted: customer['isActive'] == false,
       updatedAt: DateTime.tryParse(customer['updatedAt']?.toString() ?? '') ?? now,
       createdAt: DateTime.tryParse(customer['createdAt']?.toString() ?? '') ?? now,
     );
   }
 
   /// Convert to Map for API sync
+  /// Maps to Firebase field names (firstName, lastName, contact, etc.)
   Map<String, dynamic> toSyncPayload() {
+    // Split name into firstName, middleName, lastName for Firebase compatibility
+    final nameParts = name.split(' ');
+    final firstName = nameParts.isNotEmpty ? nameParts.first : '';
+    final middleName = nameParts.length > 2 ? nameParts.sublist(1, nameParts.length - 1).join(' ') : '';
+    final lastName = nameParts.length > 1 ? nameParts.last : '';
+
     return {
       'id': serverId,
-      'name': name,
-      'mobile': mobile,
+      'firstName': firstName,
+      'middleName': middleName,
+      'lastName': lastName,
+      'contact': mobile,
       'address': address,
       'email': email,
       'currentPendingAmount': currentPendingAmount,
-      'totalPurchases': totalPurchases,
+      'totalPurchaseAmount': totalPurchases,
+      'isActive': !isDeleted,
       'updatedAt': updatedAt.toIso8601String(),
       'createdAt': createdAt.toIso8601String(),
-      'isDeleted': isDeleted,
     };
   }
 
