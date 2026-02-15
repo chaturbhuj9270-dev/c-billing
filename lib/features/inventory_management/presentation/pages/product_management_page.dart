@@ -48,6 +48,10 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
   // Offline-first support
   StreamSubscription<List<ProductEntity>>? _productStreamSubscription;
   int _unsyncedCount = 0;
+
+  // Cross-page refresh subscriptions
+  StreamSubscription<void>? _purchaseChangeSubscription;
+  StreamSubscription<void>? _productChangeSubscription;
   
   // Latest purchase info for each product
   Map<String, Map<String, dynamic>> _latestPurchases = {};
@@ -97,6 +101,7 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
     _setupInitialData();
     _setupOfflineStream();
     _setupBatchStream();
+    _setupCrossPageRefresh();
   }
 
   void _onLanguageChanged() {
@@ -112,6 +117,8 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
     LanguageService.instance.removeListener(_onLanguageChanged);
     _productStreamSubscription?.cancel();
     _batchStreamSubscription?.cancel();
+    _purchaseChangeSubscription?.cancel();
+    _productChangeSubscription?.cancel();
     _scrollController.dispose();
     super.dispose();
   }
@@ -238,6 +245,20 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
         print('[ERROR] Batch stream error: $e');
       },
     );
+  }
+
+  /// Listen for purchase/product changes from other pages to refresh stock in real time
+  void _setupCrossPageRefresh() {
+    _purchaseChangeSubscription = DashboardRefreshService.instance.onPurchaseChanged.listen((_) {
+      if (mounted) {
+        _loadProducts();
+      }
+    });
+    _productChangeSubscription = DashboardRefreshService.instance.onProductChanged.listen((_) {
+      if (mounted) {
+        _loadProducts();
+      }
+    });
   }
 
   /// Rebuild grouped product list from batches + products

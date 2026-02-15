@@ -1612,6 +1612,7 @@ class _PurchasePageState extends State<PurchasePage>
         
         // Notify dashboard to refresh (purchase affects product stock)
         DashboardRefreshService.instance.notifyDataChanged(DataChangeType.purchase);
+        DashboardRefreshService.instance.notifyDataChanged(DataChangeType.product);
 
         // Reset form
         setState(() {
