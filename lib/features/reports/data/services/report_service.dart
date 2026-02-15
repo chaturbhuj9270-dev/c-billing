@@ -47,9 +47,25 @@ class ReportService {
       for (final e in saleReturnLedgers) productIds.add(e.productId);
       for (final e in purchaseReturnLedgers) productIds.add(e.productId);
 
-      // If no transactions found, also check batches for stock context
+      // Include ALL batch products (not just remaining > 0) so that:
+      // - Products with zero stock still appear when they had transactions
+      // - Advanced filters (expired, low stock, etc.) work on all products
+      // - Product/supplier-specific filters show complete data
       for (final b in allBatches) {
-        if (b.quantityRemaining > 0) productIds.add(b.productId);
+        productIds.add(b.productId);
+      }
+
+      // If still no data from ledger or batches, try loading products directly
+      // This handles cases where filters are set but no ledger/batch data exists yet
+      if (productIds.isEmpty && filter.hasAdvancedFilters) {
+        final products = await _repo.getProducts(
+          productId: filter.productId,
+          lowStockOnly: filter.lowStockOnly,
+          lowStockThreshold: filter.lowStockThreshold,
+        );
+        for (final p in products) {
+          if (p.serverId != null) productIds.add(p.serverId!);
+        }
       }
 
       if (productIds.isEmpty) {
@@ -75,6 +91,8 @@ class ReportService {
 
       // ── 4. Build product info from batches ──
       final productInfo = <String, _ProductInfo>{};
+      // Track which products belong to the filtered supplier
+      final supplierProductIds = <String>{};
       for (final b in allBatches) {
         final info = productInfo.putIfAbsent(
             b.productId, () => _ProductInfo());
@@ -84,6 +102,7 @@ class ReportService {
         info.totalRemaining += b.quantityRemaining;
         info.latestPurchasePrice = b.purchasePrice;
         info.latestSellingPrice = b.sellingPrice;
+        supplierProductIds.add(b.productId);
         // Track expiry
         if (b.expiryDate != null && b.quantityRemaining > 0) {
           final now = DateTime.now();
@@ -108,6 +127,14 @@ class ReportService {
             }
           }
         }
+      }
+
+      // If supplier filter is active, restrict productIds to only supplier's products
+      // (ledger entries don't have supplierId, so we cross-reference with batches)
+      if (filter.supplierId != null && supplierProductIds.isNotEmpty) {
+        productIds.retainAll(supplierProductIds);
+        // Also re-add supplier's products in case they had no ledger entries in range
+        productIds.addAll(supplierProductIds);
       }
 
       // ── 5. Build rows ──
