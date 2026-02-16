@@ -17,8 +17,10 @@ import '../../data/services/purchase_sync_service.dart';
 import '../../../product/offline/controllers/product_offline_controller.dart';
 import '../../../product/data/services/product_sync_service.dart';
 import '../../../supplier/offline/controllers/supplier_offline_controller.dart';
+import '../../../supplier/offline/entities/supplier_entity.dart';
 import '../../../company/offline/controllers/company_offline_controller.dart';
-import '../../../company/data/services/company_sync_service.dart';
+import '../../../company/offline/entities/company_entity.dart';
+import '../../../product/offline/entities/product_entity.dart';
 import '../../../../core/services/inventory_integration_service.dart';
 import '../../../../common_widgets/action_menu.dart';
 import 'purchase_settings_page.dart';
@@ -43,10 +45,10 @@ class _PurchasePageState extends State<PurchasePage>
   late AppLocalizations _localizations;
   final _cacheDataSource = PurchaseCacheDataSource();
   
-  // Data refresh subscriptions
-  StreamSubscription<void>? _productRefreshSubscription;
-  StreamSubscription<void>? _supplierRefreshSubscription;
-  StreamSubscription<void>? _companyRefreshSubscription;
+  // Real-time Isar stream subscriptions
+  StreamSubscription<List<ProductEntity>>? _productStreamSubscription;
+  StreamSubscription<List<SupplierEntity>>? _supplierStreamSubscription;
+  StreamSubscription<List<CompanyEntity>>? _companyStreamSubscription;
 
   Product? _selectedProduct;
   Map<String, dynamic>? _selectedSupplier;
@@ -130,22 +132,10 @@ class _PurchasePageState extends State<PurchasePage>
       () => _animController.forward(),
     );
     
-    // Listen for product changes from other screens
-    _productRefreshSubscription = DashboardRefreshService.instance.onProductChanged.listen((_) {
-      if (mounted) _loadProducts();
-    });
-    
-    // Listen for supplier changes from other screens
-    _supplierRefreshSubscription = DashboardRefreshService.instance.onSupplierChanged.listen((_) {
-      if (mounted) _loadSuppliers();
-    });
-    
-    // Listen for company changes from other screens
-    _companyRefreshSubscription = DashboardRefreshService.instance.onCompanyChanged.listen((_) {
-      if (mounted) _loadCompanies();
-    });
-
-    _setupInitialData();
+    // Setup real-time Isar streams for instant UI updates
+    _setupProductStream();
+    _setupSupplierStream();
+    _setupCompanyStream();
   }
 
   void _onLanguageChanged() {
@@ -171,166 +161,76 @@ class _PurchasePageState extends State<PurchasePage>
     }
   }
 
-  Future<void> _setupInitialData() async {
-    // Load from cache immediately for < 0.5s loading
-    final cachedProducts = await _cacheDataSource.getCachedProducts();
-    final cachedSuppliers = await _cacheDataSource.getCachedSuppliers();
-    final cachedCompanies = await _cacheDataSource.getCachedCompanies();
-
-    if (mounted) {
-      setState(() {
-        if (cachedProducts != null) _products = cachedProducts;
-        if (cachedSuppliers != null) _suppliers = cachedSuppliers;
-        if (cachedCompanies != null) _companies = cachedCompanies;
-      });
-      print(
-        '[DEBUG] Loaded from cache: ${_products.length} products, ${_suppliers.length} suppliers, ${_companies.length} companies',
-      );
-    }
-
-    // Fetch from Firestore in background
-    _loadProducts();
-    _loadSuppliers();
-    _loadCompanies();
-  }
-
-  Future<void> _loadProducts() async {
-    try {
-      print('[DEBUG] Loading products from offline controller...');
-      
-      // Use offline controller for consistent offline-first behavior
-      final productEntities = await ProductOfflineController.instance.getAllProducts();
-      
-      // Convert ProductEntity to Product domain model
-      final products = productEntities.map((entity) => Product(
-        id: entity.serverId ?? entity.id.toString(),
-        indexNo: entity.indexNo,
-        name: entity.name,
-        companyName: entity.companyName,
-        category: entity.category,
-        purchasePrice: entity.purchasePrice,
-        salesPrice: entity.salesPrice,
-        currentStock: entity.currentStock,
-        createdAt: entity.createdAt,
-        updatedAt: entity.updatedAt,
-        defaultSupplierId: entity.defaultSupplierId,
-        defaultSupplierName: entity.defaultSupplierName,
-      )).toList();
-      
-      // Debug: Check for duplicates by name+company
-      final uniqueNameCompany = <String>{};
-      final duplicates = <String>[];
-      for (final product in products) {
-        final key = '${product.name.toLowerCase()}|${product.companyName.toLowerCase()}';
-        if (uniqueNameCompany.contains(key)) {
-          duplicates.add('${product.name} (${product.companyName})');
-        } else {
-          uniqueNameCompany.add(key);
-        }
-      }
-      if (duplicates.isNotEmpty) {
-        print('[WARNING] Found duplicate products by name+company: $duplicates');
-      }
-      
-      if (mounted) {
+  /// Setup real-time product stream from Isar
+  void _setupProductStream() {
+    _productStreamSubscription = ProductOfflineController.instance.watchAllProducts().listen(
+      (entities) {
+        if (!mounted) return;
+        final products = entities.map((entity) => Product(
+          id: entity.serverId ?? entity.id.toString(),
+          indexNo: entity.indexNo,
+          name: entity.name,
+          companyName: entity.companyName,
+          category: entity.category,
+          purchasePrice: entity.purchasePrice,
+          salesPrice: entity.salesPrice,
+          currentStock: entity.currentStock,
+          createdAt: entity.createdAt,
+          updatedAt: entity.updatedAt,
+          defaultSupplierId: entity.defaultSupplierId,
+          defaultSupplierName: entity.defaultSupplierName,
+        )).toList();
         setState(() {
           _products = products;
           _filteredProducts = products;
         });
-        // Save to cache for next time
         _cacheDataSource.saveProducts(products);
-        print('[DEBUG] Loaded ${products.length} products from offline controller');
-      }
-    } catch (e) {
-      print('[ERROR] Failed to load products: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${_localizations.errorLoadingProducts}: $e')),
-        );
-      }
-    }
+        print('[Purchase] Product stream: ${products.length} products');
+      },
+      onError: (e) => print('[ERROR] Product stream error: $e'),
+    );
   }
 
-  Future<void> _loadSuppliers() async {
-    try {
-      print('[DEBUG] Loading suppliers from offline controller...');
-      
-      // Use offline controller for consistent offline-first behavior
-      final supplierEntities = await SupplierOfflineController.instance.getAllSuppliers();
-      
-      // Convert SupplierEntity to the format expected by the UI
-      final suppliers = supplierEntities.map((entity) => <String, dynamic>{
-        'id': entity.serverId ?? entity.id.toString(),
-        'firstName': entity.firstName,
-        'lastName': entity.lastName,
-        'fullName': '${entity.firstName} ${entity.lastName}'.trim(),
-      }).toList();
-
-      if (mounted) {
+  /// Setup real-time supplier stream from Isar
+  void _setupSupplierStream() {
+    _supplierStreamSubscription = SupplierOfflineController.instance.watchAllSuppliers().listen(
+      (entities) {
+        if (!mounted) return;
+        final suppliers = entities.map((entity) => <String, dynamic>{
+          'id': entity.serverId ?? entity.id.toString(),
+          'firstName': entity.firstName,
+          'lastName': entity.lastName,
+          'fullName': '${entity.firstName} ${entity.lastName}'.trim(),
+        }).toList();
         setState(() {
           _suppliers = suppliers;
           _filteredSuppliers = suppliers;
         });
-        // Save to cache for next time
         _cacheDataSource.saveSuppliers(suppliers);
-        print('[DEBUG] Loaded ${suppliers.length} suppliers from offline controller');
-      }
-    } catch (e) {
-      print('[ERROR] Failed to load suppliers: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('${_localizations.errorLoadingSuppliers}: $e'),
-          ),
-        );
-      }
-    }
+        print('[Purchase] Supplier stream: ${suppliers.length} suppliers');
+      },
+      onError: (e) => print('[ERROR] Supplier stream error: $e'),
+    );
   }
 
-  Future<void> _loadCompanies() async {
-    try {
-      print('[DEBUG] Loading companies from offline controller...');
-      
-      // Use offline controller for consistent offline-first behavior
-      var companyEntities = await CompanyOfflineController.instance.getAllCompanies();
-      
-      // If no companies locally, try to sync from server
-      if (companyEntities.isEmpty) {
-        print('[DEBUG] No local companies found, attempting to sync from server...');
-        try {
-          await CompanySyncService.instance.forceFullSync();
-          companyEntities = await CompanyOfflineController.instance.getAllCompanies();
-          print('[DEBUG] After sync: ${companyEntities.length} companies');
-        } catch (e) {
-          print('[DEBUG] Failed to sync companies from server: $e');
-        }
-      }
-      
-      // Convert CompanyEntity to the format expected by the UI
-      final companies = companyEntities.map((entity) => <String, dynamic>{
-        'id': entity.serverId ?? entity.id.toString(),
-        'companyName': entity.companyName,
-      }).toList();
-
-      if (mounted) {
+  /// Setup real-time company stream from Isar
+  void _setupCompanyStream() {
+    _companyStreamSubscription = CompanyOfflineController.instance.watchAllCompanies().listen(
+      (entities) {
+        if (!mounted) return;
+        final companies = entities.map((entity) => <String, dynamic>{
+          'id': entity.serverId ?? entity.id.toString(),
+          'companyName': entity.companyName,
+        }).toList();
         setState(() {
           _companies = companies;
           _filteredCompanies = companies;
         });
-        // Save to cache for next time
         _cacheDataSource.saveCompanies(companies);
-        print('[DEBUG] Loaded ${companies.length} companies from offline controller');
-      }
-    } catch (e) {
-      print('[ERROR] Failed to load companies: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('${_localizations.errorLoadingCompanies}: $e'),
-          ),
-        );
-      }
-    }
+        print('[Purchase] Company stream: ${companies.length} companies');
+      },
+      onError: (e) => print('[ERROR] Company stream error: $e'),
+    );
   }
 
   Future<void> _addNewProduct() async {
@@ -590,7 +490,8 @@ class _PurchasePageState extends State<PurchasePage>
                           if (dialogContext.mounted) {
                             Navigator.pop(dialogContext);
                           }
-                          await _loadProducts();
+                          // Stream auto-updates products, just wait a tick for UI
+                          await Future.delayed(const Duration(milliseconds: 100));
                           // Select the newly added product (last one in list)
                           if (_products.isNotEmpty) {
                             setState(() {
@@ -1683,8 +1584,7 @@ class _PurchasePageState extends State<PurchasePage>
           _expiryDateController.clear();
         });
 
-        // Reload products to show updated stock
-        _loadProducts();
+        // Reload products to show updated stock — stream auto-handles this
       }
     } catch (e) {
       print('[ERROR] Failed to process purchase: $e');
@@ -1700,9 +1600,9 @@ class _PurchasePageState extends State<PurchasePage>
 
   @override
   void dispose() {
-    _productRefreshSubscription?.cancel();
-    _supplierRefreshSubscription?.cancel();
-    _companyRefreshSubscription?.cancel();
+    _productStreamSubscription?.cancel();
+    _supplierStreamSubscription?.cancel();
+    _companyStreamSubscription?.cancel();
     LanguageService.instance.removeListener(_onLanguageChanged);
     PurchaseSettingsService.instance.removeListener(_onPurchaseSettingsChanged);
     _animController.dispose();
@@ -2142,37 +2042,19 @@ class _PurchasePageState extends State<PurchasePage>
     }
 
     try {
-      final currentUser = FirebaseAuth.instance.currentUser;
-      if (currentUser == null) throw Exception('User not authenticated');
-
-      final supplierId = _firestore
-          .collection('users')
-          .doc(currentUser.uid)
-          .collection('suppliers')
-          .doc()
-          .id;
-
-      await _firestore
-          .collection('users')
-          .doc(currentUser.uid)
-          .collection('suppliers')
-          .doc(supplierId)
-          .set({
-            'id': supplierId,
-            'firstName': firstName,
-            'lastName': lastName,
-            'supplierCode': _newSupplierCodeController.text.trim(),
-            'contact': contact,
-            'address': _newSupplierAddressController.text.trim(),
-            'createdAt': FieldValue.serverTimestamp(),
-          });
+      // Use offline controller — saves to Isar (stream auto-updates UI) + syncs to Firestore in background
+      await SupplierOfflineController.instance.addSupplier(
+        firstName: firstName,
+        lastName: lastName,
+        supplierCode: _newSupplierCodeController.text.trim(),
+        contact: contact,
+        address: _newSupplierAddressController.text.trim(),
+      );
 
       if (dialogContext.mounted) {
         Navigator.pop(dialogContext);
       }
 
-      await _loadSuppliers();
-      
       // Notify dashboard to refresh
       DashboardRefreshService.instance.notifyDataChanged(DataChangeType.supplier);
 
@@ -2361,36 +2243,18 @@ class _PurchasePageState extends State<PurchasePage>
     }
 
     try {
-      final currentUser = FirebaseAuth.instance.currentUser;
-      if (currentUser == null) throw Exception('User not authenticated');
-
-      final companyId = _firestore
-          .collection('users')
-          .doc(currentUser.uid)
-          .collection('companies')
-          .doc()
-          .id;
-
-      await _firestore
-          .collection('users')
-          .doc(currentUser.uid)
-          .collection('companies')
-          .doc(companyId)
-          .set({
-            'id': companyId,
-            'companyName': companyName,
-            'companyCode': _newCompanyCodeController.text.trim(),
-            'contact': _newCompanyContactController.text.trim(),
-            'address': _newCompanyAddressController.text.trim(),
-            'createdAt': FieldValue.serverTimestamp(),
-          });
+      // Use offline controller — saves to Isar (stream auto-updates UI) + syncs to Firestore in background
+      await CompanyOfflineController.instance.addCompany(
+        companyName: companyName,
+        companyCode: _newCompanyCodeController.text.trim(),
+        contact: _newCompanyContactController.text.trim(),
+        address: _newCompanyAddressController.text.trim(),
+      );
 
       if (dialogContext.mounted) {
         Navigator.pop(dialogContext);
       }
 
-      await _loadCompanies();
-      
       // Notify dashboard to refresh
       DashboardRefreshService.instance.notifyDataChanged(DataChangeType.company);
 

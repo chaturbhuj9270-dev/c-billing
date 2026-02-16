@@ -29,12 +29,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:c_billing/features/billing/offline/entities/bill_entity.dart';
 import 'package:c_billing/features/billing/data/services/bill_sync_service.dart';
 import 'package:c_billing/features/product/offline/controllers/product_offline_controller.dart';
+import 'package:c_billing/features/product/offline/entities/product_entity.dart';
 import 'package:c_billing/features/product/data/services/product_sync_service.dart';
 import 'package:c_billing/core/services/app_logger.dart';
 import 'package:c_billing/core/services/inventory_integration_service.dart';
 import 'package:c_billing/features/inventory_management/offline/controllers/purchase_batch_offline_controller.dart';
 import 'package:c_billing/features/inventory_management/offline/entities/purchase_batch_entity.dart';
 import 'package:c_billing/features/customer/offline/controllers/customer_offline_controller.dart';
+import 'package:c_billing/features/customer/offline/entities/customer_entity.dart';
 import 'package:c_billing/features/billing/domain/entities/bill_tax_settings.dart';
 
 class BillingPage extends StatefulWidget {
@@ -55,9 +57,9 @@ class _BillingPageState extends State<BillingPage> {
   late FirebaseCustomerRepository _customerRepository;
   late AppLocalizations _localizations;
 
-  // Data refresh subscriptions
-  StreamSubscription<void>? _productRefreshSubscription;
-  StreamSubscription<void>? _customerRefreshSubscription;
+  // Real-time Isar stream subscriptions
+  StreamSubscription<List<ProductEntity>>? _productStreamSubscription;
+  StreamSubscription<List<CustomerEntity>>? _customerStreamSubscription;
   StreamSubscription<void>? _billSettingsSubscription;
 
   // Printing services
@@ -159,23 +161,15 @@ class _BillingPageState extends State<BillingPage> {
     // Listen for customer phone number changes
     _customerContactController.addListener(_onPhoneNumberChanged);
     
-    // Listen for product changes from other screens
-    _productRefreshSubscription = DashboardRefreshService.instance.onProductChanged.listen((_) {
-      if (mounted) _loadProducts(showLoader: false);
-    });
-    
-    // Listen for customer changes from other screens
-    _customerRefreshSubscription = DashboardRefreshService.instance.onCustomerChanged.listen((_) {
-      if (mounted) _loadCustomers();
-    });
+    // Setup real-time Isar streams for instant data updates
+    _setupProductStream();
+    _setupCustomerStream();
     
     // Listen for bill settings changes from settings page
     _billSettingsSubscription = DashboardRefreshService.instance.onBillSettingsChanged.listen((_) {
       if (mounted) _loadBillSettings();
     });
     
-    _loadProducts();
-    _loadCustomers();
     _loadBillSettings();
   }
   
@@ -195,8 +189,8 @@ class _BillingPageState extends State<BillingPage> {
 
   @override
   void dispose() {
-    _productRefreshSubscription?.cancel();
-    _customerRefreshSubscription?.cancel();
+    _productStreamSubscription?.cancel();
+    _customerStreamSubscription?.cancel();
     _billSettingsSubscription?.cancel();
     LanguageService.instance.removeListener(_onLanguageChanged);
     _debounceTimer?.cancel();
@@ -221,6 +215,50 @@ class _BillingPageState extends State<BillingPage> {
         );
       });
     }
+  }
+
+  /// Setup real-time product stream from Isar — auto-refreshes on any product/stock change
+  void _setupProductStream() {
+    _productStreamSubscription = ProductOfflineController.instance.watchAllProducts().listen(
+      (entities) {
+        if (!mounted) return;
+        _loadProducts(showLoader: false);
+      },
+      onError: (e) => debugPrint('[Billing] Product stream error: $e'),
+    );
+    // Also do an initial load (stream fires immediately but we need batch data too)
+    _loadProducts();
+  }
+
+  /// Setup real-time customer stream from Isar — auto-refreshes on any customer change
+  void _setupCustomerStream() {
+    _customerStreamSubscription = CustomerOfflineController.instance.watchAllCustomers().listen(
+      (entities) {
+        if (!mounted) return;
+        // Convert entities directly from stream for instant update
+        final customers = entities.map((entity) {
+          final nameParts = entity.name.split(' ');
+          final firstName = nameParts.isNotEmpty ? nameParts.first : '';
+          final lastName = nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '';
+          return <String, dynamic>{
+            'id': entity.serverId ?? 'local_${entity.id}',
+            'localId': entity.id,
+            'firstName': firstName,
+            'lastName': lastName,
+            'contact': entity.mobile,
+            'fullName': entity.name,
+            'pendingBalance': entity.currentPendingAmount,
+            'totalPurchases': entity.totalPurchases,
+          };
+        }).toList();
+        setState(() {
+          _customers = customers;
+          _isLoadingCustomers = false;
+        });
+        debugPrint('[Billing] Customer stream: ${customers.length} customers');
+      },
+      onError: (e) => debugPrint('[Billing] Customer stream error: $e'),
+    );
   }
 
   Future<void> _loadProducts({bool showLoader = true}) async {
