@@ -203,6 +203,7 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
             updatedAt: e.updatedAt,
             defaultSupplierId: e.defaultSupplierId,
             defaultSupplierName: e.defaultSupplierName,
+            isSynced: e.syncStatus == SyncStatus.synced,
           )).toList();
           
           setState(() {
@@ -516,6 +517,8 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
   void _showEditProductDialog(Product product) {
     final nameController = TextEditingController(text: product.name);
     final categoryController = TextEditingController(text: product.category);
+    final cgstEditController = TextEditingController(text: product.cgstPercent.toString());
+    final sgstEditController = TextEditingController(text: product.sgstPercent.toString());
 
     showDialog(
       context: context,
@@ -574,6 +577,50 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                       ),
                     ),
                   ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: cgstEditController,
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(
+                          labelText: 'CGST %',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(
+                              color: Color(0xFF1B4D3E),
+                              width: 2,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: TextField(
+                        controller: sgstEditController,
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(
+                          labelText: 'SGST %',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(
+                              color: Color(0xFF1B4D3E),
+                              width: 2,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 12),
                 // Purchase Price - Read Only (Updated from Purchase Page)
@@ -669,6 +716,8 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                       id: existing.id,
                       name: nameController.text,
                       category: categoryController.text,
+                      cgstPercent: double.tryParse(cgstEditController.text) ?? 0.0,
+                      sgstPercent: double.tryParse(sgstEditController.text) ?? 0.0,
                     );
                   } else {
                     // Fallback to Firebase direct update if not in Isar
@@ -1042,6 +1091,8 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
     final purchasePriceController = TextEditingController();
     final salesPriceController = TextEditingController();
     final initialStockController = TextEditingController(text: '0');
+    final cgstController = TextEditingController(text: '0');
+    final sgstController = TextEditingController(text: '0');
     Map<String, dynamic>? dialogSelectedCompany;
     Map<String, dynamic>? dialogSelectedSupplier;
     List<Map<String, dynamic>> dialogCompanies = [];
@@ -1261,6 +1312,50 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                       ),
                     ),
                   ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: cgstController,
+                          keyboardType: TextInputType.number,
+                          decoration: InputDecoration(
+                            labelText: 'CGST %',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(
+                                color: Color(0xFF1B4D3E),
+                                width: 2,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: TextField(
+                          controller: sgstController,
+                          keyboardType: TextInputType.number,
+                          decoration: InputDecoration(
+                            labelText: 'SGST %',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(
+                                color: Color(0xFF1B4D3E),
+                                width: 2,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),
@@ -1289,6 +1384,8 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                       currentStock: int.parse(initialStockController.text),
                       defaultSupplierId: dialogSelectedSupplier?['id'],
                       defaultSupplierName: dialogSelectedSupplier?['fullName'],
+                      cgstPercent: double.tryParse(cgstController.text) ?? 0.0,
+                      sgstPercent: double.tryParse(sgstController.text) ?? 0.0,
                     );
                     
                     // Notify dashboard to refresh
@@ -1720,15 +1817,30 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                                           MainAxisAlignment.spaceBetween,
                                       children: [
                                         Expanded(
-                                          child: Text(
-                                            product.name,
-                                            style: const TextStyle(
-                                              fontSize: 18,
-                                              fontWeight: FontWeight.w700,
-                                              fontFamily: 'Literata',
-                                            ),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
+                                          child: Row(
+                                            children: [
+                                              Flexible(
+                                                child: Text(
+                                                  product.name,
+                                                  style: const TextStyle(
+                                                    fontSize: 18,
+                                                    fontWeight: FontWeight.w700,
+                                                    fontFamily: 'Literata',
+                                                  ),
+                                                  maxLines: 1,
+                                                  overflow: TextOverflow.ellipsis,
+                                                ),
+                                              ),
+                                              if (!product.isSynced)
+                                                Padding(
+                                                  padding: const EdgeInsets.only(left: 6),
+                                                  child: Icon(
+                                                    Icons.cloud_off,
+                                                    size: 14,
+                                                    color: Colors.orange[600],
+                                                  ),
+                                                ),
+                                            ],
                                           ),
                                         ),
                                         Container(

@@ -222,6 +222,20 @@ class EscPosBillFormatter {
           '  Ret: ${item.returnedQuantity} qty  -${_fmt(item.returnedAmount)}',
         ));
       }
+
+      // Per-item GST breakdown
+      if (item.hasItemGst) {
+        if (item.cgstPercent > 0) {
+          b.addAll(_left(
+            '  CGST(${_fmt(item.cgstPercent)}%): ${_fmt(item.cgstAmount)}',
+          ));
+        }
+        if (item.sgstPercent > 0) {
+          b.addAll(_left(
+            '  SGST(${_fmt(item.sgstPercent)}%): ${_fmt(item.sgstAmount)}',
+          ));
+        }
+      }
     }
 
     b.addAll(_thinDiv());

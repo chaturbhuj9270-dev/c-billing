@@ -1220,18 +1220,33 @@ class _CompanyPageState extends State<CompanyPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         // Company name with improved typography
-                        Text(
-                          companyName,
-                          style: const TextStyle(
-                            fontSize: 17,
-                            fontWeight: FontWeight.w700,
-                            color: Color(0xFF1B4D3E),
-                            fontFamily: 'Literata',
-                            height: 1.3,
-                            letterSpacing: -0.2,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                companyName,
+                                style: const TextStyle(
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFF1B4D3E),
+                                  fontFamily: 'Literata',
+                                  height: 1.3,
+                                  letterSpacing: -0.2,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            if (company['isSynced'] == false)
+                              Padding(
+                                padding: const EdgeInsets.only(left: 6),
+                                child: Icon(
+                                  Icons.cloud_off,
+                                  size: 14,
+                                  color: Colors.orange[600],
+                                ),
+                              ),
+                          ],
                         ),
                         // Company code badge with enhanced styling
                         if (companyCode.isNotEmpty) ...[

@@ -6,6 +6,8 @@ class PrintBillItem {
   final double rate;
   final double amount;
   final int returnedQuantity;
+  final double cgstPercent;
+  final double sgstPercent;
 
   const PrintBillItem({
     required this.name,
@@ -14,7 +16,18 @@ class PrintBillItem {
     required this.rate,
     required this.amount,
     this.returnedQuantity = 0,
+    this.cgstPercent = 0.0,
+    this.sgstPercent = 0.0,
   });
+
+  /// CGST amount computed from amount
+  double get cgstAmount => amount * cgstPercent / 100;
+
+  /// SGST amount computed from amount
+  double get sgstAmount => amount * sgstPercent / 100;
+
+  /// Whether this item has per-product GST
+  bool get hasItemGst => cgstPercent > 0 || sgstPercent > 0;
 
   /// Whether some units of this item have been returned
   bool get hasReturns => returnedQuantity > 0;
@@ -34,6 +47,8 @@ class PrintBillItem {
       rate: billItem.sellingPrice as double,
       amount: billItem.subtotal as double,
       returnedQuantity: (billItem.returnedQuantity as int?) ?? 0,
+      cgstPercent: (billItem.cgstPercent as double?) ?? 0.0,
+      sgstPercent: (billItem.sgstPercent as double?) ?? 0.0,
     );
   }
 
@@ -45,6 +60,8 @@ class PrintBillItem {
       'rate': rate,
       'amount': amount,
       'returnedQuantity': returnedQuantity,
+      'cgstPercent': cgstPercent,
+      'sgstPercent': sgstPercent,
     };
   }
 }

@@ -25,6 +25,9 @@ class ProductApiService {
   /// Get current user ID
   String? get _userId => _auth.currentUser?.uid;
 
+  /// Check if user is authenticated
+  bool get isAuthenticated => _userId != null;
+
   /// Get products collection reference for current user
   CollectionReference<Map<String, dynamic>>? get _productsRef {
     final userId = _userId;

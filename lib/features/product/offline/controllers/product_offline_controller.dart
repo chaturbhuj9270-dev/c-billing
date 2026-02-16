@@ -91,6 +91,8 @@ class ProductOfflineController extends ChangeNotifier {
     bool skipDuplicateCheck = false,
     String? defaultSupplierId,
     String? defaultSupplierName,
+    double cgstPercent = 0.0,
+    double sgstPercent = 0.0,
   }) async {
     debugPrint('[ProductOffline] Adding product: $name');
     
@@ -124,6 +126,8 @@ class ProductOfflineController extends ChangeNotifier {
       minStockLevel: minStockLevel,
       defaultSupplierId: defaultSupplierId,
       defaultSupplierName: defaultSupplierName,
+      cgstPercent: cgstPercent,
+      sgstPercent: sgstPercent,
     );
 
     await _isar.writeTxn(() async {
@@ -251,6 +255,8 @@ class ProductOfflineController extends ChangeNotifier {
     String? description,
     String? imageUrl,
     int? minStockLevel,
+    double? cgstPercent,
+    double? sgstPercent,
   }) async {
     final existing = await _isar.productEntitys.get(id);
     if (existing == null) {
@@ -293,6 +299,8 @@ class ProductOfflineController extends ChangeNotifier {
       description: description,
       imageUrl: imageUrl,
       minStockLevel: minStockLevel,
+      cgstPercent: cgstPercent,
+      sgstPercent: sgstPercent,
       syncStatus: newSyncStatus,
       updatedAt: DateTime.now(),
     );

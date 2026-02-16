@@ -88,6 +88,12 @@ class ProductEntity {
   /// Default supplier name (for display)
   String? defaultSupplierName;
 
+  /// CGST percentage for this product
+  double cgstPercent;
+
+  /// SGST percentage for this product
+  double sgstPercent;
+
   ProductEntity({
     this.serverId,
     this.indexNo = 0,
@@ -108,6 +114,8 @@ class ProductEntity {
     this.imageUrl,
     this.defaultSupplierId,
     this.defaultSupplierName,
+    this.cgstPercent = 0.0,
+    this.sgstPercent = 0.0,
   });
 
   /// Factory constructor for creating new product with defaults
@@ -129,6 +137,8 @@ class ProductEntity {
     int? minStockLevel,
     String? defaultSupplierId,
     String? defaultSupplierName,
+    double cgstPercent = 0.0,
+    double sgstPercent = 0.0,
   }) {
     final now = DateTime.now();
     return ProductEntity(
@@ -151,6 +161,8 @@ class ProductEntity {
       minStockLevel: minStockLevel,
       defaultSupplierId: defaultSupplierId,
       defaultSupplierName: defaultSupplierName,
+      cgstPercent: cgstPercent,
+      sgstPercent: sgstPercent,
     );
   }
 
@@ -177,6 +189,8 @@ class ProductEntity {
       minStockLevel: (data['minStockLevel'] as num?)?.toInt(),
       defaultSupplierId: data['defaultSupplierId'] as String?,
       defaultSupplierName: data['defaultSupplierName'] as String?,
+      cgstPercent: (data['cgstPercent'] as num?)?.toDouble() ?? 0.0,
+      sgstPercent: (data['sgstPercent'] as num?)?.toDouble() ?? 0.0,
     );
   }
 
@@ -199,6 +213,8 @@ class ProductEntity {
       'minStockLevel': minStockLevel,
       'defaultSupplierId': defaultSupplierId,
       'defaultSupplierName': defaultSupplierName,
+      'cgstPercent': cgstPercent,
+      'sgstPercent': sgstPercent,
       'updatedAt': updatedAt.toIso8601String(),
       'createdAt': createdAt.toIso8601String(),
     };
@@ -228,6 +244,8 @@ class ProductEntity {
       'minStockLevel': minStockLevel,
       'defaultSupplierId': defaultSupplierId,
       'defaultSupplierName': defaultSupplierName,
+      'cgstPercent': cgstPercent,
+      'sgstPercent': sgstPercent,
     };
   }
 
@@ -253,6 +271,8 @@ class ProductEntity {
     int? minStockLevel,
     String? defaultSupplierId,
     String? defaultSupplierName,
+    double? cgstPercent,
+    double? sgstPercent,
   }) {
     final entity = ProductEntity(
       serverId: serverId ?? this.serverId,
@@ -274,6 +294,8 @@ class ProductEntity {
       minStockLevel: minStockLevel ?? this.minStockLevel,
       defaultSupplierId: defaultSupplierId ?? this.defaultSupplierId,
       defaultSupplierName: defaultSupplierName ?? this.defaultSupplierName,
+      cgstPercent: cgstPercent ?? this.cgstPercent,
+      sgstPercent: sgstPercent ?? this.sgstPercent,
     );
     entity.id = id ?? this.id;
     return entity;

@@ -337,6 +337,8 @@ class _PurchasePageState extends State<PurchasePage>
     final nameController = TextEditingController();
     final purchasePriceController = TextEditingController();
     final salesPriceController = TextEditingController();
+    final cgstController = TextEditingController(text: '0');
+    final sgstController = TextEditingController(text: '0');
     Map<String, dynamic>? dialogSelectedCompany;
     Map<String, dynamic>? dialogSelectedSupplier;
 
@@ -497,6 +499,50 @@ class _PurchasePageState extends State<PurchasePage>
                     ),
                   ),
                 ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: cgstController,
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(
+                          labelText: 'CGST %',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(
+                              color: Color(0xFF1B4D3E),
+                              width: 2,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: TextField(
+                        controller: sgstController,
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(
+                          labelText: 'SGST %',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(
+                              color: Color(0xFF1B4D3E),
+                              width: 2,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
@@ -530,6 +576,8 @@ class _PurchasePageState extends State<PurchasePage>
                           currentStock: 0,
                           defaultSupplierId: dialogSelectedSupplier?['id'],
                           defaultSupplierName: dialogSelectedSupplier?['fullName'],
+                          cgstPercent: double.tryParse(cgstController.text) ?? 0.0,
+                          sgstPercent: double.tryParse(sgstController.text) ?? 0.0,
                         );
                         
                         // Notify other screens about the product change

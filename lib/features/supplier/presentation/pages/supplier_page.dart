@@ -1206,16 +1206,31 @@ class _SupplierPageState extends State<SupplierPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            fullName,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                              color: Color(0xFF1B4D3E),
-                              fontFamily: 'Literata',
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  fullName,
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                    color: Color(0xFF1B4D3E),
+                                    fontFamily: 'Literata',
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              if (supplier['isSynced'] == false)
+                                Padding(
+                                  padding: const EdgeInsets.only(left: 6),
+                                  child: Icon(
+                                    Icons.cloud_off,
+                                    size: 14,
+                                    color: Colors.orange[600],
+                                  ),
+                                ),
+                            ],
                           ),
                           if (supplierCode.isNotEmpty) ...[
                             const SizedBox(height: 4),

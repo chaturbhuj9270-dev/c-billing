@@ -784,7 +784,7 @@ class _BillingPageState extends State<BillingPage> {
         billItems: _billItems,
         availableBatches: _availableBatches,
         localizations: _localizations,
-        onBatchItemAdded: (productId, productName, companyName, batchLocalId, sellingPrice, purchasePrice, quantity, maxStock) {
+        onBatchItemAdded: (productId, productName, companyName, batchLocalId, sellingPrice, purchasePrice, quantity, maxStock, cgstPercent, sgstPercent) {
           // Use a unique key: productId + batchLocalId (or just productId if no batch)
           final uniqueKey = batchLocalId != null ? '${productId}_batch_$batchLocalId' : productId;
           final existingIndex = _billItems.indexWhere(
@@ -799,6 +799,8 @@ class _BillingPageState extends State<BillingPage> {
                 sellingPrice: sellingPrice,
                 purchasePrice: purchasePrice,
                 quantity: quantity,
+                cgstPercent: cgstPercent,
+                sgstPercent: sgstPercent,
               );
             } else {
               _billItems.add(
@@ -809,6 +811,8 @@ class _BillingPageState extends State<BillingPage> {
                   sellingPrice: sellingPrice,
                   purchasePrice: purchasePrice,
                   quantity: quantity,
+                  cgstPercent: cgstPercent,
+                  sgstPercent: sgstPercent,
                 ),
               );
             }
@@ -922,6 +926,8 @@ class _BillingPageState extends State<BillingPage> {
           sellingPrice: item.sellingPrice,
           purchasePrice: item.purchasePrice,
           quantity: item.quantity,
+          cgstPercent: item.cgstPercent,
+          sgstPercent: item.sgstPercent,
         );
       }).toList();
 
@@ -2626,6 +2632,18 @@ class _BillingPageState extends State<BillingPage> {
                                 color: Colors.grey[600],
                               ),
                             ),
+                            if (item.cgstPercent > 0 || item.sgstPercent > 0)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 2),
+                                child: Text(
+                                  'CGST: ${item.cgstPercent}% (₹${item.cgstAmount.toStringAsFixed(2)})  SGST: ${item.sgstPercent}% (₹${item.sgstAmount.toStringAsFixed(2)})',
+                                  style: TextStyle(
+                                    fontFamily: 'Literata',
+                                    fontSize: 10,
+                                    color: Colors.orange[800],
+                                  ),
+                                ),
+                              ),
                           ],
                         ),
                       ),
@@ -2650,6 +2668,8 @@ class _BillingPageState extends State<BillingPage> {
                                       sellingPrice: item.sellingPrice,
                                       purchasePrice: item.purchasePrice,
                                       quantity: item.quantity - 1,
+                                      cgstPercent: item.cgstPercent,
+                                      sgstPercent: item.sgstPercent,
                                     );
                                   });
                                 } else {
@@ -2702,6 +2722,8 @@ class _BillingPageState extends State<BillingPage> {
                                       sellingPrice: item.sellingPrice,
                                       purchasePrice: item.purchasePrice,
                                       quantity: item.quantity + 1,
+                                      cgstPercent: item.cgstPercent,
+                                      sgstPercent: item.sgstPercent,
                                     );
                                   });
                                 } else {
@@ -3867,7 +3889,7 @@ class _AddItemsBottomSheet extends StatefulWidget {
   final List<Product> products;
   final List<BillItem> billItems;
   final List<PurchaseBatchEntity> availableBatches;
-  final Function(String productId, String productName, String companyName, int? batchLocalId, double sellingPrice, double purchasePrice, int quantity, int maxStock) onBatchItemAdded;
+  final Function(String productId, String productName, String companyName, int? batchLocalId, double sellingPrice, double purchasePrice, int quantity, int maxStock, double cgstPercent, double sgstPercent) onBatchItemAdded;
   final Function(String uniqueKey) onItemRemoved;
   final Function(String message, {bool isError}) showSnackbar;
   final AppLocalizations localizations;
@@ -3921,6 +3943,8 @@ class _AddItemsBottomSheetState extends State<_AddItemsBottomSheet> {
           indexNo: product?.indexNo ?? 0,
           category: product?.category ?? batch.category,
           batches: [batch],
+          cgstPercent: product?.cgstPercent ?? 0.0,
+          sgstPercent: product?.sgstPercent ?? 0.0,
         );
       }
     }
@@ -3936,6 +3960,8 @@ class _AddItemsBottomSheetState extends State<_AddItemsBottomSheet> {
             category: product.category,
             batches: [],
             fallbackProduct: product,
+            cgstPercent: product.cgstPercent,
+            sgstPercent: product.sgstPercent,
           );
         }
       }
@@ -4020,6 +4046,8 @@ class _AddItemsBottomSheetState extends State<_AddItemsBottomSheet> {
           product.purchasePrice,
           existingQty + 1,
           product.currentStock,
+          group.cgstPercent,
+          group.sgstPercent,
         );
         setState(() {});
         widget.showSnackbar('${widget.localizations.added}: ${product.name}', isError: false);
@@ -4053,6 +4081,8 @@ class _AddItemsBottomSheetState extends State<_AddItemsBottomSheet> {
             batch.purchasePrice,
             quantity,
             batch.quantityRemaining,
+            group.cgstPercent,
+            group.sgstPercent,
           );
           setState(() {});
           Navigator.pop(ctx);
@@ -4827,6 +4857,8 @@ class _GroupedBillingProduct {
   final String category;
   final List<PurchaseBatchEntity> batches; // All batches for this product name (FIFO sorted)
   final Product? fallbackProduct; // For products without batch data
+  final double cgstPercent;
+  final double sgstPercent;
 
   _GroupedBillingProduct({
     required this.productName,
@@ -4834,6 +4866,8 @@ class _GroupedBillingProduct {
     required this.category,
     required this.batches,
     this.fallbackProduct,
+    this.cgstPercent = 0.0,
+    this.sgstPercent = 0.0,
   }) {
     // Sort batches FIFO (oldest first)
     batches.sort((a, b) => a.purchaseDate.compareTo(b.purchaseDate));

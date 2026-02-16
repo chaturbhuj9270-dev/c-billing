@@ -12,6 +12,9 @@ class Product {
   final DateTime updatedAt;
   final String? defaultSupplierId;
   final String? defaultSupplierName;
+  final double cgstPercent;
+  final double sgstPercent;
+  final bool isSynced;
 
   Product({
     required this.id,
@@ -26,6 +29,9 @@ class Product {
     required this.updatedAt,
     this.defaultSupplierId,
     this.defaultSupplierName,
+    this.cgstPercent = 0.0,
+    this.sgstPercent = 0.0,
+    this.isSynced = true,
   });
 
   // Factory constructor to create from ProductEntity (Isar offline entity)
@@ -43,10 +49,11 @@ class Product {
       updatedAt: entity.updatedAt ?? DateTime.now(),
       defaultSupplierId: entity.defaultSupplierId,
       defaultSupplierName: entity.defaultSupplierName,
+      cgstPercent: (entity.cgstPercent as num?)?.toDouble() ?? 0.0,
+      sgstPercent: (entity.sgstPercent as num?)?.toDouble() ?? 0.0,
+      isSynced: entity.isSynced ?? true,
     );
   }
-
-  // Factory constructor to create from JSON (for Firebase)
   factory Product.fromJson(Map<String, dynamic> json) {
     try {
       return Product(
@@ -66,6 +73,8 @@ class Product {
             : DateTime.now(),
         defaultSupplierId: json['defaultSupplierId'] as String?,
         defaultSupplierName: json['defaultSupplierName'] as String?,
+        cgstPercent: ((json['cgstPercent'] ?? 0) as num).toDouble(),
+        sgstPercent: ((json['sgstPercent'] ?? 0) as num).toDouble(),
       );
     } catch (e) {
       print('[ERROR] Failed to parse Product from JSON: $json');
@@ -101,6 +110,8 @@ class Product {
       'updatedAt': updatedAt.toIso8601String(),
       'defaultSupplierId': defaultSupplierId,
       'defaultSupplierName': defaultSupplierName,
+      'cgstPercent': cgstPercent,
+      'sgstPercent': sgstPercent,
     };
   }
 
@@ -118,6 +129,9 @@ class Product {
     DateTime? updatedAt,
     String? defaultSupplierId,
     String? defaultSupplierName,
+    double? cgstPercent,
+    double? sgstPercent,
+    bool? isSynced,
   }) {
     return Product(
       id: id ?? this.id,
@@ -132,6 +146,9 @@ class Product {
       updatedAt: updatedAt ?? this.updatedAt,
       defaultSupplierId: defaultSupplierId ?? this.defaultSupplierId,
       defaultSupplierName: defaultSupplierName ?? this.defaultSupplierName,
+      cgstPercent: cgstPercent ?? this.cgstPercent,
+      sgstPercent: sgstPercent ?? this.sgstPercent,
+      isSynced: isSynced ?? this.isSynced,
     );
   }
 

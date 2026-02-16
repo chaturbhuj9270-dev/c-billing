@@ -53,6 +53,9 @@ class CustomerSyncService extends ChangeNotifier {
   String? _lastError;
   StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
   Timer? _periodicSyncTimer;
+  
+  /// Mutex to prevent concurrent sync operations
+  bool _isSyncing = false;
 
   CustomerSyncService._({
     CustomerOfflineController? offlineController,
@@ -83,18 +86,30 @@ class CustomerSyncService extends ChangeNotifier {
   /// Initialize the sync service
   /// Call this after Isar is initialized
   void initialize() {
+    debugPrint('[CustomerSync] Initializing...');
+    
     // Listen for connectivity changes
     _connectivitySubscription = _connectivity.onConnectivityChanged.listen((result) {
       if (_isConnected(result)) {
-        // Back online - trigger sync
-        syncNow();
+        // Back online - trigger sync with delay
+        Future.delayed(const Duration(seconds: 2), () {
+          if (!_isSyncing) {
+            debugPrint('[CustomerSync] Network available - triggering sync');
+            syncNow();
+          }
+        });
       }
     });
 
-    // Set up periodic sync (every 5 minutes when online)
-    _periodicSyncTimer = Timer.periodic(const Duration(minutes: 5), (_) {
+    // Set up periodic sync (every 3 minutes when online)
+    _periodicSyncTimer = Timer.periodic(const Duration(minutes: 3), (_) {
       _checkAndSync();
     });
+    
+    // Initial sync
+    _checkAndSync();
+    
+    debugPrint('[CustomerSync] Initialized');
   }
 
   /// Dispose resources
@@ -124,7 +139,8 @@ class CustomerSyncService extends ChangeNotifier {
   /// Perform sync now
   /// Returns SyncResult with details of the sync operation
   Future<SyncResult> syncNow() async {
-    if (_status == SyncStatus.syncing) {
+    // Prevent concurrent syncs
+    if (_isSyncing) {
       return SyncResult(
         success: false,
         errorMessage: 'Sync already in progress',
@@ -132,6 +148,17 @@ class CustomerSyncService extends ChangeNotifier {
       );
     }
 
+    // Check if user is authenticated
+    if (!_apiService.isAuthenticated) {
+      debugPrint('[CustomerSync] User not authenticated, skipping sync');
+      return SyncResult(
+        success: false,
+        errorMessage: 'User not authenticated',
+        duration: Duration.zero,
+      );
+    }
+
+    _isSyncing = true;
     final startTime = DateTime.now();
     _status = SyncStatus.syncing;
     _lastError = null;
@@ -183,6 +210,8 @@ class CustomerSyncService extends ChangeNotifier {
         errorMessage: e.toString(),
         duration: DateTime.now().difference(startTime),
       );
+    } finally {
+      _isSyncing = false;
     }
   }
 

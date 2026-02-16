@@ -165,6 +165,16 @@ class ProductSyncService extends ChangeNotifier {
       );
     }
 
+    // Check if user is authenticated
+    if (!_apiService.isAuthenticated) {
+      debugPrint('[ProductSync] User not authenticated, skipping sync');
+      return ProductSyncResult(
+        success: false,
+        errorMessage: 'User not authenticated',
+        duration: Duration.zero,
+      );
+    }
+
     _isSyncing = true;
     final startTime = DateTime.now();
     _status = ProductSyncStatus.syncing;

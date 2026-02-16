@@ -11,6 +11,8 @@ class BillItem {
   final int quantity;
   final double subtotal;
   final int returnedQuantity; // Track how many units have been returned
+  final double cgstPercent; // Per-product CGST percentage
+  final double sgstPercent; // Per-product SGST percentage
 
   BillItem({
     required this.id,
@@ -23,7 +25,18 @@ class BillItem {
     required this.quantity,
     required this.subtotal,
     this.returnedQuantity = 0,
+    this.cgstPercent = 0.0,
+    this.sgstPercent = 0.0,
   });
+
+  /// CGST amount computed from subtotal
+  double get cgstAmount => subtotal * cgstPercent / 100;
+
+  /// SGST amount computed from subtotal
+  double get sgstAmount => subtotal * sgstPercent / 100;
+
+  /// Total GST amount for this item
+  double get totalGstAmount => cgstAmount + sgstAmount;
 
   /// Calculate profit for this item (before any bill-level discount)
   double get itemProfit => (sellingPrice - purchasePrice) * quantity;
@@ -52,6 +65,8 @@ class BillItem {
         quantity: (json['quantity'] ?? 0) as int,
         subtotal: ((json['subtotal'] ?? 0) as num).toDouble(),
         returnedQuantity: (json['returnedQuantity'] ?? 0) as int,
+        cgstPercent: ((json['cgstPercent'] ?? 0) as num).toDouble(),
+        sgstPercent: ((json['sgstPercent'] ?? 0) as num).toDouble(),
       );
     } catch (e) {
       print('[ERROR] Failed to parse BillItem from JSON: $json');
@@ -84,6 +99,8 @@ class BillItem {
       'quantity': quantity,
       'subtotal': subtotal,
       'returnedQuantity': returnedQuantity,
+      'cgstPercent': cgstPercent,
+      'sgstPercent': sgstPercent,
     };
   }
 
@@ -99,6 +116,8 @@ class BillItem {
     int? quantity,
     double? subtotal,
     int? returnedQuantity,
+    double? cgstPercent,
+    double? sgstPercent,
   }) {
     return BillItem(
       id: id ?? this.id,
@@ -111,6 +130,8 @@ class BillItem {
       quantity: quantity ?? this.quantity,
       subtotal: subtotal ?? this.subtotal,
       returnedQuantity: returnedQuantity ?? this.returnedQuantity,
+      cgstPercent: cgstPercent ?? this.cgstPercent,
+      sgstPercent: sgstPercent ?? this.sgstPercent,
     );
   }
 
@@ -125,6 +146,8 @@ class BillItem {
     required double sellingPrice,
     required int quantity,
     int returnedQuantity = 0,
+    double cgstPercent = 0.0,
+    double sgstPercent = 0.0,
   }) {
     return BillItem(
       id: id,
@@ -137,6 +160,8 @@ class BillItem {
       quantity: quantity,
       subtotal: sellingPrice * quantity,
       returnedQuantity: returnedQuantity,
+      cgstPercent: cgstPercent,
+      sgstPercent: sgstPercent,
     );
   }
 

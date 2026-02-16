@@ -145,6 +145,16 @@ class SupplierSyncService extends ChangeNotifier {
       );
     }
 
+    // Check if user is authenticated
+    if (!_apiService.isAuthenticated) {
+      debugPrint('[SupplierSync] User not authenticated, skipping sync');
+      return SupplierSyncResult(
+        success: false,
+        errorMessage: 'User not authenticated',
+        duration: Duration.zero,
+      );
+    }
+
     // Check connectivity
     if (!await isOnline()) {
       debugPrint('[SupplierSync] No network, skipping sync');

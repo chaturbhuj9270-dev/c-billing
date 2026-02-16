@@ -255,38 +255,71 @@ class PdfBillService {
                 ],
               ),
               // Item rows
-              ...billData.items.asMap().entries.map((entry) {
+              ...billData.items.asMap().entries.expand((entry) {
                 final index = entry.key;
                 final item = entry.value;
-                return pw.TableRow(
-                  children: [
-                    _buildCompactCell('${index + 1}', align: pw.TextAlign.center),
-                    pw.Padding(
-                      padding: const pw.EdgeInsets.all(4),
-                      child: pw.Column(
-                        crossAxisAlignment: pw.CrossAxisAlignment.start,
-                        children: [
-                          pw.Text(
-                            item.name,
-                            style: const pw.TextStyle(fontSize: 9),
-                          ),
-                          if (item.companyName != null && item.companyName!.isNotEmpty)
+                final rows = <pw.TableRow>[
+                  pw.TableRow(
+                    children: [
+                      _buildCompactCell('${index + 1}', align: pw.TextAlign.center),
+                      pw.Padding(
+                        padding: const pw.EdgeInsets.all(4),
+                        child: pw.Column(
+                          crossAxisAlignment: pw.CrossAxisAlignment.start,
+                          children: [
                             pw.Text(
-                              item.companyName!,
-                              style: pw.TextStyle(
-                                fontSize: 7,
-                                color: PdfColors.grey700,
-                                fontStyle: pw.FontStyle.italic,
-                              ),
+                              item.name,
+                              style: const pw.TextStyle(fontSize: 9),
                             ),
-                        ],
+                            if (item.companyName != null && item.companyName!.isNotEmpty)
+                              pw.Text(
+                                item.companyName!,
+                                style: pw.TextStyle(
+                                  fontSize: 7,
+                                  color: PdfColors.grey700,
+                                  fontStyle: pw.FontStyle.italic,
+                                ),
+                              ),
+                          ],
+                        ),
                       ),
-                    ),
-                    _buildCompactCell('${item.quantity}', align: pw.TextAlign.center),
-                    _buildCompactCell(item.rate.toStringAsFixed(2), align: pw.TextAlign.right),
-                    _buildCompactCell(item.amount.toStringAsFixed(2), align: pw.TextAlign.right),
-                  ],
-                );
+                      _buildCompactCell('${item.quantity}', align: pw.TextAlign.center),
+                      _buildCompactCell(item.rate.toStringAsFixed(2), align: pw.TextAlign.right),
+                      _buildCompactCell(item.amount.toStringAsFixed(2), align: pw.TextAlign.right),
+                    ],
+                  ),
+                ];
+                // Per-item GST sub-row
+                if (item.hasItemGst) {
+                  rows.add(pw.TableRow(
+                    children: [
+                      _buildCompactCell(''),
+                      pw.Padding(
+                        padding: const pw.EdgeInsets.only(left: 8, top: 0, bottom: 2, right: 4),
+                        child: pw.Row(
+                          children: [
+                            if (item.cgstPercent > 0)
+                              pw.Text(
+                                'CGST(${item.cgstPercent.toStringAsFixed(1)}%): ${item.cgstAmount.toStringAsFixed(2)}',
+                                style: pw.TextStyle(fontSize: 7, color: PdfColors.orange800),
+                              ),
+                            if (item.cgstPercent > 0 && item.sgstPercent > 0)
+                              pw.Text('  |  ', style: pw.TextStyle(fontSize: 7, color: PdfColors.grey600)),
+                            if (item.sgstPercent > 0)
+                              pw.Text(
+                                'SGST(${item.sgstPercent.toStringAsFixed(1)}%): ${item.sgstAmount.toStringAsFixed(2)}',
+                                style: pw.TextStyle(fontSize: 7, color: PdfColors.orange800),
+                              ),
+                          ],
+                        ),
+                      ),
+                      _buildCompactCell(''),
+                      _buildCompactCell(''),
+                      _buildCompactCell(''),
+                    ],
+                  ));
+                }
+                return rows;
               }),
             ],
           ),
@@ -914,6 +947,33 @@ class PdfBillService {
                         fontWeight: pw.FontWeight.bold,
                       ),
                     ),
+                  ],
+                ),
+              ),
+            // Per-item GST breakdown
+            if (item.hasItemGst)
+              pw.Padding(
+                padding: const pw.EdgeInsets.only(left: 8, bottom: 2),
+                child: pw.Row(
+                  children: [
+                    if (item.cgstPercent > 0)
+                      pw.Text(
+                        'CGST(${item.cgstPercent.toStringAsFixed(1)}%): ${item.cgstAmount.toStringAsFixed(2)}',
+                        style: pw.TextStyle(
+                          fontSize: 8,
+                          color: PdfColors.orange800,
+                        ),
+                      ),
+                    if (item.cgstPercent > 0 && item.sgstPercent > 0)
+                      pw.Text('  |  ', style: pw.TextStyle(fontSize: 8, color: PdfColors.grey600)),
+                    if (item.sgstPercent > 0)
+                      pw.Text(
+                        'SGST(${item.sgstPercent.toStringAsFixed(1)}%): ${item.sgstAmount.toStringAsFixed(2)}',
+                        style: pw.TextStyle(
+                          fontSize: 8,
+                          color: PdfColors.orange800,
+                        ),
+                      ),
                   ],
                 ),
               ),

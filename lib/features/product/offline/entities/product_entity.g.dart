@@ -23,83 +23,93 @@ const ProductEntitySchema = CollectionSchema(
       name: r'category',
       type: IsarType.string,
     ),
-    r'companyName': PropertySchema(
+    r'cgstPercent': PropertySchema(
       id: 2,
+      name: r'cgstPercent',
+      type: IsarType.double,
+    ),
+    r'companyName': PropertySchema(
+      id: 3,
       name: r'companyName',
       type: IsarType.string,
     ),
     r'createdAt': PropertySchema(
-      id: 3,
+      id: 4,
       name: r'createdAt',
       type: IsarType.dateTime,
     ),
     r'currentStock': PropertySchema(
-      id: 4,
+      id: 5,
       name: r'currentStock',
       type: IsarType.long,
     ),
     r'defaultSupplierId': PropertySchema(
-      id: 5,
+      id: 6,
       name: r'defaultSupplierId',
       type: IsarType.string,
     ),
     r'defaultSupplierName': PropertySchema(
-      id: 6,
+      id: 7,
       name: r'defaultSupplierName',
       type: IsarType.string,
     ),
     r'description': PropertySchema(
-      id: 7,
+      id: 8,
       name: r'description',
       type: IsarType.string,
     ),
     r'imageUrl': PropertySchema(
-      id: 8,
+      id: 9,
       name: r'imageUrl',
       type: IsarType.string,
     ),
-    r'indexNo': PropertySchema(id: 9, name: r'indexNo', type: IsarType.long),
-    r'isActive': PropertySchema(id: 10, name: r'isActive', type: IsarType.bool),
+    r'indexNo': PropertySchema(id: 10, name: r'indexNo', type: IsarType.long),
+    r'isActive': PropertySchema(id: 11, name: r'isActive', type: IsarType.bool),
     r'isMarkedForDeletion': PropertySchema(
-      id: 11,
+      id: 12,
       name: r'isMarkedForDeletion',
       type: IsarType.bool,
     ),
     r'minStockLevel': PropertySchema(
-      id: 12,
+      id: 13,
       name: r'minStockLevel',
       type: IsarType.long,
     ),
-    r'name': PropertySchema(id: 13, name: r'name', type: IsarType.string),
+    r'name': PropertySchema(id: 14, name: r'name', type: IsarType.string),
     r'needsSync': PropertySchema(
-      id: 14,
+      id: 15,
       name: r'needsSync',
       type: IsarType.bool,
     ),
     r'purchasePrice': PropertySchema(
-      id: 15,
+      id: 16,
       name: r'purchasePrice',
       type: IsarType.double,
     ),
     r'salesPrice': PropertySchema(
-      id: 16,
+      id: 17,
       name: r'salesPrice',
       type: IsarType.double,
     ),
     r'serverId': PropertySchema(
-      id: 17,
+      id: 18,
       name: r'serverId',
       type: IsarType.string,
     ),
+    r'sgstPercent': PropertySchema(
+      id: 19,
+      name: r'sgstPercent',
+      type: IsarType.double,
+    ),
     r'syncStatus': PropertySchema(
-      id: 18,
+      id: 20,
       name: r'syncStatus',
       type: IsarType.byte,
       enumMap: _ProductEntitysyncStatusEnumValueMap,
     ),
-    r'unit': PropertySchema(id: 19, name: r'unit', type: IsarType.string),
+    r'unit': PropertySchema(id: 21, name: r'unit', type: IsarType.string),
     r'updatedAt': PropertySchema(
-      id: 20,
+      id: 22,
       name: r'updatedAt',
       type: IsarType.dateTime,
     ),
@@ -248,25 +258,27 @@ void _productEntitySerialize(
 ) {
   writer.writeString(offsets[0], object.barcode);
   writer.writeString(offsets[1], object.category);
-  writer.writeString(offsets[2], object.companyName);
-  writer.writeDateTime(offsets[3], object.createdAt);
-  writer.writeLong(offsets[4], object.currentStock);
-  writer.writeString(offsets[5], object.defaultSupplierId);
-  writer.writeString(offsets[6], object.defaultSupplierName);
-  writer.writeString(offsets[7], object.description);
-  writer.writeString(offsets[8], object.imageUrl);
-  writer.writeLong(offsets[9], object.indexNo);
-  writer.writeBool(offsets[10], object.isActive);
-  writer.writeBool(offsets[11], object.isMarkedForDeletion);
-  writer.writeLong(offsets[12], object.minStockLevel);
-  writer.writeString(offsets[13], object.name);
-  writer.writeBool(offsets[14], object.needsSync);
-  writer.writeDouble(offsets[15], object.purchasePrice);
-  writer.writeDouble(offsets[16], object.salesPrice);
-  writer.writeString(offsets[17], object.serverId);
-  writer.writeByte(offsets[18], object.syncStatus.index);
-  writer.writeString(offsets[19], object.unit);
-  writer.writeDateTime(offsets[20], object.updatedAt);
+  writer.writeDouble(offsets[2], object.cgstPercent);
+  writer.writeString(offsets[3], object.companyName);
+  writer.writeDateTime(offsets[4], object.createdAt);
+  writer.writeLong(offsets[5], object.currentStock);
+  writer.writeString(offsets[6], object.defaultSupplierId);
+  writer.writeString(offsets[7], object.defaultSupplierName);
+  writer.writeString(offsets[8], object.description);
+  writer.writeString(offsets[9], object.imageUrl);
+  writer.writeLong(offsets[10], object.indexNo);
+  writer.writeBool(offsets[11], object.isActive);
+  writer.writeBool(offsets[12], object.isMarkedForDeletion);
+  writer.writeLong(offsets[13], object.minStockLevel);
+  writer.writeString(offsets[14], object.name);
+  writer.writeBool(offsets[15], object.needsSync);
+  writer.writeDouble(offsets[16], object.purchasePrice);
+  writer.writeDouble(offsets[17], object.salesPrice);
+  writer.writeString(offsets[18], object.serverId);
+  writer.writeDouble(offsets[19], object.sgstPercent);
+  writer.writeByte(offsets[20], object.syncStatus.index);
+  writer.writeString(offsets[21], object.unit);
+  writer.writeDateTime(offsets[22], object.updatedAt);
 }
 
 ProductEntity _productEntityDeserialize(
@@ -278,27 +290,29 @@ ProductEntity _productEntityDeserialize(
   final object = ProductEntity(
     barcode: reader.readStringOrNull(offsets[0]),
     category: reader.readStringOrNull(offsets[1]) ?? '',
-    companyName: reader.readStringOrNull(offsets[2]) ?? '',
-    createdAt: reader.readDateTime(offsets[3]),
-    currentStock: reader.readLongOrNull(offsets[4]) ?? 0,
-    defaultSupplierId: reader.readStringOrNull(offsets[5]),
-    defaultSupplierName: reader.readStringOrNull(offsets[6]),
-    description: reader.readStringOrNull(offsets[7]),
-    imageUrl: reader.readStringOrNull(offsets[8]),
-    indexNo: reader.readLongOrNull(offsets[9]) ?? 0,
-    isActive: reader.readBoolOrNull(offsets[10]) ?? true,
-    minStockLevel: reader.readLongOrNull(offsets[12]),
-    name: reader.readString(offsets[13]),
-    purchasePrice: reader.readDouble(offsets[15]),
-    salesPrice: reader.readDouble(offsets[16]),
-    serverId: reader.readStringOrNull(offsets[17]),
+    cgstPercent: reader.readDoubleOrNull(offsets[2]) ?? 0.0,
+    companyName: reader.readStringOrNull(offsets[3]) ?? '',
+    createdAt: reader.readDateTime(offsets[4]),
+    currentStock: reader.readLongOrNull(offsets[5]) ?? 0,
+    defaultSupplierId: reader.readStringOrNull(offsets[6]),
+    defaultSupplierName: reader.readStringOrNull(offsets[7]),
+    description: reader.readStringOrNull(offsets[8]),
+    imageUrl: reader.readStringOrNull(offsets[9]),
+    indexNo: reader.readLongOrNull(offsets[10]) ?? 0,
+    isActive: reader.readBoolOrNull(offsets[11]) ?? true,
+    minStockLevel: reader.readLongOrNull(offsets[13]),
+    name: reader.readString(offsets[14]),
+    purchasePrice: reader.readDouble(offsets[16]),
+    salesPrice: reader.readDouble(offsets[17]),
+    serverId: reader.readStringOrNull(offsets[18]),
+    sgstPercent: reader.readDoubleOrNull(offsets[19]) ?? 0.0,
     syncStatus:
         _ProductEntitysyncStatusValueEnumMap[reader.readByteOrNull(
-          offsets[18],
+          offsets[20],
         )] ??
         SyncStatus.newRecord,
-    unit: reader.readStringOrNull(offsets[19]),
-    updatedAt: reader.readDateTime(offsets[20]),
+    unit: reader.readStringOrNull(offsets[21]),
+    updatedAt: reader.readDateTime(offsets[22]),
   );
   object.id = id;
   return object;
@@ -316,13 +330,13 @@ P _productEntityDeserializeProp<P>(
     case 1:
       return (reader.readStringOrNull(offset) ?? '') as P;
     case 2:
-      return (reader.readStringOrNull(offset) ?? '') as P;
+      return (reader.readDoubleOrNull(offset) ?? 0.0) as P;
     case 3:
-      return (reader.readDateTime(offset)) as P;
+      return (reader.readStringOrNull(offset) ?? '') as P;
     case 4:
-      return (reader.readLongOrNull(offset) ?? 0) as P;
+      return (reader.readDateTime(offset)) as P;
     case 5:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readLongOrNull(offset) ?? 0) as P;
     case 6:
       return (reader.readStringOrNull(offset)) as P;
     case 7:
@@ -330,32 +344,36 @@ P _productEntityDeserializeProp<P>(
     case 8:
       return (reader.readStringOrNull(offset)) as P;
     case 9:
-      return (reader.readLongOrNull(offset) ?? 0) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 10:
-      return (reader.readBoolOrNull(offset) ?? true) as P;
+      return (reader.readLongOrNull(offset) ?? 0) as P;
     case 11:
-      return (reader.readBool(offset)) as P;
+      return (reader.readBoolOrNull(offset) ?? true) as P;
     case 12:
-      return (reader.readLongOrNull(offset)) as P;
-    case 13:
-      return (reader.readString(offset)) as P;
-    case 14:
       return (reader.readBool(offset)) as P;
+    case 13:
+      return (reader.readLongOrNull(offset)) as P;
+    case 14:
+      return (reader.readString(offset)) as P;
     case 15:
-      return (reader.readDouble(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 16:
       return (reader.readDouble(offset)) as P;
     case 17:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readDouble(offset)) as P;
     case 18:
+      return (reader.readStringOrNull(offset)) as P;
+    case 19:
+      return (reader.readDoubleOrNull(offset) ?? 0.0) as P;
+    case 20:
       return (_ProductEntitysyncStatusValueEnumMap[reader.readByteOrNull(
                 offset,
               )] ??
               SyncStatus.newRecord)
           as P;
-    case 19:
+    case 21:
       return (reader.readStringOrNull(offset)) as P;
-    case 20:
+    case 22:
       return (reader.readDateTime(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -1299,6 +1317,81 @@ extension ProductEntityQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         FilterCondition.greaterThan(property: r'category', value: ''),
+      );
+    });
+  }
+
+  QueryBuilder<ProductEntity, ProductEntity, QAfterFilterCondition>
+  cgstPercentEqualTo(double value, {double epsilon = Query.epsilon}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'cgstPercent',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<ProductEntity, ProductEntity, QAfterFilterCondition>
+  cgstPercentGreaterThan(
+    double value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'cgstPercent',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<ProductEntity, ProductEntity, QAfterFilterCondition>
+  cgstPercentLessThan(
+    double value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'cgstPercent',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<ProductEntity, ProductEntity, QAfterFilterCondition>
+  cgstPercentBetween(
+    double lower,
+    double upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'cgstPercent',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+
+          epsilon: epsilon,
+        ),
       );
     });
   }
@@ -2859,6 +2952,81 @@ extension ProductEntityQueryFilter
   }
 
   QueryBuilder<ProductEntity, ProductEntity, QAfterFilterCondition>
+  sgstPercentEqualTo(double value, {double epsilon = Query.epsilon}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'sgstPercent',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<ProductEntity, ProductEntity, QAfterFilterCondition>
+  sgstPercentGreaterThan(
+    double value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'sgstPercent',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<ProductEntity, ProductEntity, QAfterFilterCondition>
+  sgstPercentLessThan(
+    double value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'sgstPercent',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<ProductEntity, ProductEntity, QAfterFilterCondition>
+  sgstPercentBetween(
+    double lower,
+    double upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'sgstPercent',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+
+          epsilon: epsilon,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<ProductEntity, ProductEntity, QAfterFilterCondition>
   syncStatusEqualTo(SyncStatus value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
@@ -3164,6 +3332,19 @@ extension ProductEntityQuerySortBy
     });
   }
 
+  QueryBuilder<ProductEntity, ProductEntity, QAfterSortBy> sortByCgstPercent() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'cgstPercent', Sort.asc);
+    });
+  }
+
+  QueryBuilder<ProductEntity, ProductEntity, QAfterSortBy>
+  sortByCgstPercentDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'cgstPercent', Sort.desc);
+    });
+  }
+
   QueryBuilder<ProductEntity, ProductEntity, QAfterSortBy> sortByCompanyName() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'companyName', Sort.asc);
@@ -3376,6 +3557,19 @@ extension ProductEntityQuerySortBy
     });
   }
 
+  QueryBuilder<ProductEntity, ProductEntity, QAfterSortBy> sortBySgstPercent() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'sgstPercent', Sort.asc);
+    });
+  }
+
+  QueryBuilder<ProductEntity, ProductEntity, QAfterSortBy>
+  sortBySgstPercentDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'sgstPercent', Sort.desc);
+    });
+  }
+
   QueryBuilder<ProductEntity, ProductEntity, QAfterSortBy> sortBySyncStatus() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'syncStatus', Sort.asc);
@@ -3439,6 +3633,19 @@ extension ProductEntityQuerySortThenBy
   thenByCategoryDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'category', Sort.desc);
+    });
+  }
+
+  QueryBuilder<ProductEntity, ProductEntity, QAfterSortBy> thenByCgstPercent() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'cgstPercent', Sort.asc);
+    });
+  }
+
+  QueryBuilder<ProductEntity, ProductEntity, QAfterSortBy>
+  thenByCgstPercentDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'cgstPercent', Sort.desc);
     });
   }
 
@@ -3666,6 +3873,19 @@ extension ProductEntityQuerySortThenBy
     });
   }
 
+  QueryBuilder<ProductEntity, ProductEntity, QAfterSortBy> thenBySgstPercent() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'sgstPercent', Sort.asc);
+    });
+  }
+
+  QueryBuilder<ProductEntity, ProductEntity, QAfterSortBy>
+  thenBySgstPercentDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'sgstPercent', Sort.desc);
+    });
+  }
+
   QueryBuilder<ProductEntity, ProductEntity, QAfterSortBy> thenBySyncStatus() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'syncStatus', Sort.asc);
@@ -3720,6 +3940,13 @@ extension ProductEntityQueryWhereDistinct
   }) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'category', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<ProductEntity, ProductEntity, QDistinct>
+  distinctByCgstPercent() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'cgstPercent');
     });
   }
 
@@ -3841,6 +4068,13 @@ extension ProductEntityQueryWhereDistinct
     });
   }
 
+  QueryBuilder<ProductEntity, ProductEntity, QDistinct>
+  distinctBySgstPercent() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'sgstPercent');
+    });
+  }
+
   QueryBuilder<ProductEntity, ProductEntity, QDistinct> distinctBySyncStatus() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'syncStatus');
@@ -3879,6 +4113,12 @@ extension ProductEntityQueryProperty
   QueryBuilder<ProductEntity, String, QQueryOperations> categoryProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'category');
+    });
+  }
+
+  QueryBuilder<ProductEntity, double, QQueryOperations> cgstPercentProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'cgstPercent');
     });
   }
 
@@ -3979,6 +4219,12 @@ extension ProductEntityQueryProperty
   QueryBuilder<ProductEntity, String?, QQueryOperations> serverIdProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'serverId');
+    });
+  }
+
+  QueryBuilder<ProductEntity, double, QQueryOperations> sgstPercentProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'sgstPercent');
     });
   }
 

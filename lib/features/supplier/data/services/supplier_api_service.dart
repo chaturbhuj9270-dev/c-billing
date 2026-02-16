@@ -25,6 +25,9 @@ class SupplierApiService {
   /// Get current user ID
   String? get _userId => _auth.currentUser?.uid;
 
+  /// Check if user is authenticated
+  bool get isAuthenticated => _userId != null;
+
   /// Get suppliers collection reference for current user
   CollectionReference<Map<String, dynamic>>? get _suppliersRef {
     final userId = _userId;
