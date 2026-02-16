@@ -1609,7 +1609,7 @@ class _BillingPageState extends State<BillingPage> {
                 // FAB — always on top
                 Positioned(
                   right: 16,
-                  bottom: MediaQuery.of(context).padding.bottom + 70,
+                  top: 8,
                   child: _buildQuickStatsFAB(),
                 ),
               ],
@@ -3813,15 +3813,16 @@ class _BillingPageState extends State<BillingPage> {
 
   Widget _buildQuickStatsOverlay() {
     return Positioned(
+      left: 16,
       right: 16,
-      bottom: MediaQuery.of(context).padding.bottom + 126,
+      top: 56,
       child: TweenAnimationBuilder<double>(
         tween: Tween(begin: 0.0, end: 1.0),
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeOutCubic,
         builder: (context, value, child) {
           return Transform.translate(
-            offset: Offset(0, 20 * (1 - value)),
+            offset: Offset(0, -12 * (1 - value)),
             child: Opacity(
               opacity: value,
               child: child,
@@ -3829,7 +3830,6 @@ class _BillingPageState extends State<BillingPage> {
           );
         },
         child: Container(
-          width: MediaQuery.of(context).size.width - 32,
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             color: Colors.white,
@@ -3851,39 +3851,9 @@ class _BillingPageState extends State<BillingPage> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header row
-              Padding(
-                padding: const EdgeInsets.only(left: 4, bottom: 10),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Icon(
-                        Icons.grid_view_rounded,
-                        size: 14,
-                        color: Color(0xFF1B4D3E),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    const Text(
-                      'Quick Stats',
-                      style: TextStyle(
-                        fontFamily: 'Literata',
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF1B4D3E),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              // Stats grid
+               // Stats grid
               SizedBox(
-                height: 72,
+                height: 84,
                 child: _isLoadingQuickStats
                     ? _buildQuickStatsShimmer()
                     : ListView(

@@ -59,7 +59,7 @@ class _OptimizedDashboardView extends StatefulWidget {
 
 class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
     with TickerProviderStateMixin {
-  int _selectedIndex = 0;
+  int _selectedIndex = 2;
   late SessionManager _sessionManager;
   late AppLocalizations _localizations;
 
@@ -174,11 +174,11 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
   String _getPageTitle() {
     switch (_selectedIndex) {
       case 0:
-        return _localizations.billing;
-      case 1:
         return _localizations.dashboard;
-      case 2:
+      case 1:
         return _localizations.customers;
+      case 2:
+        return _localizations.billing;
       case 3:
         return _localizations.availability;
       case 4:
@@ -191,11 +191,11 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
   String _getPageSubtitle() {
     switch (_selectedIndex) {
       case 0:
-        return _localizations.generateInvoice;
-      case 1:
         return _localizations.businessOverview;
-      case 2:
+      case 1:
         return _localizations.manageCustomers;
+      case 2:
+        return _localizations.generateInvoice;
       case 3:
         return _localizations.stockAvailability;
       case 4:
@@ -226,9 +226,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
               child: IndexedStack(
                 index: _selectedIndex,
                 children: [
-                  // Billing tab (primary - index 0)
-                  const BillingPage(isEmbedded: true),
-                  // Dashboard tab
+                  // Dashboard tab (index 0)
                   BlocBuilder<OptimizedDashboardCubit, OptimizedDashboardState>(
                     builder: (context, state) {
                       return FadeTransition(
@@ -242,11 +240,13 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                       );
                     },
                   ),
-                  // Customers tab
+                  // Customers tab (index 1)
                   const CustomerPage(isEmbedded: true),
-                  // Available tab
+                  // Billing tab (primary - center - index 2)
+                  const BillingPage(isEmbedded: true),
+                  // Available tab (index 3)
                   const AvailabilityPage(isEmbedded: true),
-                  // Purchase tab
+                  // Purchase tab (index 4)
                   const PurchasePage(isEmbedded: true),
                 ],
               ),
@@ -412,9 +412,9 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
               ActionMenu(
                 menuColor: const Color(0xFF1B4D3E),
                 iconColor: Colors.white,
-                onSettingsTap: (_selectedIndex == 0 || _selectedIndex == 4)
+                onSettingsTap: (_selectedIndex == 2 || _selectedIndex == 4)
                     ? () async {
-                        if (_selectedIndex == 0) {
+                        if (_selectedIndex == 2) {
                           final result = await Navigator.push(
                             context,
                             MaterialPageRoute(
@@ -1709,9 +1709,9 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              _buildNavItem(0, Icons.receipt_long_rounded, _localizations.billing, isPrimary: true),
-              _buildNavItem(1, Icons.dashboard_rounded, _localizations.dashboard),
-              _buildNavItem(2, Icons.people_rounded, _localizations.customers),
+              _buildNavItem(0, Icons.dashboard_rounded, _localizations.dashboard),
+              _buildNavItem(1, Icons.people_rounded, _localizations.customers),
+              _buildNavItem(2, Icons.receipt_long_rounded, _localizations.billing, isPrimary: true),
               _buildNavItem(3, Icons.event_available_rounded, _localizations.availability),
               _buildNavItem(4, Icons.shopping_cart_rounded, _localizations.purchase),
             ],
