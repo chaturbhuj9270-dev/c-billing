@@ -174,13 +174,13 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
   String _getPageTitle() {
     switch (_selectedIndex) {
       case 0:
-        return _localizations.dashboard;
-      case 1:
-        return _localizations.customers;
-      case 2:
-        return _localizations.availability;
-      case 3:
         return _localizations.billing;
+      case 1:
+        return _localizations.dashboard;
+      case 2:
+        return _localizations.customers;
+      case 3:
+        return _localizations.availability;
       case 4:
         return _localizations.purchase;
       default:
@@ -191,13 +191,13 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
   String _getPageSubtitle() {
     switch (_selectedIndex) {
       case 0:
-        return _localizations.businessOverview;
-      case 1:
-        return _localizations.manageCustomers;
-      case 2:
-        return _localizations.stockAvailability;
-      case 3:
         return _localizations.generateInvoice;
+      case 1:
+        return _localizations.businessOverview;
+      case 2:
+        return _localizations.manageCustomers;
+      case 3:
+        return _localizations.stockAvailability;
       case 4:
         return _localizations.trackPurchases;
       default:
@@ -226,6 +226,8 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
               child: IndexedStack(
                 index: _selectedIndex,
                 children: [
+                  // Billing tab (primary - index 0)
+                  const BillingPage(isEmbedded: true),
                   // Dashboard tab
                   BlocBuilder<OptimizedDashboardCubit, OptimizedDashboardState>(
                     builder: (context, state) {
@@ -244,8 +246,6 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                   const CustomerPage(isEmbedded: true),
                   // Available tab
                   const AvailabilityPage(isEmbedded: true),
-                  // Billing tab
-                  const BillingPage(isEmbedded: true),
                   // Purchase tab
                   const PurchasePage(isEmbedded: true),
                 ],
@@ -412,9 +412,9 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
               ActionMenu(
                 menuColor: const Color(0xFF1B4D3E),
                 iconColor: Colors.white,
-                onSettingsTap: (_selectedIndex == 3 || _selectedIndex == 4)
+                onSettingsTap: (_selectedIndex == 0 || _selectedIndex == 4)
                     ? () async {
-                        if (_selectedIndex == 3) {
+                        if (_selectedIndex == 0) {
                           final result = await Navigator.push(
                             context,
                             MaterialPageRoute(
@@ -1709,10 +1709,10 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              _buildNavItem(0, Icons.dashboard_rounded, _localizations.dashboard),
-              _buildNavItem(1, Icons.people_rounded, _localizations.customers),
-              _buildNavItem(2, Icons.event_available_rounded, _localizations.availability),
-              _buildNavItem(3, Icons.receipt_long_rounded, _localizations.billing),
+              _buildNavItem(0, Icons.receipt_long_rounded, _localizations.billing, isPrimary: true),
+              _buildNavItem(1, Icons.dashboard_rounded, _localizations.dashboard),
+              _buildNavItem(2, Icons.people_rounded, _localizations.customers),
+              _buildNavItem(3, Icons.event_available_rounded, _localizations.availability),
               _buildNavItem(4, Icons.shopping_cart_rounded, _localizations.purchase),
             ],
           ),
@@ -1721,8 +1721,67 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
     );
   }
 
-  Widget _buildNavItem(int index, IconData icon, String label) {
+  Widget _buildNavItem(int index, IconData icon, String label, {bool isPrimary = false}) {
     final isSelected = _selectedIndex == index;
+    
+    // Primary Bill tab gets an elevated, always-highlighted design
+    if (isPrimary) {
+      return Expanded(
+        child: GestureDetector(
+          onTap: () => _navigateToPage(index),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+            margin: const EdgeInsets.symmetric(horizontal: 2),
+            decoration: BoxDecoration(
+              gradient: isSelected
+                  ? const LinearGradient(
+                      colors: [Color(0xFF1B4D3E), Color(0xFF2E7D5B)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    )
+                  : null,
+              color: isSelected ? null : const Color(0xFF1B4D3E).withOpacity(0.08),
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: isSelected
+                  ? [
+                      BoxShadow(
+                        color: const Color(0xFF1B4D3E).withOpacity(0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ]
+                  : null,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  icon,
+                  color: isSelected ? Colors.white : const Color(0xFF1B4D3E),
+                  size: 22,
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  label,
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: isSelected ? Colors.white : const Color(0xFF1B4D3E),
+                    fontSize: 9,
+                    fontWeight: FontWeight.w700,
+                    fontFamily: 'Literata',
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+    
     return Expanded(
       child: GestureDetector(
         onTap: () => _navigateToPage(index),

@@ -38,6 +38,14 @@ import 'package:c_billing/features/inventory_management/offline/entities/purchas
 import 'package:c_billing/features/customer/offline/controllers/customer_offline_controller.dart';
 import 'package:c_billing/features/customer/offline/entities/customer_entity.dart';
 import 'package:c_billing/features/billing/domain/entities/bill_tax_settings.dart';
+import 'package:c_billing/features/dashboard/data/repositories/dashboard_offline_repository.dart';
+import 'package:c_billing/features/billing/presentation/pages/bills_list_page.dart';
+import 'package:c_billing/features/inventory_management/presentation/pages/product_management_page.dart';
+import 'package:c_billing/features/supplier/presentation/pages/supplier_page.dart';
+import 'package:c_billing/features/company/presentation/pages/company_page.dart';
+import 'package:c_billing/features/purchase_return/presentation/pages/purchase_return_screen.dart';
+import 'package:c_billing/features/reports/presentation/pages/report_page.dart';
+import 'package:c_billing/features/dashboard/data/models/dashboard_data.dart';
 
 class BillingPage extends StatefulWidget {
   final bool isEmbedded;
@@ -112,6 +120,12 @@ class _BillingPageState extends State<BillingPage> {
   bool _showCustomerOnBill = true;
   bool _generateBillViaContact = false;
   String _billType = 'pos'; // 'pos' or 'normal'
+
+  // Quick Stats data
+  final DashboardOfflineRepository _dashboardRepo = DashboardOfflineRepository.instance;
+  DashboardData? _quickStatsData;
+  bool _isLoadingQuickStats = true;
+  bool _showQuickStats = false;
 
   // GST/Tax settings
   BillTaxSettings _taxSettings = BillTaxSettings.defaultSettings;
@@ -1572,21 +1586,33 @@ class _BillingPageState extends State<BillingPage> {
               child: CircularProgressIndicator(color: Color(0xFF1B4D3E)),
             )
           : widget.isEmbedded
-          ? SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              child: Column(
-                children: [
-                  // Header with settings button for embedded view
-                  _buildEmbeddedHeader(),
-                  if (_showCustomerOnBill || _generateBillViaContact) _buildCustomerSection(),
-                  _buildAddItemsSection(),
-                  if (_billItems.isNotEmpty) _buildBillItemsSection(),
-                  if (_billItems.isNotEmpty) _buildDiscountSection(),
-                  if (_billItems.isNotEmpty && _taxSettings.hasAnyTaxEnabled) _buildGstModeSection(),
-                  if (_billItems.isNotEmpty) _buildPaymentSection(),
-                  const SizedBox(height: 100),
-                ],
-              ),
+          ? Stack(
+              children: [
+                // Main billing content
+                SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  child: Column(
+                    children: [
+                      _buildEmbeddedHeader(),
+                      if (_showCustomerOnBill || _generateBillViaContact) _buildCustomerSection(),
+                      _buildAddItemsSection(),
+                      if (_billItems.isNotEmpty) _buildBillItemsSection(),
+                      if (_billItems.isNotEmpty) _buildDiscountSection(),
+                      if (_billItems.isNotEmpty && _taxSettings.hasAnyTaxEnabled) _buildGstModeSection(),
+                      if (_billItems.isNotEmpty) _buildPaymentSection(),
+                      const SizedBox(height: 100),
+                    ],
+                  ),
+                ),
+                // Quick Stats overlay (z-index above everything)
+                if (_showQuickStats) _buildQuickStatsOverlay(),
+                // FAB — always on top
+                Positioned(
+                  right: 16,
+                  bottom: MediaQuery.of(context).padding.bottom + 70,
+                  child: _buildQuickStatsFAB(),
+                ),
+              ],
             )
           : CustomScrollView(
               slivers: [
@@ -3714,6 +3740,311 @@ class _BillingPageState extends State<BillingPage> {
         }
       }
     });
+  }
+
+  // ============ QUICK STATS FAB + OVERLAY ============
+
+  Future<void> _loadQuickStats() async {
+    try {
+      final data = await _dashboardRepo.fetchDashboardData();
+      if (mounted) {
+        setState(() {
+          _quickStatsData = data;
+          _isLoadingQuickStats = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('[BillingPage] Error loading quick stats: $e');
+      if (mounted) setState(() => _isLoadingQuickStats = false);
+    }
+  }
+
+  void _toggleQuickStats() {
+    setState(() {
+      _showQuickStats = !_showQuickStats;
+    });
+    // Load data on first open
+    if (_showQuickStats && _quickStatsData == null) {
+      _loadQuickStats();
+    }
+  }
+
+  Widget _buildQuickStatsFAB() {
+    return GestureDetector(
+      onTap: _toggleQuickStats,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOutCubic,
+        width: _showQuickStats ? 44 : 48,
+        height: _showQuickStats ? 44 : 48,
+        decoration: BoxDecoration(
+          gradient: _showQuickStats
+              ? const LinearGradient(
+                  colors: [Color(0xFFEF5350), Color(0xFFE53935)],
+                )
+              : const LinearGradient(
+                  colors: [Color(0xFF1B4D3E), Color(0xFF2E7D5B)],
+                ),
+          borderRadius: BorderRadius.circular(_showQuickStats ? 12 : 14),
+          boxShadow: [
+            BoxShadow(
+              color: (_showQuickStats
+                      ? const Color(0xFFE53935)
+                      : const Color(0xFF1B4D3E))
+                  .withValues(alpha: 0.35),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 200),
+          transitionBuilder: (child, anim) => ScaleTransition(scale: anim, child: child),
+          child: Icon(
+            _showQuickStats ? Icons.close_rounded : Icons.grid_view_rounded,
+            key: ValueKey(_showQuickStats),
+            color: Colors.white,
+            size: 22,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuickStatsOverlay() {
+    return Positioned(
+      right: 16,
+      bottom: MediaQuery.of(context).padding.bottom + 126,
+      child: TweenAnimationBuilder<double>(
+        tween: Tween(begin: 0.0, end: 1.0),
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOutCubic,
+        builder: (context, value, child) {
+          return Transform.translate(
+            offset: Offset(0, 20 * (1 - value)),
+            child: Opacity(
+              opacity: value,
+              child: child,
+            ),
+          );
+        },
+        child: Container(
+          width: MediaQuery.of(context).size.width - 32,
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.12),
+                blurRadius: 24,
+                offset: const Offset(0, 8),
+              ),
+              BoxShadow(
+                color: const Color(0xFF1B4D3E).withValues(alpha: 0.06),
+                blurRadius: 40,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header row
+              Padding(
+                padding: const EdgeInsets.only(left: 4, bottom: 10),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(
+                        Icons.grid_view_rounded,
+                        size: 14,
+                        color: Color(0xFF1B4D3E),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    const Text(
+                      'Quick Stats',
+                      style: TextStyle(
+                        fontFamily: 'Literata',
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF1B4D3E),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // Stats grid
+              SizedBox(
+                height: 72,
+                child: _isLoadingQuickStats
+                    ? _buildQuickStatsShimmer()
+                    : ListView(
+                        scrollDirection: Axis.horizontal,
+                        physics: const BouncingScrollPhysics(),
+                        children: [
+                          _buildQuickStatChip(
+                            icon: Icons.receipt_long_outlined,
+                            value: '${_quickStatsData?.invoicesCount ?? 0}',
+                            label: _localizations.invoices,
+                            color: const Color(0xFF667eea),
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => const BillsListPage()),
+                            ).then((_) { _loadQuickStats(); }),
+                          ),
+                          const SizedBox(width: 8),
+                          _buildQuickStatChip(
+                            icon: Icons.inventory_2_outlined,
+                            value: '${_quickStatsData?.productsCount ?? 0}',
+                            label: _localizations.products,
+                            color: const Color(0xFFf093fb),
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => const ProductManagementPage()),
+                            ).then((_) { _loadQuickStats(); }),
+                          ),
+                          const SizedBox(width: 8),
+                          _buildQuickStatChip(
+                            icon: Icons.local_shipping_outlined,
+                            value: '${_quickStatsData?.suppliersCount ?? 0}',
+                            label: _localizations.suppliers,
+                            color: const Color(0xFFFF6B6B),
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => const SupplierPage()),
+                            ).then((_) { _loadQuickStats(); }),
+                          ),
+                          const SizedBox(width: 8),
+                          _buildQuickStatChip(
+                            icon: Icons.business_outlined,
+                            value: '${_quickStatsData?.companiesCount ?? 0}',
+                            label: _localizations.companies,
+                            color: const Color(0xFF9C27B0),
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => const CompanyPage()),
+                            ).then((_) { _loadQuickStats(); }),
+                          ),
+                          const SizedBox(width: 8),
+                          _buildQuickStatChip(
+                            icon: Icons.keyboard_return_rounded,
+                            value: '${_quickStatsData?.totalReturnedItems ?? 0}',
+                            label: 'P. Return',
+                            color: const Color(0xFFE65100),
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => const PurchaseReturnScreen()),
+                            ).then((_) { _loadQuickStats(); }),
+                          ),
+                          const SizedBox(width: 8),
+                          _buildQuickStatChip(
+                            icon: Icons.assessment_outlined,
+                            value: '\u2014',
+                            label: 'Reports',
+                            color: const Color(0xFF0277BD),
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => const ReportPage()),
+                            ).then((_) { _loadQuickStats(); }),
+                          ),
+                        ],
+                      ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuickStatsShimmer() {
+    return ListView.separated(
+      scrollDirection: Axis.horizontal,
+      itemCount: 5,
+      separatorBuilder: (_, __) => const SizedBox(width: 8),
+      itemBuilder: (_, __) => Container(
+        width: 80,
+        decoration: BoxDecoration(
+          color: Colors.grey[100],
+          borderRadius: BorderRadius.circular(14),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuickStatChip({
+    required IconData icon,
+    required String value,
+    required String label,
+    required Color color,
+    VoidCallback? onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 80,
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              color.withValues(alpha: 0.12),
+              color.withValues(alpha: 0.04),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: color.withValues(alpha: 0.15),
+            width: 1,
+          ),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 30,
+              height: 30,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(icon, color: color, size: 16),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              value,
+              style: const TextStyle(
+                color: Color(0xFF1B4D3E),
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+                fontFamily: 'Literata',
+              ),
+            ),
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: const Color(0xFF1B4D3E).withValues(alpha: 0.6),
+                fontSize: 8,
+                fontFamily: 'Literata',
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _buildBottomBar() {
