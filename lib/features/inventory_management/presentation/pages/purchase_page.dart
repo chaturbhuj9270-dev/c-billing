@@ -239,6 +239,7 @@ class _PurchasePageState extends State<PurchasePage>
     final salesPriceController = TextEditingController();
     final cgstController = TextEditingController(text: '0');
     final sgstController = TextEditingController(text: '0');
+    final hsnController = TextEditingController();
     Map<String, dynamic>? dialogSelectedCompany;
     Map<String, dynamic>? dialogSelectedSupplier;
 
@@ -443,6 +444,29 @@ class _PurchasePageState extends State<PurchasePage>
                     ),
                   ],
                 ),
+                const SizedBox(height: 12),
+                // HSN Code
+                TextField(
+                  controller: hsnController,
+                  keyboardType: TextInputType.number,
+                  maxLength: 8,
+                  decoration: InputDecoration(
+                    labelText: 'HSN Code',
+                    hintText: 'e.g. 30049099',
+                    counterText: '',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(
+                        color: Color(0xFF1B4D3E),
+                        width: 2,
+                      ),
+                    ),
+                    prefixIcon: const Icon(Icons.tag, size: 20),
+                  ),
+                ),
               ],
             ),
           ),
@@ -463,6 +487,20 @@ class _PurchasePageState extends State<PurchasePage>
                   : () async {
                       final dialogContext = context;
                       try {
+                        // Validate HSN: required if CGST or SGST > 0
+                        final cgstVal = double.tryParse(cgstController.text) ?? 0.0;
+                        final sgstVal = double.tryParse(sgstController.text) ?? 0.0;
+                        final hsnVal = hsnController.text.trim();
+                        if ((cgstVal > 0 || sgstVal > 0) && hsnVal.isEmpty) {
+                          ScaffoldMessenger.of(dialogContext).showSnackBar(
+                            const SnackBar(
+                              content: Text('HSN Code is required when GST is applied', style: TextStyle(fontFamily: 'Literata')),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                          return;
+                        }
+
                         // Use offline controller for consistent offline-first behavior
                         final productOfflineController = ProductOfflineController.instance;
                         
@@ -476,8 +514,9 @@ class _PurchasePageState extends State<PurchasePage>
                           currentStock: 0,
                           defaultSupplierId: dialogSelectedSupplier?['id'],
                           defaultSupplierName: dialogSelectedSupplier?['fullName'],
-                          cgstPercent: double.tryParse(cgstController.text) ?? 0.0,
-                          sgstPercent: double.tryParse(sgstController.text) ?? 0.0,
+                          cgstPercent: cgstVal,
+                          sgstPercent: sgstVal,
+                          hsnCode: hsnVal.isNotEmpty ? hsnVal : null,
                         );
                         
                         // Notify other screens about the product change
