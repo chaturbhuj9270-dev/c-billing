@@ -16,6 +16,7 @@ class Product {
   final String? defaultSupplierName;
   final double cgstPercent;
   final double sgstPercent;
+  final String? hsnCode;
   final bool isSynced;
 
   Product({
@@ -33,6 +34,7 @@ class Product {
     this.defaultSupplierName,
     this.cgstPercent = 0.0,
     this.sgstPercent = 0.0,
+    this.hsnCode,
     this.isSynced = true,
   });
 
@@ -53,6 +55,7 @@ class Product {
       defaultSupplierName: entity.defaultSupplierName,
       cgstPercent: (entity.cgstPercent as num?)?.toDouble() ?? 0.0,
       sgstPercent: (entity.sgstPercent as num?)?.toDouble() ?? 0.0,
+      hsnCode: entity.hsnCode as String?,
       isSynced: entity.syncStatus == SyncStatus.synced,
     );
   }
@@ -77,6 +80,7 @@ class Product {
         defaultSupplierName: json['defaultSupplierName'] as String?,
         cgstPercent: ((json['cgstPercent'] ?? 0) as num).toDouble(),
         sgstPercent: ((json['sgstPercent'] ?? 0) as num).toDouble(),
+        hsnCode: json['hsnCode'] as String?,
       );
     } catch (e) {
       print('[ERROR] Failed to parse Product from JSON: $json');
@@ -114,6 +118,7 @@ class Product {
       'defaultSupplierName': defaultSupplierName,
       'cgstPercent': cgstPercent,
       'sgstPercent': sgstPercent,
+      'hsnCode': hsnCode,
     };
   }
 
@@ -133,6 +138,7 @@ class Product {
     String? defaultSupplierName,
     double? cgstPercent,
     double? sgstPercent,
+    String? hsnCode,
     bool? isSynced,
   }) {
     return Product(
@@ -150,6 +156,7 @@ class Product {
       defaultSupplierName: defaultSupplierName ?? this.defaultSupplierName,
       cgstPercent: cgstPercent ?? this.cgstPercent,
       sgstPercent: sgstPercent ?? this.sgstPercent,
+      hsnCode: hsnCode ?? this.hsnCode,
       isSynced: isSynced ?? this.isSynced,
     );
   }

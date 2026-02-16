@@ -94,6 +94,9 @@ class ProductEntity {
   /// SGST percentage for this product
   double sgstPercent;
 
+  /// HSN code for GST compliance (nullable for backward compatibility)
+  String? hsnCode;
+
   ProductEntity({
     this.serverId,
     this.indexNo = 0,
@@ -116,6 +119,7 @@ class ProductEntity {
     this.defaultSupplierName,
     this.cgstPercent = 0.0,
     this.sgstPercent = 0.0,
+    this.hsnCode,
   });
 
   /// Factory constructor for creating new product with defaults
@@ -139,6 +143,7 @@ class ProductEntity {
     String? defaultSupplierName,
     double cgstPercent = 0.0,
     double sgstPercent = 0.0,
+    String? hsnCode,
   }) {
     final now = DateTime.now();
     return ProductEntity(
@@ -163,6 +168,7 @@ class ProductEntity {
       defaultSupplierName: defaultSupplierName,
       cgstPercent: cgstPercent,
       sgstPercent: sgstPercent,
+      hsnCode: hsnCode,
     );
   }
 
@@ -191,6 +197,7 @@ class ProductEntity {
       defaultSupplierName: data['defaultSupplierName'] as String?,
       cgstPercent: (data['cgstPercent'] as num?)?.toDouble() ?? 0.0,
       sgstPercent: (data['sgstPercent'] as num?)?.toDouble() ?? 0.0,
+      hsnCode: data['hsnCode'] as String?,
     );
   }
 
@@ -215,6 +222,7 @@ class ProductEntity {
       'defaultSupplierName': defaultSupplierName,
       'cgstPercent': cgstPercent,
       'sgstPercent': sgstPercent,
+      'hsnCode': hsnCode,
       'updatedAt': updatedAt.toIso8601String(),
       'createdAt': createdAt.toIso8601String(),
     };
@@ -246,6 +254,7 @@ class ProductEntity {
       'defaultSupplierName': defaultSupplierName,
       'cgstPercent': cgstPercent,
       'sgstPercent': sgstPercent,
+      'hsnCode': hsnCode,
     };
   }
 
@@ -273,6 +282,7 @@ class ProductEntity {
     String? defaultSupplierName,
     double? cgstPercent,
     double? sgstPercent,
+    String? hsnCode,
   }) {
     final entity = ProductEntity(
       serverId: serverId ?? this.serverId,
@@ -296,6 +306,7 @@ class ProductEntity {
       defaultSupplierName: defaultSupplierName ?? this.defaultSupplierName,
       cgstPercent: cgstPercent ?? this.cgstPercent,
       sgstPercent: sgstPercent ?? this.sgstPercent,
+      hsnCode: hsnCode ?? this.hsnCode,
     );
     entity.id = id ?? this.id;
     return entity;

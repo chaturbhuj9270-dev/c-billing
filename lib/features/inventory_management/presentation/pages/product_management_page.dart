@@ -519,6 +519,8 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
     final categoryController = TextEditingController(text: product.category);
     final cgstEditController = TextEditingController(text: product.cgstPercent.toString());
     final sgstEditController = TextEditingController(text: product.sgstPercent.toString());
+    final hsnEditController = TextEditingController(text: product.hsnCode ?? '');
+    String? hsnError;
 
     showDialog(
       context: context,
@@ -705,6 +707,20 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
             ElevatedButton(
               onPressed: () async {
                 try {
+                  // Validate HSN: required if CGST or SGST > 0
+                  final cgstVal = double.tryParse(cgstEditController.text) ?? 0.0;
+                  final sgstVal = double.tryParse(sgstEditController.text) ?? 0.0;
+                  final hsnVal = hsnEditController.text.trim();
+                  if ((cgstVal > 0 || sgstVal > 0) && hsnVal.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('HSN Code is required when GST is applied', style: TextStyle(fontFamily: 'Literata')),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                    return;
+                  }
+
                   // Offline-first: Update in Isar
                   final offlineController = ProductOfflineController.instance;
                   
@@ -716,8 +732,9 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                       id: existing.id,
                       name: nameController.text,
                       category: categoryController.text,
-                      cgstPercent: double.tryParse(cgstEditController.text) ?? 0.0,
-                      sgstPercent: double.tryParse(sgstEditController.text) ?? 0.0,
+                      cgstPercent: cgstVal,
+                      sgstPercent: sgstVal,
+                      hsnCode: hsnVal.isNotEmpty ? hsnVal : null,
                     );
                   } else {
                     // Fallback to Firebase direct update if not in Isar
@@ -1093,6 +1110,7 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
     final initialStockController = TextEditingController(text: '0');
     final cgstController = TextEditingController(text: '0');
     final sgstController = TextEditingController(text: '0');
+    final hsnController = TextEditingController();
     Map<String, dynamic>? dialogSelectedCompany;
     Map<String, dynamic>? dialogSelectedSupplier;
     List<Map<String, dynamic>> dialogCompanies = [];
@@ -1356,6 +1374,29 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                       ),
                     ],
                   ),
+                  const SizedBox(height: 12),
+                  // HSN Code
+                  TextField(
+                    controller: hsnController,
+                    keyboardType: TextInputType.number,
+                    maxLength: 8,
+                    decoration: InputDecoration(
+                      labelText: 'HSN Code',
+                      hintText: 'e.g. 30049099',
+                      counterText: '',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(
+                          color: Color(0xFF1B4D3E),
+                          width: 2,
+                        ),
+                      ),
+                      prefixIcon: const Icon(Icons.tag, size: 20),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -1373,6 +1414,20 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
               ElevatedButton(
                 onPressed: () async {
                   try {
+                    // Validate HSN: required if CGST or SGST > 0
+                    final cgstVal = double.tryParse(cgstController.text) ?? 0.0;
+                    final sgstVal = double.tryParse(sgstController.text) ?? 0.0;
+                    final hsnVal = hsnController.text.trim();
+                    if ((cgstVal > 0 || sgstVal > 0) && hsnVal.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('HSN Code is required when GST is applied', style: TextStyle(fontFamily: 'Literata')),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                      return;
+                    }
+
                     // Offline-first: Save to Isar immediately
                     final offlineController = ProductOfflineController.instance;
                     await offlineController.addProduct(
@@ -1384,8 +1439,9 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                       currentStock: int.parse(initialStockController.text),
                       defaultSupplierId: dialogSelectedSupplier?['id'],
                       defaultSupplierName: dialogSelectedSupplier?['fullName'],
-                      cgstPercent: double.tryParse(cgstController.text) ?? 0.0,
-                      sgstPercent: double.tryParse(sgstController.text) ?? 0.0,
+                      cgstPercent: cgstVal,
+                      sgstPercent: sgstVal,
+                      hsnCode: hsnVal.isNotEmpty ? hsnVal : null,
                     );
                     
                     // Notify dashboard to refresh
@@ -2011,6 +2067,33 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                                         ],
                                       ),
                                     ),
+                                    // HSN Code display (if available)
+                                    if (product.hsnCode != null && product.hsnCode!.isNotEmpty) ...[
+                                      const SizedBox(height: 8),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                        decoration: BoxDecoration(
+                                          color: Colors.orange.withOpacity(0.08),
+                                          borderRadius: BorderRadius.circular(8),
+                                          border: Border.all(color: Colors.orange.withOpacity(0.2)),
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            Icon(Icons.tag, size: 16, color: Colors.orange[700]),
+                                            const SizedBox(width: 8),
+                                            Text(
+                                              'HSN: ${product.hsnCode}',
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w600,
+                                                fontFamily: 'Literata',
+                                                color: Colors.orange[800],
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
                                     // Latest Purchase Info Section
                                     _buildLatestPurchaseInfo(product.id),
                                     const SizedBox(height: 12),

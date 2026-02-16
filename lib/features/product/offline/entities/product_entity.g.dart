@@ -58,58 +58,59 @@ const ProductEntitySchema = CollectionSchema(
       name: r'description',
       type: IsarType.string,
     ),
+    r'hsnCode': PropertySchema(id: 9, name: r'hsnCode', type: IsarType.string),
     r'imageUrl': PropertySchema(
-      id: 9,
+      id: 10,
       name: r'imageUrl',
       type: IsarType.string,
     ),
-    r'indexNo': PropertySchema(id: 10, name: r'indexNo', type: IsarType.long),
-    r'isActive': PropertySchema(id: 11, name: r'isActive', type: IsarType.bool),
+    r'indexNo': PropertySchema(id: 11, name: r'indexNo', type: IsarType.long),
+    r'isActive': PropertySchema(id: 12, name: r'isActive', type: IsarType.bool),
     r'isMarkedForDeletion': PropertySchema(
-      id: 12,
+      id: 13,
       name: r'isMarkedForDeletion',
       type: IsarType.bool,
     ),
     r'minStockLevel': PropertySchema(
-      id: 13,
+      id: 14,
       name: r'minStockLevel',
       type: IsarType.long,
     ),
-    r'name': PropertySchema(id: 14, name: r'name', type: IsarType.string),
+    r'name': PropertySchema(id: 15, name: r'name', type: IsarType.string),
     r'needsSync': PropertySchema(
-      id: 15,
+      id: 16,
       name: r'needsSync',
       type: IsarType.bool,
     ),
     r'purchasePrice': PropertySchema(
-      id: 16,
+      id: 17,
       name: r'purchasePrice',
       type: IsarType.double,
     ),
     r'salesPrice': PropertySchema(
-      id: 17,
+      id: 18,
       name: r'salesPrice',
       type: IsarType.double,
     ),
     r'serverId': PropertySchema(
-      id: 18,
+      id: 19,
       name: r'serverId',
       type: IsarType.string,
     ),
     r'sgstPercent': PropertySchema(
-      id: 19,
+      id: 20,
       name: r'sgstPercent',
       type: IsarType.double,
     ),
     r'syncStatus': PropertySchema(
-      id: 20,
+      id: 21,
       name: r'syncStatus',
       type: IsarType.byte,
       enumMap: _ProductEntitysyncStatusEnumValueMap,
     ),
-    r'unit': PropertySchema(id: 21, name: r'unit', type: IsarType.string),
+    r'unit': PropertySchema(id: 22, name: r'unit', type: IsarType.string),
     r'updatedAt': PropertySchema(
-      id: 22,
+      id: 23,
       name: r'updatedAt',
       type: IsarType.dateTime,
     ),
@@ -229,6 +230,12 @@ int _productEntityEstimateSize(
     }
   }
   {
+    final value = object.hsnCode;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
+  {
     final value = object.imageUrl;
     if (value != null) {
       bytesCount += 3 + value.length * 3;
@@ -265,20 +272,21 @@ void _productEntitySerialize(
   writer.writeString(offsets[6], object.defaultSupplierId);
   writer.writeString(offsets[7], object.defaultSupplierName);
   writer.writeString(offsets[8], object.description);
-  writer.writeString(offsets[9], object.imageUrl);
-  writer.writeLong(offsets[10], object.indexNo);
-  writer.writeBool(offsets[11], object.isActive);
-  writer.writeBool(offsets[12], object.isMarkedForDeletion);
-  writer.writeLong(offsets[13], object.minStockLevel);
-  writer.writeString(offsets[14], object.name);
-  writer.writeBool(offsets[15], object.needsSync);
-  writer.writeDouble(offsets[16], object.purchasePrice);
-  writer.writeDouble(offsets[17], object.salesPrice);
-  writer.writeString(offsets[18], object.serverId);
-  writer.writeDouble(offsets[19], object.sgstPercent);
-  writer.writeByte(offsets[20], object.syncStatus.index);
-  writer.writeString(offsets[21], object.unit);
-  writer.writeDateTime(offsets[22], object.updatedAt);
+  writer.writeString(offsets[9], object.hsnCode);
+  writer.writeString(offsets[10], object.imageUrl);
+  writer.writeLong(offsets[11], object.indexNo);
+  writer.writeBool(offsets[12], object.isActive);
+  writer.writeBool(offsets[13], object.isMarkedForDeletion);
+  writer.writeLong(offsets[14], object.minStockLevel);
+  writer.writeString(offsets[15], object.name);
+  writer.writeBool(offsets[16], object.needsSync);
+  writer.writeDouble(offsets[17], object.purchasePrice);
+  writer.writeDouble(offsets[18], object.salesPrice);
+  writer.writeString(offsets[19], object.serverId);
+  writer.writeDouble(offsets[20], object.sgstPercent);
+  writer.writeByte(offsets[21], object.syncStatus.index);
+  writer.writeString(offsets[22], object.unit);
+  writer.writeDateTime(offsets[23], object.updatedAt);
 }
 
 ProductEntity _productEntityDeserialize(
@@ -297,22 +305,23 @@ ProductEntity _productEntityDeserialize(
     defaultSupplierId: reader.readStringOrNull(offsets[6]),
     defaultSupplierName: reader.readStringOrNull(offsets[7]),
     description: reader.readStringOrNull(offsets[8]),
-    imageUrl: reader.readStringOrNull(offsets[9]),
-    indexNo: reader.readLongOrNull(offsets[10]) ?? 0,
-    isActive: reader.readBoolOrNull(offsets[11]) ?? true,
-    minStockLevel: reader.readLongOrNull(offsets[13]),
-    name: reader.readString(offsets[14]),
-    purchasePrice: reader.readDouble(offsets[16]),
-    salesPrice: reader.readDouble(offsets[17]),
-    serverId: reader.readStringOrNull(offsets[18]),
-    sgstPercent: reader.readDoubleOrNull(offsets[19]) ?? 0.0,
+    hsnCode: reader.readStringOrNull(offsets[9]),
+    imageUrl: reader.readStringOrNull(offsets[10]),
+    indexNo: reader.readLongOrNull(offsets[11]) ?? 0,
+    isActive: reader.readBoolOrNull(offsets[12]) ?? true,
+    minStockLevel: reader.readLongOrNull(offsets[14]),
+    name: reader.readString(offsets[15]),
+    purchasePrice: reader.readDouble(offsets[17]),
+    salesPrice: reader.readDouble(offsets[18]),
+    serverId: reader.readStringOrNull(offsets[19]),
+    sgstPercent: reader.readDoubleOrNull(offsets[20]) ?? 0.0,
     syncStatus:
         _ProductEntitysyncStatusValueEnumMap[reader.readByteOrNull(
-          offsets[20],
+          offsets[21],
         )] ??
         SyncStatus.newRecord,
-    unit: reader.readStringOrNull(offsets[21]),
-    updatedAt: reader.readDateTime(offsets[22]),
+    unit: reader.readStringOrNull(offsets[22]),
+    updatedAt: reader.readDateTime(offsets[23]),
   );
   object.id = id;
   return object;
@@ -346,34 +355,36 @@ P _productEntityDeserializeProp<P>(
     case 9:
       return (reader.readStringOrNull(offset)) as P;
     case 10:
-      return (reader.readLongOrNull(offset) ?? 0) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 11:
-      return (reader.readBoolOrNull(offset) ?? true) as P;
+      return (reader.readLongOrNull(offset) ?? 0) as P;
     case 12:
-      return (reader.readBool(offset)) as P;
+      return (reader.readBoolOrNull(offset) ?? true) as P;
     case 13:
-      return (reader.readLongOrNull(offset)) as P;
-    case 14:
-      return (reader.readString(offset)) as P;
-    case 15:
       return (reader.readBool(offset)) as P;
+    case 14:
+      return (reader.readLongOrNull(offset)) as P;
+    case 15:
+      return (reader.readString(offset)) as P;
     case 16:
-      return (reader.readDouble(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 17:
       return (reader.readDouble(offset)) as P;
     case 18:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readDouble(offset)) as P;
     case 19:
-      return (reader.readDoubleOrNull(offset) ?? 0.0) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 20:
+      return (reader.readDoubleOrNull(offset) ?? 0.0) as P;
+    case 21:
       return (_ProductEntitysyncStatusValueEnumMap[reader.readByteOrNull(
                 offset,
               )] ??
               SyncStatus.newRecord)
           as P;
-    case 21:
-      return (reader.readStringOrNull(offset)) as P;
     case 22:
+      return (reader.readStringOrNull(offset)) as P;
+    case 23:
       return (reader.readDateTime(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -2127,6 +2138,165 @@ extension ProductEntityQueryFilter
     });
   }
 
+  QueryBuilder<ProductEntity, ProductEntity, QAfterFilterCondition>
+  hsnCodeIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const FilterCondition.isNull(property: r'hsnCode'),
+      );
+    });
+  }
+
+  QueryBuilder<ProductEntity, ProductEntity, QAfterFilterCondition>
+  hsnCodeIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const FilterCondition.isNotNull(property: r'hsnCode'),
+      );
+    });
+  }
+
+  QueryBuilder<ProductEntity, ProductEntity, QAfterFilterCondition>
+  hsnCodeEqualTo(String? value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'hsnCode',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<ProductEntity, ProductEntity, QAfterFilterCondition>
+  hsnCodeGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'hsnCode',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<ProductEntity, ProductEntity, QAfterFilterCondition>
+  hsnCodeLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'hsnCode',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<ProductEntity, ProductEntity, QAfterFilterCondition>
+  hsnCodeBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'hsnCode',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<ProductEntity, ProductEntity, QAfterFilterCondition>
+  hsnCodeStartsWith(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.startsWith(
+          property: r'hsnCode',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<ProductEntity, ProductEntity, QAfterFilterCondition>
+  hsnCodeEndsWith(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.endsWith(
+          property: r'hsnCode',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<ProductEntity, ProductEntity, QAfterFilterCondition>
+  hsnCodeContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.contains(
+          property: r'hsnCode',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<ProductEntity, ProductEntity, QAfterFilterCondition>
+  hsnCodeMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.matches(
+          property: r'hsnCode',
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<ProductEntity, ProductEntity, QAfterFilterCondition>
+  hsnCodeIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'hsnCode', value: ''),
+      );
+    });
+  }
+
+  QueryBuilder<ProductEntity, ProductEntity, QAfterFilterCondition>
+  hsnCodeIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(property: r'hsnCode', value: ''),
+      );
+    });
+  }
+
   QueryBuilder<ProductEntity, ProductEntity, QAfterFilterCondition> idEqualTo(
     Id value,
   ) {
@@ -3426,6 +3596,18 @@ extension ProductEntityQuerySortBy
     });
   }
 
+  QueryBuilder<ProductEntity, ProductEntity, QAfterSortBy> sortByHsnCode() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'hsnCode', Sort.asc);
+    });
+  }
+
+  QueryBuilder<ProductEntity, ProductEntity, QAfterSortBy> sortByHsnCodeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'hsnCode', Sort.desc);
+    });
+  }
+
   QueryBuilder<ProductEntity, ProductEntity, QAfterSortBy> sortByImageUrl() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'imageUrl', Sort.asc);
@@ -3730,6 +3912,18 @@ extension ProductEntityQuerySortThenBy
     });
   }
 
+  QueryBuilder<ProductEntity, ProductEntity, QAfterSortBy> thenByHsnCode() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'hsnCode', Sort.asc);
+    });
+  }
+
+  QueryBuilder<ProductEntity, ProductEntity, QAfterSortBy> thenByHsnCodeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'hsnCode', Sort.desc);
+    });
+  }
+
   QueryBuilder<ProductEntity, ProductEntity, QAfterSortBy> thenById() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'id', Sort.asc);
@@ -3999,6 +4193,14 @@ extension ProductEntityQueryWhereDistinct
     });
   }
 
+  QueryBuilder<ProductEntity, ProductEntity, QDistinct> distinctByHsnCode({
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'hsnCode', caseSensitive: caseSensitive);
+    });
+  }
+
   QueryBuilder<ProductEntity, ProductEntity, QDistinct> distinctByImageUrl({
     bool caseSensitive = true,
   }) {
@@ -4157,6 +4359,12 @@ extension ProductEntityQueryProperty
   QueryBuilder<ProductEntity, String?, QQueryOperations> descriptionProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'description');
+    });
+  }
+
+  QueryBuilder<ProductEntity, String?, QQueryOperations> hsnCodeProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'hsnCode');
     });
   }
 

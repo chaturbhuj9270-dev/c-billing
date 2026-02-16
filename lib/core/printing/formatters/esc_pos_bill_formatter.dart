@@ -216,6 +216,11 @@ class EscPosBillFormatter {
         _fmt(item.amount),
       ));
 
+      // HSN code
+      if (item.hsnCode != null && item.hsnCode!.isNotEmpty) {
+        b.addAll(_left('  HSN: ${item.hsnCode}'));
+      }
+
       // Per-item return note
       if (item.hasReturns) {
         b.addAll(_left(

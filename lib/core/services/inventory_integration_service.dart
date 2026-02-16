@@ -237,6 +237,7 @@ class InventoryIntegrationService {
                 quantity: item.quantity,
                 subtotal: item.subtotal,
                 returnedQuantity: item.returnedQuantity,
+                hsnCode: item.hsnCode,
               ))
           .toList();
 

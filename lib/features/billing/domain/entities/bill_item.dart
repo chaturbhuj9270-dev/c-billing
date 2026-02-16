@@ -13,6 +13,7 @@ class BillItem {
   final int returnedQuantity; // Track how many units have been returned
   final double cgstPercent; // Per-product CGST percentage
   final double sgstPercent; // Per-product SGST percentage
+  final String? hsnCode; // HSN code for GST compliance
 
   BillItem({
     required this.id,
@@ -27,6 +28,7 @@ class BillItem {
     this.returnedQuantity = 0,
     this.cgstPercent = 0.0,
     this.sgstPercent = 0.0,
+    this.hsnCode,
   });
 
   /// CGST amount computed from subtotal
@@ -67,6 +69,7 @@ class BillItem {
         returnedQuantity: (json['returnedQuantity'] ?? 0) as int,
         cgstPercent: ((json['cgstPercent'] ?? 0) as num).toDouble(),
         sgstPercent: ((json['sgstPercent'] ?? 0) as num).toDouble(),
+        hsnCode: json['hsnCode'] as String?,
       );
     } catch (e) {
       print('[ERROR] Failed to parse BillItem from JSON: $json');
@@ -101,6 +104,7 @@ class BillItem {
       'returnedQuantity': returnedQuantity,
       'cgstPercent': cgstPercent,
       'sgstPercent': sgstPercent,
+      'hsnCode': hsnCode,
     };
   }
 
@@ -118,6 +122,7 @@ class BillItem {
     int? returnedQuantity,
     double? cgstPercent,
     double? sgstPercent,
+    String? hsnCode,
   }) {
     return BillItem(
       id: id ?? this.id,
@@ -132,6 +137,7 @@ class BillItem {
       returnedQuantity: returnedQuantity ?? this.returnedQuantity,
       cgstPercent: cgstPercent ?? this.cgstPercent,
       sgstPercent: sgstPercent ?? this.sgstPercent,
+      hsnCode: hsnCode ?? this.hsnCode,
     );
   }
 
@@ -148,6 +154,7 @@ class BillItem {
     int returnedQuantity = 0,
     double cgstPercent = 0.0,
     double sgstPercent = 0.0,
+    String? hsnCode,
   }) {
     return BillItem(
       id: id,
@@ -162,6 +169,7 @@ class BillItem {
       returnedQuantity: returnedQuantity,
       cgstPercent: cgstPercent,
       sgstPercent: sgstPercent,
+      hsnCode: hsnCode,
     );
   }
 

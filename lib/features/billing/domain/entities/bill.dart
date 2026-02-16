@@ -200,6 +200,7 @@ class Bill {
       quantity: item.quantity,
       subtotal: item.subtotal,
       returnedQuantity: item.returnedQuantity,
+      hsnCode: item.hsnCode,
     )).toList();
 
     // Convert BillPaymentStatus to PaymentStatus

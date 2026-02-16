@@ -4842,35 +4842,36 @@ const BillItemEmbeddedSchema = Schema(
   name: r'BillItemEmbedded',
   id: 2336104038497063482,
   properties: {
-    r'itemId': PropertySchema(id: 0, name: r'itemId', type: IsarType.string),
+    r'hsnCode': PropertySchema(id: 0, name: r'hsnCode', type: IsarType.string),
+    r'itemId': PropertySchema(id: 1, name: r'itemId', type: IsarType.string),
     r'productId': PropertySchema(
-      id: 1,
+      id: 2,
       name: r'productId',
       type: IsarType.string,
     ),
     r'productName': PropertySchema(
-      id: 2,
+      id: 3,
       name: r'productName',
       type: IsarType.string,
     ),
     r'purchasePrice': PropertySchema(
-      id: 3,
+      id: 4,
       name: r'purchasePrice',
       type: IsarType.double,
     ),
-    r'quantity': PropertySchema(id: 4, name: r'quantity', type: IsarType.long),
+    r'quantity': PropertySchema(id: 5, name: r'quantity', type: IsarType.long),
     r'returnedQuantity': PropertySchema(
-      id: 5,
+      id: 6,
       name: r'returnedQuantity',
       type: IsarType.long,
     ),
     r'sellingPrice': PropertySchema(
-      id: 6,
+      id: 7,
       name: r'sellingPrice',
       type: IsarType.double,
     ),
     r'subtotal': PropertySchema(
-      id: 7,
+      id: 8,
       name: r'subtotal',
       type: IsarType.double,
     ),
@@ -4888,6 +4889,12 @@ int _billItemEmbeddedEstimateSize(
   Map<Type, List<int>> allOffsets,
 ) {
   var bytesCount = offsets.last;
+  {
+    final value = object.hsnCode;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   {
     final value = object.itemId;
     if (value != null) {
@@ -4915,14 +4922,15 @@ void _billItemEmbeddedSerialize(
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
 ) {
-  writer.writeString(offsets[0], object.itemId);
-  writer.writeString(offsets[1], object.productId);
-  writer.writeString(offsets[2], object.productName);
-  writer.writeDouble(offsets[3], object.purchasePrice);
-  writer.writeLong(offsets[4], object.quantity);
-  writer.writeLong(offsets[5], object.returnedQuantity);
-  writer.writeDouble(offsets[6], object.sellingPrice);
-  writer.writeDouble(offsets[7], object.subtotal);
+  writer.writeString(offsets[0], object.hsnCode);
+  writer.writeString(offsets[1], object.itemId);
+  writer.writeString(offsets[2], object.productId);
+  writer.writeString(offsets[3], object.productName);
+  writer.writeDouble(offsets[4], object.purchasePrice);
+  writer.writeLong(offsets[5], object.quantity);
+  writer.writeLong(offsets[6], object.returnedQuantity);
+  writer.writeDouble(offsets[7], object.sellingPrice);
+  writer.writeDouble(offsets[8], object.subtotal);
 }
 
 BillItemEmbedded _billItemEmbeddedDeserialize(
@@ -4932,14 +4940,15 @@ BillItemEmbedded _billItemEmbeddedDeserialize(
   Map<Type, List<int>> allOffsets,
 ) {
   final object = BillItemEmbedded(
-    itemId: reader.readStringOrNull(offsets[0]),
-    productId: reader.readStringOrNull(offsets[1]),
-    productName: reader.readStringOrNull(offsets[2]),
-    purchasePrice: reader.readDoubleOrNull(offsets[3]) ?? 0.0,
-    quantity: reader.readLongOrNull(offsets[4]) ?? 0,
-    returnedQuantity: reader.readLongOrNull(offsets[5]) ?? 0,
-    sellingPrice: reader.readDoubleOrNull(offsets[6]) ?? 0.0,
-    subtotal: reader.readDoubleOrNull(offsets[7]) ?? 0.0,
+    hsnCode: reader.readStringOrNull(offsets[0]),
+    itemId: reader.readStringOrNull(offsets[1]),
+    productId: reader.readStringOrNull(offsets[2]),
+    productName: reader.readStringOrNull(offsets[3]),
+    purchasePrice: reader.readDoubleOrNull(offsets[4]) ?? 0.0,
+    quantity: reader.readLongOrNull(offsets[5]) ?? 0,
+    returnedQuantity: reader.readLongOrNull(offsets[6]) ?? 0,
+    sellingPrice: reader.readDoubleOrNull(offsets[7]) ?? 0.0,
+    subtotal: reader.readDoubleOrNull(offsets[8]) ?? 0.0,
   );
   return object;
 }
@@ -4958,14 +4967,16 @@ P _billItemEmbeddedDeserializeProp<P>(
     case 2:
       return (reader.readStringOrNull(offset)) as P;
     case 3:
-      return (reader.readDoubleOrNull(offset) ?? 0.0) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 4:
-      return (reader.readLongOrNull(offset) ?? 0) as P;
+      return (reader.readDoubleOrNull(offset) ?? 0.0) as P;
     case 5:
       return (reader.readLongOrNull(offset) ?? 0) as P;
     case 6:
-      return (reader.readDoubleOrNull(offset) ?? 0.0) as P;
+      return (reader.readLongOrNull(offset) ?? 0) as P;
     case 7:
+      return (reader.readDoubleOrNull(offset) ?? 0.0) as P;
+    case 8:
       return (reader.readDoubleOrNull(offset) ?? 0.0) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -4974,6 +4985,165 @@ P _billItemEmbeddedDeserializeProp<P>(
 
 extension BillItemEmbeddedQueryFilter
     on QueryBuilder<BillItemEmbedded, BillItemEmbedded, QFilterCondition> {
+  QueryBuilder<BillItemEmbedded, BillItemEmbedded, QAfterFilterCondition>
+  hsnCodeIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const FilterCondition.isNull(property: r'hsnCode'),
+      );
+    });
+  }
+
+  QueryBuilder<BillItemEmbedded, BillItemEmbedded, QAfterFilterCondition>
+  hsnCodeIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const FilterCondition.isNotNull(property: r'hsnCode'),
+      );
+    });
+  }
+
+  QueryBuilder<BillItemEmbedded, BillItemEmbedded, QAfterFilterCondition>
+  hsnCodeEqualTo(String? value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'hsnCode',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<BillItemEmbedded, BillItemEmbedded, QAfterFilterCondition>
+  hsnCodeGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'hsnCode',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<BillItemEmbedded, BillItemEmbedded, QAfterFilterCondition>
+  hsnCodeLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'hsnCode',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<BillItemEmbedded, BillItemEmbedded, QAfterFilterCondition>
+  hsnCodeBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'hsnCode',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<BillItemEmbedded, BillItemEmbedded, QAfterFilterCondition>
+  hsnCodeStartsWith(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.startsWith(
+          property: r'hsnCode',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<BillItemEmbedded, BillItemEmbedded, QAfterFilterCondition>
+  hsnCodeEndsWith(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.endsWith(
+          property: r'hsnCode',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<BillItemEmbedded, BillItemEmbedded, QAfterFilterCondition>
+  hsnCodeContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.contains(
+          property: r'hsnCode',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<BillItemEmbedded, BillItemEmbedded, QAfterFilterCondition>
+  hsnCodeMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.matches(
+          property: r'hsnCode',
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<BillItemEmbedded, BillItemEmbedded, QAfterFilterCondition>
+  hsnCodeIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'hsnCode', value: ''),
+      );
+    });
+  }
+
+  QueryBuilder<BillItemEmbedded, BillItemEmbedded, QAfterFilterCondition>
+  hsnCodeIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(property: r'hsnCode', value: ''),
+      );
+    });
+  }
+
   QueryBuilder<BillItemEmbedded, BillItemEmbedded, QAfterFilterCondition>
   itemIdIsNull() {
     return QueryBuilder.apply(this, (query) {

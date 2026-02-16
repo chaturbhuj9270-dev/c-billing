@@ -40,6 +40,7 @@ class BillItemEmbedded {
   int quantity;
   double subtotal;
   int returnedQuantity;
+  String? hsnCode;
 
   BillItemEmbedded({
     this.itemId,
@@ -50,6 +51,7 @@ class BillItemEmbedded {
     this.quantity = 0,
     this.subtotal = 0.0,
     this.returnedQuantity = 0,
+    this.hsnCode,
   });
 
   Map<String, dynamic> toJson() {
@@ -62,6 +64,7 @@ class BillItemEmbedded {
       'quantity': quantity,
       'subtotal': subtotal,
       'returnedQuantity': returnedQuantity,
+      'hsnCode': hsnCode,
     };
   }
 
@@ -75,6 +78,7 @@ class BillItemEmbedded {
       quantity: (json['quantity'] as num?)?.toInt() ?? 0,
       subtotal: (json['subtotal'] as num?)?.toDouble() ?? 0.0,
       returnedQuantity: (json['returnedQuantity'] as num?)?.toInt() ?? 0,
+      hsnCode: json['hsnCode'] as String?,
     );
   }
 }

@@ -8,6 +8,7 @@ class PrintBillItem {
   final int returnedQuantity;
   final double cgstPercent;
   final double sgstPercent;
+  final String? hsnCode;
 
   const PrintBillItem({
     required this.name,
@@ -18,6 +19,7 @@ class PrintBillItem {
     this.returnedQuantity = 0,
     this.cgstPercent = 0.0,
     this.sgstPercent = 0.0,
+    this.hsnCode,
   });
 
   /// CGST amount computed from amount
@@ -49,6 +51,7 @@ class PrintBillItem {
       returnedQuantity: (billItem.returnedQuantity as int?) ?? 0,
       cgstPercent: (billItem.cgstPercent as double?) ?? 0.0,
       sgstPercent: (billItem.sgstPercent as double?) ?? 0.0,
+      hsnCode: billItem.hsnCode as String?,
     );
   }
 
@@ -62,6 +65,7 @@ class PrintBillItem {
       'returnedQuantity': returnedQuantity,
       'cgstPercent': cgstPercent,
       'sgstPercent': sgstPercent,
+      'hsnCode': hsnCode,
     };
   }
 }

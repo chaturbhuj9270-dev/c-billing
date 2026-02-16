@@ -280,6 +280,14 @@ class PdfBillService {
                                   fontStyle: pw.FontStyle.italic,
                                 ),
                               ),
+                            if (item.hsnCode != null && item.hsnCode!.isNotEmpty)
+                              pw.Text(
+                                'HSN: ${item.hsnCode}',
+                                style: pw.TextStyle(
+                                  fontSize: 7,
+                                  color: PdfColors.grey600,
+                                ),
+                              ),
                           ],
                         ),
                       ),
@@ -892,6 +900,14 @@ class PdfBillService {
                               fontSize: 8,
                               color: PdfColors.grey700,
                               fontStyle: pw.FontStyle.italic,
+                            ),
+                          ),
+                        if (item.hsnCode != null && item.hsnCode!.isNotEmpty)
+                          pw.Text(
+                            'HSN: ${item.hsnCode}',
+                            style: pw.TextStyle(
+                              fontSize: 8,
+                              color: PdfColors.grey600,
                             ),
                           ),
                       ],
