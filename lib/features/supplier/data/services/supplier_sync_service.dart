@@ -106,6 +106,9 @@ class SupplierSyncService extends ChangeNotifier {
       _checkAndSync();
     });
     
+    // Initial sync
+    _checkAndSync();
+    
     debugPrint('[SupplierSync] Initialized');
   }
 

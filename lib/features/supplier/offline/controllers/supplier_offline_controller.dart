@@ -324,10 +324,44 @@ class SupplierOfflineController extends ChangeNotifier {
         if (serverId == null) continue;
 
         // Check if exists locally by serverId
-        final existing = await _isar.supplierEntitys
+        var existing = await _isar.supplierEntitys
             .filter()
             .serverIdEqualTo(serverId)
             .findFirst();
+
+        // Fallback: check by contact (handles locally-created records without serverId yet)
+        if (existing == null) {
+          final contact = (supplierData['contact'] ?? '').toString();
+          if (contact.isNotEmpty) {
+            existing = await _isar.supplierEntitys
+                .filter()
+                .contactEqualTo(contact)
+                .findFirst();
+            if (existing != null && existing.serverId == null) {
+              // Link local record with server ID and mark synced
+              existing.serverId = serverId;
+              existing.syncStatus = SupplierSyncStatus.synced;
+              await _isar.supplierEntitys.put(existing);
+              imported++;
+              continue;
+            }
+          }
+          // Also check by supplierCode
+          final supplierCode = (supplierData['supplierCode'] ?? '').toString();
+          if (existing == null && supplierCode.isNotEmpty) {
+            existing = await _isar.supplierEntitys
+                .filter()
+                .supplierCodeEqualTo(supplierCode)
+                .findFirst();
+            if (existing != null && existing.serverId == null) {
+              existing.serverId = serverId;
+              existing.syncStatus = SupplierSyncStatus.synced;
+              await _isar.supplierEntitys.put(existing);
+              imported++;
+              continue;
+            }
+          }
+        }
 
         if (existing != null) {
           // Only update if not locally modified AND server is newer

@@ -1,3 +1,5 @@
+import 'package:c_billing/features/product/offline/entities/product_entity.dart';
+
 class Product {
   final String id;
   final int
@@ -51,7 +53,7 @@ class Product {
       defaultSupplierName: entity.defaultSupplierName,
       cgstPercent: (entity.cgstPercent as num?)?.toDouble() ?? 0.0,
       sgstPercent: (entity.sgstPercent as num?)?.toDouble() ?? 0.0,
-      isSynced: entity.isSynced ?? true,
+      isSynced: entity.syncStatus == SyncStatus.synced,
     );
   }
   factory Product.fromJson(Map<String, dynamic> json) {

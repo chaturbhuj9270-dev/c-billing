@@ -475,10 +475,32 @@ class ProductOfflineController extends ChangeNotifier {
         if (serverId == null) continue;
 
         // Check if exists locally by serverId
-        final existing = await _isar.productEntitys
+        var existing = await _isar.productEntitys
             .filter()
             .serverIdEqualTo(serverId)
             .findFirst();
+
+        // Fallback: check by name + companyName (handles locally-created records without serverId yet)
+        if (existing == null) {
+          final name = (productData['name'] ?? '').toString();
+          final companyName = (productData['companyName'] ?? '').toString();
+          if (name.isNotEmpty) {
+            existing = await _isar.productEntitys
+                .filter()
+                .nameEqualTo(name, caseSensitive: false)
+                .and()
+                .companyNameEqualTo(companyName, caseSensitive: false)
+                .findFirst();
+            if (existing != null && existing.serverId == null) {
+              // Link local record with server ID and mark synced
+              existing.serverId = serverId;
+              existing.syncStatus = SyncStatus.synced;
+              await _isar.productEntitys.put(existing);
+              imported++;
+              continue;
+            }
+          }
+        }
 
         if (existing != null) {
           // Only update if not locally modified AND server is newer

@@ -734,45 +734,20 @@ class _BillingPageState extends State<BillingPage> {
     required String phoneNumber,
   }) async {
     try {
-      // Save to Firebase
-      final billRepo = FirebaseBillRepository(firestore: _firestore);
-      final docRef = await _firestore
-          .collection('users')
-          .doc(billRepo.userId)
-          .collection('customers')
-          .add({
-        'firstName': firstName,
-        'lastName': lastName,
-        'middleName': '',
-        'contact': phoneNumber,
-        'address': '',
-        'createdAt': FieldValue.serverTimestamp(),
-        'updatedAt': FieldValue.serverTimestamp(),
-        'isActive': true,
-        'pendingBalance': 0.0,
-        'totalPurchaseAmount': 0.0,
-        'totalPaidAmount': 0.0,
-      });
-
-      // Also save to Isar for offline-first consistency
-      try {
-        final offlineCtrl = CustomerOfflineController.instance;
-        final entity = await offlineCtrl.addCustomer(
-          name: '$firstName $lastName'.trim(),
-          mobile: phoneNumber,
-        );
-        // Mark as synced with serverId
-        await offlineCtrl.markAsSynced(entity.id, serverId: docRef.id);
-      } catch (e) {
-        debugPrint('[DEBUG] Isar save for new customer failed (non-critical): $e');
-      }
+      // Save to Isar via offline controller — syncs to Firestore in background
+      final offlineCtrl = CustomerOfflineController.instance;
+      final entity = await offlineCtrl.addCustomer(
+        name: '$firstName $lastName'.trim(),
+        mobile: phoneNumber,
+      );
 
       // Auto-attach customer to bill
       final fullName = '$firstName $lastName'.trim();
       if (mounted) {
         setState(() {
           _selectedCustomer = {
-            'id': docRef.id,
+            'id': 'local_${entity.id}',
+            'localId': entity.id,
             'firstName': firstName,
             'lastName': lastName,
             'contact': phoneNumber,
@@ -788,9 +763,6 @@ class _BillingPageState extends State<BillingPage> {
           }
         });
       }
-
-      // Refresh customer list
-      await _loadCustomers();
       
       // Notify other screens
       DashboardRefreshService.instance.notifyDataChanged(DataChangeType.customer);

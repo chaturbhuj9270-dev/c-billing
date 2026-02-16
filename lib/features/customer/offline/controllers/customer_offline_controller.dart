@@ -264,20 +264,41 @@ class CustomerOfflineController extends ChangeNotifier {
         final serverId = customerData['id'] as String?;
         if (serverId == null) continue;
 
-        // Check if exists locally
-        final existing = await _isar.customerEntitys
+        // Check if exists locally by serverId
+        var existing = await _isar.customerEntitys
             .filter()
             .serverIdEqualTo(serverId)
             .findFirst();
 
-        if (existing != null) {
-          // Update existing if server version is newer
-          final serverUpdatedAt = DateTime.tryParse(customerData['updatedAt']?.toString() ?? '');
-          if (serverUpdatedAt != null && serverUpdatedAt.isAfter(existing.updatedAt)) {
-            final updated = CustomerEntity.fromCustomer(customerData);
-            updated.id = existing.id; // Keep local ID
-            await _isar.customerEntitys.put(updated);
+        // Fallback: check by mobile number (handles locally-created records without serverId yet)
+        if (existing == null) {
+          final mobile = (customerData['mobile'] ?? customerData['contact'] ?? '').toString();
+          if (mobile.isNotEmpty) {
+            existing = await _isar.customerEntitys
+                .filter()
+                .mobileEqualTo(mobile)
+                .findFirst();
+            // If found by mobile, update its serverId
+            if (existing != null && existing.serverId == null) {
+              existing.serverId = serverId;
+              existing.isSynced = true;
+              await _isar.customerEntitys.put(existing);
+              continue; // Already linked, skip further update
+            }
           }
+        }
+
+        if (existing != null) {
+          // Update existing if server version is newer and local is synced
+          if (existing.isSynced) {
+            final serverUpdatedAt = DateTime.tryParse(customerData['updatedAt']?.toString() ?? '');
+            if (serverUpdatedAt != null && serverUpdatedAt.isAfter(existing.updatedAt)) {
+              final updated = CustomerEntity.fromCustomer(customerData);
+              updated.id = existing.id; // Keep local ID
+              await _isar.customerEntitys.put(updated);
+            }
+          }
+          // If not synced, local changes take precedence
         } else {
           // Create new
           final newCustomer = CustomerEntity.fromCustomer(customerData);

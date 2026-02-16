@@ -123,6 +123,9 @@ class ProductSyncService extends ChangeNotifier {
       _checkAndSync();
     });
     
+    // Initial sync
+    _checkAndSync();
+    
     debugPrint('[ProductSync] Initialized');
   }
 

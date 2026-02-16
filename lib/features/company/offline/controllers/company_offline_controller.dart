@@ -287,11 +287,36 @@ class CompanyOfflineController extends ChangeNotifier {
         final serverId = data['id'] as String?;
         if (serverId == null) continue;
 
-        // Check if we already have this company
-        final existing = await _isar.companyEntitys
+        // Check if we already have this company by serverId
+        var existing = await _isar.companyEntitys
             .filter()
             .serverIdEqualTo(serverId)
             .findFirst();
+
+        // Fallback: check by companyName or companyCode (handles locally-created records without serverId yet)
+        if (existing == null) {
+          final companyName = (data['companyName'] ?? '').toString();
+          final companyCode = (data['companyCode'] ?? '').toString();
+          if (companyCode.isNotEmpty) {
+            existing = await _isar.companyEntitys
+                .filter()
+                .companyCodeEqualTo(companyCode, caseSensitive: false)
+                .findFirst();
+          }
+          if (existing == null && companyName.isNotEmpty) {
+            existing = await _isar.companyEntitys
+                .filter()
+                .companyNameEqualTo(companyName, caseSensitive: false)
+                .findFirst();
+          }
+          if (existing != null && existing.serverId == null) {
+            // Link local record with server ID and mark synced
+            existing.serverId = serverId;
+            existing.syncStatus = CompanySyncStatus.synced;
+            await _isar.companyEntitys.put(existing);
+            continue;
+          }
+        }
 
         if (existing == null) {
           // New company from server
