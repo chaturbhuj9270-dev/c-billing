@@ -5,8 +5,8 @@ import 'package:intl/intl.dart';
 import 'package:c_billing/core/services/language_service.dart';
 import 'package:c_billing/core/services/dashboard_refresh_service.dart';
 import 'package:c_billing/core/localization/app_localizations.dart';
-import '../../offline/entities/purchase_entity.dart';
-import '../../offline/controllers/purchase_offline_controller.dart';
+import '../../offline/entities/purchase_batch_entity.dart';
+import '../../offline/controllers/purchase_batch_offline_controller.dart';
 import '../../data/services/purchase_sync_service.dart';
 import '../../../supplier/offline/controllers/supplier_offline_controller.dart';
 import '../../../supplier/offline/entities/supplier_entity.dart';
@@ -35,7 +35,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
   late Animation<double> _opacityAnimation;
 
   // Data
-  List<PurchaseEntity> _purchases = [];
+  List<PurchaseBatchEntity> _purchases = [];
   List<Map<String, dynamic>> _suppliers = [];
   bool _isLoading = true;
 
@@ -44,7 +44,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
   String? _supplierFilter;
 
   // Streams
-  StreamSubscription<List<PurchaseEntity>>? _purchaseStreamSubscription;
+  StreamSubscription<List<PurchaseBatchEntity>>? _purchaseStreamSubscription;
   StreamSubscription<List<SupplierEntity>>? _supplierStreamSubscription;
   StreamSubscription<void>? _purchaseChangeSubscription;
 
@@ -102,11 +102,13 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
 
   /// Setup real-time purchase stream from Isar
   void _setupPurchaseStream() {
-    _purchaseStreamSubscription = PurchaseOfflineController.instance
-        .watchAllPurchases()
+    _purchaseStreamSubscription = PurchaseBatchOfflineController.instance
+        .watchAllBatches(includeConsumed: true)
         .listen(
       (purchases) {
         if (mounted) {
+          // Sort by purchase date descending (most recent first)
+          purchases.sort((a, b) => b.purchaseDate.compareTo(a.purchaseDate));
           setState(() {
             _purchases = purchases;
             _isLoading = false;
@@ -171,7 +173,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
   }
 
   /// Show purchase details bottom sheet
-  void _showPurchaseDetails(PurchaseEntity purchase) {
+  void _showPurchaseDetails(PurchaseBatchEntity purchase) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -203,7 +205,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
   }
 
   /// Show purchase context menu on long press
-  void _showPurchaseContextMenu(PurchaseEntity purchase) {
+  void _showPurchaseContextMenu(PurchaseBatchEntity purchase) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -590,7 +592,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
 
 /// Purchase details bottom sheet
 class _PurchaseDetailsSheet extends StatelessWidget {
-  final PurchaseEntity purchase;
+  final PurchaseBatchEntity purchase;
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
 
@@ -599,6 +601,9 @@ class _PurchaseDetailsSheet extends StatelessWidget {
     this.onEdit,
     this.onDelete,
   });
+
+  /// Calculate total amount for this batch
+  double get totalAmount => purchase.purchasePrice * purchase.quantityPurchased;
 
   @override
   Widget build(BuildContext context) {
@@ -663,10 +668,9 @@ class _PurchaseDetailsSheet extends StatelessWidget {
                                 color: Color(0xFF1B4D3E),
                               ),
                             ),
-                            if (purchase.companyName != null &&
-                                purchase.companyName!.isNotEmpty)
+                            if (purchase.companyName.isNotEmpty)
                               Text(
-                                purchase.companyName!,
+                                purchase.companyName,
                                 style: TextStyle(
                                   fontFamily: 'Literata',
                                   fontWeight: FontWeight.w500,
@@ -683,16 +687,16 @@ class _PurchaseDetailsSheet extends StatelessWidget {
                   const SizedBox(height: 24),
 
                   // Details grid
-                  _buildDetailRow('Quantity', '${purchase.quantity} ${purchase.unit}'),
+                  _buildDetailRow('Quantity', '${purchase.quantityPurchased} ${purchase.unit}'),
                   _buildDetailRow('Purchase Price', '₹${purchase.purchasePrice.toStringAsFixed(2)}/unit'),
-                  _buildDetailRow('Sales Price', '₹${purchase.salesPrice.toStringAsFixed(2)}/unit'),
-                  _buildDetailRow('Total Amount', '₹${purchase.totalAmount.toStringAsFixed(2)}', highlight: true),
+                  _buildDetailRow('Sales Price', '₹${purchase.sellingPrice.toStringAsFixed(2)}/unit'),
+                  _buildDetailRow('Total Amount', '₹${totalAmount.toStringAsFixed(2)}', highlight: true),
                   
                   if (purchase.supplierName != null && purchase.supplierName!.isNotEmpty)
                     _buildDetailRow('Supplier', purchase.supplierName!),
                   
-                  _buildDetailRow('Date', dateFormat.format(purchase.createdAt)),
-                  _buildDetailRow('Time', timeFormat.format(purchase.createdAt)),
+                  _buildDetailRow('Date', dateFormat.format(purchase.purchaseDate)),
+                  _buildDetailRow('Time', timeFormat.format(purchase.purchaseDate)),
                   
                   if (purchase.productionDate != null)
                     _buildDetailRow('Production Date', dateFormat.format(purchase.productionDate!)),

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../../offline/entities/purchase_entity.dart';
+import '../../offline/entities/purchase_batch_entity.dart';
 
 /// Modern card widget for displaying individual purchase items
 /// Features: Subtle shadows, proper spacing, responsive layout
 class PurchaseCardWidget extends StatelessWidget {
-  final PurchaseEntity purchase;
+  final PurchaseBatchEntity purchase;
   final VoidCallback? onTap;
   final VoidCallback? onLongPress;
   final bool showSyncStatus;
@@ -17,6 +17,9 @@ class PurchaseCardWidget extends StatelessWidget {
     this.onLongPress,
     this.showSyncStatus = false,
   });
+
+  /// Calculate total amount for this batch
+  double get totalAmount => purchase.purchasePrice * purchase.quantityPurchased;
 
   @override
   Widget build(BuildContext context) {
@@ -93,7 +96,7 @@ class PurchaseCardWidget extends StatelessWidget {
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
-                              if (purchase.companyName != null && purchase.companyName!.isNotEmpty) ...[
+                              if (purchase.companyName.isNotEmpty) ...[
                                 const SizedBox(height: 2),
                                 Row(
                                   children: [
@@ -105,7 +108,7 @@ class PurchaseCardWidget extends StatelessWidget {
                                     const SizedBox(width: 4),
                                     Expanded(
                                       child: Text(
-                                        purchase.companyName!,
+                                        purchase.companyName,
                                         style: TextStyle(
                                           fontFamily: 'Literata',
                                           fontWeight: FontWeight.w500,
@@ -127,7 +130,7 @@ class PurchaseCardWidget extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
                             Text(
-                              '₹${purchase.totalAmount.toStringAsFixed(2)}',
+                              '₹${totalAmount.toStringAsFixed(2)}',
                               style: const TextStyle(
                                 fontFamily: 'Literata',
                                 fontWeight: FontWeight.w800,
@@ -158,7 +161,7 @@ class PurchaseCardWidget extends StatelessWidget {
                         // Quantity
                         _buildDetailChip(
                           icon: Icons.layers_rounded,
-                          label: '${purchase.quantity} ${purchase.unit}',
+                          label: '${purchase.quantityPurchased} ${purchase.unit}',
                           color: Colors.blue,
                         ),
                         const SizedBox(width: 10),
@@ -217,7 +220,7 @@ class PurchaseCardWidget extends StatelessWidget {
                               ),
                               const SizedBox(width: 4),
                               Text(
-                                dateFormat.format(purchase.createdAt),
+                                dateFormat.format(purchase.purchaseDate),
                                 style: TextStyle(
                                   fontFamily: 'Literata',
                                   fontWeight: FontWeight.w500,
@@ -227,7 +230,7 @@ class PurchaseCardWidget extends StatelessWidget {
                               ),
                               const SizedBox(width: 6),
                               Text(
-                                timeFormat.format(purchase.createdAt),
+                                timeFormat.format(purchase.purchaseDate),
                                 style: TextStyle(
                                   fontFamily: 'Literata',
                                   fontWeight: FontWeight.w400,
@@ -289,16 +292,16 @@ class PurchaseCardWidget extends StatelessWidget {
     IconData badgeIcon;
     
     switch (purchase.syncStatus) {
-      case PurchaseSyncStatus.synced:
+      case BatchSyncStatus.synced:
         badgeColor = Colors.green;
         badgeIcon = Icons.cloud_done_rounded;
         break;
-      case PurchaseSyncStatus.newRecord:
-      case PurchaseSyncStatus.updated:
+      case BatchSyncStatus.newRecord:
+      case BatchSyncStatus.updated:
         badgeColor = Colors.orange;
         badgeIcon = Icons.cloud_upload_rounded;
         break;
-      case PurchaseSyncStatus.deleted:
+      case BatchSyncStatus.deleted:
         badgeColor = Colors.red;
         badgeIcon = Icons.delete_outline_rounded;
         break;

@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
-import '../../offline/entities/purchase_entity.dart';
+import '../../offline/entities/purchase_batch_entity.dart';
 import 'purchase_card_widget.dart';
 import 'purchase_filter_widget.dart';
 
 /// Main list widget for displaying purchase history
 /// Features: Shimmer loading, empty state, smooth scrolling, real-time updates
 class PurchaseListWidget extends StatefulWidget {
-  final List<PurchaseEntity> purchases;
+  final List<PurchaseBatchEntity> purchases;
   final bool isLoading;
   final PurchaseDateFilter dateFilter;
   final String? supplierFilter;
   final VoidCallback? onRefresh;
-  final Function(PurchaseEntity)? onPurchaseTap;
-  final Function(PurchaseEntity)? onPurchaseLongPress;
+  final Function(PurchaseBatchEntity)? onPurchaseTap;
+  final Function(PurchaseBatchEntity)? onPurchaseLongPress;
   final String emptyTitle;
   final String emptySubtitle;
 
@@ -43,16 +43,16 @@ class _PurchaseListWidgetState extends State<PurchaseListWidget> {
   }
 
   /// Filter purchases based on date and supplier
-  List<PurchaseEntity> get _filteredPurchases {
+  List<PurchaseBatchEntity> get _filteredPurchases {
     var filtered = widget.purchases;
 
     // Apply date filter
     if (widget.dateFilter == PurchaseDateFilter.today) {
       final today = DateTime.now();
       filtered = filtered.where((p) {
-        return p.createdAt.year == today.year &&
-            p.createdAt.month == today.month &&
-            p.createdAt.day == today.day;
+        return p.purchaseDate.year == today.year &&
+            p.purchaseDate.month == today.month &&
+            p.purchaseDate.day == today.day;
       }).toList();
     }
 
@@ -281,7 +281,7 @@ class _PurchaseListWidgetState extends State<PurchaseListWidget> {
 
 /// Summary stats widget for purchase header
 class PurchaseSummaryWidget extends StatelessWidget {
-  final List<PurchaseEntity> purchases;
+  final List<PurchaseBatchEntity> purchases;
   final PurchaseDateFilter dateFilter;
   final String? supplierFilter;
 
@@ -292,15 +292,15 @@ class PurchaseSummaryWidget extends StatelessWidget {
     this.supplierFilter,
   });
 
-  List<PurchaseEntity> get _filteredPurchases {
+  List<PurchaseBatchEntity> get _filteredPurchases {
     var filtered = purchases;
 
     if (dateFilter == PurchaseDateFilter.today) {
       final today = DateTime.now();
       filtered = filtered.where((p) {
-        return p.createdAt.year == today.year &&
-            p.createdAt.month == today.month &&
-            p.createdAt.day == today.day;
+        return p.purchaseDate.year == today.year &&
+            p.purchaseDate.month == today.month &&
+            p.purchaseDate.day == today.day;
       }).toList();
     }
 
@@ -314,8 +314,8 @@ class PurchaseSummaryWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final filtered = _filteredPurchases;
-    final totalAmount = filtered.fold<double>(0, (sum, p) => sum + p.totalAmount);
-    final totalQuantity = filtered.fold<int>(0, (sum, p) => sum + p.quantity);
+    final totalAmount = filtered.fold<double>(0, (sum, p) => sum + (p.purchasePrice * p.quantityPurchased));
+    final totalQuantity = filtered.fold<int>(0, (sum, p) => sum + p.quantityPurchased);
 
     return Container(
       padding: const EdgeInsets.all(16),
