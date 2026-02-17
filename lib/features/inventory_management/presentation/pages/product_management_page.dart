@@ -117,6 +117,7 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
   @override
   void dispose() {
     LanguageService.instance.removeListener(_onLanguageChanged);
+    ProductOfflineController.instance.removeListener(_onProductOfflineChanged);
     _productStreamSubscription?.cancel();
     _firestoreProductStreamSubscription?.cancel();
     _batchStreamSubscription?.cancel();
@@ -166,18 +167,10 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
   }
 
   Future<void> _setupInitialData() async {
-    // 1. Load from cache immediately for < 0.5s loading
-    final cached = await _cacheDataSource.getCachedProducts();
-    if (cached != null && mounted) {
-      setState(() {
-        _products = cached;
-        _applyFilters();
-        _displayedProducts = _filteredProducts.take(_pageSize).toList();
-      });
-      print('[DEBUG] Loaded ${_products.length} products from cache');
-    }
+    // 1. Load from Isar immediately (offline-first, always has correct stock)
+    await _reloadFromIsar();
 
-    // 2. Fetch from Firestore in background
+    // 2. Fetch from Firestore in background for sync
     _loadProducts();
   }
 
@@ -189,28 +182,17 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
     _productStreamSubscription = offlineController.watchAllProducts().listen(
       (entities) {
         if (mounted) {
-          // Convert entities to Product domain objects
-          final products = entities.map((e) => Product(
-            id: e.serverId ?? 'local_${e.id}',
-            indexNo: e.indexNo,
-            name: e.name,
-            companyName: e.companyName,
-            category: e.category,
-            purchasePrice: e.purchasePrice,
-            salesPrice: e.salesPrice,
-            currentStock: e.currentStock,
-            createdAt: e.createdAt,
-            updatedAt: e.updatedAt,
-            defaultSupplierId: e.defaultSupplierId,
-            defaultSupplierName: e.defaultSupplierName,
-            isSynced: e.syncStatus == SyncStatus.synced,
-          )).toList();
+          // Convert entities to Product domain objects using fromProductEntity
+          final products = entities.map((e) => Product.fromProductEntity(e)).toList();
           
           setState(() {
             _products = products;
             _applyFilters();
             _displayedProducts = _filteredProducts.take(_pageSize).toList();
           });
+          
+          // Rebuild grouped products with updated stock
+          _rebuildGroupedProducts();
           
           // Update unsynced count
           _updateUnsyncedCount();
@@ -221,8 +203,37 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
       },
     );
     
+    // Also listen to ChangeNotifier for stock updates from billing/purchase flows
+    offlineController.addListener(_onProductOfflineChanged);
+    
     // Initial unsynced count
     _updateUnsyncedCount();
+  }
+  
+  /// Called when ProductOfflineController notifies (stock changes from billing/purchase)
+  void _onProductOfflineChanged() {
+    if (mounted) {
+      _reloadFromIsar();
+    }
+  }
+  
+  /// Reload products from Isar (offline-first, always has latest stock)
+  Future<void> _reloadFromIsar() async {
+    try {
+      final entities = await ProductOfflineController.instance.getAllProducts();
+      final products = entities.map((e) => Product.fromProductEntity(e)).toList();
+      if (mounted) {
+        setState(() {
+          _products = products;
+          _applyFilters();
+          _displayedProducts = _filteredProducts.take(_pageSize).toList();
+        });
+        _rebuildGroupedProducts();
+        _updateUnsyncedCount();
+      }
+    } catch (e) {
+      print('[ERROR] Failed to reload from Isar: $e');
+    }
   }
   
   Future<void> _updateUnsyncedCount() async {
@@ -255,12 +266,12 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
   void _setupCrossPageRefresh() {
     _purchaseChangeSubscription = DashboardRefreshService.instance.onPurchaseChanged.listen((_) {
       if (mounted) {
-        _loadProducts();
+        _reloadFromIsar();
       }
     });
     _productChangeSubscription = DashboardRefreshService.instance.onProductChanged.listen((_) {
       if (mounted) {
-        _loadProducts();
+        _reloadFromIsar();
       }
     });
   }
@@ -320,7 +331,10 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
         setState(() => _isLoading = true);
       }
 
-      print('[DEBUG] Loading products from Firestore...');
+      // 1. Load from Isar first (offline-first — always has latest stock)
+      await _reloadFromIsar();
+
+      // 2. Fetch from Firestore in background for sync (don't overwrite local stock)
       final currentUser = _auth.currentUser;
       if (currentUser == null) {
         print('[ERROR] No authenticated user - cannot load products');
@@ -328,21 +342,18 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
         return;
       }
 
-      print('[DEBUG] Fetching products for user: ${currentUser.uid}');
+      print('[DEBUG] Fetching products from Firestore for sync...');
       final products = await _inventoryService.getAllProducts();
       print('[DEBUG] Loaded ${products.length} products from Firestore');
 
       if (mounted) {
-        setState(() {
-          _products = products;
-          _applyFilters();
-          _displayedProducts = _filteredProducts.take(_pageSize).toList();
-          _isLoading = false;
-        });
+        setState(() => _isLoading = false);
+        
         // Save to cache for next time
         _cacheDataSource.saveProducts(products);
         
         // Import products to Isar for offline-first support
+        // (importFromServer only updates synced records with newer server data)
         _importProductsToIsar(products);
         
         // Load latest purchase info for each product
@@ -351,10 +362,9 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
     } catch (e) {
       print('[ERROR] Failed to load products: $e');
       if (mounted) {
+        // On Firestore failure, still show Isar data
+        await _reloadFromIsar();
         setState(() => _isLoading = false);
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error loading products: $e')));
       }
     }
   }
@@ -371,6 +381,9 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
         'purchasePrice': p.purchasePrice,
         'salesPrice': p.salesPrice,
         'currentStock': p.currentStock,
+        'cgstPercent': p.cgstPercent,
+        'sgstPercent': p.sgstPercent,
+        'hsnCode': p.hsnCode,
         'createdAt': p.createdAt.toIso8601String(),
         'updatedAt': p.updatedAt.toIso8601String(),
       }).toList();
