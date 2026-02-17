@@ -1218,28 +1218,13 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
       return;
     }
 
-    // Convert Isar entities to plain maps (isolate-safe) on the main thread
-    // — this is just a lightweight copy, takes microseconds.
-    final purchaseMaps = filtered.map((p) => <String, dynamic>{
-      'productName': p.productName,
-      'companyName': p.companyName,
-      'supplierName': p.supplierName,
-      'unit': p.unit,
-      'quantityPurchased': p.quantityPurchased,
-      'quantityRemaining': p.quantityRemaining,
-      'purchasePrice': p.purchasePrice,
-      'sellingPrice': p.sellingPrice,
-      'purchaseDateMs': p.purchaseDate.millisecondsSinceEpoch,
-      'expiryDateMs': p.expiryDate?.millisecondsSinceEpoch,
-    }).toList();
-
     try {
-      // PDF is built entirely in a background isolate via compute()
-      // — UI stays fully responsive, no loader needed.
+      debugPrint('[PurchaseReport] Generating PDF for ${filtered.length} entries...');
       final pdfBytes = await PurchaseReportPdfGenerator.generate(
-        purchaseMaps: purchaseMaps,
+        purchases: filtered,
         filterDescription: _buildFilterDescription(),
       );
+      debugPrint('[PurchaseReport] PDF generated: ${pdfBytes.length} bytes');
 
       if (!mounted) return;
 
