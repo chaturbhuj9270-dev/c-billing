@@ -256,8 +256,13 @@ class PurchaseBatchOfflineController extends ChangeNotifier {
     required Id id,
     double? purchasePrice,
     double? sellingPrice,
+    int? quantityPurchased,
     int? quantityRemaining,
+    String? supplierName,
+    String? supplierId,
+    String? unit,
     String? notes,
+    DateTime? purchaseDate,
     DateTime? expiryDate,
     DateTime? productionDate,
     int? warrantyMonths,
@@ -289,8 +294,13 @@ class PurchaseBatchOfflineController extends ChangeNotifier {
     final updated = existing.copyWith(
       purchasePrice: purchasePrice,
       sellingPrice: sellingPrice,
+      quantityPurchased: quantityPurchased,
       quantityRemaining: quantityRemaining,
+      supplierName: supplierName,
+      supplierId: supplierId,
+      unit: unit,
       notes: notes,
+      purchaseDate: purchaseDate,
       expiryDate: expiryDate,
       productionDate: productionDate,
       warrantyMonths: warrantyMonths,
@@ -479,30 +489,129 @@ class PurchaseBatchOfflineController extends ChangeNotifier {
 
   /// Import batches from server
   Future<void> importFromServer(List<Map<String, dynamic>> serverBatches) async {
+    int imported = 0;
+    int skipped = 0;
+    int updated = 0;
+    
     await _isar.writeTxn(() async {
       for (final data in serverBatches) {
         final entity = PurchaseBatchEntity.fromServer(data);
         
-        // Check if batch already exists locally
-        final existing = await _isar.purchaseBatchEntitys
-            .filter()
-            .serverIdEqualTo(entity.serverId)
-            .findFirst();
+        // 1. Check if batch already exists by serverId
+        PurchaseBatchEntity? existing;
+        if (entity.serverId != null && entity.serverId!.isNotEmpty) {
+          existing = await _isar.purchaseBatchEntitys
+              .filter()
+              .serverIdEqualTo(entity.serverId)
+              .findFirst();
+        }
+        
+        // 2. If not found by serverId, check by business key to prevent duplicates
+        //    (same product, same purchase date, same quantity, same price)
+        if (existing == null) {
+          existing = await _isar.purchaseBatchEntitys
+              .filter()
+              .productIdEqualTo(entity.productId)
+              .quantityPurchasedEqualTo(entity.quantityPurchased)
+              .purchasePriceEqualTo(entity.purchasePrice)
+              .group((q) => q
+                .purchaseDateEqualTo(entity.purchaseDate)
+                .or()
+                // Allow 2-second tolerance for date matching
+                .purchaseDateBetween(
+                  entity.purchaseDate.subtract(const Duration(seconds: 2)),
+                  entity.purchaseDate.add(const Duration(seconds: 2)),
+                )
+              )
+              .findFirst();
+        }
         
         if (existing != null) {
           // Update existing if server version is newer
-          if (entity.updatedAt.isAfter(existing.updatedAt)) {
+          if (entity.updatedAt.isAfter(existing.updatedAt) || 
+              existing.serverId == null) {
             entity.id = existing.id;
+            // Preserve server ID from incoming data
+            if (entity.serverId != null && entity.serverId!.isNotEmpty) {
+              existing.serverId = entity.serverId;
+            }
             await _isar.purchaseBatchEntitys.put(entity);
+            updated++;
+          } else {
+            // Just update the serverId if missing locally
+            if (existing.serverId == null && entity.serverId != null) {
+              existing.serverId = entity.serverId;
+              existing.syncStatus = BatchSyncStatus.synced;
+              await _isar.purchaseBatchEntitys.put(existing);
+              updated++;
+            } else {
+              skipped++;
+            }
           }
         } else {
           await _isar.purchaseBatchEntitys.put(entity);
+          imported++;
         }
       }
     });
     
-    debugPrint('[BatchOffline] Imported ${serverBatches.length} batches from server');
+    debugPrint('[BatchOffline] Import complete: $imported new, $updated updated, $skipped skipped (total ${serverBatches.length})');
     notifyListeners();
+  }
+
+  /// Remove duplicate batches from local database
+  /// Keeps the one with serverId (synced) or the newest one
+  Future<int> deduplicateBatches() async {
+    int removedCount = 0;
+    
+    await _isar.writeTxn(() async {
+      final allBatches = await _isar.purchaseBatchEntitys.where().findAll();
+      
+      // Group batches by business key: productId + purchasePrice + quantityPurchased + purchaseDate (rounded to minute)
+      final Map<String, List<PurchaseBatchEntity>> groups = {};
+      
+      for (final batch in allBatches) {
+        // Round purchase date to nearest minute to group near-identical timestamps
+        final roundedDate = DateTime(
+          batch.purchaseDate.year,
+          batch.purchaseDate.month,
+          batch.purchaseDate.day,
+          batch.purchaseDate.hour,
+          batch.purchaseDate.minute,
+        );
+        final key = '${batch.productId}_${batch.purchasePrice}_${batch.quantityPurchased}_${roundedDate.toIso8601String()}';
+        
+        groups.putIfAbsent(key, () => []);
+        groups[key]!.add(batch);
+      }
+      
+      // For each group with more than one batch, keep the best one and remove others
+      for (final entry in groups.entries) {
+        if (entry.value.length <= 1) continue;
+        
+        // Sort: prefer synced (with serverId), then newest updatedAt
+        entry.value.sort((a, b) {
+          // Prefer one with serverId
+          if (a.serverId != null && b.serverId == null) return -1;
+          if (a.serverId == null && b.serverId != null) return 1;
+          // Then prefer newest
+          return b.updatedAt.compareTo(a.updatedAt);
+        });
+        
+        // Keep first (best), remove rest
+        for (int i = 1; i < entry.value.length; i++) {
+          await _isar.purchaseBatchEntitys.delete(entry.value[i].id);
+          removedCount++;
+        }
+      }
+    });
+    
+    if (removedCount > 0) {
+      debugPrint('[BatchOffline] Deduplication removed $removedCount duplicate batches');
+      notifyListeners();
+    }
+    
+    return removedCount;
   }
 
   /// Clear all local batches (for testing or logout)

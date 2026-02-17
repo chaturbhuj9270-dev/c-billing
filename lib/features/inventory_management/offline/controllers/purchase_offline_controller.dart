@@ -306,11 +306,35 @@ class PurchaseOfflineController extends ChangeNotifier {
         final serverId = data['id'] as String?;
         if (serverId == null) continue;
 
-        // Check if we already have this purchase
-        final existing = await _isar.purchaseEntitys
+        // 1. Check if we already have this purchase by serverId
+        var existing = await _isar.purchaseEntitys
             .filter()
             .serverIdEqualTo(serverId)
             .findFirst();
+
+        // 2. If not found by serverId, check by business key to prevent duplicates
+        if (existing == null) {
+          final productId = data['productId'] as String? ?? '';
+          final quantity = (data['quantity'] as num?)?.toInt() ?? 0;
+          final purchasePrice = (data['purchasePrice'] as num?)?.toDouble() ?? 0.0;
+          
+          if (productId.isNotEmpty) {
+            existing = await _isar.purchaseEntitys
+                .filter()
+                .productIdEqualTo(productId)
+                .quantityEqualTo(quantity)
+                .purchasePriceEqualTo(purchasePrice)
+                .findFirst();
+            
+            if (existing != null && existing.serverId == null) {
+              // Link local record with server ID and mark synced
+              existing.serverId = serverId;
+              existing.syncStatus = PurchaseSyncStatus.synced;
+              await _isar.purchaseEntitys.put(existing);
+              continue;
+            }
+          }
+        }
 
         if (existing == null) {
           // New purchase from server

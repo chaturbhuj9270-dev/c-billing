@@ -64,6 +64,9 @@ class PurchaseBatchSyncService extends ChangeNotifier {
   
   /// Mutex to prevent concurrent sync operations
   bool _isSyncing = false;
+  
+  /// Mutex to prevent concurrent full sync operations
+  bool _isFullSyncing = false;
 
   PurchaseBatchSyncService._({
     PurchaseBatchOfflineController? offlineController,
@@ -128,7 +131,15 @@ class PurchaseBatchSyncService extends ChangeNotifier {
       final localBatches = await _offlineController.getAllBatches(includeConsumed: true);
       debugPrint('[PurchaseBatchSync] Initial sync check: ${localBatches.length} local batches');
       
-      // First sync any pending local changes
+      // First, deduplicate any existing local data
+      if (localBatches.length > 1) {
+        final removedDupes = await _offlineController.deduplicateBatches();
+        if (removedDupes > 0) {
+          debugPrint('[PurchaseBatchSync] Initial dedup removed $removedDupes duplicates');
+        }
+      }
+      
+      // Sync any pending local changes
       await syncNow();
       
       // Then check if we need to download from server
@@ -297,18 +308,55 @@ class PurchaseBatchSyncService extends ChangeNotifier {
 
   /// Force a full sync (re-download all from server)
   Future<PurchaseBatchSyncResult> forceFullSync() async {
-    // First upload any local changes
-    await syncNow();
+    // Prevent concurrent full syncs
+    if (_isFullSyncing) {
+      debugPrint('[PurchaseBatchSync] Full sync already in progress, skipping...');
+      return PurchaseBatchSyncResult(
+        success: false,
+        errorMessage: 'Full sync already in progress',
+        duration: Duration.zero,
+      );
+    }
     
-    // Then download all from server
-    final serverBatches = await _apiService.getBatches();
-    await _offlineController.importFromServer(serverBatches);
+    if (!_apiService.isAuthenticated) {
+      return PurchaseBatchSyncResult(
+        success: false,
+        errorMessage: 'User not authenticated',
+        duration: Duration.zero,
+      );
+    }
     
-    return PurchaseBatchSyncResult(
-      success: true,
-      downloadedCount: serverBatches.length,
-      duration: Duration.zero,
-    );
+    _isFullSyncing = true;
+    
+    try {
+      // First upload any local changes
+      await syncNow();
+      
+      // Then download all from server
+      final serverBatches = await _apiService.getBatches();
+      await _offlineController.importFromServer(serverBatches);
+      
+      // Run deduplication to clean up any existing duplicates
+      final removedDupes = await _offlineController.deduplicateBatches();
+      if (removedDupes > 0) {
+        debugPrint('[PurchaseBatchSync] Removed $removedDupes duplicates during full sync');
+      }
+      
+      return PurchaseBatchSyncResult(
+        success: true,
+        downloadedCount: serverBatches.length,
+        duration: Duration.zero,
+      );
+    } catch (e) {
+      debugPrint('[PurchaseBatchSync] Full sync failed: $e');
+      return PurchaseBatchSyncResult(
+        success: false,
+        errorMessage: e.toString(),
+        duration: Duration.zero,
+      );
+    } finally {
+      _isFullSyncing = false;
+    }
   }
 
   /// Get count of pending syncs

@@ -3,13 +3,12 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:isar_community/isar.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:c_billing/core/services/language_service.dart';
 import 'package:c_billing/core/services/dashboard_refresh_service.dart';
 import 'package:c_billing/core/services/isar_service.dart';
 import 'package:c_billing/core/localization/app_localizations.dart';
 import '../../offline/entities/purchase_batch_entity.dart';
+import '../../offline/controllers/purchase_batch_offline_controller.dart';
 import '../../data/services/purchase_sync_service.dart';
 import '../../data/services/purchase_batch_sync_service.dart';
 import '../../../supplier/offline/controllers/supplier_offline_controller.dart';
@@ -120,10 +119,11 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
       
       debugPrint('[EnhancedPurchase] Isar found ${batches.length} batches');
       
-      // If Isar is empty, try loading from Firestore
+      // If Isar is empty, let the sync service handle downloading from server
+      // Do NOT do manual Firestore import here — PurchaseBatchSyncService handles it
       if (batches.isEmpty) {
-        debugPrint('[EnhancedPurchase] Isar empty, loading from Firestore...');
-        await _syncFromFirestore();
+        debugPrint('[EnhancedPurchase] Isar empty, requesting sync service to download...');
+        await PurchaseBatchSyncService.instance.forceFullSync();
         
         // Re-query Isar after sync
         batches = await isar.purchaseBatchEntitys
@@ -133,7 +133,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
             .sortByPurchaseDateDesc()
             .findAll();
         
-        debugPrint('[EnhancedPurchase] After Firestore sync: ${batches.length} batches');
+        debugPrint('[EnhancedPurchase] After sync service download: ${batches.length} batches');
       }
       
       if (mounted) {
@@ -153,93 +153,6 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
         setState(() => _isLoading = false);
       }
     }
-  }
-
-  /// Sync purchase batches from Firestore to Isar
-  Future<void> _syncFromFirestore() async {
-    try {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user == null) {
-        debugPrint('[EnhancedPurchase] No user logged in');
-        return;
-      }
-      
-      final firestore = FirebaseFirestore.instance;
-      final snapshot = await firestore
-          .collection('users')
-          .doc(user.uid)
-          .collection('purchaseBatches')
-          .get();
-      
-      debugPrint('[EnhancedPurchase] Firestore found ${snapshot.docs.length} batches');
-      
-      if (snapshot.docs.isEmpty) return;
-      
-      final isar = IsarService.instance.isar;
-      
-      await isar.writeTxn(() async {
-        for (final doc in snapshot.docs) {
-          final data = doc.data();
-          
-          // Check if already exists
-          final existing = await isar.purchaseBatchEntitys
-              .filter()
-              .serverIdEqualTo(doc.id)
-              .findFirst();
-          
-          if (existing != null) continue;
-          
-          // Create new batch entity
-          final batch = PurchaseBatchEntity(
-            serverId: doc.id,
-            productId: data['productId'] ?? '',
-            productName: data['productName'] ?? '',
-            companyName: data['companyName'] ?? '',
-            modelName: data['modelName'] ?? '',
-            category: data['category'] ?? '',
-            productUniqueKey: _generateProductKey(
-              data['productName'] ?? '',
-              data['companyName'] ?? '',
-              data['modelName'] ?? '',
-            ),
-            purchasePrice: (data['purchasePrice'] ?? 0).toDouble(),
-            sellingPrice: (data['sellingPrice'] ?? data['salesPrice'] ?? 0).toDouble(),
-            quantityPurchased: data['quantityPurchased'] ?? data['quantity'] ?? 0,
-            quantityRemaining: data['quantityRemaining'] ?? data['quantityPurchased'] ?? data['quantity'] ?? 0,
-            purchaseDate: _parseDate(data['purchaseDate']) ?? DateTime.now(),
-            supplierId: data['supplierId'],
-            supplierName: data['supplierName'],
-            unit: data['unit'] ?? 'pcs',
-            expiryDate: _parseDate(data['expiryDate']),
-            productionDate: _parseDate(data['productionDate']),
-            warrantyMonths: data['warrantyMonths'],
-            notes: data['notes'],
-            isConsumed: data['isConsumed'] ?? false,
-            syncStatus: BatchSyncStatus.synced,
-            createdAt: _parseDate(data['createdAt']) ?? DateTime.now(),
-            updatedAt: _parseDate(data['updatedAt']) ?? DateTime.now(),
-          );
-          
-          await isar.purchaseBatchEntitys.put(batch);
-        }
-      });
-      
-      debugPrint('[EnhancedPurchase] Synced batches to Isar');
-    } catch (e) {
-      debugPrint('[EnhancedPurchase] Firestore sync error: $e');
-    }
-  }
-
-  String _generateProductKey(String name, String company, String model) {
-    return '${name.toLowerCase().trim()}_${company.toLowerCase().trim()}_${model.toLowerCase().trim()}';
-  }
-
-  DateTime? _parseDate(dynamic value) {
-    if (value == null) return null;
-    if (value is Timestamp) return value.toDate();
-    if (value is DateTime) return value;
-    if (value is String) return DateTime.tryParse(value);
-    return null;
   }
 
   /// Setup real-time purchase stream from Isar (for updates after initial load)
@@ -327,23 +240,11 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
         purchase: purchase,
         onEdit: () {
           Navigator.pop(context);
-          // TODO: Navigate to edit purchase if supported
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Edit feature coming soon'),
-              duration: Duration(seconds: 2),
-            ),
-          );
+          _showEditPurchaseDialog(purchase);
         },
         onDelete: () async {
           Navigator.pop(context);
-          // TODO: Implement delete if supported
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Delete feature coming soon'),
-              duration: Duration(seconds: 2),
-            ),
-          );
+          _confirmDeletePurchase(purchase);
         },
       ),
     );
@@ -404,12 +305,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                     label: 'Edit',
                     onTap: () {
                       Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Edit feature coming soon'),
-                          duration: Duration(seconds: 2),
-                        ),
-                      );
+                      _showEditPurchaseDialog(purchase);
                     },
                   ),
                   _buildContextMenuItem(
@@ -418,12 +314,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                     isDestructive: true,
                     onTap: () {
                       Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Delete feature coming soon'),
-                          duration: Duration(seconds: 2),
-                        ),
-                      );
+                      _confirmDeletePurchase(purchase);
                     },
                   ),
                   const SizedBox(height: 16),
@@ -461,6 +352,720 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                 fontWeight: FontWeight.w500,
                 fontSize: 15,
                 color: isDestructive ? Colors.red : Colors.grey[800],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Show edit purchase dialog
+  void _showEditPurchaseDialog(PurchaseBatchEntity purchase) {
+    final purchasePriceController = TextEditingController(
+      text: purchase.purchasePrice.toStringAsFixed(2),
+    );
+    final sellingPriceController = TextEditingController(
+      text: purchase.sellingPrice.toStringAsFixed(2),
+    );
+    final quantityController = TextEditingController(
+      text: purchase.quantityPurchased.toString(),
+    );
+    final unitController = TextEditingController(text: purchase.unit);
+    final notesController = TextEditingController(text: purchase.notes ?? '');
+    final warrantyController = TextEditingController(
+      text: (purchase.warrantyMonths ?? 0) > 0
+          ? purchase.warrantyMonths.toString()
+          : '',
+    );
+
+    DateTime? selectedPurchaseDate = purchase.purchaseDate;
+    DateTime? selectedExpiryDate = purchase.expiryDate;
+    DateTime? selectedProductionDate = purchase.productionDate;
+    String? selectedSupplierId = purchase.supplierId;
+    String? selectedSupplierName = purchase.supplierName;
+    final originalQty = purchase.quantityPurchased;
+    final consumed = originalQty - purchase.quantityRemaining;
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: AlertDialog(
+            backgroundColor: Colors.white.withOpacity(0.95),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+              side: BorderSide(
+                color: Colors.white.withOpacity(0.3),
+                width: 1.5,
+              ),
+            ),
+            title: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.edit_rounded,
+                    color: Color(0xFF1B4D3E),
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Edit Purchase',
+                        style: TextStyle(
+                          fontFamily: 'Literata',
+                          fontWeight: FontWeight.w700,
+                          fontSize: 16,
+                          color: Color(0xFF1B4D3E),
+                        ),
+                      ),
+                      Text(
+                        purchase.productName,
+                        style: TextStyle(
+                          fontFamily: 'Literata',
+                          fontWeight: FontWeight.w500,
+                          fontSize: 12,
+                          color: Colors.grey[600],
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Purchase Price
+                  _buildEditField(
+                    controller: purchasePriceController,
+                    label: _localizations.purchasePrice,
+                    icon: Icons.currency_rupee_rounded,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Selling Price
+                  _buildEditField(
+                    controller: sellingPriceController,
+                    label: _localizations.salesPrice,
+                    icon: Icons.sell_rounded,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Quantity
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildEditField(
+                          controller: quantityController,
+                          label: '${_localizations.quantity} (min: $consumed sold)',
+                          icon: Icons.inventory_2_rounded,
+                          keyboardType: TextInputType.number,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildEditField(
+                          controller: unitController,
+                          label: 'Unit',
+                          icon: Icons.straighten_rounded,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Supplier selector
+                  InkWell(
+                    onTap: () async {
+                      final supplier = await _showSupplierPickerDialog(context);
+                      if (supplier != null) {
+                        setDialogState(() {
+                          selectedSupplierId = supplier['id'] as String?;
+                          selectedSupplierName = supplier['fullName'] as String?;
+                        });
+                      }
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey[300]!),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.person_rounded, size: 20, color: Colors.grey[600]),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              selectedSupplierName ?? _localizations.selectSupplier,
+                              style: TextStyle(
+                                fontFamily: 'Literata',
+                                fontSize: 14,
+                                color: selectedSupplierName != null
+                                    ? Colors.black87
+                                    : Colors.grey[500],
+                              ),
+                            ),
+                          ),
+                          if (selectedSupplierName != null)
+                            GestureDetector(
+                              onTap: () {
+                                setDialogState(() {
+                                  selectedSupplierId = null;
+                                  selectedSupplierName = null;
+                                });
+                              },
+                              child: Icon(Icons.close, size: 18, color: Colors.grey[500]),
+                            ),
+                          if (selectedSupplierName == null)
+                            Icon(Icons.arrow_drop_down, color: Colors.grey[500]),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Purchase Date
+                  InkWell(
+                    onTap: () async {
+                      final date = await showDatePicker(
+                        context: context,
+                        initialDate: selectedPurchaseDate ?? DateTime.now(),
+                        firstDate: DateTime(2020),
+                        lastDate: DateTime.now().add(const Duration(days: 1)),
+                      );
+                      if (date != null) {
+                        setDialogState(() => selectedPurchaseDate = date);
+                      }
+                    },
+                    child: _buildDateField(
+                      label: 'Purchase Date',
+                      date: selectedPurchaseDate,
+                      icon: Icons.calendar_today_rounded,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Production Date & Expiry Date
+                  Row(
+                    children: [
+                      Expanded(
+                        child: InkWell(
+                          onTap: () async {
+                            final date = await showDatePicker(
+                              context: context,
+                              initialDate: selectedProductionDate ?? DateTime.now(),
+                              firstDate: DateTime(2020),
+                              lastDate: DateTime.now().add(const Duration(days: 1)),
+                            );
+                            if (date != null) {
+                              setDialogState(() => selectedProductionDate = date);
+                            }
+                          },
+                          child: _buildDateField(
+                            label: 'Mfg Date',
+                            date: selectedProductionDate,
+                            icon: Icons.factory_rounded,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: InkWell(
+                          onTap: () async {
+                            final date = await showDatePicker(
+                              context: context,
+                              initialDate: selectedExpiryDate ?? DateTime.now().add(const Duration(days: 365)),
+                              firstDate: DateTime.now(),
+                              lastDate: DateTime(2035),
+                            );
+                            if (date != null) {
+                              setDialogState(() => selectedExpiryDate = date);
+                            }
+                          },
+                          child: _buildDateField(
+                            label: 'Expiry',
+                            date: selectedExpiryDate,
+                            icon: Icons.event_busy_rounded,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Warranty
+                  _buildEditField(
+                    controller: warrantyController,
+                    label: 'Warranty (months)',
+                    icon: Icons.verified_user_rounded,
+                    keyboardType: TextInputType.number,
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Notes
+                  _buildEditField(
+                    controller: notesController,
+                    label: 'Notes',
+                    icon: Icons.notes_rounded,
+                    maxLines: 3,
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text(
+                  _localizations.cancel,
+                  style: const TextStyle(
+                    fontFamily: 'Literata',
+                    color: Colors.grey,
+                  ),
+                ),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  try {
+                    final newPurchasePrice =
+                        double.tryParse(purchasePriceController.text) ??
+                            purchase.purchasePrice;
+                    final newSellingPrice =
+                        double.tryParse(sellingPriceController.text) ??
+                            purchase.sellingPrice;
+                    var newQuantity =
+                        int.tryParse(quantityController.text) ??
+                            purchase.quantityPurchased;
+                    final newUnit = unitController.text.trim().isNotEmpty
+                        ? unitController.text.trim()
+                        : purchase.unit;
+                    final newNotes = notesController.text.trim().isNotEmpty
+                        ? notesController.text.trim()
+                        : null;
+                    final newWarranty =
+                        int.tryParse(warrantyController.text);
+
+                    // Validate: quantity cannot be less than already consumed
+                    if (newQuantity < consumed) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            'Quantity cannot be less than $consumed (already sold)',
+                            style: const TextStyle(fontFamily: 'Literata'),
+                          ),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                      return;
+                    }
+
+                    // Calculate new remaining: newQuantity - consumed
+                    final newRemaining = newQuantity - consumed;
+
+                    final controller = PurchaseBatchOfflineController.instance;
+                    await controller.updateBatch(
+                      id: purchase.id,
+                      purchasePrice: newPurchasePrice,
+                      sellingPrice: newSellingPrice,
+                      quantityPurchased: newQuantity,
+                      quantityRemaining: newRemaining,
+                      unit: newUnit,
+                      notes: newNotes,
+                      supplierId: selectedSupplierId,
+                      supplierName: selectedSupplierName,
+                      purchaseDate: selectedPurchaseDate,
+                      expiryDate: selectedExpiryDate,
+                      productionDate: selectedProductionDate,
+                      warrantyMonths: newWarranty,
+                    );
+
+                    // Notify dashboard
+                    DashboardRefreshService.instance
+                        .notifyDataChanged(DataChangeType.purchase);
+
+                    // Trigger background sync
+                    PurchaseBatchSyncService.instance.syncNow();
+
+                    if (mounted) {
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            'Purchase updated successfully',
+                            style: TextStyle(fontFamily: 'Literata'),
+                          ),
+                          backgroundColor: Color(0xFF1B4D3E),
+                        ),
+                      );
+                    }
+                  } catch (e) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          'Error updating purchase: $e',
+                          style: const TextStyle(fontFamily: 'Literata'),
+                        ),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF1B4D3E),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text(
+                  'Update',
+                  style: TextStyle(fontFamily: 'Literata', color: Colors.white),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Build a text field for the edit dialog
+  Widget _buildEditField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    TextInputType? keyboardType,
+    int maxLines = 1,
+  }) {
+    return TextField(
+      controller: controller,
+      keyboardType: keyboardType,
+      maxLines: maxLines,
+      style: const TextStyle(fontFamily: 'Literata', fontSize: 14),
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: TextStyle(
+          fontFamily: 'Literata',
+          fontSize: 13,
+          color: Colors.grey[600],
+        ),
+        prefixIcon: Icon(icon, size: 20, color: const Color(0xFF1B4D3E)),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey[300]!),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey[300]!),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Color(0xFF1B4D3E), width: 1.5),
+        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+        isDense: true,
+      ),
+    );
+  }
+
+  /// Build a date display field for the edit dialog
+  Widget _buildDateField({
+    required String label,
+    required DateTime? date,
+    required IconData icon,
+  }) {
+    final dateFormat = DateFormat('dd MMM yyyy');
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey[300]!),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: const Color(0xFF1B4D3E)),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontFamily: 'Literata',
+                    fontSize: 10,
+                    color: Colors.grey[600],
+                  ),
+                ),
+                Text(
+                  date != null ? dateFormat.format(date) : 'Not set',
+                  style: TextStyle(
+                    fontFamily: 'Literata',
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: date != null ? Colors.black87 : Colors.grey[400],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Show supplier picker dialog
+  Future<Map<String, dynamic>?> _showSupplierPickerDialog(BuildContext parentContext) async {
+    return await showDialog<Map<String, dynamic>>(
+      context: parentContext,
+      builder: (context) {
+        var filtered = _suppliers.toList();
+        return StatefulBuilder(
+          builder: (context, setPickerState) => AlertDialog(
+            backgroundColor: Colors.white,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            title: Text(
+              _localizations.selectSupplier,
+              style: const TextStyle(
+                fontFamily: 'Literata',
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF1B4D3E),
+                fontSize: 16,
+              ),
+            ),
+            content: SizedBox(
+              width: double.maxFinite,
+              height: 300,
+              child: Column(
+                children: [
+                  TextField(
+                    decoration: InputDecoration(
+                      hintText: 'Search supplier...',
+                      hintStyle: const TextStyle(fontFamily: 'Literata', fontSize: 13),
+                      prefixIcon: const Icon(Icons.search, size: 20),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                      isDense: true,
+                    ),
+                    style: const TextStyle(fontFamily: 'Literata', fontSize: 13),
+                    onChanged: (q) {
+                      setPickerState(() {
+                        filtered = _suppliers.where((s) =>
+                          (s['fullName'] as String).toLowerCase().contains(q.toLowerCase())
+                        ).toList();
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  Expanded(
+                    child: filtered.isEmpty
+                        ? Center(
+                            child: Text(
+                              'No suppliers found',
+                              style: TextStyle(
+                                fontFamily: 'Literata',
+                                color: Colors.grey[500],
+                                fontSize: 13,
+                              ),
+                            ),
+                          )
+                        : ListView.builder(
+                            itemCount: filtered.length,
+                            itemBuilder: (context, index) {
+                              final supplier = filtered[index];
+                              return ListTile(
+                                dense: true,
+                                title: Text(
+                                  supplier['fullName'] as String,
+                                  style: const TextStyle(
+                                    fontFamily: 'Literata',
+                                    fontSize: 14,
+                                  ),
+                                ),
+                                subtitle: supplier['contact'] != null
+                                    ? Text(
+                                        supplier['contact'] as String,
+                                        style: TextStyle(
+                                          fontFamily: 'Literata',
+                                          fontSize: 12,
+                                          color: Colors.grey[500],
+                                        ),
+                                      )
+                                    : null,
+                                onTap: () => Navigator.pop(context, supplier),
+                              );
+                            },
+                          ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  /// Confirm and delete a purchase batch
+  void _confirmDeletePurchase(PurchaseBatchEntity purchase) {
+    showDialog(
+      context: context,
+      builder: (context) => BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: AlertDialog(
+          backgroundColor: Colors.white.withOpacity(0.95),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: const Text(
+            'Delete Purchase',
+            style: TextStyle(
+              fontFamily: 'Literata',
+              fontWeight: FontWeight.w700,
+              color: Colors.red,
+              fontSize: 16,
+            ),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Are you sure you want to delete this purchase?',
+                style: TextStyle(
+                  fontFamily: 'Literata',
+                  fontSize: 14,
+                  color: Colors.grey[700],
+                ),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.red.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.red.withOpacity(0.2)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      purchase.productName,
+                      style: const TextStyle(
+                        fontFamily: 'Literata',
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Qty: ${purchase.quantityPurchased} ${purchase.unit} • ₹${purchase.purchasePrice.toStringAsFixed(2)}/unit',
+                      style: TextStyle(
+                        fontFamily: 'Literata',
+                        fontSize: 12,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                    if (purchase.quantityRemaining < purchase.quantityPurchased) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        '⚠ ${purchase.quantityPurchased - purchase.quantityRemaining} units already sold from this batch',
+                        style: const TextStyle(
+                          fontFamily: 'Literata',
+                          fontSize: 11,
+                          color: Colors.orange,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'This action cannot be undone. Stock will be adjusted accordingly.',
+                style: TextStyle(
+                  fontFamily: 'Literata',
+                  fontSize: 12,
+                  color: Colors.grey[500],
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(
+                _localizations.cancel,
+                style: const TextStyle(
+                  fontFamily: 'Literata',
+                  color: Colors.grey,
+                ),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                try {
+                  final controller = PurchaseBatchOfflineController.instance;
+                  await controller.deleteBatch(purchase.id);
+
+                  // Update product stock
+                  DashboardRefreshService.instance
+                      .notifyDataChanged(DataChangeType.purchase);
+                  DashboardRefreshService.instance
+                      .notifyDataChanged(DataChangeType.product);
+
+                  // Trigger background sync
+                  PurchaseBatchSyncService.instance.syncNow();
+
+                  if (mounted) {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          'Purchase deleted successfully',
+                          style: TextStyle(fontFamily: 'Literata'),
+                        ),
+                        backgroundColor: Color(0xFF1B4D3E),
+                      ),
+                    );
+                  }
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        'Error deleting purchase: $e',
+                        style: const TextStyle(fontFamily: 'Literata'),
+                      ),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: const Text(
+                'Delete',
+                style: TextStyle(fontFamily: 'Literata', color: Colors.white),
               ),
             ),
           ],
