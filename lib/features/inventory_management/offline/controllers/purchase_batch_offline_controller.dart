@@ -461,6 +461,20 @@ class PurchaseBatchOfflineController extends ChangeNotifier {
     });
     
     debugPrint('[BatchOffline] Batch marked as synced: $id -> $serverId');
+    notifyListeners();
+  }
+
+  /// Permanently delete batch from local DB (after server deletion)
+  Future<bool> permanentlyDelete(Id id) async {
+    final result = await _isar.writeTxn(() async {
+      return await _isar.purchaseBatchEntitys.delete(id);
+    });
+
+    if (result) {
+      debugPrint('[BatchOffline] Batch permanently deleted: $id');
+      notifyListeners();
+    }
+    return result;
   }
 
   /// Import batches from server

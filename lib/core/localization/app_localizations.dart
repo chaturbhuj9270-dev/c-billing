@@ -2747,6 +2747,39 @@ class AppLocalizations {
     }
   }
 
+  String get minStockLevel {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.minStockLevel;
+      case 'Marathi':
+        return MarathiLocalization.minStockLevel;
+      default:
+        return EnglishLocalization.minStockLevel;
+    }
+  }
+
+  String get description {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.description;
+      case 'Marathi':
+        return MarathiLocalization.description;
+      default:
+        return EnglishLocalization.description;
+    }
+  }
+
+  String get requiredWhenGstApplied {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.requiredWhenGstApplied;
+      case 'Marathi':
+        return MarathiLocalization.requiredWhenGstApplied;
+      default:
+        return EnglishLocalization.requiredWhenGstApplied;
+    }
+  }
+
   String get filterProducts {
     switch (languageCode) {
       case 'Hindi':

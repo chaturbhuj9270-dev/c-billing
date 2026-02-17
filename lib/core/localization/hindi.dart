@@ -306,6 +306,9 @@ class HindiLocalization {
   static const String salesPriceReadOnly = 'बिक्री मूल्य (केवल पढ़ने के लिए)';
   static const String currentStockReadOnly = 'मौजूदा स्टॉक (केवल पढ़ने के लिए)';
   static const String updatedFromPurchasePage = 'खरीद पृष्ठ से अपडेट किया गया';
+  static const String minStockLevel = 'न्यूनतम स्टॉक स्तर';
+  static const String description = 'विवरण';
+  static const String requiredWhenGstApplied = 'GST लागू होने पर आवश्यक';
   static const String filterProducts = 'उत्पाद फिल्टर करें';
   static const String selectCategory = 'श्रेणी चुनें';
   static const String priceRange = 'मूल्य सीमा';

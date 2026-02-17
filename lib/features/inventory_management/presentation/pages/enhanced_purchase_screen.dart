@@ -11,6 +11,7 @@ import 'package:c_billing/core/services/isar_service.dart';
 import 'package:c_billing/core/localization/app_localizations.dart';
 import '../../offline/entities/purchase_batch_entity.dart';
 import '../../data/services/purchase_sync_service.dart';
+import '../../data/services/purchase_batch_sync_service.dart';
 import '../../../supplier/offline/controllers/supplier_offline_controller.dart';
 import '../../../supplier/offline/entities/supplier_entity.dart';
 import '../../../../common_widgets/action_menu.dart';
@@ -81,8 +82,9 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
       if (mounted) _animController.forward();
     });
 
-    // Trigger background sync
+    // Trigger background sync for both PurchaseEntity and PurchaseBatchEntity
     PurchaseSyncService.instance.syncNow();
+    PurchaseBatchSyncService.instance.syncNow();
   }
 
   void _onLanguageChanged() {
@@ -534,6 +536,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                             supplierFilter: _supplierFilter,
                             onRefresh: () {
                               PurchaseSyncService.instance.syncNow();
+                              PurchaseBatchSyncService.instance.syncNow();
                             },
                             onPurchaseTap: _showPurchaseDetails,
                             onPurchaseLongPress: _showPurchaseContextMenu,

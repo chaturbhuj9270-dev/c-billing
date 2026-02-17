@@ -14,6 +14,7 @@ import '../../data/repositories/firebase_purchase_repository.dart';
 import '../../data/datasources/purchase_cache_datasource.dart';
 import '../../domain/entities/product.dart';
 import '../../data/services/purchase_sync_service.dart';
+import '../../data/services/purchase_batch_sync_service.dart';
 import '../../../product/offline/controllers/product_offline_controller.dart';
 import '../../../product/data/services/product_sync_service.dart';
 import '../../../supplier/offline/controllers/supplier_offline_controller.dart';
@@ -1591,8 +1592,9 @@ class _PurchasePageState extends State<PurchasePage>
         }
       }
       
-      // Trigger background sync
+      // Trigger background sync for both PurchaseEntity and PurchaseBatchEntity
       PurchaseSyncService.instance.syncNow();
+      PurchaseBatchSyncService.instance.syncNow();
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

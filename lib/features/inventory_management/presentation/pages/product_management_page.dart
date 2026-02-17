@@ -530,10 +530,12 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
   void _showEditProductDialog(Product product) {
     final nameController = TextEditingController(text: product.name);
     final categoryController = TextEditingController(text: product.category);
+    final companyController = TextEditingController(text: product.companyName);
+    final purchasePriceController = TextEditingController(text: product.purchasePrice.toString());
+    final salesPriceController = TextEditingController(text: product.salesPrice.toString());
     final cgstEditController = TextEditingController(text: product.cgstPercent.toString());
     final sgstEditController = TextEditingController(text: product.sgstPercent.toString());
     final hsnEditController = TextEditingController(text: product.hsnCode ?? '');
-    String? hsnError;
 
     showDialog(
       context: context,
@@ -560,10 +562,12 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                // Product Name
                 TextField(
                   controller: nameController,
                   decoration: InputDecoration(
                     labelText: _localizations.productName,
+                    prefixIcon: const Icon(Icons.inventory_2_outlined, color: Color(0xFF1B4D3E)),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -577,10 +581,31 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                   ),
                 ),
                 const SizedBox(height: 12),
+                // Company Name
+                TextField(
+                  controller: companyController,
+                  decoration: InputDecoration(
+                    labelText: _localizations.companyName,
+                    prefixIcon: const Icon(Icons.business_outlined, color: Color(0xFF1B4D3E)),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(
+                        color: Color(0xFF1B4D3E),
+                        width: 2,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                // Category
                 TextField(
                   controller: categoryController,
                   decoration: InputDecoration(
                     labelText: _localizations.category,
+                    prefixIcon: const Icon(Icons.category_outlined, color: Color(0xFF1B4D3E)),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -594,6 +619,54 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                   ),
                 ),
                 const SizedBox(height: 12),
+                // Purchase Price & Sales Price Row
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: purchasePriceController,
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        decoration: InputDecoration(
+                          labelText: _localizations.purchasePrice,
+                          prefixText: '₹ ',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(
+                              color: Color(0xFF1B4D3E),
+                              width: 2,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: TextField(
+                        controller: salesPriceController,
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        decoration: InputDecoration(
+                          labelText: _localizations.salesPrice,
+                          prefixText: '₹ ',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(
+                              color: Color(0xFF1B4D3E),
+                              width: 2,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                // CGST & SGST Row
                 Row(
                   children: [
                     Expanded(
@@ -638,45 +711,21 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                   ],
                 ),
                 const SizedBox(height: 12),
-                // Purchase Price - Read Only (Updated from Purchase Page)
+                // HSN Code
                 TextField(
-                  controller: TextEditingController(
-                    text: product.purchasePrice.toString(),
-                  ),
-                  enabled: false,
+                  controller: hsnEditController,
                   decoration: InputDecoration(
-                    labelText: _localizations.purchasePriceReadOnly,
-                    hintText: _localizations.updatedFromPurchasePage,
+                    labelText: 'HSN Code',
+                    hintText: _localizations.requiredWhenGstApplied,
+                    prefixIcon: const Icon(Icons.qr_code_outlined, color: Color(0xFF1B4D3E)),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    disabledBorder: OutlineInputBorder(
+                    focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(
-                        color: Colors.grey[300]!,
-                        width: 1,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                // Sales Price - Read Only (Updated from Purchase Page)
-                TextField(
-                  controller: TextEditingController(
-                    text: product.salesPrice.toString(),
-                  ),
-                  enabled: false,
-                  decoration: InputDecoration(
-                    labelText: _localizations.salesPriceReadOnly,
-                    hintText: _localizations.updatedFromPurchasePage,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    disabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(
-                        color: Colors.grey[300]!,
-                        width: 1,
+                      borderSide: const BorderSide(
+                        color: Color(0xFF1B4D3E),
+                        width: 2,
                       ),
                     ),
                   ),
@@ -691,6 +740,7 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                   decoration: InputDecoration(
                     labelText: _localizations.currentStockReadOnly,
                     hintText: _localizations.updatedFromPurchasePage,
+                    prefixIcon: const Icon(Icons.inventory_outlined, color: Colors.grey),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -720,10 +770,25 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
             ElevatedButton(
               onPressed: () async {
                 try {
-                  // Validate HSN: required if CGST or SGST > 0
+                  // Validate inputs
+                  final name = nameController.text.trim();
+                  if (name.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Product name is required', style: TextStyle(fontFamily: 'Literata')),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                    return;
+                  }
+
+                  final purchasePrice = double.tryParse(purchasePriceController.text) ?? 0.0;
+                  final salesPrice = double.tryParse(salesPriceController.text) ?? 0.0;
                   final cgstVal = double.tryParse(cgstEditController.text) ?? 0.0;
                   final sgstVal = double.tryParse(sgstEditController.text) ?? 0.0;
                   final hsnVal = hsnEditController.text.trim();
+                  
+                  // Validate HSN: required if CGST or SGST > 0
                   if ((cgstVal > 0 || sgstVal > 0) && hsnVal.isEmpty) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
@@ -743,8 +808,11 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                   if (existing != null) {
                     await offlineController.updateProduct(
                       id: existing.id,
-                      name: nameController.text,
-                      category: categoryController.text,
+                      name: name,
+                      companyName: companyController.text.trim(),
+                      category: categoryController.text.trim(),
+                      purchasePrice: purchasePrice,
+                      salesPrice: salesPrice,
                       cgstPercent: cgstVal,
                       sgstPercent: sgstVal,
                       hsnCode: hsnVal.isNotEmpty ? hsnVal : null,
@@ -752,8 +820,11 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                   } else {
                     // Fallback to Firebase direct update if not in Isar
                     await _inventoryService.updateProduct(product.copyWith(
-                      name: nameController.text,
-                      category: categoryController.text,
+                      name: name,
+                      companyName: companyController.text.trim(),
+                      category: categoryController.text.trim(),
+                      purchasePrice: purchasePrice,
+                      salesPrice: salesPrice,
                       updatedAt: DateTime.now(),
                     ));
                   }

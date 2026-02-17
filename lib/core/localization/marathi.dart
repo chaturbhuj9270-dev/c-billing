@@ -308,6 +308,9 @@ class MarathiLocalization {
   static const String salesPriceReadOnly = 'विक्री किंमत (फक्त वाचण्यासाठी)';
   static const String currentStockReadOnly = 'सध्याचा स्टॉक (फक्त वाचण्यासाठी)';
   static const String updatedFromPurchasePage = 'खरेदी पानावरून अपडेट केले';
+  static const String minStockLevel = 'किमान स्टॉक पातळी';
+  static const String description = 'वर्णन';
+  static const String requiredWhenGstApplied = 'GST लागू केल्यावर आवश्यक';
   static const String filterProducts = 'उत्पादने फिल्टर करा';
   static const String selectCategory = 'श्रेणी निवडा';
   static const String priceRange = 'किंमत श्रेणी';

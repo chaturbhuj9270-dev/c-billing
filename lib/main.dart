@@ -13,6 +13,7 @@ import 'features/product/data/services/product_sync_service.dart';
 import 'features/supplier/data/services/supplier_sync_service.dart';
 import 'features/company/data/services/company_sync_service.dart';
 import 'features/inventory_management/data/services/purchase_sync_service.dart';
+import 'features/inventory_management/data/services/purchase_batch_sync_service.dart';
 import 'features/billing/data/services/bill_sync_service.dart';
 import 'firebase_options.dart';
 
@@ -77,6 +78,7 @@ void initializeSyncServices() {
   SupplierSyncService.instance.initialize();
   CompanySyncService.instance.initialize();
   PurchaseSyncService.instance.initialize();
+  PurchaseBatchSyncService.instance.initialize();
   BillSyncService.instance.initialize();
 }
 

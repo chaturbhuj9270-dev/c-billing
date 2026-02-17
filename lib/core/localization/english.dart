@@ -305,6 +305,9 @@ class EnglishLocalization {
   static const String salesPriceReadOnly = 'Sales Price (Read-Only)';
   static const String currentStockReadOnly = 'Current Stock (Read-Only)';
   static const String updatedFromPurchasePage = 'Updated from Purchase Page';
+  static const String minStockLevel = 'Minimum Stock Level';
+  static const String description = 'Description';
+  static const String requiredWhenGstApplied = 'Required when GST is applied';
   static const String filterProducts = 'Filter Products';
   static const String selectCategory = 'Select Category';
   static const String priceRange = 'Price Range';
