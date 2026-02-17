@@ -151,12 +151,16 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
   }
 
   Widget _buildSupplierDropdown() {
-    final selectedSupplier = widget.selectedSupplierId != null
-        ? widget.suppliers.firstWhere(
-            (s) => s['id'] == widget.selectedSupplierId,
-            orElse: () => {},
-          )
-        : null;
+    Map<String, dynamic>? selectedSupplier;
+    if (widget.selectedSupplierId != null) {
+      try {
+        selectedSupplier = widget.suppliers.firstWhere(
+          (s) => s['id'] == widget.selectedSupplierId,
+        );
+      } catch (_) {
+        selectedSupplier = null;
+      }
+    }
     
     final displayText = selectedSupplier != null && selectedSupplier.isNotEmpty
         ? (selectedSupplier['fullName'] ?? selectedSupplier['firstName'] ?? 'Supplier')
@@ -252,12 +256,14 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
   }
 
   String _getSupplierName(String supplierId) {
-    final supplier = widget.suppliers.firstWhere(
-      (s) => s['id'] == supplierId,
-      orElse: () => {},
-    );
-    if (supplier.isEmpty) return 'Unknown';
-    return supplier['fullName'] ?? supplier['firstName'] ?? 'Supplier';
+    try {
+      final supplier = widget.suppliers.firstWhere(
+        (s) => s['id'] == supplierId,
+      );
+      return supplier['fullName'] ?? supplier['firstName'] ?? 'Supplier';
+    } catch (_) {
+      return 'Unknown';
+    }
   }
 
   Widget _buildActiveFilterTag({

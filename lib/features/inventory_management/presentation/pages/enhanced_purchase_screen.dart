@@ -3,6 +3,8 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:isar_community/isar.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:c_billing/core/services/language_service.dart';
 import 'package:c_billing/core/services/dashboard_refresh_service.dart';
 import 'package:c_billing/core/services/isar_service.dart';
@@ -107,19 +109,29 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
       final isar = IsarService.instance.isar;
       
       // Query all purchase batches directly from Isar
-      final batches = await isar.purchaseBatchEntitys
+      var batches = await isar.purchaseBatchEntitys
           .filter()
           .not()
           .syncStatusEqualTo(BatchSyncStatus.deleted)
           .sortByPurchaseDateDesc()
           .findAll();
       
-      debugPrint('[EnhancedPurchase] Direct Isar query found ${batches.length} batches');
+      debugPrint('[EnhancedPurchase] Isar found ${batches.length} batches');
       
-      if (batches.isNotEmpty) {
-        for (var i = 0; i < batches.length && i < 3; i++) {
-          debugPrint('[EnhancedPurchase] Batch[$i]: ${batches[i].productName}, qty: ${batches[i].quantityPurchased}, remaining: ${batches[i].quantityRemaining}');
-        }
+      // If Isar is empty, try loading from Firestore
+      if (batches.isEmpty) {
+        debugPrint('[EnhancedPurchase] Isar empty, loading from Firestore...');
+        await _syncFromFirestore();
+        
+        // Re-query Isar after sync
+        batches = await isar.purchaseBatchEntitys
+            .filter()
+            .not()
+            .syncStatusEqualTo(BatchSyncStatus.deleted)
+            .sortByPurchaseDateDesc()
+            .findAll();
+        
+        debugPrint('[EnhancedPurchase] After Firestore sync: ${batches.length} batches');
       }
       
       if (mounted) {
@@ -139,6 +151,93 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
         setState(() => _isLoading = false);
       }
     }
+  }
+
+  /// Sync purchase batches from Firestore to Isar
+  Future<void> _syncFromFirestore() async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        debugPrint('[EnhancedPurchase] No user logged in');
+        return;
+      }
+      
+      final firestore = FirebaseFirestore.instance;
+      final snapshot = await firestore
+          .collection('users')
+          .doc(user.uid)
+          .collection('purchaseBatches')
+          .get();
+      
+      debugPrint('[EnhancedPurchase] Firestore found ${snapshot.docs.length} batches');
+      
+      if (snapshot.docs.isEmpty) return;
+      
+      final isar = IsarService.instance.isar;
+      
+      await isar.writeTxn(() async {
+        for (final doc in snapshot.docs) {
+          final data = doc.data();
+          
+          // Check if already exists
+          final existing = await isar.purchaseBatchEntitys
+              .filter()
+              .serverIdEqualTo(doc.id)
+              .findFirst();
+          
+          if (existing != null) continue;
+          
+          // Create new batch entity
+          final batch = PurchaseBatchEntity(
+            serverId: doc.id,
+            productId: data['productId'] ?? '',
+            productName: data['productName'] ?? '',
+            companyName: data['companyName'] ?? '',
+            modelName: data['modelName'] ?? '',
+            category: data['category'] ?? '',
+            productUniqueKey: _generateProductKey(
+              data['productName'] ?? '',
+              data['companyName'] ?? '',
+              data['modelName'] ?? '',
+            ),
+            purchasePrice: (data['purchasePrice'] ?? 0).toDouble(),
+            sellingPrice: (data['sellingPrice'] ?? data['salesPrice'] ?? 0).toDouble(),
+            quantityPurchased: data['quantityPurchased'] ?? data['quantity'] ?? 0,
+            quantityRemaining: data['quantityRemaining'] ?? data['quantityPurchased'] ?? data['quantity'] ?? 0,
+            purchaseDate: _parseDate(data['purchaseDate']) ?? DateTime.now(),
+            supplierId: data['supplierId'],
+            supplierName: data['supplierName'],
+            unit: data['unit'] ?? 'pcs',
+            expiryDate: _parseDate(data['expiryDate']),
+            productionDate: _parseDate(data['productionDate']),
+            warrantyMonths: data['warrantyMonths'],
+            notes: data['notes'],
+            isConsumed: data['isConsumed'] ?? false,
+            syncStatus: BatchSyncStatus.synced,
+            createdAt: _parseDate(data['createdAt']) ?? DateTime.now(),
+            updatedAt: _parseDate(data['updatedAt']) ?? DateTime.now(),
+          );
+          
+          await isar.purchaseBatchEntitys.put(batch);
+        }
+      });
+      
+      debugPrint('[EnhancedPurchase] Synced batches to Isar');
+    } catch (e) {
+      debugPrint('[EnhancedPurchase] Firestore sync error: $e');
+    }
+  }
+
+  String _generateProductKey(String name, String company, String model) {
+    return '${name.toLowerCase().trim()}_${company.toLowerCase().trim()}_${model.toLowerCase().trim()}';
+  }
+
+  DateTime? _parseDate(dynamic value) {
+    if (value == null) return null;
+    if (value is Timestamp) return value.toDate();
+    if (value is DateTime) return value;
+    if (value is String) return DateTime.tryParse(value);
+    return null;
   }
 
   /// Setup real-time purchase stream from Isar (for updates after initial load)
@@ -168,26 +267,28 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
 
   /// Setup supplier stream for filter dropdown
   void _setupSupplierStream() {
-    _supplierStreamSubscription = SupplierOfflineController.instance
-        .watchAllSuppliers()
-        .listen(
-      (suppliers) {
-        if (mounted) {
-          setState(() {
-            _suppliers = suppliers.map((s) => {
-              'id': s.serverId ?? 'local_${s.id}',
-              'firstName': s.firstName,
-              'lastName': s.lastName,
-              'fullName': '${s.firstName} ${s.lastName}'.trim(),
-              'contact': s.contact,
-            }).toList();
-          });
-        }
-      },
-      onError: (e) {
-        debugPrint('[EnhancedPurchase] Supplier stream error: $e');
-      },
-    );
+    // Load suppliers once instead of streaming to avoid rebuilds
+    _loadSuppliers();
+  }
+
+  /// Load suppliers once
+  Future<void> _loadSuppliers() async {
+    try {
+      final suppliers = await SupplierOfflineController.instance.getAllSuppliers();
+      if (mounted) {
+        setState(() {
+          _suppliers = suppliers.map((s) => {
+            'id': s.serverId ?? s.id.toString(),
+            'firstName': s.firstName,
+            'lastName': s.lastName,
+            'fullName': '${s.firstName} ${s.lastName}'.trim(),
+            'contact': s.contact,
+          }).toList();
+        });
+      }
+    } catch (e) {
+      debugPrint('[EnhancedPurchase] Error loading suppliers: $e');
+    }
   }
 
   /// Listen for purchase changes from other screens
