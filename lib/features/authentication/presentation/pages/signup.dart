@@ -5,6 +5,7 @@ import 'dart:ui';
 import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/services/language_service.dart';
 import '../../../../core/services/session_manager.dart';
+import '../../../../core/services/logout_service.dart';
 
 class SignupPage extends StatefulWidget {
   const SignupPage({super.key});
@@ -180,19 +181,16 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
             // Initialize session for new user
             final sessionManager = SessionManager();
             sessionManager.initializeSession(currentUser, () {
-              print('[CRITICAL] Session expired - logging out user');
-              FirebaseAuth.instance.signOut().then((_) {
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(_localizations.sessionExpired),
-                    ),
-                  );
-                  Navigator.of(
-                    context,
-                  ).pushNamedAndRemoveUntil('/', (route) => false);
-                }
-              });
+              print('[CRITICAL] Session expired - clearing data and logging out');
+              // Use LogoutService to ensure all local data is cleared on session expiry
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(_localizations.sessionExpired),
+                  ),
+                );
+                LogoutService.instance.onSessionExpired(context);
+              }
             });
             print('[DEBUG] Session initialized with 2-hour timeout');
 

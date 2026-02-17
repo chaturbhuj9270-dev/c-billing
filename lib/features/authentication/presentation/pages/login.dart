@@ -9,6 +9,7 @@ import '../../../dashboard/presentation/pages/optimized_dashboard_page.dart';
 import '../../../../core/services/session_manager.dart';
 import '../../../../core/services/credentials_manager.dart';
 import '../../../../core/services/subscription_service.dart';
+import '../../../../core/services/logout_service.dart';
 import '../../../../core/ui/subscription_screen.dart';
 import 'signup.dart';
 import 'change_password_page.dart';
@@ -136,19 +137,16 @@ class _LoginPageV2State extends State<LoginPageV2>
           // Initialize session with 2-hour timeout
           final sessionManager = SessionManager();
           sessionManager.initializeSession(cred.user!, () {
-            print('[CRITICAL] Session expired - logging out user');
-            FirebaseAuth.instance.signOut().then((_) {
-              if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(_localizations.sessionExpired),
-                  ),
-                );
-                Navigator.of(
-                  context,
-                ).pushNamedAndRemoveUntil('/', (route) => false);
-              }
-            });
+            print('[CRITICAL] Session expired - clearing data and logging out');
+            // Use LogoutService to ensure all local data is cleared on session expiry
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(_localizations.sessionExpired),
+                ),
+              );
+              LogoutService.instance.onSessionExpired(context);
+            }
           });
 
           // Save credentials for persistent login

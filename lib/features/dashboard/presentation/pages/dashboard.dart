@@ -11,7 +11,7 @@ import '../../../inventory_management/presentation/pages/product_management_page
 import '../../../billing/presentation/pages/billing_page.dart';
 import '../../../billing/presentation/pages/bills_list_page.dart';
 import '../../../../core/services/session_manager.dart';
-import '../../../../core/services/credentials_manager.dart';
+import '../../../../core/services/logout_service.dart';
 import '../../../../common_widgets/welcome_card.dart';
 import 'flyout_menu.dart';
 
@@ -30,7 +30,6 @@ class _DashboardPageState extends State<DashboardPage>
   final _auth = FirebaseAuth.instance;
   final _firestore = FirebaseFirestore.instance;
   late SessionManager _sessionManager;
-  late CredentialsManager _credentialsManager;
 
   // Filter
   DashboardFilter _selectedFilter = DashboardFilter.thisMonth;
@@ -76,7 +75,6 @@ class _DashboardPageState extends State<DashboardPage>
   void initState() {
     super.initState();
     _sessionManager = SessionManager();
-    _credentialsManager = CredentialsManager();
 
     // Load dashboard data
     _loadDashboardData();
@@ -426,25 +424,8 @@ class _DashboardPageState extends State<DashboardPage>
   }
 
   void _logout() {
-    _sessionManager.endSession();
-    _credentialsManager
-        .clearCredentials()
-        .then((_) {
-          print('[DEBUG] User logged out - credentials cleared');
-          _auth.signOut().then((_) {
-            Navigator.of(
-              context,
-            ).pushNamedAndRemoveUntil('/', (route) => false);
-          });
-        })
-        .catchError((e) {
-          print('[ERROR] Error during logout: $e');
-          _auth.signOut().then((_) {
-            Navigator.of(
-              context,
-            ).pushNamedAndRemoveUntil('/', (route) => false);
-          });
-        });
+    // Use centralized logout service to ensure all local data is cleared
+    LogoutService.instance.logout(context);
   }
 
   void _resetSessionTimer() {

@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../../../../core/services/session_manager.dart';
-import '../../../../core/services/credentials_manager.dart';
 import '../../../../core/services/language_service.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/services/biometric_service.dart';
 import '../../../../core/services/error_logging_service.dart';
+import '../../../../core/services/logout_service.dart';
 import '../../../../features/authentication/presentation/pages/change_password_page.dart';
 import 'profile_page.dart';
 import '../../../supplier/presentation/pages/supplier_page.dart';
@@ -24,8 +23,6 @@ class FlyoutMenu extends StatefulWidget {
 
 class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
   final _auth = FirebaseAuth.instance;
-  late SessionManager _sessionManager;
-  late CredentialsManager _credentialsManager;
   late User? _currentUser;
   String _userName = 'User';
   String _selectedLanguage = 'English'; // Default language
@@ -55,8 +52,6 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
   void initState() {
     super.initState();
     _localizations = AppLocalizations(LanguageService.instance.currentLanguage);
-    _sessionManager = SessionManager();
-    _credentialsManager = CredentialsManager();
     _currentUser = _auth.currentUser;
     _userName = _currentUser?.displayName ?? 'User';
     _selectedLanguage = LanguageService.instance.currentLanguage;
@@ -185,18 +180,8 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
   }
 
   void _logout() {
-    _sessionManager.endSession();
-    _credentialsManager.clearCredentials().then((_) {
-      print('[DEBUG] User logged out - credentials cleared');
-      _auth.signOut().then((_) {
-        Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
-      });
-    }).catchError((e) {
-      print('[ERROR] Error during logout: $e');
-      _auth.signOut().then((_) {
-        Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
-      });
-    });
+    // Use centralized logout service to ensure all local data is cleared
+    LogoutService.instance.logout(context);
   }
 
   void _navigateToPage(String pageName, int index) {
