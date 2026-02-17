@@ -11,6 +11,7 @@ import '../../offline/entities/purchase_batch_entity.dart';
 import '../../offline/controllers/purchase_batch_offline_controller.dart';
 import '../../data/services/purchase_sync_service.dart';
 import '../../data/services/purchase_batch_sync_service.dart';
+import '../../data/services/purchase_report_pdf_generator.dart';
 import '../../../supplier/offline/controllers/supplier_offline_controller.dart';
 import '../../../supplier/offline/entities/supplier_entity.dart';
 import '../../../../common_widgets/action_menu.dart';
@@ -1161,6 +1162,219 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
     );
   }
 
+  // ── Filtered purchases (same logic as PurchaseListWidget) ──
+  List<PurchaseBatchEntity> get _filteredPurchases {
+    var filtered = _purchases;
+
+    // Date filter
+    if (_dateFilter == PurchaseDateFilter.today) {
+      final today = DateTime.now();
+      filtered = filtered.where((p) {
+        return p.purchaseDate.year == today.year &&
+            p.purchaseDate.month == today.month &&
+            p.purchaseDate.day == today.day;
+      }).toList();
+    }
+
+    // Supplier filter
+    if (_supplierFilter != null && _supplierFilter!.isNotEmpty) {
+      filtered = filtered.where((p) => p.supplierId == _supplierFilter).toList();
+    }
+
+    return filtered;
+  }
+
+  String _buildFilterDescription() {
+    final parts = <String>[];
+    if (_dateFilter == PurchaseDateFilter.today) {
+      parts.add('Today');
+    } else {
+      parts.add('All Time');
+    }
+    if (_supplierFilter != null && _supplierFilter!.isNotEmpty) {
+      final supplierName = _suppliers
+          .where((s) => s['id'] == _supplierFilter)
+          .map((s) => s['name'] as String?)
+          .firstOrNull;
+      if (supplierName != null) {
+        parts.add('Supplier: $supplierName');
+      }
+    }
+    return parts.join(' | ');
+  }
+
+  // ── Generate & show purchase report ──
+  Future<void> _generatePurchaseReport() async {
+    final filtered = _filteredPurchases;
+    if (filtered.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('No purchase data to generate report'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+      return;
+    }
+
+    // Convert Isar entities to plain maps (isolate-safe) on the main thread
+    // — this is just a lightweight copy, takes microseconds.
+    final purchaseMaps = filtered.map((p) => <String, dynamic>{
+      'productName': p.productName,
+      'companyName': p.companyName,
+      'supplierName': p.supplierName,
+      'unit': p.unit,
+      'quantityPurchased': p.quantityPurchased,
+      'quantityRemaining': p.quantityRemaining,
+      'purchasePrice': p.purchasePrice,
+      'sellingPrice': p.sellingPrice,
+      'purchaseDateMs': p.purchaseDate.millisecondsSinceEpoch,
+      'expiryDateMs': p.expiryDate?.millisecondsSinceEpoch,
+    }).toList();
+
+    try {
+      // PDF is built entirely in a background isolate via compute()
+      // — UI stays fully responsive, no loader needed.
+      final pdfBytes = await PurchaseReportPdfGenerator.generate(
+        purchaseMaps: purchaseMaps,
+        filterDescription: _buildFilterDescription(),
+      );
+
+      if (!mounted) return;
+
+      // Show action bottom sheet immediately
+      showModalBottomSheet(
+        context: context,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        builder: (ctx) {
+          return SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 40,
+                    height: 4,
+                    margin: const EdgeInsets.only(bottom: 16),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  const Text(
+                    'Purchase Report Ready',
+                    style: TextStyle(
+                      fontFamily: 'Literata',
+                      fontWeight: FontWeight.w700,
+                      fontSize: 18,
+                      color: Color(0xFF1B4D3E),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${filtered.length} entries',
+                    style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      _reportActionButton(
+                        icon: Icons.print_rounded,
+                        label: 'Print',
+                        color: const Color(0xFF1B4D3E),
+                        onTap: () async {
+                          Navigator.pop(ctx);
+                          await PurchaseReportPdfGenerator.printReport(pdfBytes);
+                        },
+                      ),
+                      _reportActionButton(
+                        icon: Icons.share_rounded,
+                        label: 'Share',
+                        color: Colors.blue.shade700,
+                        onTap: () async {
+                          Navigator.pop(ctx);
+                          await PurchaseReportPdfGenerator.shareReport(pdfBytes);
+                        },
+                      ),
+                      _reportActionButton(
+                        icon: Icons.save_alt_rounded,
+                        label: 'Save',
+                        color: Colors.orange.shade700,
+                        onTap: () async {
+                          Navigator.pop(ctx);
+                          final path = await PurchaseReportPdfGenerator.saveLocally(pdfBytes);
+                          if (mounted && path != null) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Report saved: ${path.split('/').last}'),
+                                duration: const Duration(seconds: 3),
+                              ),
+                            );
+                          }
+                        },
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                ],
+              ),
+            ),
+          );
+        },
+      );
+    } catch (e) {
+      debugPrint('[PurchaseReport] Error: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to generate report: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Widget _reportActionButton({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Icon(icon, color: color, size: 28),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            style: TextStyle(
+              fontFamily: 'Literata',
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildHeader() {
     return SlideTransition(
       position: _offsetAnimation,
@@ -1211,6 +1425,23 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                   ],
                 ),
               ),
+              // Report button
+              GestureDetector(
+                onTap: _generatePurchaseReport,
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.description_rounded,
+                    size: 22,
+                    color: Color(0xFF1B4D3E),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
               ActionMenu(
                 menuColor: const Color(0xFF1B4D3E),
                 iconColor: const Color(0xFF1B4D3E),
@@ -1274,20 +1505,33 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
             ),
           ],
         ),
-        IconButton(
-          onPressed: () async {
-            await Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const PurchaseSettingsPage(),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              onPressed: _generatePurchaseReport,
+              icon: const Icon(
+                Icons.description_rounded,
+                color: Color(0xFF1B4D3E),
               ),
-            );
-            setState(() {});
-          },
-          icon: const Icon(
-            Icons.settings_rounded,
-            color: Color(0xFF1B4D3E),
-          ),
+              tooltip: 'Generate Report',
+            ),
+            IconButton(
+              onPressed: () async {
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const PurchaseSettingsPage(),
+                  ),
+                );
+                setState(() {});
+              },
+              icon: const Icon(
+                Icons.settings_rounded,
+                color: Color(0xFF1B4D3E),
+              ),
+            ),
+          ],
         ),
       ],
     );
