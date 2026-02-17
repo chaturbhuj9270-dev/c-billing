@@ -2,11 +2,12 @@ import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:isar_community/isar.dart';
 import 'package:c_billing/core/services/language_service.dart';
 import 'package:c_billing/core/services/dashboard_refresh_service.dart';
+import 'package:c_billing/core/services/isar_service.dart';
 import 'package:c_billing/core/localization/app_localizations.dart';
 import '../../offline/entities/purchase_batch_entity.dart';
-import '../../offline/controllers/purchase_batch_offline_controller.dart';
 import '../../data/services/purchase_sync_service.dart';
 import '../../../supplier/offline/controllers/supplier_offline_controller.dart';
 import '../../../supplier/offline/entities/supplier_entity.dart';
@@ -68,8 +69,8 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
       end: 1.0,
     ).animate(CurvedAnimation(parent: _animController, curve: Curves.easeIn));
 
-    // Setup data streams
-    _setupPurchaseStream();
+    // Load data directly from Isar first
+    _loadPurchasesFromIsar();
     _setupSupplierStream();
     _setupCrossPageRefresh();
 
@@ -100,26 +101,67 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
     super.dispose();
   }
 
-  /// Setup real-time purchase stream from Isar
+  /// Load purchases directly from Isar database
+  Future<void> _loadPurchasesFromIsar() async {
+    try {
+      final isar = IsarService.instance.isar;
+      
+      // Query all purchase batches directly from Isar
+      final batches = await isar.purchaseBatchEntitys
+          .filter()
+          .not()
+          .syncStatusEqualTo(BatchSyncStatus.deleted)
+          .sortByPurchaseDateDesc()
+          .findAll();
+      
+      debugPrint('[EnhancedPurchase] Direct Isar query found ${batches.length} batches');
+      
+      if (batches.isNotEmpty) {
+        for (var i = 0; i < batches.length && i < 3; i++) {
+          debugPrint('[EnhancedPurchase] Batch[$i]: ${batches[i].productName}, qty: ${batches[i].quantityPurchased}, remaining: ${batches[i].quantityRemaining}');
+        }
+      }
+      
+      if (mounted) {
+        setState(() {
+          _purchases = batches;
+          _isLoading = false;
+        });
+      }
+      
+      // Now setup the stream for real-time updates
+      _setupPurchaseStream();
+      
+    } catch (e, stack) {
+      debugPrint('[EnhancedPurchase] Error loading from Isar: $e');
+      debugPrint('[EnhancedPurchase] Stack: $stack');
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  /// Setup real-time purchase stream from Isar (for updates after initial load)
   void _setupPurchaseStream() {
-    _purchaseStreamSubscription = PurchaseBatchOfflineController.instance
-        .watchAllBatches(includeConsumed: true)
+    final isar = IsarService.instance.isar;
+    
+    _purchaseStreamSubscription = isar.purchaseBatchEntitys
+        .filter()
+        .not()
+        .syncStatusEqualTo(BatchSyncStatus.deleted)
+        .sortByPurchaseDateDesc()
+        .watch(fireImmediately: false) // Don't fire immediately since we already loaded
         .listen(
       (purchases) {
+        debugPrint('[EnhancedPurchase] Stream update: ${purchases.length} purchases');
         if (mounted) {
-          // Sort by purchase date descending (most recent first)
-          purchases.sort((a, b) => b.purchaseDate.compareTo(a.purchaseDate));
           setState(() {
             _purchases = purchases;
-            _isLoading = false;
           });
         }
       },
       onError: (e) {
         debugPrint('[EnhancedPurchase] Stream error: $e');
-        if (mounted) {
-          setState(() => _isLoading = false);
-        }
       },
     );
   }
@@ -154,8 +196,8 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
         .onPurchaseChanged
         .listen((_) {
       if (mounted) {
-        // Stream auto-updates, just trigger sync
-        PurchaseSyncService.instance.syncNow();
+        // Reload from Isar when purchases change
+        _loadPurchasesFromIsar();
       }
     });
   }
@@ -168,8 +210,8 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
         builder: (context) => const PurchasePage(isEmbedded: false),
       ),
     );
-    // Stream auto-refreshes, but trigger sync just in case
-    PurchaseSyncService.instance.syncNow();
+    // Reload purchases after returning from add page
+    _loadPurchasesFromIsar();
   }
 
   /// Show purchase details bottom sheet
