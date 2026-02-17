@@ -728,4 +728,9 @@ class HindiLocalization {
   // Action Menu
   static const String options = 'विकल्प';
   static const String reportIssue = 'समस्या रिपोर्ट करें';
+
+  // Purchase History Screen
+  static const String purchaseHistory = 'खरीद इतिहास';
+  static const String noPurchasesFound = 'कोई खरीद नहीं मिली';
+  static const String addNewPurchase = 'नई खरीद जोड़ें';
 }

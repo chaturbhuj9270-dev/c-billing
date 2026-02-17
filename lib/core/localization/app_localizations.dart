@@ -5739,6 +5739,33 @@ class AppLocalizations {
   }
 
   // ═══════════════════════════════════════════════════
+  // Purchase History Screen
+  // ═══════════════════════════════════════════════════
+  String get purchaseHistory {
+    switch (languageCode) {
+      case 'Hindi': return HindiLocalization.purchaseHistory;
+      case 'Marathi': return MarathiLocalization.purchaseHistory;
+      default: return EnglishLocalization.purchaseHistory;
+    }
+  }
+
+  String get noPurchasesFound {
+    switch (languageCode) {
+      case 'Hindi': return HindiLocalization.noPurchasesFound;
+      case 'Marathi': return MarathiLocalization.noPurchasesFound;
+      default: return EnglishLocalization.noPurchasesFound;
+    }
+  }
+
+  String get addNewPurchase {
+    switch (languageCode) {
+      case 'Hindi': return HindiLocalization.addNewPurchase;
+      case 'Marathi': return MarathiLocalization.addNewPurchase;
+      default: return EnglishLocalization.addNewPurchase;
+    }
+  }
+
+  // ═══════════════════════════════════════════════════
   // GST / Tax Settings
   // ═══════════════════════════════════════════════════
   String get taxSettings {

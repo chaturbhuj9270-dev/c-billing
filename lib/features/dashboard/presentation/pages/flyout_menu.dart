@@ -11,7 +11,7 @@ import 'profile_page.dart';
 import '../../../supplier/presentation/pages/supplier_page.dart';
 import '../../../customer/presentation/pages/customer_page.dart';
 import '../../../company/presentation/pages/company_page.dart';
-import '../../../inventory_management/presentation/pages/purchase_page.dart';
+import '../../../inventory_management/presentation/pages/enhanced_purchase_screen.dart';
 import '../../../inventory_management/presentation/pages/product_management_page.dart';
 import '../../../shop/presentation/pages/shop_details_page.dart';
 
@@ -231,7 +231,7 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
           break;
         case 'Purchases':
           Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => const PurchasePage()),
+            MaterialPageRoute(builder: (_) => const EnhancedPurchaseScreen()),
           );
           break;
         case 'Inventory':

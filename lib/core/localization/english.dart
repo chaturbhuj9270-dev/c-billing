@@ -726,4 +726,9 @@ class EnglishLocalization {
   // Action Menu
   static const String options = 'Options';
   static const String reportIssue = 'Report Issue';
+
+  // Purchase History Screen
+  static const String purchaseHistory = 'Purchase History';
+  static const String noPurchasesFound = 'No Purchases Found';
+  static const String addNewPurchase = 'Add New Purchase';
 }

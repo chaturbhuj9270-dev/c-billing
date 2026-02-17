@@ -5,7 +5,7 @@ import 'package:intl/intl.dart';
 import '../../../customer/presentation/pages/customer_page.dart';
 import '../../../supplier/presentation/pages/supplier_page.dart';
 import '../../../company/presentation/pages/company_page.dart';
-import '../../../inventory_management/presentation/pages/purchase_page.dart';
+import '../../../inventory_management/presentation/pages/enhanced_purchase_screen.dart';
 import '../../../inventory_management/presentation/pages/product_management_page.dart';
 import '../../../billing/presentation/pages/billing_page.dart';
 import '../../../billing/presentation/pages/bills_list_page.dart';
@@ -281,7 +281,7 @@ class _DashboardViewState extends State<_DashboardView>
       case 4:
         Navigator.of(
           context,
-        ).push(MaterialPageRoute(builder: (_) => const PurchasePage())).then((_) {
+        ).push(MaterialPageRoute(builder: (_) => const EnhancedPurchaseScreen())).then((_) {
           if (mounted) {
             context.read<DashboardCubit>().refresh();
             _loadExpandableSectionData();
@@ -1564,7 +1564,7 @@ class _DashboardViewState extends State<_DashboardView>
             targetPage = const SupplierPage();
             break;
           case 'Purchases':
-            targetPage = const PurchasePage();
+            targetPage = const EnhancedPurchaseScreen();
             break;
           case 'Companies':
             targetPage = const CompanyPage();
@@ -2222,7 +2222,7 @@ class _DashboardViewState extends State<_DashboardView>
                 // Navigate to purchase page or create order
                 Navigator.of(
                   context,
-                ).push(MaterialPageRoute(builder: (_) => const PurchasePage()));
+                ).push(MaterialPageRoute(builder: (_) => const EnhancedPurchaseScreen()));
               },
               style: OutlinedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(

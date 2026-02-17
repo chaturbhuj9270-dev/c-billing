@@ -729,4 +729,9 @@ class MarathiLocalization {
   // Action Menu
   static const String options = 'पर्याय';
   static const String reportIssue = 'समस्या रिपोर्ट करा';
+
+  // Purchase History Screen
+  static const String purchaseHistory = 'खरेदी इतिहास';
+  static const String noPurchasesFound = 'कोणतीही खरेदी सापडली नाही';
+  static const String addNewPurchase = 'नवीन खरेदी जोडा';
 }
