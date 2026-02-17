@@ -1203,10 +1203,24 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
     return parts.join(' | ');
   }
 
+  // Flag to prevent concurrent report generation
+  bool _isGeneratingReport = false;
+
   // ── Generate & show purchase report ──
   Future<void> _generatePurchaseReport() async {
+    debugPrint('[PurchaseReport] Button tapped! _isGeneratingReport=$_isGeneratingReport');
+    
+    // Prevent concurrent generation
+    if (_isGeneratingReport) {
+      debugPrint('[PurchaseReport] Already generating, skipping');
+      return;
+    }
+    
     final filtered = _filteredPurchases;
+    debugPrint('[PurchaseReport] Filtered purchases: ${filtered.length}');
+    
     if (filtered.isEmpty) {
+      debugPrint('[PurchaseReport] No data - showing snackbar');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -1218,15 +1232,50 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
       return;
     }
 
+    _isGeneratingReport = true;
+
+    // Show loading indicator
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Row(
+            children: [
+              SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white,
+                ),
+              ),
+              SizedBox(width: 12),
+              Text('Generating PDF report...'),
+            ],
+          ),
+          duration: Duration(seconds: 30),
+        ),
+      );
+    }
+
     try {
       debugPrint('[PurchaseReport] Generating PDF for ${filtered.length} entries...');
+      
       final pdfBytes = await PurchaseReportPdfGenerator.generate(
         purchases: filtered,
         filterDescription: _buildFilterDescription(),
       );
+      
       debugPrint('[PurchaseReport] PDF generated: ${pdfBytes.length} bytes');
+      
+      // Dismiss loading snackbar
+      if (mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      }
 
-      if (!mounted) return;
+      if (!mounted) {
+        _isGeneratingReport = false;
+        return;
+      }
 
       // Show action bottom sheet immediately
       showModalBottomSheet(
@@ -1311,17 +1360,24 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
             ),
           );
         },
-      );
-    } catch (e) {
+      ).whenComplete(() {
+        _isGeneratingReport = false;
+      });
+    } catch (e, stack) {
       debugPrint('[PurchaseReport] Error: $e');
+      debugPrint('[PurchaseReport] Stack: $stack');
       if (mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to generate report: $e'),
             backgroundColor: Colors.red,
+            duration: const Duration(seconds: 4),
           ),
         );
       }
+    } finally {
+      _isGeneratingReport = false;
     }
   }
 
@@ -1411,18 +1467,25 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                 ),
               ),
               // Report button
-              GestureDetector(
-                onTap: _generatePurchaseReport,
-                child: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1B4D3E).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Icon(
-                    Icons.description_rounded,
-                    size: 22,
-                    color: Color(0xFF1B4D3E),
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () {
+                    debugPrint('[PurchaseReport] Report button InkWell tapped!');
+                    _generatePurchaseReport();
+                  },
+                  borderRadius: BorderRadius.circular(10),
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(
+                      Icons.description_rounded,
+                      size: 22,
+                      color: Color(0xFF1B4D3E),
+                    ),
                   ),
                 ),
               ),
@@ -1494,7 +1557,10 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
           mainAxisSize: MainAxisSize.min,
           children: [
             IconButton(
-              onPressed: _generatePurchaseReport,
+              onPressed: () {
+                debugPrint('[PurchaseReport] Report IconButton tapped (embedded mode)!');
+                _generatePurchaseReport();
+              },
               icon: const Icon(
                 Icons.description_rounded,
                 color: Color(0xFF1B4D3E),
