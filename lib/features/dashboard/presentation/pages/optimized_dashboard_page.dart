@@ -9,6 +9,7 @@ import '../../../supplier/presentation/pages/supplier_page.dart';
 import '../../../company/presentation/pages/company_page.dart';
 import '../../../inventory_management/presentation/pages/enhanced_purchase_screen.dart';
 import '../../../inventory_management/presentation/pages/purchase_settings_page.dart';
+import '../../../inventory_management/presentation/pages/purchase_report_settings_page.dart';
 import '../../../inventory_management/presentation/pages/product_management_page.dart';
 import '../../../billing/presentation/pages/billing_page.dart';
 import '../../../billing/presentation/pages/bill_settings_page.dart';
@@ -431,6 +432,16 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                           );
                           if (mounted) setState(() {});
                         }
+                      }
+                    : null,
+                onReportSettingsTap: _selectedIndex == 4
+                    ? () async {
+                        await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const PurchaseReportSettingsPage(),
+                          ),
+                        );
                       }
                     : null,
                 onLanguageTap: _showLanguageDialog,

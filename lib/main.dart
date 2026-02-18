@@ -7,6 +7,7 @@ import 'core/services/credentials_manager.dart';
 import 'core/services/language_service.dart';
 import 'core/services/purchase_settings_service.dart';
 import 'core/services/product_settings_service.dart';
+import 'core/services/purchase_report_settings_service.dart';
 import 'core/services/isar_service.dart';
 import 'core/services/error_logging_service.dart';
 import 'features/customer/data/services/customer_sync_service.dart';
@@ -68,6 +69,12 @@ Future<void> initializeServices() async {
     await ProductSettingsService.instance.init();
   } catch (e) {
     debugPrint('ProductSettingsService init error: $e');
+  }
+  
+  try {
+    await PurchaseReportSettingsService.instance.init();
+  } catch (e) {
+    debugPrint('PurchaseReportSettingsService init error: $e');
   }
   
   // Initialize Isar database for offline-first support

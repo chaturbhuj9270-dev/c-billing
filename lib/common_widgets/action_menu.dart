@@ -7,6 +7,7 @@ import 'package:c_billing/core/localization/app_localizations.dart';
 /// Uses PopupMenuButton under the hood so it never causes Stack constraint errors.
 class ActionMenu extends StatelessWidget {
   final VoidCallback? onSettingsTap;
+  final VoidCallback? onReportSettingsTap;
   final VoidCallback? onLanguageTap;
   final VoidCallback? onBugReportTap;
   final Color menuColor;
@@ -16,6 +17,7 @@ class ActionMenu extends StatelessWidget {
   const ActionMenu({
     super.key,
     this.onSettingsTap,
+    this.onReportSettingsTap,
     this.onLanguageTap,
     this.onBugReportTap,
     this.menuColor = const Color(0xFF1B4D3E),
@@ -36,6 +38,13 @@ class ActionMenu extends StatelessWidget {
         icon: Icons.settings_rounded,
         label: localizations.settings,
         onTap: onSettingsTap!,
+      ));
+    }
+    if (onReportSettingsTap != null) {
+      entries.add(_MenuEntry(
+        icon: Icons.view_column_rounded,
+        label: 'Report Settings',
+        onTap: onReportSettingsTap!,
       ));
     }
     if (onLanguageTap != null) {

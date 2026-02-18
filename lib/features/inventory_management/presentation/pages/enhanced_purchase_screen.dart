@@ -22,6 +22,7 @@ import '../widgets/purchase_filter_widget.dart';
 import '../widgets/purchase_list_widget.dart';
 import 'purchase_page.dart';
 import 'purchase_settings_page.dart';
+import 'purchase_report_settings_page.dart';
 
 /// Enhanced Purchase Screen with purchase list as default view
 /// Features: Modern UI, filters, FAB for adding purchases, real-time updates
@@ -1700,6 +1701,79 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                   ),
                 ),
               ),
+              const SizedBox(width: 8),
+              // Settings menu
+              PopupMenuButton<String>(
+                icon: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.settings_rounded,
+                    size: 22,
+                    color: Color(0xFF1B4D3E),
+                  ),
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                onSelected: (value) async {
+                  if (value == 'purchase_settings') {
+                    await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const PurchaseSettingsPage(),
+                      ),
+                    );
+                    setState(() {});
+                  } else if (value == 'report_settings') {
+                    await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const PurchaseReportSettingsPage(),
+                      ),
+                    );
+                  }
+                },
+                itemBuilder: (context) => [
+                  PopupMenuItem<String>(
+                    value: 'purchase_settings',
+                    child: Row(
+                      children: [
+                        Icon(Icons.tune_rounded, 
+                            color: Colors.grey[700], size: 20),
+                        const SizedBox(width: 12),
+                        const Text(
+                          'Purchase Settings',
+                          style: TextStyle(
+                            fontFamily: 'Literata',
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  PopupMenuItem<String>(
+                    value: 'report_settings',
+                    child: Row(
+                      children: [
+                        Icon(Icons.view_column_rounded, 
+                            color: Colors.grey[700], size: 20),
+                        const SizedBox(width: 12),
+                        const Text(
+                          'Report Settings',
+                          style: TextStyle(
+                            fontFamily: 'Literata',
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ],
           ),
         ),
@@ -1748,20 +1822,68 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
               ),
               tooltip: 'Generate Report',
             ),
-            IconButton(
-              onPressed: () async {
-                await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const PurchaseSettingsPage(),
-                  ),
-                );
-                setState(() {});
-              },
+            PopupMenuButton<String>(
               icon: const Icon(
                 Icons.settings_rounded,
                 color: Color(0xFF1B4D3E),
               ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              onSelected: (value) async {
+                if (value == 'purchase_settings') {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const PurchaseSettingsPage(),
+                    ),
+                  );
+                  setState(() {});
+                } else if (value == 'report_settings') {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const PurchaseReportSettingsPage(),
+                    ),
+                  );
+                }
+              },
+              itemBuilder: (context) => [
+                PopupMenuItem<String>(
+                  value: 'purchase_settings',
+                  child: Row(
+                    children: [
+                      Icon(Icons.tune_rounded, 
+                          color: Colors.grey[700], size: 20),
+                      const SizedBox(width: 12),
+                      const Text(
+                        'Purchase Settings',
+                        style: TextStyle(
+                          fontFamily: 'Literata',
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                PopupMenuItem<String>(
+                  value: 'report_settings',
+                  child: Row(
+                    children: [
+                      Icon(Icons.view_column_rounded, 
+                          color: Colors.grey[700], size: 20),
+                      const SizedBox(width: 12),
+                      const Text(
+                        'Report Settings',
+                        style: TextStyle(
+                          fontFamily: 'Literata',
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ],
         ),
