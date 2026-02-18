@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
-import '../../../customer/presentation/pages/customer_page.dart';
+import '../../../customer/presentation/pages/enhanced_customer_page.dart';
 import '../../../supplier/presentation/pages/supplier_page.dart';
 import '../../../company/presentation/pages/company_page.dart';
 import '../../../inventory_management/presentation/pages/enhanced_purchase_screen.dart';
@@ -256,7 +256,7 @@ class _DashboardViewState extends State<_DashboardView>
       case 1:
         Navigator.of(
           context,
-        ).push(MaterialPageRoute(builder: (_) => const CustomerPage())).then((_) {
+        ).push(MaterialPageRoute(builder: (_) => const EnhancedCustomerPage())).then((_) {
           if (mounted) {
             context.read<DashboardCubit>().refresh();
             _loadExpandableSectionData();
@@ -1555,7 +1555,7 @@ class _DashboardViewState extends State<_DashboardView>
             targetPage = const BillsListPage();
             break;
           case 'Clients':
-            targetPage = const CustomerPage();
+            targetPage = const EnhancedCustomerPage();
             break;
           case 'Products':
             targetPage = const ProductManagementPage();
@@ -1896,7 +1896,7 @@ class _DashboardViewState extends State<_DashboardView>
         GestureDetector(
           onTap: () => Navigator.of(
             context,
-          ).push(MaterialPageRoute(builder: (_) => const CustomerPage())),
+          ).push(MaterialPageRoute(builder: (_) => const EnhancedCustomerPage())),
           child: _buildViewAllButton(
             'View All Customers',
             Icons.people_outline_rounded,

@@ -4,7 +4,7 @@ import 'package:flutter/services.dart';
 import 'dart:ui';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
-import '../../../customer/presentation/pages/customer_page.dart';
+import '../../../customer/presentation/pages/enhanced_customer_page.dart';
 import '../../../supplier/presentation/pages/supplier_page.dart';
 import '../../../company/presentation/pages/company_page.dart';
 import '../../../inventory_management/presentation/pages/enhanced_purchase_screen.dart';
@@ -242,7 +242,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                     },
                   ),
                   // Customers tab (index 1)
-                  const CustomerPage(isEmbedded: true),
+                  const EnhancedCustomerPage(isEmbedded: true),
                   // Billing tab (primary - center - index 2)
                   const BillingPage(isEmbedded: true),
                   // Available tab (index 3)

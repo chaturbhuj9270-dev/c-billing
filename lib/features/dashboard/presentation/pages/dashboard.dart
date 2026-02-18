@@ -3,7 +3,7 @@ import 'dart:ui';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
-import '../../../customer/presentation/pages/customer_page.dart';
+import '../../../customer/presentation/pages/enhanced_customer_page.dart';
 import '../../../supplier/presentation/pages/supplier_page.dart';
 import '../../../company/presentation/pages/company_page.dart';
 import '../../../inventory_management/presentation/pages/enhanced_purchase_screen.dart';
@@ -445,7 +445,7 @@ class _DashboardPageState extends State<DashboardPage>
       case 0:
         return _buildDashboardContent();
       case 1:
-        return const CustomerPage(isEmbedded: true);
+        return const EnhancedCustomerPage(isEmbedded: true);
       case 2:
         return const ProductManagementPage();
       case 3:
@@ -1654,7 +1654,7 @@ class _DashboardPageState extends State<DashboardPage>
           case 'Clients':
             Navigator.of(
               context,
-            ).push(MaterialPageRoute(builder: (_) => const CustomerPage()));
+            ).push(MaterialPageRoute(builder: (_) => const EnhancedCustomerPage()));
             break;
           case 'Products':
             Navigator.of(context).push(
