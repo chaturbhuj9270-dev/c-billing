@@ -18,6 +18,7 @@ class Product {
   final double sgstPercent;
   final String? hsnCode;
   final bool isSynced;
+  final String? customFieldsJson;
 
   Product({
     required this.id,
@@ -36,6 +37,7 @@ class Product {
     this.sgstPercent = 0.0,
     this.hsnCode,
     this.isSynced = true,
+    this.customFieldsJson,
   });
 
   // Factory constructor to create from ProductEntity (Isar offline entity)
@@ -57,6 +59,7 @@ class Product {
       sgstPercent: (entity.sgstPercent as num?)?.toDouble() ?? 0.0,
       hsnCode: entity.hsnCode as String?,
       isSynced: entity.syncStatus == SyncStatus.synced,
+      customFieldsJson: entity.customFieldsJson as String?,
     );
   }
   factory Product.fromJson(Map<String, dynamic> json) {
@@ -81,6 +84,7 @@ class Product {
         cgstPercent: ((json['cgstPercent'] ?? 0) as num).toDouble(),
         sgstPercent: ((json['sgstPercent'] ?? 0) as num).toDouble(),
         hsnCode: json['hsnCode'] as String?,
+        customFieldsJson: json['customFieldsJson'] as String?,
       );
     } catch (e) {
       print('[ERROR] Failed to parse Product from JSON: $json');
@@ -119,6 +123,7 @@ class Product {
       'cgstPercent': cgstPercent,
       'sgstPercent': sgstPercent,
       'hsnCode': hsnCode,
+      'customFieldsJson': customFieldsJson,
     };
   }
 
@@ -140,6 +145,7 @@ class Product {
     double? sgstPercent,
     String? hsnCode,
     bool? isSynced,
+    String? customFieldsJson,
   }) {
     return Product(
       id: id ?? this.id,
@@ -158,6 +164,7 @@ class Product {
       sgstPercent: sgstPercent ?? this.sgstPercent,
       hsnCode: hsnCode ?? this.hsnCode,
       isSynced: isSynced ?? this.isSynced,
+      customFieldsJson: customFieldsJson ?? this.customFieldsJson,
     );
   }
 

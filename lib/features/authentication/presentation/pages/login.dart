@@ -4,6 +4,7 @@ import 'dart:ui';
 
 import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/services/language_service.dart';
+import '../../../../core/services/product_settings_service.dart';
 import '../../../../main.dart' show initializeSyncServices;
 import '../../../dashboard/presentation/pages/optimized_dashboard_page.dart';
 import '../../../../core/services/session_manager.dart';
@@ -133,6 +134,9 @@ class _LoginPageV2State extends State<LoginPageV2>
 
           // Start sync services now that user is authenticated
           initializeSyncServices();
+          
+          // Reload product settings to fetch custom columns for this user
+          ProductSettingsService.instance.reload();
 
           // Initialize session with 2-hour timeout
           final sessionManager = SessionManager();

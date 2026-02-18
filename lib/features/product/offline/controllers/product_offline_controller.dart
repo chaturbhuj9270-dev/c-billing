@@ -262,6 +262,7 @@ class ProductOfflineController extends ChangeNotifier {
     double? cgstPercent,
     double? sgstPercent,
     String? hsnCode,
+    String? customFieldsJson,
   }) async {
     final existing = await _isar.productEntitys.get(id);
     if (existing == null) {
@@ -307,6 +308,7 @@ class ProductOfflineController extends ChangeNotifier {
       cgstPercent: cgstPercent,
       sgstPercent: sgstPercent,
       hsnCode: hsnCode,
+      customFieldsJson: customFieldsJson,
       syncStatus: newSyncStatus,
       updatedAt: DateTime.now(),
     );

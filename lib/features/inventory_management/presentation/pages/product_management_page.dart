@@ -539,10 +539,43 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
     final cgstEditController = TextEditingController(text: product.cgstPercent.toString());
     final sgstEditController = TextEditingController(text: product.sgstPercent.toString());
     final hsnEditController = TextEditingController(text: product.hsnCode ?? '');
+    
+    // Custom fields controllers and values
+    final customColumns = ProductSettingsService.instance.activeCustomColumns;
+    final Map<String, TextEditingController> customTextControllers = {};
+    final Map<String, dynamic> customFieldValues = {};
+    
+    // Parse existing custom fields from product
+    Map<String, dynamic> existingCustomFields = {};
+    if (product.customFieldsJson != null && product.customFieldsJson!.isNotEmpty) {
+      try {
+        existingCustomFields = jsonDecode(product.customFieldsJson!) as Map<String, dynamic>;
+      } catch (_) {}
+    }
+    
+    // Initialize controllers for custom fields with existing values
+    for (final column in customColumns) {
+      final existingValue = existingCustomFields[column.id]?.toString();
+      if (column.type == CustomColumnType.text || 
+          column.type == CustomColumnType.number ||
+          column.type == CustomColumnType.decimal) {
+        customTextControllers[column.id] = TextEditingController(
+          text: existingValue ?? column.defaultValue ?? '',
+        );
+      } else if (column.type == CustomColumnType.boolean) {
+        customFieldValues[column.id] = existingValue == 'true' || (existingValue == null && column.defaultValue == 'true');
+      } else if (column.type == CustomColumnType.dropdown) {
+        customFieldValues[column.id] = existingValue ?? column.defaultValue ?? 
+            ((column.dropdownOptions?.isNotEmpty ?? false) ? column.dropdownOptions!.first : '');
+      } else if (column.type == CustomColumnType.date) {
+        customFieldValues[column.id] = existingValue ?? column.defaultValue;
+      }
+    }
 
     showDialog(
       context: context,
-      builder: (context) => BackdropFilter(
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
         child: AlertDialog(
           backgroundColor: Colors.white.withValues(alpha: 0.95),
@@ -756,6 +789,21 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                     ),
                   ),
                 ),
+                // Custom Fields Section
+                if (customColumns.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  ...customColumns.map((column) {
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: _buildCustomFieldWidget(
+                        column,
+                        customTextControllers[column.id],
+                        customFieldValues,
+                        setDialogState,
+                      ),
+                    );
+                  }),
+                ],
               ],
             ),
           ),
@@ -801,6 +849,31 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                     );
                     return;
                   }
+                  
+                  // Collect custom field values
+                  final Map<String, dynamic> finalCustomFields = {};
+                  for (final column in customColumns) {
+                    String? value;
+                    if (column.type == CustomColumnType.text ||
+                        column.type == CustomColumnType.number ||
+                        column.type == CustomColumnType.decimal) {
+                      value = customTextControllers[column.id]?.text.trim();
+                    } else if (column.type == CustomColumnType.boolean) {
+                      value = (customFieldValues[column.id] ?? false).toString();
+                    } else if (column.type == CustomColumnType.dropdown ||
+                               column.type == CustomColumnType.date) {
+                      value = customFieldValues[column.id]?.toString();
+                    }
+                    if (value != null && value.isNotEmpty) {
+                      finalCustomFields[column.id] = value;
+                    }
+                  }
+                  
+                  // Convert to JSON string
+                  String? customFieldsJson;
+                  if (finalCustomFields.isNotEmpty) {
+                    customFieldsJson = jsonEncode(finalCustomFields);
+                  }
 
                   // Offline-first: Update in Isar
                   final offlineController = ProductOfflineController.instance;
@@ -819,6 +892,7 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                       cgstPercent: cgstVal,
                       sgstPercent: sgstVal,
                       hsnCode: hsnVal.isNotEmpty ? hsnVal : null,
+                      customFieldsJson: customFieldsJson,
                     );
                   } else {
                     // Fallback to Firebase direct update if not in Isar
@@ -829,6 +903,7 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                       purchasePrice: purchasePrice,
                       salesPrice: salesPrice,
                       updatedAt: DateTime.now(),
+                      customFieldsJson: customFieldsJson,
                     ));
                   }
                   
@@ -868,6 +943,7 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
             ),
           ],
         ),
+      ),
       ),
     );
   }
