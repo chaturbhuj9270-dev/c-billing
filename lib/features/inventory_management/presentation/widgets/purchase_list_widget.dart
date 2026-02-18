@@ -10,6 +10,8 @@ class PurchaseListWidget extends StatefulWidget {
   final bool isLoading;
   final PurchaseDateFilter dateFilter;
   final String? supplierFilter;
+  final DateTime? customStartDate;
+  final DateTime? customEndDate;
   final VoidCallback? onRefresh;
   final Function(PurchaseBatchEntity)? onPurchaseTap;
   final Function(PurchaseBatchEntity)? onPurchaseLongPress;
@@ -22,6 +24,8 @@ class PurchaseListWidget extends StatefulWidget {
     this.isLoading = false,
     this.dateFilter = PurchaseDateFilter.all,
     this.supplierFilter,
+    this.customStartDate,
+    this.customEndDate,
     this.onRefresh,
     this.onPurchaseTap,
     this.onPurchaseLongPress,
@@ -53,6 +57,36 @@ class _PurchaseListWidgetState extends State<PurchaseListWidget> {
         return p.purchaseDate.year == today.year &&
             p.purchaseDate.month == today.month &&
             p.purchaseDate.day == today.day;
+      }).toList();
+    } else if (widget.dateFilter == PurchaseDateFilter.thisMonth) {
+      final now = DateTime.now();
+      filtered = filtered.where((p) {
+        return p.purchaseDate.year == now.year &&
+            p.purchaseDate.month == now.month;
+      }).toList();
+    } else if (widget.dateFilter == PurchaseDateFilter.thisYear) {
+      final now = DateTime.now();
+      filtered = filtered.where((p) {
+        return p.purchaseDate.year == now.year;
+      }).toList();
+    } else if (widget.dateFilter == PurchaseDateFilter.custom &&
+               widget.customStartDate != null) {
+      final start = DateTime(
+        widget.customStartDate!.year,
+        widget.customStartDate!.month,
+        widget.customStartDate!.day,
+      );
+      final end = widget.customEndDate != null
+          ? DateTime(
+              widget.customEndDate!.year,
+              widget.customEndDate!.month,
+              widget.customEndDate!.day,
+              23, 59, 59,
+            )
+          : DateTime(start.year, start.month, start.day, 23, 59, 59);
+      filtered = filtered.where((p) {
+        return p.purchaseDate.isAfter(start.subtract(const Duration(seconds: 1))) &&
+            p.purchaseDate.isBefore(end.add(const Duration(seconds: 1)));
       }).toList();
     }
 
@@ -284,12 +318,16 @@ class PurchaseSummaryWidget extends StatelessWidget {
   final List<PurchaseBatchEntity> purchases;
   final PurchaseDateFilter dateFilter;
   final String? supplierFilter;
+  final DateTime? customStartDate;
+  final DateTime? customEndDate;
 
   const PurchaseSummaryWidget({
     super.key,
     required this.purchases,
     this.dateFilter = PurchaseDateFilter.all,
     this.supplierFilter,
+    this.customStartDate,
+    this.customEndDate,
   });
 
   List<PurchaseBatchEntity> get _filteredPurchases {
@@ -301,6 +339,35 @@ class PurchaseSummaryWidget extends StatelessWidget {
         return p.purchaseDate.year == today.year &&
             p.purchaseDate.month == today.month &&
             p.purchaseDate.day == today.day;
+      }).toList();
+    } else if (dateFilter == PurchaseDateFilter.thisMonth) {
+      final now = DateTime.now();
+      filtered = filtered.where((p) {
+        return p.purchaseDate.year == now.year &&
+            p.purchaseDate.month == now.month;
+      }).toList();
+    } else if (dateFilter == PurchaseDateFilter.thisYear) {
+      final now = DateTime.now();
+      filtered = filtered.where((p) {
+        return p.purchaseDate.year == now.year;
+      }).toList();
+    } else if (dateFilter == PurchaseDateFilter.custom && customStartDate != null) {
+      final start = DateTime(
+        customStartDate!.year,
+        customStartDate!.month,
+        customStartDate!.day,
+      );
+      final end = customEndDate != null
+          ? DateTime(
+              customEndDate!.year,
+              customEndDate!.month,
+              customEndDate!.day,
+              23, 59, 59,
+            )
+          : DateTime(start.year, start.month, start.day, 23, 59, 59);
+      filtered = filtered.where((p) {
+        return p.purchaseDate.isAfter(start.subtract(const Duration(seconds: 1))) &&
+            p.purchaseDate.isBefore(end.add(const Duration(seconds: 1)));
       }).toList();
     }
 

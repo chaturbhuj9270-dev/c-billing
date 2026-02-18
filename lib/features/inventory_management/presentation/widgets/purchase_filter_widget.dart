@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
+import 'package:intl/intl.dart';
 
 /// Filter options for purchase list
 enum PurchaseDateFilter {
   all,
   today,
+  thisMonth,
+  thisYear,
+  custom,
 }
 
 /// Sticky filter widget for purchase list
@@ -15,8 +19,15 @@ class PurchaseFilterWidget extends StatefulWidget {
   final List<Map<String, dynamic>> suppliers;
   final ValueChanged<PurchaseDateFilter> onDateFilterChanged;
   final ValueChanged<String?> onSupplierChanged;
+  final DateTime? customStartDate;
+  final DateTime? customEndDate;
+  final Function(DateTime?, DateTime?)? onCustomDateRangeSelected;
+  final VoidCallback? onReportTap;
   final String allLabel;
   final String todayLabel;
+  final String thisMonthLabel;
+  final String thisYearLabel;
+  final String customLabel;
   final String supplierLabel;
 
   const PurchaseFilterWidget({
@@ -26,8 +37,15 @@ class PurchaseFilterWidget extends StatefulWidget {
     required this.suppliers,
     required this.onDateFilterChanged,
     required this.onSupplierChanged,
+    this.customStartDate,
+    this.customEndDate,
+    this.onCustomDateRangeSelected,
+    this.onReportTap,
     this.allLabel = 'All',
     this.todayLabel = 'Today',
+    this.thisMonthLabel = 'This Month',
+    this.thisYearLabel = 'This Year',
+    this.customLabel = 'Custom',
     this.supplierLabel = 'Supplier',
   });
 
@@ -65,39 +83,89 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
           // Date filter row
           Row(
             children: [
-              // All/Today toggle buttons
+              // All filters in horizontal scroll
               Expanded(
-                child: Row(
-                  children: [
-                    _buildFilterChip(
-                      label: widget.allLabel,
-                      isSelected: widget.selectedDateFilter == PurchaseDateFilter.all,
-                      onTap: () => widget.onDateFilterChanged(PurchaseDateFilter.all),
-                      icon: Icons.list_alt_rounded,
-                    ),
-                    const SizedBox(width: 8),
-                    _buildFilterChip(
-                      label: widget.todayLabel,
-                      isSelected: widget.selectedDateFilter == PurchaseDateFilter.today,
-                      onTap: () => widget.onDateFilterChanged(PurchaseDateFilter.today),
-                      icon: Icons.today_rounded,
-                    ),
-                  ],
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      _buildFilterChip(
+                        label: widget.allLabel,
+                        isSelected: widget.selectedDateFilter == PurchaseDateFilter.all,
+                        onTap: () => widget.onDateFilterChanged(PurchaseDateFilter.all),
+                        icon: Icons.list_alt_rounded,
+                      ),
+                      const SizedBox(width: 8),
+                      _buildFilterChip(
+                        label: widget.todayLabel,
+                        isSelected: widget.selectedDateFilter == PurchaseDateFilter.today,
+                        onTap: () => widget.onDateFilterChanged(PurchaseDateFilter.today),
+                        icon: Icons.today_rounded,
+                      ),
+                      const SizedBox(width: 8),
+                      _buildFilterChip(
+                        label: widget.thisMonthLabel,
+                        isSelected: widget.selectedDateFilter == PurchaseDateFilter.thisMonth,
+                        onTap: () => widget.onDateFilterChanged(PurchaseDateFilter.thisMonth),
+                        icon: Icons.calendar_month_rounded,
+                      ),
+                      const SizedBox(width: 8),
+                      _buildFilterChip(
+                        label: widget.thisYearLabel,
+                        isSelected: widget.selectedDateFilter == PurchaseDateFilter.thisYear,
+                        onTap: () => widget.onDateFilterChanged(PurchaseDateFilter.thisYear),
+                        icon: Icons.calendar_today_rounded,
+                      ),
+                      const SizedBox(width: 8),
+                      _buildFilterChip(
+                        label: widget.selectedDateFilter == PurchaseDateFilter.custom && 
+                               widget.customStartDate != null
+                            ? _formatCustomDateLabel()
+                            : widget.customLabel,
+                        isSelected: widget.selectedDateFilter == PurchaseDateFilter.custom,
+                        onTap: () => _showCustomDatePicker(context),
+                        icon: Icons.date_range_rounded,
+                      ),
+                      const SizedBox(width: 8),
+                      // Supplier dropdown in scroll
+                      _buildSupplierDropdown(),
+                    ],
+                  ),
                 ),
               ),
-              
-              // Supplier dropdown
-              _buildSupplierDropdown(),
+              // Report button
+              if (widget.onReportTap != null) ...[
+                const SizedBox(width: 8),
+                _buildReportButton(),
+              ],
             ],
           ),
           
           // Show active filters indicator
-          if (widget.selectedDateFilter == PurchaseDateFilter.today || 
+          if (widget.selectedDateFilter != PurchaseDateFilter.all || 
               widget.selectedSupplierId != null) ...[
             const SizedBox(height: 10),
             _buildActiveFiltersRow(),
           ],
         ],
+      ),
+    );
+  }
+
+  Widget _buildReportButton() {
+    return GestureDetector(
+      onTap: widget.onReportTap,
+      child: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: const Color(0xFF1B4D3E),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: const Icon(
+          Icons.description_rounded,
+          size: 20,
+          color: Colors.white,
+        ),
       ),
     );
   }
@@ -242,8 +310,26 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
               label: widget.todayLabel,
               onRemove: () => widget.onDateFilterChanged(PurchaseDateFilter.all),
             ),
+          if (widget.selectedDateFilter == PurchaseDateFilter.thisMonth)
+            _buildActiveFilterTag(
+              label: widget.thisMonthLabel,
+              onRemove: () => widget.onDateFilterChanged(PurchaseDateFilter.all),
+            ),
+          if (widget.selectedDateFilter == PurchaseDateFilter.thisYear)
+            _buildActiveFilterTag(
+              label: widget.thisYearLabel,
+              onRemove: () => widget.onDateFilterChanged(PurchaseDateFilter.all),
+            ),
+          if (widget.selectedDateFilter == PurchaseDateFilter.custom)
+            _buildActiveFilterTag(
+              label: _formatCustomDateLabel(),
+              onRemove: () {
+                widget.onCustomDateRangeSelected?.call(null, null);
+                widget.onDateFilterChanged(PurchaseDateFilter.all);
+              },
+            ),
           if (widget.selectedSupplierId != null) ...[
-            if (widget.selectedDateFilter == PurchaseDateFilter.today)
+            if (widget.selectedDateFilter != PurchaseDateFilter.all)
               const SizedBox(width: 6),
             _buildActiveFilterTag(
               label: _getSupplierName(widget.selectedSupplierId!),
@@ -304,6 +390,56 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
         ],
       ),
     );
+  }
+
+  String _formatCustomDateLabel() {
+    if (widget.customStartDate == null) return widget.customLabel;
+    final dateFormat = DateFormat('dd MMM');
+    final start = dateFormat.format(widget.customStartDate!);
+    if (widget.customEndDate == null || 
+        widget.customStartDate == widget.customEndDate) {
+      return start;
+    }
+    final end = dateFormat.format(widget.customEndDate!);
+    return '$start - $end';
+  }
+
+  Future<void> _showCustomDatePicker(BuildContext context) async {
+    final now = DateTime.now();
+    final initialRange = DateTimeRange(
+      start: widget.customStartDate ?? now.subtract(const Duration(days: 7)),
+      end: widget.customEndDate ?? now,
+    );
+
+    final picked = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(2020),
+      lastDate: now,
+      initialDateRange: initialRange,
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: Color(0xFF1B4D3E),
+              onPrimary: Colors.white,
+              surface: Colors.white,
+              onSurface: Colors.black87,
+            ),
+            textButtonTheme: TextButtonThemeData(
+              style: TextButton.styleFrom(
+                foregroundColor: const Color(0xFF1B4D3E),
+              ),
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null) {
+      widget.onCustomDateRangeSelected?.call(picked.start, picked.end);
+      widget.onDateFilterChanged(PurchaseDateFilter.custom);
+    }
   }
 
   void _showSupplierPicker(BuildContext context) {

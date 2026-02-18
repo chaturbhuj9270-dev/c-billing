@@ -46,6 +46,8 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
   // Filters
   PurchaseDateFilter _dateFilter = PurchaseDateFilter.all;
   String? _supplierFilter;
+  DateTime? _customStartDate;
+  DateTime? _customEndDate;
 
   // Streams
   StreamSubscription<List<PurchaseBatchEntity>>? _purchaseStreamSubscription;
@@ -1098,12 +1100,6 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Section header
-                        if (widget.isEmbedded) ...[
-                          const SizedBox(height: 12),
-                          _buildSectionHeader(),
-                        ],
-                        
                         const SizedBox(height: 16),
                         
                         // Summary stats
@@ -1111,6 +1107,8 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                           purchases: _purchases,
                           dateFilter: _dateFilter,
                           supplierFilter: _supplierFilter,
+                          customStartDate: _customStartDate,
+                          customEndDate: _customEndDate,
                         ),
                         
                         const SizedBox(height: 16),
@@ -1120,12 +1118,21 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                           selectedDateFilter: _dateFilter,
                           selectedSupplierId: _supplierFilter,
                           suppliers: _suppliers,
+                          customStartDate: _customStartDate,
+                          customEndDate: _customEndDate,
                           onDateFilterChanged: (filter) {
                             setState(() => _dateFilter = filter);
                           },
                           onSupplierChanged: (supplierId) {
                             setState(() => _supplierFilter = supplierId);
                           },
+                          onCustomDateRangeSelected: (start, end) {
+                            setState(() {
+                              _customStartDate = start;
+                              _customEndDate = end;
+                            });
+                          },
+                          onReportTap: _generatePurchaseReport,
                           allLabel: _localizations.all,
                           todayLabel: _localizations.today,
                           supplierLabel: _localizations.supplier,
@@ -1140,6 +1147,8 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                             isLoading: _isLoading,
                             dateFilter: _dateFilter,
                             supplierFilter: _supplierFilter,
+                            customStartDate: _customStartDate,
+                            customEndDate: _customEndDate,
                             onRefresh: () {
                               PurchaseSyncService.instance.syncNow();
                               PurchaseBatchSyncService.instance.syncNow();
@@ -1174,6 +1183,35 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
             p.purchaseDate.month == today.month &&
             p.purchaseDate.day == today.day;
       }).toList();
+    } else if (_dateFilter == PurchaseDateFilter.thisMonth) {
+      final now = DateTime.now();
+      filtered = filtered.where((p) {
+        return p.purchaseDate.year == now.year &&
+            p.purchaseDate.month == now.month;
+      }).toList();
+    } else if (_dateFilter == PurchaseDateFilter.thisYear) {
+      final now = DateTime.now();
+      filtered = filtered.where((p) {
+        return p.purchaseDate.year == now.year;
+      }).toList();
+    } else if (_dateFilter == PurchaseDateFilter.custom && _customStartDate != null) {
+      final start = DateTime(
+        _customStartDate!.year,
+        _customStartDate!.month,
+        _customStartDate!.day,
+      );
+      final end = _customEndDate != null
+          ? DateTime(
+              _customEndDate!.year,
+              _customEndDate!.month,
+              _customEndDate!.day,
+              23, 59, 59,
+            )
+          : DateTime(start.year, start.month, start.day, 23, 59, 59);
+      filtered = filtered.where((p) {
+        return p.purchaseDate.isAfter(start.subtract(const Duration(seconds: 1))) &&
+            p.purchaseDate.isBefore(end.add(const Duration(seconds: 1)));
+      }).toList();
     }
 
     // Supplier filter
@@ -1188,6 +1226,19 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
     final parts = <String>[];
     if (_dateFilter == PurchaseDateFilter.today) {
       parts.add('Today');
+    } else if (_dateFilter == PurchaseDateFilter.thisMonth) {
+      parts.add('This Month');
+    } else if (_dateFilter == PurchaseDateFilter.thisYear) {
+      parts.add('This Year');
+    } else if (_dateFilter == PurchaseDateFilter.custom && _customStartDate != null) {
+      final dateFormat = DateFormat('dd MMM yyyy');
+      final start = dateFormat.format(_customStartDate!);
+      if (_customEndDate == null || _customStartDate == _customEndDate) {
+        parts.add(start);
+      } else {
+        final end = dateFormat.format(_customEndDate!);
+        parts.add('$start - $end');
+      }
     } else {
       parts.add('All Time');
     }
@@ -1488,36 +1539,6 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              ActionMenu(
-                menuColor: const Color(0xFF1B4D3E),
-                iconColor: const Color(0xFF1B4D3E),
-                onSettingsTap: () async {
-                  await Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const PurchaseSettingsPage(),
-                    ),
-                  );
-                  setState(() {});
-                },
-                onLanguageTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Language change is available in Dashboard'),
-                      duration: Duration(seconds: 2),
-                    ),
-                  );
-                },
-                onBugReportTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Bug report feature coming soon'),
-                      duration: Duration(seconds: 2),
-                    ),
-                  );
-                },
               ),
             ],
           ),
