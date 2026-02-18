@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -6,6 +7,7 @@ import 'package:isar_community/isar.dart';
 import 'package:c_billing/core/services/language_service.dart';
 import 'package:c_billing/core/services/dashboard_refresh_service.dart';
 import 'package:c_billing/core/services/isar_service.dart';
+import 'package:c_billing/core/services/product_settings_service.dart';
 import 'package:c_billing/core/localization/app_localizations.dart';
 import '../../offline/entities/purchase_batch_entity.dart';
 import '../../offline/controllers/purchase_batch_offline_controller.dart';
@@ -14,6 +16,7 @@ import '../../data/services/purchase_batch_sync_service.dart';
 import '../../data/services/purchase_report_pdf_generator.dart';
 import '../../../supplier/offline/controllers/supplier_offline_controller.dart';
 import '../../../supplier/offline/entities/supplier_entity.dart';
+import '../../../product/offline/controllers/product_offline_controller.dart';
 import '../../../../common_widgets/action_menu.dart';
 import '../widgets/purchase_filter_widget.dart';
 import '../widgets/purchase_list_widget.dart';
@@ -390,6 +393,9 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
     final originalQty = purchase.quantityPurchased;
     final consumed = originalQty - purchase.quantityRemaining;
 
+    // Load custom columns
+    final customColumns = ProductSettingsService.instance.activeCustomColumns;
+
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
@@ -629,6 +635,63 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                     icon: Icons.notes_rounded,
                     maxLines: 3,
                   ),
+                  
+                  // Custom Fields Section (Read-only display)
+                  if (customColumns.isNotEmpty) ...[
+                    const SizedBox(height: 16),
+                    Container(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: Row(
+                        children: [
+                          Icon(Icons.tune_rounded, 
+                              size: 16, 
+                              color: Colors.grey[600]),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Custom Fields',
+                            style: TextStyle(
+                              fontFamily: 'Literata',
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    FutureBuilder<Map<String, dynamic>>(
+                      future: _loadProductCustomFields(purchase.productId),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState == ConnectionState.waiting) {
+                          return const Padding(
+                            padding: EdgeInsets.all(8.0),
+                            child: Center(
+                              child: SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Color(0xFF1B4D3E),
+                                ),
+                              ),
+                            ),
+                          );
+                        }
+                        final fieldValues = snapshot.data ?? {};
+                        return Column(
+                          children: customColumns.map((column) {
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: _buildCustomFieldDisplay(
+                                column,
+                                fieldValues[column.id],
+                              ),
+                            );
+                          }).toList(),
+                        );
+                      },
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -822,6 +885,103 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
                     color: date != null ? Colors.black87 : Colors.grey[400],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Load custom field values from the product
+  Future<Map<String, dynamic>> _loadProductCustomFields(String productId) async {
+    try {
+      final product = await ProductOfflineController.instance.getProductByServerId(productId);
+      if (product != null && product.customFieldsJson != null && product.customFieldsJson!.isNotEmpty) {
+        return jsonDecode(product.customFieldsJson!) as Map<String, dynamic>;
+      }
+    } catch (e) {
+      debugPrint('Error loading product custom fields: $e');
+    }
+    return {};
+  }
+
+  /// Build a read-only custom field display widget
+  Widget _buildCustomFieldDisplay(CustomColumn column, dynamic value) {
+    final primaryColor = const Color(0xFF1B4D3E);
+    String displayValue = '';
+    IconData icon = Icons.text_fields_rounded;
+    
+    switch (column.type) {
+      case CustomColumnType.text:
+        displayValue = value?.toString() ?? '-';
+        icon = Icons.text_fields_rounded;
+        break;
+      case CustomColumnType.number:
+        displayValue = value?.toString() ?? '-';
+        icon = Icons.numbers_rounded;
+        break;
+      case CustomColumnType.decimal:
+        displayValue = value?.toString() ?? '-';
+        icon = Icons.percent_rounded;
+        break;
+      case CustomColumnType.date:
+        if (value != null && value.toString().isNotEmpty) {
+          try {
+            final date = DateTime.parse(value.toString());
+            displayValue = DateFormat('dd MMM yyyy').format(date);
+          } catch (_) {
+            displayValue = value.toString();
+          }
+        } else {
+          displayValue = '-';
+        }
+        icon = Icons.calendar_today_rounded;
+        break;
+      case CustomColumnType.dropdown:
+        displayValue = value?.toString() ?? '-';
+        icon = Icons.arrow_drop_down_circle_rounded;
+        break;
+      case CustomColumnType.boolean:
+        displayValue = value == true || value == 'true' ? 'Yes' : 'No';
+        icon = Icons.check_circle_outline_rounded;
+        break;
+    }
+    
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey[300]!),
+        borderRadius: BorderRadius.circular(12),
+        color: Colors.grey[50],
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: primaryColor),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  column.name,
+                  style: TextStyle(
+                    fontFamily: 'Literata',
+                    fontSize: 10,
+                    color: Colors.grey[600],
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  displayValue,
+                  style: TextStyle(
+                    fontFamily: 'Literata',
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: displayValue != '-' ? Colors.black87 : Colors.grey[400],
                   ),
                 ),
               ],
