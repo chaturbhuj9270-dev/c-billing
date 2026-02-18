@@ -42,7 +42,7 @@ import 'package:c_billing/features/dashboard/data/repositories/dashboard_offline
 import 'package:c_billing/features/billing/presentation/pages/bills_list_page.dart';
 import 'package:c_billing/features/inventory_management/presentation/pages/enhanced_product_page.dart';
 import 'package:c_billing/features/supplier/presentation/pages/enhanced_supplier_page.dart';
-import 'package:c_billing/features/company/presentation/pages/company_page.dart';
+import 'package:c_billing/features/company/presentation/pages/enhanced_company_page.dart';
 import 'package:c_billing/features/purchase_return/presentation/pages/purchase_return_screen.dart';
 import 'package:c_billing/features/reports/presentation/pages/report_page.dart';
 import 'package:c_billing/features/dashboard/data/models/dashboard_data.dart';
@@ -3909,7 +3909,7 @@ class _BillingPageState extends State<BillingPage> {
                             color: const Color(0xFF9C27B0),
                             onTap: () => Navigator.push(
                               context,
-                              MaterialPageRoute(builder: (_) => const CompanyPage()),
+                              MaterialPageRoute(builder: (_) => const EnhancedCompanyPage()),
                             ).then((_) { _loadQuickStats(); }),
                           ),
                           const SizedBox(width: 8),

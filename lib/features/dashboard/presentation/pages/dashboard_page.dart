@@ -4,7 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import '../../../customer/presentation/pages/enhanced_customer_page.dart';
 import '../../../supplier/presentation/pages/enhanced_supplier_page.dart';
-import '../../../company/presentation/pages/company_page.dart';
+import '../../../company/presentation/pages/enhanced_company_page.dart';
 import '../../../inventory_management/presentation/pages/enhanced_purchase_screen.dart';
 import '../../../inventory_management/presentation/pages/enhanced_product_page.dart';
 import '../../../billing/presentation/pages/billing_page.dart';
@@ -1567,7 +1567,7 @@ class _DashboardViewState extends State<_DashboardView>
             targetPage = const EnhancedPurchaseScreen();
             break;
           case 'Companies':
-            targetPage = const CompanyPage();
+            targetPage = const EnhancedCompanyPage();
             break;
           case 'Inventory':
           case 'Low Stock':

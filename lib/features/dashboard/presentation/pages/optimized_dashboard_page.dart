@@ -6,7 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import '../../../customer/presentation/pages/enhanced_customer_page.dart';
 import '../../../supplier/presentation/pages/enhanced_supplier_page.dart';
-import '../../../company/presentation/pages/company_page.dart';
+import '../../../company/presentation/pages/enhanced_company_page.dart';
 import '../../../inventory_management/presentation/pages/enhanced_purchase_screen.dart';
 import '../../../inventory_management/presentation/pages/purchase_settings_page.dart';
 import '../../../inventory_management/presentation/pages/purchase_report_settings_page.dart';
@@ -852,7 +852,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
             isLoading: isLoading,
             onTap: () => Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => const CompanyPage()),
+              MaterialPageRoute(builder: (_) => const EnhancedCompanyPage()),
             ).then((_) => _onDataChanged()),
           ),
           const SizedBox(width: 12),
