@@ -25,7 +25,6 @@ import '../../../company/offline/controllers/company_offline_controller.dart';
 import '../../../company/offline/entities/company_entity.dart';
 import '../../../product/offline/entities/product_entity.dart';
 import '../../../../core/services/inventory_integration_service.dart';
-import '../../../../common_widgets/action_menu.dart';
 import 'purchase_settings_page.dart';
 
 class PurchasePage extends StatefulWidget {
@@ -47,7 +46,7 @@ class _PurchasePageState extends State<PurchasePage>
   late Animation<double> _opacityAnimation;
   late AppLocalizations _localizations;
   final _cacheDataSource = PurchaseCacheDataSource();
-  
+
   // Real-time Isar stream subscriptions
   StreamSubscription<List<ProductEntity>>? _productStreamSubscription;
   StreamSubscription<List<SupplierEntity>>? _supplierStreamSubscription;
@@ -90,6 +89,10 @@ class _PurchasePageState extends State<PurchasePage>
   List<Map<String, dynamic>> _filteredSuppliers = [];
   List<Map<String, dynamic>> _companies = [];
   List<Map<String, dynamic>> _filteredCompanies = [];
+  
+  // Scroll tracking for bottom button
+  final ScrollController _scrollController = ScrollController();
+  bool _hasScrolledToBottom = false;
 
   @override
   void initState() {
@@ -107,7 +110,7 @@ class _PurchasePageState extends State<PurchasePage>
 
     // Initialize selected unit with default
     _selectedUnit = PurchaseSettingsService.instance.defaultUnit;
-    
+
     // Initialize selected warranty with default
     _selectedWarranty = PurchaseSettingsService.instance.defaultWarranty;
 
@@ -134,11 +137,28 @@ class _PurchasePageState extends State<PurchasePage>
       const Duration(milliseconds: 150),
       () => _animController.forward(),
     );
-    
+
     // Setup real-time Isar streams for instant UI updates
     _setupProductStream();
     _setupSupplierStream();
     _setupCompanyStream();
+    
+    // Setup scroll listener to track when user scrolls to bottom
+    _scrollController.addListener(_onScroll);
+  }
+  
+  void _onScroll() {
+    if (_scrollController.hasClients) {
+      final maxScroll = _scrollController.position.maxScrollExtent;
+      final currentScroll = _scrollController.offset;
+      // Consider "scrolled to bottom" when within 50 pixels of the end
+      final isAtBottom = currentScroll >= maxScroll - 50;
+      if (isAtBottom != _hasScrolledToBottom) {
+        setState(() {
+          _hasScrolledToBottom = isAtBottom;
+        });
+      }
+    }
   }
 
   void _onLanguageChanged() {
@@ -157,7 +177,7 @@ class _PurchasePageState extends State<PurchasePage>
         // Always update to the new default unit when settings change
         // This ensures immediate effect when user changes default unit in settings
         _selectedUnit = PurchaseSettingsService.instance.defaultUnit;
-        
+
         // Always update to the new default warranty when settings change
         _selectedWarranty = PurchaseSettingsService.instance.defaultWarranty;
       });
@@ -166,74 +186,83 @@ class _PurchasePageState extends State<PurchasePage>
 
   /// Setup real-time product stream from Isar
   void _setupProductStream() {
-    _productStreamSubscription = ProductOfflineController.instance.watchAllProducts().listen(
-      (entities) {
-        if (!mounted) return;
-        final products = entities.map((entity) => Product(
-          id: entity.serverId ?? entity.id.toString(),
-          indexNo: entity.indexNo,
-          name: entity.name,
-          companyName: entity.companyName,
-          category: entity.category,
-          purchasePrice: entity.purchasePrice,
-          salesPrice: entity.salesPrice,
-          currentStock: entity.currentStock,
-          createdAt: entity.createdAt,
-          updatedAt: entity.updatedAt,
-          defaultSupplierId: entity.defaultSupplierId,
-          defaultSupplierName: entity.defaultSupplierName,
-        )).toList();
-        setState(() {
-          _products = products;
-          _filteredProducts = products;
-        });
-        _cacheDataSource.saveProducts(products);
-        print('[Purchase] Product stream: ${products.length} products');
-      },
-      onError: (e) => print('[ERROR] Product stream error: $e'),
-    );
+    _productStreamSubscription = ProductOfflineController.instance
+        .watchAllProducts()
+        .listen((entities) {
+          if (!mounted) return;
+          final products = entities
+              .map(
+                (entity) => Product(
+                  id: entity.serverId ?? entity.id.toString(),
+                  indexNo: entity.indexNo,
+                  name: entity.name,
+                  companyName: entity.companyName,
+                  category: entity.category,
+                  purchasePrice: entity.purchasePrice,
+                  salesPrice: entity.salesPrice,
+                  currentStock: entity.currentStock,
+                  createdAt: entity.createdAt,
+                  updatedAt: entity.updatedAt,
+                  defaultSupplierId: entity.defaultSupplierId,
+                  defaultSupplierName: entity.defaultSupplierName,
+                ),
+              )
+              .toList();
+          setState(() {
+            _products = products;
+            _filteredProducts = products;
+          });
+          _cacheDataSource.saveProducts(products);
+          print('[Purchase] Product stream: ${products.length} products');
+        }, onError: (e) => print('[ERROR] Product stream error: $e'));
   }
 
   /// Setup real-time supplier stream from Isar
   void _setupSupplierStream() {
-    _supplierStreamSubscription = SupplierOfflineController.instance.watchAllSuppliers().listen(
-      (entities) {
-        if (!mounted) return;
-        final suppliers = entities.map((entity) => <String, dynamic>{
-          'id': entity.serverId ?? entity.id.toString(),
-          'firstName': entity.firstName,
-          'lastName': entity.lastName,
-          'fullName': '${entity.firstName} ${entity.lastName}'.trim(),
-        }).toList();
-        setState(() {
-          _suppliers = suppliers;
-          _filteredSuppliers = suppliers;
-        });
-        _cacheDataSource.saveSuppliers(suppliers);
-        print('[Purchase] Supplier stream: ${suppliers.length} suppliers');
-      },
-      onError: (e) => print('[ERROR] Supplier stream error: $e'),
-    );
+    _supplierStreamSubscription = SupplierOfflineController.instance
+        .watchAllSuppliers()
+        .listen((entities) {
+          if (!mounted) return;
+          final suppliers = entities
+              .map(
+                (entity) => <String, dynamic>{
+                  'id': entity.serverId ?? entity.id.toString(),
+                  'firstName': entity.firstName,
+                  'lastName': entity.lastName,
+                  'fullName': '${entity.firstName} ${entity.lastName}'.trim(),
+                },
+              )
+              .toList();
+          setState(() {
+            _suppliers = suppliers;
+            _filteredSuppliers = suppliers;
+          });
+          _cacheDataSource.saveSuppliers(suppliers);
+          print('[Purchase] Supplier stream: ${suppliers.length} suppliers');
+        }, onError: (e) => print('[ERROR] Supplier stream error: $e'));
   }
 
   /// Setup real-time company stream from Isar
   void _setupCompanyStream() {
-    _companyStreamSubscription = CompanyOfflineController.instance.watchAllCompanies().listen(
-      (entities) {
-        if (!mounted) return;
-        final companies = entities.map((entity) => <String, dynamic>{
-          'id': entity.serverId ?? entity.id.toString(),
-          'companyName': entity.companyName,
-        }).toList();
-        setState(() {
-          _companies = companies;
-          _filteredCompanies = companies;
-        });
-        _cacheDataSource.saveCompanies(companies);
-        print('[Purchase] Company stream: ${companies.length} companies');
-      },
-      onError: (e) => print('[ERROR] Company stream error: $e'),
-    );
+    _companyStreamSubscription = CompanyOfflineController.instance
+        .watchAllCompanies()
+        .listen((entities) {
+          if (!mounted) return;
+          final companies = entities
+              .map(
+                (entity) => <String, dynamic>{
+                  'id': entity.serverId ?? entity.id.toString(),
+                  'companyName': entity.companyName,
+                },
+              )
+              .toList();
+          setState(() {
+            _companies = companies;
+            _filteredCompanies = companies;
+          });
+          _cacheDataSource.saveCompanies(companies);
+          print('[Purchase] Company stream: ${companies.length} companies');
+        }, onError: (e) => print('[ERROR] Company stream error: $e'));
   }
 
   Future<void> _addNewProduct() async {
@@ -243,17 +272,17 @@ class _PurchasePageState extends State<PurchasePage>
     final cgstController = TextEditingController(text: '0');
     final sgstController = TextEditingController(text: '0');
     final hsnController = TextEditingController();
-    Map<String, dynamic>? dialogSelectedCompany;
-    Map<String, dynamic>? dialogSelectedSupplier;
-    
+    Map<String, dynamic>? sheetSelectedCompany;
+    Map<String, dynamic>? sheetSelectedSupplier;
+
     // Custom fields controllers and values
     final customColumns = ProductSettingsService.instance.activeCustomColumns;
     final Map<String, TextEditingController> customTextControllers = {};
     final Map<String, dynamic> customFieldValues = {};
-    
+
     // Initialize controllers for custom fields
     for (final column in customColumns) {
-      if (column.type == CustomColumnType.text || 
+      if (column.type == CustomColumnType.text ||
           column.type == CustomColumnType.number ||
           column.type == CustomColumnType.decimal) {
         customTextControllers[column.id] = TextEditingController(
@@ -262,399 +291,536 @@ class _PurchasePageState extends State<PurchasePage>
       } else if (column.type == CustomColumnType.boolean) {
         customFieldValues[column.id] = column.defaultValue == 'true';
       } else if (column.type == CustomColumnType.dropdown) {
-        customFieldValues[column.id] = column.defaultValue ?? 
-            ((column.dropdownOptions?.isNotEmpty ?? false) ? column.dropdownOptions!.first : '');
+        customFieldValues[column.id] =
+            column.defaultValue ??
+            ((column.dropdownOptions?.isNotEmpty ?? false)
+                ? column.dropdownOptions!.first
+                : '');
       } else if (column.type == CustomColumnType.date) {
         customFieldValues[column.id] = column.defaultValue;
       }
     }
 
-    showDialog(
+    showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
       builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          title: Text(
-            _localizations.addNewProduct,
-            style: const TextStyle(
-              fontFamily: 'Literata',
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF1B4D3E),
-              fontSize: 18,
+        builder: (context, setSheetState) => Container(
+          height: MediaQuery.of(context).size.height * 0.9,
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(24),
+              topRight: Radius.circular(24),
             ),
           ),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: nameController,
-                  onChanged: (_) => setDialogState(() {}),
-                  decoration: InputDecoration(
-                    labelText: _localizations.productName,
-                    hintText: _localizations.enterProductName,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: Color(0xFF1B4D3E),
-                        width: 2,
-                      ),
-                    ),
+          child: Column(
+            children: [
+              // Drag handle
+              Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(2),
                   ),
                 ),
-                const SizedBox(height: 12),
-                // Company selector
-                InkWell(
-                  onTap: () async {
-                    final company = await _showInlineCompanyPicker(context);
-                    if (company != null) {
-                      setDialogState(() {
-                        dialogSelectedCompany = company;
-                      });
-                    }
-                  },
-                  borderRadius: BorderRadius.circular(12),
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-                    decoration: BoxDecoration(
-                      border: Border.all(
-                        color: dialogSelectedCompany != null ? const Color(0xFF1B4D3E) : Colors.grey[400]!,
-                        width: dialogSelectedCompany != null ? 2 : 1,
-                      ),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(Icons.business, color: dialogSelectedCompany != null ? const Color(0xFF1B4D3E) : Colors.grey, size: 20),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            dialogSelectedCompany?['companyName'] ?? _localizations.selectCompany,
-                            style: TextStyle(
-                              fontFamily: 'Literata',
-                              color: dialogSelectedCompany != null ? Colors.black87 : Colors.grey[600],
-                              fontSize: 14,
-                            ),
-                          ),
-                        ),
-                        Icon(Icons.arrow_drop_down, color: Colors.grey[600]),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                // Supplier selector
-                InkWell(
-                  onTap: () async {
-                    final supplier = await _showInlineSupplierPicker(context);
-                    if (supplier != null) {
-                      setDialogState(() {
-                        dialogSelectedSupplier = supplier;
-                      });
-                    }
-                  },
-                  borderRadius: BorderRadius.circular(12),
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-                    decoration: BoxDecoration(
-                      border: Border.all(
-                        color: dialogSelectedSupplier != null ? const Color(0xFF1B4D3E) : Colors.grey[400]!,
-                        width: dialogSelectedSupplier != null ? 2 : 1,
-                      ),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(Icons.person, color: dialogSelectedSupplier != null ? const Color(0xFF1B4D3E) : Colors.grey, size: 20),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            dialogSelectedSupplier?['fullName'] ?? _localizations.selectSupplier,
-                            style: TextStyle(
-                              fontFamily: 'Literata',
-                              color: dialogSelectedSupplier != null ? Colors.black87 : Colors.grey[600],
-                              fontSize: 14,
-                            ),
-                          ),
-                        ),
-                        Icon(Icons.arrow_drop_down, color: Colors.grey[600]),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: purchasePriceController,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    labelText: _localizations.purchasePrice,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: Color(0xFF1B4D3E),
-                        width: 2,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: salesPriceController,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    labelText: _localizations.salesPrice,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: Color(0xFF1B4D3E),
-                        width: 2,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Row(
+              ),
+              // Header
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                child: Row(
                   children: [
-                    Expanded(
-                      child: TextField(
-                        controller: cgstController,
-                        keyboardType: TextInputType.number,
-                        decoration: InputDecoration(
-                          labelText: 'CGST %',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
-                              color: Color(0xFF1B4D3E),
-                              width: 2,
-                            ),
-                          ),
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            const Color(0xFFf093fb),
+                            const Color(0xFFf093fb).withValues(alpha: 0.8),
+                          ],
                         ),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(
+                        Icons.inventory_2_rounded,
+                        color: Colors.white,
+                        size: 22,
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 14),
                     Expanded(
-                      child: TextField(
-                        controller: sgstController,
-                        keyboardType: TextInputType.number,
-                        decoration: InputDecoration(
-                          labelText: 'SGST %',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _localizations.addNewProduct,
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w700,
+                              fontFamily: 'Literata',
                               color: Color(0xFF1B4D3E),
-                              width: 2,
                             ),
                           ),
+                          Text(
+                            'Create a new product record',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.grey[500],
+                              fontFamily: 'Literata',
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: Colors.grey[100],
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.close,
+                          size: 20,
+                          color: Colors.grey[600],
                         ),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
-                // HSN Code
-                TextField(
-                  controller: hsnController,
-                  keyboardType: TextInputType.number,
-                  maxLength: 8,
-                  decoration: InputDecoration(
-                    labelText: 'HSN Code',
-                    hintText: 'e.g. 30049099',
-                    counterText: '',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: Color(0xFF1B4D3E),
-                        width: 2,
+              ),
+              const SizedBox(height: 16),
+              Container(height: 1, color: Colors.grey[200]),
+              // Scrollable content
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Product Name
+                      _buildBottomSheetTextField(
+                        controller: nameController,
+                        label: _localizations.productName,
+                        hint: _localizations.enterProductName,
+                        icon: Icons.inventory_2_outlined,
+                        isRequired: true,
+                        onChanged: (_) => setSheetState(() {}),
                       ),
-                    ),
-                    prefixIcon: const Icon(Icons.tag, size: 20),
+                      const SizedBox(height: 16),
+                      // Company selector
+                      _buildSelectorField(
+                        label: _localizations.selectCompany,
+                        value: sheetSelectedCompany?['companyName'],
+                        icon: Icons.business_outlined,
+                        color: const Color(0xFF7B68EE),
+                        onTap: () async {
+                          final company = await _showInlineCompanyPicker(
+                            context,
+                          );
+                          if (company != null) {
+                            setSheetState(() {
+                              sheetSelectedCompany = company;
+                            });
+                          }
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      // Supplier selector
+                      _buildSelectorField(
+                        label: _localizations.selectSupplier,
+                        value: sheetSelectedSupplier?['fullName'],
+                        icon: Icons.person_outline,
+                        color: const Color(0xFFFF6B6B),
+                        onTap: () async {
+                          final supplier = await _showInlineSupplierPicker(
+                            context,
+                          );
+                          if (supplier != null) {
+                            setSheetState(() {
+                              sheetSelectedSupplier = supplier;
+                            });
+                          }
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      // Prices row
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildBottomSheetTextField(
+                              controller: purchasePriceController,
+                              label: _localizations.purchasePrice,
+                              hint: '0.00',
+                              icon: Icons.shopping_cart_outlined,
+                              keyboardType: TextInputType.number,
+                              onChanged: (_) => setSheetState(() {}),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _buildBottomSheetTextField(
+                              controller: salesPriceController,
+                              label: _localizations.salesPrice,
+                              hint: '0.00',
+                              icon: Icons.sell_outlined,
+                              keyboardType: TextInputType.number,
+                              onChanged: (_) => setSheetState(() {}),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      // GST row
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildBottomSheetTextField(
+                              controller: cgstController,
+                              label: 'CGST %',
+                              hint: '0',
+                              icon: Icons.percent,
+                              keyboardType: TextInputType.number,
+                              onChanged: (_) => setSheetState(() {}),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _buildBottomSheetTextField(
+                              controller: sgstController,
+                              label: 'SGST %',
+                              hint: '0',
+                              icon: Icons.percent,
+                              keyboardType: TextInputType.number,
+                              onChanged: (_) => setSheetState(() {}),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      // HSN Code
+                      _buildBottomSheetTextField(
+                        controller: hsnController,
+                        label: 'HSN Code',
+                        hint: 'e.g. 30049099',
+                        icon: Icons.tag,
+                        keyboardType: TextInputType.number,
+                        maxLength: 8,
+                        onChanged: (_) => setSheetState(() {}),
+                      ),
+                      // Custom Fields Section
+                      if (customColumns.isNotEmpty) ...[
+                        const SizedBox(height: 16),
+                        ...customColumns.map((column) {
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: _buildCustomFieldWidgetForPurchase(
+                              column,
+                              customTextControllers[column.id],
+                              customFieldValues,
+                              setSheetState,
+                            ),
+                          );
+                        }),
+                      ],
+                      const SizedBox(height: 24),
+                      // Action buttons
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: () => Navigator.pop(context),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: Colors.grey[700],
+                                side: BorderSide(color: Colors.grey[300]!),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              child: Text(
+                                _localizations.cancel,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  fontFamily: 'Literata',
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            flex: 2,
+                            child: ElevatedButton(
+                              onPressed: nameController.text.trim().isEmpty
+                                  ? null
+                                  : () => _saveNewProduct(
+                                      context,
+                                      nameController,
+                                      purchasePriceController,
+                                      salesPriceController,
+                                      cgstController,
+                                      sgstController,
+                                      hsnController,
+                                      sheetSelectedCompany,
+                                      sheetSelectedSupplier,
+                                      customColumns,
+                                      customTextControllers,
+                                      customFieldValues,
+                                    ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF1B4D3E),
+                                foregroundColor: Colors.white,
+                                disabledBackgroundColor: Colors.grey[300],
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                elevation: 0,
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(Icons.add_rounded, size: 20),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    _localizations.addProduct,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                      fontFamily: 'Literata',
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
-                // Custom Fields Section
-                if (customColumns.isNotEmpty) ...[
-                  const SizedBox(height: 12),
-                  ...customColumns.map((column) {
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: _buildCustomFieldWidgetForPurchase(
-                        column,
-                        customTextControllers[column.id],
-                        customFieldValues,
-                        setDialogState,
-                      ),
-                    );
-                  }),
-                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Save new product from bottom sheet
+  Future<void> _saveNewProduct(
+    BuildContext sheetContext,
+    TextEditingController nameController,
+    TextEditingController purchasePriceController,
+    TextEditingController salesPriceController,
+    TextEditingController cgstController,
+    TextEditingController sgstController,
+    TextEditingController hsnController,
+    Map<String, dynamic>? selectedCompany,
+    Map<String, dynamic>? selectedSupplier,
+    List<CustomColumn> customColumns,
+    Map<String, TextEditingController> customTextControllers,
+    Map<String, dynamic> customFieldValues,
+  ) async {
+    try {
+      // Validate HSN: required if CGST or SGST > 0
+      final cgstVal = double.tryParse(cgstController.text) ?? 0.0;
+      final sgstVal = double.tryParse(sgstController.text) ?? 0.0;
+      final hsnVal = hsnController.text.trim();
+      if ((cgstVal > 0 || sgstVal > 0) && hsnVal.isEmpty) {
+        ScaffoldMessenger.of(sheetContext).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'HSN Code is required when GST is applied',
+              style: TextStyle(fontFamily: 'Literata'),
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
+      // Collect custom field values
+      final Map<String, dynamic> finalCustomFields = {};
+      for (final column in customColumns) {
+        String? value;
+        if (column.type == CustomColumnType.text ||
+            column.type == CustomColumnType.number ||
+            column.type == CustomColumnType.decimal) {
+          value = customTextControllers[column.id]?.text.trim();
+        } else if (column.type == CustomColumnType.boolean) {
+          value = (customFieldValues[column.id] ?? false).toString();
+        } else if (column.type == CustomColumnType.dropdown ||
+            column.type == CustomColumnType.date) {
+          value = customFieldValues[column.id]?.toString();
+        }
+        if (value != null && value.isNotEmpty) {
+          finalCustomFields[column.id] = value;
+        }
+      }
+
+      // Convert to JSON string
+      String? customFieldsJson;
+      if (finalCustomFields.isNotEmpty) {
+        customFieldsJson = jsonEncode(finalCustomFields);
+      }
+
+      // Use offline controller for consistent offline-first behavior
+      final productOfflineController = ProductOfflineController.instance;
+
+      // This will throw if duplicate exists
+      await productOfflineController.addProduct(
+        name: nameController.text.trim(),
+        companyName: selectedCompany?['companyName'] ?? '',
+        category: '', // No category required
+        purchasePrice: double.tryParse(purchasePriceController.text) ?? 0.0,
+        salesPrice: double.tryParse(salesPriceController.text) ?? 0.0,
+        currentStock: 0,
+        defaultSupplierId: selectedSupplier?['id'],
+        defaultSupplierName: selectedSupplier?['fullName'],
+        cgstPercent: cgstVal,
+        sgstPercent: sgstVal,
+        hsnCode: hsnVal.isNotEmpty ? hsnVal : null,
+        customFieldsJson: customFieldsJson,
+      );
+
+      // Notify other screens about the product change
+      DashboardRefreshService.instance.notifyDataChanged(
+        DataChangeType.product,
+      );
+
+      // Trigger background sync if online
+      ProductSyncService.instance.syncNow();
+
+      if (mounted) {
+        if (sheetContext.mounted) {
+          Navigator.pop(sheetContext);
+        }
+        // Stream auto-updates products, just wait a tick for UI
+        await Future.delayed(const Duration(milliseconds: 100));
+        // Select the newly added product (last one in list)
+        if (_products.isNotEmpty) {
+          setState(() {
+            _selectedProduct = _products.last;
+            _priceController.text = _selectedProduct!.purchasePrice.toString();
+            _salesPriceController.text = _selectedProduct!.salesPrice
+                .toString();
+            // Auto-populate company and supplier from the newly created product
+            if (selectedCompany != null) {
+              _selectedCompany = selectedCompany;
+            }
+            if (selectedSupplier != null) {
+              _selectedSupplier = selectedSupplier;
+            }
+          });
+        }
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(_localizations.productAddedSuccessfully),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted && sheetContext.mounted) {
+        ScaffoldMessenger.of(sheetContext).showSnackBar(
+          SnackBar(
+            content: Text('${_localizations.error}: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  /// Builds a selector field for company/supplier selection
+  Widget _buildSelectorField({
+    required String label,
+    required String? value,
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    final hasValue = value != null && value.isNotEmpty;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF1B4D3E),
+            fontFamily: 'Literata',
+          ),
+        ),
+        const SizedBox(height: 8),
+        InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+            decoration: BoxDecoration(
+              border: Border.all(
+                color: hasValue ? color : Colors.grey[300]!,
+                width: hasValue ? 2 : 1,
+              ),
+              borderRadius: BorderRadius.circular(12),
+              color: hasValue ? color.withValues(alpha: 0.05) : Colors.grey[50],
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: hasValue
+                        ? color.withValues(alpha: 0.15)
+                        : Colors.grey[200],
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    icon,
+                    color: hasValue ? color : Colors.grey[500],
+                    size: 18,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    value ?? 'Tap to select',
+                    style: TextStyle(
+                      fontFamily: 'Literata',
+                      color: hasValue ? Colors.black87 : Colors.grey[500],
+                      fontSize: 14,
+                      fontWeight: hasValue
+                          ? FontWeight.w600
+                          : FontWeight.normal,
+                    ),
+                  ),
+                ),
+                Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  size: 16,
+                  color: Colors.grey[400],
+                ),
               ],
             ),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(
-                _localizations.cancel,
-                style: const TextStyle(
-                  fontFamily: 'Literata',
-                  color: Colors.grey,
-                ),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: nameController.text.trim().isEmpty
-                  ? null
-                  : () async {
-                      final dialogContext = context;
-                      try {
-                        // Validate HSN: required if CGST or SGST > 0
-                        final cgstVal = double.tryParse(cgstController.text) ?? 0.0;
-                        final sgstVal = double.tryParse(sgstController.text) ?? 0.0;
-                        final hsnVal = hsnController.text.trim();
-                        if ((cgstVal > 0 || sgstVal > 0) && hsnVal.isEmpty) {
-                          ScaffoldMessenger.of(dialogContext).showSnackBar(
-                            const SnackBar(
-                              content: Text('HSN Code is required when GST is applied', style: TextStyle(fontFamily: 'Literata')),
-                              backgroundColor: Colors.red,
-                            ),
-                          );
-                          return;
-                        }
-                        
-                        // Collect custom field values
-                        final Map<String, dynamic> finalCustomFields = {};
-                        for (final column in customColumns) {
-                          String? value;
-                          if (column.type == CustomColumnType.text ||
-                              column.type == CustomColumnType.number ||
-                              column.type == CustomColumnType.decimal) {
-                            value = customTextControllers[column.id]?.text.trim();
-                          } else if (column.type == CustomColumnType.boolean) {
-                            value = (customFieldValues[column.id] ?? false).toString();
-                          } else if (column.type == CustomColumnType.dropdown ||
-                                     column.type == CustomColumnType.date) {
-                            value = customFieldValues[column.id]?.toString();
-                          }
-                          if (value != null && value.isNotEmpty) {
-                            finalCustomFields[column.id] = value;
-                          }
-                        }
-                        
-                        // Convert to JSON string
-                        String? customFieldsJson;
-                        if (finalCustomFields.isNotEmpty) {
-                          customFieldsJson = jsonEncode(finalCustomFields);
-                        }
-
-                        // Use offline controller for consistent offline-first behavior
-                        final productOfflineController = ProductOfflineController.instance;
-                        
-                        // This will throw if duplicate exists
-                        await productOfflineController.addProduct(
-                          name: nameController.text.trim(),
-                          companyName: dialogSelectedCompany?['companyName'] ?? '',
-                          category: '', // No category required
-                          purchasePrice: double.tryParse(purchasePriceController.text) ?? 0.0,
-                          salesPrice: double.tryParse(salesPriceController.text) ?? 0.0,
-                          currentStock: 0,
-                          defaultSupplierId: dialogSelectedSupplier?['id'],
-                          defaultSupplierName: dialogSelectedSupplier?['fullName'],
-                          cgstPercent: cgstVal,
-                          sgstPercent: sgstVal,
-                          hsnCode: hsnVal.isNotEmpty ? hsnVal : null,
-                          customFieldsJson: customFieldsJson,
-                        );
-                        
-                        // Notify other screens about the product change
-                        DashboardRefreshService.instance.notifyDataChanged(DataChangeType.product);
-                        
-                        // Trigger background sync if online
-                        ProductSyncService.instance.syncNow();
-                        
-                        if (mounted) {
-                          if (dialogContext.mounted) {
-                            Navigator.pop(dialogContext);
-                          }
-                          // Stream auto-updates products, just wait a tick for UI
-                          await Future.delayed(const Duration(milliseconds: 100));
-                          // Select the newly added product (last one in list)
-                          if (_products.isNotEmpty) {
-                            setState(() {
-                              _selectedProduct = _products.last;
-                              _priceController.text = _selectedProduct!
-                                  .purchasePrice
-                                  .toString();
-                              _salesPriceController.text = _selectedProduct!
-                                  .salesPrice
-                                  .toString();
-                              // Auto-populate company and supplier from the newly created product
-                              if (dialogSelectedCompany != null) {
-                                _selectedCompany = dialogSelectedCompany;
-                              }
-                              if (dialogSelectedSupplier != null) {
-                                _selectedSupplier = dialogSelectedSupplier;
-                              }
-                            });
-                          }
-                          if (mounted) {
-                            ScaffoldMessenger.of(dialogContext).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  _localizations.productAddedSuccessfully,
-                                ),
-                                backgroundColor: Colors.green,
-                              ),
-                            );
-                          }
-                        }
-                      } catch (e) {
-                        if (mounted && dialogContext.mounted) {
-                          ScaffoldMessenger.of(dialogContext).showSnackBar(
-                            SnackBar(
-                              content: Text('${_localizations.error}: $e'),
-                              backgroundColor: Colors.red,
-                            ),
-                          );
-                        }
-                      }
-                    },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: nameController.text.trim().isEmpty
-                    ? Colors.grey[400]
-                    : const Color(0xFF1B4D3E),
-              ),
-              child: Text(
-                _localizations.addProduct,
-                style: const TextStyle(
-                  fontFamily: 'Literata',
-                  color: Colors.white,
-                ),
-              ),
-            ),
-          ],
         ),
-      ),
+      ],
     );
   }
 
@@ -666,17 +832,16 @@ class _PurchasePageState extends State<PurchasePage>
     StateSetter setDialogState,
   ) {
     final primaryColor = const Color(0xFF1B4D3E);
-    
+
     switch (column.type) {
       case CustomColumnType.text:
         return TextField(
           controller: textController,
           decoration: InputDecoration(
             labelText: column.name + (column.isRequired ? ' *' : ''),
-            hintText: column.placeholder ?? 'Enter ${column.name.toLowerCase()}',
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
+            hintText:
+                column.placeholder ?? 'Enter ${column.name.toLowerCase()}',
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(color: primaryColor, width: 2),
@@ -684,17 +849,16 @@ class _PurchasePageState extends State<PurchasePage>
             prefixIcon: const Icon(Icons.text_fields_rounded, size: 20),
           ),
         );
-        
+
       case CustomColumnType.number:
         return TextField(
           controller: textController,
           keyboardType: TextInputType.number,
           decoration: InputDecoration(
             labelText: column.name + (column.isRequired ? ' *' : ''),
-            hintText: column.placeholder ?? 'Enter ${column.name.toLowerCase()}',
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
+            hintText:
+                column.placeholder ?? 'Enter ${column.name.toLowerCase()}',
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(color: primaryColor, width: 2),
@@ -702,17 +866,16 @@ class _PurchasePageState extends State<PurchasePage>
             prefixIcon: const Icon(Icons.numbers_rounded, size: 20),
           ),
         );
-        
+
       case CustomColumnType.decimal:
         return TextField(
           controller: textController,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
           decoration: InputDecoration(
             labelText: column.name + (column.isRequired ? ' *' : ''),
-            hintText: column.placeholder ?? 'Enter ${column.name.toLowerCase()}',
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
+            hintText:
+                column.placeholder ?? 'Enter ${column.name.toLowerCase()}',
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(color: primaryColor, width: 2),
@@ -720,7 +883,7 @@ class _PurchasePageState extends State<PurchasePage>
             prefixIcon: const Icon(Icons.percent_rounded, size: 20),
           ),
         );
-        
+
       case CustomColumnType.date:
         final currentValue = fieldValues[column.id] as String?;
         DateTime? selectedDate;
@@ -747,7 +910,10 @@ class _PurchasePageState extends State<PurchasePage>
             );
             if (date != null) {
               setDialogState(() {
-                fieldValues[column.id] = date.toIso8601String().split('T').first;
+                fieldValues[column.id] = date
+                    .toIso8601String()
+                    .split('T')
+                    .first;
               });
             }
           },
@@ -764,16 +930,22 @@ class _PurchasePageState extends State<PurchasePage>
             ),
             child: Row(
               children: [
-                Icon(Icons.calendar_today_rounded, 
-                    color: currentValue != null ? primaryColor : Colors.grey, 
-                    size: 20),
+                Icon(
+                  Icons.calendar_today_rounded,
+                  color: currentValue != null ? primaryColor : Colors.grey,
+                  size: 20,
+                ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    currentValue ?? column.placeholder ?? 'Select ${column.name.toLowerCase()}',
+                    currentValue ??
+                        column.placeholder ??
+                        'Select ${column.name.toLowerCase()}',
                     style: TextStyle(
                       fontFamily: 'Literata',
-                      color: currentValue != null ? Colors.black87 : Colors.grey[600],
+                      color: currentValue != null
+                          ? Colors.black87
+                          : Colors.grey[600],
                       fontSize: 14,
                     ),
                   ),
@@ -790,14 +962,16 @@ class _PurchasePageState extends State<PurchasePage>
             ),
           ),
         );
-        
+
       case CustomColumnType.dropdown:
         final currentValue = fieldValues[column.id] as String?;
         return Container(
           padding: const EdgeInsets.symmetric(horizontal: 12),
           decoration: BoxDecoration(
             border: Border.all(
-              color: currentValue != null && currentValue.isNotEmpty ? primaryColor : Colors.grey[400]!,
+              color: currentValue != null && currentValue.isNotEmpty
+                  ? primaryColor
+                  : Colors.grey[400]!,
               width: currentValue != null && currentValue.isNotEmpty ? 2 : 1,
             ),
             borderRadius: BorderRadius.circular(12),
@@ -835,7 +1009,7 @@ class _PurchasePageState extends State<PurchasePage>
             ),
           ),
         );
-        
+
       case CustomColumnType.boolean:
         final currentValue = fieldValues[column.id] as bool? ?? false;
         return Container(
@@ -849,17 +1023,16 @@ class _PurchasePageState extends State<PurchasePage>
           ),
           child: Row(
             children: [
-              Icon(Icons.toggle_on_rounded, 
-                  color: currentValue ? primaryColor : Colors.grey, 
-                  size: 20),
+              Icon(
+                Icons.toggle_on_rounded,
+                color: currentValue ? primaryColor : Colors.grey,
+                size: 20,
+              ),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
                   column.name + (column.isRequired ? ' *' : ''),
-                  style: const TextStyle(
-                    fontFamily: 'Literata',
-                    fontSize: 14,
-                  ),
+                  style: const TextStyle(fontFamily: 'Literata', fontSize: 14),
                 ),
               ),
               Switch(
@@ -878,7 +1051,9 @@ class _PurchasePageState extends State<PurchasePage>
   }
 
   /// Inline company picker for use inside dialogs
-  Future<Map<String, dynamic>?> _showInlineCompanyPicker(BuildContext parentContext) async {
+  Future<Map<String, dynamic>?> _showInlineCompanyPicker(
+    BuildContext parentContext,
+  ) async {
     return await showDialog<Map<String, dynamic>>(
       context: parentContext,
       builder: (context) {
@@ -886,8 +1061,18 @@ class _PurchasePageState extends State<PurchasePage>
         return StatefulBuilder(
           builder: (context, setPickerState) => AlertDialog(
             backgroundColor: Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            title: Text(_localizations.selectCompany, style: const TextStyle(fontFamily: 'Literata', fontWeight: FontWeight.w700, color: Color(0xFF1B4D3E), fontSize: 16)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            title: Text(
+              _localizations.selectCompany,
+              style: const TextStyle(
+                fontFamily: 'Literata',
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF1B4D3E),
+                fontSize: 16,
+              ),
+            ),
             content: SizedBox(
               width: double.maxFinite,
               height: 300,
@@ -897,34 +1082,61 @@ class _PurchasePageState extends State<PurchasePage>
                     decoration: InputDecoration(
                       hintText: _localizations.searchByCompany,
                       prefixIcon: const Icon(Icons.search, size: 20),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
                       isDense: true,
                     ),
                     onChanged: (q) {
                       setPickerState(() {
-                        filtered = _companies.where((c) =>
-                          (c['companyName'] as String? ?? '').toLowerCase().contains(q.toLowerCase())
-                        ).toList();
+                        filtered = _companies
+                            .where(
+                              (c) => (c['companyName'] as String? ?? '')
+                                  .toLowerCase()
+                                  .contains(q.toLowerCase()),
+                            )
+                            .toList();
                       });
                     },
                   ),
                   const SizedBox(height: 8),
                   Expanded(
                     child: filtered.isEmpty
-                      ? Center(child: Text(_localizations.noCompaniesFound, style: TextStyle(color: Colors.grey[500], fontFamily: 'Literata')))
-                      : ListView.builder(
-                          itemCount: filtered.length,
-                          itemBuilder: (context, index) {
-                            final company = filtered[index];
-                            return ListTile(
-                              dense: true,
-                              leading: const Icon(Icons.business, color: Color(0xFF1B4D3E), size: 20),
-                              title: Text(company['companyName'] ?? '', style: const TextStyle(fontFamily: 'Literata', fontSize: 14)),
-                              onTap: () => Navigator.pop(context, company),
-                            );
-                          },
-                        ),
+                        ? Center(
+                            child: Text(
+                              _localizations.noCompaniesFound,
+                              style: TextStyle(
+                                color: Colors.grey[500],
+                                fontFamily: 'Literata',
+                              ),
+                            ),
+                          )
+                        : ListView.builder(
+                            itemCount: filtered.length,
+                            itemBuilder: (context, index) {
+                              final company = filtered[index];
+                              return ListTile(
+                                dense: true,
+                                leading: const Icon(
+                                  Icons.business,
+                                  color: Color(0xFF1B4D3E),
+                                  size: 20,
+                                ),
+                                title: Text(
+                                  company['companyName'] ?? '',
+                                  style: const TextStyle(
+                                    fontFamily: 'Literata',
+                                    fontSize: 14,
+                                  ),
+                                ),
+                                onTap: () => Navigator.pop(context, company),
+                              );
+                            },
+                          ),
                   ),
                 ],
               ),
@@ -936,7 +1148,9 @@ class _PurchasePageState extends State<PurchasePage>
   }
 
   /// Inline supplier picker for use inside dialogs
-  Future<Map<String, dynamic>?> _showInlineSupplierPicker(BuildContext parentContext) async {
+  Future<Map<String, dynamic>?> _showInlineSupplierPicker(
+    BuildContext parentContext,
+  ) async {
     return await showDialog<Map<String, dynamic>>(
       context: parentContext,
       builder: (context) {
@@ -944,8 +1158,18 @@ class _PurchasePageState extends State<PurchasePage>
         return StatefulBuilder(
           builder: (context, setPickerState) => AlertDialog(
             backgroundColor: Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            title: Text(_localizations.selectSupplier, style: const TextStyle(fontFamily: 'Literata', fontWeight: FontWeight.w700, color: Color(0xFF1B4D3E), fontSize: 16)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            title: Text(
+              _localizations.selectSupplier,
+              style: const TextStyle(
+                fontFamily: 'Literata',
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF1B4D3E),
+                fontSize: 16,
+              ),
+            ),
             content: SizedBox(
               width: double.maxFinite,
               height: 300,
@@ -955,34 +1179,61 @@ class _PurchasePageState extends State<PurchasePage>
                     decoration: InputDecoration(
                       hintText: _localizations.searchBySupplier,
                       prefixIcon: const Icon(Icons.search, size: 20),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
                       isDense: true,
                     ),
                     onChanged: (q) {
                       setPickerState(() {
-                        filtered = _suppliers.where((s) =>
-                          (s['fullName'] as String? ?? '').toLowerCase().contains(q.toLowerCase())
-                        ).toList();
+                        filtered = _suppliers
+                            .where(
+                              (s) => (s['fullName'] as String? ?? '')
+                                  .toLowerCase()
+                                  .contains(q.toLowerCase()),
+                            )
+                            .toList();
                       });
                     },
                   ),
                   const SizedBox(height: 8),
                   Expanded(
                     child: filtered.isEmpty
-                      ? Center(child: Text(_localizations.noSuppliersFound, style: TextStyle(color: Colors.grey[500], fontFamily: 'Literata')))
-                      : ListView.builder(
-                          itemCount: filtered.length,
-                          itemBuilder: (context, index) {
-                            final supplier = filtered[index];
-                            return ListTile(
-                              dense: true,
-                              leading: const Icon(Icons.person, color: Color(0xFF1B4D3E), size: 20),
-                              title: Text(supplier['fullName'] ?? '', style: const TextStyle(fontFamily: 'Literata', fontSize: 14)),
-                              onTap: () => Navigator.pop(context, supplier),
-                            );
-                          },
-                        ),
+                        ? Center(
+                            child: Text(
+                              _localizations.noSuppliersFound,
+                              style: TextStyle(
+                                color: Colors.grey[500],
+                                fontFamily: 'Literata',
+                              ),
+                            ),
+                          )
+                        : ListView.builder(
+                            itemCount: filtered.length,
+                            itemBuilder: (context, index) {
+                              final supplier = filtered[index];
+                              return ListTile(
+                                dense: true,
+                                leading: const Icon(
+                                  Icons.person,
+                                  color: Color(0xFF1B4D3E),
+                                  size: 20,
+                                ),
+                                title: Text(
+                                  supplier['fullName'] ?? '',
+                                  style: const TextStyle(
+                                    fontFamily: 'Literata',
+                                    fontSize: 14,
+                                  ),
+                                ),
+                                onTap: () => Navigator.pop(context, supplier),
+                              );
+                            },
+                          ),
                   ),
                 ],
               ),
@@ -1134,7 +1385,11 @@ class _PurchasePageState extends State<PurchasePage>
                           color: Colors.grey[100],
                           shape: BoxShape.circle,
                         ),
-                        child: Icon(Icons.close, size: 20, color: Colors.grey[600]),
+                        child: Icon(
+                          Icons.close,
+                          size: 20,
+                          color: Colors.grey[600],
+                        ),
                       ),
                     ),
                   ],
@@ -1153,10 +1408,19 @@ class _PurchasePageState extends State<PurchasePage>
                     controller: _productSearchController,
                     decoration: InputDecoration(
                       hintText: _localizations.searchByProduct,
-                      hintStyle: TextStyle(color: Colors.grey[400], fontFamily: 'Literata'),
-                      prefixIcon: Icon(Icons.search_rounded, color: Colors.grey[400]),
+                      hintStyle: TextStyle(
+                        color: Colors.grey[400],
+                        fontFamily: 'Literata',
+                      ),
+                      prefixIcon: Icon(
+                        Icons.search_rounded,
+                        color: Colors.grey[400],
+                      ),
                       border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 14,
+                      ),
                     ),
                     onChanged: (query) {
                       _filterProducts(query);
@@ -1175,19 +1439,30 @@ class _PurchasePageState extends State<PurchasePage>
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.inventory_2_outlined, size: 64, color: Colors.grey[300]),
+                            Icon(
+                              Icons.inventory_2_outlined,
+                              size: 64,
+                              color: Colors.grey[300],
+                            ),
                             const SizedBox(height: 16),
                             Text(
                               _productSearchController.text.isEmpty
                                   ? _localizations.noProductsAvailable
                                   : _localizations.noProductsFound,
-                              style: TextStyle(color: Colors.grey[500], fontSize: 15, fontFamily: 'Literata'),
+                              style: TextStyle(
+                                color: Colors.grey[500],
+                                fontSize: 15,
+                                fontFamily: 'Literata',
+                              ),
                             ),
                           ],
                         ),
                       )
                     : ListView.separated(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
                         itemCount: _filteredProducts.length,
                         separatorBuilder: (_, __) => const SizedBox(height: 8),
                         itemBuilder: (context, index) {
@@ -1199,26 +1474,37 @@ class _PurchasePageState extends State<PurchasePage>
                               onTap: () {
                                 setState(() {
                                   _selectedProduct = product;
-                                  _priceController.text = product.purchasePrice.toString();
-                                  _salesPriceController.text = product.salesPrice.toString();
-                                  
+                                  _priceController.text = product.purchasePrice
+                                      .toString();
+                                  _salesPriceController.text = product
+                                      .salesPrice
+                                      .toString();
+
                                   // Auto-populate company from product
                                   if (product.companyName.isNotEmpty) {
-                                    final matchingCompany = _companies.firstWhere(
-                                      (c) => (c['companyName'] as String?)?.toLowerCase() == product.companyName.toLowerCase(),
-                                      orElse: () => <String, dynamic>{},
-                                    );
+                                    final matchingCompany = _companies
+                                        .firstWhere(
+                                          (c) =>
+                                              (c['companyName'] as String?)
+                                                  ?.toLowerCase() ==
+                                              product.companyName.toLowerCase(),
+                                          orElse: () => <String, dynamic>{},
+                                        );
                                     if (matchingCompany.isNotEmpty) {
                                       _selectedCompany = matchingCompany;
                                     }
                                   }
-                                  
+
                                   // Auto-populate supplier from product's default supplier
-                                  if (product.defaultSupplierId != null && product.defaultSupplierId!.isNotEmpty) {
-                                    final matchingSupplier = _suppliers.firstWhere(
-                                      (s) => s['id'] == product.defaultSupplierId,
-                                      orElse: () => <String, dynamic>{},
-                                    );
+                                  if (product.defaultSupplierId != null &&
+                                      product.defaultSupplierId!.isNotEmpty) {
+                                    final matchingSupplier = _suppliers
+                                        .firstWhere(
+                                          (s) =>
+                                              s['id'] ==
+                                              product.defaultSupplierId,
+                                          orElse: () => <String, dynamic>{},
+                                        );
                                     if (matchingSupplier.isNotEmpty) {
                                       _selectedSupplier = matchingSupplier;
                                     }
@@ -1230,10 +1516,16 @@ class _PurchasePageState extends State<PurchasePage>
                               child: Container(
                                 padding: const EdgeInsets.all(14),
                                 decoration: BoxDecoration(
-                                  color: isSelected ? const Color(0xFF1B4D3E).withOpacity(0.08) : Colors.grey[50],
+                                  color: isSelected
+                                      ? const Color(
+                                          0xFF1B4D3E,
+                                        ).withOpacity(0.08)
+                                      : Colors.grey[50],
                                   borderRadius: BorderRadius.circular(14),
                                   border: Border.all(
-                                    color: isSelected ? const Color(0xFF1B4D3E) : Colors.grey[200]!,
+                                    color: isSelected
+                                        ? const Color(0xFF1B4D3E)
+                                        : Colors.grey[200]!,
                                     width: isSelected ? 1.5 : 1,
                                   ),
                                 ),
@@ -1243,15 +1535,22 @@ class _PurchasePageState extends State<PurchasePage>
                                       width: 48,
                                       height: 48,
                                       decoration: BoxDecoration(
-                                        color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                                        color: const Color(
+                                          0xFF1B4D3E,
+                                        ).withOpacity(0.1),
                                         borderRadius: BorderRadius.circular(12),
                                       ),
-                                      child: const Icon(Icons.inventory_2_rounded, color: Color(0xFF1B4D3E), size: 22),
+                                      child: const Icon(
+                                        Icons.inventory_2_rounded,
+                                        color: Color(0xFF1B4D3E),
+                                        size: 22,
+                                      ),
                                     ),
                                     const SizedBox(width: 14),
                                     Expanded(
                                       child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
                                           Text(
                                             product.name,
@@ -1264,31 +1563,62 @@ class _PurchasePageState extends State<PurchasePage>
                                           const SizedBox(height: 4),
                                           Row(
                                             children: [
-                                              if (product.companyName.isNotEmpty)
+                                              if (product
+                                                  .companyName
+                                                  .isNotEmpty)
                                                 Container(
-                                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                                  padding:
+                                                      const EdgeInsets.symmetric(
+                                                        horizontal: 8,
+                                                        vertical: 2,
+                                                      ),
                                                   decoration: BoxDecoration(
-                                                    color: Colors.blue.withOpacity(0.1),
-                                                    borderRadius: BorderRadius.circular(6),
+                                                    color: Colors.blue
+                                                        .withOpacity(0.1),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          6,
+                                                        ),
                                                   ),
                                                   child: Text(
                                                     product.companyName,
-                                                    style: const TextStyle(fontSize: 11, color: Colors.blue, fontWeight: FontWeight.w500),
+                                                    style: const TextStyle(
+                                                      fontSize: 11,
+                                                      color: Colors.blue,
+                                                      fontWeight:
+                                                          FontWeight.w500,
+                                                    ),
                                                   ),
                                                 ),
-                                              if (product.companyName.isNotEmpty)
+                                              if (product
+                                                  .companyName
+                                                  .isNotEmpty)
                                                 const SizedBox(width: 8),
                                               Container(
-                                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 8,
+                                                      vertical: 2,
+                                                    ),
                                                 decoration: BoxDecoration(
-                                                  color: product.currentStock > 0 ? Colors.green.withOpacity(0.1) : Colors.red.withOpacity(0.1),
-                                                  borderRadius: BorderRadius.circular(6),
+                                                  color:
+                                                      product.currentStock > 0
+                                                      ? Colors.green
+                                                            .withOpacity(0.1)
+                                                      : Colors.red.withOpacity(
+                                                          0.1,
+                                                        ),
+                                                  borderRadius:
+                                                      BorderRadius.circular(6),
                                                 ),
                                                 child: Text(
                                                   '${_localizations.stock}: ${product.currentStock}',
                                                   style: TextStyle(
                                                     fontSize: 11,
-                                                    color: product.currentStock > 0 ? Colors.green[700] : Colors.red[700],
+                                                    color:
+                                                        product.currentStock > 0
+                                                        ? Colors.green[700]
+                                                        : Colors.red[700],
                                                     fontWeight: FontWeight.w500,
                                                   ),
                                                 ),
@@ -1299,7 +1629,8 @@ class _PurchasePageState extends State<PurchasePage>
                                       ),
                                     ),
                                     Column(
-                                      crossAxisAlignment: CrossAxisAlignment.end,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.end,
                                       children: [
                                         Text(
                                           '₹${product.purchasePrice}',
@@ -1311,13 +1642,20 @@ class _PurchasePageState extends State<PurchasePage>
                                         ),
                                         Text(
                                           'per unit',
-                                          style: TextStyle(fontSize: 11, color: Colors.grey[400]),
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            color: Colors.grey[400],
+                                          ),
                                         ),
                                       ],
                                     ),
                                     if (isSelected) ...[
                                       const SizedBox(width: 8),
-                                      const Icon(Icons.check_circle, color: Color(0xFF1B4D3E), size: 22),
+                                      const Icon(
+                                        Icons.check_circle,
+                                        color: Color(0xFF1B4D3E),
+                                        size: 22,
+                                      ),
                                     ],
                                   ],
                                 ),
@@ -1417,7 +1755,11 @@ class _PurchasePageState extends State<PurchasePage>
                           color: Colors.grey[100],
                           shape: BoxShape.circle,
                         ),
-                        child: Icon(Icons.close, size: 20, color: Colors.grey[600]),
+                        child: Icon(
+                          Icons.close,
+                          size: 20,
+                          color: Colors.grey[600],
+                        ),
                       ),
                     ),
                   ],
@@ -1436,10 +1778,19 @@ class _PurchasePageState extends State<PurchasePage>
                     controller: _supplierSearchController,
                     decoration: InputDecoration(
                       hintText: _localizations.searchBySupplier,
-                      hintStyle: TextStyle(color: Colors.grey[400], fontFamily: 'Literata'),
-                      prefixIcon: Icon(Icons.search_rounded, color: Colors.grey[400]),
+                      hintStyle: TextStyle(
+                        color: Colors.grey[400],
+                        fontFamily: 'Literata',
+                      ),
+                      prefixIcon: Icon(
+                        Icons.search_rounded,
+                        color: Colors.grey[400],
+                      ),
                       border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 14,
+                      ),
                     ),
                     onChanged: (query) {
                       _filterSuppliers(query);
@@ -1458,24 +1809,36 @@ class _PurchasePageState extends State<PurchasePage>
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.person_off_outlined, size: 64, color: Colors.grey[300]),
+                            Icon(
+                              Icons.person_off_outlined,
+                              size: 64,
+                              color: Colors.grey[300],
+                            ),
                             const SizedBox(height: 16),
                             Text(
                               _supplierSearchController.text.isEmpty
                                   ? _localizations.noSuppliersAvailable
                                   : _localizations.noSuppliersFound,
-                              style: TextStyle(color: Colors.grey[500], fontSize: 15, fontFamily: 'Literata'),
+                              style: TextStyle(
+                                color: Colors.grey[500],
+                                fontSize: 15,
+                                fontFamily: 'Literata',
+                              ),
                             ),
                           ],
                         ),
                       )
                     : ListView.separated(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
                         itemCount: _filteredSuppliers.length,
                         separatorBuilder: (_, __) => const SizedBox(height: 8),
                         itemBuilder: (context, index) {
                           final supplier = _filteredSuppliers[index];
-                          final isSelected = _selectedSupplier?['id'] == supplier['id'];
+                          final isSelected =
+                              _selectedSupplier?['id'] == supplier['id'];
                           return Material(
                             color: Colors.transparent,
                             child: InkWell(
@@ -1489,10 +1852,16 @@ class _PurchasePageState extends State<PurchasePage>
                               child: Container(
                                 padding: const EdgeInsets.all(14),
                                 decoration: BoxDecoration(
-                                  color: isSelected ? const Color(0xFFFF6B6B).withOpacity(0.08) : Colors.grey[50],
+                                  color: isSelected
+                                      ? const Color(
+                                          0xFFFF6B6B,
+                                        ).withOpacity(0.08)
+                                      : Colors.grey[50],
                                   borderRadius: BorderRadius.circular(14),
                                   border: Border.all(
-                                    color: isSelected ? const Color(0xFFFF6B6B) : Colors.grey[200]!,
+                                    color: isSelected
+                                        ? const Color(0xFFFF6B6B)
+                                        : Colors.grey[200]!,
                                     width: isSelected ? 1.5 : 1,
                                   ),
                                 ),
@@ -1502,13 +1871,18 @@ class _PurchasePageState extends State<PurchasePage>
                                       width: 48,
                                       height: 48,
                                       decoration: BoxDecoration(
-                                        color: const Color(0xFFFF6B6B).withOpacity(0.1),
+                                        color: const Color(
+                                          0xFFFF6B6B,
+                                        ).withOpacity(0.1),
                                         borderRadius: BorderRadius.circular(12),
                                       ),
                                       child: Center(
                                         child: Text(
-                                          (supplier['fullName'] as String).isNotEmpty 
-                                              ? (supplier['fullName'] as String).substring(0, 1).toUpperCase()
+                                          (supplier['fullName'] as String)
+                                                  .isNotEmpty
+                                              ? (supplier['fullName'] as String)
+                                                    .substring(0, 1)
+                                                    .toUpperCase()
                                               : 'S',
                                           style: const TextStyle(
                                             color: Color(0xFFFF6B6B),
@@ -1530,7 +1904,11 @@ class _PurchasePageState extends State<PurchasePage>
                                       ),
                                     ),
                                     if (isSelected)
-                                      const Icon(Icons.check_circle, color: Color(0xFFFF6B6B), size: 22),
+                                      const Icon(
+                                        Icons.check_circle,
+                                        color: Color(0xFFFF6B6B),
+                                        size: 22,
+                                      ),
                                   ],
                                 ),
                               ),
@@ -1629,7 +2007,11 @@ class _PurchasePageState extends State<PurchasePage>
                           color: Colors.grey[100],
                           shape: BoxShape.circle,
                         ),
-                        child: Icon(Icons.close, size: 20, color: Colors.grey[600]),
+                        child: Icon(
+                          Icons.close,
+                          size: 20,
+                          color: Colors.grey[600],
+                        ),
                       ),
                     ),
                   ],
@@ -1648,10 +2030,19 @@ class _PurchasePageState extends State<PurchasePage>
                     controller: _companySearchController,
                     decoration: InputDecoration(
                       hintText: _localizations.searchByCompany,
-                      hintStyle: TextStyle(color: Colors.grey[400], fontFamily: 'Literata'),
-                      prefixIcon: Icon(Icons.search_rounded, color: Colors.grey[400]),
+                      hintStyle: TextStyle(
+                        color: Colors.grey[400],
+                        fontFamily: 'Literata',
+                      ),
+                      prefixIcon: Icon(
+                        Icons.search_rounded,
+                        color: Colors.grey[400],
+                      ),
                       border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 14,
+                      ),
                     ),
                     onChanged: (query) {
                       _filterCompanies(query);
@@ -1670,24 +2061,36 @@ class _PurchasePageState extends State<PurchasePage>
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.business_outlined, size: 64, color: Colors.grey[300]),
+                            Icon(
+                              Icons.business_outlined,
+                              size: 64,
+                              color: Colors.grey[300],
+                            ),
                             const SizedBox(height: 16),
                             Text(
                               _companySearchController.text.isEmpty
                                   ? _localizations.noCompaniesAvailable
                                   : _localizations.noCompaniesFound,
-                              style: TextStyle(color: Colors.grey[500], fontSize: 15, fontFamily: 'Literata'),
+                              style: TextStyle(
+                                color: Colors.grey[500],
+                                fontSize: 15,
+                                fontFamily: 'Literata',
+                              ),
                             ),
                           ],
                         ),
                       )
                     : ListView.separated(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
                         itemCount: _filteredCompanies.length,
                         separatorBuilder: (_, __) => const SizedBox(height: 8),
                         itemBuilder: (context, index) {
                           final company = _filteredCompanies[index];
-                          final isSelected = _selectedCompany?['id'] == company['id'];
+                          final isSelected =
+                              _selectedCompany?['id'] == company['id'];
                           return Material(
                             color: Colors.transparent,
                             child: InkWell(
@@ -1701,10 +2104,16 @@ class _PurchasePageState extends State<PurchasePage>
                               child: Container(
                                 padding: const EdgeInsets.all(14),
                                 decoration: BoxDecoration(
-                                  color: isSelected ? const Color(0xFF7B68EE).withOpacity(0.08) : Colors.grey[50],
+                                  color: isSelected
+                                      ? const Color(
+                                          0xFF7B68EE,
+                                        ).withOpacity(0.08)
+                                      : Colors.grey[50],
                                   borderRadius: BorderRadius.circular(14),
                                   border: Border.all(
-                                    color: isSelected ? const Color(0xFF7B68EE) : Colors.grey[200]!,
+                                    color: isSelected
+                                        ? const Color(0xFF7B68EE)
+                                        : Colors.grey[200]!,
                                     width: isSelected ? 1.5 : 1,
                                   ),
                                 ),
@@ -1714,13 +2123,19 @@ class _PurchasePageState extends State<PurchasePage>
                                       width: 48,
                                       height: 48,
                                       decoration: BoxDecoration(
-                                        color: const Color(0xFF7B68EE).withOpacity(0.1),
+                                        color: const Color(
+                                          0xFF7B68EE,
+                                        ).withOpacity(0.1),
                                         borderRadius: BorderRadius.circular(12),
                                       ),
                                       child: Center(
                                         child: Text(
-                                          (company['companyName'] as String).isNotEmpty 
-                                              ? (company['companyName'] as String).substring(0, 1).toUpperCase()
+                                          (company['companyName'] as String)
+                                                  .isNotEmpty
+                                              ? (company['companyName']
+                                                        as String)
+                                                    .substring(0, 1)
+                                                    .toUpperCase()
                                               : 'C',
                                           style: const TextStyle(
                                             color: Color(0xFF7B68EE),
@@ -1742,7 +2157,11 @@ class _PurchasePageState extends State<PurchasePage>
                                       ),
                                     ),
                                     if (isSelected)
-                                      const Icon(Icons.check_circle, color: Color(0xFF7B68EE), size: 22),
+                                      const Icon(
+                                        Icons.check_circle,
+                                        color: Color(0xFF7B68EE),
+                                        size: 22,
+                                      ),
                                   ],
                                 ),
                               ),
@@ -1786,7 +2205,9 @@ class _PurchasePageState extends State<PurchasePage>
     }
 
     // Validate expiry date is after production date only if both are provided
-    if (_productionDate != null && _expiryDate != null && _expiryDate!.isBefore(_productionDate!)) {
+    if (_productionDate != null &&
+        _expiryDate != null &&
+        _expiryDate!.isBefore(_productionDate!)) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Expiry date must be after production date'),
@@ -1825,37 +2246,45 @@ class _PurchasePageState extends State<PurchasePage>
     try {
       // Use InventoryIntegrationService for unified processing:
       // Creates PurchaseEntity + PurchaseBatch (FIFO) + StockLedger + updates Product stock/prices
-      final integrationResult = await InventoryIntegrationService.instance.processPurchase(
-        productId: _selectedProduct!.id,
-        productName: _selectedProduct!.name,
-        supplierId: _selectedSupplier!['id'],
-        supplierName: _selectedSupplier!['fullName'],
-        companyId: _selectedCompany!['id'],
-        companyName: _selectedCompany!['companyName'],
-        quantity: quantity,
-        unit: _selectedUnit ?? PurchaseSettingsService.instance.defaultUnit,
-        purchasePrice: price,
-        salesPrice: salesPrice,
-        productionDate: _productionDate,
-        expiryDate: _expiryDate,
-        warrantyMonths: _selectedWarranty ?? 0,
-        notes: _notesController.text.isNotEmpty ? _notesController.text : null,
-      );
+      final integrationResult = await InventoryIntegrationService.instance
+          .processPurchase(
+            productId: _selectedProduct!.id,
+            productName: _selectedProduct!.name,
+            supplierId: _selectedSupplier!['id'],
+            supplierName: _selectedSupplier!['fullName'],
+            companyId: _selectedCompany!['id'],
+            companyName: _selectedCompany!['companyName'],
+            quantity: quantity,
+            unit: _selectedUnit ?? PurchaseSettingsService.instance.defaultUnit,
+            purchasePrice: price,
+            salesPrice: salesPrice,
+            productionDate: _productionDate,
+            expiryDate: _expiryDate,
+            warrantyMonths: _selectedWarranty ?? 0,
+            notes: _notesController.text.isNotEmpty
+                ? _notesController.text
+                : null,
+          );
 
       if (!integrationResult.success) {
-        throw Exception(integrationResult.errorMessage ?? 'Purchase processing failed');
+        throw Exception(
+          integrationResult.errorMessage ?? 'Purchase processing failed',
+        );
       }
-      
-      print('[DEBUG] Purchase fully processed: PurchaseEntity + PurchaseBatch + StockLedger + Product stock updated');
-      
+
+      print(
+        '[DEBUG] Purchase fully processed: PurchaseEntity + PurchaseBatch + StockLedger + Product stock updated',
+      );
+
       // Also update Firestore if online and product is synced
       final currentUser = FirebaseAuth.instance.currentUser;
       final productId = _selectedProduct!.id;
       final newStock = _selectedProduct!.currentStock + quantity;
-      final isValidServerId = productId.isNotEmpty && 
-          !productId.startsWith('local_') && 
+      final isValidServerId =
+          productId.isNotEmpty &&
+          !productId.startsWith('local_') &&
           productId.length >= 10;
-      
+
       if (currentUser != null && isValidServerId) {
         try {
           // Only update purchasePrice; keep salesPrice from product creation
@@ -1864,7 +2293,7 @@ class _PurchasePageState extends State<PurchasePage>
             'currentStock': newStock,
             'updatedAt': DateTime.now().toIso8601String(),
           };
-          
+
           await _firestore
               .collection('users')
               .doc(currentUser.uid)
@@ -1876,7 +2305,7 @@ class _PurchasePageState extends State<PurchasePage>
           print('[DEBUG] Failed to update Firestore (will sync later): $e');
         }
       }
-      
+
       // Trigger background sync for both PurchaseEntity and PurchaseBatchEntity
       PurchaseSyncService.instance.syncNow();
       PurchaseBatchSyncService.instance.syncNow();
@@ -1888,10 +2317,14 @@ class _PurchasePageState extends State<PurchasePage>
             backgroundColor: Colors.green,
           ),
         );
-        
+
         // Notify dashboard to refresh (purchase affects product stock)
-        DashboardRefreshService.instance.notifyDataChanged(DataChangeType.purchase);
-        DashboardRefreshService.instance.notifyDataChanged(DataChangeType.product);
+        DashboardRefreshService.instance.notifyDataChanged(
+          DataChangeType.purchase,
+        );
+        DashboardRefreshService.instance.notifyDataChanged(
+          DataChangeType.product,
+        );
 
         // Reset form
         setState(() {
@@ -1950,59 +2383,55 @@ class _PurchasePageState extends State<PurchasePage>
     _newCompanyAddressController.dispose();
     _productionDateController.dispose();
     _expiryDateController.dispose();
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
     super.dispose();
   }
 
   // ============ QUICK ACTIONS BAR ============
   Widget _buildQuickActionsBar() {
-    return SlideTransition(
-      position: _offsetAnimation,
-      child: FadeTransition(
-        opacity: _opacityAnimation,
-        child: Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.06),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
-              ),
-            ],
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
           ),
-          child: Row(
-            children: [
-              Expanded(
-                child: _buildQuickActionChip(
-                  icon: Icons.inventory_2_rounded,
-                  label: _localizations.addProduct,
-                  color: const Color(0xFFf093fb),
-                  onTap: _addNewProduct,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _buildQuickActionChip(
-                  icon: Icons.person_add_rounded,
-                  label: _localizations.addSupplier,
-                  color: const Color(0xFFFF6B6B),
-                  onTap: _showAddSupplierDialog,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _buildQuickActionChip(
-                  icon: Icons.business_rounded,
-                  label: _localizations.addCompany,
-                  color: const Color(0xFF7B68EE),
-                  onTap: _showAddCompanyDialog,
-                ),
-              ),
-            ],
+        ],
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: _buildQuickActionChip(
+              icon: Icons.inventory_2_rounded,
+              label: _localizations.addProduct,
+              color: const Color(0xFFf093fb),
+              onTap: _addNewProduct,
+            ),
           ),
-        ),
+          const SizedBox(width: 6),
+          Expanded(
+            child: _buildQuickActionChip(
+              icon: Icons.person_add_rounded,
+              label: _localizations.addSupplier,
+              color: const Color(0xFFFF6B6B),
+              onTap: _showAddSupplierDialog,
+            ),
+          ),
+          const SizedBox(width: 6),
+          Expanded(
+            child: _buildQuickActionChip(
+              icon: Icons.business_rounded,
+              label: _localizations.addCompany,
+              color: const Color(0xFF7B68EE),
+              onTap: _showAddCompanyDialog,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -2016,262 +2445,43 @@ class _PurchasePageState extends State<PurchasePage>
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
-              color.withOpacity(0.12),
-              color.withOpacity(0.04),
-            ],
+            colors: [color.withOpacity(0.12), color.withOpacity(0.04)],
           ),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: color.withOpacity(0.15),
-            width: 1,
-          ),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: color.withOpacity(0.15), width: 1),
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              width: 36,
-              height: 36,
+              width: 28,
+              height: 28,
               decoration: BoxDecoration(
                 color: color.withOpacity(0.15),
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(8),
               ),
-              child: Icon(icon, color: color, size: 18),
+              child: Icon(icon, color: color, size: 14),
             ),
-            const SizedBox(height: 6),
-            Text(
-              label,
-              textAlign: TextAlign.center,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: const Color(0xFF1B4D3E).withOpacity(0.8),
-                fontSize: 10,
-                fontFamily: 'Literata',
-                fontWeight: FontWeight.w600,
+            const SizedBox(width: 6),
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: const Color(0xFF1B4D3E).withOpacity(0.8),
+                  fontSize: 10,
+                  fontFamily: 'Literata',
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-
-  void _showAddOptionsBottomSheet() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (context) => BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-        child: Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-          ),
-          padding: const EdgeInsets.only(top: 12),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Drag Handle
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              const SizedBox(height: 20),
-              // Header
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFF667eea), Color(0xFF764ba2)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFF667eea).withOpacity(0.3),
-                            blurRadius: 12,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: const Icon(
-                        Icons.add_circle_outline_rounded,
-                        color: Colors.white,
-                        size: 22,
-                      ),
-                    ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            _localizations.addNewItems,
-                            style: const TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w700,
-                              fontFamily: 'Literata',
-                              color: Color(0xFF1B4D3E),
-                            ),
-                          ),
-                          Text(
-                            'Create new records',
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Colors.grey[500],
-                              fontFamily: 'Literata',
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    IconButton(
-                      onPressed: () => Navigator.pop(context),
-                      icon: Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          color: Colors.grey[100],
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(Icons.close, size: 20, color: Colors.grey[600]),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 24),
-              // Options
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Column(
-                  children: [
-                    // Add Product
-                    _buildAddOptionTile(
-                      icon: Icons.inventory_2_rounded,
-                      title: _localizations.addProduct,
-                      subtitle: _localizations.createNewProduct,
-                      color: const Color(0xFFf093fb),
-                      onTap: () {
-                        Navigator.pop(context);
-                        _addNewProduct();
-                      },
-                    ),
-                    const SizedBox(height: 12),
-                    // Add Supplier
-                    _buildAddOptionTile(
-                      icon: Icons.person_add_rounded,
-                      title: _localizations.addSupplier,
-                      subtitle: _localizations.addNewSupplier,
-                      color: const Color(0xFFFF6B6B),
-                      onTap: () {
-                        Navigator.pop(context);
-                        _showAddSupplierDialog();
-                      },
-                    ),
-                    const SizedBox(height: 12),
-                    // Add Company
-                    _buildAddOptionTile(
-                      icon: Icons.business_rounded,
-                      title: _localizations.addCompany,
-                      subtitle: _localizations.addNewCompany,
-                      color: const Color(0xFF7B68EE),
-                      onTap: () {
-                        Navigator.pop(context);
-                        _showAddCompanyDialog();
-                      },
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 32),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildAddOptionTile({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            border: Border.all(color: color.withValues(alpha: 0.2)),
-            borderRadius: BorderRadius.circular(14),
-            color: color.withValues(alpha: 0.05),
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(icon, color: color, size: 24),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        fontFamily: 'Literata',
-                        color: Colors.black87,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      subtitle,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontFamily: 'Literata',
-                        color: Colors.grey[600],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Icon(
-                Icons.arrow_forward_ios_rounded,
-                size: 16,
-                color: Colors.grey[400],
-              ),
-            ],
-          ),
         ),
       ),
     );
@@ -2284,182 +2494,297 @@ class _PurchasePageState extends State<PurchasePage>
     _newSupplierContactController.clear();
     _newSupplierAddressController.clear();
 
-    showDialog(
+    showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
       builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          title: Text(
-            _localizations.addNewSupplier,
-            style: const TextStyle(
-              fontFamily: 'Literata',
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF1B4D3E),
-              fontSize: 18,
+        builder: (context, setSheetState) => Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(24),
+              topRight: Radius.circular(24),
             ),
           ),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: _newSupplierFirstNameController,
-                  onChanged: (_) => setDialogState(() {}),
-                  decoration: InputDecoration(
-                    labelText: _localizations.firstName,
-                    hintText: _localizations.enterFirstName,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: Color(0xFF1B4D3E),
-                        width: 2,
-                      ),
-                    ),
-                    errorBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Colors.red, width: 2),
-                    ),
-                    errorText: _newSupplierFirstNameController.text.isEmpty
-                        ? _localizations.firstNameRequired
-                        : null,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: _newSupplierLastNameController,
-                  onChanged: (_) => setDialogState(() {}),
-                  decoration: InputDecoration(
-                    labelText: _localizations.lastName,
-                    hintText: _localizations.enterLastName,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: Color(0xFF1B4D3E),
-                        width: 2,
-                      ),
-                    ),
-                    errorBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Colors.red, width: 2),
-                    ),
-                    errorText: _newSupplierLastNameController.text.isEmpty
-                        ? _localizations.lastNameRequired
-                        : null,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: _newSupplierCodeController,
-                  onChanged: (_) => setDialogState(() {}),
-                  decoration: InputDecoration(
-                    labelText: '${_localizations.supplierCode} *',
-                    prefixIcon: const Icon(Icons.qr_code_rounded),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: Color(0xFF1B4D3E),
-                        width: 2,
-                      ),
-                    ),
-                    errorBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Colors.red, width: 2),
-                    ),
-                    errorText: _newSupplierCodeController.text.isEmpty
-                        ? _localizations.supplierCodeRequired
-                        : null,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: _newSupplierContactController,
-                  keyboardType: TextInputType.phone,
-                  maxLength: 10,
-                  onChanged: (_) => setDialogState(() {}),
-                  decoration: InputDecoration(
-                    labelText: _localizations.contactNumber,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: Color(0xFF1B4D3E),
-                        width: 2,
-                      ),
-                    ),
-                    errorBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Colors.red, width: 2),
-                    ),
-                    errorText:
-                        _newSupplierContactController.text.isNotEmpty &&
-                            _newSupplierContactController.text.length != 10
-                        ? 'Contact number must be exactly 10 digits'
-                        : null,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: _newSupplierAddressController,
-                  maxLines: 3,
-                  decoration: InputDecoration(
-                    labelText: _localizations.address,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: Color(0xFF1B4D3E),
-                        width: 2,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(_localizations.cancel),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor:
-                    (_newSupplierFirstNameController.text.trim().isEmpty ||
-                        _newSupplierLastNameController.text.trim().isEmpty ||
-                        _newSupplierCodeController.text.trim().isEmpty)
-                    ? Colors.grey[400]
-                    : const Color(0xFF1B4D3E),
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: EdgeInsets.only(
+                left: 20,
+                right: 20,
+                top: 16,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 20,
               ),
-              onPressed:
-                  (_newSupplierFirstNameController.text.trim().isEmpty ||
-                      _newSupplierLastNameController.text.trim().isEmpty ||
-                      _newSupplierCodeController.text.trim().isEmpty)
-                  ? null
-                  : () => _saveNewSupplier(context),
-              child: Text(
-                _localizations.addSupplier,
-                style: const TextStyle(color: Colors.white),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Drag handle
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[300],
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  // Header
+                  Row(
+                    children: [
+                      Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              const Color(0xFFFF6B6B),
+                              const Color(0xFFFF6B6B).withValues(alpha: 0.8),
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(
+                          Icons.person_add_rounded,
+                          color: Colors.white,
+                          size: 22,
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _localizations.addNewSupplier,
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w700,
+                                fontFamily: 'Literata',
+                                color: Color(0xFF1B4D3E),
+                              ),
+                            ),
+                            Text(
+                              'Create a new supplier record',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.grey[500],
+                                fontFamily: 'Literata',
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => Navigator.pop(context),
+                        icon: Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[100],
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.close,
+                            size: 20,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  // Form fields
+                  _buildBottomSheetTextField(
+                    controller: _newSupplierFirstNameController,
+                    label: _localizations.firstName,
+                    hint: _localizations.enterFirstName,
+                    icon: Icons.person_outline,
+                    isRequired: true,
+                    onChanged: (_) => setSheetState(() {}),
+                  ),
+                  const SizedBox(height: 16),
+                  _buildBottomSheetTextField(
+                    controller: _newSupplierLastNameController,
+                    label: _localizations.lastName,
+                    hint: _localizations.enterLastName,
+                    icon: Icons.person_outline,
+                    isRequired: true,
+                    onChanged: (_) => setSheetState(() {}),
+                  ),
+                  const SizedBox(height: 16),
+                  _buildBottomSheetTextField(
+                    controller: _newSupplierCodeController,
+                    label: _localizations.supplierCode,
+                    hint: 'Enter supplier code',
+                    icon: Icons.qr_code_rounded,
+                    isRequired: true,
+                    onChanged: (_) => setSheetState(() {}),
+                  ),
+                  const SizedBox(height: 16),
+                  _buildBottomSheetTextField(
+                    controller: _newSupplierContactController,
+                    label: _localizations.contactNumber,
+                    hint: 'Enter 10-digit number',
+                    icon: Icons.phone_outlined,
+                    keyboardType: TextInputType.phone,
+                    maxLength: 10,
+                    onChanged: (_) => setSheetState(() {}),
+                  ),
+                  const SizedBox(height: 16),
+                  _buildBottomSheetTextField(
+                    controller: _newSupplierAddressController,
+                    label: _localizations.address,
+                    hint: 'Enter address',
+                    icon: Icons.location_on_outlined,
+                    maxLines: 3,
+                    onChanged: (_) => setSheetState(() {}),
+                  ),
+                  const SizedBox(height: 24),
+                  // Action buttons
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.pop(context),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.grey[700],
+                            side: BorderSide(color: Colors.grey[300]!),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: Text(
+                            _localizations.cancel,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontFamily: 'Literata',
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        flex: 2,
+                        child: ElevatedButton(
+                          onPressed:
+                              (_newSupplierFirstNameController.text
+                                      .trim()
+                                      .isEmpty ||
+                                  _newSupplierLastNameController.text
+                                      .trim()
+                                      .isEmpty ||
+                                  _newSupplierCodeController.text
+                                      .trim()
+                                      .isEmpty)
+                              ? null
+                              : () => _saveNewSupplier(context),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF1B4D3E),
+                            foregroundColor: Colors.white,
+                            disabledBackgroundColor: Colors.grey[300],
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            elevation: 0,
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.add_rounded, size: 20),
+                              const SizedBox(width: 8),
+                              Text(
+                                _localizations.addSupplier,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  fontFamily: 'Literata',
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
-          ],
+          ),
         ),
       ),
+    );
+  }
+
+  /// Reusable text field widget for bottom sheets
+  Widget _buildBottomSheetTextField({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    required IconData icon,
+    bool isRequired = false,
+    TextInputType keyboardType = TextInputType.text,
+    int maxLines = 1,
+    int? maxLength,
+    Function(String)? onChanged,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF1B4D3E),
+                fontFamily: 'Literata',
+              ),
+            ),
+            if (isRequired)
+              const Text(' *', style: TextStyle(color: Colors.red)),
+          ],
+        ),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: controller,
+          keyboardType: keyboardType,
+          maxLines: maxLines,
+          maxLength: maxLength,
+          onChanged: onChanged,
+          style: const TextStyle(fontFamily: 'Literata'),
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: TextStyle(
+              color: Colors.grey[400],
+              fontFamily: 'Literata',
+            ),
+            prefixIcon: Icon(icon, color: Colors.grey[600]),
+            counterText: '',
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Colors.grey[300]!),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Colors.grey[300]!),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFF1B4D3E), width: 2),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 12,
+            ),
+            filled: true,
+            fillColor: Colors.grey[50],
+          ),
+        ),
+      ],
     );
   }
 
@@ -2492,7 +2817,9 @@ class _PurchasePageState extends State<PurchasePage>
       }
 
       // Notify dashboard to refresh
-      DashboardRefreshService.instance.notifyDataChanged(DataChangeType.supplier);
+      DashboardRefreshService.instance.notifyDataChanged(
+        DataChangeType.supplier,
+      );
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -2517,150 +2844,209 @@ class _PurchasePageState extends State<PurchasePage>
     _newCompanyContactController.clear();
     _newCompanyAddressController.clear();
 
-    showDialog(
+    showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
       builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          title: Text(
-            _localizations.addNewCompany,
-            style: const TextStyle(
-              fontFamily: 'Literata',
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF1B4D3E),
-              fontSize: 18,
+        builder: (context, setSheetState) => Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(24),
+              topRight: Radius.circular(24),
             ),
           ),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: _newCompanyNameController,
-                  onChanged: (_) => setDialogState(() {}),
-                  decoration: InputDecoration(
-                    labelText: _localizations.companyName,
-                    hintText: _localizations.enterCompanyName,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: Color(0xFF1B4D3E),
-                        width: 2,
-                      ),
-                    ),
-                    errorBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Colors.red, width: 2),
-                    ),
-                    errorText: _newCompanyNameController.text.isEmpty
-                        ? _localizations.companyNameRequired
-                        : null,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: _newCompanyCodeController,
-                  onChanged: (_) => setDialogState(() {}),
-                  decoration: InputDecoration(
-                    labelText: '${_localizations.companyCode} *',
-                    prefixIcon: const Icon(Icons.qr_code_rounded),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: Color(0xFF1B4D3E),
-                        width: 2,
-                      ),
-                    ),
-                    errorBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Colors.red, width: 2),
-                    ),
-                    errorText: _newCompanyCodeController.text.isEmpty
-                        ? _localizations.companyCodeRequired
-                        : null,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: _newCompanyContactController,
-                  keyboardType: TextInputType.phone,
-                  maxLength: 10,
-                  onChanged: (_) => setDialogState(() {}),
-                  decoration: InputDecoration(
-                    labelText: _localizations.contactNumber,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: Color(0xFF1B4D3E),
-                        width: 2,
-                      ),
-                    ),
-                    errorBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Colors.red, width: 2),
-                    ),
-                    errorText:
-                        _newCompanyContactController.text.isNotEmpty &&
-                            _newCompanyContactController.text.length != 10
-                        ? 'Contact number must be exactly 10 digits'
-                        : null,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: _newCompanyAddressController,
-                  maxLines: 3,
-                  decoration: InputDecoration(
-                    labelText: _localizations.address,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: Color(0xFF1B4D3E),
-                        width: 2,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(_localizations.cancel),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: (_newCompanyNameController.text.trim().isEmpty ||
-                    _newCompanyCodeController.text.trim().isEmpty)
-                    ? Colors.grey[400]
-                    : const Color(0xFF1B4D3E),
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: EdgeInsets.only(
+                left: 20,
+                right: 20,
+                top: 16,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 20,
               ),
-              onPressed: (_newCompanyNameController.text.trim().isEmpty ||
-                  _newCompanyCodeController.text.trim().isEmpty)
-                  ? null
-                  : () => _saveNewCompany(context),
-              child: Text(
-                _localizations.addCompany,
-                style: const TextStyle(color: Colors.white),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Drag handle
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[300],
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  // Header
+                  Row(
+                    children: [
+                      Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              const Color(0xFF7B68EE),
+                              const Color(0xFF7B68EE).withValues(alpha: 0.8),
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(
+                          Icons.business_rounded,
+                          color: Colors.white,
+                          size: 22,
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _localizations.addNewCompany,
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w700,
+                                fontFamily: 'Literata',
+                                color: Color(0xFF1B4D3E),
+                              ),
+                            ),
+                            Text(
+                              'Create a new company record',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.grey[500],
+                                fontFamily: 'Literata',
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => Navigator.pop(context),
+                        icon: Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[100],
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.close,
+                            size: 20,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  // Form fields
+                  _buildBottomSheetTextField(
+                    controller: _newCompanyNameController,
+                    label: _localizations.companyName,
+                    hint: _localizations.enterCompanyName,
+                    icon: Icons.business_outlined,
+                    isRequired: true,
+                    onChanged: (_) => setSheetState(() {}),
+                  ),
+                  const SizedBox(height: 16),
+                  _buildBottomSheetTextField(
+                    controller: _newCompanyCodeController,
+                    label: _localizations.companyCode,
+                    hint: 'Enter company code',
+                    icon: Icons.qr_code_rounded,
+                    isRequired: true,
+                    onChanged: (_) => setSheetState(() {}),
+                  ),
+                  const SizedBox(height: 16),
+                  _buildBottomSheetTextField(
+                    controller: _newCompanyContactController,
+                    label: _localizations.contactNumber,
+                    hint: 'Enter 10-digit number',
+                    icon: Icons.phone_outlined,
+                    keyboardType: TextInputType.phone,
+                    maxLength: 10,
+                    onChanged: (_) => setSheetState(() {}),
+                  ),
+                  const SizedBox(height: 16),
+                  _buildBottomSheetTextField(
+                    controller: _newCompanyAddressController,
+                    label: _localizations.address,
+                    hint: 'Enter address',
+                    icon: Icons.location_on_outlined,
+                    maxLines: 3,
+                    onChanged: (_) => setSheetState(() {}),
+                  ),
+                  const SizedBox(height: 24),
+                  // Action buttons
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.pop(context),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.grey[700],
+                            side: BorderSide(color: Colors.grey[300]!),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: Text(
+                            _localizations.cancel,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontFamily: 'Literata',
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        flex: 2,
+                        child: ElevatedButton(
+                          onPressed:
+                              (_newCompanyNameController.text.trim().isEmpty ||
+                                  _newCompanyCodeController.text.trim().isEmpty)
+                              ? null
+                              : () => _saveNewCompany(context),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF1B4D3E),
+                            foregroundColor: Colors.white,
+                            disabledBackgroundColor: Colors.grey[300],
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            elevation: 0,
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.add_rounded, size: 20),
+                              const SizedBox(width: 8),
+                              Text(
+                                _localizations.addCompany,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  fontFamily: 'Literata',
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -2692,7 +3078,9 @@ class _PurchasePageState extends State<PurchasePage>
       }
 
       // Notify dashboard to refresh
-      DashboardRefreshService.instance.notifyDataChanged(DataChangeType.company);
+      DashboardRefreshService.instance.notifyDataChanged(
+        DataChangeType.company,
+      );
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -2714,724 +3102,1142 @@ class _PurchasePageState extends State<PurchasePage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFE6EDE7),
+      backgroundColor: const Color(0xFFF5F7F6),
       body: SafeArea(
-        top: !widget
-            .isEmbedded, // SafeArea already handled by common header when embedded
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: EdgeInsets.symmetric(
-              horizontal: 20.0,
-              vertical: widget.isEmbedded ? 12.0 : 20.0,
-            ),
-            child: Column(
-              children: [
-                // Quick Actions Bar
-                _buildQuickActionsBar(),
-                const SizedBox(height: 16),
-                // Form content with animation
-                SlideTransition(
-                  position: _offsetAnimation,
-                  child: FadeTransition(
-                    opacity: _opacityAnimation,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Product Selection
-                        const Text(
-                          'Select Product',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            fontFamily: 'Literata',
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        GestureDetector(
-                          onTap: _showProductSelectionBottomSheet,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 14,
-                            ),
-                            decoration: BoxDecoration(
-                              border: Border.all(
-                                color: _selectedProduct != null
-                                    ? const Color(0xFF1B4D3E)
-                                    : Colors.grey[300]!,
-                                width: _selectedProduct != null ? 2 : 1,
-                              ),
-                              borderRadius: BorderRadius.circular(12),
-                              color: _selectedProduct != null
-                                  ? const Color(
-                                      0xFF1B4D3E,
-                                    ).withValues(alpha: 0.05)
-                                  : Colors.white,
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        _selectedProduct?.name ??
-                                            'Select a product',
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w600,
-                                          fontFamily: 'Literata',
-                                          color: _selectedProduct != null
-                                              ? Colors.black87
-                                              : Colors.grey[500],
-                                        ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                      if (_selectedProduct != null)
-                                        Padding(
-                                          padding: const EdgeInsets.only(
-                                            top: 4,
-                                          ),
-                                          child: Text(
-                                            'Stock: ${_selectedProduct!.currentStock}',
-                                            style: TextStyle(
-                                              fontSize: 12,
-                                              color: Colors.grey[600],
-                                            ),
-                                          ),
-                                        ),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Icon(
-                                  Icons.arrow_forward_ios_rounded,
-                                  size: 16,
-                                  color: Colors.grey[400],
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        if (_selectedProduct != null) ...[
-                          const SizedBox(height: 12),
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: Colors.green.withValues(alpha: 0.08),
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(
-                                color: Colors.green.withValues(alpha: 0.2),
-                              ),
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  Icons.check_circle_rounded,
-                                  color: Colors.green[600],
-                                  size: 18,
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    '${_selectedProduct!.name} (${_selectedProduct!.category})',
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w500,
-                                      fontFamily: 'Literata',
-                                      color: Colors.green[700],
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                        const SizedBox(height: 24),
-
-                        // Supplier Selection
-                        const Text(
-                          'Select Supplier',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            fontFamily: 'Literata',
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        GestureDetector(
-                          onTap: _showSupplierSelectionBottomSheet,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 14,
-                            ),
-                            decoration: BoxDecoration(
-                              border: Border.all(
-                                color: _selectedSupplier != null
-                                    ? const Color(0xFF1B4D3E)
-                                    : Colors.grey[300]!,
-                                width: _selectedSupplier != null ? 2 : 1,
-                              ),
-                              borderRadius: BorderRadius.circular(12),
-                              color: _selectedSupplier != null
-                                  ? const Color(
-                                      0xFF1B4D3E,
-                                    ).withValues(alpha: 0.05)
-                                  : Colors.white,
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    _selectedSupplier?['fullName'] ??
-                                        'Select a supplier',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
-                                      fontFamily: 'Literata',
-                                      color: _selectedSupplier != null
-                                          ? Colors.black87
-                                          : Colors.grey[500],
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Icon(
-                                  Icons.arrow_forward_ios_rounded,
-                                  size: 16,
-                                  color: Colors.grey[400],
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-
-                        // Company Selection
-                        const Text(
-                          'Select Company',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            fontFamily: 'Literata',
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        GestureDetector(
-                          onTap: _showCompanySelectionBottomSheet,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 14,
-                            ),
-                            decoration: BoxDecoration(
-                              border: Border.all(
-                                color: _selectedCompany != null
-                                    ? const Color(0xFF1B4D3E)
-                                    : Colors.grey[300]!,
-                                width: _selectedCompany != null ? 2 : 1,
-                              ),
-                              borderRadius: BorderRadius.circular(12),
-                              color: _selectedCompany != null
-                                  ? const Color(
-                                      0xFF1B4D3E,
-                                    ).withValues(alpha: 0.05)
-                                  : Colors.white,
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    _selectedCompany?['companyName'] ??
-                                        'Select a company',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
-                                      fontFamily: 'Literata',
-                                      color: _selectedCompany != null
-                                          ? Colors.black87
-                                          : Colors.grey[500],
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Icon(
-                                  Icons.arrow_forward_ios_rounded,
-                                  size: 16,
-                                  color: Colors.grey[400],
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-
-                        // Production Date Picker (conditionally visible)
-                        if (PurchaseSettingsService.instance.showManufacturingDate) ...[
-                        const Text(
-                          'Production Date (Optional)',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            fontFamily: 'Literata',
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        TextField(
-                          controller: _productionDateController,
-                          keyboardType: TextInputType.datetime,
-                          decoration: InputDecoration(
-                            hintText: 'DD/MM/YYYY',
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            suffixIcon: IconButton(
-                              icon: Icon(
-                                Icons.calendar_today,
-                                color: Colors.grey[600],
-                              ),
-                              onPressed: () async {
-                                final selectedDate = await showDatePicker(
-                                  context: context,
-                                  initialDate: _productionDate ?? DateTime.now(),
-                                  firstDate: DateTime(2000),
-                                  lastDate: DateTime.now(),
-                                  builder: (context, child) {
-                                    return Theme(
-                                      data: Theme.of(context).copyWith(
-                                        colorScheme: ColorScheme.light(
-                                          primary: const Color(0xFF1B4D3E),
-                                          onPrimary: Colors.white,
-                                          surface: Colors.white,
-                                          onSurface: Colors.black,
-                                          secondary: const Color(0xFF1B4D3E),
-                                          onSecondary: Colors.white,
-                                        ),
-                                        useMaterial3: true,
-                                        buttonTheme: ButtonThemeData(
-                                          buttonColor: const Color(0xFF1B4D3E),
-                                          textTheme: ButtonTextTheme.primary,
-                                        ),
-                                      ),
-                                      child: child!,
-                                    );
-                                  },
-                                );
-                                if (selectedDate != null) {
-                                  setState(() {
-                                    _productionDate = selectedDate;
-                                    _productionDateController.text = '${selectedDate.day.toString().padLeft(2, '0')}/${selectedDate.month.toString().padLeft(2, '0')}/${selectedDate.year}';
-                                  });
-                                }
-                              },
-                            ),
-                          ),
-                          onChanged: (value) {
-                            // Parse manually entered date (DD/MM/YYYY format)
-                            final parts = value.split('/');
-                            if (parts.length == 3) {
-                              final day = int.tryParse(parts[0]);
-                              final month = int.tryParse(parts[1]);
-                              final year = int.tryParse(parts[2]);
-                              if (day != null && month != null && year != null) {
-                                try {
-                                  final date = DateTime(year, month, day);
-                                  if (date.isBefore(DateTime.now().add(const Duration(days: 1)))) {
-                                    setState(() {
-                                      _productionDate = date;
-                                    });
-                                  }
-                                } catch (_) {}
-                              }
-                            } else if (value.isEmpty) {
-                              setState(() {
-                                _productionDate = null;
-                              });
-                            }
-                          },
-                        ),
-                        const SizedBox(height: 20),
-                        ],
-
-                        // Expiry Date Picker (conditionally visible)
-                        if (PurchaseSettingsService.instance.showExpiryDate) ...[
-                        const Text(
-                          'Expiry Date (Optional)',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            fontFamily: 'Literata',
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        TextField(
-                          controller: _expiryDateController,
-                          keyboardType: TextInputType.datetime,
-                          decoration: InputDecoration(
-                            hintText: 'DD/MM/YYYY',
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            suffixIcon: IconButton(
-                              icon: Icon(
-                                Icons.calendar_today,
-                                color: Colors.grey[600],
-                              ),
-                              onPressed: () async {
-                                final selectedDate = await showDatePicker(
-                                  context: context,
-                                  initialDate:
-                                      _expiryDate ??
-                                      DateTime.now().add(const Duration(days: 30)),
-                                  firstDate: DateTime.now(),
-                                  lastDate: DateTime(2100),
-                                  builder: (context, child) {
-                                    return Theme(
-                                      data: Theme.of(context).copyWith(
-                                        colorScheme: ColorScheme.light(
-                                          primary: const Color(0xFF1B4D3E),
-                                          onPrimary: Colors.white,
-                                          surface: Colors.white,
-                                          onSurface: Colors.black,
-                                          secondary: const Color(0xFF1B4D3E),
-                                          onSecondary: Colors.white,
-                                        ),
-                                        useMaterial3: true,
-                                        buttonTheme: ButtonThemeData(
-                                          buttonColor: const Color(0xFF1B4D3E),
-                                          textTheme: ButtonTextTheme.primary,
-                                        ),
-                                      ),
-                                      child: child!,
-                                    );
-                                  },
-                                );
-                                if (selectedDate != null) {
-                                  setState(() {
-                                    _expiryDate = selectedDate;
-                                    _expiryDateController.text = '${selectedDate.day.toString().padLeft(2, '0')}/${selectedDate.month.toString().padLeft(2, '0')}/${selectedDate.year}';
-                                  });
-                                }
-                              },
-                            ),
-                          ),
-                          onChanged: (value) {
-                            // Parse manually entered date (DD/MM/YYYY format)
-                            final parts = value.split('/');
-                            if (parts.length == 3) {
-                              final day = int.tryParse(parts[0]);
-                              final month = int.tryParse(parts[1]);
-                              final year = int.tryParse(parts[2]);
-                              if (day != null && month != null && year != null) {
-                                try {
-                                  final date = DateTime(year, month, day);
-                                  setState(() {
-                                    _expiryDate = date;
-                                  });
-                                } catch (_) {}
-                              }
-                            } else if (value.isEmpty) {
-                              setState(() {
-                                _expiryDate = null;
-                              });
-                            }
-                          },
-                        ),
-                        const SizedBox(height: 28),
-                        ],
-
-                        // Quantity Input
-                        const Text(
-                          'Purchase Quantity',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            fontFamily: 'Literata',
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        TextField(
-                          controller: _quantityController,
-                          keyboardType: TextInputType.number,
-                          onChanged: (_) => _calculateTotal(),
-                          decoration: InputDecoration(
-                            hintText: 'Enter quantity',
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            prefixIcon: const Icon(Icons.shopping_cart_rounded),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        
-                        // Measurement Unit Selector
-                        const Text(
-                          'Measurement Unit',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            fontFamily: 'Literata',
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: PurchaseSettingsService.instance.availableUnits.map((unit) {
-                            final isSelected = _selectedUnit == unit;
-                            final chipColor = isSelected ? const Color(0xFF1B4D3E) : Colors.grey[600]!;
-                            return ChoiceChip(
-                              avatar: isSelected ? null : Icon(
-                                Icons.straighten_rounded,
-                                size: 16,
-                                color: chipColor,
-                              ),
-                              label: Text(
-                                unit,
-                                style: TextStyle(
-                                  color: isSelected ? Colors.white : chipColor,
-                                  fontFamily: 'Literata',
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                              selected: isSelected,
-                              onSelected: (selected) {
-                                if (selected) {
-                                  setState(() {
-                                    _selectedUnit = unit;
-                                  });
-                                }
-                              },
-                              selectedColor: const Color(0xFF1B4D3E),
-                              backgroundColor: Colors.grey[100],
-                              checkmarkColor: Colors.white,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                                side: BorderSide(
-                                  color: isSelected ? const Color(0xFF1B4D3E) : Colors.grey[300]!,
-                                ),
-                              ),
-                            );
-                          }).toList(),
-                        ),
-                        const SizedBox(height: 20),
-                        
-                        // Warranty Selector (if enabled)
-                        if (PurchaseSettingsService.instance.showWarranty) ...[
-                          const Text(
-                            'Warranty',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                              fontFamily: 'Literata',
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            children: PurchaseSettingsService.instance.warrantyOptions.map((months) {
-                              final isSelected = _selectedWarranty == months;
-                              final chipColor = isSelected ? const Color(0xFF9C27B0) : Colors.grey[600]!;
-                              return ChoiceChip(
-                                avatar: isSelected ? null : Icon(
-                                  Icons.verified_user_rounded,
-                                  size: 16,
-                                  color: chipColor,
-                                ),
-                                label: Text(
-                                  PurchaseSettingsService.instance.getWarrantyLabel(months),
-                                  style: TextStyle(
-                                    color: isSelected ? Colors.white : chipColor,
-                                    fontFamily: 'Literata',
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                                selected: isSelected,
-                                onSelected: (selected) {
-                                  if (selected) {
-                                    setState(() {
-                                      _selectedWarranty = months;
-                                    });
-                                  }
-                                },
-                                selectedColor: const Color(0xFF9C27B0),
-                                backgroundColor: Colors.grey[100],
-                                checkmarkColor: Colors.white,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                  side: BorderSide(
-                                    color: isSelected ? const Color(0xFF9C27B0) : Colors.grey[300]!,
-                                  ),
-                                ),
-                              );
-                            }).toList(),
-                          ),
-                          const SizedBox(height: 20),
-                        ],
-
-                        // Price Input
-                        const Text(
-                          'Purchase Price per Unit',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            fontFamily: 'Literata',
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        TextField(
-                          controller: _priceController,
-                          keyboardType: TextInputType.number,
-                          onChanged: (_) => _calculateTotal(),
-                          decoration: InputDecoration(
-                            hintText: 'Enter purchase price',
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            prefixIcon: const Icon(
-                              Icons.currency_rupee_rounded,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-
-                        // Sales Price Input
-                        const Text(
-                          'Sales Price per Unit',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            fontFamily: 'Literata',
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        TextField(
-                          controller: _salesPriceController,
-                          keyboardType: TextInputType.number,
-                          decoration: InputDecoration(
-                            hintText: 'Enter sales price',
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            prefixIcon: const Icon(
-                              Icons.currency_rupee_rounded,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-
-                        // Total Amount
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.green.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: Colors.green.withValues(alpha: 0.3),
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        top: !widget.isEmbedded,
+        child: Column(
+          children: [
+            // Scrollable content
+            Expanded(
+              child: CustomScrollView(
+                controller: _scrollController,
+                slivers: [
+                  // Sticky App Bar Section
+                  if (!widget.isEmbedded)
+                    SliverPersistentHeader(
+                      pinned: true,
+                      delegate: _StickyHeaderDelegate(
+                        child: _buildHeader(),
+                        height: 90,
+                      ),
+                    ),
+                  // Sticky Quick Actions
+                  SliverPersistentHeader(
+                    pinned: true,
+                    delegate: _StickyHeaderDelegate(
+                      child: Container(
+                        color: const Color(0xFFF5F7F6),
+                        padding: const EdgeInsets.fromLTRB(16, 6, 16, 6),
+                        child: _buildQuickActionsBar(),
+                      ),
+                      height: 62,
+                    ),
+                  ),
+                  // Main Form Content
+                  SliverToBoxAdapter(
+                    child: SlideTransition(
+                      position: _offsetAnimation,
+                      child: FadeTransition(
+                        opacity: _opacityAnimation,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: Column(
                             children: [
-                              const Text(
-                                'Total Amount',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                  fontFamily: 'Literata',
-                                ),
-                              ),
-                              Text(
-                                '₹${((int.tryParse(_quantityController.text) ?? 0) * (double.tryParse(_priceController.text) ?? 0)).toStringAsFixed(2)}',
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w800,
-                                  fontFamily: 'Literata',
-                                  color: Colors.green,
-                                ),
-                              ),
+                              const SizedBox(height: 8),
+                              // Selection Cards Section
+                              _buildSelectionSection(),
+                              const SizedBox(height: 16),
+                              // Date & Quantity Section
+                              _buildDetailsSection(),
+                              const SizedBox(height: 16),
+                              // Pricing Section
+                              _buildPricingSection(),
+                              const SizedBox(height: 16),
+                              // Notes Section
+                              _buildNotesSection(),
+                              const SizedBox(height: 24),
                             ],
                           ),
                         ),
-                        const SizedBox(height: 20),
-
-                        // Notes Input
-                        const Text(
-                          'Notes (Optional)',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            fontFamily: 'Literata',
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        TextField(
-                          controller: _notesController,
-                          maxLines: 3,
-                          decoration: InputDecoration(
-                            hintText: 'Add any notes about this purchase',
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 28),
-
-                        // Submit Button
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            onPressed: _isLoading ? null : _processPurchase,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF1B4D3E),
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              disabledBackgroundColor: Colors.grey[400],
-                            ),
-                            child: _isLoading
-                                ? const SizedBox(
-                                    height: 20,
-                                    width: 20,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      valueColor: AlwaysStoppedAnimation<Color>(
-                                        Colors.white,
-                                      ),
-                                    ),
-                                  )
-                                : const Text(
-                                    'Record Purchase',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w700,
-                                      fontFamily: 'Literata',
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                      ],
+                      ),
                     ),
+                  ),
+                ],
+              ),
+            ),
+            // Sticky Bottom Submit Button
+            _buildStickyBottomButton(),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  /// Sticky bottom submit button
+  Widget _buildStickyBottomButton() {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 10,
+            offset: const Offset(0, -4),
+          ),
+        ],
+      ),
+      child: Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFF1B4D3E), Color(0xFF0F3B2F)],
+          ),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF1B4D3E).withValues(alpha: 0.4),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: ElevatedButton(
+          onPressed: _isLoading ? null : _processPurchase,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.transparent,
+            shadowColor: Colors.transparent,
+            disabledBackgroundColor: Colors.transparent,
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+          ),
+          child: _isLoading
+              ? const SizedBox(
+                  height: 22,
+                  width: 22,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.5,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  ),
+                )
+              : const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.check_circle_rounded,
+                      color: Colors.white,
+                      size: 22,
+                    ),
+                    SizedBox(width: 10),
+                    Text(
+                      'Record Purchase',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        fontFamily: 'Literata',
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+        ),
+      ),
+    );
+  }
+
+  /// Modern header with gradient
+  Widget _buildHeader() {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF1B4D3E), Color(0xFF0F3B2F)],
+        ),
+        borderRadius: const BorderRadius.only(
+          bottomLeft: Radius.circular(24),
+          bottomRight: Radius.circular(24),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF1B4D3E).withValues(alpha: 0.3),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          GestureDetector(
+            onTap: () => Navigator.pop(context),
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(
+                Icons.arrow_back_rounded,
+                color: Colors.white,
+                size: 22,
+              ),
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Add Purchase',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    fontFamily: 'Literata',
+                  ),
+                ),
+                Text(
+                  'Record new inventory purchase',
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.7),
+                    fontSize: 12,
+                    fontFamily: 'Literata',
                   ),
                 ),
               ],
             ),
           ),
+          GestureDetector(
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const PurchaseSettingsPage()),
+            ),
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(
+                Icons.settings_rounded,
+                color: Colors.white,
+                size: 22,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Selection section with product, supplier, company cards
+  Widget _buildSelectionSection() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  Icons.checklist_rounded,
+                  color: Color(0xFF1B4D3E),
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Text(
+                'Selection Details',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  fontFamily: 'Literata',
+                  color: Color(0xFF1B4D3E),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          // Product Selection
+          _buildSelectionCard(
+            title: 'Product',
+            value: _selectedProduct?.name,
+            subtitle: _selectedProduct != null
+                ? 'Stock: ${_selectedProduct!.currentStock} • ${_selectedProduct!.companyName}'
+                : null,
+            icon: Icons.inventory_2_rounded,
+            color: const Color(0xFF1B4D3E),
+            onTap: _showProductSelectionBottomSheet,
+            isSelected: _selectedProduct != null,
+          ),
+          const SizedBox(height: 12),
+          // Supplier & Company in row
+          Row(
+            children: [
+              Expanded(
+                child: _buildSelectionCard(
+                  title: 'Supplier',
+                  value: _selectedSupplier?['fullName'],
+                  icon: Icons.person_rounded,
+                  color: const Color(0xFFFF6B6B),
+                  onTap: _showSupplierSelectionBottomSheet,
+                  isSelected: _selectedSupplier != null,
+                  compact: true,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildSelectionCard(
+                  title: 'Company',
+                  value: _selectedCompany?['companyName'],
+                  icon: Icons.business_rounded,
+                  color: const Color(0xFF7B68EE),
+                  onTap: _showCompanySelectionBottomSheet,
+                  isSelected: _selectedCompany != null,
+                  compact: true,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Reusable selection card widget
+  Widget _buildSelectionCard({
+    required String title,
+    String? value,
+    String? subtitle,
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+    required bool isSelected,
+    bool compact = false,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: EdgeInsets.all(compact ? 12 : 14),
+        decoration: BoxDecoration(
+          color: isSelected ? color.withValues(alpha: 0.08) : Colors.grey[50],
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: isSelected
+                ? color.withValues(alpha: 0.4)
+                : Colors.grey[200]!,
+            width: isSelected ? 1.5 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: compact ? 36 : 42,
+              height: compact ? 36 : 42,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: isSelected
+                      ? [color, color.withValues(alpha: 0.8)]
+                      : [Colors.grey[300]!, Colors.grey[400]!],
+                ),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, color: Colors.white, size: compact ? 18 : 20),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                      fontFamily: 'Literata',
+                      color: Colors.grey[500],
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    value ?? 'Select $title',
+                    style: TextStyle(
+                      fontSize: compact ? 13 : 14,
+                      fontWeight: FontWeight.w600,
+                      fontFamily: 'Literata',
+                      color: isSelected ? Colors.black87 : Colors.grey[400],
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  if (subtitle != null && !compact) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontFamily: 'Literata',
+                        color: Colors.grey[500],
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            Icon(
+              Icons.chevron_right_rounded,
+              color: isSelected ? color : Colors.grey[400],
+              size: 20,
+            ),
+          ],
         ),
       ),
     );
+  }
+
+  /// Details section with dates, quantity, unit, warranty
+  Widget _buildDetailsSection() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF2196F3).withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  Icons.tune_rounded,
+                  color: Color(0xFF2196F3),
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Text(
+                'Purchase Details',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  fontFamily: 'Literata',
+                  color: Color(0xFF1B4D3E),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          // Date pickers row (if enabled)
+          if (PurchaseSettingsService.instance.showManufacturingDate ||
+              PurchaseSettingsService.instance.showExpiryDate)
+            Row(
+              children: [
+                if (PurchaseSettingsService.instance.showManufacturingDate)
+                  Expanded(
+                    child: _buildDateField(
+                      label: 'Mfg. Date',
+                      value: _productionDate,
+                      icon: Icons.event_rounded,
+                      color: const Color(0xFF4CAF50),
+                      onTap: () => _selectDate(isProduction: true),
+                    ),
+                  ),
+                if (PurchaseSettingsService.instance.showManufacturingDate &&
+                    PurchaseSettingsService.instance.showExpiryDate)
+                  const SizedBox(width: 12),
+                if (PurchaseSettingsService.instance.showExpiryDate)
+                  Expanded(
+                    child: _buildDateField(
+                      label: 'Expiry Date',
+                      value: _expiryDate,
+                      icon: Icons.event_busy_rounded,
+                      color: const Color(0xFFFF9800),
+                      onTap: () => _selectDate(isProduction: false),
+                    ),
+                  ),
+              ],
+            ),
+          if (PurchaseSettingsService.instance.showManufacturingDate ||
+              PurchaseSettingsService.instance.showExpiryDate)
+            const SizedBox(height: 16),
+          // Quantity field
+          _buildTextField(
+            controller: _quantityController,
+            label: 'Purchase Quantity',
+            hint: 'Enter quantity',
+            icon: Icons.shopping_cart_rounded,
+            keyboardType: TextInputType.number,
+            onChanged: (_) => _calculateTotal(),
+          ),
+          const SizedBox(height: 16),
+          // Measurement Unit
+          _buildChipSelector(
+            label: 'Measurement Unit',
+            options: PurchaseSettingsService.instance.availableUnits,
+            selectedValue: _selectedUnit,
+            onSelected: (unit) => setState(() => _selectedUnit = unit),
+            color: const Color(0xFF1B4D3E),
+            icon: Icons.straighten_rounded,
+          ),
+          // Warranty (if enabled)
+          if (PurchaseSettingsService.instance.showWarranty) ...[
+            const SizedBox(height: 16),
+            _buildChipSelector<int>(
+              label: 'Warranty Period',
+              options: PurchaseSettingsService.instance.warrantyOptions,
+              selectedValue: _selectedWarranty,
+              onSelected: (warranty) =>
+                  setState(() => _selectedWarranty = warranty),
+              color: const Color(0xFF9C27B0),
+              icon: Icons.verified_user_rounded,
+              labelBuilder: (value) =>
+                  PurchaseSettingsService.instance.getWarrantyLabel(value),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  /// Date field widget
+  Widget _buildDateField({
+    required String label,
+    DateTime? value,
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    final hasValue = value != null;
+    final dateStr = hasValue
+        ? '${value.day.toString().padLeft(2, '0')}/${value.month.toString().padLeft(2, '0')}/${value.year}'
+        : 'Select';
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: hasValue ? color.withValues(alpha: 0.08) : Colors.grey[50],
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: hasValue ? color.withValues(alpha: 0.3) : Colors.grey[200]!,
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: hasValue
+                    ? color.withValues(alpha: 0.15)
+                    : Colors.grey[200],
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                icon,
+                color: hasValue ? color : Colors.grey[500],
+                size: 16,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w500,
+                      fontFamily: 'Literata',
+                      color: Colors.grey[500],
+                    ),
+                  ),
+                  Text(
+                    dateStr,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      fontFamily: 'Literata',
+                      color: hasValue ? Colors.black87 : Colors.grey[400],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.calendar_month_rounded,
+              color: Colors.grey[400],
+              size: 18,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Date picker helper
+  Future<void> _selectDate({required bool isProduction}) async {
+    final selectedDate = await showDatePicker(
+      context: context,
+      initialDate: isProduction
+          ? (_productionDate ?? DateTime.now())
+          : (_expiryDate ?? DateTime.now().add(const Duration(days: 30))),
+      firstDate: isProduction ? DateTime(2000) : DateTime.now(),
+      lastDate: isProduction ? DateTime.now() : DateTime(2100),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: Color(0xFF1B4D3E),
+              onPrimary: Colors.white,
+              surface: Colors.white,
+              onSurface: Colors.black,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (selectedDate != null) {
+      setState(() {
+        if (isProduction) {
+          _productionDate = selectedDate;
+          _productionDateController.text =
+              '${selectedDate.day.toString().padLeft(2, '0')}/${selectedDate.month.toString().padLeft(2, '0')}/${selectedDate.year}';
+        } else {
+          _expiryDate = selectedDate;
+          _expiryDateController.text =
+              '${selectedDate.day.toString().padLeft(2, '0')}/${selectedDate.month.toString().padLeft(2, '0')}/${selectedDate.year}';
+        }
+      });
+    }
+  }
+
+  /// Text field widget
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    required IconData icon,
+    TextInputType keyboardType = TextInputType.text,
+    Function(String)? onChanged,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            fontFamily: 'Literata',
+            color: Color(0xFF1B4D3E),
+          ),
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          controller: controller,
+          keyboardType: keyboardType,
+          onChanged: onChanged,
+          style: const TextStyle(
+            fontFamily: 'Literata',
+            fontWeight: FontWeight.w500,
+          ),
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: TextStyle(
+              color: Colors.grey[400],
+              fontFamily: 'Literata',
+            ),
+            prefixIcon: Icon(icon, color: const Color(0xFF1B4D3E), size: 20),
+            filled: true,
+            fillColor: Colors.grey[50],
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Colors.grey[200]!),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(
+                color: Color(0xFF1B4D3E),
+                width: 1.5,
+              ),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 14,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Chip selector widget
+  Widget _buildChipSelector<T>({
+    required String label,
+    required List<T> options,
+    required T? selectedValue,
+    required Function(T) onSelected,
+    required Color color,
+    required IconData icon,
+    String Function(T)? labelBuilder,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            fontFamily: 'Literata',
+            color: Color(0xFF1B4D3E),
+          ),
+        ),
+        const SizedBox(height: 10),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: options.map((option) {
+              final isSelected = selectedValue == option;
+              final displayLabel = labelBuilder != null
+                  ? labelBuilder(option)
+                  : option.toString();
+              return Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: GestureDetector(
+                  onTap: () => onSelected(option),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      gradient: isSelected
+                          ? LinearGradient(
+                              colors: [color, color.withValues(alpha: 0.8)],
+                            )
+                          : null,
+                      color: isSelected ? null : Colors.grey[100],
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: isSelected ? color : Colors.grey[300]!,
+                        width: isSelected ? 0 : 1,
+                      ),
+                      boxShadow: isSelected
+                          ? [
+                              BoxShadow(
+                                color: color.withValues(alpha: 0.3),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ]
+                          : null,
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          isSelected ? Icons.check_rounded : icon,
+                          size: 16,
+                          color: isSelected ? Colors.white : Colors.grey[600],
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          displayLabel,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            fontFamily: 'Literata',
+                            color: isSelected ? Colors.white : Colors.grey[700],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Pricing section
+  Widget _buildPricingSection() {
+    final quantity = int.tryParse(_quantityController.text) ?? 0;
+    final price = double.tryParse(_priceController.text) ?? 0;
+    final total = quantity * price;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF4CAF50).withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  Icons.currency_rupee_rounded,
+                  color: Color(0xFF4CAF50),
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Text(
+                'Pricing',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  fontFamily: 'Literata',
+                  color: Color(0xFF1B4D3E),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          // Price fields row
+          Row(
+            children: [
+              Expanded(
+                child: _buildPriceField(
+                  controller: _priceController,
+                  label: 'Purchase Price',
+                  hint: '0.00',
+                  onChanged: (_) => _calculateTotal(),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildPriceField(
+                  controller: _salesPriceController,
+                  label: 'Sales Price',
+                  hint: '0.00',
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          // Total amount card
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  const Color(0xFF1B4D3E).withValues(alpha: 0.08),
+                  const Color(0xFF4CAF50).withValues(alpha: 0.08),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: const Color(0xFF1B4D3E).withValues(alpha: 0.2),
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(
+                        Icons.receipt_long_rounded,
+                        color: Color(0xFF1B4D3E),
+                        size: 18,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Total Amount',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            fontFamily: 'Literata',
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                        Text(
+                          '$quantity × ₹${price.toStringAsFixed(2)}',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontFamily: 'Literata',
+                            color: Colors.grey[500],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                Text(
+                  '₹${total.toStringAsFixed(2)}',
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                    fontFamily: 'Literata',
+                    color: Color(0xFF1B4D3E),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Price field widget
+  Widget _buildPriceField({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    Function(String)? onChanged,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            fontFamily: 'Literata',
+            color: Colors.grey[600],
+          ),
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          controller: controller,
+          keyboardType: TextInputType.number,
+          onChanged: onChanged,
+          style: const TextStyle(
+            fontFamily: 'Literata',
+            fontWeight: FontWeight.w600,
+            fontSize: 15,
+          ),
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: TextStyle(color: Colors.grey[400]),
+            prefixText: '₹ ',
+            prefixStyle: TextStyle(
+              fontWeight: FontWeight.w700,
+              color: Colors.grey[600],
+              fontSize: 15,
+            ),
+            filled: true,
+            fillColor: Colors.grey[50],
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Colors.grey[200]!),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(
+                color: Color(0xFF4CAF50),
+                width: 1.5,
+              ),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 14,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Notes section
+  Widget _buildNotesSection() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFF9800).withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  Icons.notes_rounded,
+                  color: Color(0xFFFF9800),
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Text(
+                'Notes',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  fontFamily: 'Literata',
+                  color: Color(0xFF1B4D3E),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                '(Optional)',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontFamily: 'Literata',
+                  color: Colors.grey[500],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _notesController,
+            maxLines: 3,
+            style: const TextStyle(fontFamily: 'Literata'),
+            decoration: InputDecoration(
+              hintText: 'Add any notes about this purchase...',
+              hintStyle: TextStyle(
+                color: Colors.grey[400],
+                fontFamily: 'Literata',
+              ),
+              filled: true,
+              fillColor: Colors.grey[50],
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none,
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.grey[200]!),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(
+                  color: Color(0xFFFF9800),
+                  width: 1.5,
+                ),
+              ),
+              contentPadding: const EdgeInsets.all(14),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Sticky header delegate for pinned sections
+class _StickyHeaderDelegate extends SliverPersistentHeaderDelegate {
+  final Widget child;
+  final double height;
+
+  _StickyHeaderDelegate({required this.child, this.height = 90});
+
+  @override
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
+    return child;
+  }
+
+  @override
+  double get maxExtent => height;
+
+  @override
+  double get minExtent => height;
+
+  @override
+  bool shouldRebuild(covariant _StickyHeaderDelegate oldDelegate) {
+    return child != oldDelegate.child || height != oldDelegate.height;
   }
 }
