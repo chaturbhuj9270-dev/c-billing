@@ -1509,38 +1509,7 @@ class _ProductManagementPageState extends State<ProductManagementPage> {
                   ),
                   // Custom Fields Section
                   if (customColumns.isNotEmpty) ...[
-                    const SizedBox(height: 16),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(6),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF667eea).withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: const Icon(
-                              Icons.tune_rounded,
-                              size: 16,
-                              color: Color(0xFF667eea),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          const Text(
-                            'Custom Fields',
-                            style: TextStyle(
-                              fontFamily: 'Literata',
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF667eea),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 12),
                     ...customColumns.map((column) {
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 12),

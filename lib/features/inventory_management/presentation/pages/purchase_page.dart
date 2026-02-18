@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -7,6 +8,7 @@ import 'package:c_billing/core/services/inventory_service.dart';
 import 'package:c_billing/core/services/language_service.dart';
 import 'package:c_billing/core/services/dashboard_refresh_service.dart';
 import 'package:c_billing/core/services/purchase_settings_service.dart';
+import 'package:c_billing/core/services/product_settings_service.dart';
 import 'package:c_billing/core/localization/app_localizations.dart';
 import '../../data/repositories/firebase_product_repository.dart';
 import '../../data/repositories/firebase_stock_repository.dart';
@@ -243,6 +245,29 @@ class _PurchasePageState extends State<PurchasePage>
     final hsnController = TextEditingController();
     Map<String, dynamic>? dialogSelectedCompany;
     Map<String, dynamic>? dialogSelectedSupplier;
+    
+    // Custom fields controllers and values
+    final customColumns = ProductSettingsService.instance.activeCustomColumns;
+    final Map<String, TextEditingController> customTextControllers = {};
+    final Map<String, dynamic> customFieldValues = {};
+    
+    // Initialize controllers for custom fields
+    for (final column in customColumns) {
+      if (column.type == CustomColumnType.text || 
+          column.type == CustomColumnType.number ||
+          column.type == CustomColumnType.decimal) {
+        customTextControllers[column.id] = TextEditingController(
+          text: column.defaultValue ?? '',
+        );
+      } else if (column.type == CustomColumnType.boolean) {
+        customFieldValues[column.id] = column.defaultValue == 'true';
+      } else if (column.type == CustomColumnType.dropdown) {
+        customFieldValues[column.id] = column.defaultValue ?? 
+            ((column.dropdownOptions?.isNotEmpty ?? false) ? column.dropdownOptions!.first : '');
+      } else if (column.type == CustomColumnType.date) {
+        customFieldValues[column.id] = column.defaultValue;
+      }
+    }
 
     showDialog(
       context: context,
@@ -468,6 +493,21 @@ class _PurchasePageState extends State<PurchasePage>
                     prefixIcon: const Icon(Icons.tag, size: 20),
                   ),
                 ),
+                // Custom Fields Section
+                if (customColumns.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  ...customColumns.map((column) {
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: _buildCustomFieldWidgetForPurchase(
+                        column,
+                        customTextControllers[column.id],
+                        customFieldValues,
+                        setDialogState,
+                      ),
+                    );
+                  }),
+                ],
               ],
             ),
           ),
@@ -501,6 +541,31 @@ class _PurchasePageState extends State<PurchasePage>
                           );
                           return;
                         }
+                        
+                        // Collect custom field values
+                        final Map<String, dynamic> finalCustomFields = {};
+                        for (final column in customColumns) {
+                          String? value;
+                          if (column.type == CustomColumnType.text ||
+                              column.type == CustomColumnType.number ||
+                              column.type == CustomColumnType.decimal) {
+                            value = customTextControllers[column.id]?.text.trim();
+                          } else if (column.type == CustomColumnType.boolean) {
+                            value = (customFieldValues[column.id] ?? false).toString();
+                          } else if (column.type == CustomColumnType.dropdown ||
+                                     column.type == CustomColumnType.date) {
+                            value = customFieldValues[column.id]?.toString();
+                          }
+                          if (value != null && value.isNotEmpty) {
+                            finalCustomFields[column.id] = value;
+                          }
+                        }
+                        
+                        // Convert to JSON string
+                        String? customFieldsJson;
+                        if (finalCustomFields.isNotEmpty) {
+                          customFieldsJson = jsonEncode(finalCustomFields);
+                        }
 
                         // Use offline controller for consistent offline-first behavior
                         final productOfflineController = ProductOfflineController.instance;
@@ -518,6 +583,7 @@ class _PurchasePageState extends State<PurchasePage>
                           cgstPercent: cgstVal,
                           sgstPercent: sgstVal,
                           hsnCode: hsnVal.isNotEmpty ? hsnVal : null,
+                          customFieldsJson: customFieldsJson,
                         );
                         
                         // Notify other screens about the product change
@@ -590,6 +656,225 @@ class _PurchasePageState extends State<PurchasePage>
         ),
       ),
     );
+  }
+
+  /// Build a custom field widget based on column type (for purchase page)
+  Widget _buildCustomFieldWidgetForPurchase(
+    CustomColumn column,
+    TextEditingController? textController,
+    Map<String, dynamic> fieldValues,
+    StateSetter setDialogState,
+  ) {
+    final primaryColor = const Color(0xFF1B4D3E);
+    
+    switch (column.type) {
+      case CustomColumnType.text:
+        return TextField(
+          controller: textController,
+          decoration: InputDecoration(
+            labelText: column.name + (column.isRequired ? ' *' : ''),
+            hintText: column.placeholder ?? 'Enter ${column.name.toLowerCase()}',
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: primaryColor, width: 2),
+            ),
+            prefixIcon: const Icon(Icons.text_fields_rounded, size: 20),
+          ),
+        );
+        
+      case CustomColumnType.number:
+        return TextField(
+          controller: textController,
+          keyboardType: TextInputType.number,
+          decoration: InputDecoration(
+            labelText: column.name + (column.isRequired ? ' *' : ''),
+            hintText: column.placeholder ?? 'Enter ${column.name.toLowerCase()}',
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: primaryColor, width: 2),
+            ),
+            prefixIcon: const Icon(Icons.numbers_rounded, size: 20),
+          ),
+        );
+        
+      case CustomColumnType.decimal:
+        return TextField(
+          controller: textController,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          decoration: InputDecoration(
+            labelText: column.name + (column.isRequired ? ' *' : ''),
+            hintText: column.placeholder ?? 'Enter ${column.name.toLowerCase()}',
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: primaryColor, width: 2),
+            ),
+            prefixIcon: const Icon(Icons.percent_rounded, size: 20),
+          ),
+        );
+        
+      case CustomColumnType.date:
+        final currentValue = fieldValues[column.id] as String?;
+        DateTime? selectedDate;
+        if (currentValue != null && currentValue.isNotEmpty) {
+          try {
+            selectedDate = DateTime.parse(currentValue);
+          } catch (_) {}
+        }
+        return InkWell(
+          onTap: () async {
+            final date = await showDatePicker(
+              context: context,
+              initialDate: selectedDate ?? DateTime.now(),
+              firstDate: DateTime(2000),
+              lastDate: DateTime(2100),
+              builder: (context, child) {
+                return Theme(
+                  data: Theme.of(context).copyWith(
+                    colorScheme: ColorScheme.light(primary: primaryColor),
+                  ),
+                  child: child!,
+                );
+              },
+            );
+            if (date != null) {
+              setDialogState(() {
+                fieldValues[column.id] = date.toIso8601String().split('T').first;
+              });
+            }
+          },
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+            decoration: BoxDecoration(
+              border: Border.all(
+                color: currentValue != null ? primaryColor : Colors.grey[400]!,
+                width: currentValue != null ? 2 : 1,
+              ),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.calendar_today_rounded, 
+                    color: currentValue != null ? primaryColor : Colors.grey, 
+                    size: 20),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    currentValue ?? column.placeholder ?? 'Select ${column.name.toLowerCase()}',
+                    style: TextStyle(
+                      fontFamily: 'Literata',
+                      color: currentValue != null ? Colors.black87 : Colors.grey[600],
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+                Text(
+                  column.name + (column.isRequired ? ' *' : ''),
+                  style: TextStyle(
+                    fontFamily: 'Literata',
+                    color: Colors.grey[500],
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+        
+      case CustomColumnType.dropdown:
+        final currentValue = fieldValues[column.id] as String?;
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          decoration: BoxDecoration(
+            border: Border.all(
+              color: currentValue != null && currentValue.isNotEmpty ? primaryColor : Colors.grey[400]!,
+              width: currentValue != null && currentValue.isNotEmpty ? 2 : 1,
+            ),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              value: currentValue,
+              hint: Text(
+                column.placeholder ?? 'Select ${column.name.toLowerCase()}',
+                style: TextStyle(
+                  fontFamily: 'Literata',
+                  color: Colors.grey[600],
+                  fontSize: 14,
+                ),
+              ),
+              isExpanded: true,
+              icon: Icon(Icons.arrow_drop_down, color: Colors.grey[600]),
+              items: (column.dropdownOptions ?? []).map((option) {
+                return DropdownMenuItem<String>(
+                  value: option,
+                  child: Text(
+                    option,
+                    style: const TextStyle(
+                      fontFamily: 'Literata',
+                      fontSize: 14,
+                    ),
+                  ),
+                );
+              }).toList(),
+              onChanged: (value) {
+                setDialogState(() {
+                  fieldValues[column.id] = value;
+                });
+              },
+            ),
+          ),
+        );
+        
+      case CustomColumnType.boolean:
+        final currentValue = fieldValues[column.id] as bool? ?? false;
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            border: Border.all(
+              color: currentValue ? primaryColor : Colors.grey[400]!,
+              width: currentValue ? 2 : 1,
+            ),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.toggle_on_rounded, 
+                  color: currentValue ? primaryColor : Colors.grey, 
+                  size: 20),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  column.name + (column.isRequired ? ' *' : ''),
+                  style: const TextStyle(
+                    fontFamily: 'Literata',
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+              Switch(
+                value: currentValue,
+                activeColor: primaryColor,
+                onChanged: (value) {
+                  setDialogState(() {
+                    fieldValues[column.id] = value;
+                  });
+                },
+              ),
+            ],
+          ),
+        );
+    }
   }
 
   /// Inline company picker for use inside dialogs
