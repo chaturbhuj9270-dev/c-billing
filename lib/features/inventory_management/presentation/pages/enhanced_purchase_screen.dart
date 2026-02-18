@@ -1818,7 +1818,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
 }
 
 /// Purchase details bottom sheet
-class _PurchaseDetailsSheet extends StatelessWidget {
+class _PurchaseDetailsSheet extends StatefulWidget {
   final PurchaseBatchEntity purchase;
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
@@ -1829,13 +1829,32 @@ class _PurchaseDetailsSheet extends StatelessWidget {
     this.onDelete,
   });
 
+  @override
+  State<_PurchaseDetailsSheet> createState() => _PurchaseDetailsSheetState();
+}
+
+class _PurchaseDetailsSheetState extends State<_PurchaseDetailsSheet> {
   /// Calculate total amount for this batch
-  double get totalAmount => purchase.purchasePrice * purchase.quantityPurchased;
+  double get totalAmount => widget.purchase.purchasePrice * widget.purchase.quantityPurchased;
+
+  /// Load custom field values from the product
+  Future<Map<String, dynamic>> _loadProductCustomFields() async {
+    try {
+      final product = await ProductOfflineController.instance.getProductByServerId(widget.purchase.productId);
+      if (product != null && product.customFieldsJson != null && product.customFieldsJson!.isNotEmpty) {
+        return jsonDecode(product.customFieldsJson!) as Map<String, dynamic>;
+      }
+    } catch (e) {
+      debugPrint('Error loading product custom fields: $e');
+    }
+    return {};
+  }
 
   @override
   Widget build(BuildContext context) {
     final dateFormat = DateFormat('dd MMM yyyy');
     final timeFormat = DateFormat('hh:mm a');
+    final customColumns = ProductSettingsService.instance.activeCustomColumns;
 
     return ClipRRect(
       borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
@@ -1887,7 +1906,7 @@ class _PurchaseDetailsSheet extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              purchase.productName,
+                              widget.purchase.productName,
                               style: const TextStyle(
                                 fontFamily: 'Literata',
                                 fontWeight: FontWeight.w800,
@@ -1895,9 +1914,9 @@ class _PurchaseDetailsSheet extends StatelessWidget {
                                 color: Color(0xFF1B4D3E),
                               ),
                             ),
-                            if (purchase.companyName.isNotEmpty)
+                            if (widget.purchase.companyName.isNotEmpty)
                               Text(
-                                purchase.companyName,
+                                widget.purchase.companyName,
                                 style: TextStyle(
                                   fontFamily: 'Literata',
                                   fontWeight: FontWeight.w500,
@@ -1914,27 +1933,27 @@ class _PurchaseDetailsSheet extends StatelessWidget {
                   const SizedBox(height: 24),
 
                   // Details grid
-                  _buildDetailRow('Quantity', '${purchase.quantityPurchased} ${purchase.unit}'),
-                  _buildDetailRow('Purchase Price', '₹${purchase.purchasePrice.toStringAsFixed(2)}/unit'),
-                  _buildDetailRow('Sales Price', '₹${purchase.sellingPrice.toStringAsFixed(2)}/unit'),
+                  _buildDetailRow('Quantity', '${widget.purchase.quantityPurchased} ${widget.purchase.unit}'),
+                  _buildDetailRow('Purchase Price', '₹${widget.purchase.purchasePrice.toStringAsFixed(2)}/unit'),
+                  _buildDetailRow('Sales Price', '₹${widget.purchase.sellingPrice.toStringAsFixed(2)}/unit'),
                   _buildDetailRow('Total Amount', '₹${totalAmount.toStringAsFixed(2)}', highlight: true),
                   
-                  if (purchase.supplierName != null && purchase.supplierName!.isNotEmpty)
-                    _buildDetailRow('Supplier', purchase.supplierName!),
+                  if (widget.purchase.supplierName != null && widget.purchase.supplierName!.isNotEmpty)
+                    _buildDetailRow('Supplier', widget.purchase.supplierName!),
                   
-                  _buildDetailRow('Date', dateFormat.format(purchase.purchaseDate)),
-                  _buildDetailRow('Time', timeFormat.format(purchase.purchaseDate)),
+                  _buildDetailRow('Date', dateFormat.format(widget.purchase.purchaseDate)),
+                  _buildDetailRow('Time', timeFormat.format(widget.purchase.purchaseDate)),
                   
-                  if (purchase.productionDate != null)
-                    _buildDetailRow('Production Date', dateFormat.format(purchase.productionDate!)),
+                  if (widget.purchase.productionDate != null)
+                    _buildDetailRow('Production Date', dateFormat.format(widget.purchase.productionDate!)),
                   
-                  if (purchase.expiryDate != null)
-                    _buildDetailRow('Expiry Date', dateFormat.format(purchase.expiryDate!)),
+                  if (widget.purchase.expiryDate != null)
+                    _buildDetailRow('Expiry Date', dateFormat.format(widget.purchase.expiryDate!)),
                   
-                  if (purchase.warrantyMonths != null && purchase.warrantyMonths! > 0)
-                    _buildDetailRow('Warranty', '${purchase.warrantyMonths} months'),
+                  if (widget.purchase.warrantyMonths != null && widget.purchase.warrantyMonths! > 0)
+                    _buildDetailRow('Warranty', '${widget.purchase.warrantyMonths} months'),
                   
-                  if (purchase.notes != null && purchase.notes!.isNotEmpty) ...[
+                  if (widget.purchase.notes != null && widget.purchase.notes!.isNotEmpty) ...[
                     const SizedBox(height: 16),
                     const Text(
                       'Notes',
@@ -1954,7 +1973,7 @@ class _PurchaseDetailsSheet extends StatelessWidget {
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Text(
-                        purchase.notes!,
+                        widget.purchase.notes!,
                         style: TextStyle(
                           fontFamily: 'Literata',
                           fontWeight: FontWeight.w400,
@@ -1965,6 +1984,56 @@ class _PurchaseDetailsSheet extends StatelessWidget {
                     ),
                   ],
 
+                  // Custom Fields Section
+                  if (customColumns.isNotEmpty) ...[                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Icon(Icons.tune_rounded, 
+                            size: 16, 
+                            color: Colors.grey[600]),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Custom Fields',
+                          style: TextStyle(
+                            fontFamily: 'Literata',
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    FutureBuilder<Map<String, dynamic>>(
+                      future: _loadProductCustomFields(),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState == ConnectionState.waiting) {
+                          return const Padding(
+                            padding: EdgeInsets.all(8.0),
+                            child: Center(
+                              child: SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Color(0xFF1B4D3E),
+                                ),
+                              ),
+                            ),
+                          );
+                        }
+                        final fieldValues = snapshot.data ?? {};
+                        return Column(
+                          children: customColumns.map((column) {
+                            final value = fieldValues[column.id];
+                            String displayValue = _formatCustomFieldValue(column, value);
+                            return _buildDetailRow(column.name, displayValue);
+                          }).toList(),
+                        );
+                      },
+                    ),
+                  ],
+
                   const SizedBox(height: 24),
 
                   // Action buttons
@@ -1972,7 +2041,7 @@ class _PurchaseDetailsSheet extends StatelessWidget {
                     children: [
                       Expanded(
                         child: OutlinedButton.icon(
-                          onPressed: onEdit,
+                          onPressed: widget.onEdit,
                           icon: const Icon(Icons.edit_rounded, size: 18),
                           label: const Text('Edit'),
                           style: OutlinedButton.styleFrom(
@@ -1988,7 +2057,7 @@ class _PurchaseDetailsSheet extends StatelessWidget {
                       const SizedBox(width: 12),
                       Expanded(
                         child: OutlinedButton.icon(
-                          onPressed: onDelete,
+                          onPressed: widget.onDelete,
                           icon: const Icon(Icons.delete_outline_rounded, size: 18),
                           label: const Text('Delete'),
                           style: OutlinedButton.styleFrom(
@@ -2010,6 +2079,28 @@ class _PurchaseDetailsSheet extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  /// Format custom field value for display
+  String _formatCustomFieldValue(CustomColumn column, dynamic value) {
+    if (value == null) return '-';
+    
+    switch (column.type) {
+      case CustomColumnType.date:
+        if (value.toString().isNotEmpty) {
+          try {
+            final date = DateTime.parse(value.toString());
+            return DateFormat('dd MMM yyyy').format(date);
+          } catch (_) {
+            return value.toString();
+          }
+        }
+        return '-';
+      case CustomColumnType.boolean:
+        return value == true || value == 'true' ? 'Yes' : 'No';
+      default:
+        return value.toString().isEmpty ? '-' : value.toString();
+    }
   }
 
   Widget _buildDetailRow(String label, String value, {bool highlight = false}) {
