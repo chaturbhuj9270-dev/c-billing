@@ -1,5 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Supported data types for custom product columns
@@ -96,12 +98,17 @@ class CustomColumn {
 }
 
 /// Service for managing product custom columns settings
+/// Stores in Firestore per user so data persists across app reinstalls
 class ProductSettingsService extends ChangeNotifier {
-  static const String _customColumnsKey = 'product_custom_columns';
+  static const String _localCacheKey = 'product_custom_columns_cache';
+  static const String _firestoreCollection = 'product_settings';
+  static const String _customColumnsDoc = 'custom_columns';
   
   static ProductSettingsService? _instance;
   
   List<CustomColumn> _customColumns = [];
+  bool _isLoading = false;
+  String? _currentUserId;
   
   ProductSettingsService._();
   
@@ -117,29 +124,143 @@ class ProductSettingsService extends ChangeNotifier {
   List<CustomColumn> get activeCustomColumns => 
       _customColumns.where((c) => c.isActive).toList();
   
-  /// Initialize service - load saved columns
+  /// Check if loading
+  bool get isLoading => _isLoading;
+  
+  /// Get current user ID
+  String? get _userId => FirebaseAuth.instance.currentUser?.uid;
+  
+  /// Get Firestore reference for user's custom columns
+  DocumentReference? get _userSettingsDoc {
+    final uid = _userId;
+    if (uid == null) return null;
+    return FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .collection(_firestoreCollection)
+        .doc(_customColumnsDoc);
+  }
+  
+  /// Initialize service - load from Firestore (with local cache fallback)
   Future<void> init() async {
-    final prefs = await SharedPreferences.getInstance();
-    final savedData = prefs.getString(_customColumnsKey);
+    _isLoading = true;
+    notifyListeners();
     
-    if (savedData != null) {
-      try {
+    try {
+      final uid = _userId;
+      if (uid == null) {
+        debugPrint('[ProductSettings] No user logged in, loading from local cache');
+        await _loadFromLocalCache();
+        return;
+      }
+      
+      _currentUserId = uid;
+      
+      // Try to load from Firestore first
+      final doc = await _userSettingsDoc?.get();
+      
+      if (doc != null && doc.exists) {
+        final data = doc.data() as Map<String, dynamic>?;
+        if (data != null && data['columns'] != null) {
+          final List<dynamic> jsonList = data['columns'] as List<dynamic>;
+          _customColumns = jsonList
+              .map((json) => CustomColumn.fromJson(json as Map<String, dynamic>))
+              .toList();
+          debugPrint('[ProductSettings] Loaded ${_customColumns.length} columns from Firestore');
+          
+          // Update local cache
+          await _saveToLocalCache();
+        }
+      } else {
+        debugPrint('[ProductSettings] No Firestore data, checking local cache');
+        await _loadFromLocalCache();
+        
+        // If we have local data, sync it to Firestore
+        if (_customColumns.isNotEmpty) {
+          await _saveToFirestore();
+        }
+      }
+    } catch (e) {
+      debugPrint('[ProductSettings] Error loading from Firestore: $e');
+      // Fallback to local cache
+      await _loadFromLocalCache();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+  
+  /// Reload data (useful when user changes)
+  Future<void> reload() async {
+    final newUserId = _userId;
+    if (newUserId != _currentUserId) {
+      _customColumns = [];
+      _currentUserId = newUserId;
+    }
+    await init();
+  }
+  
+  /// Load from local cache (SharedPreferences)
+  Future<void> _loadFromLocalCache() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final uid = _userId ?? 'anonymous';
+      final cacheKey = '${_localCacheKey}_$uid';
+      final savedData = prefs.getString(cacheKey);
+      
+      if (savedData != null) {
         final List<dynamic> jsonList = jsonDecode(savedData);
         _customColumns = jsonList
             .map((json) => CustomColumn.fromJson(json as Map<String, dynamic>))
             .toList();
-      } catch (e) {
-        debugPrint('[ProductSettings] Error loading custom columns: $e');
-        _customColumns = [];
+        debugPrint('[ProductSettings] Loaded ${_customColumns.length} columns from local cache');
       }
+    } catch (e) {
+      debugPrint('[ProductSettings] Error loading from local cache: $e');
+      _customColumns = [];
     }
   }
   
-  /// Save columns to persistent storage
+  /// Save to local cache
+  Future<void> _saveToLocalCache() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final uid = _userId ?? 'anonymous';
+      final cacheKey = '${_localCacheKey}_$uid';
+      final jsonList = _customColumns.map((c) => c.toJson()).toList();
+      await prefs.setString(cacheKey, jsonEncode(jsonList));
+    } catch (e) {
+      debugPrint('[ProductSettings] Error saving to local cache: $e');
+    }
+  }
+  
+  /// Save to Firestore
+  Future<void> _saveToFirestore() async {
+    try {
+      final docRef = _userSettingsDoc;
+      if (docRef == null) {
+        debugPrint('[ProductSettings] No user logged in, cannot save to Firestore');
+        return;
+      }
+      
+      final jsonList = _customColumns.map((c) => c.toJson()).toList();
+      await docRef.set({
+        'columns': jsonList,
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+      
+      debugPrint('[ProductSettings] Saved ${_customColumns.length} columns to Firestore');
+    } catch (e) {
+      debugPrint('[ProductSettings] Error saving to Firestore: $e');
+    }
+  }
+  
+  /// Save columns (to both Firestore and local cache)
   Future<void> _saveColumns() async {
-    final prefs = await SharedPreferences.getInstance();
-    final jsonList = _customColumns.map((c) => c.toJson()).toList();
-    await prefs.setString(_customColumnsKey, jsonEncode(jsonList));
+    await Future.wait([
+      _saveToFirestore(),
+      _saveToLocalCache(),
+    ]);
   }
   
   /// Add a new custom column
@@ -222,5 +343,12 @@ class ProductSettingsService extends ChangeNotifier {
         break;
     }
     return null;
+  }
+  
+  /// Clear all data (for logout)
+  Future<void> clear() async {
+    _customColumns = [];
+    _currentUserId = null;
+    notifyListeners();
   }
 }
