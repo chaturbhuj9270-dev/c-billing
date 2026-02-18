@@ -6,7 +6,7 @@ import '../../../customer/presentation/pages/enhanced_customer_page.dart';
 import '../../../supplier/presentation/pages/supplier_page.dart';
 import '../../../company/presentation/pages/company_page.dart';
 import '../../../inventory_management/presentation/pages/enhanced_purchase_screen.dart';
-import '../../../inventory_management/presentation/pages/product_management_page.dart';
+import '../../../inventory_management/presentation/pages/enhanced_product_page.dart';
 import '../../../billing/presentation/pages/billing_page.dart';
 import '../../../billing/presentation/pages/bills_list_page.dart';
 import '../../../../core/services/session_manager.dart';
@@ -1558,7 +1558,7 @@ class _DashboardViewState extends State<_DashboardView>
             targetPage = const EnhancedCustomerPage();
             break;
           case 'Products':
-            targetPage = const ProductManagementPage();
+            targetPage = const EnhancedProductPage();
             break;
           case 'Suppliers':
             targetPage = const SupplierPage();
@@ -1571,7 +1571,7 @@ class _DashboardViewState extends State<_DashboardView>
             break;
           case 'Inventory':
           case 'Low Stock':
-            targetPage = const ProductManagementPage();
+            targetPage = const EnhancedProductPage();
             break;
         }
         if (targetPage != null) {
@@ -1992,7 +1992,7 @@ class _DashboardViewState extends State<_DashboardView>
         const SizedBox(height: 8),
         GestureDetector(
           onTap: () => Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => const ProductManagementPage()),
+            MaterialPageRoute(builder: (_) => const EnhancedProductPage()),
           ).then((_) {
             if (mounted) {
               context.read<DashboardCubit>().refresh();

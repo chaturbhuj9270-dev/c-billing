@@ -10,7 +10,7 @@ import '../../../company/presentation/pages/company_page.dart';
 import '../../../inventory_management/presentation/pages/enhanced_purchase_screen.dart';
 import '../../../inventory_management/presentation/pages/purchase_settings_page.dart';
 import '../../../inventory_management/presentation/pages/purchase_report_settings_page.dart';
-import '../../../inventory_management/presentation/pages/product_management_page.dart';
+import '../../../inventory_management/presentation/pages/enhanced_product_page.dart';
 import '../../../billing/presentation/pages/billing_page.dart';
 import '../../../billing/presentation/pages/bill_settings_page.dart';
 import '../../../billing/presentation/pages/bills_list_page.dart';
@@ -828,7 +828,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
             isLoading: isLoading,
             onTap: () => Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => const ProductManagementPage()),
+              MaterialPageRoute(builder: (_) => const EnhancedProductPage()),
             ).then((_) => _onDataChanged()),
           ),
           const SizedBox(width: 12),

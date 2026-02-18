@@ -7,7 +7,7 @@ import '../../../customer/presentation/pages/enhanced_customer_page.dart';
 import '../../../supplier/presentation/pages/supplier_page.dart';
 import '../../../company/presentation/pages/company_page.dart';
 import '../../../inventory_management/presentation/pages/enhanced_purchase_screen.dart';
-import '../../../inventory_management/presentation/pages/product_management_page.dart';
+import '../../../inventory_management/presentation/pages/enhanced_product_page.dart';
 import '../../../billing/presentation/pages/billing_page.dart';
 import '../../../billing/presentation/pages/bills_list_page.dart';
 import '../../../../core/services/session_manager.dart';
@@ -447,7 +447,7 @@ class _DashboardPageState extends State<DashboardPage>
       case 1:
         return const EnhancedCustomerPage(isEmbedded: true);
       case 2:
-        return const ProductManagementPage();
+        return const EnhancedProductPage(isEmbedded: true);
       case 3:
         return const BillingPage(isEmbedded: true);
       case 4:
@@ -1658,7 +1658,7 @@ class _DashboardPageState extends State<DashboardPage>
             break;
           case 'Products':
             Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const ProductManagementPage()),
+              MaterialPageRoute(builder: (_) => const EnhancedProductPage()),
             );
             break;
           case 'Suppliers':
@@ -1678,12 +1678,12 @@ class _DashboardPageState extends State<DashboardPage>
             break;
           case 'Inventory':
             Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const ProductManagementPage()),
+              MaterialPageRoute(builder: (_) => const EnhancedProductPage()),
             );
             break;
           case 'Low Stock':
             Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const ProductManagementPage()),
+              MaterialPageRoute(builder: (_) => const EnhancedProductPage()),
             );
             break;
         }
