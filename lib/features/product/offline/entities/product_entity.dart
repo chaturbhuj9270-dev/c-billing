@@ -97,6 +97,10 @@ class ProductEntity {
   /// HSN code for GST compliance (nullable for backward compatibility)
   String? hsnCode;
 
+  /// Custom fields JSON string (stores dynamic custom column values)
+  /// Format: {"column_id": "value", ...}
+  String? customFieldsJson;
+
   ProductEntity({
     this.serverId,
     this.indexNo = 0,
@@ -120,6 +124,7 @@ class ProductEntity {
     this.cgstPercent = 0.0,
     this.sgstPercent = 0.0,
     this.hsnCode,
+    this.customFieldsJson,
   });
 
   /// Factory constructor for creating new product with defaults
@@ -144,6 +149,7 @@ class ProductEntity {
     double cgstPercent = 0.0,
     double sgstPercent = 0.0,
     String? hsnCode,
+    String? customFieldsJson,
   }) {
     final now = DateTime.now();
     return ProductEntity(
@@ -169,6 +175,7 @@ class ProductEntity {
       cgstPercent: cgstPercent,
       sgstPercent: sgstPercent,
       hsnCode: hsnCode,
+      customFieldsJson: customFieldsJson,
     );
   }
 
@@ -198,6 +205,7 @@ class ProductEntity {
       cgstPercent: (data['cgstPercent'] as num?)?.toDouble() ?? 0.0,
       sgstPercent: (data['sgstPercent'] as num?)?.toDouble() ?? 0.0,
       hsnCode: data['hsnCode'] as String?,
+      customFieldsJson: data['customFieldsJson'] as String?,
     );
   }
 
@@ -223,6 +231,7 @@ class ProductEntity {
       'cgstPercent': cgstPercent,
       'sgstPercent': sgstPercent,
       'hsnCode': hsnCode,
+      'customFieldsJson': customFieldsJson,
       'updatedAt': updatedAt.toIso8601String(),
       'createdAt': createdAt.toIso8601String(),
     };
@@ -283,6 +292,7 @@ class ProductEntity {
     double? cgstPercent,
     double? sgstPercent,
     String? hsnCode,
+    String? customFieldsJson,
   }) {
     final entity = ProductEntity(
       serverId: serverId ?? this.serverId,
@@ -307,6 +317,7 @@ class ProductEntity {
       cgstPercent: cgstPercent ?? this.cgstPercent,
       sgstPercent: sgstPercent ?? this.sgstPercent,
       hsnCode: hsnCode ?? this.hsnCode,
+      customFieldsJson: customFieldsJson ?? this.customFieldsJson,
     );
     entity.id = id ?? this.id;
     return entity;

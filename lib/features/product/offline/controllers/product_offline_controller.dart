@@ -94,6 +94,7 @@ class ProductOfflineController extends ChangeNotifier {
     double cgstPercent = 0.0,
     double sgstPercent = 0.0,
     String? hsnCode,
+    String? customFieldsJson,
   }) async {
     debugPrint('[ProductOffline] Adding product: $name');
     
@@ -130,6 +131,7 @@ class ProductOfflineController extends ChangeNotifier {
       cgstPercent: cgstPercent,
       sgstPercent: sgstPercent,
       hsnCode: hsnCode,
+      customFieldsJson: customFieldsJson,
     );
 
     await _isar.writeTxn(() async {
