@@ -1668,6 +1668,116 @@ class _PurchasePageState extends State<PurchasePage>
     super.dispose();
   }
 
+  // ============ QUICK ACTIONS BAR ============
+  Widget _buildQuickActionsBar() {
+    return SlideTransition(
+      position: _offsetAnimation,
+      child: FadeTransition(
+        opacity: _opacityAnimation,
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.06),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: _buildQuickActionChip(
+                  icon: Icons.inventory_2_rounded,
+                  label: _localizations.addProduct,
+                  color: const Color(0xFFf093fb),
+                  onTap: _addNewProduct,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildQuickActionChip(
+                  icon: Icons.person_add_rounded,
+                  label: _localizations.addSupplier,
+                  color: const Color(0xFFFF6B6B),
+                  onTap: _showAddSupplierDialog,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildQuickActionChip(
+                  icon: Icons.business_rounded,
+                  label: _localizations.addCompany,
+                  color: const Color(0xFF7B68EE),
+                  onTap: _showAddCompanyDialog,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuickActionChip({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              color.withOpacity(0.12),
+              color.withOpacity(0.04),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: color.withOpacity(0.15),
+            width: 1,
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, color: color, size: 18),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: const Color(0xFF1B4D3E).withOpacity(0.8),
+                fontSize: 10,
+                fontFamily: 'Literata',
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _showAddOptionsBottomSheet() {
     showModalBottomSheet(
       context: context,
@@ -2320,60 +2430,6 @@ class _PurchasePageState extends State<PurchasePage>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFE6EDE7),
-      floatingActionButton: ClipRRect(
-        borderRadius: BorderRadius.circular(22),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Container(
-            width: 70,
-            height: 70,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(22),
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  const Color(0xFF1B4D3E).withOpacity(0.4),
-                  const Color(0xFF1B4D3E).withOpacity(0.2),
-                ],
-              ),
-              border: Border.all(
-                color: Colors.white.withOpacity(0.3),
-                width: 1.5,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF1B4D3E).withOpacity(0.25),
-                  blurRadius: 25,
-                  offset: const Offset(0, 10),
-                  spreadRadius: 2,
-                ),
-                BoxShadow(
-                  color: Colors.white.withOpacity(0.1),
-                  blurRadius: 10,
-                  offset: const Offset(-5, -5),
-                ),
-              ],
-            ),
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: _showAddOptionsBottomSheet,
-                splashColor: Colors.white.withOpacity(0.2),
-                highlightColor: Colors.white.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(22),
-                child: Center(
-                  child: Icon(
-                    Icons.add_rounded,
-                    size: 36,
-                    color: Colors.white.withOpacity(0.95),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
       body: SafeArea(
         top: !widget
             .isEmbedded, // SafeArea already handled by common header when embedded
@@ -2385,6 +2441,9 @@ class _PurchasePageState extends State<PurchasePage>
             ),
             child: Column(
               children: [
+                // Quick Actions Bar
+                _buildQuickActionsBar(),
+                const SizedBox(height: 16),
                 // Form content with animation
                 SlideTransition(
                   position: _offsetAnimation,
