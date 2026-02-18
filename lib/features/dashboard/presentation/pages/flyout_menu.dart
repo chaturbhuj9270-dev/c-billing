@@ -7,7 +7,7 @@ import '../../../../core/services/error_logging_service.dart';
 import '../../../../core/services/logout_service.dart';
 import '../../../../features/authentication/presentation/pages/change_password_page.dart';
 import 'profile_page.dart';
-import '../../../supplier/presentation/pages/supplier_page.dart';
+import '../../../supplier/presentation/pages/enhanced_supplier_page.dart';
 import '../../../customer/presentation/pages/enhanced_customer_page.dart';
 import '../../../company/presentation/pages/company_page.dart';
 import '../../../inventory_management/presentation/pages/enhanced_purchase_screen.dart';
@@ -206,7 +206,7 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
           break;
         case 'Suppliers':
           Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => const SupplierPage()),
+            MaterialPageRoute(builder: (_) => const EnhancedSupplierPage()),
           );
           break;
         case 'Companies':

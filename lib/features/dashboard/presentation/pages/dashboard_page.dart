@@ -3,7 +3,7 @@ import 'dart:ui';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import '../../../customer/presentation/pages/enhanced_customer_page.dart';
-import '../../../supplier/presentation/pages/supplier_page.dart';
+import '../../../supplier/presentation/pages/enhanced_supplier_page.dart';
 import '../../../company/presentation/pages/company_page.dart';
 import '../../../inventory_management/presentation/pages/enhanced_purchase_screen.dart';
 import '../../../inventory_management/presentation/pages/enhanced_product_page.dart';
@@ -1561,7 +1561,7 @@ class _DashboardViewState extends State<_DashboardView>
             targetPage = const EnhancedProductPage();
             break;
           case 'Suppliers':
-            targetPage = const SupplierPage();
+            targetPage = const EnhancedSupplierPage();
             break;
           case 'Purchases':
             targetPage = const EnhancedPurchaseScreen();

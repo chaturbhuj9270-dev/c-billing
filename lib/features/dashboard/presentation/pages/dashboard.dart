@@ -4,7 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import '../../../customer/presentation/pages/enhanced_customer_page.dart';
-import '../../../supplier/presentation/pages/supplier_page.dart';
+import '../../../supplier/presentation/pages/enhanced_supplier_page.dart';
 import '../../../company/presentation/pages/company_page.dart';
 import '../../../inventory_management/presentation/pages/enhanced_purchase_screen.dart';
 import '../../../inventory_management/presentation/pages/enhanced_product_page.dart';
@@ -1664,7 +1664,7 @@ class _DashboardPageState extends State<DashboardPage>
           case 'Suppliers':
             Navigator.of(
               context,
-            ).push(MaterialPageRoute(builder: (_) => const SupplierPage()));
+            ).push(MaterialPageRoute(builder: (_) => const EnhancedSupplierPage()));
             break;
           case 'Purchases':
             Navigator.of(

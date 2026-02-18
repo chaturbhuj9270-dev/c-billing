@@ -40,8 +40,8 @@ import 'package:c_billing/features/customer/offline/entities/customer_entity.dar
 import 'package:c_billing/features/billing/domain/entities/bill_tax_settings.dart';
 import 'package:c_billing/features/dashboard/data/repositories/dashboard_offline_repository.dart';
 import 'package:c_billing/features/billing/presentation/pages/bills_list_page.dart';
-import 'package:c_billing/features/inventory_management/presentation/pages/product_management_page.dart';
-import 'package:c_billing/features/supplier/presentation/pages/supplier_page.dart';
+import 'package:c_billing/features/inventory_management/presentation/pages/enhanced_product_page.dart';
+import 'package:c_billing/features/supplier/presentation/pages/enhanced_supplier_page.dart';
 import 'package:c_billing/features/company/presentation/pages/company_page.dart';
 import 'package:c_billing/features/purchase_return/presentation/pages/purchase_return_screen.dart';
 import 'package:c_billing/features/reports/presentation/pages/report_page.dart';
@@ -3887,7 +3887,7 @@ class _BillingPageState extends State<BillingPage> {
                             color: const Color(0xFFf093fb),
                             onTap: () => Navigator.push(
                               context,
-                              MaterialPageRoute(builder: (_) => const ProductManagementPage()),
+                              MaterialPageRoute(builder: (_) => const EnhancedProductPage()),
                             ).then((_) { _loadQuickStats(); }),
                           ),
                           const SizedBox(width: 8),
@@ -3898,7 +3898,7 @@ class _BillingPageState extends State<BillingPage> {
                             color: const Color(0xFFFF6B6B),
                             onTap: () => Navigator.push(
                               context,
-                              MaterialPageRoute(builder: (_) => const SupplierPage()),
+                              MaterialPageRoute(builder: (_) => const EnhancedSupplierPage()),
                             ).then((_) { _loadQuickStats(); }),
                           ),
                           const SizedBox(width: 8),
