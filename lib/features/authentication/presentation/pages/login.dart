@@ -7,6 +7,7 @@ import '../../../../core/services/language_service.dart';
 import '../../../../core/services/product_settings_service.dart';
 import '../../../../core/services/purchase_report_settings_service.dart';
 import '../../../../core/services/bill_report_settings_service.dart';
+import '../../../../core/services/stock_report_settings_service.dart';
 import '../../../../main.dart' show initializeSyncServices;
 import '../../../dashboard/presentation/pages/optimized_dashboard_page.dart';
 import '../../../../core/services/session_manager.dart';
@@ -141,6 +142,7 @@ class _LoginPageV2State extends State<LoginPageV2>
           ProductSettingsService.instance.reload();
           PurchaseReportSettingsService.instance.reload();
           BillReportSettingsService.instance.reload();
+          StockReportSettingsService.instance.reload();
 
           // Initialize session with 2-hour timeout
           final sessionManager = SessionManager();

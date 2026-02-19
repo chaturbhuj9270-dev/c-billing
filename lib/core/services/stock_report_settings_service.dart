@@ -3,15 +3,16 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'product_settings_service.dart';
 
-/// Model for a bill report column configuration
-class BillReportColumn {
+/// Model for a stock report column configuration
+class StockReportColumn {
   final String id;
   final String name;
-  final bool isDefault;
+  final bool isDefault; // true = built-in column, false = custom column
   bool isVisible;
 
-  BillReportColumn({
+  StockReportColumn({
     required this.id,
     required this.name,
     this.isDefault = true,
@@ -25,14 +26,14 @@ class BillReportColumn {
     'isVisible': isVisible,
   };
 
-  factory BillReportColumn.fromJson(Map<String, dynamic> json) => BillReportColumn(
+  factory StockReportColumn.fromJson(Map<String, dynamic> json) => StockReportColumn(
     id: json['id'] as String,
     name: json['name'] as String,
     isDefault: json['isDefault'] as bool? ?? true,
     isVisible: json['isVisible'] as bool? ?? true,
   );
 
-  BillReportColumn copyWith({bool? isVisible}) => BillReportColumn(
+  StockReportColumn copyWith({bool? isVisible}) => StockReportColumn(
     id: id,
     name: name,
     isDefault: isDefault,
@@ -40,43 +41,46 @@ class BillReportColumn {
   );
 }
 
-/// Service to manage bill print/report column visibility settings
+/// Service to manage stock report column visibility settings
 /// Stored in Firestore per user with SharedPreferences fallback
-class BillReportSettingsService {
-  BillReportSettingsService._();
-  static final BillReportSettingsService instance = BillReportSettingsService._();
+class StockReportSettingsService {
+  StockReportSettingsService._();
+  static final StockReportSettingsService instance = StockReportSettingsService._();
 
-  static const String _prefsKey = 'bill_report_columns';
+  static const String _prefsKey = 'stock_report_columns';
   
-  // Default columns for bill/invoice
+  // Default columns for stock report
   static const List<Map<String, dynamic>> _defaultColumns = [
     {'id': 'sr_no', 'name': 'Sr No', 'isDefault': true, 'isVisible': true},
     {'id': 'product_name', 'name': 'Product Name', 'isDefault': true, 'isVisible': true},
+    {'id': 'category', 'name': 'Category', 'isDefault': true, 'isVisible': true},
+    {'id': 'company', 'name': 'Company', 'isDefault': true, 'isVisible': true},
     {'id': 'hsn_code', 'name': 'HSN Code', 'isDefault': true, 'isVisible': false},
-    {'id': 'company', 'name': 'Company', 'isDefault': true, 'isVisible': false},
-    {'id': 'quantity', 'name': 'Quantity', 'isDefault': true, 'isVisible': true},
-    {'id': 'unit', 'name': 'Unit', 'isDefault': true, 'isVisible': false},
-    {'id': 'rate', 'name': 'Rate', 'isDefault': true, 'isVisible': true},
-    {'id': 'discount', 'name': 'Discount', 'isDefault': true, 'isVisible': false},
-    {'id': 'tax', 'name': 'Tax', 'isDefault': true, 'isVisible': false},
-    {'id': 'amount', 'name': 'Amount', 'isDefault': true, 'isVisible': true},
+    {'id': 'purchase_price', 'name': 'Purchase Price', 'isDefault': true, 'isVisible': false},
+    {'id': 'selling_price', 'name': 'Selling Price', 'isDefault': true, 'isVisible': false},
+    {'id': 'stock', 'name': 'Stock', 'isDefault': true, 'isVisible': true},
+    {'id': 'stock_value', 'name': 'Stock Value', 'isDefault': true, 'isVisible': false},
+    {'id': 'status', 'name': 'Status', 'isDefault': true, 'isVisible': true},
+    {'id': 'order_qty', 'name': 'Order Qty', 'isDefault': true, 'isVisible': true},
+    {'id': 'supplier', 'name': 'Supplier', 'isDefault': true, 'isVisible': false},
+    {'id': 'cgst', 'name': 'CGST %', 'isDefault': true, 'isVisible': false},
+    {'id': 'sgst', 'name': 'SGST %', 'isDefault': true, 'isVisible': false},
   ];
 
-  List<BillReportColumn> _columns = [];
+  List<StockReportColumn> _columns = [];
   bool _initialized = false;
 
-  /// Get all report columns
-  List<BillReportColumn> get columns => List.unmodifiable(_columns);
+  /// Get all report columns (default + custom)
+  List<StockReportColumn> get columns => List.unmodifiable(_columns);
 
   /// Get only visible columns
-  List<BillReportColumn> get visibleColumns => 
+  List<StockReportColumn> get visibleColumns => 
       _columns.where((c) => c.isVisible).toList();
 
   /// Check if a column is visible by ID
   bool isColumnVisible(String columnId) {
-    // If not initialized or columns are empty, use default visibility
+    // Return default visibility if not initialized
     if (!_initialized || _columns.isEmpty) {
-      // Return default visibility based on _defaultColumns
       final defaultCol = _defaultColumns.firstWhere(
         (c) => c['id'] == columnId,
         orElse: () => {'isVisible': false},
@@ -86,7 +90,7 @@ class BillReportSettingsService {
     
     final column = _columns.firstWhere(
       (c) => c.id == columnId,
-      orElse: () => BillReportColumn(id: columnId, name: '', isVisible: false),
+      orElse: () => StockReportColumn(id: columnId, name: '', isVisible: false),
     );
     return column.isVisible;
   }
@@ -115,18 +119,18 @@ class BillReportSettingsService {
             .collection('users')
             .doc(user.uid)
             .collection('settings')
-            .doc('bill_report_columns')
+            .doc('stock_report_columns')
             .get();
 
         if (doc.exists && doc.data() != null) {
           final data = doc.data()!;
           final savedColumns = (data['columns'] as List<dynamic>?)
-              ?.map((e) => BillReportColumn.fromJson(e as Map<String, dynamic>))
+              ?.map((e) => StockReportColumn.fromJson(e as Map<String, dynamic>))
               .toList() ?? [];
           
           // Merge with defaults to ensure new columns are included
           _columns = _mergeWithDefaults(savedColumns);
-          debugPrint('[BillReportSettings] Loaded ${_columns.length} columns from Firestore');
+          debugPrint('[StockReportSettings] Loaded ${_columns.length} columns from Firestore');
           
           // Also save to SharedPreferences as cache
           await _saveToPrefs();
@@ -141,36 +145,40 @@ class BillReportSettingsService {
       if (savedJson != null) {
         final savedData = jsonDecode(savedJson) as Map<String, dynamic>;
         final savedColumns = (savedData['columns'] as List<dynamic>?)
-            ?.map((e) => BillReportColumn.fromJson(e as Map<String, dynamic>))
+            ?.map((e) => StockReportColumn.fromJson(e as Map<String, dynamic>))
             .toList() ?? [];
         
         _columns = _mergeWithDefaults(savedColumns);
-        debugPrint('[BillReportSettings] Loaded ${_columns.length} columns from SharedPreferences');
+        debugPrint('[StockReportSettings] Loaded ${_columns.length} columns from SharedPreferences');
       } else {
         // Initialize with defaults
         _columns = _defaultColumns
-            .map((e) => BillReportColumn.fromJson(e))
+            .map((e) => StockReportColumn.fromJson(e))
             .toList();
         
-        debugPrint('[BillReportSettings] Initialized with ${_columns.length} default columns');
+        // Add custom columns from ProductSettingsService
+        _addCustomColumns();
+        
+        debugPrint('[StockReportSettings] Initialized with ${_columns.length} default columns');
       }
     } catch (e) {
-      debugPrint('[BillReportSettings] Error loading columns: $e');
+      debugPrint('[StockReportSettings] Error loading columns: $e');
       _columns = _defaultColumns
-          .map((e) => BillReportColumn.fromJson(e))
+          .map((e) => StockReportColumn.fromJson(e))
           .toList();
+      _addCustomColumns();
     }
   }
 
   /// Merge saved columns with defaults (to handle new columns added later)
-  List<BillReportColumn> _mergeWithDefaults(List<BillReportColumn> saved) {
-    final result = <BillReportColumn>[];
+  List<StockReportColumn> _mergeWithDefaults(List<StockReportColumn> saved) {
+    final result = <StockReportColumn>[];
     
     // Add all default columns, using saved visibility if available
     for (final defaultCol in _defaultColumns) {
       final savedCol = saved.firstWhere(
         (c) => c.id == defaultCol['id'],
-        orElse: () => BillReportColumn.fromJson(defaultCol),
+        orElse: () => StockReportColumn.fromJson(defaultCol),
       );
       result.add(savedCol);
     }
@@ -182,7 +190,35 @@ class BillReportSettingsService {
       }
     }
     
+    // Add any new custom columns from ProductSettingsService
+    _addCustomColumnsToList(result);
+    
     return result;
+  }
+
+  /// Add custom columns from ProductSettingsService
+  void _addCustomColumns() {
+    _addCustomColumnsToList(_columns);
+  }
+
+  void _addCustomColumnsToList(List<StockReportColumn> list) {
+    final customColumns = ProductSettingsService.instance.activeCustomColumns;
+    for (final custom in customColumns) {
+      if (!list.any((c) => c.id == 'custom_${custom.id}')) {
+        list.add(StockReportColumn(
+          id: 'custom_${custom.id}',
+          name: custom.name,
+          isDefault: false,
+          isVisible: false,
+        ));
+      }
+    }
+  }
+
+  /// Refresh custom columns (call when custom columns change)
+  Future<void> refreshCustomColumns() async {
+    _addCustomColumns();
+    await _saveColumns();
   }
 
   /// Update column visibility
@@ -203,17 +239,17 @@ class BillReportSettingsService {
             .collection('users')
             .doc(user.uid)
             .collection('settings')
-            .doc('bill_report_columns')
+            .doc('stock_report_columns')
             .set({
           'columns': _columns.map((c) => c.toJson()).toList(),
           'updatedAt': FieldValue.serverTimestamp(),
         });
-        debugPrint('[BillReportSettings] Saved to Firestore');
+        debugPrint('[StockReportSettings] Saved to Firestore');
       }
       
       await _saveToPrefs();
     } catch (e) {
-      debugPrint('[BillReportSettings] Error saving columns: $e');
+      debugPrint('[StockReportSettings] Error saving columns: $e');
     }
   }
 
@@ -224,15 +260,16 @@ class BillReportSettingsService {
         'columns': _columns.map((c) => c.toJson()).toList(),
       }));
     } catch (e) {
-      debugPrint('[BillReportSettings] Error saving to prefs: $e');
+      debugPrint('[StockReportSettings] Error saving to prefs: $e');
     }
   }
 
   /// Reset to defaults
   Future<void> resetToDefaults() async {
     _columns = _defaultColumns
-        .map((e) => BillReportColumn.fromJson(e))
+        .map((e) => StockReportColumn.fromJson(e))
         .toList();
+    _addCustomColumns();
     await _saveColumns();
   }
 }

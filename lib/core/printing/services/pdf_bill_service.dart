@@ -588,12 +588,17 @@ class PdfBillService {
       'amount': _ColumnConfig('Amount', const pw.FixedColumnWidth(65), pw.TextAlign.right),
     };
 
-    // Get visible columns in order
+    // Get visible columns in order - ensure at least basic columns are shown
     final visibleColumnIds = <String>[];
     for (final colId in ['sr_no', 'product_name', 'hsn_code', 'company', 'quantity', 'unit', 'rate', 'discount', 'tax', 'amount']) {
       if (settings.isColumnVisible(colId)) {
         visibleColumnIds.add(colId);
       }
+    }
+    
+    // Fallback: if no columns are visible, show default columns
+    if (visibleColumnIds.isEmpty) {
+      visibleColumnIds.addAll(['sr_no', 'product_name', 'quantity', 'rate', 'amount']);
     }
 
     // Build column widths map

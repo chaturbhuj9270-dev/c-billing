@@ -7,9 +7,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../main.dart' show initializeServices, initializeSyncServices;
 import '../../features/authentication/presentation/pages/login.dart';
 import '../../features/dashboard/presentation/pages/optimized_dashboard_page.dart';
-import '../services/product_settings_service.dart';
-import '../services/purchase_report_settings_service.dart';
 import '../services/bill_report_settings_service.dart';
+import '../services/stock_report_settings_service.dart';
 import '../../core/services/biometric_service.dart';
 import '../services/credentials_manager.dart';
 import '../services/language_service.dart';
@@ -76,11 +75,9 @@ class _SplashPageState extends State<SplashPage> {
           );
           // Start sync services now that user is authenticated
           initializeSyncServices();
-          // Reload product settings to fetch custom columns for this user
-          await ProductSettingsService.instance.reload();
-          await PurchaseReportSettingsService.instance.reload();
-          await BillReportSettingsService.instance.reload();
-          // Go directly to dashboard
+          // Reload settings in background - don't wait
+          _reloadSettingsInBackground();
+          // Go directly to dashboard immediately
           _goToDashboard();
           return;
         }
@@ -122,10 +119,8 @@ class _SplashPageState extends State<SplashPage> {
         print('[DEBUG] Auto-login successful for: ${userCredential.user!.uid}');
         // Start sync services now that user is authenticated
         initializeSyncServices();
-        // Reload product settings to fetch custom columns for this user
-        await ProductSettingsService.instance.reload();
-        await PurchaseReportSettingsService.instance.reload();
-        await BillReportSettingsService.instance.reload();
+        // Reload settings in background - don't wait
+        _reloadSettingsInBackground();
         _goToDashboard();
       } else {
         print('[ERROR] Auto-login failed: user is null');
@@ -153,13 +148,24 @@ class _SplashPageState extends State<SplashPage> {
     }
   }
 
+  /// Reload settings in background without blocking navigation
+  void _reloadSettingsInBackground() {
+    // Fire and forget - don't await these
+    Future.microtask(() async {
+      try {
+        await BillReportSettingsService.instance.reload();
+        await StockReportSettingsService.instance.reload();
+      } catch (e) {
+        print('[DEBUG] Background settings reload error (non-critical): $e');
+      }
+    });
+  }
+
   void _goToDashboard() {
     if (mounted) {
       print('[DEBUG] User logged in, checking biometric lock status');
-      // Wait for splash animation to complete, then check biometric setting
-      _timer = Timer(widget.duration, () {
-        _checkBiometricLockAndNavigate();
-      });
+      // Navigate immediately without waiting for splash animation
+      _checkBiometricLockAndNavigate();
     }
   }
 

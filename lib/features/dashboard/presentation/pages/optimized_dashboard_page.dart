@@ -10,6 +10,7 @@ import '../../../company/presentation/pages/enhanced_company_page.dart';
 import '../../../inventory_management/presentation/pages/enhanced_purchase_screen.dart';
 import '../../../inventory_management/presentation/pages/purchase_settings_page.dart';
 import '../../../inventory_management/presentation/pages/purchase_report_settings_page.dart';
+import '../../../inventory_management/presentation/pages/stock_report_settings_page.dart';
 import '../../../inventory_management/presentation/pages/enhanced_product_page.dart';
 import '../../../billing/presentation/pages/billing_page.dart';
 import '../../../billing/presentation/pages/bill_settings_page.dart';
@@ -435,13 +436,20 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                         }
                       }
                     : null,
-                onReportSettingsTap: (_selectedIndex == 2 || _selectedIndex == 4)
+                onReportSettingsTap: (_selectedIndex == 2 || _selectedIndex == 3 || _selectedIndex == 4)
                     ? () async {
                         if (_selectedIndex == 2) {
                           await Navigator.push(
                             context,
                             MaterialPageRoute(
                               builder: (context) => const BillReportSettingsPage(),
+                            ),
+                          );
+                        } else if (_selectedIndex == 3) {
+                          await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const StockReportSettingsPage(),
                             ),
                           );
                         } else {

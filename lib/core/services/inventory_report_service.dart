@@ -5,6 +5,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:intl/intl.dart';
 import 'package:c_billing/features/inventory_management/domain/entities/product.dart';
+import 'stock_report_settings_service.dart';
 
 /// Report type enumeration
 enum ReportType { outOfStock, lowStock, allProducts }
@@ -229,6 +230,93 @@ class InventoryReportService {
   }
 
   pw.Widget _buildPdfTable(List<Product> products) {
+    return _buildDynamicPdfTable(products, null);
+  }
+
+  /// Build dynamic PDF table based on stock report settings
+  pw.Widget _buildDynamicPdfTable(List<Product> products, List<int?>? orderQuantities) {
+    final settings = StockReportSettingsService.instance;
+    
+    // Build headers and data based on visible columns
+    final headers = <String>[];
+    final columnIds = <String>[];
+    
+    // Column mapping
+    final columnConfig = {
+      'sr_no': '#',
+      'product_name': 'Product Name',
+      'category': 'Category',
+      'company': 'Company',
+      'hsn_code': 'HSN Code',
+      'purchase_price': 'Pur. Price',
+      'selling_price': 'Sell Price',
+      'stock': 'Stock',
+      'stock_value': 'Stock Value',
+      'status': 'Status',
+      'order_qty': 'Order Qty',
+      'supplier': 'Supplier',
+      'cgst': 'CGST %',
+      'sgst': 'SGST %',
+    };
+    
+    // Build headers based on visible columns
+    for (final entry in columnConfig.entries) {
+      if (settings.isColumnVisible(entry.key)) {
+        headers.add(entry.value);
+        columnIds.add(entry.key);
+      }
+    }
+    
+    // Fallback: if no columns selected, show minimum required
+    if (headers.isEmpty) {
+      headers.addAll(['#', 'Product Name', 'Stock', 'Status']);
+      columnIds.addAll(['sr_no', 'product_name', 'stock', 'status']);
+    }
+    
+    // Build data rows
+    final data = products.asMap().entries.map((entry) {
+      final i = entry.key;
+      final p = entry.value;
+      final orderQty = orderQuantities != null && i < orderQuantities.length 
+          ? orderQuantities[i] 
+          : null;
+      
+      return columnIds.map((colId) {
+        switch (colId) {
+          case 'sr_no':
+            return '${i + 1}';
+          case 'product_name':
+            return p.name.isEmpty ? '-' : p.name;
+          case 'category':
+            return p.category.isEmpty ? '-' : p.category;
+          case 'company':
+            return p.companyName.isEmpty ? '-' : p.companyName;
+          case 'hsn_code':
+            return p.hsnCode?.isNotEmpty == true ? p.hsnCode! : '-';
+          case 'purchase_price':
+            return _formatAmount(p.purchasePrice);
+          case 'selling_price':
+            return _formatAmount(p.salesPrice);
+          case 'stock':
+            return '${p.currentStock}';
+          case 'stock_value':
+            return _formatAmount(p.getStockValue());
+          case 'status':
+            return getStockStatus(p.currentStock);
+          case 'order_qty':
+            return orderQty != null ? '$orderQty' : '-';
+          case 'supplier':
+            return p.defaultSupplierName?.isNotEmpty == true ? p.defaultSupplierName! : '-';
+          case 'cgst':
+            return '${p.cgstPercent}%';
+          case 'sgst':
+            return '${p.sgstPercent}%';
+          default:
+            return '-';
+        }
+      }).toList();
+    }).toList();
+    
     return pw.TableHelper.fromTextArray(
       context: null,
       headerStyle: pw.TextStyle(
@@ -240,29 +328,13 @@ class InventoryReportService {
       cellStyle: const pw.TextStyle(fontSize: 9),
       cellAlignment: pw.Alignment.centerLeft,
       cellPadding: const pw.EdgeInsets.all(6),
-      headers: [
-        '#',
-        'Product Name',
-        'Category',
-        'Company',
-        'Stock',
-        'Status',
-        'Order Qty',
-      ],
-      data: products.asMap().entries.map((entry) {
-        final i = entry.key;
-        final p = entry.value;
-        return [
-          '${i + 1}',
-          p.name.isEmpty ? '-' : p.name,
-          p.category.isEmpty ? '-' : p.category,
-          p.companyName.isEmpty ? '-' : p.companyName,
-          '${p.currentStock}',
-          getStockStatus(p.currentStock),
-          '-',
-        ];
-      }).toList(),
+      headers: headers,
+      data: data,
     );
+  }
+  
+  String _formatAmount(double amount) {
+    return NumberFormat('#,##0.00').format(amount);
   }
 
   /// Generate CSV report
@@ -271,8 +343,24 @@ class InventoryReportService {
     required ReportType reportType,
     String? customTitle,
   }) async {
+    return _generateDynamicCsvReport(
+      products: products,
+      reportType: reportType,
+      customTitle: customTitle,
+      orderQuantities: null,
+    );
+  }
+  
+  /// Internal method to generate CSV with dynamic columns based on settings
+  Future<File> _generateDynamicCsvReport({
+    required List<Product> products,
+    required ReportType reportType,
+    String? customTitle,
+    List<int?>? orderQuantities,
+  }) async {
     final reportTitle = customTitle ?? getReportTypeLabel(reportType);
     final dateStr = DateFormat('dd MMM yyyy, hh:mm a').format(DateTime.now());
+    final settings = StockReportSettingsService.instance;
 
     final buffer = StringBuffer();
 
@@ -282,28 +370,94 @@ class InventoryReportService {
     buffer.writeln('Total Products: ${products.length}');
     buffer.writeln('');
 
+    // Column mapping
+    final columnConfig = {
+      'sr_no': 'S.No',
+      'product_name': 'Product Name',
+      'category': 'Category',
+      'company': 'Company',
+      'hsn_code': 'HSN Code',
+      'purchase_price': 'Purchase Price',
+      'selling_price': 'Selling Price',
+      'stock': 'Stock',
+      'stock_value': 'Stock Value',
+      'status': 'Status',
+      'order_qty': 'Order Qty',
+      'supplier': 'Supplier',
+      'cgst': 'CGST %',
+      'sgst': 'SGST %',
+    };
+    
+    // Build headers based on visible columns
+    final headers = <String>[];
+    final columnIds = <String>[];
+    
+    for (final entry in columnConfig.entries) {
+      if (settings.isColumnVisible(entry.key)) {
+        headers.add(entry.value);
+        columnIds.add(entry.key);
+      }
+    }
+    
+    // Fallback: if no columns selected, show minimum required
+    if (headers.isEmpty) {
+      headers.addAll(['S.No', 'Product Name', 'Stock', 'Status']);
+      columnIds.addAll(['sr_no', 'product_name', 'stock', 'status']);
+    }
+
     // CSV headers
-    buffer.writeln('S.No,Product Name,Category,Company,Stock,Status,Order Qty');
+    buffer.writeln(headers.join(','));
 
     // Data rows
     for (var i = 0; i < products.length; i++) {
       final p = products[i];
-      final name = p.name.isEmpty ? '-' : p.name.replaceAll('"', '""');
-      final category = p.category.isEmpty
-          ? '-'
-          : p.category.replaceAll('"', '""');
-      final company = p.companyName.isEmpty
-          ? '-'
-          : p.companyName.replaceAll('"', '""');
-      buffer.writeln(
-        '${i + 1},'
-        '"$name",'
-        '"$category",'
-        '"$company",'
-        '${p.currentStock},'
-        '"${getStockStatus(p.currentStock)}",'
-        '-',
-      );
+      final orderQty = orderQuantities != null && i < orderQuantities.length 
+          ? orderQuantities[i] 
+          : null;
+      
+      final rowData = columnIds.map((colId) {
+        switch (colId) {
+          case 'sr_no':
+            return '${i + 1}';
+          case 'product_name':
+            final name = p.name.isEmpty ? '-' : p.name.replaceAll('"', '""');
+            return '"$name"';
+          case 'category':
+            final cat = p.category.isEmpty ? '-' : p.category.replaceAll('"', '""');
+            return '"$cat"';
+          case 'company':
+            final comp = p.companyName.isEmpty ? '-' : p.companyName.replaceAll('"', '""');
+            return '"$comp"';
+          case 'hsn_code':
+            final hsn = p.hsnCode?.isNotEmpty == true ? p.hsnCode!.replaceAll('"', '""') : '-';
+            return '"$hsn"';
+          case 'purchase_price':
+            return _formatAmount(p.purchasePrice);
+          case 'selling_price':
+            return _formatAmount(p.salesPrice);
+          case 'stock':
+            return '${p.currentStock}';
+          case 'stock_value':
+            return _formatAmount(p.getStockValue());
+          case 'status':
+            return '"${getStockStatus(p.currentStock)}"';
+          case 'order_qty':
+            return orderQty != null ? '$orderQty' : '-';
+          case 'supplier':
+            final sup = p.defaultSupplierName?.isNotEmpty == true 
+                ? p.defaultSupplierName!.replaceAll('"', '""') 
+                : '-';
+            return '"$sup"';
+          case 'cgst':
+            return '${p.cgstPercent}%';
+          case 'sgst':
+            return '${p.sgstPercent}%';
+          default:
+            return '-';
+        }
+      }).toList();
+      
+      buffer.writeln(rowData.join(','));
     }
 
     // Save to file
@@ -351,7 +505,7 @@ class InventoryReportService {
           pw.SizedBox(height: 20),
           _buildPdfSummary(products, reportType),
           pw.SizedBox(height: 20),
-          _buildPdfTableWithOrderQty(products, orderQuantities),
+          _buildDynamicPdfTable(products, orderQuantities),
         ],
       ),
     );
@@ -366,45 +520,12 @@ class InventoryReportService {
     return file;
   }
 
+  // Legacy method - kept for backward compatibility but now uses dynamic table
   pw.Widget _buildPdfTableWithOrderQty(
     List<Product> products,
     List<int?> orderQuantities,
   ) {
-    return pw.TableHelper.fromTextArray(
-      context: null,
-      headerStyle: pw.TextStyle(
-        fontWeight: pw.FontWeight.bold,
-        fontSize: 10,
-        color: PdfColors.white,
-      ),
-      headerDecoration: const pw.BoxDecoration(color: PdfColors.green800),
-      cellStyle: const pw.TextStyle(fontSize: 9),
-      cellAlignment: pw.Alignment.centerLeft,
-      cellPadding: const pw.EdgeInsets.all(6),
-      headers: [
-        '#',
-        'Product Name',
-        'Category',
-        'Company',
-        'Stock',
-        'Status',
-        'Order Qty',
-      ],
-      data: products.asMap().entries.map((entry) {
-        final i = entry.key;
-        final p = entry.value;
-        final orderQty = i < orderQuantities.length ? orderQuantities[i] : null;
-        return [
-          '${i + 1}',
-          p.name.isEmpty ? '-' : p.name,
-          p.category.isEmpty ? '-' : p.category,
-          p.companyName.isEmpty ? '-' : p.companyName,
-          '${p.currentStock}',
-          getStockStatus(p.currentStock),
-          orderQty != null ? '$orderQty' : '-',
-        ];
-      }).toList(),
-    );
+    return _buildDynamicPdfTable(products, orderQuantities);
   }
 
   /// Generate CSV report with order quantities
@@ -414,49 +535,11 @@ class InventoryReportService {
     required ReportType reportType,
     String? customTitle,
   }) async {
-    final reportTitle = customTitle ?? getReportTypeLabel(reportType);
-    final dateStr = DateFormat('dd MMM yyyy, hh:mm a').format(DateTime.now());
-
-    final buffer = StringBuffer();
-
-    // Header info
-    buffer.writeln('Report: $reportTitle');
-    buffer.writeln('Generated: $dateStr');
-    buffer.writeln('Total Products: ${products.length}');
-    buffer.writeln('');
-
-    // CSV headers
-    buffer.writeln('S.No,Product Name,Category,Company,Stock,Status,Order Qty');
-
-    // Data rows
-    for (var i = 0; i < products.length; i++) {
-      final p = products[i];
-      final orderQty = i < orderQuantities.length ? orderQuantities[i] : null;
-      final name = p.name.isEmpty ? '-' : p.name.replaceAll('"', '""');
-      final category = p.category.isEmpty
-          ? '-'
-          : p.category.replaceAll('"', '""');
-      final company = p.companyName.isEmpty
-          ? '-'
-          : p.companyName.replaceAll('"', '""');
-      buffer.writeln(
-        '${i + 1},'
-        '"$name",'
-        '"$category",'
-        '"$company",'
-        '${p.currentStock},'
-        '"${getStockStatus(p.currentStock)}",'
-        '${orderQty != null ? '$orderQty' : '-'}',
-      );
-    }
-
-    // Save to file
-    final directory = await getApplicationDocumentsDirectory();
-    final fileName =
-        '${reportType.name}_report_${DateFormat('yyyyMMdd_HHmmss').format(DateTime.now())}.csv';
-    final file = File('${directory.path}/$fileName');
-    await file.writeAsString(buffer.toString());
-
-    return file;
+    return _generateDynamicCsvReport(
+      products: products,
+      reportType: reportType,
+      customTitle: customTitle,
+      orderQuantities: orderQuantities,
+    );
   }
 }

@@ -9,6 +9,7 @@ import 'core/services/purchase_settings_service.dart';
 import 'core/services/product_settings_service.dart';
 import 'core/services/purchase_report_settings_service.dart';
 import 'core/services/bill_report_settings_service.dart';
+import 'core/services/stock_report_settings_service.dart';
 import 'core/services/isar_service.dart';
 import 'core/services/error_logging_service.dart';
 import 'features/customer/data/services/customer_sync_service.dart';
@@ -42,53 +43,30 @@ Future<void> main() async {
 
 /// Initialize non-Firebase services. Called from SplashPage so the UI is visible.
 Future<void> initializeServices() async {
-  try {
-    await di.init();
-  } catch (e) {
-    debugPrint('DI init error: $e');
-  }
+  // Run all independent initializations in parallel for faster startup
+  await Future.wait([
+    _safeInit(() => di.init(), 'DI'),
+    _safeInit(() => CredentialsManager().init(), 'CredentialsManager'),
+    _safeInit(() => LanguageService.instance.init(), 'LanguageService'),
+    _safeInit(() => IsarService.instance.initialize(), 'Isar'),
+  ]);
   
+  // These can run in background after basic services are ready
+  Future.wait([
+    _safeInit(() => PurchaseSettingsService.instance.init(), 'PurchaseSettingsService'),
+    _safeInit(() => ProductSettingsService.instance.init(), 'ProductSettingsService'),
+    _safeInit(() => PurchaseReportSettingsService.instance.init(), 'PurchaseReportSettingsService'),
+    _safeInit(() => BillReportSettingsService.instance.init(), 'BillReportSettingsService'),
+    _safeInit(() => StockReportSettingsService.instance.init(), 'StockReportSettingsService'),
+  ]);
+}
+
+/// Safe initialization wrapper
+Future<void> _safeInit(Future<void> Function() init, String name) async {
   try {
-    await CredentialsManager().init();
+    await init();
   } catch (e) {
-    debugPrint('CredentialsManager init error: $e');
-  }
-  
-  try {
-    await LanguageService.instance.init();
-  } catch (e) {
-    debugPrint('LanguageService init error: $e');
-  }
-  
-  try {
-    await PurchaseSettingsService.instance.init();
-  } catch (e) {
-    debugPrint('PurchaseSettingsService init error: $e');
-  }
-  
-  try {
-    await ProductSettingsService.instance.init();
-  } catch (e) {
-    debugPrint('ProductSettingsService init error: $e');
-  }
-  
-  try {
-    await PurchaseReportSettingsService.instance.init();
-  } catch (e) {
-    debugPrint('PurchaseReportSettingsService init error: $e');
-  }
-  
-  try {
-    await BillReportSettingsService.instance.init();
-  } catch (e) {
-    debugPrint('BillReportSettingsService init error: $e');
-  }
-  
-  // Initialize Isar database for offline-first support
-  try {
-    await IsarService.instance.initialize();
-  } catch (e) {
-    debugPrint('Isar init error: $e');
+    debugPrint('$name init error: $e');
   }
 }
 

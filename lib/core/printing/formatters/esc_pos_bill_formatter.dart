@@ -203,21 +203,26 @@ class EscPosBillFormatter {
     final b = <int>[];
     final settings = BillReportSettingsService.instance;
 
-    // Check which columns are visible
+    // Check which columns are visible (with fallback defaults)
     final showQty = settings.isColumnVisible('quantity');
     final showRate = settings.isColumnVisible('rate');
     final showAmount = settings.isColumnVisible('amount');
     final showHsn = settings.isColumnVisible('hsn_code');
     final showCompany = settings.isColumnVisible('company');
     final showTax = settings.isColumnVisible('tax');
+    
+    // Fallback: ensure at least basic columns are shown
+    final effectiveShowQty = showQty || (!showQty && !showRate && !showAmount);
+    final effectiveShowRate = showRate || (!showQty && !showRate && !showAmount);
+    final effectiveShowAmount = showAmount || (!showQty && !showRate && !showAmount);
 
     // Build dynamic header based on visible columns
     b.addAll(EscPosCommands.boldOn);
     b.addAll(_dynamicItemRow(
       'Item',
-      showQty ? 'Qty' : null,
-      showRate ? 'Rate' : null,
-      showAmount ? 'Amt' : null,
+      effectiveShowQty ? 'Qty' : null,
+      effectiveShowRate ? 'Rate' : null,
+      effectiveShowAmount ? 'Amt' : null,
     ));
     b.addAll(EscPosCommands.boldOff);
     b.addAll(_thinDiv());
@@ -232,9 +237,9 @@ class EscPosBillFormatter {
 
       b.addAll(_dynamicItemRow(
         itemName,
-        showQty ? '${item.quantity}' : null,
-        showRate ? _fmt(item.rate) : null,
-        showAmount ? _fmt(item.amount) : null,
+        effectiveShowQty ? '${item.quantity}' : null,
+        effectiveShowRate ? _fmt(item.rate) : null,
+        effectiveShowAmount ? _fmt(item.amount) : null,
       ));
 
       // HSN code (only if enabled)
