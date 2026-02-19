@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/print_bill_data.dart';
 import '../models/printer_models.dart';
 import '../../../features/shop/domain/entities/shop.dart';
+import '../../services/bill_report_settings_service.dart';
 
 /// ESC/POS Commands for thermal printer control
 class EscPosCommands {
@@ -200,24 +201,44 @@ class EscPosBillFormatter {
   // ├────────────────────────────────┤
   List<int> _buildItemsTable(PrintBillData d) {
     final b = <int>[];
+    final settings = BillReportSettingsService.instance;
 
-    // Column header row
+    // Check which columns are visible
+    final showQty = settings.isColumnVisible('quantity');
+    final showRate = settings.isColumnVisible('rate');
+    final showAmount = settings.isColumnVisible('amount');
+    final showHsn = settings.isColumnVisible('hsn_code');
+    final showCompany = settings.isColumnVisible('company');
+    final showTax = settings.isColumnVisible('tax');
+
+    // Build dynamic header based on visible columns
     b.addAll(EscPosCommands.boldOn);
-    b.addAll(_itemRow('Item', 'Qty', 'Rate', 'Amt'));
+    b.addAll(_dynamicItemRow(
+      'Item',
+      showQty ? 'Qty' : null,
+      showRate ? 'Rate' : null,
+      showAmount ? 'Amt' : null,
+    ));
     b.addAll(EscPosCommands.boldOff);
     b.addAll(_thinDiv());
 
     // Each item
     for (final item in d.items) {
-      b.addAll(_itemRow(
-        item.name,
-        '${item.quantity}',
-        _fmt(item.rate),
-        _fmt(item.amount),
+      // Build item name with optional company
+      String itemName = item.name;
+      if (showCompany && item.companyName != null && item.companyName!.isNotEmpty) {
+        itemName = '$itemName (${item.companyName})';
+      }
+
+      b.addAll(_dynamicItemRow(
+        itemName,
+        showQty ? '${item.quantity}' : null,
+        showRate ? _fmt(item.rate) : null,
+        showAmount ? _fmt(item.amount) : null,
       ));
 
-      // HSN code
-      if (item.hsnCode != null && item.hsnCode!.isNotEmpty) {
+      // HSN code (only if enabled)
+      if (showHsn && item.hsnCode != null && item.hsnCode!.isNotEmpty) {
         b.addAll(_left('  HSN: ${item.hsnCode}'));
       }
 
@@ -228,8 +249,8 @@ class EscPosBillFormatter {
         ));
       }
 
-      // Per-item GST breakdown
-      if (item.hasItemGst) {
+      // Per-item GST breakdown (only if tax column is enabled)
+      if (showTax && item.hasItemGst) {
         if (item.cgstPercent > 0) {
           b.addAll(_left(
             '  CGST(${_fmt(item.cgstPercent)}%): ${_fmt(item.cgstAmount)}',
@@ -252,6 +273,31 @@ class EscPosBillFormatter {
       b.addAll(_thinDiv());
     }
 
+    return b;
+  }
+
+  /// Dynamic item row that only shows visible columns
+  List<int> _dynamicItemRow(String item, String? qty, String? rate, String? amt) {
+    final b = <int>[];
+    b.addAll(EscPosCommands.alignLeft);
+    
+    // Calculate available width for item name
+    int usedWidth = 0;
+    if (qty != null) usedWidth += 5; // Qty column
+    if (rate != null) usedWidth += 7; // Rate column
+    if (amt != null) usedWidth += 9; // Amount column
+    
+    final itemWidth = _cols - usedWidth;
+    // Truncate item name if needed
+    final truncatedItem = item.length > itemWidth ? item.substring(0, itemWidth - 1) : item;
+    
+    // Build the row
+    final row = StringBuffer(truncatedItem.padRight(itemWidth));
+    if (qty != null) row.write(qty.padLeft(5));
+    if (rate != null) row.write(rate.padLeft(7));
+    if (amt != null) row.write(amt.padLeft(9));
+    
+    b.addAll(utf8.encode('$row\n'));
     return b;
   }
 

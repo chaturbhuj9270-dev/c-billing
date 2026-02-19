@@ -8,6 +8,7 @@ import 'package:printing/printing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/print_bill_data.dart';
 import '../../../features/shop/domain/entities/shop.dart';
+import '../../services/bill_report_settings_service.dart';
 
 /// Service for generating PDF bills and sharing them
 class PdfBillService {
@@ -228,109 +229,9 @@ class PdfBillService {
           ),
 
           // ═══════════════════════════════════════════
-          // ITEMS TABLE — Particulars, Company, Qty, Rate, Amount
+          // ITEMS TABLE — Dynamic columns based on settings
           // ═══════════════════════════════════════════
-          pw.Table(
-            border: pw.TableBorder(
-              horizontalInside: thinBorder,
-              bottom: borderSide,
-            ),
-            columnWidths: {
-              0: const pw.FixedColumnWidth(28),   // Sr.
-              1: const pw.FlexColumnWidth(3.5),   // Particulars
-              2: const pw.FixedColumnWidth(40),    // Qty
-              3: const pw.FixedColumnWidth(60),    // Rate
-              4: const pw.FixedColumnWidth(70),    // Amount
-            },
-            children: [
-              // Header row
-              pw.TableRow(
-                decoration: const pw.BoxDecoration(color: PdfColors.grey200),
-                children: [
-                  _buildCompactHeaderCell('Sr.'),
-                  _buildCompactHeaderCell('Particulars', align: pw.TextAlign.left),
-                  _buildCompactHeaderCell('Qty'),
-                  _buildCompactHeaderCell('Rate'),
-                  _buildCompactHeaderCell('Amount'),
-                ],
-              ),
-              // Item rows
-              ...billData.items.asMap().entries.expand((entry) {
-                final index = entry.key;
-                final item = entry.value;
-                final rows = <pw.TableRow>[
-                  pw.TableRow(
-                    children: [
-                      _buildCompactCell('${index + 1}', align: pw.TextAlign.center),
-                      pw.Padding(
-                        padding: const pw.EdgeInsets.all(4),
-                        child: pw.Column(
-                          crossAxisAlignment: pw.CrossAxisAlignment.start,
-                          children: [
-                            pw.Text(
-                              item.name,
-                              style: const pw.TextStyle(fontSize: 9),
-                            ),
-                            if (item.companyName != null && item.companyName!.isNotEmpty)
-                              pw.Text(
-                                item.companyName!,
-                                style: pw.TextStyle(
-                                  fontSize: 7,
-                                  color: PdfColors.grey700,
-                                  fontStyle: pw.FontStyle.italic,
-                                ),
-                              ),
-                            if (item.hsnCode != null && item.hsnCode!.isNotEmpty)
-                              pw.Text(
-                                'HSN: ${item.hsnCode}',
-                                style: pw.TextStyle(
-                                  fontSize: 7,
-                                  color: PdfColors.grey600,
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
-                      _buildCompactCell('${item.quantity}', align: pw.TextAlign.center),
-                      _buildCompactCell(item.rate.toStringAsFixed(2), align: pw.TextAlign.right),
-                      _buildCompactCell(item.amount.toStringAsFixed(2), align: pw.TextAlign.right),
-                    ],
-                  ),
-                ];
-                // Per-item GST sub-row
-                if (item.hasItemGst) {
-                  rows.add(pw.TableRow(
-                    children: [
-                      _buildCompactCell(''),
-                      pw.Padding(
-                        padding: const pw.EdgeInsets.only(left: 8, top: 0, bottom: 2, right: 4),
-                        child: pw.Row(
-                          children: [
-                            if (item.cgstPercent > 0)
-                              pw.Text(
-                                'CGST(${item.cgstPercent.toStringAsFixed(1)}%): ${item.cgstAmount.toStringAsFixed(2)}',
-                                style: pw.TextStyle(fontSize: 7, color: PdfColors.orange800),
-                              ),
-                            if (item.cgstPercent > 0 && item.sgstPercent > 0)
-                              pw.Text('  |  ', style: pw.TextStyle(fontSize: 7, color: PdfColors.grey600)),
-                            if (item.sgstPercent > 0)
-                              pw.Text(
-                                'SGST(${item.sgstPercent.toStringAsFixed(1)}%): ${item.sgstAmount.toStringAsFixed(2)}',
-                                style: pw.TextStyle(fontSize: 7, color: PdfColors.orange800),
-                              ),
-                          ],
-                        ),
-                      ),
-                      _buildCompactCell(''),
-                      _buildCompactCell(''),
-                      _buildCompactCell(''),
-                    ],
-                  ));
-                }
-                return rows;
-              }),
-            ],
-          ),
+          _buildDynamicItemsTable(billData, thinBorder, borderSide),
 
           // ═══════════════════════════════════════════
           // BOTTOM SECTION — Terms (left) + Totals (right)
@@ -662,6 +563,135 @@ class PdfBillService {
         style: const pw.TextStyle(fontSize: 8),
         textAlign: align,
       ),
+    );
+  }
+
+  /// Build dynamic items table based on visible columns from settings
+  pw.Widget _buildDynamicItemsTable(
+    PrintBillData billData,
+    pw.BorderSide thinBorder,
+    pw.BorderSide borderSide,
+  ) {
+    final settings = BillReportSettingsService.instance;
+    
+    // Define column configurations
+    final allColumns = <String, _ColumnConfig>{
+      'sr_no': _ColumnConfig('Sr.', const pw.FixedColumnWidth(28), pw.TextAlign.center),
+      'product_name': _ColumnConfig('Particulars', const pw.FlexColumnWidth(3.5), pw.TextAlign.left),
+      'hsn_code': _ColumnConfig('HSN', const pw.FixedColumnWidth(55), pw.TextAlign.center),
+      'company': _ColumnConfig('Company', const pw.FixedColumnWidth(70), pw.TextAlign.left),
+      'quantity': _ColumnConfig('Qty', const pw.FixedColumnWidth(35), pw.TextAlign.center),
+      'unit': _ColumnConfig('Unit', const pw.FixedColumnWidth(35), pw.TextAlign.center),
+      'rate': _ColumnConfig('Rate', const pw.FixedColumnWidth(55), pw.TextAlign.right),
+      'discount': _ColumnConfig('Disc', const pw.FixedColumnWidth(45), pw.TextAlign.right),
+      'tax': _ColumnConfig('Tax', const pw.FixedColumnWidth(45), pw.TextAlign.right),
+      'amount': _ColumnConfig('Amount', const pw.FixedColumnWidth(65), pw.TextAlign.right),
+    };
+
+    // Get visible columns in order
+    final visibleColumnIds = <String>[];
+    for (final colId in ['sr_no', 'product_name', 'hsn_code', 'company', 'quantity', 'unit', 'rate', 'discount', 'tax', 'amount']) {
+      if (settings.isColumnVisible(colId)) {
+        visibleColumnIds.add(colId);
+      }
+    }
+
+    // Build column widths map
+    final columnWidths = <int, pw.TableColumnWidth>{};
+    for (int i = 0; i < visibleColumnIds.length; i++) {
+      columnWidths[i] = allColumns[visibleColumnIds[i]]!.width;
+    }
+
+    // Build header row
+    final headerCells = visibleColumnIds.map((colId) {
+      final config = allColumns[colId]!;
+      return _buildCompactHeaderCell(config.header, align: config.align);
+    }).toList();
+
+    // Build item rows
+    final itemRows = <pw.TableRow>[];
+    for (int index = 0; index < billData.items.length; index++) {
+      final item = billData.items[index];
+      
+      final cells = visibleColumnIds.map((colId) {
+        switch (colId) {
+          case 'sr_no':
+            return _buildCompactCell('${index + 1}', align: pw.TextAlign.center);
+          case 'product_name':
+            return pw.Padding(
+              padding: const pw.EdgeInsets.all(4),
+              child: pw.Text(
+                item.name,
+                style: const pw.TextStyle(fontSize: 9),
+              ),
+            );
+          case 'hsn_code':
+            return _buildCompactCell(item.hsnCode ?? '', align: pw.TextAlign.center);
+          case 'company':
+            return _buildCompactCell(item.companyName ?? '', align: pw.TextAlign.left);
+          case 'quantity':
+            return _buildCompactCell('${item.quantity}', align: pw.TextAlign.center);
+          case 'unit':
+            return _buildCompactCell('', align: pw.TextAlign.center); // Unit not available in PrintBillItem
+          case 'rate':
+            return _buildCompactCell(item.rate.toStringAsFixed(2), align: pw.TextAlign.right);
+          case 'discount':
+            return _buildCompactCell('-', align: pw.TextAlign.right); // Discount per item not available
+          case 'tax':
+            final taxAmt = item.cgstAmount + item.sgstAmount;
+            return _buildCompactCell(taxAmt > 0 ? taxAmt.toStringAsFixed(2) : '-', align: pw.TextAlign.right);
+          case 'amount':
+            return _buildCompactCell(item.amount.toStringAsFixed(2), align: pw.TextAlign.right);
+          default:
+            return _buildCompactCell('');
+        }
+      }).toList();
+
+      itemRows.add(pw.TableRow(children: cells));
+
+      // Add GST sub-row if tax column is visible and item has GST
+      if (settings.isColumnVisible('tax') && item.hasItemGst) {
+        final gstCells = visibleColumnIds.map((colId) {
+          if (colId == 'product_name') {
+            return pw.Padding(
+              padding: const pw.EdgeInsets.only(left: 8, top: 0, bottom: 2, right: 4),
+              child: pw.Row(
+                children: [
+                  if (item.cgstPercent > 0)
+                    pw.Text(
+                      'CGST(${item.cgstPercent.toStringAsFixed(1)}%): ${item.cgstAmount.toStringAsFixed(2)}',
+                      style: pw.TextStyle(fontSize: 7, color: PdfColors.orange800),
+                    ),
+                  if (item.cgstPercent > 0 && item.sgstPercent > 0)
+                    pw.Text('  |  ', style: pw.TextStyle(fontSize: 7, color: PdfColors.grey600)),
+                  if (item.sgstPercent > 0)
+                    pw.Text(
+                      'SGST(${item.sgstPercent.toStringAsFixed(1)}%): ${item.sgstAmount.toStringAsFixed(2)}',
+                      style: pw.TextStyle(fontSize: 7, color: PdfColors.orange800),
+                    ),
+                ],
+              ),
+            );
+          }
+          return _buildCompactCell('');
+        }).toList();
+        itemRows.add(pw.TableRow(children: gstCells));
+      }
+    }
+
+    return pw.Table(
+      border: pw.TableBorder(
+        horizontalInside: thinBorder,
+        bottom: borderSide,
+      ),
+      columnWidths: columnWidths,
+      children: [
+        pw.TableRow(
+          decoration: const pw.BoxDecoration(color: PdfColors.grey200),
+          children: headerCells,
+        ),
+        ...itemRows,
+      ],
     );
   }
 
@@ -1385,4 +1415,13 @@ class PdfBillService {
       filename: 'bill_${billData.billNumber.replaceAll('/', '_')}.pdf',
     );
   }
+}
+
+/// Helper class for column configuration
+class _ColumnConfig {
+  final String header;
+  final pw.TableColumnWidth width;
+  final pw.TextAlign align;
+
+  const _ColumnConfig(this.header, this.width, this.align);
 }
