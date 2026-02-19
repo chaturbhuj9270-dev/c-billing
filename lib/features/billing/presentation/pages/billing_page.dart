@@ -1691,7 +1691,6 @@ class _BillingPageState extends State<BillingPage> {
                   physics: const BouncingScrollPhysics(),
                   child: Column(
                     children: [
-                      _buildEmbeddedHeader(),
                       if (_showCustomerOnBill || _generateBillViaContact)
                         _buildCustomerSection(),
                       _buildAddItemsSection(),
@@ -1755,104 +1754,6 @@ class _BillingPageState extends State<BillingPage> {
             MaterialPageRoute(builder: (context) => const BillReportSettingsPage()),
           );
         },
-      ),
-    );
-  }
-
-  /// Header widget for embedded view
-  Widget _buildEmbeddedHeader() {
-    return Container(
-      margin: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            const Color(0xFF1B4D3E),
-            const Color(0xFF2D6A4F),
-            const Color(0xFF1B4D3E).withOpacity(0.9),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF1B4D3E).withOpacity(0.3),
-            blurRadius: 15,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.15),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: const Icon(
-              Icons.receipt_long_rounded,
-              color: Colors.white,
-              size: 24,
-            ),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  _localizations.createBill,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                    fontFamily: 'Literata',
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Quick billing made easy',
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.8),
-                    fontSize: 12,
-                    fontFamily: 'Literata',
-                  ),
-                ),
-              ],
-            ),
-          ),
-          if (_billItems.isNotEmpty)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(
-                    Icons.shopping_cart_rounded,
-                    color: Color(0xFF1B4D3E),
-                    size: 16,
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    '${_billItems.length}',
-                    style: const TextStyle(
-                      color: Color(0xFF1B4D3E),
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      fontFamily: 'Literata',
-                    ),
-                  ),
-                ],
-              ),
-            ),
-        ],
       ),
     );
   }

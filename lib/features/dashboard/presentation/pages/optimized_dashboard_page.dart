@@ -13,6 +13,7 @@ import '../../../inventory_management/presentation/pages/purchase_report_setting
 import '../../../inventory_management/presentation/pages/enhanced_product_page.dart';
 import '../../../billing/presentation/pages/billing_page.dart';
 import '../../../billing/presentation/pages/bill_settings_page.dart';
+import '../../../billing/presentation/pages/bill_report_settings_page.dart';
 import '../../../billing/presentation/pages/bills_list_page.dart';
 import '../../../availability/presentation/pages/availability_page.dart';
 import '../../../../core/services/session_manager.dart';
@@ -434,14 +435,23 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                         }
                       }
                     : null,
-                onReportSettingsTap: _selectedIndex == 4
+                onReportSettingsTap: (_selectedIndex == 2 || _selectedIndex == 4)
                     ? () async {
-                        await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const PurchaseReportSettingsPage(),
-                          ),
-                        );
+                        if (_selectedIndex == 2) {
+                          await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const BillReportSettingsPage(),
+                            ),
+                          );
+                        } else {
+                          await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const PurchaseReportSettingsPage(),
+                            ),
+                          );
+                        }
                       }
                     : null,
                 onLanguageTap: _showLanguageDialog,
