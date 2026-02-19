@@ -23,18 +23,29 @@ class ReportPreviewScreen extends StatefulWidget {
   State<ReportPreviewScreen> createState() => _ReportPreviewScreenState();
 }
 
-class _ReportPreviewScreenState extends State<ReportPreviewScreen> {
+class _ReportPreviewScreenState extends State<ReportPreviewScreen> 
+    with SingleTickerProviderStateMixin {
   late List<ReportItem> _editableItems;
   bool _isGenerating = false;
   final _reportService = InventoryReportService();
+  late AnimationController _animationController;
 
   // Controllers for order quantity text fields
   final Map<String, TextEditingController> _controllers = {};
   final Map<String, FocusNode> _focusNodes = {};
+  
+  // Visible columns cache
+  List<String> _visibleColumnIds = [];
 
   @override
   void initState() {
     super.initState();
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
+    _animationController.forward();
+    
     // All items are selected by default, order qty is null (shown as "-")
     _editableItems = widget.reportItems
         .map(
@@ -49,10 +60,28 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen> {
       _controllers[key] = TextEditingController();
       _focusNodes[key] = FocusNode();
     }
+    
+    // Cache visible columns
+    _loadVisibleColumns();
+  }
+  
+  void _loadVisibleColumns() {
+    final settings = StockReportSettingsService.instance;
+    final columnOrder = ['sr_no', 'product_name', 'category', 'company', 'hsn_code', 
+                         'purchase_price', 'selling_price', 'stock', 'stock_value', 
+                         'status', 'order_qty', 'supplier', 'cgst', 'sgst'];
+    
+    _visibleColumnIds = columnOrder.where((id) => settings.isColumnVisible(id)).toList();
+    
+    // Fallback
+    if (_visibleColumnIds.isEmpty) {
+      _visibleColumnIds = ['product_name', 'stock', 'order_qty'];
+    }
   }
 
   @override
   void dispose() {
+    _animationController.dispose();
     for (var c in _controllers.values) {
       c.dispose();
     }
@@ -70,18 +99,17 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen> {
   bool get _allSelected => _editableItems.every((e) => e.isSelected);
   bool get _noneSelected => _editableItems.every((e) => !e.isSelected);
 
-  void _toggleSelectAll(bool? value) {
+  void _toggleSelectAll(bool value) {
     setState(() {
-      final select = value ?? false;
       for (final item in _editableItems) {
-        item.isSelected = select;
+        item.isSelected = value;
       }
     });
   }
 
-  void _toggleItem(int index, bool? value) {
+  void _toggleItem(int index) {
     setState(() {
-      _editableItems[index].isSelected = value ?? false;
+      _editableItems[index].isSelected = !_editableItems[index].isSelected;
     });
   }
 
@@ -104,9 +132,19 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen> {
 
     if (selected.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select at least one item'),
-          backgroundColor: Colors.orange,
+        SnackBar(
+          content: const Row(
+            children: [
+              Icon(Icons.warning_amber_rounded, color: Colors.white, size: 20),
+              SizedBox(width: 12),
+              Text('Please select at least one item', 
+                style: TextStyle(fontFamily: 'Literata')),
+            ],
+          ),
+          backgroundColor: Colors.orange[700],
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          margin: const EdgeInsets.all(16),
         ),
       );
       return;
@@ -140,8 +178,18 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Report generated with ${selected.length} products'),
+            content: Row(
+              children: [
+                const Icon(Icons.check_circle, color: Colors.white, size: 20),
+                const SizedBox(width: 12),
+                Text('Report generated with ${selected.length} products',
+                  style: const TextStyle(fontFamily: 'Literata')),
+              ],
+            ),
             backgroundColor: const Color(0xFF1B4D3E),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            margin: const EdgeInsets.all(16),
           ),
         );
         Navigator.of(context).pop();
@@ -150,8 +198,18 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error generating report: $e'),
-            backgroundColor: Colors.red,
+            content: Row(
+              children: [
+                const Icon(Icons.error_outline, color: Colors.white, size: 20),
+                const SizedBox(width: 12),
+                Expanded(child: Text('Error: $e',
+                  style: const TextStyle(fontFamily: 'Literata'))),
+              ],
+            ),
+            backgroundColor: Colors.red[700],
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            margin: const EdgeInsets.all(16),
           ),
         );
       }
@@ -169,547 +227,818 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFE6EDE7),
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 2,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF1B4D3E)),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      backgroundColor: const Color(0xFFF5F7F5),
+      body: SafeArea(
+        child: Column(
           children: [
-            const Text(
-              'Report Preview',
-              style: TextStyle(
-                color: Color(0xFF1B4D3E),
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                fontFamily: 'Literata',
-              ),
+            // Custom Header
+            _buildHeader(),
+            
+            // Selection Summary Bar
+            _buildSelectionBar(),
+            
+            // Product List
+            Expanded(
+              child: _editableItems.isEmpty
+                  ? _buildEmptyState()
+                  : _buildProductList(),
             ),
-            Text(
-              widget.reportTitle,
-              style: const TextStyle(
-                color: Color(0xFF1B4D3E),
-                fontSize: 12,
-                fontWeight: FontWeight.w400,
-                fontFamily: 'Literata',
-              ),
-            ),
+
+            // Bottom action bar
+            _buildBottomBar(),
           ],
         ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 16.0),
-            child: Center(
-              child: Text(
-                '$_selectedCount / ${_editableItems.length} selected',
-                style: const TextStyle(
-                  fontSize: 13,
-                  color: Color(0xFF1B4D3E),
-                  fontFamily: 'Literata',
-                  fontWeight: FontWeight.w600,
+      ),
+    );
+  }
+  
+  // ---------------------------------------------------------------------------
+  // Header
+  // ---------------------------------------------------------------------------
+  
+  Widget _buildHeader() {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(8, 12, 16, 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          // Back button
+          IconButton(
+            onPressed: () => Navigator.of(context).pop(),
+            icon: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(
+                Icons.arrow_back_ios_new_rounded,
+                color: Color(0xFF1B4D3E),
+                size: 18,
+              ),
+            ),
+          ),
+          const SizedBox(width: 4),
+          // Title
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Report Preview',
+                  style: TextStyle(
+                    color: Color(0xFF1B4D3E),
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                    fontFamily: 'Literata',
+                  ),
                 ),
+                const SizedBox(height: 2),
+                Row(
+                  children: [
+                    Icon(
+                      widget.selectedFormat == ReportFormat.pdf 
+                          ? Icons.picture_as_pdf_rounded 
+                          : Icons.table_chart_rounded,
+                      size: 14,
+                      color: const Color(0xFF1B4D3E).withOpacity(0.6),
+                    ),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        widget.reportTitle,
+                        style: TextStyle(
+                          color: const Color(0xFF1B4D3E).withOpacity(0.7),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          fontFamily: 'Literata',
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          // Format badge
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: widget.selectedFormat == ReportFormat.pdf
+                    ? [const Color(0xFFE53935), const Color(0xFFC62828)]
+                    : [const Color(0xFF43A047), const Color(0xFF2E7D32)],
+              ),
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: (widget.selectedFormat == ReportFormat.pdf
+                      ? Colors.red
+                      : Colors.green).withOpacity(0.3),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Text(
+              widget.selectedFormat == ReportFormat.pdf ? 'PDF' : 'CSV',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                fontFamily: 'Literata',
               ),
             ),
           ),
         ],
       ),
-      body: Column(
+    );
+  }
+  
+  // ---------------------------------------------------------------------------
+  // Selection Bar
+  // ---------------------------------------------------------------------------
+  
+  Widget _buildSelectionBar() {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            const Color(0xFF1B4D3E).withOpacity(0.08),
+            const Color(0xFF1B4D3E).withOpacity(0.04),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: const Color(0xFF1B4D3E).withOpacity(0.15),
+        ),
+      ),
+      child: Row(
         children: [
-          // Info banner
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(16),
-            margin: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1B4D3E).withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: const Color(0xFF1B4D3E).withOpacity(0.3),
-                width: 1,
-              ),
-            ),
-            child: Row(
-              children: [
-                const Icon(
-                  Icons.info_outline,
-                  color: Color(0xFF1B4D3E),
-                  size: 20,
+          // Select all checkbox
+          GestureDetector(
+            onTap: () => _toggleSelectAll(!_allSelected),
+            child: Container(
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                color: _allSelected 
+                    ? const Color(0xFF1B4D3E) 
+                    : Colors.white,
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(
+                  color: _allSelected 
+                      ? const Color(0xFF1B4D3E)
+                      : const Color(0xFF1B4D3E).withOpacity(0.3),
+                  width: 2,
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    'Uncheck items to exclude them from the report. '
-                    'Tap order quantity to edit.',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: const Color(0xFF1B4D3E).withOpacity(0.9),
-                      fontFamily: 'Literata',
-                    ),
+              ),
+              child: _allSelected
+                  ? const Icon(Icons.check, color: Colors.white, size: 16)
+                  : _noneSelected
+                      ? null
+                      : Container(
+                          margin: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF1B4D3E),
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          // Selection text
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _allSelected ? 'All Selected' : 'Select All',
+                  style: const TextStyle(
+                    fontFamily: 'Literata',
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                    color: Color(0xFF1B4D3E),
+                  ),
+                ),
+                Text(
+                  'Tap items to include/exclude from report',
+                  style: TextStyle(
+                    fontFamily: 'Literata',
+                    fontSize: 11,
+                    color: const Color(0xFF1B4D3E).withOpacity(0.6),
                   ),
                 ),
               ],
             ),
           ),
-
-          // Data table
-          Expanded(
-            child: _editableItems.isEmpty
-                ? Center(
-                    child: Text(
-                      'No items to display',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.grey[600],
-                        fontFamily: 'Literata',
-                      ),
-                    ),
-                  )
-                : SingleChildScrollView(
-                    scrollDirection: Axis.vertical,
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: _buildDataTable(),
-                      ),
-                    ),
-                  ),
+          // Count badge
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1B4D3E),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              '$_selectedCount / ${_editableItems.length}',
+              style: const TextStyle(
+                fontFamily: 'Literata',
+                fontWeight: FontWeight.w700,
+                fontSize: 13,
+                color: Colors.white,
+              ),
+            ),
           ),
-
-          // Bottom action bar
-          _buildBottomBar(),
         ],
       ),
     );
   }
-
+  
   // ---------------------------------------------------------------------------
-  // Data Table
+  // Empty State
   // ---------------------------------------------------------------------------
-
-  Widget _buildDataTable() {
-    const headerStyle = TextStyle(
-      fontWeight: FontWeight.w700,
-      fontSize: 13,
-      color: Color(0xFF1B4D3E),
-      fontFamily: 'Literata',
+  
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1B4D3E).withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.inventory_2_outlined,
+              size: 48,
+              color: const Color(0xFF1B4D3E).withOpacity(0.5),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'No items to display',
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.grey[600],
+              fontFamily: 'Literata',
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Add products to generate a report',
+            style: TextStyle(
+              fontSize: 13,
+              color: Colors.grey[400],
+              fontFamily: 'Literata',
+            ),
+          ),
+        ],
+      ),
     );
-
-    final settings = StockReportSettingsService.instance;
+  }
+  
+  // ---------------------------------------------------------------------------
+  // Product List
+  // ---------------------------------------------------------------------------
+  
+  Widget _buildProductList() {
+    return ListView.builder(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+      itemCount: _editableItems.length,
+      itemBuilder: (context, index) {
+        return SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(0.3, 0),
+            end: Offset.zero,
+          ).animate(CurvedAnimation(
+            parent: _animationController,
+            curve: Interval(
+              (index / _editableItems.length) * 0.5,
+              0.5 + (index / _editableItems.length) * 0.5,
+              curve: Curves.easeOutCubic,
+            ),
+          )),
+          child: FadeTransition(
+            opacity: CurvedAnimation(
+              parent: _animationController,
+              curve: Interval(
+                (index / _editableItems.length) * 0.5,
+                0.5 + (index / _editableItems.length) * 0.5,
+                curve: Curves.easeOut,
+              ),
+            ),
+            child: _buildProductCard(index),
+          ),
+        );
+      },
+    );
+  }
+  
+  // ---------------------------------------------------------------------------
+  // Product Card
+  // ---------------------------------------------------------------------------
+  
+  Widget _buildProductCard(int index) {
+    final item = _editableItems[index];
+    final product = item.product;
+    final key = product.id;
+    final controller = _controllers[key]!;
+    final focusNode = _focusNodes[key]!;
+    final isSelected = item.isSelected;
+    final numberFormat = NumberFormat('#,##0.00');
     
-    // Build dynamic columns based on settings
-    final columns = <DataColumn>[
-      // Always show checkbox first
-      DataColumn(
-        label: Checkbox(
-          value: _allSelected
-              ? true
-              : _noneSelected
-              ? false
-              : null,
-          tristate: true,
-          onChanged: _toggleSelectAll,
-          activeColor: const Color(0xFF1B4D3E),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(4),
+    return GestureDetector(
+      onTap: () => _toggleItem(index),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        margin: const EdgeInsets.only(bottom: 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected 
+                ? const Color(0xFF1B4D3E).withOpacity(0.4)
+                : Colors.grey.withOpacity(0.15),
+            width: isSelected ? 2 : 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: isSelected
+                  ? const Color(0xFF1B4D3E).withOpacity(0.08)
+                  : Colors.black.withOpacity(0.03),
+              blurRadius: isSelected ? 12 : 6,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: AnimatedOpacity(
+          duration: const Duration(milliseconds: 200),
+          opacity: isSelected ? 1.0 : 0.6,
+          child: Column(
+            children: [
+              // Card Header
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? const Color(0xFF1B4D3E).withOpacity(0.04)
+                      : Colors.grey.withOpacity(0.02),
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
+                ),
+                child: Row(
+                  children: [
+                    // Selection indicator
+                    Container(
+                      width: 28,
+                      height: 28,
+                      decoration: BoxDecoration(
+                        color: isSelected 
+                            ? const Color(0xFF1B4D3E) 
+                            : Colors.transparent,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: isSelected 
+                              ? const Color(0xFF1B4D3E)
+                              : Colors.grey.withOpacity(0.3),
+                          width: 2,
+                        ),
+                      ),
+                      child: isSelected
+                          ? const Icon(Icons.check_rounded, 
+                              color: Colors.white, size: 18)
+                          : null,
+                    ),
+                    const SizedBox(width: 12),
+                    // Serial number
+                    if (_visibleColumnIds.contains('sr_no'))
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          '#${index + 1}',
+                          style: const TextStyle(
+                            fontFamily: 'Literata',
+                            fontWeight: FontWeight.w700,
+                            fontSize: 12,
+                            color: Color(0xFF1B4D3E),
+                          ),
+                        ),
+                      ),
+                    if (_visibleColumnIds.contains('sr_no'))
+                      const SizedBox(width: 10),
+                    // Product name
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (_visibleColumnIds.contains('product_name'))
+                            Text(
+                              product.name.isEmpty ? '-' : product.name,
+                              style: const TextStyle(
+                                fontFamily: 'Literata',
+                                fontWeight: FontWeight.w700,
+                                fontSize: 15,
+                                color: Color(0xFF1B4D3E),
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          if (_visibleColumnIds.contains('company') && 
+                              product.companyName.isNotEmpty)
+                            Text(
+                              product.companyName,
+                              style: TextStyle(
+                                fontFamily: 'Literata',
+                                fontSize: 12,
+                                color: Colors.grey[600],
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                        ],
+                      ),
+                    ),
+                    // Stock badge
+                    if (_visibleColumnIds.contains('stock'))
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: _getStockColor(item.availableQuantity).withOpacity(0.12),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: _getStockColor(item.availableQuantity).withOpacity(0.3),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.inventory_2_rounded,
+                              size: 14,
+                              color: _getStockColor(item.availableQuantity),
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              '${item.availableQuantity}',
+                              style: TextStyle(
+                                fontFamily: 'Literata',
+                                fontWeight: FontWeight.w700,
+                                fontSize: 14,
+                                color: _getStockColor(item.availableQuantity),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              
+              // Card Body - Dynamic Fields
+              Padding(
+                padding: const EdgeInsets.fromLTRB(14, 8, 14, 14),
+                child: Column(
+                  children: [
+                    // Row 1: Category, HSN, Status
+                    _buildInfoRow([
+                      if (_visibleColumnIds.contains('category'))
+                        _buildInfoChip(
+                          Icons.category_rounded, 
+                          'Category', 
+                          product.category.isEmpty ? '-' : product.category
+                        ),
+                      if (_visibleColumnIds.contains('hsn_code'))
+                        _buildInfoChip(
+                          Icons.tag_rounded, 
+                          'HSN', 
+                          product.hsnCode?.isNotEmpty == true ? product.hsnCode! : '-'
+                        ),
+                      if (_visibleColumnIds.contains('status'))
+                        _buildStatusChip(item.availableQuantity),
+                    ]),
+                    
+                    // Row 2: Prices
+                    if (_visibleColumnIds.contains('purchase_price') || 
+                        _visibleColumnIds.contains('selling_price') ||
+                        _visibleColumnIds.contains('stock_value'))
+                      Padding(
+                        padding: const EdgeInsets.only(top: 10),
+                        child: _buildInfoRow([
+                          if (_visibleColumnIds.contains('purchase_price'))
+                            _buildPriceChip(
+                              'Purchase', 
+                              '₹${numberFormat.format(product.purchasePrice)}',
+                              Colors.orange,
+                            ),
+                          if (_visibleColumnIds.contains('selling_price'))
+                            _buildPriceChip(
+                              'Selling', 
+                              '₹${numberFormat.format(product.salesPrice)}',
+                              Colors.blue,
+                            ),
+                          if (_visibleColumnIds.contains('stock_value'))
+                            _buildPriceChip(
+                              'Value', 
+                              '₹${numberFormat.format(product.getStockValue())}',
+                              const Color(0xFF1B4D3E),
+                            ),
+                        ]),
+                      ),
+                    
+                    // Row 3: Tax & Supplier
+                    if (_visibleColumnIds.contains('cgst') || 
+                        _visibleColumnIds.contains('sgst') ||
+                        _visibleColumnIds.contains('supplier'))
+                      Padding(
+                        padding: const EdgeInsets.only(top: 10),
+                        child: _buildInfoRow([
+                          if (_visibleColumnIds.contains('cgst'))
+                            _buildInfoChip(
+                              Icons.percent_rounded, 
+                              'CGST', 
+                              '${product.cgstPercent}%'
+                            ),
+                          if (_visibleColumnIds.contains('sgst'))
+                            _buildInfoChip(
+                              Icons.percent_rounded, 
+                              'SGST', 
+                              '${product.sgstPercent}%'
+                            ),
+                          if (_visibleColumnIds.contains('supplier'))
+                            _buildInfoChip(
+                              Icons.local_shipping_rounded, 
+                              'Supplier', 
+                              product.defaultSupplierName?.isNotEmpty == true 
+                                  ? product.defaultSupplierName! 
+                                  : '-'
+                            ),
+                        ]),
+                      ),
+                    
+                    // Order Quantity Input
+                    if (_visibleColumnIds.contains('order_qty'))
+                      Padding(
+                        padding: const EdgeInsets.only(top: 12),
+                        child: _buildOrderQuantityInput(
+                          controller, 
+                          focusNode, 
+                          isSelected, 
+                          index
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
           ),
         ),
       ),
-    ];
-    
-    // Track which columns to show (in order)
-    final visibleColumnIds = <String>[];
-    
-    // Column config mapping
-    final columnHeaders = {
-      'sr_no': const DataColumn(label: Text('#', style: headerStyle)),
-      'product_name': const DataColumn(label: Text('Product Name', style: headerStyle)),
-      'category': const DataColumn(label: Text('Category', style: headerStyle)),
-      'company': const DataColumn(label: Text('Company', style: headerStyle)),
-      'hsn_code': const DataColumn(label: Text('HSN Code', style: headerStyle)),
-      'purchase_price': const DataColumn(label: Text('Pur. Price', style: headerStyle), numeric: true),
-      'selling_price': const DataColumn(label: Text('Sell Price', style: headerStyle), numeric: true),
-      'stock': const DataColumn(label: Text('Stock', style: headerStyle), numeric: true),
-      'stock_value': const DataColumn(label: Text('Stock Value', style: headerStyle), numeric: true),
-      'status': const DataColumn(label: Text('Status', style: headerStyle)),
-      'order_qty': const DataColumn(label: Text('Order Qty', style: headerStyle), numeric: true),
-      'supplier': const DataColumn(label: Text('Supplier', style: headerStyle)),
-      'cgst': const DataColumn(label: Text('CGST %', style: headerStyle), numeric: true),
-      'sgst': const DataColumn(label: Text('SGST %', style: headerStyle), numeric: true),
-    };
-    
-    // Add columns based on settings (order matters)
-    final columnOrder = ['sr_no', 'product_name', 'category', 'company', 'hsn_code', 
-                         'purchase_price', 'selling_price', 'stock', 'stock_value', 
-                         'status', 'order_qty', 'supplier', 'cgst', 'sgst'];
-    
-    for (final colId in columnOrder) {
-      if (settings.isColumnVisible(colId)) {
-        columns.add(columnHeaders[colId]!);
-        visibleColumnIds.add(colId);
-      }
-    }
-    
-    // Fallback: if no columns visible, show at least product name, stock, and order qty
-    if (visibleColumnIds.isEmpty) {
-      columns.addAll([
-        columnHeaders['product_name']!,
-        columnHeaders['stock']!,
-        columnHeaders['order_qty']!,
-      ]);
-      visibleColumnIds.addAll(['product_name', 'stock', 'order_qty']);
-    }
-
-    return DataTable(
-      headingRowColor: WidgetStateProperty.all(
-        const Color(0xFF1B4D3E).withOpacity(0.1),
-      ),
-      headingRowHeight: 56,
-      dataRowMinHeight: 56,
-      dataRowMaxHeight: 80,
-      columnSpacing: 16,
-      horizontalMargin: 12,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[200]!),
-      ),
-      columns: columns,
-      rows: List<DataRow>.generate(_editableItems.length, (index) {
-        final item = _editableItems[index];
-        final product = item.product;
-        final key = product.id;
-        final controller = _controllers[key]!;
-        final focusNode = _focusNodes[key]!;
-        final isSelected = item.isSelected;
-
-        // Build cells based on visible columns
-        final cells = <DataCell>[
-          // Always show checkbox first
-          DataCell(
-            Checkbox(
-              value: isSelected,
-              onChanged: (val) => _toggleItem(index, val),
-              activeColor: const Color(0xFF1B4D3E),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(4),
-              ),
-            ),
-          ),
-        ];
-        
-        for (final colId in visibleColumnIds) {
-          cells.add(_buildDataCell(colId, index, item, product, controller, focusNode, isSelected));
-        }
-
-        return DataRow(
-          color: WidgetStateProperty.resolveWith<Color?>((states) {
-            if (!isSelected) {
-              return Colors.grey[50];
-            }
-            return null;
-          }),
-          cells: cells,
-        );
-      }),
     );
   }
   
-  /// Build a data cell based on column ID
-  DataCell _buildDataCell(String colId, int index, ReportItem item, dynamic product, 
-                          TextEditingController controller, FocusNode focusNode, bool isSelected) {
-    final numberFormat = NumberFormat('#,##0.00');
+  Widget _buildInfoRow(List<Widget> children) {
+    final validChildren = children.where((w) => w is! SizedBox || (w).width != 0).toList();
+    if (validChildren.isEmpty) return const SizedBox.shrink();
     
-    switch (colId) {
-      case 'sr_no':
-        return DataCell(
-          Opacity(
-            opacity: isSelected ? 1.0 : 0.5,
-            child: Text(
-              '${index + 1}',
-              style: const TextStyle(
-                fontSize: 13,
-                fontFamily: 'Literata',
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-        );
-        
-      case 'product_name':
-        return DataCell(
-          Opacity(
-            opacity: isSelected ? 1.0 : 0.5,
-            child: SizedBox(
-              width: 180,
-              child: Text(
-                product.name.isEmpty ? '-' : product.name,
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontFamily: 'Literata',
-                  fontWeight: FontWeight.w600,
-                ),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ),
-        );
-        
-      case 'category':
-        return DataCell(
-          Opacity(
-            opacity: isSelected ? 1.0 : 0.5,
-            child: Text(
-              product.category.isEmpty ? '-' : product.category,
-              style: const TextStyle(
-                fontSize: 13,
-                fontFamily: 'Literata',
-              ),
-            ),
-          ),
-        );
-        
-      case 'company':
-        return DataCell(
-          Opacity(
-            opacity: isSelected ? 1.0 : 0.5,
-            child: Text(
-              product.companyName.isEmpty ? '-' : product.companyName,
-              style: TextStyle(
-                fontSize: 13,
-                fontFamily: 'Literata',
-                color: Colors.grey[700],
-              ),
-            ),
-          ),
-        );
-        
-      case 'hsn_code':
-        return DataCell(
-          Opacity(
-            opacity: isSelected ? 1.0 : 0.5,
-            child: Text(
-              product.hsnCode?.isNotEmpty == true ? product.hsnCode! : '-',
-              style: const TextStyle(
-                fontSize: 13,
-                fontFamily: 'Literata',
-              ),
-            ),
-          ),
-        );
-        
-      case 'purchase_price':
-        return DataCell(
-          Opacity(
-            opacity: isSelected ? 1.0 : 0.5,
-            child: Text(
-              '₹${numberFormat.format(product.purchasePrice)}',
-              style: const TextStyle(
-                fontSize: 13,
-                fontFamily: 'Literata',
-              ),
-            ),
-          ),
-        );
-        
-      case 'selling_price':
-        return DataCell(
-          Opacity(
-            opacity: isSelected ? 1.0 : 0.5,
-            child: Text(
-              '₹${numberFormat.format(product.salesPrice)}',
-              style: const TextStyle(
-                fontSize: 13,
-                fontFamily: 'Literata',
-              ),
-            ),
-          ),
-        );
-        
-      case 'stock':
-        return DataCell(
-          Opacity(
-            opacity: isSelected ? 1.0 : 0.5,
-            child: Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 6,
-              ),
-              decoration: BoxDecoration(
-                color: _getStockColor(item.availableQuantity).withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: _getStockColor(item.availableQuantity).withOpacity(0.3),
-                ),
-              ),
-              child: Text(
-                '${item.availableQuantity}',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontFamily: 'Literata',
-                  fontWeight: FontWeight.w600,
-                  color: _getStockColor(item.availableQuantity),
-                ),
-              ),
-            ),
-          ),
-        );
-        
-      case 'stock_value':
-        return DataCell(
-          Opacity(
-            opacity: isSelected ? 1.0 : 0.5,
-            child: Text(
-              '₹${numberFormat.format(product.getStockValue())}',
-              style: const TextStyle(
-                fontSize: 13,
-                fontFamily: 'Literata',
-              ),
-            ),
-          ),
-        );
-        
-      case 'status':
-        return DataCell(
-          Opacity(
-            opacity: isSelected ? 1.0 : 0.5,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: _getStockColor(item.availableQuantity).withOpacity(0.1),
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: Text(
-                _getStockStatus(item.availableQuantity),
-                style: TextStyle(
-                  fontSize: 11,
-                  fontFamily: 'Literata',
-                  fontWeight: FontWeight.w600,
-                  color: _getStockColor(item.availableQuantity),
-                ),
-              ),
-            ),
-          ),
-        );
-        
-      case 'order_qty':
-        return DataCell(
-          Opacity(
-            opacity: isSelected ? 1.0 : 0.5,
-            child: SizedBox(
-              width: 100,
-              child: TextField(
-                controller: controller,
-                focusNode: focusNode,
-                enabled: isSelected,
-                keyboardType: TextInputType.number,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontFamily: 'Literata',
-                  fontWeight: FontWeight.w600,
-                ),
-                decoration: InputDecoration(
-                  filled: true,
-                  fillColor: const Color(0xFF1B4D3E).withOpacity(0.05),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: Color(0xFF1B4D3E)),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(
-                      color: const Color(0xFF1B4D3E).withOpacity(0.3),
-                    ),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(
-                      color: Color(0xFF1B4D3E),
-                      width: 2,
-                    ),
-                  ),
-                  disabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(color: Colors.grey[300]!),
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 12,
-                  ),
-                  hintText: '-',
-                  hintStyle: TextStyle(
-                    color: Colors.grey[400],
-                    fontFamily: 'Literata',
-                  ),
-                ),
-                onChanged: (value) => _updateOrderQuantity(index, value),
-              ),
-            ),
-          ),
-        );
-        
-      case 'supplier':
-        return DataCell(
-          Opacity(
-            opacity: isSelected ? 1.0 : 0.5,
-            child: Text(
-              product.defaultSupplierName?.isNotEmpty == true ? product.defaultSupplierName! : '-',
-              style: const TextStyle(
-                fontSize: 13,
-                fontFamily: 'Literata',
-              ),
-            ),
-          ),
-        );
-        
-      case 'cgst':
-        return DataCell(
-          Opacity(
-            opacity: isSelected ? 1.0 : 0.5,
-            child: Text(
-              '${product.cgstPercent}%',
-              style: const TextStyle(
-                fontSize: 13,
-                fontFamily: 'Literata',
-              ),
-            ),
-          ),
-        );
-        
-      case 'sgst':
-        return DataCell(
-          Opacity(
-            opacity: isSelected ? 1.0 : 0.5,
-            child: Text(
-              '${product.sgstPercent}%',
-              style: const TextStyle(
-                fontSize: 13,
-                fontFamily: 'Literata',
-              ),
-            ),
-          ),
-        );
-        
-      default:
-        return DataCell(
-          Opacity(
-            opacity: isSelected ? 1.0 : 0.5,
-            child: const Text('-'),
-          ),
-        );
-    }
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: validChildren,
+    );
   }
   
-  String _getStockStatus(int stock) {
-    if (stock == 0) return 'Out of Stock';
-    if (stock <= 10) return 'Low Stock';
-    return 'In Stock';
+  Widget _buildInfoChip(IconData icon, String label, String value) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.grey.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: Colors.grey[600]),
+          const SizedBox(width: 6),
+          Text(
+            '$label: ',
+            style: TextStyle(
+              fontFamily: 'Literata',
+              fontSize: 11,
+              color: Colors.grey[500],
+            ),
+          ),
+          Text(
+            value,
+            style: const TextStyle(
+              fontFamily: 'Literata',
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF333333),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildStatusChip(int stock) {
+    final status = _getStockStatus(stock);
+    final color = _getStockColor(stock);
+    
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withOpacity(0.3)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(
+              color: color,
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            status,
+            style: TextStyle(
+              fontFamily: 'Literata',
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildPriceChip(String label, String value, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            '$label: ',
+            style: TextStyle(
+              fontFamily: 'Literata',
+              fontSize: 11,
+              color: color.withOpacity(0.7),
+            ),
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              fontFamily: 'Literata',
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildOrderQuantityInput(
+    TextEditingController controller, 
+    FocusNode focusNode, 
+    bool isSelected, 
+    int index
+  ) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1B4D3E).withOpacity(0.04),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: const Color(0xFF1B4D3E).withOpacity(0.15),
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1B4D3E).withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Icon(
+              Icons.shopping_cart_rounded,
+              size: 18,
+              color: Color(0xFF1B4D3E),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Order Quantity',
+                  style: TextStyle(
+                    fontFamily: 'Literata',
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                    color: Color(0xFF1B4D3E),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Enter quantity to order',
+                  style: TextStyle(
+                    fontFamily: 'Literata',
+                    fontSize: 10,
+                    color: Colors.grey[500],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(
+            width: 100,
+            height: 44,
+            child: TextField(
+              controller: controller,
+              focusNode: focusNode,
+              enabled: isSelected,
+              keyboardType: TextInputType.number,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 16,
+                fontFamily: 'Literata',
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF1B4D3E),
+              ),
+              decoration: InputDecoration(
+                filled: true,
+                fillColor: Colors.white,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: const BorderSide(color: Color(0xFF1B4D3E)),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide(
+                    color: const Color(0xFF1B4D3E).withOpacity(0.3),
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: const BorderSide(
+                    color: Color(0xFF1B4D3E),
+                    width: 2,
+                  ),
+                ),
+                disabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide(color: Colors.grey[300]!),
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
+                hintText: '-',
+                hintStyle: TextStyle(
+                  color: Colors.grey[400],
+                  fontFamily: 'Literata',
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
+              onChanged: (value) => _updateOrderQuantity(index, value),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   // ---------------------------------------------------------------------------
@@ -721,68 +1050,119 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, -2),
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 16,
+            offset: const Offset(0, -4),
           ),
         ],
       ),
       child: SafeArea(
         child: Row(
           children: [
+            // Cancel button
             Expanded(
-              child: OutlinedButton.icon(
-                onPressed: _isGenerating
-                    ? null
-                    : () => Navigator.of(context).pop(),
-                icon: const Icon(Icons.close),
-                label: const Text('Cancel'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFF1B4D3E),
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  side: const BorderSide(color: Color(0xFF1B4D3E)),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: _isGenerating ? null : () => Navigator.of(context).pop(),
+                  borderRadius: BorderRadius.circular(14),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: const Color(0xFF1B4D3E).withOpacity(0.3),
+                      ),
+                    ),
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.close_rounded, 
+                          color: Color(0xFF1B4D3E), size: 20),
+                        SizedBox(width: 8),
+                        Text(
+                          'Cancel',
+                          style: TextStyle(
+                            fontFamily: 'Literata',
+                            fontWeight: FontWeight.w600,
+                            fontSize: 15,
+                            color: Color(0xFF1B4D3E),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
             ),
             const SizedBox(width: 12),
+            // Generate button
             Expanded(
               flex: 2,
-              child: ElevatedButton.icon(
-                onPressed: _isGenerating || _noneSelected
-                    ? null
-                    : _generateReport,
-                icon: _isGenerating
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: _isGenerating || _noneSelected ? null : _generateReport,
+                  borderRadius: BorderRadius.circular(14),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    decoration: BoxDecoration(
+                      gradient: _isGenerating || _noneSelected
+                          ? LinearGradient(
+                              colors: [Colors.grey[400]!, Colors.grey[500]!],
+                            )
+                          : const LinearGradient(
+                              colors: [Color(0xFF2E7D4A), Color(0xFF1B4D3E)],
+                            ),
+                      borderRadius: BorderRadius.circular(14),
+                      boxShadow: _isGenerating || _noneSelected
+                          ? null
+                          : [
+                              BoxShadow(
+                                color: const Color(0xFF1B4D3E).withOpacity(0.4),
+                                blurRadius: 12,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        if (_isGenerating)
+                          const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.5,
+                              color: Colors.white,
+                            ),
+                          )
+                        else
+                          Icon(
+                            widget.selectedFormat == ReportFormat.pdf
+                                ? Icons.picture_as_pdf_rounded
+                                : Icons.table_chart_rounded,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                        const SizedBox(width: 10),
+                        Text(
+                          _isGenerating
+                              ? 'Generating...'
+                              : 'Generate (${_selectedCount})',
+                          style: const TextStyle(
+                            fontFamily: 'Literata',
+                            fontWeight: FontWeight.w700,
+                            fontSize: 15,
+                            color: Colors.white,
+                          ),
                         ),
-                      )
-                    : Icon(
-                        widget.selectedFormat == ReportFormat.pdf
-                            ? Icons.picture_as_pdf
-                            : Icons.table_chart,
-                      ),
-                label: Text(
-                  _isGenerating
-                      ? 'Generating...'
-                      : 'Generate ${widget.selectedFormat == ReportFormat.pdf ? 'PDF' : 'Excel'}'
-                            ' ($_selectedCount)',
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF1B4D3E),
-                  foregroundColor: Colors.white,
-                  disabledBackgroundColor: Colors.grey[300],
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -794,12 +1174,18 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen> {
   }
 
   // ---------------------------------------------------------------------------
-  // Colour helper
+  // Helpers
   // ---------------------------------------------------------------------------
+  
+  String _getStockStatus(int stock) {
+    if (stock == 0) return 'Out of Stock';
+    if (stock <= 10) return 'Low Stock';
+    return 'In Stock';
+  }
 
   Color _getStockColor(int stock) {
-    if (stock == 0) return Colors.red;
-    if (stock <= 10) return Colors.orange;
-    return Colors.green;
+    if (stock == 0) return const Color(0xFFE53935);
+    if (stock <= 10) return const Color(0xFFFB8C00);
+    return const Color(0xFF43A047);
   }
 }
