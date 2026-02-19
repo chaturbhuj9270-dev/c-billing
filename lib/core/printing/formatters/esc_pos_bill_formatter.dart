@@ -238,8 +238,9 @@ class EscPosBillFormatter {
       ));
 
       // HSN code (only if enabled)
-      if (showHsn && item.hsnCode != null && item.hsnCode!.isNotEmpty) {
-        b.addAll(_left('  HSN: ${item.hsnCode}'));
+      if (showHsn) {
+        final hsn = (item.hsnCode != null && item.hsnCode!.isNotEmpty) ? item.hsnCode! : '-';
+        b.addAll(_left('  HSN: $hsn'));
       }
 
       // Per-item return note

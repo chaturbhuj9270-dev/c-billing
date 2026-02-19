@@ -815,6 +815,7 @@ class _BillSettingsPageState extends State<BillSettingsPage>
     );
   }
 
+
   Widget _buildBillTypeSelector() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

@@ -621,29 +621,35 @@ class PdfBillService {
             return pw.Padding(
               padding: const pw.EdgeInsets.all(4),
               child: pw.Text(
-                item.name,
+                item.name.isNotEmpty ? item.name : '-',
                 style: const pw.TextStyle(fontSize: 9),
               ),
             );
           case 'hsn_code':
-            return _buildCompactCell(item.hsnCode ?? '', align: pw.TextAlign.center);
+            return _buildCompactCell(
+              (item.hsnCode != null && item.hsnCode!.isNotEmpty) ? item.hsnCode! : '-', 
+              align: pw.TextAlign.center
+            );
           case 'company':
-            return _buildCompactCell(item.companyName ?? '', align: pw.TextAlign.left);
+            return _buildCompactCell(
+              (item.companyName != null && item.companyName!.isNotEmpty) ? item.companyName! : '-', 
+              align: pw.TextAlign.left
+            );
           case 'quantity':
             return _buildCompactCell('${item.quantity}', align: pw.TextAlign.center);
           case 'unit':
-            return _buildCompactCell('', align: pw.TextAlign.center); // Unit not available in PrintBillItem
+            return _buildCompactCell('-', align: pw.TextAlign.center); // Unit not available in PrintBillItem
           case 'rate':
-            return _buildCompactCell(item.rate.toStringAsFixed(2), align: pw.TextAlign.right);
+            return _buildCompactCell(item.rate > 0 ? item.rate.toStringAsFixed(2) : '-', align: pw.TextAlign.right);
           case 'discount':
             return _buildCompactCell('-', align: pw.TextAlign.right); // Discount per item not available
           case 'tax':
             final taxAmt = item.cgstAmount + item.sgstAmount;
             return _buildCompactCell(taxAmt > 0 ? taxAmt.toStringAsFixed(2) : '-', align: pw.TextAlign.right);
           case 'amount':
-            return _buildCompactCell(item.amount.toStringAsFixed(2), align: pw.TextAlign.right);
+            return _buildCompactCell(item.amount > 0 ? item.amount.toStringAsFixed(2) : '-', align: pw.TextAlign.right);
           default:
-            return _buildCompactCell('');
+            return _buildCompactCell('-');
         }
       }).toList();
 
