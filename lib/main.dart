@@ -8,6 +8,7 @@ import 'core/services/language_service.dart';
 import 'core/services/purchase_settings_service.dart';
 import 'core/services/product_settings_service.dart';
 import 'core/services/purchase_report_settings_service.dart';
+import 'core/services/bill_report_settings_service.dart';
 import 'core/services/isar_service.dart';
 import 'core/services/error_logging_service.dart';
 import 'features/customer/data/services/customer_sync_service.dart';
@@ -75,6 +76,12 @@ Future<void> initializeServices() async {
     await PurchaseReportSettingsService.instance.init();
   } catch (e) {
     debugPrint('PurchaseReportSettingsService init error: $e');
+  }
+  
+  try {
+    await BillReportSettingsService.instance.init();
+  } catch (e) {
+    debugPrint('BillReportSettingsService init error: $e');
   }
   
   // Initialize Isar database for offline-first support

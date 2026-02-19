@@ -5,6 +5,7 @@ import 'package:c_billing/core/services/dashboard_refresh_service.dart';
 import 'package:c_billing/core/services/language_service.dart';
 import 'package:c_billing/core/localization/app_localizations.dart';
 import 'package:c_billing/features/billing/domain/entities/bill_tax_settings.dart';
+import 'package:c_billing/features/billing/presentation/pages/bill_report_settings_page.dart';
 
 /// Bill settings page for configuring billing preferences
 class BillSettingsPage extends StatefulWidget {
@@ -207,6 +208,21 @@ class _BillSettingsPageState extends State<BillSettingsPage>
                                       _showCustomerDetails = value;
                                     });
                                     await _saveSettings();
+                                  },
+                                ),
+                                const SizedBox(height: 14),
+                                _buildNavigationTile(
+                                  icon: Icons.view_column_rounded,
+                                  iconColor: const Color(0xFF2196F3),
+                                  title: 'Print Column Settings',
+                                  subtitle: 'Choose columns to show on printed bills',
+                                  onTap: () async {
+                                    await Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => const BillReportSettingsPage(),
+                                      ),
+                                    );
                                   },
                                 ),
                               ],
@@ -728,6 +744,74 @@ class _BillSettingsPageState extends State<BillSettingsPage>
           ),
         ),
       ],
+    );
+  }
+
+  // Navigation tile for linking to other pages
+  Widget _buildNavigationTile({
+    required IconData icon,
+    required Color iconColor,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Row(
+          children: [
+            Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                color: iconColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, color: iconColor, size: 22),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      fontFamily: 'Literata',
+                      color: Color(0xFF1B4D3E),
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey[500],
+                      fontFamily: 'Literata',
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: iconColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(
+                Icons.arrow_forward_ios_rounded,
+                color: iconColor,
+                size: 16,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

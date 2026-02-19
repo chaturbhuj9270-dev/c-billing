@@ -25,6 +25,7 @@ import 'package:c_billing/features/customer/data/repositories/customer_transacti
 import 'package:c_billing/core/services/language_service.dart';
 import 'package:c_billing/core/localization/app_localizations.dart';
 import 'package:c_billing/features/billing/presentation/pages/bill_settings_page.dart';
+import 'package:c_billing/features/billing/presentation/pages/bill_report_settings_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:c_billing/features/billing/offline/entities/bill_entity.dart';
 import 'package:c_billing/features/billing/data/services/bill_sync_service.dart';
@@ -1747,6 +1748,12 @@ class _BillingPageState extends State<BillingPage> {
           if (result == true) {
             _loadBillSettings();
           }
+        },
+        onReportSettingsTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const BillReportSettingsPage()),
+          );
         },
       ),
     );
@@ -6923,6 +6930,7 @@ class _BillingHeaderDelegate extends SliverPersistentHeaderDelegate {
   final int billItemsCount;
   final AppLocalizations localizations;
   final VoidCallback onSettingsTap;
+  final VoidCallback onReportSettingsTap;
 
   _BillingHeaderDelegate({
     required this.minHeight,
@@ -6930,6 +6938,7 @@ class _BillingHeaderDelegate extends SliverPersistentHeaderDelegate {
     required this.billItemsCount,
     required this.localizations,
     required this.onSettingsTap,
+    required this.onReportSettingsTap,
   });
 
   @override
@@ -7067,10 +7076,9 @@ class _BillingHeaderDelegate extends SliverPersistentHeaderDelegate {
                             ],
                           ),
                         ),
-                      // Settings Button
-                      GestureDetector(
-                        onTap: onSettingsTap,
-                        child: Container(
+                      // Settings Menu Button
+                      PopupMenuButton<String>(
+                        icon: Container(
                           width: 44,
                           height: 44,
                           decoration: BoxDecoration(
@@ -7081,11 +7089,84 @@ class _BillingHeaderDelegate extends SliverPersistentHeaderDelegate {
                             ),
                           ),
                           child: const Icon(
-                            Icons.settings_rounded,
+                            Icons.more_vert_rounded,
                             color: Colors.white,
                             size: 22,
                           ),
                         ),
+                        offset: const Offset(0, 50),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        elevation: 8,
+                        color: Colors.white,
+                        onSelected: (value) {
+                          if (value == 'settings') {
+                            onSettingsTap();
+                          } else if (value == 'report_settings') {
+                            onReportSettingsTap();
+                          }
+                        },
+                        itemBuilder: (context) => [
+                          PopupMenuItem<String>(
+                            value: 'settings',
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 36,
+                                  height: 36,
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: const Icon(
+                                    Icons.settings_rounded,
+                                    color: Color(0xFF1B4D3E),
+                                    size: 20,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Text(
+                                  localizations.settings,
+                                  style: const TextStyle(
+                                    fontFamily: 'Literata',
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          PopupMenuItem<String>(
+                            value: 'report_settings',
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 36,
+                                  height: 36,
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF2196F3).withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: const Icon(
+                                    Icons.view_column_rounded,
+                                    color: Color(0xFF2196F3),
+                                    size: 20,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                const Text(
+                                  'Print Column Settings',
+                                  style: TextStyle(
+                                    fontFamily: 'Literata',
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),

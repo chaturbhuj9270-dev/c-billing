@@ -9,6 +9,7 @@ import '../../features/authentication/presentation/pages/login.dart';
 import '../../features/dashboard/presentation/pages/optimized_dashboard_page.dart';
 import '../services/product_settings_service.dart';
 import '../services/purchase_report_settings_service.dart';
+import '../services/bill_report_settings_service.dart';
 import '../../core/services/biometric_service.dart';
 import '../services/credentials_manager.dart';
 import '../services/language_service.dart';
@@ -78,6 +79,7 @@ class _SplashPageState extends State<SplashPage> {
           // Reload product settings to fetch custom columns for this user
           await ProductSettingsService.instance.reload();
           await PurchaseReportSettingsService.instance.reload();
+          await BillReportSettingsService.instance.reload();
           // Go directly to dashboard
           _goToDashboard();
           return;
@@ -123,6 +125,7 @@ class _SplashPageState extends State<SplashPage> {
         // Reload product settings to fetch custom columns for this user
         await ProductSettingsService.instance.reload();
         await PurchaseReportSettingsService.instance.reload();
+        await BillReportSettingsService.instance.reload();
         _goToDashboard();
       } else {
         print('[ERROR] Auto-login failed: user is null');
