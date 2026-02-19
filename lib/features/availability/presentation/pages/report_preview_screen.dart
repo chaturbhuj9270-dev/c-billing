@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:c_billing/features/inventory_management/domain/entities/report_item.dart';
 import 'package:c_billing/core/services/inventory_report_service.dart';
+import 'package:c_billing/core/services/stock_report_settings_service.dart';
+import 'package:intl/intl.dart';
 
 class ReportPreviewScreen extends StatefulWidget {
   final List<ReportItem> reportItems;
@@ -297,6 +299,71 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen> {
       fontFamily: 'Literata',
     );
 
+    final settings = StockReportSettingsService.instance;
+    
+    // Build dynamic columns based on settings
+    final columns = <DataColumn>[
+      // Always show checkbox first
+      DataColumn(
+        label: Checkbox(
+          value: _allSelected
+              ? true
+              : _noneSelected
+              ? false
+              : null,
+          tristate: true,
+          onChanged: _toggleSelectAll,
+          activeColor: const Color(0xFF1B4D3E),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(4),
+          ),
+        ),
+      ),
+    ];
+    
+    // Track which columns to show (in order)
+    final visibleColumnIds = <String>[];
+    
+    // Column config mapping
+    final columnHeaders = {
+      'sr_no': const DataColumn(label: Text('#', style: headerStyle)),
+      'product_name': const DataColumn(label: Text('Product Name', style: headerStyle)),
+      'category': const DataColumn(label: Text('Category', style: headerStyle)),
+      'company': const DataColumn(label: Text('Company', style: headerStyle)),
+      'hsn_code': const DataColumn(label: Text('HSN Code', style: headerStyle)),
+      'purchase_price': const DataColumn(label: Text('Pur. Price', style: headerStyle), numeric: true),
+      'selling_price': const DataColumn(label: Text('Sell Price', style: headerStyle), numeric: true),
+      'stock': const DataColumn(label: Text('Stock', style: headerStyle), numeric: true),
+      'stock_value': const DataColumn(label: Text('Stock Value', style: headerStyle), numeric: true),
+      'status': const DataColumn(label: Text('Status', style: headerStyle)),
+      'order_qty': const DataColumn(label: Text('Order Qty', style: headerStyle), numeric: true),
+      'supplier': const DataColumn(label: Text('Supplier', style: headerStyle)),
+      'cgst': const DataColumn(label: Text('CGST %', style: headerStyle), numeric: true),
+      'sgst': const DataColumn(label: Text('SGST %', style: headerStyle), numeric: true),
+    };
+    
+    // Add columns based on settings (order matters)
+    final columnOrder = ['sr_no', 'product_name', 'category', 'company', 'hsn_code', 
+                         'purchase_price', 'selling_price', 'stock', 'stock_value', 
+                         'status', 'order_qty', 'supplier', 'cgst', 'sgst'];
+    
+    for (final colId in columnOrder) {
+      if (settings.isColumnVisible(colId)) {
+        columns.add(columnHeaders[colId]!);
+        visibleColumnIds.add(colId);
+      }
+    }
+    
+    // Fallback: if no columns visible, show at least product name, stock, and order qty
+    if (visibleColumnIds.isEmpty) {
+      columns.addAll([
+        columnHeaders['product_name']!,
+        columnHeaders['stock']!,
+        columnHeaders['order_qty']!,
+      ]);
+      visibleColumnIds.addAll(['product_name', 'stock', 'order_qty']);
+    }
+
     return DataTable(
       headingRowColor: WidgetStateProperty.all(
         const Color(0xFF1B4D3E).withOpacity(0.1),
@@ -311,38 +378,7 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen> {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.grey[200]!),
       ),
-      columns: [
-        // 1. Checkbox (Select All)
-        DataColumn(
-          label: Checkbox(
-            value: _allSelected
-                ? true
-                : _noneSelected
-                ? false
-                : null,
-            tristate: true,
-            onChanged: _toggleSelectAll,
-            activeColor: const Color(0xFF1B4D3E),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(4),
-            ),
-          ),
-        ),
-        // 2. Product Name
-        const DataColumn(label: Text('Product Name', style: headerStyle)),
-        // 3. Available Quantity
-        const DataColumn(
-          label: Text('Available Qty', style: headerStyle),
-          numeric: true,
-        ),
-        // 4. Order Quantity (editable)
-        const DataColumn(
-          label: Text('Order Qty', style: headerStyle),
-          numeric: true,
-        ),
-        // 5. Expiry Date
-        const DataColumn(label: Text('Expiry Date', style: headerStyle)),
-      ],
+      columns: columns,
       rows: List<DataRow>.generate(_editableItems.length, (index) {
         final item = _editableItems[index];
         final product = item.product;
@@ -351,6 +387,25 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen> {
         final focusNode = _focusNodes[key]!;
         final isSelected = item.isSelected;
 
+        // Build cells based on visible columns
+        final cells = <DataCell>[
+          // Always show checkbox first
+          DataCell(
+            Checkbox(
+              value: isSelected,
+              onChanged: (val) => _toggleItem(index, val),
+              activeColor: const Color(0xFF1B4D3E),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(4),
+              ),
+            ),
+          ),
+        ];
+        
+        for (final colId in visibleColumnIds) {
+          cells.add(_buildDataCell(colId, index, item, product, controller, focusNode, isSelected));
+        }
+
         return DataRow(
           color: WidgetStateProperty.resolveWith<Color?>((states) {
             if (!isSelected) {
@@ -358,161 +413,303 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen> {
             }
             return null;
           }),
-          cells: [
-            // 1. Checkbox
-            DataCell(
-              Checkbox(
-                value: isSelected,
-                onChanged: (val) => _toggleItem(index, val),
-                activeColor: const Color(0xFF1B4D3E),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(4),
-                ),
-              ),
-            ),
-            // 2. Product Name + company subtitle
-            DataCell(
-              Opacity(
-                opacity: isSelected ? 1.0 : 0.5,
-                child: SizedBox(
-                  width: 200,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        product.name,
-                        style: const TextStyle(
-                          fontSize: 13,
-                          fontFamily: 'Literata',
-                          fontWeight: FontWeight.w600,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      Text(
-                        product.companyName,
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontFamily: 'Literata',
-                          color: Colors.grey[600],
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            // 3. Available Quantity (read-only)
-            DataCell(
-              Opacity(
-                opacity: isSelected ? 1.0 : 0.5,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: _getStockColor(
-                      item.availableQuantity,
-                    ).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: _getStockColor(
-                        item.availableQuantity,
-                      ).withOpacity(0.3),
-                    ),
-                  ),
-                  child: Text(
-                    '${item.availableQuantity}',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontFamily: 'Literata',
-                      fontWeight: FontWeight.w600,
-                      color: _getStockColor(item.availableQuantity),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            // 4. Order Quantity (editable, "-" when null/empty)
-            DataCell(
-              Opacity(
-                opacity: isSelected ? 1.0 : 0.5,
-                child: SizedBox(
-                  width: 100,
-                  child: TextField(
-                    controller: controller,
-                    focusNode: focusNode,
-                    enabled: isSelected,
-                    keyboardType: TextInputType.number,
-                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontFamily: 'Literata',
-                      fontWeight: FontWeight.w600,
-                    ),
-                    decoration: InputDecoration(
-                      filled: true,
-                      fillColor: const Color(0xFF1B4D3E).withOpacity(0.05),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: const BorderSide(color: Color(0xFF1B4D3E)),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(
-                          color: const Color(0xFF1B4D3E).withOpacity(0.3),
-                        ),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: const BorderSide(
-                          color: Color(0xFF1B4D3E),
-                          width: 2,
-                        ),
-                      ),
-                      disabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(color: Colors.grey[300]!),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 12,
-                      ),
-                      hintText: '-',
-                      hintStyle: TextStyle(
-                        color: Colors.grey[400],
-                        fontFamily: 'Literata',
-                      ),
-                    ),
-                    onChanged: (value) => _updateOrderQuantity(index, value),
-                  ),
-                ),
-              ),
-            ),
-            // 5. Expiry Date
-            DataCell(
-              Opacity(
-                opacity: isSelected ? 1.0 : 0.5,
-                child: Text(
-                  item.expiryDateDisplay,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontFamily: 'Literata',
-                    fontWeight: FontWeight.w500,
-                    color: item.expiryDate != null
-                        ? Colors.black87
-                        : Colors.grey[400],
-                  ),
-                ),
-              ),
-            ),
-          ],
+          cells: cells,
         );
       }),
     );
+  }
+  
+  /// Build a data cell based on column ID
+  DataCell _buildDataCell(String colId, int index, ReportItem item, dynamic product, 
+                          TextEditingController controller, FocusNode focusNode, bool isSelected) {
+    final numberFormat = NumberFormat('#,##0.00');
+    
+    switch (colId) {
+      case 'sr_no':
+        return DataCell(
+          Opacity(
+            opacity: isSelected ? 1.0 : 0.5,
+            child: Text(
+              '${index + 1}',
+              style: const TextStyle(
+                fontSize: 13,
+                fontFamily: 'Literata',
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        );
+        
+      case 'product_name':
+        return DataCell(
+          Opacity(
+            opacity: isSelected ? 1.0 : 0.5,
+            child: SizedBox(
+              width: 180,
+              child: Text(
+                product.name.isEmpty ? '-' : product.name,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontFamily: 'Literata',
+                  fontWeight: FontWeight.w600,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ),
+        );
+        
+      case 'category':
+        return DataCell(
+          Opacity(
+            opacity: isSelected ? 1.0 : 0.5,
+            child: Text(
+              product.category.isEmpty ? '-' : product.category,
+              style: const TextStyle(
+                fontSize: 13,
+                fontFamily: 'Literata',
+              ),
+            ),
+          ),
+        );
+        
+      case 'company':
+        return DataCell(
+          Opacity(
+            opacity: isSelected ? 1.0 : 0.5,
+            child: Text(
+              product.companyName.isEmpty ? '-' : product.companyName,
+              style: TextStyle(
+                fontSize: 13,
+                fontFamily: 'Literata',
+                color: Colors.grey[700],
+              ),
+            ),
+          ),
+        );
+        
+      case 'hsn_code':
+        return DataCell(
+          Opacity(
+            opacity: isSelected ? 1.0 : 0.5,
+            child: Text(
+              product.hsnCode?.isNotEmpty == true ? product.hsnCode! : '-',
+              style: const TextStyle(
+                fontSize: 13,
+                fontFamily: 'Literata',
+              ),
+            ),
+          ),
+        );
+        
+      case 'purchase_price':
+        return DataCell(
+          Opacity(
+            opacity: isSelected ? 1.0 : 0.5,
+            child: Text(
+              '₹${numberFormat.format(product.purchasePrice)}',
+              style: const TextStyle(
+                fontSize: 13,
+                fontFamily: 'Literata',
+              ),
+            ),
+          ),
+        );
+        
+      case 'selling_price':
+        return DataCell(
+          Opacity(
+            opacity: isSelected ? 1.0 : 0.5,
+            child: Text(
+              '₹${numberFormat.format(product.salesPrice)}',
+              style: const TextStyle(
+                fontSize: 13,
+                fontFamily: 'Literata',
+              ),
+            ),
+          ),
+        );
+        
+      case 'stock':
+        return DataCell(
+          Opacity(
+            opacity: isSelected ? 1.0 : 0.5,
+            child: Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 6,
+              ),
+              decoration: BoxDecoration(
+                color: _getStockColor(item.availableQuantity).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: _getStockColor(item.availableQuantity).withOpacity(0.3),
+                ),
+              ),
+              child: Text(
+                '${item.availableQuantity}',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontFamily: 'Literata',
+                  fontWeight: FontWeight.w600,
+                  color: _getStockColor(item.availableQuantity),
+                ),
+              ),
+            ),
+          ),
+        );
+        
+      case 'stock_value':
+        return DataCell(
+          Opacity(
+            opacity: isSelected ? 1.0 : 0.5,
+            child: Text(
+              '₹${numberFormat.format(product.getStockValue())}',
+              style: const TextStyle(
+                fontSize: 13,
+                fontFamily: 'Literata',
+              ),
+            ),
+          ),
+        );
+        
+      case 'status':
+        return DataCell(
+          Opacity(
+            opacity: isSelected ? 1.0 : 0.5,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: _getStockColor(item.availableQuantity).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text(
+                _getStockStatus(item.availableQuantity),
+                style: TextStyle(
+                  fontSize: 11,
+                  fontFamily: 'Literata',
+                  fontWeight: FontWeight.w600,
+                  color: _getStockColor(item.availableQuantity),
+                ),
+              ),
+            ),
+          ),
+        );
+        
+      case 'order_qty':
+        return DataCell(
+          Opacity(
+            opacity: isSelected ? 1.0 : 0.5,
+            child: SizedBox(
+              width: 100,
+              child: TextField(
+                controller: controller,
+                focusNode: focusNode,
+                enabled: isSelected,
+                keyboardType: TextInputType.number,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontFamily: 'Literata',
+                  fontWeight: FontWeight.w600,
+                ),
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: const Color(0xFF1B4D3E).withOpacity(0.05),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(color: Color(0xFF1B4D3E)),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(
+                      color: const Color(0xFF1B4D3E).withOpacity(0.3),
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(
+                      color: Color(0xFF1B4D3E),
+                      width: 2,
+                    ),
+                  ),
+                  disabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: Colors.grey[300]!),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 12,
+                  ),
+                  hintText: '-',
+                  hintStyle: TextStyle(
+                    color: Colors.grey[400],
+                    fontFamily: 'Literata',
+                  ),
+                ),
+                onChanged: (value) => _updateOrderQuantity(index, value),
+              ),
+            ),
+          ),
+        );
+        
+      case 'supplier':
+        return DataCell(
+          Opacity(
+            opacity: isSelected ? 1.0 : 0.5,
+            child: Text(
+              product.defaultSupplierName?.isNotEmpty == true ? product.defaultSupplierName! : '-',
+              style: const TextStyle(
+                fontSize: 13,
+                fontFamily: 'Literata',
+              ),
+            ),
+          ),
+        );
+        
+      case 'cgst':
+        return DataCell(
+          Opacity(
+            opacity: isSelected ? 1.0 : 0.5,
+            child: Text(
+              '${product.cgstPercent}%',
+              style: const TextStyle(
+                fontSize: 13,
+                fontFamily: 'Literata',
+              ),
+            ),
+          ),
+        );
+        
+      case 'sgst':
+        return DataCell(
+          Opacity(
+            opacity: isSelected ? 1.0 : 0.5,
+            child: Text(
+              '${product.sgstPercent}%',
+              style: const TextStyle(
+                fontSize: 13,
+                fontFamily: 'Literata',
+              ),
+            ),
+          ),
+        );
+        
+      default:
+        return DataCell(
+          Opacity(
+            opacity: isSelected ? 1.0 : 0.5,
+            child: const Text('-'),
+          ),
+        );
+    }
+  }
+  
+  String _getStockStatus(int stock) {
+    if (stock == 0) return 'Out of Stock';
+    if (stock <= 10) return 'Low Stock';
+    return 'In Stock';
   }
 
   // ---------------------------------------------------------------------------
