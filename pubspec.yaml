@@ -42,6 +42,8 @@ dependencies:
   isar_community_flutter_libs: ^3.3.0
   # Network Connectivity
   connectivity_plus: ^6.1.4
+  # Invoice OCR (Google MLKit)
+  google_mlkit_text_recognition: ^0.14.0
 
 dev_dependencies:
   flutter_test:

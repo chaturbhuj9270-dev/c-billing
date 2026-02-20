@@ -47,5 +47,9 @@
 		<true/>
 		<key>UIStatusBarHidden</key>
 		<false/>
+		<key>NSCameraUsageDescription</key>
+		<string>Camera access is needed to scan invoices for adding purchases</string>
+		<key>NSPhotoLibraryUsageDescription</key>
+		<string>Photo library access is needed to select invoice images for scanning</string>
 	</dict>
 </plist>

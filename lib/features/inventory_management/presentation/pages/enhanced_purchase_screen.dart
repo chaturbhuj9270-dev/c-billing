@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:isar_community/isar.dart';
 import 'package:c_billing/core/services/language_service.dart';
@@ -14,6 +16,8 @@ import '../../offline/controllers/purchase_batch_offline_controller.dart';
 import '../../data/services/purchase_sync_service.dart';
 import '../../data/services/purchase_batch_sync_service.dart';
 import '../../data/services/purchase_report_pdf_generator.dart';
+import '../../data/services/ocr_service.dart';
+import '../../data/services/invoice_parser_service.dart';
 import '../../../supplier/offline/controllers/supplier_offline_controller.dart';
 import '../../../supplier/offline/entities/supplier_entity.dart';
 import '../../../product/offline/controllers/product_offline_controller.dart';
@@ -21,6 +25,7 @@ import '../../../../common_widgets/action_menu.dart';
 import '../widgets/purchase_filter_widget.dart';
 import '../widgets/purchase_list_widget.dart';
 import 'purchase_page.dart';
+import 'invoice_preview_screen.dart';
 import 'purchase_settings_page.dart';
 import 'purchase_report_settings_page.dart';
 
@@ -235,6 +240,215 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
     );
     // Reload purchases after returning from add page
     _loadPurchasesFromIsar();
+  }
+
+  /// Scan invoice using camera or gallery, process with OCR, and navigate to preview.
+  Future<void> _onScanInvoice() async {
+    // Show source picker bottom sheet
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => ClipRRect(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.95),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(20),
+              ),
+            ),
+            child: SafeArea(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Handle bar
+                  Container(
+                    margin: const EdgeInsets.only(top: 12),
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Scan Invoice',
+                    style: TextStyle(
+                      fontFamily: 'Literata',
+                      fontWeight: FontWeight.w700,
+                      fontSize: 18,
+                      color: Color(0xFF1B4D3E),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Choose image source',
+                    style: TextStyle(
+                      fontFamily: 'Literata',
+                      fontSize: 13,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      _buildSourceButton(
+                        icon: Icons.camera_alt_rounded,
+                        label: 'Camera',
+                        onTap: () =>
+                            Navigator.pop(context, ImageSource.camera),
+                      ),
+                      _buildSourceButton(
+                        icon: Icons.photo_library_rounded,
+                        label: 'Gallery',
+                        onTap: () =>
+                            Navigator.pop(context, ImageSource.gallery),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    if (source == null || !mounted) return;
+
+    // Pick image
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(
+      source: source,
+      maxWidth: 2048,
+      maxHeight: 2048,
+      imageQuality: 90,
+    );
+
+    if (pickedFile == null || !mounted) return;
+
+    // Show processing snackbar
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Row(
+          children: [
+            SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Colors.white,
+              ),
+            ),
+            SizedBox(width: 12),
+            Text(
+              'Scanning invoice...',
+              style: TextStyle(fontFamily: 'Literata'),
+            ),
+          ],
+        ),
+        duration: Duration(seconds: 30),
+      ),
+    );
+
+    // OCR processing
+    final imageFile = File(pickedFile.path);
+    final ocrResult = await OcrService.instance.recognizeText(imageFile);
+
+    if (mounted) ScaffoldMessenger.of(context).hideCurrentSnackBar();
+
+    if (!ocrResult.success || ocrResult.rawText == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              ocrResult.errorMessage ?? 'Could not read invoice',
+              style: const TextStyle(fontFamily: 'Literata'),
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      return;
+    }
+
+    // Parse invoice text
+    final parseResult = await InvoiceParserService.instance.parseInvoiceText(
+      ocrResult.rawText!,
+    );
+
+    if (!parseResult.success || parseResult.items.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              parseResult.errorMessage ??
+                  'No items found in invoice. Try a clearer image.',
+              style: const TextStyle(fontFamily: 'Literata'),
+            ),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+      return;
+    }
+
+    // Auto-match with existing products
+    await InvoiceParserService.instance.matchWithExistingProducts(
+      parseResult.items,
+    );
+
+    // Navigate to preview screen
+    if (mounted) {
+      final saved = await Navigator.push<bool>(
+        context,
+        MaterialPageRoute(
+          builder: (context) =>
+              InvoicePreviewScreen(parseResult: parseResult),
+        ),
+      );
+      if (saved == true) {
+        _loadPurchasesFromIsar();
+      }
+    }
+  }
+
+  Widget _buildSourceButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        children: [
+          Container(
+            width: 64,
+            height: 64,
+            decoration: BoxDecoration(
+              color: const Color(0xFF1B4D3E).withOpacity(0.1),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Icon(icon, color: const Color(0xFF1B4D3E), size: 32),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            style: const TextStyle(
+              fontFamily: 'Literata',
+              fontWeight: FontWeight.w600,
+              fontSize: 13,
+              color: Color(0xFF1B4D3E),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   /// Show purchase details bottom sheet
@@ -1892,49 +2106,101 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
   }
 
   Widget _buildFAB() {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(22),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: Container(
-          width: 64,
-          height: 64,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(22),
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                const Color(0xFF1B4D3E),
-                const Color(0xFF1B4D3E).withOpacity(0.85),
-              ],
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFF1B4D3E).withOpacity(0.35),
-                blurRadius: 20,
-                offset: const Offset(0, 8),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Scan Invoice FAB (secondary, smaller)
+        ClipRRect(
+          borderRadius: BorderRadius.circular(18),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: Container(
+              width: 52,
+              height: 52,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(18),
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    const Color(0xFF0F3B2F),
+                    const Color(0xFF0F3B2F).withOpacity(0.85),
+                  ],
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF0F3B2F).withOpacity(0.3),
+                    blurRadius: 16,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
               ),
-            ],
-          ),
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: _navigateToAddPurchase,
-              splashColor: Colors.white.withOpacity(0.2),
-              highlightColor: Colors.white.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(22),
-              child: const Center(
-                child: Icon(
-                  Icons.add_rounded,
-                  size: 32,
-                  color: Colors.white,
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: _onScanInvoice,
+                  splashColor: Colors.white.withOpacity(0.2),
+                  highlightColor: Colors.white.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(18),
+                  child: const Center(
+                    child: Icon(
+                      Icons.document_scanner_rounded,
+                      size: 24,
+                      color: Colors.white,
+                    ),
+                  ),
                 ),
               ),
             ),
           ),
         ),
-      ),
+        const SizedBox(height: 12),
+        // Add Purchase FAB (primary, existing)
+        ClipRRect(
+          borderRadius: BorderRadius.circular(22),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: Container(
+              width: 64,
+              height: 64,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(22),
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    const Color(0xFF1B4D3E),
+                    const Color(0xFF1B4D3E).withOpacity(0.85),
+                  ],
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF1B4D3E).withOpacity(0.35),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: _navigateToAddPurchase,
+                  splashColor: Colors.white.withOpacity(0.2),
+                  highlightColor: Colors.white.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(22),
+                  child: const Center(
+                    child: Icon(
+                      Icons.add_rounded,
+                      size: 32,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
