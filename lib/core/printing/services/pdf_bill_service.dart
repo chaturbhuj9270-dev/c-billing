@@ -113,6 +113,14 @@ class PdfBillService {
                   ),
                   textAlign: pw.TextAlign.center,
                 ),
+                if (shopDetails.ownerName != null && shopDetails.ownerName!.isNotEmpty) ...[
+                  pw.SizedBox(height: 2),
+                  pw.Text(
+                    'Prop: ${shopDetails.ownerName}',
+                    style: const pw.TextStyle(fontSize: 9),
+                    textAlign: pw.TextAlign.center,
+                  ),
+                ],
                 if (shopDetails.address.isNotEmpty) ...[
                   pw.SizedBox(height: 3),
                   pw.Text(
@@ -769,24 +777,35 @@ class PdfBillService {
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
-        // Shop Header
-        pw.Center(
+        // Shop Header - centered with full width
+        pw.Container(
+          width: double.infinity,
           child: pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.center,
             children: [
               pw.Text(
                 shopDetails.shopName.isNotEmpty
                     ? shopDetails.shopName
                     : 'STORE',
                 style: pw.TextStyle(
-                  fontSize: 18,
+                  fontSize: 14,
                   fontWeight: pw.FontWeight.bold,
                 ),
+                textAlign: pw.TextAlign.center,
               ),
+              if (shopDetails.ownerName != null && shopDetails.ownerName!.isNotEmpty) ...[
+                pw.SizedBox(height: 2),
+                pw.Text(
+                  'Prop: ${shopDetails.ownerName}',
+                  style: const pw.TextStyle(fontSize: 8),
+                  textAlign: pw.TextAlign.center,
+                ),
+              ],
               if (shopDetails.address.isNotEmpty) ...[
-                pw.SizedBox(height: 4),
+                pw.SizedBox(height: 3),
                 pw.Text(
                   shopDetails.address,
-                  style: const pw.TextStyle(fontSize: 10),
+                  style: const pw.TextStyle(fontSize: 8),
                   textAlign: pw.TextAlign.center,
                 ),
               ],
@@ -794,7 +813,7 @@ class PdfBillService {
                 pw.SizedBox(height: 2),
                 pw.Text(
                   'Ph: ${shopDetails.phone}',
-                  style: const pw.TextStyle(fontSize: 10),
+                  style: const pw.TextStyle(fontSize: 8),
                   textAlign: pw.TextAlign.center,
                 ),
               ],
@@ -803,16 +822,16 @@ class PdfBillService {
                 pw.SizedBox(height: 2),
                 pw.Text(
                   'GSTIN: ${shopDetails.gstNumber}',
-                  style: const pw.TextStyle(fontSize: 10),
+                  style: const pw.TextStyle(fontSize: 8),
                   textAlign: pw.TextAlign.center,
                 ),
               ],
             ],
           ),
         ),
-        pw.SizedBox(height: 12),
+        pw.SizedBox(height: 10),
         pw.Divider(thickness: 0.5),
-        pw.SizedBox(height: 8),
+        pw.SizedBox(height: 6),
 
         // Bill Info
         pw.Row(
@@ -820,15 +839,15 @@ class PdfBillService {
           children: [
             pw.Text(
               'Bill: ${billData.billNumber}',
-              style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold),
+              style: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold),
             ),
             pw.Text(
               _formatDate(billData.dateTime),
-              style: const pw.TextStyle(fontSize: 10),
+              style: const pw.TextStyle(fontSize: 8),
             ),
           ],
         ),
-        pw.SizedBox(height: 4),
+        pw.SizedBox(height: 3),
 
         // Customer Info - show based on settings
         if (generateViaContact &&
@@ -836,34 +855,34 @@ class PdfBillService {
             billData.customerPhone!.isNotEmpty) ...[
           pw.Text(
             'Phone: ${billData.customerPhone}',
-            style: const pw.TextStyle(fontSize: 10),
+            style: const pw.TextStyle(fontSize: 8),
           ),
           if (showCustomer &&
               billData.customerName != null &&
               billData.customerName!.isNotEmpty)
             pw.Text(
               'Customer: ${billData.customerName}',
-              style: const pw.TextStyle(fontSize: 10),
+              style: const pw.TextStyle(fontSize: 8),
             ),
-          pw.SizedBox(height: 4),
+          pw.SizedBox(height: 3),
         ] else if (showCustomer &&
             billData.customerName != null &&
             billData.customerName!.isNotEmpty) ...[
           pw.Text(
             'Customer: ${billData.customerName}',
-            style: const pw.TextStyle(fontSize: 10),
+            style: const pw.TextStyle(fontSize: 8),
           ),
           if (billData.customerPhone != null &&
               billData.customerPhone!.isNotEmpty)
             pw.Text(
               'Phone: ${billData.customerPhone}',
-              style: const pw.TextStyle(fontSize: 10),
+              style: const pw.TextStyle(fontSize: 8),
             ),
-          pw.SizedBox(height: 4),
+          pw.SizedBox(height: 3),
         ],
 
         pw.Divider(thickness: 0.5),
-        pw.SizedBox(height: 8),
+        pw.SizedBox(height: 6),
 
         // Items Header
         pw.Row(
@@ -873,39 +892,39 @@ class PdfBillService {
               child: pw.Text(
                 'Item',
                 style: pw.TextStyle(
-                  fontSize: 10,
+                  fontSize: 8,
                   fontWeight: pw.FontWeight.bold,
                 ),
               ),
             ),
             pw.SizedBox(
-              width: 40,
+              width: 35,
               child: pw.Text(
                 'Qty',
                 style: pw.TextStyle(
-                  fontSize: 10,
+                  fontSize: 8,
                   fontWeight: pw.FontWeight.bold,
                 ),
                 textAlign: pw.TextAlign.center,
               ),
             ),
             pw.SizedBox(
-              width: 50,
+              width: 45,
               child: pw.Text(
                 'Rate',
                 style: pw.TextStyle(
-                  fontSize: 10,
+                  fontSize: 8,
                   fontWeight: pw.FontWeight.bold,
                 ),
                 textAlign: pw.TextAlign.right,
               ),
             ),
             pw.SizedBox(
-              width: 60,
+              width: 55,
               child: pw.Text(
                 'Amount',
                 style: pw.TextStyle(
-                  fontSize: 10,
+                  fontSize: 8,
                   fontWeight: pw.FontWeight.bold,
                 ),
                 textAlign: pw.TextAlign.right,
@@ -913,15 +932,15 @@ class PdfBillService {
             ),
           ],
         ),
-        pw.SizedBox(height: 4),
+        pw.SizedBox(height: 3),
         pw.Divider(thickness: 0.3),
-        pw.SizedBox(height: 4),
+        pw.SizedBox(height: 3),
 
         // Items
         ...billData.items.expand(
           (item) => [
             pw.Padding(
-              padding: const pw.EdgeInsets.symmetric(vertical: 2),
+              padding: const pw.EdgeInsets.symmetric(vertical: 1),
               child: pw.Row(
                 crossAxisAlignment: pw.CrossAxisAlignment.start,
                 children: [
@@ -932,13 +951,13 @@ class PdfBillService {
                       children: [
                         pw.Text(
                           item.name,
-                          style: const pw.TextStyle(fontSize: 10),
+                          style: const pw.TextStyle(fontSize: 8),
                         ),
                         if (item.companyName != null && item.companyName!.isNotEmpty)
                           pw.Text(
                             item.companyName!,
                             style: pw.TextStyle(
-                              fontSize: 8,
+                              fontSize: 7,
                               color: PdfColors.grey700,
                               fontStyle: pw.FontStyle.italic,
                             ),
@@ -947,7 +966,7 @@ class PdfBillService {
                           pw.Text(
                             'HSN: ${item.hsnCode}',
                             style: pw.TextStyle(
-                              fontSize: 8,
+                              fontSize: 7,
                               color: PdfColors.grey600,
                             ),
                           ),
@@ -955,26 +974,26 @@ class PdfBillService {
                     ),
                   ),
                   pw.SizedBox(
-                    width: 40,
+                    width: 35,
                     child: pw.Text(
                       '${item.quantity}',
-                      style: const pw.TextStyle(fontSize: 10),
+                      style: const pw.TextStyle(fontSize: 8),
                       textAlign: pw.TextAlign.center,
                     ),
                   ),
                   pw.SizedBox(
-                    width: 50,
+                    width: 45,
                     child: pw.Text(
                       item.rate.toStringAsFixed(2),
-                      style: const pw.TextStyle(fontSize: 10),
+                      style: const pw.TextStyle(fontSize: 8),
                       textAlign: pw.TextAlign.right,
                     ),
                   ),
                   pw.SizedBox(
-                    width: 60,
+                    width: 55,
                     child: pw.Text(
                       item.amount.toStringAsFixed(2),
-                      style: const pw.TextStyle(fontSize: 10),
+                      style: const pw.TextStyle(fontSize: 8),
                       textAlign: pw.TextAlign.right,
                     ),
                   ),
@@ -984,14 +1003,14 @@ class PdfBillService {
             // Show returned quantity for this item
             if (item.hasReturns)
               pw.Padding(
-                padding: const pw.EdgeInsets.only(left: 8, bottom: 2),
+                padding: const pw.EdgeInsets.only(left: 6, bottom: 1),
                 child: pw.Row(
                   mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                   children: [
                     pw.Text(
                       'Returned: ${item.returnedQuantity} qty',
                       style: pw.TextStyle(
-                        fontSize: 9,
+                        fontSize: 7,
                         color: PdfColors.orange800,
                         fontWeight: pw.FontWeight.bold,
                       ),
@@ -999,7 +1018,7 @@ class PdfBillService {
                     pw.Text(
                       '-Rs. ${item.returnedAmount.toStringAsFixed(2)}',
                       style: pw.TextStyle(
-                        fontSize: 9,
+                        fontSize: 7,
                         color: PdfColors.orange800,
                         fontWeight: pw.FontWeight.bold,
                       ),
@@ -1010,24 +1029,24 @@ class PdfBillService {
             // Per-item GST breakdown
             if (item.hasItemGst)
               pw.Padding(
-                padding: const pw.EdgeInsets.only(left: 8, bottom: 2),
+                padding: const pw.EdgeInsets.only(left: 6, bottom: 1),
                 child: pw.Row(
                   children: [
                     if (item.cgstPercent > 0)
                       pw.Text(
                         'CGST(${item.cgstPercent.toStringAsFixed(1)}%): ${item.cgstAmount.toStringAsFixed(2)}',
                         style: pw.TextStyle(
-                          fontSize: 8,
+                          fontSize: 7,
                           color: PdfColors.orange800,
                         ),
                       ),
                     if (item.cgstPercent > 0 && item.sgstPercent > 0)
-                      pw.Text('  |  ', style: pw.TextStyle(fontSize: 8, color: PdfColors.grey600)),
+                      pw.Text('  |  ', style: pw.TextStyle(fontSize: 7, color: PdfColors.grey600)),
                     if (item.sgstPercent > 0)
                       pw.Text(
                         'SGST(${item.sgstPercent.toStringAsFixed(1)}%): ${item.sgstAmount.toStringAsFixed(2)}',
                         style: pw.TextStyle(
-                          fontSize: 8,
+                          fontSize: 7,
                           color: PdfColors.orange800,
                         ),
                       ),
@@ -1037,9 +1056,9 @@ class PdfBillService {
           ],
         ),
 
-        pw.SizedBox(height: 8),
+        pw.SizedBox(height: 6),
         pw.Divider(thickness: 0.5),
-        pw.SizedBox(height: 8),
+        pw.SizedBox(height: 6),
 
         // Returns summary section
         if (billData.hasAnyReturns) ...[
@@ -1048,22 +1067,22 @@ class PdfBillService {
             children: [
               pw.Text(
                 'Returned Items:',
-                style: const pw.TextStyle(fontSize: 10),
+                style: const pw.TextStyle(fontSize: 8),
               ),
               pw.Text(
                 '${billData.totalReturnedQuantity} qty',
-                style: const pw.TextStyle(fontSize: 10),
+                style: const pw.TextStyle(fontSize: 8),
               ),
             ],
           ),
-          pw.SizedBox(height: 4),
+          pw.SizedBox(height: 3),
           pw.Row(
             mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
             children: [
               pw.Text(
                 'Return Amount:',
                 style: pw.TextStyle(
-                  fontSize: 10,
+                  fontSize: 8,
                   fontWeight: pw.FontWeight.bold,
                   color: PdfColors.orange800,
                 ),
@@ -1071,16 +1090,16 @@ class PdfBillService {
               pw.Text(
                 '-Rs. ${billData.totalReturnedAmount.toStringAsFixed(2)}',
                 style: pw.TextStyle(
-                  fontSize: 10,
+                  fontSize: 8,
                   fontWeight: pw.FontWeight.bold,
                   color: PdfColors.orange800,
                 ),
               ),
             ],
           ),
-          pw.SizedBox(height: 8),
+          pw.SizedBox(height: 6),
           pw.Divider(thickness: 0.5),
-          pw.SizedBox(height: 8),
+          pw.SizedBox(height: 6),
         ],
 
         // Totals
@@ -1131,9 +1150,9 @@ class PdfBillService {
             ),
           ],
         ],
-        pw.SizedBox(height: 8),
+        pw.SizedBox(height: 6),
         pw.Divider(thickness: 0.5),
-        pw.SizedBox(height: 8),
+        pw.SizedBox(height: 6),
 
         // Grand Total
         pw.Row(
@@ -1141,31 +1160,31 @@ class PdfBillService {
           children: [
             pw.Text(
               'GRAND TOTAL',
-              style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
+              style: pw.TextStyle(fontSize: 11, fontWeight: pw.FontWeight.bold),
             ),
             pw.Text(
               'Rs. ${billData.grandTotal.toStringAsFixed(2)}',
-              style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
+              style: pw.TextStyle(fontSize: 11, fontWeight: pw.FontWeight.bold),
             ),
           ],
         ),
 
         // Payment Details Section
         if (billData.hasPaymentInfo) ...[
-          pw.SizedBox(height: 12),
+          pw.SizedBox(height: 10),
           pw.Divider(thickness: 0.3),
-          pw.SizedBox(height: 8),
+          pw.SizedBox(height: 6),
 
           // Paid Amount
           if (billData.paidAmount != null)
             pw.Row(
               mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
               children: [
-                pw.Text('Paid Amount', style: const pw.TextStyle(fontSize: 10)),
+                pw.Text('Paid Amount', style: const pw.TextStyle(fontSize: 8)),
                 pw.Text(
                   'Rs. ${billData.paidAmount!.toStringAsFixed(2)}',
                   style: pw.TextStyle(
-                    fontSize: 10,
+                    fontSize: 8,
                     fontWeight: pw.FontWeight.bold,
                     color: PdfColors.green700,
                   ),
@@ -1175,21 +1194,21 @@ class PdfBillService {
 
           // Pending Amount
           if (billData.hasPendingAmount) ...[
-            pw.SizedBox(height: 4),
+            pw.SizedBox(height: 3),
             pw.Row(
               mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
               children: [
                 pw.Text(
                   'Pending Amount',
                   style: pw.TextStyle(
-                    fontSize: 10,
+                    fontSize: 8,
                     fontWeight: pw.FontWeight.bold,
                   ),
                 ),
                 pw.Text(
                   'Rs. ${billData.pendingAmount!.toStringAsFixed(2)}',
                   style: pw.TextStyle(
-                    fontSize: 10,
+                    fontSize: 8,
                     fontWeight: pw.FontWeight.bold,
                     color: PdfColors.orange700,
                   ),
@@ -1201,11 +1220,11 @@ class PdfBillService {
           // Total Due Amount
           if (billData.totalDueAmount != null &&
               billData.totalDueAmount! > 0) ...[
-            pw.SizedBox(height: 8),
-            pw.Divider(thickness: 0.3),
             pw.SizedBox(height: 6),
+            pw.Divider(thickness: 0.3),
+            pw.SizedBox(height: 4),
             pw.Container(
-              padding: const pw.EdgeInsets.all(8),
+              padding: const pw.EdgeInsets.all(6),
               decoration: pw.BoxDecoration(
                 color: PdfColors.orange50,
                 border: pw.Border.all(color: PdfColors.orange200),
@@ -1217,14 +1236,14 @@ class PdfBillService {
                   pw.Text(
                     'TOTAL DUE',
                     style: pw.TextStyle(
-                      fontSize: 11,
+                      fontSize: 9,
                       fontWeight: pw.FontWeight.bold,
                     ),
                   ),
                   pw.Text(
                     'Rs. ${billData.totalDueAmount!.toStringAsFixed(2)}',
                     style: pw.TextStyle(
-                      fontSize: 12,
+                      fontSize: 9,
                       fontWeight: pw.FontWeight.bold,
                       color: PdfColors.orange800,
                     ),
@@ -1235,9 +1254,9 @@ class PdfBillService {
           ],
         ],
 
-        pw.SizedBox(height: 16),
+        pw.SizedBox(height: 12),
         pw.Divider(thickness: 0.3),
-        pw.SizedBox(height: 8),
+        pw.SizedBox(height: 6),
 
         // Footer
         pw.Center(
@@ -1246,14 +1265,14 @@ class PdfBillService {
               pw.Text(
                 'Thank you for your purchase!',
                 style: pw.TextStyle(
-                  fontSize: 10,
+                  fontSize: 8,
                   fontWeight: pw.FontWeight.bold,
                 ),
               ),
-              pw.SizedBox(height: 4),
+              pw.SizedBox(height: 3),
               pw.Text(
                 'Please visit again',
-                style: const pw.TextStyle(fontSize: 9),
+                style: const pw.TextStyle(fontSize: 7),
               ),
             ],
           ),
@@ -1266,10 +1285,10 @@ class PdfBillService {
     return pw.Row(
       mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
       children: [
-        pw.Text(label, style: const pw.TextStyle(fontSize: 10)),
+        pw.Text(label, style: const pw.TextStyle(fontSize: 8)),
         pw.Text(
           'Rs. ${amount.abs().toStringAsFixed(2)}${amount < 0 ? ' -' : ''}',
-          style: const pw.TextStyle(fontSize: 10),
+          style: const pw.TextStyle(fontSize: 8),
         ),
       ],
     );
