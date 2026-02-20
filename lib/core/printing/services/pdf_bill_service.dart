@@ -807,9 +807,12 @@ class PdfBillService {
                   textAlign: pw.TextAlign.center,
                 ),
               ],
+              // Dotted line between address and owner details
+              pw.SizedBox(height: 4),
+              pw.Divider(thickness: 0.5),
               // Owner name and contact - right aligned
               if (shopDetails.ownerName != null && shopDetails.ownerName!.isNotEmpty) ...[
-                pw.SizedBox(height: 2),
+                pw.SizedBox(height: 3),
                 pw.Align(
                   alignment: pw.Alignment.centerRight,
                   child: pw.Text(
@@ -840,7 +843,7 @@ class PdfBillService {
             ],
           ),
         ),
-        pw.SizedBox(height: 10),
+        pw.SizedBox(height: 2),
         pw.Divider(thickness: 0.5),
         pw.SizedBox(height: 6),
 
