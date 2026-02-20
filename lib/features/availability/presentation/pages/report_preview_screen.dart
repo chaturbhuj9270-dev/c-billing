@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:c_billing/features/inventory_management/domain/entities/report_item.dart';
 import 'package:c_billing/core/services/inventory_report_service.dart';
 import 'package:c_billing/core/services/stock_report_settings_service.dart';
+import 'package:c_billing/common_widgets/file_preview_page.dart';
 import 'package:intl/intl.dart';
 
 class ReportPreviewScreen extends StatefulWidget {
@@ -173,26 +174,25 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
         );
       }
 
-      await _reportService.shareReport(file);
-
+      // Navigate to file preview page
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.check_circle, color: Colors.white, size: 20),
-                const SizedBox(width: 12),
-                Text('Report generated with ${selected.length} products',
-                  style: const TextStyle(fontFamily: 'Literata')),
-              ],
+        await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => FilePreviewPage(
+              file: file,
+              fileName: widget.reportTitle,
+              fileType: widget.selectedFormat == ReportFormat.pdf
+                  ? FilePreviewType.pdf
+                  : FilePreviewType.csv,
+              subtitle: '${selected.length} products • ${DateFormat('dd MMM yyyy').format(DateTime.now())}',
+              onClose: () {
+                // Pop back to availability page when preview is closed
+                if (mounted) Navigator.of(context).pop();
+              },
             ),
-            backgroundColor: const Color(0xFF1B4D3E),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            margin: const EdgeInsets.all(16),
           ),
         );
-        Navigator.of(context).pop();
       }
     } catch (e) {
       if (mounted) {

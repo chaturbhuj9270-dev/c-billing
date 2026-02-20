@@ -1,14 +1,17 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:isar_community/isar.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:c_billing/core/services/language_service.dart';
 import 'package:c_billing/core/services/dashboard_refresh_service.dart';
 import 'package:c_billing/core/services/isar_service.dart';
 import 'package:c_billing/core/services/product_settings_service.dart';
 import 'package:c_billing/core/localization/app_localizations.dart';
+import 'package:c_billing/common_widgets/file_preview_page.dart';
 import '../../offline/entities/purchase_batch_entity.dart';
 import '../../offline/controllers/purchase_batch_offline_controller.dart';
 import '../../data/services/purchase_sync_service.dart';
@@ -17,7 +20,6 @@ import '../../data/services/purchase_report_pdf_generator.dart';
 import '../../../supplier/offline/controllers/supplier_offline_controller.dart';
 import '../../../supplier/offline/entities/supplier_entity.dart';
 import '../../../product/offline/controllers/product_offline_controller.dart';
-import '../../../../common_widgets/action_menu.dart';
 import '../widgets/purchase_filter_widget.dart';
 import '../widgets/purchase_list_widget.dart';
 import 'purchase_page.dart';
@@ -1479,6 +1481,12 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
       
       debugPrint('[PurchaseReport] PDF generated: ${pdfBytes.length} bytes');
       
+      // Save to temporary file for preview
+      final tempDir = await getTemporaryDirectory();
+      final timestamp = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
+      final tempFile = File('${tempDir.path}/purchase_report_$timestamp.pdf');
+      await tempFile.writeAsBytes(pdfBytes);
+      
       // Dismiss loading snackbar
       if (mounted) {
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
@@ -1489,92 +1497,20 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
         return;
       }
 
-      // Show action bottom sheet immediately
-      showModalBottomSheet(
-        context: context,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      // Navigate to file preview page
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => FilePreviewPage(
+            file: tempFile,
+            fileName: 'Purchase Report',
+            fileType: FilePreviewType.pdf,
+            subtitle: '${filtered.length} entries • ${DateFormat('dd MMM yyyy').format(DateTime.now())}',
+          ),
         ),
-        builder: (ctx) {
-          return SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 40,
-                    height: 4,
-                    margin: const EdgeInsets.only(bottom: 16),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[300],
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                  const Text(
-                    'Purchase Report Ready',
-                    style: TextStyle(
-                      fontFamily: 'Literata',
-                      fontWeight: FontWeight.w700,
-                      fontSize: 18,
-                      color: Color(0xFF1B4D3E),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '${filtered.length} entries',
-                    style: TextStyle(fontSize: 13, color: Colors.grey[600]),
-                  ),
-                  const SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      _reportActionButton(
-                        icon: Icons.print_rounded,
-                        label: 'Print',
-                        color: const Color(0xFF1B4D3E),
-                        onTap: () async {
-                          Navigator.pop(ctx);
-                          await PurchaseReportPdfGenerator.printReport(pdfBytes);
-                        },
-                      ),
-                      _reportActionButton(
-                        icon: Icons.share_rounded,
-                        label: 'Share',
-                        color: Colors.blue.shade700,
-                        onTap: () async {
-                          Navigator.pop(ctx);
-                          await PurchaseReportPdfGenerator.shareReport(pdfBytes);
-                        },
-                      ),
-                      _reportActionButton(
-                        icon: Icons.save_alt_rounded,
-                        label: 'Save',
-                        color: Colors.orange.shade700,
-                        onTap: () async {
-                          Navigator.pop(ctx);
-                          final path = await PurchaseReportPdfGenerator.saveLocally(pdfBytes);
-                          if (mounted && path != null) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('Report saved: ${path.split('/').last}'),
-                                duration: const Duration(seconds: 3),
-                              ),
-                            );
-                          }
-                        },
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                ],
-              ),
-            ),
-          );
-        },
-      ).whenComplete(() {
-        _isGeneratingReport = false;
-      });
+      );
+      
+      _isGeneratingReport = false;
     } catch (e, stack) {
       debugPrint('[PurchaseReport] Error: $e');
       debugPrint('[PurchaseReport] Stack: $stack');
@@ -1591,41 +1527,6 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
     } finally {
       _isGeneratingReport = false;
     }
-  }
-
-  Widget _reportActionButton({
-    required IconData icon,
-    required String label,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Icon(icon, color: color, size: 28),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            label,
-            style: TextStyle(
-              fontFamily: 'Literata',
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: color,
-            ),
-          ),
-        ],
-      ),
-    );
   }
 
   Widget _buildHeader() {
@@ -1778,116 +1679,6 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildSectionHeader() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              _localizations.purchaseHistory,
-              style: const TextStyle(
-                fontFamily: 'Literata',
-                fontWeight: FontWeight.w800,
-                fontSize: 20,
-                color: Color(0xFF1B4D3E),
-              ),
-            ),
-            Text(
-              _localizations.trackPurchases,
-              style: TextStyle(
-                fontFamily: 'Literata',
-                fontWeight: FontWeight.w400,
-                fontSize: 12,
-                color: Colors.grey[600],
-              ),
-            ),
-          ],
-        ),
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            IconButton(
-              onPressed: () {
-                debugPrint('[PurchaseReport] Report IconButton tapped (embedded mode)!');
-                _generatePurchaseReport();
-              },
-              icon: const Icon(
-                Icons.description_rounded,
-                color: Color(0xFF1B4D3E),
-              ),
-              tooltip: 'Generate Report',
-            ),
-            PopupMenuButton<String>(
-              icon: const Icon(
-                Icons.settings_rounded,
-                color: Color(0xFF1B4D3E),
-              ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              onSelected: (value) async {
-                if (value == 'purchase_settings') {
-                  await Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const PurchaseSettingsPage(),
-                    ),
-                  );
-                  setState(() {});
-                } else if (value == 'report_settings') {
-                  await Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const PurchaseReportSettingsPage(),
-                    ),
-                  );
-                }
-              },
-              itemBuilder: (context) => [
-                PopupMenuItem<String>(
-                  value: 'purchase_settings',
-                  child: Row(
-                    children: [
-                      Icon(Icons.tune_rounded, 
-                          color: Colors.grey[700], size: 20),
-                      const SizedBox(width: 12),
-                      const Text(
-                        'Purchase Settings',
-                        style: TextStyle(
-                          fontFamily: 'Literata',
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                PopupMenuItem<String>(
-                  value: 'report_settings',
-                  child: Row(
-                    children: [
-                      Icon(Icons.view_column_rounded, 
-                          color: Colors.grey[700], size: 20),
-                      const SizedBox(width: 12),
-                      const Text(
-                        'Report Settings',
-                        style: TextStyle(
-                          fontFamily: 'Literata',
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ],
     );
   }
 
