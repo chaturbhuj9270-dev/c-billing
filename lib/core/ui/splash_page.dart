@@ -42,7 +42,17 @@ class _SplashPageState extends State<SplashPage> {
     _localizations = AppLocalizations.of(
       LanguageService.instance.currentLanguage,
     );
-    _initializeApp();
+    
+    // Precache logo for instant display
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        precacheImage(const AssetImage('assets/images/logo.png'), context);
+      }
+    });
+    
+    // Defer initialization until after first frame is rendered
+    // This ensures splash screen shows immediately
+    Future.microtask(() => _initializeApp());
   }
 
   Future<void> _initializeApp() async {
@@ -295,114 +305,158 @@ class _SplashPageState extends State<SplashPage> {
 
   @override
   Widget build(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
+    
     return Scaffold(
       body: Container(
         width: double.infinity,
         height: double.infinity,
-        decoration: const BoxDecoration(color: Color(0xFFE8E8E4)),
-        child: Column(
-          children: [
-            // Top spacer - smaller
-            const SizedBox(height: 40),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              const Color(0xFFE8F5E9),
+              const Color(0xFFE8E8E4),
+              const Color(0xFFF1F8E9),
+            ],
+          ),
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              // Top spacer
+              SizedBox(height: screenHeight * 0.08),
 
-            // Center section with logo and text
-            Expanded(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Logo image
-                  Container(
-                    width: 110,
-                    height: 110,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(28),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFF1B4D3E).withOpacity(0.2),
-                          blurRadius: 20,
-                          offset: const Offset(0, 8),
-                        ),
-                      ],
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(28),
-                      child: Image.asset(
-                        'assets/images/logo.png',
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 40),
-
-                  // App name
-                  Text(
-                    _localizations.appName,
-                    style: const TextStyle(
-                      color: Color(0xFF1B4D3E),
-                      fontSize: 46,
-                      fontWeight: FontWeight.w600,
-                      fontFamily: 'Literata',
-                      letterSpacing: 3,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Tagline
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Text(
-                      _localizations.tagline,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: const Color(0xFF1B4D3E).withOpacity(0.55),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        fontFamily: 'Literata',
-                        letterSpacing: 2,
-                        height: 1.7,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            // Unlock Now Button - Only visible when biometric lock is enabled
-            if (_showUnlockButton)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 30, left: 40, right: 40),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+              // Center section with logo and text
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Logo with enhanced styling
+                    Hero(
+                      tag: 'app_logo',
                       child: Container(
+                        width: 120,
+                        height: 120,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(32),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF1B4D3E).withOpacity(0.25),
+                              blurRadius: 30,
+                              offset: const Offset(0, 10),
+                              spreadRadius: 2,
+                            ),
+                            BoxShadow(
+                              color: Colors.white.withOpacity(0.8),
+                              blurRadius: 15,
+                              offset: const Offset(-5, -5),
+                            ),
+                          ],
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(32),
+                          child: Image.asset(
+                            'assets/images/logo.png',
+                            fit: BoxFit.cover,
+                            gaplessPlayback: true,
+                            cacheWidth: 360, // 3x for high DPI screens
+                            cacheHeight: 360,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+
+                    // App name with gradient
+                    ShaderMask(
+                      shaderCallback: (bounds) => const LinearGradient(
+                        colors: [
+                          Color(0xFF1B4D3E),
+                          Color(0xFF2E7D5B),
+                        ],
+                      ).createShader(bounds),
+                      child: Text(
+                        _localizations.appName,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 48,
+                          fontWeight: FontWeight.w700,
+                          fontFamily: 'Literata',
+                          letterSpacing: 2.5,
+                          height: 1.1,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Decorative line
+                    Container(
+                      width: 60,
+                      height: 3,
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [
+                            Color(0xFF1B4D3E),
+                            Color(0xFF2E7D5B),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Tagline
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 40),
+                      child: Text(
+                        _localizations.tagline,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: const Color(0xFF1B4D3E).withOpacity(0.6),
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          fontFamily: 'Literata',
+                          letterSpacing: 1.2,
+                          height: 1.6,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Unlock Now Button - Only visible when biometric lock is enabled
+              if (_showUnlockButton)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(28),
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                      child: Container(
+                        width: double.infinity,
+                        height: 56,
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                             colors: [
-                              const Color(
-                                0xFF1B4D3E,
-                              ).withValues(alpha: 0.25),
-                              const Color(
-                                0xFF2E7D32,
-                              ).withValues(alpha: 0.15),
+                              Colors.white.withOpacity(0.25),
+                              Colors.white.withOpacity(0.15),
                             ],
                           ),
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(28),
                           border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.3),
+                            color: Colors.white.withOpacity(0.3),
                             width: 1.5,
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(
-                                0xFF1B4D3E,
-                              ).withValues(alpha: 0.2),
-                              blurRadius: 12,
-                              offset: const Offset(0, 4),
+                              color: const Color(0xFF1B4D3E).withOpacity(0.2),
+                              blurRadius: 20,
+                              offset: const Offset(0, 8),
                             ),
                           ],
                         ),
@@ -410,35 +464,58 @@ class _SplashPageState extends State<SplashPage> {
                           color: Colors.transparent,
                           child: InkWell(
                             onTap: _showUnlockBiometric,
-                            borderRadius: BorderRadius.circular(12),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                vertical: 14,
-                              ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.lock_open,
-                                    size: 20,
-                                    color: Colors.white.withValues(
-                                      alpha: 0.95,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    _localizations.unlockNow,
-                                    style: TextStyle(
-                                      color: Colors.white.withValues(
-                                        alpha: 0.95,
+                            borderRadius: BorderRadius.circular(28),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                ClipOval(
+                                  child: BackdropFilter(
+                                    filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                                    child: Container(
+                                      padding: const EdgeInsets.all(8),
+                                      decoration: BoxDecoration(
+                                        gradient: LinearGradient(
+                                          begin: Alignment.topLeft,
+                                          end: Alignment.bottomRight,
+                                          colors: [
+                                            Colors.white.withOpacity(0.3),
+                                            Colors.white.withOpacity(0.2),
+                                          ],
+                                        ),
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                          color: Colors.white.withOpacity(0.4),
+                                          width: 1.5,
+                                        ),
                                       ),
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
-                                      fontFamily: 'Literata',
+                                      child: Icon(
+                                        Icons.fingerprint,
+                                        size: 24,
+                                        color: const Color(0xFF1B4D3E),
+                                      ),
                                     ),
                                   ),
-                                ],
-                              ),
+                                ),
+                                const SizedBox(width: 12),
+                                ShaderMask(
+                                  shaderCallback: (bounds) => const LinearGradient(
+                                    colors: [
+                                      Color(0xFF1B4D3E),
+                                      Color(0xFF2E7D5B),
+                                    ],
+                                  ).createShader(bounds),
+                                  child: Text(
+                                    _localizations.unlockNow,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 17,
+                                      fontWeight: FontWeight.w700,
+                                      fontFamily: 'Literata',
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ),
@@ -446,82 +523,154 @@ class _SplashPageState extends State<SplashPage> {
                     ),
                   ),
                 ),
-              ),
 
-            // Bottom branding section
-            Padding(
-              padding: const EdgeInsets.only(bottom: 60),
-              child: Column(
-                children: [
-                  // Divider line
-                  Container(
-                    width: 280,
-                    height: 2,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          const Color(0xFF1B4D3E),
-                          const Color(0xFF1B4D3E).withOpacity(0.1),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 32),
+              // Spacer to push footer up or down based on button visibility
+              SizedBox(height: _showUnlockButton ? 12 : 32),
 
-                  // Premium label
-                  Text(
-                    'PREMIUM FINANCIAL SOLUTIONS',
-                    style: TextStyle(
-                      color: const Color(0xFF1B4D3E).withOpacity(0.45),
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                      fontFamily: 'Literata',
-                      letterSpacing: 1.5,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-
-                  // Powered by
-                  RichText(
-                    text: TextSpan(
+              // Bottom branding section with enhanced design
+              Padding(
+                padding: EdgeInsets.only(
+                  bottom: _showUnlockButton ? 40 : 50,
+                ),
+                child: Column(
+                  children: [
+                    // Elegant divider
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        TextSpan(
-                          text: 'Powered by ',
-                          style: TextStyle(
-                            color: const Color(0xFF1B4D3E).withOpacity(0.35),
-                            fontSize: 9.5,
-                            fontWeight: FontWeight.w400,
-                            fontFamily: 'Literata',
+                        Container(
+                          width: 40,
+                          height: 1,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                Colors.transparent,
+                                const Color(0xFF1B4D3E).withOpacity(0.3),
+                              ],
+                            ),
                           ),
                         ),
-                        const TextSpan(
-                          text: 'CHATURBHUJ SOLUTIONS',
-                          style: TextStyle(
-                            color: Color(0xFF1B4D3E),
-                            fontSize: 9.5,
-                            fontWeight: FontWeight.w700,
-                            fontFamily: 'Literata',
-                            letterSpacing: 0.5,
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          child: Container(
+                            width: 4,
+                            height: 4,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF1B4D3E).withOpacity(0.3),
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ),
+                        Container(
+                          width: 40,
+                          height: 1,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                const Color(0xFF1B4D3E).withOpacity(0.3),
+                                Colors.transparent,
+                              ],
+                            ),
                           ),
                         ),
                       ],
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    'Newasa +91 9970662978',
-                    style: TextStyle(
-                      color: Color(0xFF1B4D3E),
-                      fontSize: 9.5,
-                      fontWeight: FontWeight.w700,
-                      fontFamily: 'Literata',
-                      letterSpacing: 0.5,
+                    const SizedBox(height: 20),
+
+                    // Premium label with better styling
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1B4D3E).withOpacity(0.08),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        'PREMIUM FINANCIAL SOLUTIONS',
+                        style: TextStyle(
+                          color: const Color(0xFF1B4D3E).withOpacity(0.65),
+                          fontSize: 9,
+                          fontWeight: FontWeight.w700,
+                          fontFamily: 'Literata',
+                          letterSpacing: 1.8,
+                        ),
+                      ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 16),
+
+                    // Powered by with better hierarchy
+                    RichText(
+                      textAlign: TextAlign.center,
+                      text: TextSpan(
+                        children: [
+                          TextSpan(
+                            text: 'Powered by ',
+                            style: TextStyle(
+                              color: const Color(0xFF1B4D3E).withOpacity(0.45),
+                              fontSize: 10,
+                              fontWeight: FontWeight.w400,
+                              fontFamily: 'Literata',
+                            ),
+                          ),
+                          const TextSpan(
+                            text: 'CHATURBHUJ SOLUTIONS',
+                            style: TextStyle(
+                              color: Color(0xFF1B4D3E),
+                              fontSize: 10,
+                              fontWeight: FontWeight.w800,
+                              fontFamily: 'Literata',
+                              letterSpacing: 0.8,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    
+                    // Contact with icon
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.location_on_outlined,
+                          size: 11,
+                          color: const Color(0xFF1B4D3E).withOpacity(0.5),
+                        ),
+                        const SizedBox(width: 4),
+                        const Text(
+                          'Newasa',
+                          style: TextStyle(
+                            color: Color(0xFF1B4D3E),
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            fontFamily: 'Literata',
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Icon(
+                          Icons.phone_outlined,
+                          size: 11,
+                          color: const Color(0xFF1B4D3E).withOpacity(0.5),
+                        ),
+                        const SizedBox(width: 4),
+                        const Text(
+                          '+91 9970662978',
+                          style: TextStyle(
+                            color: Color(0xFF1B4D3E),
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            fontFamily: 'Literata',
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
