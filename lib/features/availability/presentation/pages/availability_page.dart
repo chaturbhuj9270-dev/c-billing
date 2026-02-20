@@ -171,10 +171,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
     super.dispose();
   }
 
-  final _reportService = InventoryReportService();
-
   void _showReportBottomSheet() {
-    Set<ReportType> selectedTypes = {ReportType.outOfStock};
     ReportFormat selectedFormat = ReportFormat.pdf;
 
     showModalBottomSheet(
@@ -249,77 +246,48 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                 ),
               ),
               const Divider(height: 1),
-              // Report Type Selection
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+              // Filter info banner
+              Container(
+                margin: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1B4D3E).withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: const Color(0xFF1B4D3E).withValues(alpha: 0.2),
+                  ),
+                ),
+                child: Row(
                   children: [
-                    Text(
-                      _localizations.reportType,
-                      style: const TextStyle(
-                        fontFamily: 'Literata',
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF1B4D3E),
+                    Icon(
+                      _getFilterIcon(),
+                      color: const Color(0xFF1B4D3E),
+                      size: 22,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Exporting: ${_getFilterLabel()}',
+                            style: const TextStyle(
+                              fontFamily: 'Literata',
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF1B4D3E),
+                            ),
+                          ),
+                          Text(
+                            '${_filteredGroupedProducts.length} products will be included',
+                            style: TextStyle(
+                              fontFamily: 'Literata',
+                              fontSize: 12,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      _localizations.selectReportTypes,
-                      style: TextStyle(
-                        fontFamily: 'Literata',
-                        fontSize: 11,
-                        color: Colors.grey[600],
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    _buildReportTypeCheckbox(
-                      _localizations.outOfStockProducts,
-                      _localizations.productsWithZero,
-                      Icons.error_outline,
-                      Colors.red,
-                      ReportType.outOfStock,
-                      selectedTypes,
-                      (type, isChecked) => setSheetState(() {
-                        if (isChecked) {
-                          selectedTypes.add(type);
-                        } else {
-                          selectedTypes.remove(type);
-                        }
-                      }),
-                    ),
-                    const SizedBox(height: 8),
-                    _buildReportTypeCheckbox(
-                      _localizations.lowStockProducts,
-                      _localizations.productsWithLow,
-                      Icons.warning_amber,
-                      Colors.orange,
-                      ReportType.lowStock,
-                      selectedTypes,
-                      (type, isChecked) => setSheetState(() {
-                        if (isChecked) {
-                          selectedTypes.add(type);
-                        } else {
-                          selectedTypes.remove(type);
-                        }
-                      }),
-                    ),
-                    const SizedBox(height: 8),
-                    _buildReportTypeCheckbox(
-                      _localizations.allProducts,
-                      _localizations.completeInventory,
-                      Icons.inventory_2,
-                      const Color(0xFF1B4D3E),
-                      ReportType.allProducts,
-                      selectedTypes,
-                      (type, isChecked) => setSheetState(() {
-                        if (isChecked) {
-                          selectedTypes.add(type);
-                        } else {
-                          selectedTypes.remove(type);
-                        }
-                      }),
                     ),
                   ],
                 ),
@@ -382,14 +350,11 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                 child: SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: selectedTypes.isEmpty
+                    onPressed: _filteredGroupedProducts.isEmpty
                         ? null
                         : () async {
                             Navigator.pop(context);
-                            await _openPreviewScreen(
-                              selectedTypes,
-                              selectedFormat,
-                            );
+                            await _openPreviewScreen(selectedFormat);
                           },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF1B4D3E),
@@ -419,84 +384,6 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildReportTypeCheckbox(
-    String title,
-    String subtitle,
-    IconData icon,
-    Color iconColor,
-    ReportType type,
-    Set<ReportType> selectedTypes,
-    Function(ReportType, bool) onToggle,
-  ) {
-    final isSelected = selectedTypes.contains(type);
-    return InkWell(
-      onTap: () => onToggle(type, !isSelected),
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? const Color(0xFF1B4D3E).withValues(alpha: 0.1)
-              : Colors.grey[50],
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isSelected ? const Color(0xFF1B4D3E) : Colors.grey[200]!,
-            width: isSelected ? 2 : 1,
-          ),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: iconColor.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(icon, color: iconColor, size: 20),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: TextStyle(
-                      fontFamily: 'Literata',
-                      fontSize: 14,
-                      fontWeight: isSelected
-                          ? FontWeight.w600
-                          : FontWeight.w500,
-                      color: isSelected
-                          ? const Color(0xFF1B4D3E)
-                          : Colors.black87,
-                    ),
-                  ),
-                  Text(
-                    subtitle,
-                    style: TextStyle(
-                      fontFamily: 'Literata',
-                      fontSize: 11,
-                      color: Colors.grey[600],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Checkbox(
-              value: isSelected,
-              onChanged: (value) => onToggle(type, value ?? false),
-              activeColor: const Color(0xFF1B4D3E),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(4),
-              ),
-            ),
-          ],
         ),
       ),
     );
@@ -543,51 +430,60 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
     );
   }
 
-  Future<void> _openPreviewScreen(
-    Set<ReportType> reportTypes,
-    ReportFormat format,
-  ) async {
+  Future<void> _openPreviewScreen(ReportFormat format) async {
     try {
-      // Combine products from all selected types (avoiding duplicates)
-      final Set<String> addedProductIds = {};
-      final List<Product> combinedProducts = [];
-
-      for (final reportType in reportTypes) {
-        final filteredProducts = _reportService.filterProducts(
-          _products,
-          reportType,
-        );
-        for (final product in filteredProducts) {
-          if (!addedProductIds.contains(product.id)) {
-            addedProductIds.add(product.id);
-            combinedProducts.add(product);
-          }
-        }
-      }
-
-      if (combinedProducts.isEmpty) {
+      if (_filteredGroupedProducts.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('No products found for selected report types'),
+            content: Text('No products found for current filter'),
             backgroundColor: Colors.orange,
           ),
         );
         return;
       }
 
+      // Convert GroupedProducts to Products for ReportItems
+      final List<Product> productsForReport = [];
+      for (final group in _filteredGroupedProducts) {
+        // Use the first sub-entry to create a Product representation
+        if (group.subEntries.isNotEmpty) {
+          final firstEntry = group.subEntries.first;
+          productsForReport.add(Product(
+            id: firstEntry.productId,
+            indexNo: 0,
+            name: group.productName,
+            companyName: group.companies.isNotEmpty ? group.companies.first : '',
+            category: '',
+            purchasePrice: group.minPurchasePrice,
+            salesPrice: group.minSalesPrice,
+            currentStock: group.totalStock,
+            createdAt: firstEntry.purchaseDate,
+            updatedAt: firstEntry.purchaseDate,
+            defaultSupplierName: firstEntry.supplierName,
+          ));
+        }
+      }
+
       // Convert to ReportItems
-      final reportItems = combinedProducts
+      final reportItems = productsForReport
           .map((product) => ReportItem.fromProduct(product))
           .toList();
 
-      // Generate combined report title
-      final typeLabels = reportTypes
-          .map((t) => _reportService.getReportTypeLabel(t))
-          .join(', ');
+      // Generate report title based on current filter
+      final reportTitle = '${_getFilterLabel()} Report';
 
-      final reportTitle = reportTypes.length == 1
-          ? _reportService.getReportTypeLabel(reportTypes.first)
-          : 'Combined Report: $typeLabels';
+      // Determine report type based on filter
+      ReportType reportType;
+      switch (_stockFilter) {
+        case 'out_of_stock':
+          reportType = ReportType.outOfStock;
+          break;
+        case 'low_stock':
+          reportType = ReportType.lowStock;
+          break;
+        default:
+          reportType = ReportType.allProducts;
+      }
 
       // Navigate to preview screen
       await Navigator.push(
@@ -595,9 +491,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
         MaterialPageRoute(
           builder: (context) => ReportPreviewScreen(
             reportItems: reportItems,
-            reportType: reportTypes.length == 1
-                ? reportTypes.first
-                : ReportType.allProducts,
+            reportType: reportType,
             selectedFormat: format,
             reportTitle: reportTitle,
           ),
@@ -612,6 +506,36 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
           ),
         );
       }
+    }
+  }
+
+  String _getFilterLabel() {
+    switch (_stockFilter) {
+      case 'in_stock':
+        return _localizations.inStock;
+      case 'low_stock':
+        return _localizations.lowStock;
+      case 'out_of_stock':
+        return _localizations.outOfStock;
+      case 'expired':
+        return 'Expired Products';
+      default:
+        return _localizations.allProducts;
+    }
+  }
+
+  IconData _getFilterIcon() {
+    switch (_stockFilter) {
+      case 'in_stock':
+        return Icons.check_circle_rounded;
+      case 'low_stock':
+        return Icons.warning_rounded;
+      case 'out_of_stock':
+        return Icons.error_rounded;
+      case 'expired':
+        return Icons.event_busy_rounded;
+      default:
+        return Icons.inventory_2_rounded;
     }
   }
 
