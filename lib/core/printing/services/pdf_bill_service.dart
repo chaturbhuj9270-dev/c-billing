@@ -809,7 +809,6 @@ class PdfBillService {
               ],
               // Dotted line between address and owner details
               pw.SizedBox(height: 4),
-              pw.Divider(thickness: 0.5),
               // Owner name and contact - right aligned
               if (shopDetails.ownerName != null && shopDetails.ownerName!.isNotEmpty) ...[
                 pw.SizedBox(height: 3),
@@ -843,9 +842,9 @@ class PdfBillService {
             ],
           ),
         ),
-        pw.SizedBox(height: 2),
+        pw.SizedBox(height: 1),
         pw.Divider(thickness: 0.5),
-        pw.SizedBox(height: 6),
+        pw.SizedBox(height: 1),
 
         // Bill Info
         pw.Row(
@@ -892,11 +891,11 @@ class PdfBillService {
               'Phone: ${billData.customerPhone}',
               style: const pw.TextStyle(fontSize: 8),
             ),
-          pw.SizedBox(height: 3),
+          pw.SizedBox(height: 1),
         ],
 
         pw.Divider(thickness: 0.5),
-        pw.SizedBox(height: 6),
+        pw.SizedBox(height: 3),
 
         // Items Header
         pw.Row(
@@ -1164,9 +1163,9 @@ class PdfBillService {
             ),
           ],
         ],
-        pw.SizedBox(height: 6),
+        pw.SizedBox(height: 1),
         pw.Divider(thickness: 0.5),
-        pw.SizedBox(height: 6),
+        pw.SizedBox(height: 1),
 
         // Grand Total
         pw.Row(
@@ -1185,9 +1184,9 @@ class PdfBillService {
 
         // Payment Details Section
         if (billData.hasPaymentInfo) ...[
-          pw.SizedBox(height: 10),
+          pw.SizedBox(height: 2),
           pw.Divider(thickness: 0.3),
-          pw.SizedBox(height: 6),
+          pw.SizedBox(height: 2),
 
           // Paid Amount
           if (billData.paidAmount != null)
@@ -1208,7 +1207,7 @@ class PdfBillService {
 
           // Pending Amount
           if (billData.hasPendingAmount) ...[
-            pw.SizedBox(height: 3),
+            pw.SizedBox(height: 1),
             pw.Row(
               mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
               children: [
@@ -1234,9 +1233,9 @@ class PdfBillService {
           // Total Due Amount
           if (billData.totalDueAmount != null &&
               billData.totalDueAmount! > 0) ...[
-            pw.SizedBox(height: 6),
+            pw.SizedBox(height: 2),
             pw.Divider(thickness: 0.3),
-            pw.SizedBox(height: 4),
+            pw.SizedBox(height: 2),
             pw.Container(
               padding: const pw.EdgeInsets.all(6),
               decoration: pw.BoxDecoration(
@@ -1268,9 +1267,9 @@ class PdfBillService {
           ],
         ],
 
-        pw.SizedBox(height: 12),
-        pw.Divider(thickness: 0.3),
         pw.SizedBox(height: 6),
+        pw.Divider(thickness: 0.3),
+        pw.SizedBox(height: 3),
 
         // Footer
         pw.Center(
