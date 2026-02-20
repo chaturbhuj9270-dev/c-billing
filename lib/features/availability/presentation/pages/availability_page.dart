@@ -691,284 +691,342 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
 
   Widget _buildStatsCards() {
     final totalProducts = _groupedProducts.length;
-    final totalBatches = _allBatches.length;
     final inStock = _groupedProducts.where((g) => g.totalStock > 10).length;
     final lowStock = _groupedProducts
         .where((g) => g.totalStock > 0 && g.totalStock <= 10)
         .length;
     final outOfStock = _groupedProducts.where((g) => g.totalStock == 0).length;
-    // Count batches with low stock (<=5 qty remaining)
-    final lowBatches = _allBatches.where((b) => b.quantityRemaining > 0 && b.quantityRemaining <= 5).length;
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: _buildStatCard(
-                  title: _localizations.totalProducts,
-                  value: totalProducts,
-                  icon: Icons.inventory_2_rounded,
-                  iconColor: const Color(0xFF1B4D3E),
-                  backgroundColor: const Color(0xFF1B4D3E).withValues(alpha: 0.08),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _buildStatCard(
-                  title: _localizations.inStock,
-                  value: inStock,
-                  icon: Icons.check_circle_rounded,
-                  iconColor: Colors.green,
-                  backgroundColor: Colors.green.withValues(alpha: 0.08),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _buildStatCard(
-                  title: _localizations.lowStock,
-                  value: lowStock,
-                  icon: Icons.warning_rounded,
-                  iconColor: Colors.orange,
-                  backgroundColor: Colors.orange.withValues(alpha: 0.08),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _buildStatCard(
-                  title: _localizations.outOfStock,
-                  value: outOfStock,
-                  icon: Icons.error_rounded,
-                  iconColor: Colors.red,
-                  backgroundColor: Colors.red.withValues(alpha: 0.08),
-                ),
-              ),
-            ],
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
           ),
-          if (totalBatches > 0 || lowBatches > 0) ...[
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              decoration: BoxDecoration(
-                color: lowBatches > 0
-                    ? Colors.orange.withValues(alpha: 0.06)
-                    : const Color(0xFF1B4D3E).withValues(alpha: 0.04),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: lowBatches > 0
-                      ? Colors.orange.withValues(alpha: 0.2)
-                      : Colors.grey.withValues(alpha: 0.1),
-                ),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.layers_rounded,
-                    size: 16,
-                    color: const Color(0xFF1B4D3E).withValues(alpha: 0.7),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    '$totalBatches ${_localizations.batch}',
-                    style: const TextStyle(
-                      fontFamily: 'Literata',
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF1B4D3E),
-                    ),
-                  ),
-                  if (lowBatches > 0) ...[
-                    const Spacer(),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: Colors.orange.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.warning_amber_rounded, size: 13, color: Colors.orange),
-                          const SizedBox(width: 4),
-                          Text(
-                            '$lowBatches ${_localizations.lowStock}',
-                            style: const TextStyle(
-                              fontFamily: 'Literata',
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.orange,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ],
-              ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: _buildModernStatCard(
+              title: _localizations.totalProducts,
+              value: totalProducts,
+              icon: Icons.inventory_2_rounded,
+              gradient: const [Color(0xFF1B4D3E), Color(0xFF2D6B5A)],
+              isActive: _stockFilter == 'all',
+              onTap: () => _onStockFilterChanged('all'),
             ),
-          ],
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: _buildModernStatCard(
+              title: _localizations.inStock,
+              value: inStock,
+              icon: Icons.check_circle_rounded,
+              gradient: const [Color(0xFF4CAF50), Color(0xFF66BB6A)],
+              isActive: _stockFilter == 'in_stock',
+              onTap: () => _onStockFilterChanged('in_stock'),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: _buildModernStatCard(
+              title: _localizations.lowStock,
+              value: lowStock,
+              icon: Icons.warning_rounded,
+              gradient: const [Color(0xFFFF9800), Color(0xFFFFB74D)],
+              isActive: _stockFilter == 'low_stock',
+              onTap: () => _onStockFilterChanged('low_stock'),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: _buildModernStatCard(
+              title: _localizations.outOfStock,
+              value: outOfStock,
+              icon: Icons.error_rounded,
+              gradient: const [Color(0xFFF44336), Color(0xFFEF5350)],
+              isActive: _stockFilter == 'out_of_stock',
+              onTap: () => _onStockFilterChanged('out_of_stock'),
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildStatCard({
+  Widget _buildModernStatCard({
     required String title,
     required int value,
     required IconData icon,
-    required Color iconColor,
-    required Color backgroundColor,
+    required List<Color> gradient,
+    required bool isActive,
+    required VoidCallback onTap,
   }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: iconColor.withValues(alpha: 0.12),
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+        decoration: BoxDecoration(
+          gradient: isActive
+              ? LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: gradient,
+                )
+              : null,
+          color: isActive ? null : Colors.grey[50],
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: isActive 
+                ? Colors.transparent 
+                : gradient[0].withValues(alpha: 0.2),
+            width: 1.5,
+          ),
+          boxShadow: isActive
+              ? [
+                  BoxShadow(
+                    color: gradient[0].withValues(alpha: 0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  ),
+                ]
+              : null,
         ),
-      ),
-      child: Column(
-        children: [
-          Icon(icon, color: iconColor, size: 18),
-          const SizedBox(height: 6),
-          Text(
-            value.toString(),
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w800,
-              fontFamily: 'Literata',
-              color: iconColor,
+        child: Column(
+          children: [
+            Icon(
+              icon,
+              color: isActive ? Colors.white : gradient[0],
+              size: 20,
             ),
-          ),
-          const SizedBox(height: 3),
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 9,
-              color: Colors.grey[700],
-              fontFamily: 'Literata',
-              fontWeight: FontWeight.w600,
+            const SizedBox(height: 8),
+            Text(
+              value.toString(),
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
+                fontFamily: 'Literata',
+                color: isActive ? Colors.white : gradient[0],
+              ),
             ),
-            textAlign: TextAlign.center,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
+            const SizedBox(height: 4),
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 9,
+                color: isActive 
+                    ? Colors.white.withValues(alpha: 0.85) 
+                    : Colors.grey[600],
+                fontFamily: 'Literata',
+                fontWeight: FontWeight.w600,
+              ),
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildSearchAndFilters() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
       child: Column(
         children: [
-          // Search bar
-          TextField(
-            controller: _searchController,
-            onChanged: _onSearchChanged,
-            style: const TextStyle(fontFamily: 'Literata', fontSize: 14),
-            decoration: InputDecoration(
-              hintText: _localizations.searchProducts,
-              hintStyle: TextStyle(color: Colors.grey[500]),
-              prefixIcon: const Icon(Icons.search, color: Color(0xFF1B4D3E)),
-              suffixIcon: _searchQuery.isNotEmpty
-                  ? IconButton(
-                      icon: const Icon(Icons.clear, size: 20),
-                      onPressed: () {
-                        _searchController.clear();
-                        _onSearchChanged('');
-                      },
-                    )
-                  : null,
-              filled: true,
-              fillColor: const Color(0xFFF5F5F5),
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 14,
-              ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide.none,
+          // Search bar with modern styling
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(14),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 10,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: TextField(
+              controller: _searchController,
+              onChanged: _onSearchChanged,
+              style: const TextStyle(fontFamily: 'Literata', fontSize: 14),
+              decoration: InputDecoration(
+                hintText: _localizations.searchProducts,
+                hintStyle: TextStyle(
+                  color: Colors.grey[400],
+                  fontFamily: 'Literata',
+                ),
+                prefixIcon: Container(
+                  padding: const EdgeInsets.all(12),
+                  child: Icon(
+                    Icons.search_rounded,
+                    color: _searchQuery.isNotEmpty 
+                        ? const Color(0xFF1B4D3E) 
+                        : Colors.grey[400],
+                  ),
+                ),
+                suffixIcon: _searchQuery.isNotEmpty
+                    ? IconButton(
+                        icon: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[200],
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.close, size: 16, color: Colors.grey),
+                        ),
+                        onPressed: () {
+                          _searchController.clear();
+                          _onSearchChanged('');
+                        },
+                      )
+                    : null,
+                filled: true,
+                fillColor: Colors.white,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: BorderSide.none,
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: BorderSide(
+                    color: Colors.grey.withValues(alpha: 0.1),
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: const BorderSide(
+                    color: Color(0xFF1B4D3E),
+                    width: 1.5,
+                  ),
+                ),
               ),
             ),
           ),
           const SizedBox(height: 12),
-          // Stock filter chips
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                _buildFilterChip(_localizations.all, 'all'),
-                const SizedBox(width: 8),
-                _buildFilterChip(_localizations.inStock, 'in_stock'),
-                const SizedBox(width: 8),
-                _buildFilterChip(_localizations.lowStock, 'low_stock'),
-                const SizedBox(width: 8),
-                _buildFilterChip(_localizations.outOfStock, 'out_of_stock'),
-              ],
-            ),
+          // Result count and sort info
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1B4D3E).withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.list_alt_rounded,
+                      size: 14,
+                      color: Color(0xFF1B4D3E),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      '${_filteredGroupedProducts.length} items',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        fontFamily: 'Literata',
+                        color: Color(0xFF1B4D3E),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Spacer(),
+              if (_stockFilter != 'all')
+                GestureDetector(
+                  onTap: () => _onStockFilterChanged('all'),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[100],
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.filter_alt_off_rounded,
+                          size: 14,
+                          color: Colors.grey,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Clear filter',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                            fontFamily: 'Literata',
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+            ],
           ),
         ],
       ),
     );
   }
 
-  Widget _buildFilterChip(String label, String value) {
-    final isSelected = _stockFilter == value;
-    return FilterChip(
-      label: Text(
-        label,
-        style: TextStyle(
-          fontSize: 12,
-          fontFamily: 'Literata',
-          fontWeight: FontWeight.w500,
-          color: isSelected ? Colors.white : const Color(0xFF1B4D3E),
-        ),
-      ),
-      selected: isSelected,
-      onSelected: (_) => _onStockFilterChanged(value),
-      backgroundColor: Colors.transparent,
-      selectedColor: const Color(0xFF1B4D3E),
-      checkmarkColor: Colors.white,
-      side: BorderSide(
-        color: isSelected ? const Color(0xFF1B4D3E) : Colors.grey[300]!,
-      ),
-    );
-  }
-
-  Widget _buildProductsList() {
+  Widget _buildProductsSliver() {
     if (_filteredGroupedProducts.isEmpty) {
-      return Expanded(
+      return SliverFillRemaining(
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
                   color: Colors.grey.withValues(alpha: 0.08),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
                   Icons.inventory_2_outlined,
-                  size: 56,
+                  size: 64,
                   color: Colors.grey[400],
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 24),
               Text(
                 _searchQuery.isEmpty
                     ? _localizations.noProductsFound
                     : _localizations.noProductsMatch,
                 style: TextStyle(
-                  fontSize: 17,
+                  fontSize: 18,
                   color: Colors.grey[600],
                   fontFamily: 'Literata',
                   fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                _searchQuery.isEmpty
+                    ? 'Add products to see inventory'
+                    : 'Try a different search term',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Colors.grey[400],
+                  fontFamily: 'Literata',
                 ),
               ),
             ],
@@ -977,14 +1035,16 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
       );
     }
 
-    return Expanded(
-      child: ListView.builder(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-        itemCount: _filteredGroupedProducts.length,
-        itemBuilder: (context, index) {
-          final group = _filteredGroupedProducts[index];
-          return _buildGroupedProductCard(group);
-        },
+    return SliverPadding(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+      sliver: SliverList(
+        delegate: SliverChildBuilderDelegate(
+          (context, index) {
+            final group = _filteredGroupedProducts[index];
+            return _buildGroupedProductCard(group);
+          },
+          childCount: _filteredGroupedProducts.length,
+        ),
       ),
     );
   }
@@ -999,27 +1059,22 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
     final outBatchCount = group.subEntries.where((e) => e.stockQuantity == 0).length;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 14),
+      margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(
           color: group.totalStock == 0
-              ? Colors.red.withValues(alpha: 0.25)
+              ? Colors.red.withValues(alpha: 0.2)
               : group.totalStock <= 10
-                  ? Colors.orange.withValues(alpha: 0.2)
-                  : Colors.grey.withValues(alpha: 0.1),
+                  ? Colors.orange.withValues(alpha: 0.15)
+                  : Colors.transparent,
           width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 16,
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 12,
             offset: const Offset(0, 4),
           ),
         ],
@@ -1027,176 +1082,137 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
       child: Theme(
         data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
         child: ExpansionTile(
-          tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+          tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           childrenPadding: EdgeInsets.zero,
           shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
           collapsedShape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
           leading: Container(
-            width: 46,
-            height: 46,
+            width: 52,
+            height: 52,
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
                   stockColor,
-                  stockColor.withValues(alpha: 0.7),
+                  stockColor.withValues(alpha: 0.75),
                 ],
               ),
-              borderRadius: BorderRadius.circular(13),
+              borderRadius: BorderRadius.circular(14),
               boxShadow: [
                 BoxShadow(
-                  color: stockColor.withValues(alpha: 0.25),
+                  color: stockColor.withValues(alpha: 0.3),
                   blurRadius: 8,
                   offset: const Offset(0, 3),
                 ),
               ],
             ),
-            child: Center(
-              child: Text(
-                '${group.totalStock}',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 15,
-                  fontWeight: FontWeight.w800,
-                  fontFamily: 'Literata',
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  '${group.totalStock}',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    fontFamily: 'Literata',
+                    height: 1,
+                  ),
                 ),
-              ),
+                Text(
+                  'units',
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.8),
+                    fontSize: 8,
+                    fontWeight: FontWeight.w600,
+                    fontFamily: 'Literata',
+                  ),
+                ),
+              ],
             ),
           ),
-          title: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  group.productName,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    fontFamily: 'Literata',
-                    color: Color(0xFF1B4D3E),
-                    height: 1.2,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
+          title: Text(
+            group.productName,
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              fontFamily: 'Literata',
+              color: Color(0xFF1B4D3E),
+              height: 1.2,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
           subtitle: Padding(
-            padding: const EdgeInsets.only(top: 6),
-            child: Wrap(
-              spacing: 6,
-              runSpacing: 4,
+            padding: const EdgeInsets.only(top: 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Stock status badge
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: stockColor.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: stockColor.withValues(alpha: 0.2),
-                    ),
-                  ),
-                  child: Text(
-                    stockLabel,
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
+                // Badges row
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: [
+                    // Stock status badge
+                    _buildBadge(
+                      label: stockLabel,
                       color: stockColor,
-                      fontFamily: 'Literata',
+                      icon: group.totalStock == 0 
+                          ? Icons.error_outline 
+                          : group.totalStock <= 10 
+                              ? Icons.warning_outlined 
+                              : Icons.check_circle_outline,
                     ),
-                  ),
+                    // Batch count badge
+                    if (hasMultipleBatches)
+                      _buildBadge(
+                        label: '${group.variantCount} ${_localizations.batch}',
+                        color: const Color(0xFF2196F3),
+                        icon: Icons.layers_outlined,
+                      ),
+                    // Low batch warning badge
+                    if (lowBatchCount > 0)
+                      _buildBadge(
+                        label: '$lowBatchCount ${_localizations.lowStock}',
+                        color: Colors.orange,
+                        icon: Icons.warning_amber_rounded,
+                      ),
+                    // Out of stock batch badge
+                    if (outBatchCount > 0 && group.totalStock > 0)
+                      _buildBadge(
+                        label: '$outBatchCount empty',
+                        color: Colors.red,
+                        icon: Icons.error_outline,
+                      ),
+                  ],
                 ),
-                // Batch count badge
-                if (hasMultipleBatches)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: Colors.blue.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: Colors.blue.withValues(alpha: 0.15),
-                      ),
-                    ),
-                    child: Text(
-                      '${group.variantCount} ${_localizations.batch}',
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.blue[700],
-                        fontFamily: 'Literata',
-                      ),
-                    ),
-                  ),
-                // Low batch warning badge
-                if (lowBatchCount > 0)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: Colors.orange.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: Colors.orange.withValues(alpha: 0.2),
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.warning_amber_rounded, size: 11, color: Colors.orange),
-                        const SizedBox(width: 3),
-                        Text(
-                          '$lowBatchCount ${_localizations.lowStock}',
-                          style: const TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.orange,
-                            fontFamily: 'Literata',
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                // Out of stock batch badge
-                if (outBatchCount > 0 && group.totalStock > 0)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: Colors.red.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: Colors.red.withValues(alpha: 0.15),
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.error_outline, size: 11, color: Colors.red),
-                        const SizedBox(width: 3),
-                        Text(
-                          '$outBatchCount empty',
-                          style: const TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.red,
-                            fontFamily: 'Literata',
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
                 // Company names
-                if (group.companies.isNotEmpty)
-                  Text(
-                    group.companies.join(', '),
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: Colors.grey[500],
-                      fontFamily: 'Literata',
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                if (group.companies.isNotEmpty) ...[
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.business_outlined,
+                        size: 12,
+                        color: Colors.grey[400],
+                      ),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          group.companies.join(' • '),
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Colors.grey[500],
+                            fontFamily: 'Literata',
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
                   ),
+                ],
               ],
             ),
           ),
@@ -1204,8 +1220,17 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
             // Summary bar with stock value & price range
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              color: const Color(0xFF1B4D3E).withValues(alpha: 0.04),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    const Color(0xFF1B4D3E).withValues(alpha: 0.06),
+                    const Color(0xFF1B4D3E).withValues(alpha: 0.02),
+                  ],
+                ),
+              ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
@@ -1216,8 +1241,8 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                   ),
                   Container(
                     width: 1,
-                    height: 28,
-                    color: Colors.grey.withValues(alpha: 0.2),
+                    height: 32,
+                    color: Colors.grey.withValues(alpha: 0.15),
                   ),
                   _buildInfoChip(
                     Icons.sell_outlined,
@@ -1226,12 +1251,12 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                   ),
                   Container(
                     width: 1,
-                    height: 28,
-                    color: Colors.grey.withValues(alpha: 0.2),
+                    height: 32,
+                    color: Colors.grey.withValues(alpha: 0.15),
                   ),
                   _buildInfoChip(
                     Icons.account_balance_wallet_outlined,
-                    '₹${group.totalStockValue.toStringAsFixed(0)}',
+                    '₹${_formatCompactNumber(group.totalStockValue)}',
                     _localizations.stockValue,
                   ),
                 ],
@@ -1239,11 +1264,11 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
             ),
             // Batch header
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               decoration: BoxDecoration(
                 color: Colors.grey[100],
                 border: Border(
-                  bottom: BorderSide(color: Colors.grey[300]!),
+                  bottom: BorderSide(color: Colors.grey[200]!),
                 ),
               ),
               child: Row(
@@ -1253,10 +1278,11 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                     child: Text(
                       _localizations.company,
                       style: TextStyle(
-                        fontSize: 11,
+                        fontSize: 10,
                         fontWeight: FontWeight.w700,
                         fontFamily: 'Literata',
-                        color: Colors.grey[700],
+                        color: Colors.grey[600],
+                        letterSpacing: 0.5,
                       ),
                     ),
                   ),
@@ -1265,10 +1291,11 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                     child: Text(
                       _localizations.date,
                       style: TextStyle(
-                        fontSize: 11,
+                        fontSize: 10,
                         fontWeight: FontWeight.w700,
                         fontFamily: 'Literata',
-                        color: Colors.grey[700],
+                        color: Colors.grey[600],
+                        letterSpacing: 0.5,
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -1278,10 +1305,11 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                     child: Text(
                       '${_localizations.sellPrice} ₹',
                       style: TextStyle(
-                        fontSize: 11,
+                        fontSize: 10,
                         fontWeight: FontWeight.w700,
                         fontFamily: 'Literata',
-                        color: Colors.grey[700],
+                        color: Colors.grey[600],
+                        letterSpacing: 0.5,
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -1289,12 +1317,13 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                   const Expanded(
                     flex: 2,
                     child: Text(
-                      'Qty',
+                      'QTY',
                       style: TextStyle(
-                        fontSize: 11,
+                        fontSize: 10,
                         fontWeight: FontWeight.w700,
                         fontFamily: 'Literata',
                         color: Color(0xFF1B4D3E),
+                        letterSpacing: 0.5,
                       ),
                       textAlign: TextAlign.end,
                     ),
@@ -1311,7 +1340,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
               final isOutBatch = entry.stockQuantity == 0;
 
               return Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
                   color: isOutBatch
                       ? Colors.red.withValues(alpha: 0.04)
@@ -1322,7 +1351,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                               : Colors.grey[50],
                   border: Border(
                     bottom: BorderSide(
-                      color: Colors.grey.withValues(alpha: 0.12),
+                      color: Colors.grey.withValues(alpha: 0.1),
                       width: 0.5,
                     ),
                     left: BorderSide(
@@ -1347,30 +1376,42 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                             style: const TextStyle(
                               fontSize: 12,
                               fontFamily: 'Literata',
-                              fontWeight: FontWeight.w500,
+                              fontWeight: FontWeight.w600,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
                           if (isLowBatch || isOutBatch)
                             Padding(
-                              padding: const EdgeInsets.only(top: 2),
+                              padding: const EdgeInsets.only(top: 3),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Icon(
-                                    isOutBatch ? Icons.error_outline : Icons.warning_amber_rounded,
-                                    size: 10,
-                                    color: isOutBatch ? Colors.red : Colors.orange,
-                                  ),
-                                  const SizedBox(width: 3),
-                                  Text(
-                                    isOutBatch ? _localizations.outOfStock : _localizations.lowStock,
-                                    style: TextStyle(
-                                      fontSize: 9,
-                                      fontWeight: FontWeight.w600,
-                                      fontFamily: 'Literata',
-                                      color: isOutBatch ? Colors.red : Colors.orange,
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: (isOutBatch ? Colors.red : Colors.orange).withValues(alpha: 0.1),
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          isOutBatch ? Icons.error_outline : Icons.warning_amber_rounded,
+                                          size: 10,
+                                          color: isOutBatch ? Colors.red : Colors.orange,
+                                        ),
+                                        const SizedBox(width: 3),
+                                        Text(
+                                          isOutBatch ? _localizations.outOfStock : _localizations.lowStock,
+                                          style: TextStyle(
+                                            fontSize: 9,
+                                            fontWeight: FontWeight.w600,
+                                            fontFamily: 'Literata',
+                                            color: isOutBatch ? Colors.red : Colors.orange,
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
                                 ],
@@ -1386,7 +1427,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                         style: TextStyle(
                           fontSize: 11,
                           fontFamily: 'Literata',
-                          color: Colors.grey[700],
+                          color: Colors.grey[600],
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -1409,27 +1450,28 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: [
-                          if (isLowBatch || isOutBatch)
-                            Container(
-                              width: 6,
-                              height: 6,
-                              margin: const EdgeInsets.only(right: 5),
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: isOutBatch ? Colors.red : Colors.orange,
-                              ),
-                            ),
-                          Text(
-                            '${entry.stockQuantity}',
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontFamily: 'Literata',
-                              fontWeight: FontWeight.w800,
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
                               color: isOutBatch
-                                  ? Colors.red
+                                  ? Colors.red.withValues(alpha: 0.1)
                                   : isLowBatch
-                                      ? Colors.orange
-                                      : Colors.black87,
+                                      ? Colors.orange.withValues(alpha: 0.1)
+                                      : const Color(0xFF1B4D3E).withValues(alpha: 0.08),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              '${entry.stockQuantity}',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontFamily: 'Literata',
+                                fontWeight: FontWeight.w800,
+                                color: isOutBatch
+                                    ? Colors.red
+                                    : isLowBatch
+                                        ? Colors.orange
+                                        : const Color(0xFF1B4D3E),
+                              ),
                             ),
                           ),
                         ],
@@ -1439,26 +1481,38 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                 ),
               );
             }),
-            // Low stock alert banner at bottom of expanded card
+            // Alert banner at bottom
             if (group.totalStock == 0)
               Container(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
-                  color: Colors.red.withValues(alpha: 0.06),
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.red.withValues(alpha: 0.08),
+                      Colors.red.withValues(alpha: 0.04),
+                    ],
+                  ),
                   borderRadius: const BorderRadius.only(
-                    bottomLeft: Radius.circular(15),
-                    bottomRight: Radius.circular(15),
+                    bottomLeft: Radius.circular(17),
+                    bottomRight: Radius.circular(17),
                   ),
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.error_outline, color: Colors.red, size: 16),
-                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: Colors.red.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(Icons.error_outline, color: Colors.red, size: 16),
+                    ),
+                    const SizedBox(width: 12),
                     Expanded(
                       child: Text(
                         _localizations.outOfStockMessage,
                         style: TextStyle(
-                          fontSize: 11,
+                          fontSize: 12,
                           color: Colors.red[700],
                           fontFamily: 'Literata',
                           fontWeight: FontWeight.w500,
@@ -1470,24 +1524,36 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
               )
             else if (group.totalStock <= 10)
               Container(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
-                  color: Colors.orange.withValues(alpha: 0.06),
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.orange.withValues(alpha: 0.08),
+                      Colors.orange.withValues(alpha: 0.04),
+                    ],
+                  ),
                   borderRadius: const BorderRadius.only(
-                    bottomLeft: Radius.circular(15),
-                    bottomRight: Radius.circular(15),
+                    bottomLeft: Radius.circular(17),
+                    bottomRight: Radius.circular(17),
                   ),
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 16),
-                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 16),
+                    ),
+                    const SizedBox(width: 12),
                     Expanded(
                       child: Text(
                         _localizations.lowStockMessage,
                         style: TextStyle(
-                          fontSize: 11,
-                          color: Colors.orange[700],
+                          fontSize: 12,
+                          color: Colors.orange[800],
                           fontFamily: 'Literata',
                           fontWeight: FontWeight.w500,
                         ),
@@ -1502,6 +1568,41 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
     );
   }
 
+  Widget _buildBadge({
+    required String label,
+    required Color color,
+    IconData? icon,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: color.withValues(alpha: 0.2),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (icon != null) ...[
+            Icon(icon, size: 11, color: color),
+            const SizedBox(width: 4),
+          ],
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+              color: color,
+              fontFamily: 'Literata',
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildInfoChip(IconData icon, String value, String label) {
     return Column(
       children: [
@@ -1509,11 +1610,11 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(icon, size: 14, color: const Color(0xFF1B4D3E)),
-            const SizedBox(width: 4),
+            const SizedBox(width: 6),
             Text(
               value,
               style: const TextStyle(
-                fontSize: 12,
+                fontSize: 13,
                 fontWeight: FontWeight.w700,
                 fontFamily: 'Literata',
                 color: Color(0xFF1B4D3E),
@@ -1521,13 +1622,14 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
             ),
           ],
         ),
-        const SizedBox(height: 2),
+        const SizedBox(height: 3),
         Text(
           label,
           style: TextStyle(
             fontSize: 10,
             fontFamily: 'Literata',
-            color: Colors.grey[600],
+            color: Colors.grey[500],
+            fontWeight: FontWeight.w500,
           ),
         ),
       ],
@@ -1547,56 +1649,232 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: const Color(0xFFF5F7F6),
       body: _isLoading
           ? const Center(
               child: CircularProgressIndicator(color: Color(0xFF1B4D3E)),
             )
-          : Column(
-              children: [
-                _buildPageHeader(),
-                _buildStatsCards(),
-                _buildSearchAndFilters(),
-                const SizedBox(height: 12),
-                _buildProductsList(),
+          : CustomScrollView(
+              slivers: [
+                // Modern gradient header
+                SliverToBoxAdapter(child: _buildPageHeader()),
+                // Stats cards
+                SliverToBoxAdapter(child: _buildStatsCards()),
+                // Search and filters
+                SliverPersistentHeader(
+                  pinned: true,
+                  delegate: _SearchHeaderDelegate(
+                    child: _buildSearchAndFilters(),
+                    height: 120,
+                  ),
+                ),
+                // Products list
+                _buildProductsSliver(),
               ],
             ),
     );
   }
 
+  /// Modern gradient header
   Widget _buildPageHeader() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 8, 0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            _localizations.stockOverview,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF1B4D3E),
-              fontFamily: 'Literata',
-            ),
+    final totalStock = _groupedProducts.fold<int>(0, (sum, g) => sum + g.totalStock);
+    final totalValue = _groupedProducts.fold<double>(0, (sum, g) => sum + g.totalStockValue);
+    
+    return Container(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF1B4D3E), Color(0xFF0F3B2F)],
+        ),
+        borderRadius: const BorderRadius.only(
+          bottomLeft: Radius.circular(28),
+          bottomRight: Radius.circular(28),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF1B4D3E).withValues(alpha: 0.25),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
           ),
-          IconButton(
-            onPressed: _showReportBottomSheet,
-            icon: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(10),
+        ],
+      ),
+      child: Column(
+        children: [
+          // Title row
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.inventory_2_rounded,
+                  color: Colors.white,
+                  size: 22,
+                ),
               ),
-              child: const Icon(
-                Icons.summarize_outlined,
-                color: Color(0xFF1B4D3E),
-                size: 20,
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _localizations.stockOverview,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                        fontFamily: 'Literata',
+                      ),
+                    ),
+                    Text(
+                      '${_groupedProducts.length} products • $totalStock units',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.7),
+                        fontSize: 12,
+                        fontFamily: 'Literata',
+                      ),
+                    ),
+                  ],
+                ),
               ),
+              GestureDetector(
+                onTap: _showReportBottomSheet,
+                child: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.summarize_outlined,
+                    color: Colors.white,
+                    size: 22,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          // Summary stats in header
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(14),
             ),
-            tooltip: _localizations.generateReport,
+            child: Row(
+              children: [
+                Expanded(
+                  child: _buildHeaderStat(
+                    Icons.account_balance_wallet_rounded,
+                    '₹${_formatCompactNumber(totalValue)}',
+                    _localizations.stockValue,
+                  ),
+                ),
+                Container(
+                  width: 1,
+                  height: 36,
+                  color: Colors.white.withValues(alpha: 0.2),
+                ),
+                Expanded(
+                  child: _buildHeaderStat(
+                    Icons.layers_rounded,
+                    '${_allBatches.length}',
+                    _localizations.batch,
+                  ),
+                ),
+                Container(
+                  width: 1,
+                  height: 36,
+                  color: Colors.white.withValues(alpha: 0.2),
+                ),
+                Expanded(
+                  child: _buildHeaderStat(
+                    Icons.warning_amber_rounded,
+                    '${_groupedProducts.where((g) => g.totalStock <= 10 && g.totalStock > 0).length}',
+                    _localizations.lowStock,
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
     );
+  }
+
+  Widget _buildHeaderStat(IconData icon, String value, String label) {
+    return Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: Colors.white.withValues(alpha: 0.8), size: 16),
+            const SizedBox(width: 6),
+            Text(
+              value,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
+                fontFamily: 'Literata',
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: TextStyle(
+            color: Colors.white.withValues(alpha: 0.6),
+            fontSize: 10,
+            fontFamily: 'Literata',
+          ),
+        ),
+      ],
+    );
+  }
+
+  String _formatCompactNumber(double number) {
+    if (number >= 10000000) {
+      return '${(number / 10000000).toStringAsFixed(1)}Cr';
+    } else if (number >= 100000) {
+      return '${(number / 100000).toStringAsFixed(1)}L';
+    } else if (number >= 1000) {
+      return '${(number / 1000).toStringAsFixed(1)}K';
+    }
+    return number.toStringAsFixed(0);
+  }
+}
+
+/// Delegate for sticky search header
+class _SearchHeaderDelegate extends SliverPersistentHeaderDelegate {
+  final Widget child;
+  final double height;
+
+  _SearchHeaderDelegate({required this.child, required this.height});
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return Container(
+      color: const Color(0xFFF5F7F6),
+      child: child,
+    );
+  }
+
+  @override
+  double get maxExtent => height;
+
+  @override
+  double get minExtent => height;
+
+  @override
+  bool shouldRebuild(covariant _SearchHeaderDelegate oldDelegate) {
+    return child != oldDelegate.child || height != oldDelegate.height;
   }
 }
