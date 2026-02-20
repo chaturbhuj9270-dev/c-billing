@@ -1753,64 +1753,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
   Widget _buildNavItem(int index, IconData icon, String label, {bool isPrimary = false}) {
     final isSelected = _selectedIndex == index;
     
-    // Primary Bill tab gets an elevated, always-highlighted design
-    if (isPrimary) {
-      return Expanded(
-        child: GestureDetector(
-          onTap: () => _navigateToPage(index),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-            margin: const EdgeInsets.symmetric(horizontal: 2),
-            decoration: BoxDecoration(
-              gradient: isSelected
-                  ? const LinearGradient(
-                      colors: [Color(0xFF1B4D3E), Color(0xFF2E7D5B)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    )
-                  : null,
-              color: isSelected ? null : const Color(0xFF1B4D3E).withOpacity(0.08),
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: isSelected
-                  ? [
-                      BoxShadow(
-                        color: const Color(0xFF1B4D3E).withOpacity(0.3),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ]
-                  : null,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  icon,
-                  color: isSelected ? Colors.white : const Color(0xFF1B4D3E),
-                  size: 22,
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  label,
-                  textAlign: TextAlign.center,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: isSelected ? Colors.white : const Color(0xFF1B4D3E),
-                    fontSize: 9,
-                    fontWeight: FontWeight.w700,
-                    fontFamily: 'Literata',
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    }
-    
+    // All tabs now get the same elevated, highlighted design when selected
     return Expanded(
       child: GestureDetector(
         onTap: () => _navigateToPage(index),
@@ -1819,10 +1762,24 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
           margin: const EdgeInsets.symmetric(horizontal: 2),
           decoration: BoxDecoration(
-            color: isSelected
-                ? const Color(0xFF1B4D3E).withOpacity(0.1)
-                : Colors.transparent,
-            borderRadius: BorderRadius.circular(10),
+            gradient: isSelected
+                ? const LinearGradient(
+                    colors: [Color(0xFF1B4D3E), Color(0xFF2E7D5B)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  )
+                : null,
+            color: isSelected ? null : (isPrimary ? const Color(0xFF1B4D3E).withOpacity(0.08) : Colors.transparent),
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: const Color(0xFF1B4D3E).withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ]
+                : null,
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -1830,8 +1787,8 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
             children: [
               Icon(
                 icon,
-                color: isSelected ? const Color(0xFF1B4D3E) : Colors.grey[400],
-                size: 20,
+                color: isSelected ? Colors.white : (isPrimary ? const Color(0xFF1B4D3E) : Colors.grey[600]),
+                size: isSelected ? 22 : 20,
               ),
               const SizedBox(height: 3),
               Text(
@@ -1840,11 +1797,9 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  color: isSelected
-                      ? const Color(0xFF1B4D3E)
-                      : Colors.grey[400],
-                  fontSize: 8,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                  color: isSelected ? Colors.white : (isPrimary ? const Color(0xFF1B4D3E) : Colors.grey[600]),
+                  fontSize: isSelected ? 9 : 8,
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                   fontFamily: 'Literata',
                 ),
               ),
