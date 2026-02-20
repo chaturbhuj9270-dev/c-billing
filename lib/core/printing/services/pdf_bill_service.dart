@@ -113,14 +113,6 @@ class PdfBillService {
                   ),
                   textAlign: pw.TextAlign.center,
                 ),
-                if (shopDetails.ownerName != null && shopDetails.ownerName!.isNotEmpty) ...[
-                  pw.SizedBox(height: 2),
-                  pw.Text(
-                    'Prop: ${shopDetails.ownerName}',
-                    style: const pw.TextStyle(fontSize: 9),
-                    textAlign: pw.TextAlign.center,
-                  ),
-                ],
                 if (shopDetails.address.isNotEmpty) ...[
                   pw.SizedBox(height: 3),
                   pw.Text(
@@ -129,23 +121,37 @@ class PdfBillService {
                     textAlign: pw.TextAlign.center,
                   ),
                 ],
+                // Owner name - right aligned
+                if (shopDetails.ownerName != null && shopDetails.ownerName!.isNotEmpty) ...[
+                  pw.SizedBox(height: 2),
+                  pw.Align(
+                    alignment: pw.Alignment.centerRight,
+                    child: pw.Text(
+                      'Prop: ${shopDetails.ownerName}',
+                      style: const pw.TextStyle(fontSize: 9),
+                    ),
+                  ),
+                ],
                 pw.SizedBox(height: 3),
-                // Phone, Email, GST in a compact row
-                pw.Wrap(
-                  alignment: pw.WrapAlignment.center,
-                  spacing: 12,
-                  children: [
-                    if (shopDetails.phone.isNotEmpty)
-                      pw.Text(
-                        'Mo. No: ${shopDetails.phone}',
-                        style: const pw.TextStyle(fontSize: 9),
-                      ),
-                    if (shopDetails.email != null && shopDetails.email!.isNotEmpty)
-                      pw.Text(
-                        shopDetails.email!,
-                        style: const pw.TextStyle(fontSize: 9),
-                      ),
-                  ],
+                // Phone, Email, GST - right aligned
+                pw.Align(
+                  alignment: pw.Alignment.centerRight,
+                  child: pw.Wrap(
+                    alignment: pw.WrapAlignment.end,
+                    spacing: 12,
+                    children: [
+                      if (shopDetails.phone.isNotEmpty)
+                        pw.Text(
+                          'Mo. No: ${shopDetails.phone}',
+                          style: const pw.TextStyle(fontSize: 9),
+                        ),
+                      if (shopDetails.email != null && shopDetails.email!.isNotEmpty)
+                        pw.Text(
+                          shopDetails.email!,
+                          style: const pw.TextStyle(fontSize: 9),
+                        ),
+                    ],
+                  ),
                 ),
                 if (shopDetails.gstNumber != null &&
                     shopDetails.gstNumber!.isNotEmpty) ...[
@@ -793,14 +799,6 @@ class PdfBillService {
                 ),
                 textAlign: pw.TextAlign.center,
               ),
-              if (shopDetails.ownerName != null && shopDetails.ownerName!.isNotEmpty) ...[
-                pw.SizedBox(height: 2),
-                pw.Text(
-                  'Prop: ${shopDetails.ownerName}',
-                  style: const pw.TextStyle(fontSize: 8),
-                  textAlign: pw.TextAlign.center,
-                ),
-              ],
               if (shopDetails.address.isNotEmpty) ...[
                 pw.SizedBox(height: 3),
                 pw.Text(
@@ -809,12 +807,25 @@ class PdfBillService {
                   textAlign: pw.TextAlign.center,
                 ),
               ],
+              // Owner name and contact - right aligned
+              if (shopDetails.ownerName != null && shopDetails.ownerName!.isNotEmpty) ...[
+                pw.SizedBox(height: 2),
+                pw.Align(
+                  alignment: pw.Alignment.centerRight,
+                  child: pw.Text(
+                    'Prop: ${shopDetails.ownerName}',
+                    style: const pw.TextStyle(fontSize: 8),
+                  ),
+                ),
+              ],
               if (shopDetails.phone.isNotEmpty) ...[
                 pw.SizedBox(height: 2),
-                pw.Text(
-                  'Ph: ${shopDetails.phone}',
-                  style: const pw.TextStyle(fontSize: 8),
-                  textAlign: pw.TextAlign.center,
+                pw.Align(
+                  alignment: pw.Alignment.centerRight,
+                  child: pw.Text(
+                    'Ph: ${shopDetails.phone}',
+                    style: const pw.TextStyle(fontSize: 8),
+                  ),
                 ),
               ],
               if (shopDetails.gstNumber != null &&
