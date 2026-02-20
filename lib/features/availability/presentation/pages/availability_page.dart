@@ -35,7 +35,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
   StreamSubscription<void>? _purchaseRefreshSubscription;
 
   // Filter states
-  String _stockFilter = 'all'; // all, in_stock, low_stock, out_of_stock
+  String _stockFilter = 'all'; // all, in_stock, low_stock, out_of_stock, expired
 
   // Batch-level data for grouped view
   List<PurchaseBatchEntity> _allBatches = [];
@@ -126,15 +126,22 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
           return group.totalStock > 0 && group.totalStock <= 10;
         case 'out_of_stock':
           return group.totalStock == 0;
+        case 'expired':
+          return group.hasExpiredStock;
         default:
           return true;
       }
     }).toList();
 
-    // Sort: critical first
+    // Sort: critical first (expired, then out of stock, then low stock)
     _filteredGroupedProducts.sort((a, b) {
+      // Expired products first
+      if (a.hasExpiredStock && !b.hasExpiredStock) return -1;
+      if (b.hasExpiredStock && !a.hasExpiredStock) return 1;
+      // Then out of stock
       if (a.totalStock == 0 && b.totalStock > 0) return -1;
       if (b.totalStock == 0 && a.totalStock > 0) return 1;
+      // Then low stock
       if (a.totalStock <= 10 && b.totalStock > 10) return -1;
       if (b.totalStock <= 10 && a.totalStock > 10) return 1;
       return a.productName.compareTo(b.productName);
@@ -696,6 +703,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
         .where((g) => g.totalStock > 0 && g.totalStock <= 10)
         .length;
     final outOfStock = _groupedProducts.where((g) => g.totalStock == 0).length;
+    final expired = _groupedProducts.where((g) => g.hasExpiredStock).length;
 
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
@@ -711,10 +719,11 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
           ),
         ],
       ),
-      child: Row(
-        children: [
-          Expanded(
-            child: _buildModernStatCard(
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            _buildModernStatCard(
               title: _localizations.totalProducts,
               value: totalProducts,
               icon: Icons.inventory_2_rounded,
@@ -722,10 +731,8 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
               isActive: _stockFilter == 'all',
               onTap: () => _onStockFilterChanged('all'),
             ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: _buildModernStatCard(
+            const SizedBox(width: 10),
+            _buildModernStatCard(
               title: _localizations.inStock,
               value: inStock,
               icon: Icons.check_circle_rounded,
@@ -733,10 +740,8 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
               isActive: _stockFilter == 'in_stock',
               onTap: () => _onStockFilterChanged('in_stock'),
             ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: _buildModernStatCard(
+            const SizedBox(width: 10),
+            _buildModernStatCard(
               title: _localizations.lowStock,
               value: lowStock,
               icon: Icons.warning_rounded,
@@ -744,10 +749,8 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
               isActive: _stockFilter == 'low_stock',
               onTap: () => _onStockFilterChanged('low_stock'),
             ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: _buildModernStatCard(
+            const SizedBox(width: 10),
+            _buildModernStatCard(
               title: _localizations.outOfStock,
               value: outOfStock,
               icon: Icons.error_rounded,
@@ -755,8 +758,17 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
               isActive: _stockFilter == 'out_of_stock',
               onTap: () => _onStockFilterChanged('out_of_stock'),
             ),
-          ),
-        ],
+            const SizedBox(width: 10),
+            _buildModernStatCard(
+              title: 'Expired',
+              value: expired,
+              icon: Icons.event_busy_rounded,
+              gradient: const [Color(0xFF9C27B0), Color(0xFFBA68C8)],
+              isActive: _stockFilter == 'expired',
+              onTap: () => _onStockFilterChanged('expired'),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -773,6 +785,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
+        width: 72,
         padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
         decoration: BoxDecoration(
           gradient: isActive
@@ -1057,6 +1070,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
     // Count low-stock batches in this group
     final lowBatchCount = group.subEntries.where((e) => e.stockQuantity > 0 && e.stockQuantity <= 5).length;
     final outBatchCount = group.subEntries.where((e) => e.stockQuantity == 0).length;
+    final expiredBatchCount = group.expiredBatchCount;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -1064,11 +1078,13 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: group.totalStock == 0
-              ? Colors.red.withValues(alpha: 0.2)
-              : group.totalStock <= 10
-                  ? Colors.orange.withValues(alpha: 0.15)
-                  : Colors.transparent,
+          color: group.hasExpiredStock
+              ? const Color(0xFF9C27B0).withValues(alpha: 0.25)
+              : group.totalStock == 0
+                  ? Colors.red.withValues(alpha: 0.2)
+                  : group.totalStock <= 10
+                      ? Colors.orange.withValues(alpha: 0.15)
+                      : Colors.transparent,
           width: 1.5,
         ),
         boxShadow: [
@@ -1184,6 +1200,13 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                         label: '$outBatchCount empty',
                         color: Colors.red,
                         icon: Icons.error_outline,
+                      ),
+                    // Expired batch badge
+                    if (expiredBatchCount > 0)
+                      _buildBadge(
+                        label: '$expiredBatchCount expired',
+                        color: const Color(0xFF9C27B0),
+                        icon: Icons.event_busy_rounded,
                       ),
                   ],
                 ),
@@ -1338,29 +1361,35 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
               final isEven = i % 2 == 0;
               final isLowBatch = entry.stockQuantity > 0 && entry.stockQuantity <= 5;
               final isOutBatch = entry.stockQuantity == 0;
+              final isExpired = entry.isExpired;
+              final isExpiringSoon = entry.isExpiringSoon;
+
+              // Determine color priority: expired > out > low
+              Color? rowColor;
+              Color? borderColor;
+              if (isExpired) {
+                rowColor = const Color(0xFF9C27B0).withValues(alpha: 0.06);
+                borderColor = const Color(0xFF9C27B0);
+              } else if (isOutBatch) {
+                rowColor = Colors.red.withValues(alpha: 0.04);
+                borderColor = Colors.red;
+              } else if (isLowBatch) {
+                rowColor = Colors.orange.withValues(alpha: 0.04);
+                borderColor = Colors.orange;
+              }
 
               return Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
-                  color: isOutBatch
-                      ? Colors.red.withValues(alpha: 0.04)
-                      : isLowBatch
-                          ? Colors.orange.withValues(alpha: 0.04)
-                          : isEven
-                              ? Colors.white
-                              : Colors.grey[50],
+                  color: rowColor ?? (isEven ? Colors.white : Colors.grey[50]),
                   border: Border(
                     bottom: BorderSide(
                       color: Colors.grey.withValues(alpha: 0.1),
                       width: 0.5,
                     ),
                     left: BorderSide(
-                      color: isOutBatch
-                          ? Colors.red
-                          : isLowBatch
-                              ? Colors.orange
-                              : Colors.transparent,
-                      width: isOutBatch || isLowBatch ? 3 : 0,
+                      color: borderColor ?? Colors.transparent,
+                      width: borderColor != null ? 3 : 0,
                     ),
                   ),
                 ),
@@ -1381,39 +1410,38 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
-                          if (isLowBatch || isOutBatch)
+                          // Status badges (can show multiple)
+                          if (isExpired || isExpiringSoon || isLowBatch || isOutBatch)
                             Padding(
                               padding: const EdgeInsets.only(top: 3),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
+                              child: Wrap(
+                                spacing: 4,
+                                runSpacing: 4,
                                 children: [
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: (isOutBatch ? Colors.red : Colors.orange).withValues(alpha: 0.1),
-                                      borderRadius: BorderRadius.circular(4),
+                                  if (isExpired)
+                                    _buildMicroBadge(
+                                      label: 'EXPIRED',
+                                      color: const Color(0xFF9C27B0),
+                                      icon: Icons.event_busy_rounded,
                                     ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Icon(
-                                          isOutBatch ? Icons.error_outline : Icons.warning_amber_rounded,
-                                          size: 10,
-                                          color: isOutBatch ? Colors.red : Colors.orange,
-                                        ),
-                                        const SizedBox(width: 3),
-                                        Text(
-                                          isOutBatch ? _localizations.outOfStock : _localizations.lowStock,
-                                          style: TextStyle(
-                                            fontSize: 9,
-                                            fontWeight: FontWeight.w600,
-                                            fontFamily: 'Literata',
-                                            color: isOutBatch ? Colors.red : Colors.orange,
-                                          ),
-                                        ),
-                                      ],
+                                  if (isExpiringSoon && !isExpired)
+                                    _buildMicroBadge(
+                                      label: 'EXPIRING SOON',
+                                      color: const Color(0xFFFF5722),
+                                      icon: Icons.schedule,
                                     ),
-                                  ),
+                                  if (isOutBatch)
+                                    _buildMicroBadge(
+                                      label: _localizations.outOfStock,
+                                      color: Colors.red,
+                                      icon: Icons.error_outline,
+                                    ),
+                                  if (isLowBatch && !isOutBatch)
+                                    _buildMicroBadge(
+                                      label: _localizations.lowStock,
+                                      color: Colors.orange,
+                                      icon: Icons.warning_amber_rounded,
+                                    ),
                                 ],
                               ),
                             ),
@@ -1453,11 +1481,13 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                             decoration: BoxDecoration(
-                              color: isOutBatch
-                                  ? Colors.red.withValues(alpha: 0.1)
-                                  : isLowBatch
-                                      ? Colors.orange.withValues(alpha: 0.1)
-                                      : const Color(0xFF1B4D3E).withValues(alpha: 0.08),
+                              color: isExpired
+                                  ? const Color(0xFF9C27B0).withValues(alpha: 0.1)
+                                  : isOutBatch
+                                      ? Colors.red.withValues(alpha: 0.1)
+                                      : isLowBatch
+                                          ? Colors.orange.withValues(alpha: 0.1)
+                                          : const Color(0xFF1B4D3E).withValues(alpha: 0.08),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
@@ -1466,11 +1496,13 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                                 fontSize: 13,
                                 fontFamily: 'Literata',
                                 fontWeight: FontWeight.w800,
-                                color: isOutBatch
-                                    ? Colors.red
-                                    : isLowBatch
-                                        ? Colors.orange
-                                        : const Color(0xFF1B4D3E),
+                                color: isExpired
+                                    ? const Color(0xFF9C27B0)
+                                    : isOutBatch
+                                        ? Colors.red
+                                        : isLowBatch
+                                            ? Colors.orange
+                                            : const Color(0xFF1B4D3E),
                               ),
                             ),
                           ),
@@ -1482,6 +1514,48 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
               );
             }),
             // Alert banner at bottom
+            if (group.hasExpiredStock)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      const Color(0xFF9C27B0).withValues(alpha: 0.08),
+                      const Color(0xFF9C27B0).withValues(alpha: 0.04),
+                    ],
+                  ),
+                  borderRadius: group.totalStock == 0 || group.totalStock <= 10
+                      ? BorderRadius.zero
+                      : const BorderRadius.only(
+                          bottomLeft: Radius.circular(17),
+                          bottomRight: Radius.circular(17),
+                        ),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF9C27B0).withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(Icons.event_busy_rounded, color: Color(0xFF9C27B0), size: 16),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        '${group.expiredBatchCount} batch${group.expiredBatchCount > 1 ? 'es' : ''} expired - remove from inventory',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF7B1FA2),
+                          fontFamily: 'Literata',
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             if (group.totalStock == 0)
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -1522,7 +1596,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                   ],
                 ),
               )
-            else if (group.totalStock <= 10)
+            else if (group.totalStock <= 10 && !group.hasExpiredStock)
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
@@ -1596,6 +1670,39 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
               fontWeight: FontWeight.w700,
               color: color,
               fontFamily: 'Literata',
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Smaller badge for batch row status indicators
+  Widget _buildMicroBadge({
+    required String label,
+    required Color color,
+    IconData? icon,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (icon != null) ...[
+            Icon(icon, size: 9, color: color),
+            const SizedBox(width: 3),
+          ],
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 8,
+              fontWeight: FontWeight.w600,
+              fontFamily: 'Literata',
+              color: color,
             ),
           ),
         ],

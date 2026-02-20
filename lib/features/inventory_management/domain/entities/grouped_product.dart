@@ -13,6 +13,7 @@ class ProductSubEntry {
   final String? supplierName;
   final String? modelName;
   final int? batchId;
+  final DateTime? expiryDate;
 
   const ProductSubEntry({
     required this.productId,
@@ -25,9 +26,24 @@ class ProductSubEntry {
     this.supplierName,
     this.modelName,
     this.batchId,
+    this.expiryDate,
   });
 
   String get formattedDate => DateFormat('dd MMM yyyy').format(purchaseDate);
+
+  /// Check if this batch is expired
+  bool get isExpired {
+    if (expiryDate == null) return false;
+    return expiryDate!.isBefore(DateTime.now());
+  }
+
+  /// Check if this batch is expiring soon (within 30 days)
+  bool get isExpiringSoon {
+    if (expiryDate == null) return false;
+    final now = DateTime.now();
+    final thirtyDaysFromNow = now.add(const Duration(days: 30));
+    return expiryDate!.isAfter(now) && expiryDate!.isBefore(thirtyDaysFromNow);
+  }
 }
 
 /// Represents a group of products that share the same name
@@ -97,6 +113,21 @@ class GroupedProduct {
   /// Check if low stock (total)
   bool isLowStock({int threshold = 10}) => totalStock <= threshold;
 
+  /// Count of expired batches with remaining stock
+  int get expiredBatchCount =>
+      subEntries.where((e) => e.isExpired && e.stockQuantity > 0).length;
+
+  /// Total expired stock quantity
+  int get expiredStockCount =>
+      subEntries.where((e) => e.isExpired).fold<int>(0, (sum, e) => sum + e.stockQuantity);
+
+  /// Count of batches expiring soon (within 30 days)
+  int get expiringSoonBatchCount =>
+      subEntries.where((e) => e.isExpiringSoon && e.stockQuantity > 0).length;
+
+  /// Check if any batch has expired stock
+  bool get hasExpiredStock => expiredBatchCount > 0;
+
   /// Build grouped products from a flat list of products + batch data.
   ///
   /// Groups by normalized product name (lowercase, trimmed).
@@ -124,6 +155,7 @@ class GroupedProduct {
             ? batch.modelName as String
             : null,
         batchId: batch.id as int?,
+        expiryDate: batch.expiryDate as DateTime?,
       );
 
       groups.putIfAbsent(normalizedName, () => []).add(entry);
