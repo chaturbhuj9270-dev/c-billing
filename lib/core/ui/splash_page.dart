@@ -363,91 +363,90 @@ class _SplashPageState extends State<SplashPage> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 40),
+                ],
+              ),
+            ),
 
-                  // Unlock Now Button - Only visible when biometric lock is enabled
-                  if (_showUnlockButton)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 40),
-                      child: SizedBox(
-                        width: double.infinity,
-                        child: ClipRRect(
+            // Unlock Now Button - Only visible when biometric lock is enabled
+            if (_showUnlockButton)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 30, left: 40, right: 40),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              const Color(
+                                0xFF1B4D3E,
+                              ).withValues(alpha: 0.25),
+                              const Color(
+                                0xFF2E7D32,
+                              ).withValues(alpha: 0.15),
+                            ],
+                          ),
                           borderRadius: BorderRadius.circular(12),
-                          child: BackdropFilter(
-                            filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-                            child: Container(
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                  colors: [
-                                    const Color(
-                                      0xFF1B4D3E,
-                                    ).withValues(alpha: 0.25),
-                                    const Color(
-                                      0xFF2E7D32,
-                                    ).withValues(alpha: 0.15),
-                                  ],
-                                ),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: Colors.white.withValues(alpha: 0.3),
-                                  width: 1.5,
-                                ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: const Color(
-                                      0xFF1B4D3E,
-                                    ).withValues(alpha: 0.2),
-                                    blurRadius: 12,
-                                    offset: const Offset(0, 4),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.3),
+                            width: 1.5,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(
+                                0xFF1B4D3E,
+                              ).withValues(alpha: 0.2),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: _showUnlockBiometric,
+                            borderRadius: BorderRadius.circular(12),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 14,
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.lock_open,
+                                    size: 20,
+                                    color: Colors.white.withValues(
+                                      alpha: 0.95,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    _localizations.unlockNow,
+                                    style: TextStyle(
+                                      color: Colors.white.withValues(
+                                        alpha: 0.95,
+                                      ),
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                      fontFamily: 'Literata',
+                                    ),
                                   ),
                                 ],
-                              ),
-                              child: Material(
-                                color: Colors.transparent,
-                                child: InkWell(
-                                  onTap: _showUnlockBiometric,
-                                  borderRadius: BorderRadius.circular(12),
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 14,
-                                    ),
-                                    child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        Icon(
-                                          Icons.lock_open,
-                                          size: 20,
-                                          color: Colors.white.withValues(
-                                            alpha: 0.95,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 8),
-                                        Text(
-                                          _localizations.unlockNow,
-                                          style: TextStyle(
-                                            color: Colors.white.withValues(
-                                              alpha: 0.95,
-                                            ),
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w600,
-                                            fontFamily: 'Literata',
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
                               ),
                             ),
                           ),
                         ),
                       ),
                     ),
-                ],
+                  ),
+                ),
               ),
-            ),
 
             // Bottom branding section
             Padding(
