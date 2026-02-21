@@ -1947,166 +1947,350 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
   }
 
   void _showQuickInsightDetail(String title, List<Map<String, dynamic>> data, String type) {
-    showModalBottomSheet(
+    // Get icon and gradient colors based on type
+    IconData icon;
+    List<Color> gradientColors;
+    
+    switch (type) {
+      case 'upcoming':
+        icon = Icons.schedule_rounded;
+        gradientColors = [const Color(0xFF4A90E2), const Color(0xFF7B68EE)];
+        break;
+      case 'products':
+        icon = Icons.star_rounded;
+        gradientColors = [const Color(0xFFFFB74D), const Color(0xFFFF9800)];
+        break;
+      case 'pending':
+        icon = Icons.pending_actions_rounded;
+        gradientColors = [const Color(0xFFEF5350), const Color(0xFFE53935)];
+        break;
+      case 'dues':
+        icon = Icons.receipt_long_rounded;
+        gradientColors = [const Color(0xFF9575CD), const Color(0xFF7E57C2)];
+        break;
+      case 'lowstock':
+        icon = Icons.shopping_cart_rounded;
+        gradientColors = [const Color(0xFF26A69A), const Color(0xFF00897B)];
+        break;
+      default:
+        icon = Icons.info_outline;
+        gradientColors = [const Color(0xFF667eea), const Color(0xFF764ba2)];
+    }
+    
+    showGeneralDialog(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.6,
-        minChildSize: 0.3,
-        maxChildSize: 0.9,
-        builder: (context, scrollController) => Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          child: Column(
-            children: [
-              // Handle bar
-              Container(
-                margin: const EdgeInsets.only(top: 12),
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(2),
+      barrierDismissible: true,
+      barrierLabel: 'Dismiss',
+      barrierColor: Colors.black.withValues(alpha: 0.5),
+      transitionDuration: const Duration(milliseconds: 300),
+      pageBuilder: (context, animation, secondaryAnimation) {
+        return Container();
+      },
+      transitionBuilder: (context, animation, secondaryAnimation, child) {
+        final curvedAnimation = CurvedAnimation(
+          parent: animation,
+          curve: Curves.easeOutBack,
+          reverseCurve: Curves.easeInBack,
+        );
+        
+        return ScaleTransition(
+          scale: Tween<double>(begin: 0.8, end: 1.0).animate(curvedAnimation),
+          child: FadeTransition(
+            opacity: animation,
+            child: Center(
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 60),
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.of(context).size.height * 0.7,
+                  maxWidth: 400,
                 ),
-              ),
-              // Title
-              Padding(
-                padding: const EdgeInsets.all(20),
-                child: Row(
-                  children: [
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF1B4D3E),
-                        fontFamily: 'Literata',
-                      ),
-                    ),
-                    const Spacer(),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(28),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 25, sigmaY: 25),
+                    child: Container(
                       decoration: BoxDecoration(
-                        color: const Color(0xFF1B4D3E).withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        '${data.length} items',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF1B4D3E),
-                          fontFamily: 'Literata',
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Colors.white.withValues(alpha: 0.85),
+                            Colors.white.withValues(alpha: 0.75),
+                          ],
                         ),
+                        borderRadius: BorderRadius.circular(28),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.6),
+                          width: 1.5,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: gradientColors[0].withValues(alpha: 0.3),
+                            blurRadius: 30,
+                            spreadRadius: 5,
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Header with gradient
+                          Container(
+                            padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  gradientColors[0].withValues(alpha: 0.15),
+                                  gradientColors[1].withValues(alpha: 0.08),
+                                ],
+                              ),
+                              borderRadius: const BorderRadius.vertical(
+                                top: Radius.circular(28),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                // Icon with gradient background
+                                Container(
+                                  width: 48,
+                                  height: 48,
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                      colors: gradientColors,
+                                    ),
+                                    borderRadius: BorderRadius.circular(14),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: gradientColors[0].withValues(alpha: 0.4),
+                                        blurRadius: 12,
+                                        offset: const Offset(0, 4),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Icon(
+                                    icon,
+                                    color: Colors.white,
+                                    size: 24,
+                                  ),
+                                ),
+                                const SizedBox(width: 14),
+                                // Title and count
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        title,
+                                        style: const TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.w700,
+                                          color: Color(0xFF1B4D3E),
+                                          fontFamily: 'Literata',
+                                          letterSpacing: -0.3,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        '${data.length} ${data.length == 1 ? 'item' : 'items'}',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w500,
+                                          color: gradientColors[0],
+                                          fontFamily: 'Literata',
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                // Close button
+                                Material(
+                                  color: Colors.transparent,
+                                  child: InkWell(
+                                    onTap: () => Navigator.of(context).pop(),
+                                    borderRadius: BorderRadius.circular(12),
+                                    child: Container(
+                                      width: 36,
+                                      height: 36,
+                                      decoration: BoxDecoration(
+                                        color: Colors.grey.withValues(alpha: 0.1),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: const Icon(
+                                        Icons.close_rounded,
+                                        color: Color(0xFF1B4D3E),
+                                        size: 20,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          // Divider
+                          Container(
+                            height: 1,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  Colors.transparent,
+                                  gradientColors[0].withValues(alpha: 0.3),
+                                  Colors.transparent,
+                                ],
+                              ),
+                            ),
+                          ),
+                          // Content
+                          Flexible(
+                            child: data.isEmpty
+                                ? _buildGlassyEmptyState(gradientColors)
+                                : ListView.builder(
+                                    shrinkWrap: true,
+                                    padding: const EdgeInsets.symmetric(vertical: 8),
+                                    itemCount: data.length,
+                                    itemBuilder: (context, index) {
+                                      final item = data[index];
+                                      return _buildGlassyListItem(item, type, index, gradientColors);
+                                    },
+                                  ),
+                          ),
+                        ],
                       ),
                     ),
-                  ],
+                  ),
                 ),
               ),
-              const Divider(height: 1),
-              // Content
-              Expanded(
-                child: data.isEmpty
-                    ? _buildEmptyState(_localizations.noDataAvailableDashboard)
-                    : ListView.builder(
-                        controller: scrollController,
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        itemCount: data.length,
-                        itemBuilder: (context, index) {
-                          final item = data[index];
-                          return _buildInsightListItem(item, type, index);
-                        },
-                      ),
-              ),
-            ],
+            ),
           ),
-        ),
+        );
+      },
+    );
+  }
+  
+  Widget _buildGlassyEmptyState(List<Color> colors) {
+    return Container(
+      padding: const EdgeInsets.all(40),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 64,
+            height: 64,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [colors[0].withValues(alpha: 0.2), colors[1].withValues(alpha: 0.1)],
+              ),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Icon(
+              Icons.inbox_outlined,
+              size: 32,
+              color: colors[0],
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            _localizations.noDataAvailableDashboard,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: Colors.grey[600],
+              fontFamily: 'Literata',
+            ),
+          ),
+        ],
       ),
     );
   }
-
-  Widget _buildInsightListItem(Map<String, dynamic> item, String type, int index) {
+  
+  Widget _buildGlassyListItem(Map<String, dynamic> item, String type, int index, List<Color> colors) {
     switch (type) {
       case 'upcoming':
-        // Upcoming payments - oldest pending bills
         final daysPending = (item['daysPending'] ?? 0) as int;
         final isOverdue = (item['isOverdue'] ?? false) as bool;
-        return _buildUpcomingPaymentItem(
+        return _buildGlassyUpcomingItem(
+          customerName: item['customerName'] ?? 'Unknown',
+          amount: ((item['pendingAmount'] ?? 0) as num).toDouble(),
+          daysPending: daysPending,
+          isOverdue: isOverdue,
+          colors: colors,
+        );
+      case 'pending':
+        return _buildGlassyPaymentItem(
+          customerName: item['name'] ?? 'Unknown',
+          amount: ((item['currentPendingAmount'] ?? 0) as num).toDouble(),
+          colors: colors,
+        );
+      case 'dues':
+        return _buildGlassyDuesItem(
           customerName: item['customerName'] ?? 'Unknown',
           amount: ((item['pendingAmount'] ?? 0) as num).toDouble(),
           billDate: _parseDate(item['billDate']),
-          daysPending: daysPending,
-          isOverdue: isOverdue,
-        );
-      case 'pending':
-        // Customers with pending balance
-        return _buildPaymentListItem(
-          customerName: item['name'] ?? 'Unknown',
-          amount: ((item['currentPendingAmount'] ?? 0) as num).toDouble(),
-          dueDate: null,
-          isPending: true,
-        );
-      case 'dues':
-        // Recent pending bills
-        return _buildPaymentListItem(
-          customerName: item['customerName'] ?? 'Unknown',
-          amount: ((item['pendingAmount'] ?? 0) as num).toDouble(),
-          dueDate: _parseDate(item['billDate']),
-          isPending: true,
+          colors: colors,
         );
       case 'products':
-        // Top selling products
-        return _buildProductRankItem(
+        return _buildGlassyProductItem(
           rank: index + 1,
           name: item['productName'] ?? item['name'] ?? 'Unknown',
           quantity: (item['totalQty'] ?? item['quantity'] ?? 0) as int,
           revenue: ((item['totalAmount'] ?? item['revenue'] ?? 0) as num).toDouble(),
+          colors: colors,
         );
       case 'lowstock':
-        // Low stock products
-        return _buildLowStockItem(
+        return _buildGlassyLowStockItem(
           name: item['name'] ?? 'Unknown',
           currentStock: (item['currentStock'] ?? item['stock'] ?? 0) as int,
           minStock: (item['minStockLevel'] ?? 10) as int,
+          colors: colors,
         );
       default:
         return const SizedBox.shrink();
     }
   }
   
-  Widget _buildUpcomingPaymentItem({
+  Widget _buildGlassyUpcomingItem({
     required String customerName,
     required double amount,
-    DateTime? billDate,
     required int daysPending,
     required bool isOverdue,
+    required List<Color> colors,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: isOverdue ? Colors.red.withValues(alpha: 0.05) : null,
-        border: Border(
-          bottom: BorderSide(color: Colors.grey[200]!, width: 1),
+        color: isOverdue 
+            ? Colors.red.withValues(alpha: 0.08)
+            : colors[0].withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: isOverdue 
+              ? Colors.red.withValues(alpha: 0.2)
+              : colors[0].withValues(alpha: 0.15),
         ),
       ),
       child: Row(
         children: [
           Container(
-            width: 36,
-            height: 36,
+            width: 40,
+            height: 40,
             decoration: BoxDecoration(
-              color: isOverdue
-                  ? Colors.red.withValues(alpha: 0.1)
-                  : Colors.orange.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(8),
+              gradient: LinearGradient(
+                colors: isOverdue 
+                    ? [Colors.red.shade400, Colors.red.shade600]
+                    : colors,
+              ),
+              borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(
-              isOverdue ? Icons.warning_rounded : Icons.schedule,
-              color: isOverdue ? Colors.red : Colors.orange,
-              size: 18,
+              isOverdue ? Icons.warning_rounded : Icons.schedule_rounded,
+              color: Colors.white,
+              size: 20,
             ),
           ),
           const SizedBox(width: 12),
@@ -2117,34 +2301,382 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                 Text(
                   customerName,
                   style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF1B4D3E),
                     fontFamily: 'Literata',
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 Text(
                   daysPending == 0
-                      ? 'Today'
+                      ? 'Due today'
                       : daysPending == 1
-                          ? '1 day pending'
-                          : '$daysPending days pending',
+                          ? '1 day overdue'
+                          : '$daysPending days overdue',
                   style: TextStyle(
                     fontSize: 11,
-                    color: isOverdue ? Colors.red[600] : Colors.grey[600],
-                    fontWeight: isOverdue ? FontWeight.w500 : FontWeight.normal,
+                    color: isOverdue ? Colors.red[600] : colors[0],
+                    fontWeight: FontWeight.w500,
                     fontFamily: 'Literata',
                   ),
                 ),
               ],
             ),
           ),
-          Text(
-            '₹${_formatAmount(amount)}',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: isOverdue ? Colors.red[700] : Colors.orange[700],
-              fontFamily: 'Literata',
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: isOverdue 
+                    ? [Colors.red.shade400, Colors.red.shade600]
+                    : colors,
+              ),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              '₹${_formatAmount(amount)}',
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
+                fontFamily: 'Literata',
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildGlassyPaymentItem({
+    required String customerName,
+    required double amount,
+    required List<Color> colors,
+  }) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: colors[0].withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: colors[0].withValues(alpha: 0.15)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(colors: colors),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Icon(
+              Icons.person_outline_rounded,
+              color: Colors.white,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              customerName,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF1B4D3E),
+                fontFamily: 'Literata',
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(colors: colors),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              '₹${_formatAmount(amount)}',
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
+                fontFamily: 'Literata',
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildGlassyDuesItem({
+    required String customerName,
+    required double amount,
+    DateTime? billDate,
+    required List<Color> colors,
+  }) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: colors[0].withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: colors[0].withValues(alpha: 0.15)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(colors: colors),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Icon(
+              Icons.receipt_long_rounded,
+              color: Colors.white,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  customerName,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF1B4D3E),
+                    fontFamily: 'Literata',
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                if (billDate != null)
+                  Text(
+                    _formatDate(billDate),
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: colors[0],
+                      fontWeight: FontWeight.w500,
+                      fontFamily: 'Literata',
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(colors: colors),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              '₹${_formatAmount(amount)}',
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
+                fontFamily: 'Literata',
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildGlassyProductItem({
+    required int rank,
+    required String name,
+    required int quantity,
+    required double revenue,
+    required List<Color> colors,
+  }) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: colors[0].withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: colors[0].withValues(alpha: 0.15)),
+      ),
+      child: Row(
+        children: [
+          // Rank badge
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(colors: colors),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Center(
+              child: Text(
+                '#$rank',
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                  fontFamily: 'Literata',
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  name,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF1B4D3E),
+                    fontFamily: 'Literata',
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                Row(
+                  children: [
+                    Icon(Icons.shopping_bag_outlined, size: 12, color: colors[0]),
+                    const SizedBox(width: 4),
+                    Text(
+                      '$quantity sold',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: colors[0],
+                        fontWeight: FontWeight.w500,
+                        fontFamily: 'Literata',
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(colors: colors),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              '₹${_formatCompactAmount(revenue)}',
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
+                fontFamily: 'Literata',
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildGlassyLowStockItem({
+    required String name,
+    required int currentStock,
+    required int minStock,
+    required List<Color> colors,
+  }) {
+    final isOutOfStock = currentStock == 0;
+    final stockPercent = minStock > 0 ? (currentStock / minStock * 100).clamp(0, 100) : 0;
+    
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: isOutOfStock 
+            ? Colors.red.withValues(alpha: 0.08)
+            : colors[0].withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: isOutOfStock 
+              ? Colors.red.withValues(alpha: 0.2)
+              : colors[0].withValues(alpha: 0.15),
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: isOutOfStock 
+                    ? [Colors.red.shade400, Colors.red.shade600]
+                    : colors,
+              ),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(
+              isOutOfStock ? Icons.error_outline : Icons.inventory_2_outlined,
+              color: Colors.white,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  name,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF1B4D3E),
+                    fontFamily: 'Literata',
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+                // Progress bar
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: LinearProgressIndicator(
+                    value: stockPercent / 100,
+                    backgroundColor: Colors.grey.withValues(alpha: 0.2),
+                    valueColor: AlwaysStoppedAnimation(
+                      isOutOfStock ? Colors.red : colors[0],
+                    ),
+                    minHeight: 4,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: isOutOfStock 
+                    ? [Colors.red.shade400, Colors.red.shade600]
+                    : colors,
+              ),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              isOutOfStock ? 'Out' : '$currentStock',
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
+                fontFamily: 'Literata',
+              ),
             ),
           ),
         ],
@@ -2163,269 +2695,6 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
       }
     }
     return null;
-  }
-
-  Widget _buildPaymentListItem({
-    required String customerName,
-    required double amount,
-    DateTime? dueDate,
-    required bool isPending,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(color: Colors.grey[200]!, width: 1),
-        ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: isPending
-                  ? Colors.orange.withOpacity(0.1)
-                  : Colors.green.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(
-              isPending ? Icons.schedule : Icons.check_circle_outline,
-              color: isPending ? Colors.orange : Colors.green,
-              size: 18,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  customerName,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                    fontFamily: 'Literata',
-                  ),
-                ),
-                if (dueDate != null)
-                  Text(
-                    'Due: ${_formatDate(dueDate)}',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: Colors.grey[600],
-                      fontFamily: 'Literata',
-                    ),
-                  ),
-              ],
-            ),
-          ),
-          Text(
-            '₹${_formatAmount(amount)}',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: isPending ? Colors.orange[700] : Colors.green[700],
-              fontFamily: 'Literata',
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildProductRankItem({
-    required int rank,
-    required String name,
-    required int quantity,
-    required double revenue,
-  }) {
-    final medalColors = [Colors.amber, Colors.grey[400]!, Colors.brown[300]!];
-    final showMedal = rank <= 3;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(color: Colors.grey[200]!, width: 1),
-        ),
-      ),
-      child: Row(
-        children: [
-          if (showMedal)
-            Container(
-              width: 28,
-              height: 28,
-              decoration: BoxDecoration(
-                color: medalColors[rank - 1].withOpacity(0.2),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.emoji_events,
-                color: medalColors[rank - 1],
-                size: 16,
-              ),
-            )
-          else
-            Container(
-              width: 28,
-              height: 28,
-              alignment: Alignment.center,
-              child: Text(
-                '#$rank',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.grey[600],
-                  fontFamily: 'Literata',
-                ),
-              ),
-            ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  name,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                    fontFamily: 'Literata',
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                Text(
-                  '$quantity units sold',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: Colors.grey[600],
-                    fontFamily: 'Literata',
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Text(
-            '₹${_formatAmount(revenue)}',
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF1B4D3E),
-              fontFamily: 'Literata',
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildLowStockItem({
-    required String name,
-    required int currentStock,
-    required int minStock,
-  }) {
-    final isOutOfStock = currentStock == 0;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(color: Colors.grey[200]!, width: 1),
-        ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: isOutOfStock
-                  ? Colors.red.withOpacity(0.1)
-                  : Colors.orange.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(
-              isOutOfStock ? Icons.error_outline : Icons.warning_amber_rounded,
-              color: isOutOfStock ? Colors.red : Colors.orange,
-              size: 18,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  name,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                    fontFamily: 'Literata',
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                Text(
-                  isOutOfStock ? _localizations.outOfStockAlert : '${_localizations.onlyLeftInStock} $currentStock',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: isOutOfStock ? Colors.red : Colors.orange[700],
-                    fontWeight: FontWeight.w500,
-                    fontFamily: 'Literata',
-                  ),
-                ),
-              ],
-            ),
-          ),
-          TextButton(
-            onPressed: () {
-              // Navigate to order/restock
-            },
-            style: TextButton.styleFrom(
-              backgroundColor: const Color(0xFF1B4D3E).withOpacity(0.1),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-            child: Text(
-              _localizations.order,
-              style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF1B4D3E),
-                fontFamily: 'Literata',
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEmptyState(String message) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        children: [
-          Icon(
-            Icons.inbox_outlined,
-            size: 40,
-            color: Colors.grey[400],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            message,
-            style: TextStyle(
-              fontSize: 13,
-              color: Colors.grey[600],
-              fontFamily: 'Literata',
-            ),
-          ),
-        ],
-      ),
-    );
   }
 
   String _formatDate(DateTime date) {
