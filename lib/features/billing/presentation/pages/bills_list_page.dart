@@ -847,6 +847,10 @@ class _BillsListPageState extends State<BillsListPage>
   void _toggleReturnFilter() {
     setState(() {
       _showReturnedOnly = !_showReturnedOnly;
+      // Disable Today filter when viewing returns to show all returned bills
+      if (_showReturnedOnly) {
+        _showTodayOnly = false;
+      }
     });
     _filterBills(_searchController.text);
   }
