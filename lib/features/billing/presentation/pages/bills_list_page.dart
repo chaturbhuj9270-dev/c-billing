@@ -24,6 +24,9 @@ import 'package:c_billing/features/billing/offline/controllers/bill_offline_cont
 import 'package:c_billing/features/billing/offline/entities/bill_entity.dart';
 import 'package:c_billing/features/billing/data/services/bill_sync_service.dart';
 
+/// Quick date filter options for bill history
+enum _BillDateFilter { none, today, thisWeek, thisMonth, thisYear, custom }
+
 class BillsListPage extends StatefulWidget {
   const BillsListPage({super.key});
 
@@ -65,7 +68,7 @@ class _BillsListPageState extends State<BillsListPage>
   DateTime? _endDate;
   String _sortOrder = 'newest';
   bool _showReturnedOnly = false;
-  bool _showTodayOnly = true;
+  _BillDateFilter _dateFilter = _BillDateFilter.today;
 
   // Stats
   double _totalSales = 0.0;
@@ -801,14 +804,44 @@ class _BillsListPageState extends State<BillsListPage>
       // Start with all bills
       var bills = _bills.toList();
       
-      // Apply Today filter
-      if (_showTodayOnly) {
-        final now = DateTime.now();
-        final todayStart = DateTime(now.year, now.month, now.day);
-        final todayEnd = todayStart.add(const Duration(days: 1));
-        bills = bills.where((bill) => 
-            bill.billDate.isAfter(todayStart.subtract(const Duration(seconds: 1))) && 
-            bill.billDate.isBefore(todayEnd)).toList();
+      // Apply date filter based on selected filter type
+      final now = DateTime.now();
+      switch (_dateFilter) {
+        case _BillDateFilter.today:
+          final todayStart = DateTime(now.year, now.month, now.day);
+          final todayEnd = todayStart.add(const Duration(days: 1));
+          bills = bills.where((bill) => 
+              bill.billDate.isAfter(todayStart.subtract(const Duration(seconds: 1))) && 
+              bill.billDate.isBefore(todayEnd)).toList();
+          break;
+        case _BillDateFilter.thisWeek:
+          final weekStart = now.subtract(Duration(days: now.weekday - 1));
+          final weekStartDate = DateTime(weekStart.year, weekStart.month, weekStart.day);
+          final weekEnd = weekStartDate.add(const Duration(days: 7));
+          bills = bills.where((bill) => 
+              bill.billDate.isAfter(weekStartDate.subtract(const Duration(seconds: 1))) && 
+              bill.billDate.isBefore(weekEnd)).toList();
+          break;
+        case _BillDateFilter.thisMonth:
+          final monthStart = DateTime(now.year, now.month, 1);
+          final monthEnd = DateTime(now.year, now.month + 1, 1);
+          bills = bills.where((bill) => 
+              bill.billDate.isAfter(monthStart.subtract(const Duration(seconds: 1))) && 
+              bill.billDate.isBefore(monthEnd)).toList();
+          break;
+        case _BillDateFilter.thisYear:
+          final yearStart = DateTime(now.year, 1, 1);
+          final yearEnd = DateTime(now.year + 1, 1, 1);
+          bills = bills.where((bill) => 
+              bill.billDate.isAfter(yearStart.subtract(const Duration(seconds: 1))) && 
+              bill.billDate.isBefore(yearEnd)).toList();
+          break;
+        case _BillDateFilter.custom:
+          // Custom filter uses _startDate and _endDate - handled separately
+          break;
+        case _BillDateFilter.none:
+          // No date filter - show all
+          break;
       }
       
       // Apply return filter
@@ -837,9 +870,14 @@ class _BillsListPageState extends State<BillsListPage>
     });
   }
 
-  void _toggleTodayFilter() {
+  void _setDateFilter(_BillDateFilter filter) {
     setState(() {
-      _showTodayOnly = !_showTodayOnly;
+      // Toggle off if already selected
+      if (_dateFilter == filter) {
+        _dateFilter = _BillDateFilter.none;
+      } else {
+        _dateFilter = filter;
+      }
     });
     _filterBills(_searchController.text);
   }
@@ -847,9 +885,9 @@ class _BillsListPageState extends State<BillsListPage>
   void _toggleReturnFilter() {
     setState(() {
       _showReturnedOnly = !_showReturnedOnly;
-      // Disable Today filter when viewing returns to show all returned bills
+      // Disable date filter when viewing returns to show all returned bills
       if (_showReturnedOnly) {
-        _showTodayOnly = false;
+        _dateFilter = _BillDateFilter.none;
       }
     });
     _filterBills(_searchController.text);
@@ -1550,7 +1588,7 @@ class _BillsListPageState extends State<BillsListPage>
 
   Widget _buildSearchAndFilterSection() {
     final hasDateFilter = _startDate != null;
-    final hasActiveFilters = hasDateFilter || _showReturnedOnly || _showTodayOnly;
+    final hasActiveFilters = hasDateFilter || _showReturnedOnly || _dateFilter != _BillDateFilter.none;
     
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -1675,7 +1713,7 @@ class _BillsListPageState extends State<BillsListPage>
                   GestureDetector(
                     onTap: () {
                       setState(() {
-                        _showTodayOnly = false;
+                        _dateFilter = _BillDateFilter.none;
                         _showReturnedOnly = false;
                         _startDate = null;
                         _endDate = null;
@@ -1707,9 +1745,36 @@ class _BillsListPageState extends State<BillsListPage>
                 _buildFilterChip(
                   icon: Icons.today_rounded,
                   label: _localizations.today,
-                  isActive: _showTodayOnly,
-                  onTap: _toggleTodayFilter,
-                  onClear: _showTodayOnly ? _toggleTodayFilter : null,
+                  isActive: _dateFilter == _BillDateFilter.today,
+                  onTap: () => _setDateFilter(_BillDateFilter.today),
+                  onClear: _dateFilter == _BillDateFilter.today ? () => _setDateFilter(_BillDateFilter.today) : null,
+                ),
+                const SizedBox(width: 8),
+                // This Week filter chip
+                _buildFilterChip(
+                  icon: Icons.view_week_rounded,
+                  label: _localizations.thisWeek,
+                  isActive: _dateFilter == _BillDateFilter.thisWeek,
+                  onTap: () => _setDateFilter(_BillDateFilter.thisWeek),
+                  onClear: _dateFilter == _BillDateFilter.thisWeek ? () => _setDateFilter(_BillDateFilter.thisWeek) : null,
+                ),
+                const SizedBox(width: 8),
+                // This Month filter chip
+                _buildFilterChip(
+                  icon: Icons.calendar_month_rounded,
+                  label: _localizations.thisMonth,
+                  isActive: _dateFilter == _BillDateFilter.thisMonth,
+                  onTap: () => _setDateFilter(_BillDateFilter.thisMonth),
+                  onClear: _dateFilter == _BillDateFilter.thisMonth ? () => _setDateFilter(_BillDateFilter.thisMonth) : null,
+                ),
+                const SizedBox(width: 8),
+                // This Year filter chip
+                _buildFilterChip(
+                  icon: Icons.calendar_today_rounded,
+                  label: _localizations.thisYear,
+                  isActive: _dateFilter == _BillDateFilter.thisYear,
+                  onTap: () => _setDateFilter(_BillDateFilter.thisYear),
+                  onClear: _dateFilter == _BillDateFilter.thisYear ? () => _setDateFilter(_BillDateFilter.thisYear) : null,
                 ),
                 const SizedBox(width: 8),
                 // Date range chip
@@ -1717,7 +1782,7 @@ class _BillsListPageState extends State<BillsListPage>
                   icon: Icons.date_range_rounded,
                   label: hasDateFilter
                       ? '${DateFormat('dd MMM').format(_startDate!)} – ${DateFormat('dd MMM').format(_endDate!)}'
-                      : _localizations.date,
+                      : _localizations.custom,
                   isActive: hasDateFilter,
                   onTap: _showDateFilterDialog,
                   onClear: hasDateFilter ? _clearDateFilter : null,
