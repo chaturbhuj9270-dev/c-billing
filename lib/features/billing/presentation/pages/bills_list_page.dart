@@ -206,16 +206,17 @@ class _BillsListPageState extends State<BillsListPage>
   }
 
   Future<void> _printBill(Bill bill) async {
-    // Show PDF preview using FilePreviewPage
-    await _showBillPdfPreview(bill);
-  }
-
-  /// Show PDF preview for a bill using FilePreviewPage
-  Future<void> _showBillPdfPreview(Bill bill) async {
-    debugPrint('[BillsListPage] Starting PDF preview for bill: ${bill.billNumber}');
-    setState(() => _isProcessingPdf = true);
+    // Prevent multiple simultaneous print operations
+    if (_printingBillId != null || _isProcessingPdf) return;
+    
+    // Set the printing bill ID to show loading indicator on that specific card
+    setState(() {
+      _printingBillId = bill.id;
+      _isProcessingPdf = true;
+    });
+    
     try {
-      debugPrint('[BillsListPage] Creating print data...');
+      debugPrint('[BillsListPage] Starting PDF preview for bill: ${bill.billNumber}');
       final printData = _createPrintBillData(bill);
       
       debugPrint('[BillsListPage] Fetching shop details...');
@@ -232,6 +233,9 @@ class _BillsListPageState extends State<BillsListPage>
       final file = await _pdfService.savePdfToFile(
         billData: printData,
         shopDetails: shop,
+      ).timeout(
+        const Duration(seconds: 15),
+        onTimeout: () => throw Exception('PDF generation timed out'),
       );
       debugPrint('[BillsListPage] PDF saved to: ${file.path}');
       
@@ -239,6 +243,12 @@ class _BillsListPageState extends State<BillsListPage>
         debugPrint('[BillsListPage] Widget not mounted, returning');
         return;
       }
+      
+      // Hide loading before navigation
+      setState(() {
+        _printingBillId = null;
+        _isProcessingPdf = false;
+      });
       
       debugPrint('[BillsListPage] Navigating to FilePreviewPage...');
       await Navigator.push(
@@ -265,9 +275,19 @@ class _BillsListPageState extends State<BillsListPage>
         );
       }
     } finally {
-      debugPrint('[BillsListPage] Finally block - setting _isProcessingPdf to false');
-      if (mounted) setState(() => _isProcessingPdf = false);
+      debugPrint('[BillsListPage] Finally block - resetting state');
+      if (mounted) {
+        setState(() {
+          _printingBillId = null;
+          _isProcessingPdf = false;
+        });
+      }
     }
+  }
+
+  /// Show PDF preview for a bill using FilePreviewPage (alias for _printBill)
+  Future<void> _showBillPdfPreview(Bill bill) async {
+    await _printBill(bill);
   }
 
   Future<void> _shareBillAsPdf(Bill bill) async {
@@ -3267,6 +3287,9 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
       final file = await _pdfService.savePdfToFile(
         billData: printData,
         shopDetails: shop,
+      ).timeout(
+        const Duration(seconds: 15),
+        onTimeout: () => throw Exception('PDF generation timed out'),
       );
       debugPrint('[BillDetailsDialog] PDF saved to: ${file.path}');
       
@@ -3274,6 +3297,9 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
         debugPrint('[BillDetailsDialog] Widget not mounted, returning');
         return;
       }
+      
+      // Hide loading before navigation
+      setState(() => _isGeneratingPdf = false);
       
       debugPrint('[BillDetailsDialog] Navigating to FilePreviewPage...');
       await Navigator.push(
@@ -3300,7 +3326,7 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
         );
       }
     } finally {
-      debugPrint('[BillDetailsDialog] Finally block - setting _isGeneratingPdf to false');
+      debugPrint('[BillDetailsDialog] Finally block - resetting state');
       if (mounted) setState(() => _isGeneratingPdf = false);
     }
   }
