@@ -1324,31 +1324,52 @@ class PdfBillService {
     required PrintBillData billData,
     required Shop shopDetails,
   }) async {
-    // Check bill type setting
-    final prefs = await SharedPreferences.getInstance();
-    final billType = prefs.getString('bill_type') ?? 'pos';
-    
-    final pw.Document pdf;
-    if (billType == 'normal') {
-      pdf = await generateNormalBillPdf(
-        billData: billData,
-        shopDetails: shopDetails,
-      );
-    } else {
-      pdf = await generateBillPdf(
-        billData: billData,
-        shopDetails: shopDetails,
-      );
+    try {
+      debugPrint('[PdfBillService] savePdfToFile started for bill: ${billData.billNumber}');
+      
+      // Check bill type setting
+      debugPrint('[PdfBillService] Getting SharedPreferences...');
+      final prefs = await SharedPreferences.getInstance();
+      final billType = prefs.getString('bill_type') ?? 'pos';
+      debugPrint('[PdfBillService] Bill type: $billType');
+      
+      debugPrint('[PdfBillService] Generating PDF document...');
+      final pw.Document pdf;
+      if (billType == 'normal') {
+        pdf = await generateNormalBillPdf(
+          billData: billData,
+          shopDetails: shopDetails,
+        );
+      } else {
+        pdf = await generateBillPdf(
+          billData: billData,
+          shopDetails: shopDetails,
+        );
+      }
+      debugPrint('[PdfBillService] PDF document generated successfully');
+
+      debugPrint('[PdfBillService] Saving PDF bytes...');
+      final bytes = await pdf.save();
+      debugPrint('[PdfBillService] PDF bytes saved: ${bytes.length} bytes');
+      
+      debugPrint('[PdfBillService] Getting application documents directory...');
+      final dir = await getApplicationDocumentsDirectory();
+      debugPrint('[PdfBillService] Directory: ${dir.path}');
+      
+      final fileName =
+          'bill_${billData.billNumber.replaceAll('/', '_')}_${DateTime.now().millisecondsSinceEpoch}.pdf';
+      final file = File('${dir.path}/$fileName');
+      
+      debugPrint('[PdfBillService] Writing file to: ${file.path}');
+      await file.writeAsBytes(bytes);
+      debugPrint('[PdfBillService] File written successfully');
+      
+      return file;
+    } catch (e, stack) {
+      debugPrint('[PdfBillService] ERROR in savePdfToFile: $e');
+      debugPrint('[PdfBillService] Stack trace: $stack');
+      rethrow;
     }
-
-    final bytes = await pdf.save();
-    final dir = await getApplicationDocumentsDirectory();
-    final fileName =
-        'bill_${billData.billNumber.replaceAll('/', '_')}_${DateTime.now().millisecondsSinceEpoch}.pdf';
-    final file = File('${dir.path}/$fileName');
-    await file.writeAsBytes(bytes);
-
-    return file;
   }
 
   /// Share the bill as PDF via the system share sheet

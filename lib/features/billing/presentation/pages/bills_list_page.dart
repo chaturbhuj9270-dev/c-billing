@@ -76,11 +76,11 @@ class _BillsListPageState extends State<BillsListPage>
   bool _showReturnedOnly = false;
   _BillDateFilter _dateFilter = _BillDateFilter.today;
 
-  // Stats
-  double _totalSales = 0.0;
-  double _totalProfit = 0.0;
-  int _totalBillsCount = 0;
-  int _returnedBillsCount = 0;
+  // Filtered stats (based on applied filters)
+  double _filteredSales = 0.0;
+  double _filteredProfit = 0.0;
+  int _filteredBillsCount = 0;
+  int _filteredReturnedCount = 0;
 
   // Offline-first stream subscription
   StreamSubscription<List<BillEntity>>? _billsSubscription;
@@ -110,11 +110,6 @@ class _BillsListPageState extends State<BillsListPage>
         final bills = entities.map((e) => Bill.fromBillEntity(e)).toList();
         setState(() {
           _bills = bills;
-          _totalSales = bills.fold(0.0, (sum, bill) => sum + bill.finalAmount);
-          _totalProfit = bills.where((b) => !b.returnStatus).fold(0.0, (sum, bill) =>
-              sum + bill.items.fold(0.0, (s, item) => s + item.itemProfit) - bill.discountAmount);
-          _totalBillsCount = bills.length;
-          _returnedBillsCount = bills.where((b) => b.returnStatus).length;
           _filterBills(_searchController.text);
         });
       }
@@ -531,18 +526,13 @@ class _BillsListPageState extends State<BillsListPage>
       // Convert to domain Bills
       final bills = entities.map((e) => Bill.fromBillEntity(e)).toList();
 
-      // Calculate stats (use finalAmount to account for discounts)
-      _totalSales = bills.fold(0.0, (sum, bill) => sum + bill.finalAmount);
-      _totalProfit = bills.where((b) => !b.returnStatus).fold(0.0, (sum, bill) =>
-          sum + bill.items.fold(0.0, (s, item) => s + item.itemProfit) - bill.discountAmount);
-      _totalBillsCount = bills.length;
-
       setState(() {
         _bills = bills;
-        _filteredBills = bills;
-        _applySorting();
         _isLoading = false;
       });
+      
+      // Apply filters and calculate stats
+      _filterBills(_searchController.text);
 
       // Trigger background sync
       BillSyncService.instance.syncNow();
@@ -624,7 +614,18 @@ class _BillsListPageState extends State<BillsListPage>
         }).toList();
       }
       _applySorting();
+      
+      // Calculate filtered stats
+      _calculateFilteredStats();
     });
+  }
+
+  void _calculateFilteredStats() {
+    _filteredSales = _filteredBills.fold(0.0, (sum, bill) => sum + bill.finalAmount);
+    _filteredProfit = _filteredBills.where((b) => !b.returnStatus).fold(0.0, (sum, bill) =>
+        sum + bill.items.fold(0.0, (s, item) => s + item.itemProfit) - bill.discountAmount);
+    _filteredBillsCount = _filteredBills.length;
+    _filteredReturnedCount = _filteredBills.where((b) => b.returnStatus).length;
   }
 
   void _setDateFilter(_BillDateFilter filter) {
@@ -1027,28 +1028,59 @@ class _BillsListPageState extends State<BillsListPage>
   }
 
   Widget _buildStatsSection() {
-    // Calculate today's stats
-    final now = DateTime.now();
-    final todayStart = DateTime(now.year, now.month, now.day);
-    final todayEnd = todayStart.add(const Duration(days: 1));
-    final todayBills = _bills.where((b) => 
-        b.billDate.isAfter(todayStart.subtract(const Duration(seconds: 1))) && 
-        b.billDate.isBefore(todayEnd)).toList();
-    final todaySales = todayBills.fold(0.0, (sum, bill) => sum + bill.finalAmount);
-    
+    // Use filtered stats to show calculations based on applied filters
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Main Stats Row - Sales and Profit
+          // Filter indicator badge
+          if (_dateFilter != _BillDateFilter.none || _showReturnedOnly || _searchController.text.isNotEmpty)
+            Container(
+              margin: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    const Color(0xFF2196F3).withOpacity(0.15),
+                    const Color(0xFF1976D2).withOpacity(0.08),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: const Color(0xFF2196F3).withOpacity(0.3),
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.filter_alt_rounded,
+                    size: 14,
+                    color: Color(0xFF2196F3),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    _getFilterDescription(),
+                    style: const TextStyle(
+                      fontFamily: 'Literata',
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF2196F3),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          // Main Stats Row - Sales and Profit (based on filtered bills)
           Row(
             children: [
               // Total Sales - Featured Card
               Expanded(
                 child: _buildFeaturedStatCard(
                   title: _localizations.totalSales,
-                  value: '₹${_formatAmount(_totalSales)}',
+                  value: '₹${_formatAmount(_filteredSales)}',
                   icon: Icons.account_balance_wallet_rounded,
                   gradient: const [Color(0xFF1B4D3E), Color(0xFF2E7D5B)],
                 ),
@@ -1058,7 +1090,7 @@ class _BillsListPageState extends State<BillsListPage>
               Expanded(
                 child: _buildFeaturedStatCard(
                   title: _localizations.netProfit,
-                  value: '₹${_formatAmount(_totalProfit)}',
+                  value: '₹${_formatAmount(_filteredProfit)}',
                   icon: Icons.trending_up_rounded,
                   gradient: const [Color(0xFF4CAF50), Color(0xFF81C784)],
                 ),
@@ -1066,13 +1098,13 @@ class _BillsListPageState extends State<BillsListPage>
             ],
           ),
           const SizedBox(height: 10),
-          // Secondary Stats Row - Bills and Returns
+          // Secondary Stats Row - Bills and Returns (based on filtered bills)
           Row(
             children: [
               Expanded(
                 child: _buildMiniStatCard(
                   title: _localizations.totalBills,
-                  value: '$_totalBillsCount',
+                  value: '$_filteredBillsCount',
                   icon: Icons.receipt_long_rounded,
                   color: const Color(0xFF2196F3),
                 ),
@@ -1081,95 +1113,52 @@ class _BillsListPageState extends State<BillsListPage>
               Expanded(
                 child: _buildMiniStatCard(
                   title: _localizations.returns,
-                  value: '$_returnedBillsCount',
+                  value: '$_filteredReturnedCount',
                   icon: Icons.assignment_return_rounded,
                   color: Colors.orange,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          // Today's Sales Banner
-          ClipRRect(
-            borderRadius: BorderRadius.circular(16),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      const Color(0xFF9C27B0).withOpacity(0.15),
-                      const Color(0xFF673AB7).withOpacity(0.08),
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: const Color(0xFF9C27B0).withOpacity(0.2),
-                    width: 1,
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFF9C27B0), Color(0xFF673AB7)],
-                        ),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Icon(
-                        Icons.today_rounded,
-                        color: Colors.white,
-                        size: 20,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            '${_localizations.today}\'s ${_localizations.totalSales}',
-                            style: TextStyle(
-                              fontFamily: 'Literata',
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.grey[700],
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            '${todayBills.length} bills',
-                            style: TextStyle(
-                              fontFamily: 'Literata',
-                              fontSize: 10,
-                              color: Colors.grey[500],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Text(
-                      '₹${_formatAmount(todaySales)}',
-                      style: const TextStyle(
-                        fontFamily: 'Literata',
-                        fontSize: 20,
-                        fontWeight: FontWeight.w800,
-                        color: Color(0xFF9C27B0),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
         ],
       ),
     );
+  }
+
+  String _getFilterDescription() {
+    List<String> filters = [];
+    
+    if (_dateFilter != _BillDateFilter.none) {
+      switch (_dateFilter) {
+        case _BillDateFilter.today:
+          filters.add('Today');
+          break;
+        case _BillDateFilter.thisWeek:
+          filters.add('This Week');
+          break;
+        case _BillDateFilter.thisMonth:
+          filters.add('This Month');
+          break;
+        case _BillDateFilter.thisYear:
+          filters.add('This Year');
+          break;
+        case _BillDateFilter.custom:
+          filters.add('Custom Range');
+          break;
+        case _BillDateFilter.none:
+          break;
+      }
+    }
+    
+    if (_showReturnedOnly) {
+      filters.add('Returns Only');
+    }
+    
+    if (_searchController.text.isNotEmpty) {
+      filters.add('Search: \"${_searchController.text}\"');
+    }
+    
+    return filters.isEmpty ? 'Filtered' : filters.join(' • ');
   }
 
   Widget _buildFeaturedStatCard({

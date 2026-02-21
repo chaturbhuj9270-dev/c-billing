@@ -47,6 +47,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
   bool _isPrinting = false;
   List<List<String>>? _csvData;
   String? _errorMessage;
+  Uint8List? _pdfBytes; // Pre-loaded PDF bytes
   
   // Zoom controls
   double _zoomLevel = 1.0;
@@ -98,13 +99,43 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
 
   Future<void> _loadFile() async {
     try {
+      debugPrint('[FilePreviewPage] Loading file: ${widget.file.path}');
+      debugPrint('[FilePreviewPage] File type: ${widget.fileType}');
+      
+      // Check if file exists
+      if (!widget.file.existsSync()) {
+        throw Exception('File does not exist: ${widget.file.path}');
+      }
+      
+      final fileSize = widget.file.lengthSync();
+      debugPrint('[FilePreviewPage] File size: $fileSize bytes');
+      
+      if (fileSize == 0) {
+        throw Exception('File is empty');
+      }
+      
       if (widget.fileType == FilePreviewType.csv) {
         final content = await widget.file.readAsString();
         final lines = const LineSplitter().convert(content);
         _csvData = lines.map((line) => _parseCSVLine(line)).toList();
+      } else if (widget.fileType == FilePreviewType.pdf) {
+        // Pre-load PDF bytes for faster rendering
+        _pdfBytes = await widget.file.readAsBytes();
+        debugPrint('[FilePreviewPage] PDF bytes loaded: ${_pdfBytes!.length}');
+        
+        // Basic PDF validation - check magic bytes
+        if (_pdfBytes!.length < 4 || 
+            String.fromCharCodes(_pdfBytes!.take(4)) != '%PDF') {
+          throw Exception('Invalid PDF file format');
+        }
+        debugPrint('[FilePreviewPage] PDF file validated successfully');
       }
+      
       setState(() => _isLoading = false);
-    } catch (e) {
+      debugPrint('[FilePreviewPage] File loaded successfully');
+    } catch (e, stack) {
+      debugPrint('[FilePreviewPage] Error loading file: $e');
+      debugPrint('[FilePreviewPage] Stack: $stack');
       setState(() {
         _isLoading = false;
         _errorMessage = 'Error loading file: $e';
@@ -627,6 +658,27 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
   }
 
   Widget _buildPdfPreview() {
+    // If PDF bytes not loaded, show error
+    if (_pdfBytes == null || _pdfBytes!.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.error_outline, size: 48, color: Colors.red[400]),
+            const SizedBox(height: 16),
+            Text(
+              'PDF data not available',
+              style: TextStyle(
+                fontFamily: 'Literata',
+                fontSize: 14,
+                color: Colors.grey[600],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+    
     return Container(
       margin: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -653,7 +705,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
             }
           },
           child: PdfPreview(
-            build: (format) async => widget.file.readAsBytesSync(),
+            build: (format) async => _pdfBytes!,
             canChangeOrientation: false,
             canChangePageFormat: false,
             canDebug: false,
