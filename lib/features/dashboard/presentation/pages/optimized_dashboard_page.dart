@@ -794,6 +794,21 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
     return '₹${amount.toStringAsFixed(0)}';
   }
 
+  String _formatCompactAmount(double amount) {
+    final absAmount = amount.abs();
+    String formatted;
+    if (absAmount >= 10000000) {
+      formatted = '${(absAmount / 10000000).toStringAsFixed(1)}Cr';
+    } else if (absAmount >= 100000) {
+      formatted = '${(absAmount / 100000).toStringAsFixed(1)}L';
+    } else if (absAmount >= 1000) {
+      formatted = '${(absAmount / 1000).toStringAsFixed(1)}K';
+    } else {
+      formatted = absAmount.toStringAsFixed(0);
+    }
+    return amount < 0 ? '-₹$formatted' : '₹$formatted';
+  }
+
   void _openFlyoutMenu() {
     showGeneralDialog(
       context: context,
@@ -885,6 +900,14 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
               MaterialPageRoute(
                   builder: (_) => const PurchaseReturnScreen()),
             ).then((_) => _onDataChanged()),
+          ),
+          const SizedBox(width: 12),
+          _buildQuickStatItem(
+            icon: Icons.trending_up_rounded,
+            value: _formatCompactAmount(data.profit),
+            label: 'Margin',
+            color: data.profit >= 0 ? const Color(0xFF2E7D32) : const Color(0xFFD32F2F),
+            isLoading: isLoading,
           ),
           const SizedBox(width: 12),
           _buildQuickStatItem(
