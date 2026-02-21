@@ -4491,17 +4491,6 @@ class _BillingPageState extends State<BillingPage> {
           MaterialPageRoute(builder: (_) => const PurchaseReturnScreen()),
         ).then((_) => _loadQuickStats()),
       ),
-      _QuickStatItem(
-        icon: Icons.assessment_rounded,
-        value: '—',
-        label: 'Reports',
-        color: const Color(0xFF0277BD),
-        gradient: [const Color(0xFF0277BD), const Color(0xFF00BCD4)],
-        onTap: () => Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const ReportPage()),
-        ).then((_) => _loadQuickStats()),
-      ),
     ];
 
     return Column(
@@ -4523,8 +4512,6 @@ class _BillingPageState extends State<BillingPage> {
             Expanded(child: _buildPremiumStatCard(stats[3])),
             const SizedBox(width: 12),
             Expanded(child: _buildPremiumStatCard(stats[4])),
-            const SizedBox(width: 12),
-            Expanded(child: _buildPremiumStatCard(stats[5])),
           ],
         ),
       ],

@@ -221,11 +221,11 @@ class DashboardOfflineRepository {
     };
   }
 
-  /// Get top selling products (by quantity sold in bills)
+  /// Get top selling products (by net quantity sold - excluding returns)
   Future<List<Map<String, dynamic>>> getTopSellingProducts({int limit = 5}) async {
     final bills = await BillOfflineController.instance.getAllBills();
     
-    // Aggregate sales by product
+    // Aggregate sales by product (accounting for returns)
     final productSales = <String, Map<String, dynamic>>{};
     
     for (final bill in bills) {
@@ -233,19 +233,27 @@ class DashboardOfflineRepository {
         final productId = item.productId ?? '';
         if (productId.isEmpty) continue;
         
+        // Net sold quantity = quantity - returned quantity
+        final netQty = item.quantity - item.returnedQuantity;
+        if (netQty <= 0) continue;
+        
         if (!productSales.containsKey(productId)) {
           productSales[productId] = {
             'productId': productId,
             'productName': item.productName ?? 'Unknown',
             'totalQty': 0,
             'totalAmount': 0.0,
+            'billCount': 0,
           };
         }
         
         productSales[productId]!['totalQty'] = 
-            (productSales[productId]!['totalQty'] as int) + item.quantity;
+            (productSales[productId]!['totalQty'] as int) + netQty;
         productSales[productId]!['totalAmount'] = 
-            (productSales[productId]!['totalAmount'] as double) + item.subtotal;
+            (productSales[productId]!['totalAmount'] as double) + 
+            (netQty * item.sellingPrice);
+        productSales[productId]!['billCount'] = 
+            (productSales[productId]!['billCount'] as int) + 1;
       }
     }
     
@@ -256,11 +264,27 @@ class DashboardOfflineRepository {
     return sorted.take(limit).toList();
   }
 
-  /// Get low stock products
+  /// Get low stock products (products below minimum stock level or below 10 if not set)
   Future<List<Map<String, dynamic>>> getLowStockProducts({int limit = 5}) async {
-    final products = await ProductOfflineController.instance.getLowStockProducts();
+    final allProducts = await ProductOfflineController.instance.getAllProducts();
     
-    return products.take(limit).map((p) => {
+    // Filter products that are low on stock
+    final lowStockProducts = allProducts.where((p) {
+      if (p.currentStock <= 0) return false; // Out of stock shown separately
+      final minStock = p.minStockLevel ?? 10; // Default threshold of 10
+      return p.currentStock < minStock;
+    }).toList();
+    
+    // Sort by urgency (lowest stock percentage first)
+    lowStockProducts.sort((a, b) {
+      final aMin = a.minStockLevel ?? 10;
+      final bMin = b.minStockLevel ?? 10;
+      final aPercent = a.currentStock / aMin;
+      final bPercent = b.currentStock / bMin;
+      return aPercent.compareTo(bPercent);
+    });
+    
+    return lowStockProducts.take(limit).map((p) => {
       'id': p.serverId ?? p.id.toString(),
       'name': p.name,
       'currentStock': p.currentStock,
@@ -293,10 +317,31 @@ class DashboardOfflineRepository {
     }).toList();
   }
 
-  /// Get upcoming payment dues (purchases - just return empty for now since purchases don't have pending amounts)
+  /// Get upcoming payment dues - pending bills that need collection soonest
+  /// Returns bills sorted by oldest first (most overdue for collection)
   Future<List<Map<String, dynamic>>> getUpcomingPaymentDues({int limit = 5}) async {
-    // For now, return supplier pending amounts if available
-    // Purchases don't track pending amounts directly in this schema
-    return [];
+    final pendingBills = await BillOfflineController.instance.getPendingBills();
+    
+    if (pendingBills.isEmpty) return [];
+    
+    // Sort by bill date (oldest first - most urgent to collect)
+    final sortedBills = List.of(pendingBills)
+      ..sort((a, b) => a.billDate.compareTo(b.billDate));
+    
+    return sortedBills.take(limit).map((b) {
+      // Calculate days since bill was created
+      final daysSinceBill = DateTime.now().difference(b.billDate).inDays;
+      
+      return {
+        'id': b.serverId ?? b.id.toString(),
+        'customerName': b.customerName ?? 'Unknown',
+        'customerContact': b.customerContact ?? '',
+        'pendingAmount': b.pendingAmount,
+        'totalAmount': b.finalAmount,
+        'billDate': b.billDate.toIso8601String(),
+        'daysPending': daysSinceBill,
+        'isOverdue': daysSinceBill > 30, // Consider 30 days as overdue threshold
+      };
+    }).toList();
   }
 }

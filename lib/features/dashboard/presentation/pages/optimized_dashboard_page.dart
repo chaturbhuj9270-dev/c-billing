@@ -235,8 +235,11 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                       return FadeTransition(
                         opacity: _fadeAnimation,
                         child: RefreshIndicator(
-                          onRefresh: () =>
-                              context.read<OptimizedDashboardCubit>().refresh(),
+                          onRefresh: () async {
+                            // Refresh both main stats and Quick Insights
+                            await context.read<OptimizedDashboardCubit>().refresh();
+                            await _loadExpandableSectionData();
+                          },
                           color: const Color(0xFF1B4D3E),
                           child: _buildContent(state),
                         ),
@@ -908,19 +911,6 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
             label: 'Margin',
             color: data.profit >= 0 ? const Color(0xFF2E7D32) : const Color(0xFFD32F2F),
             isLoading: isLoading,
-          ),
-          const SizedBox(width: 12),
-          _buildQuickStatItem(
-            icon: Icons.assessment_outlined,
-            value: '—',
-            label: 'Reports',
-            color: const Color(0xFF0277BD),
-            isLoading: false,
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (_) => const ReportPage()),
-            ).then((_) => _onDataChanged()),
           ),
         ],
       ),
@@ -2041,30 +2031,125 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
   Widget _buildInsightListItem(Map<String, dynamic> item, String type, int index) {
     switch (type) {
       case 'upcoming':
+        // Upcoming payments - oldest pending bills
+        final daysPending = (item['daysPending'] ?? 0) as int;
+        final isOverdue = (item['isOverdue'] ?? false) as bool;
+        return _buildUpcomingPaymentItem(
+          customerName: item['customerName'] ?? 'Unknown',
+          amount: ((item['pendingAmount'] ?? 0) as num).toDouble(),
+          billDate: _parseDate(item['billDate']),
+          daysPending: daysPending,
+          isOverdue: isOverdue,
+        );
       case 'pending':
-      case 'dues':
+        // Customers with pending balance
         return _buildPaymentListItem(
-          customerName: item['customerName'] ?? item['name'] ?? 'Unknown',
-          amount: ((item['pendingAmount'] ?? item['currentPendingAmount'] ?? item['pendingBalance'] ?? 0) as num).toDouble(),
-          dueDate: _parseDate(item['dueDate'] ?? item['billDate']),
-          isPending: type != 'dues',
+          customerName: item['name'] ?? 'Unknown',
+          amount: ((item['currentPendingAmount'] ?? 0) as num).toDouble(),
+          dueDate: null,
+          isPending: true,
+        );
+      case 'dues':
+        // Recent pending bills
+        return _buildPaymentListItem(
+          customerName: item['customerName'] ?? 'Unknown',
+          amount: ((item['pendingAmount'] ?? 0) as num).toDouble(),
+          dueDate: _parseDate(item['billDate']),
+          isPending: true,
         );
       case 'products':
+        // Top selling products
         return _buildProductRankItem(
           rank: index + 1,
-          name: item['name'] ?? 'Unknown',
-          quantity: (item['quantity'] ?? 0) as int,
-          revenue: ((item['revenue'] ?? 0) as num).toDouble(),
+          name: item['productName'] ?? item['name'] ?? 'Unknown',
+          quantity: (item['totalQty'] ?? item['quantity'] ?? 0) as int,
+          revenue: ((item['totalAmount'] ?? item['revenue'] ?? 0) as num).toDouble(),
         );
       case 'lowstock':
+        // Low stock products
         return _buildLowStockItem(
           name: item['name'] ?? 'Unknown',
-          currentStock: (item['stock'] ?? 0) as int,
-          minStock: 10,
+          currentStock: (item['currentStock'] ?? item['stock'] ?? 0) as int,
+          minStock: (item['minStockLevel'] ?? 10) as int,
         );
       default:
         return const SizedBox.shrink();
     }
+  }
+  
+  Widget _buildUpcomingPaymentItem({
+    required String customerName,
+    required double amount,
+    DateTime? billDate,
+    required int daysPending,
+    required bool isOverdue,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: isOverdue ? Colors.red.withValues(alpha: 0.05) : null,
+        border: Border(
+          bottom: BorderSide(color: Colors.grey[200]!, width: 1),
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: isOverdue
+                  ? Colors.red.withValues(alpha: 0.1)
+                  : Colors.orange.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(
+              isOverdue ? Icons.warning_rounded : Icons.schedule,
+              color: isOverdue ? Colors.red : Colors.orange,
+              size: 18,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  customerName,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    fontFamily: 'Literata',
+                  ),
+                ),
+                Text(
+                  daysPending == 0
+                      ? 'Today'
+                      : daysPending == 1
+                          ? '1 day pending'
+                          : '$daysPending days pending',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: isOverdue ? Colors.red[600] : Colors.grey[600],
+                    fontWeight: isOverdue ? FontWeight.w500 : FontWeight.normal,
+                    fontFamily: 'Literata',
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Text(
+            '₹${_formatAmount(amount)}',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: isOverdue ? Colors.red[700] : Colors.orange[700],
+              fontFamily: 'Literata',
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   DateTime? _parseDate(dynamic value) {
