@@ -14,6 +14,7 @@ import 'package:c_billing/features/shop/data/repositories/shop_repository.dart';
 import 'package:c_billing/features/shop/domain/entities/shop.dart';
 import 'package:c_billing/common_widgets/printer_selection_widget.dart';
 import 'package:c_billing/features/billing/offline/controllers/bill_offline_controller.dart';
+import 'package:c_billing/features/billing/offline/entities/bill_entity.dart';
 import 'package:c_billing/core/services/inventory_integration_service.dart';
 import 'package:c_billing/core/services/language_service.dart';
 import 'package:c_billing/core/localization/app_localizations.dart';
@@ -50,6 +51,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
   bool _isProcessing = false;
   String? _errorMessage;
   String? _successMessage;
+  bool _hasReturnProcessed = false; // Track if any return was successfully processed
 
   // Track return quantities for each item (itemId -> quantity to return)
   Map<String, int> _returnQuantities = {};
@@ -206,7 +208,13 @@ class _ReturnBillPageState extends State<ReturnBillPage>
   }
 
   Future<void> _processReturn() async {
-    if (_currentBill == null || !_hasItemsToReturn) return;
+    if (_currentBill == null || !_hasItemsToReturn) {
+      debugPrint('[ReturnBill] Cannot process: currentBill=${_currentBill != null}, hasItems=$_hasItemsToReturn');
+      return;
+    }
+
+    debugPrint('[ReturnBill] Starting return process for bill: ${_currentBill!.id}');
+    debugPrint('[ReturnBill] Return quantities: $_returnQuantities');
 
     setState(() {
       _isProcessing = true;
@@ -215,10 +223,12 @@ class _ReturnBillPageState extends State<ReturnBillPage>
 
     try {
       // Process return via old BillingService (Firebase transactions for stock/bill updates)
+      debugPrint('[ReturnBill] Calling BillingService.processReturn...');
       final result = await _billingService.processReturn(
         billId: _currentBill!.id,
         returnItems: _returnQuantities,
       );
+      debugPrint('[ReturnBill] BillingService result: success=${result.success}, error=${result.errorMessage}');
 
       // Also process via FIFO Integration (restore batches + ledger entries + local stock)
       if (result.success) {
@@ -241,18 +251,38 @@ class _ReturnBillPageState extends State<ReturnBillPage>
           if (returnItemDetails.isNotEmpty) {
             // Find the local bill ID for updating the local entity
             final localBills = await BillOfflineController.instance.getAllBills();
-            final localBill = localBills.firstWhere(
-              (b) => b.serverId == _currentBill!.id,
-              orElse: () => localBills.first,
-            );
-
-            await InventoryIntegrationService.instance.processReturn(
-              billId: _currentBill!.id,
-              billLocalId: localBill.id,
-              returnItems: returnItemDetails,
-              notes: 'Return for bill: ${_currentBill!.billNumber}',
-            );
-            debugPrint('[ReturnBill] FIFO return processed successfully');
+            BillEntity? localBill;
+            
+            // First try to find by serverId
+            for (final b in localBills) {
+              if (b.serverId == _currentBill!.id || b.serverId == _currentBill!.billNumber) {
+                localBill = b;
+                break;
+              }
+            }
+            
+            // If not found by serverId, try matching by local ID (for offline bills)
+            if (localBill == null) {
+              for (final b in localBills) {
+                // Match by local ID (the Bill.id is serverId ?? localId.toString())
+                if (b.id.toString() == _currentBill!.id) {
+                  localBill = b;
+                  break;
+                }
+              }
+            }
+            
+            if (localBill != null) {
+              await InventoryIntegrationService.instance.processReturn(
+                billId: _currentBill!.id,
+                billLocalId: localBill.id,
+                returnItems: returnItemDetails,
+                notes: 'Return for bill: ${_currentBill!.billNumber}',
+              );
+              debugPrint('[ReturnBill] FIFO return processed successfully for local bill ID: ${localBill.id}');
+            } else {
+              debugPrint('[ReturnBill] Warning: Could not find local bill for FIFO return - Firebase return still succeeded');
+            }
           }
         } catch (e) {
           debugPrint('[ReturnBill] FIFO return processing failed (Firebase return succeeded): $e');
@@ -265,6 +295,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
           final refundAmount = result.refundAmount ?? _totalRefundAmount;
           setState(() {
             _isProcessing = false;
+            _hasReturnProcessed = true; // Mark that a return was successfully processed
             _successMessage =
                 'Return processed successfully! Refund: ₹${refundAmount.toStringAsFixed(2)}';
 
@@ -528,7 +559,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
             child: Row(
               children: [
                 GestureDetector(
-                  onTap: () => Navigator.pop(context),
+                  onTap: () => Navigator.pop(context, _hasReturnProcessed),
                   child: Container(
                     width: 40,
                     height: 40,
@@ -1721,56 +1752,48 @@ class _ReturnConfirmationDialog extends StatelessWidget {
                     const SizedBox(height: 8),
                     const Divider(height: 1),
                     const SizedBox(height: 8),
-                    // List of items being returned - constrained height
-                    ConstrainedBox(
-                      constraints: const BoxConstraints(maxHeight: 150),
-                      child: ListView.builder(
-                        shrinkWrap: true,
-                        itemCount: itemsToReturnList.length,
-                        itemBuilder: (context, index) {
-                          final item = itemsToReturnList[index];
-                          final qty = returnQuantities[item.id] ?? 0;
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 6),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  flex: 3,
-                                  child: Text(
-                                    item.productName,
-                                    style: const TextStyle(
-                                      fontFamily: 'Literata',
-                                      fontSize: 11,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
-                                    maxLines: 1,
-                                  ),
+                    // List of items being returned
+                    ...itemsToReturnList.map((item) {
+                      final qty = returnQuantities[item.id] ?? 0;
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 6),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              flex: 3,
+                              child: Text(
+                                item.productName,
+                                style: const TextStyle(
+                                  fontFamily: 'Literata',
+                                  fontSize: 11,
                                 ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  '×$qty',
-                                  style: TextStyle(
-                                    fontFamily: 'Literata',
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.orange[700],
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  '₹${(item.sellingPrice * qty).toStringAsFixed(2)}',
-                                  style: const TextStyle(
-                                    fontFamily: 'Literata',
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
+                              ),
                             ),
-                          );
-                        },
-                      ),
-                    ),
+                            const SizedBox(width: 4),
+                            Text(
+                              '×$qty',
+                              style: TextStyle(
+                                fontFamily: 'Literata',
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.orange[700],
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              '₹${(item.sellingPrice * qty).toStringAsFixed(2)}',
+                              style: const TextStyle(
+                                fontFamily: 'Literata',
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }),
                     const SizedBox(height: 8),
                     const Divider(height: 1),
                     const SizedBox(height: 8),
