@@ -1163,45 +1163,34 @@ class _BillingPageState extends State<BillingPage> {
       return;
     }
 
-    BuildContext? dialogContext;
-    
     try {
       debugPrint('[BillingPage] Starting PDF preview for bill: ${bill.billNumber}');
       _pdfGenerationInProgress = true;
       
-      // Show loading indicator with better isolation
+      // Show loading snackbar (non-blocking like purchase page)
       if (mounted) {
-        await showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (ctx) {
-            dialogContext = ctx;
-            return WillPopScope(
-              onWillPop: () async => false,
-              child: Center(
-                child: Container(
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF1B4D3E)),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        _localizations.preparingPdf,
-                        style: const TextStyle(fontFamily: 'Literata', fontSize: 14),
-                      ),
-                    ],
                   ),
                 ),
-              ),
-            );
-          },
+                const SizedBox(width: 12),
+                Text(
+                  _localizations.preparingPdf,
+                  style: const TextStyle(fontFamily: 'Literata'),
+                ),
+              ],
+            ),
+            duration: const Duration(seconds: 60),
+            backgroundColor: const Color(0xFF1B4D3E),
+          ),
         );
       }
       
@@ -1241,27 +1230,15 @@ class _BillingPageState extends State<BillingPage> {
       debugPrint('[BillingPage] PDF saved to: ${file.path}');
       debugPrint('[BillingPage] File size: ${fileSize} bytes');
       
+      // Hide loading snackbar
+      if (mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      }
+      
       if (!mounted) {
         debugPrint('[BillingPage] Widget not mounted, aborting');
         return;
       }
-      
-      // Close loading dialog safely
-      if (dialogContext != null) {
-        try {
-          if (Navigator.canPop(dialogContext!)) {
-            Navigator.of(dialogContext!).pop();
-          }
-        } catch (e) {
-          debugPrint('[BillingPage] Error closing dialog: $e');
-        }
-        dialogContext = null;
-      }
-      
-      // Small delay to ensure clean dialog closure
-      await Future.delayed(const Duration(milliseconds: 200));
-      
-      if (!mounted) return;
       
       // Navigate to PDF preview
       debugPrint('[BillingPage] Navigating to FilePreviewPage...');
@@ -1282,16 +1259,9 @@ class _BillingPageState extends State<BillingPage> {
       debugPrint('[BillingPage] ERROR generating PDF preview: $e');
       debugPrint('[BillingPage] Stack trace: $stack');
       
-      // Ensure dialog is closed
-      if (dialogContext != null) {
-        try {
-          if (Navigator.canPop(dialogContext!)) {
-            Navigator.of(dialogContext!).pop();
-          }
-        } catch (ex) {
-          debugPrint('[BillingPage] Error closing dialog in catch: $ex');
-        }
-        dialogContext = null;
+      // Hide loading snackbar
+      if (mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
       }
       
       // Small delay before showing error
