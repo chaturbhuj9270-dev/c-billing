@@ -3277,8 +3277,8 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
         billData: printData,
         shopDetails: shop,
       ).timeout(
-        const Duration(seconds: 15),
-        onTimeout: () => throw Exception('PDF generation timed out'),
+        const Duration(seconds: 60),
+        onTimeout: () => throw Exception('PDF generation timed out after 60 seconds'),
       );
       debugPrint('[BillDetailsDialog] PDF saved to: ${file.path}');
       

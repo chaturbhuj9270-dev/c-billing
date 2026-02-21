@@ -1213,8 +1213,8 @@ class _BillingPageState extends State<BillingPage> {
         billData: printData,
         shopDetails: shop,
       ).timeout(
-        const Duration(seconds: 30),
-        onTimeout: () => throw Exception('PDF generation timed out'),
+        const Duration(seconds: 60),
+        onTimeout: () => throw Exception('PDF generation timed out after 60 seconds'),
       );
       debugPrint('[BillingPage] PDF saved to: ${file.path}');
       debugPrint('[BillingPage] File exists: ${file.existsSync()}, size: ${file.lengthSync()} bytes');
