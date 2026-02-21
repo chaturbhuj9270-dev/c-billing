@@ -1861,49 +1861,54 @@ class _BillsListPageState extends State<BillsListPage>
                     Row(
                       children: [
                         // Bill number badge
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                          decoration: BoxDecoration(
-                            gradient: isReturned 
-                                ? LinearGradient(
-                                    colors: [Colors.orange.withOpacity(0.2), Colors.orange.withOpacity(0.1)],
-                                  )
-                                : LinearGradient(
-                                    colors: [const Color(0xFF1B4D3E).withOpacity(0.15), const Color(0xFF1B4D3E).withOpacity(0.08)],
-                                  ),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                              color: isReturned 
-                                  ? Colors.orange.withOpacity(0.3)
-                                  : const Color(0xFF1B4D3E).withOpacity(0.2),
-                              width: 1,
+                        Flexible(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                            decoration: BoxDecoration(
+                              gradient: isReturned 
+                                  ? LinearGradient(
+                                      colors: [Colors.orange.withOpacity(0.2), Colors.orange.withOpacity(0.1)],
+                                    )
+                                  : LinearGradient(
+                                      colors: [const Color(0xFF1B4D3E).withOpacity(0.15), const Color(0xFF1B4D3E).withOpacity(0.08)],
+                                    ),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: isReturned 
+                                    ? Colors.orange.withOpacity(0.3)
+                                    : const Color(0xFF1B4D3E).withOpacity(0.2),
+                                width: 1,
+                              ),
                             ),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.receipt_outlined,
-                                size: 12,
-                                color: isReturned ? Colors.orange[700] : const Color(0xFF1B4D3E),
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                bill.billNumber,
-                                style: TextStyle(
-                                  fontFamily: 'Literata',
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w700,
-                                  color: isReturned ? Colors.orange[800] : const Color(0xFF1B4D3E),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.receipt_outlined,
+                                  size: 12,
+                                  color: isReturned ? Colors.orange[700] : const Color(0xFF1B4D3E),
                                 ),
-                              ),
-                            ],
+                                const SizedBox(width: 4),
+                                Flexible(
+                                  child: Text(
+                                    bill.billNumber,
+                                    style: TextStyle(
+                                      fontFamily: 'Literata',
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      color: isReturned ? Colors.orange[800] : const Color(0xFF1B4D3E),
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                         if (isReturned) ...[
-                          const SizedBox(width: 8),
+                          const SizedBox(width: 6),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
                             decoration: BoxDecoration(
                               gradient: const LinearGradient(
                                 colors: [Colors.orange, Color(0xFFFF7043)],
@@ -1922,15 +1927,15 @@ class _BillsListPageState extends State<BillsListPage>
                               children: [
                                 const Icon(
                                   Icons.assignment_return_rounded,
-                                  size: 11,
+                                  size: 10,
                                   color: Colors.white,
                                 ),
-                                const SizedBox(width: 4),
+                                const SizedBox(width: 3),
                                 Text(
                                   _localizations.returnedLabel,
                                   style: const TextStyle(
                                     fontFamily: 'Literata',
-                                    fontSize: 9,
+                                    fontSize: 8,
                                     fontWeight: FontWeight.w700,
                                     color: Colors.white,
                                   ),
@@ -1940,7 +1945,7 @@ class _BillsListPageState extends State<BillsListPage>
                           ),
                         ],
                         if (isToday && !isReturned) ...[
-                          const SizedBox(width: 8),
+                          const SizedBox(width: 6),
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
                             decoration: BoxDecoration(
@@ -1958,26 +1963,27 @@ class _BillsListPageState extends State<BillsListPage>
                             ),
                           ),
                         ],
-                        const Spacer(),
+                        const SizedBox(width: 8),
                         // Date and Print
                         Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(
                               Icons.schedule_rounded,
-                              size: 12,
+                              size: 11,
                               color: Colors.grey[500],
                             ),
-                            const SizedBox(width: 4),
+                            const SizedBox(width: 3),
                             Text(
                               dateFormat.format(bill.billDate),
                               style: TextStyle(
                                 fontFamily: 'Literata',
-                                fontSize: 10,
+                                fontSize: 9,
                                 fontWeight: FontWeight.w500,
                                 color: Colors.grey[600],
                               ),
                             ),
-                            const SizedBox(width: 10),
+                            const SizedBox(width: 8),
                             // Print button
                             _printingBillId == bill.id
                                 ? const SizedBox(

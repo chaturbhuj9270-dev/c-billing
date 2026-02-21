@@ -167,6 +167,36 @@ class _ReturnBillPageState extends State<ReturnBillPage>
   }
 
   void _updateReturnQuantity(String itemId, int quantity) {
+    if (_currentBill == null) return;
+    
+    // Find the item to validate quantity
+    final item = _currentBill!.items.firstWhere(
+      (i) => i.id == itemId,
+      orElse: () => _currentBill!.items.first,
+    );
+    
+    // Validate: quantity cannot be negative
+    if (quantity < 0) {
+      quantity = 0;
+    }
+    
+    // Validate: quantity cannot exceed remaining (sold - already returned)
+    final maxReturnableQty = item.remainingQuantity;
+    if (quantity > maxReturnableQty) {
+      quantity = maxReturnableQty;
+      // Show a message if user tries to exceed
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Cannot return more than $maxReturnableQty units (sold qty: ${item.quantity}, already returned: ${item.returnedQuantity})',
+          ),
+          backgroundColor: Colors.orange,
+          duration: const Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+    
     setState(() {
       _returnQuantities[itemId] = quantity;
     });
@@ -211,6 +241,32 @@ class _ReturnBillPageState extends State<ReturnBillPage>
     if (_currentBill == null || !_hasItemsToReturn) {
       debugPrint('[ReturnBill] Cannot process: currentBill=${_currentBill != null}, hasItems=$_hasItemsToReturn');
       return;
+    }
+
+    // Validate all return quantities before processing
+    for (final item in _currentBill!.items) {
+      final returnQty = _returnQuantities[item.id] ?? 0;
+      if (returnQty > item.remainingQuantity) {
+        setState(() {
+          _errorMessage = 'Cannot return more than sold quantity for "${item.productName}". '
+              'Sold: ${item.quantity}, Already returned: ${item.returnedQuantity}, '
+              'Max returnable: ${item.remainingQuantity}';
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(_errorMessage!),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+        return;
+      }
+      if (returnQty < 0) {
+        setState(() {
+          _errorMessage = 'Return quantity cannot be negative for "${item.productName}"';
+        });
+        return;
+      }
     }
 
     debugPrint('[ReturnBill] Starting return process for bill: ${_currentBill!.id}');
@@ -1380,13 +1436,53 @@ class _ReturnBillPageState extends State<ReturnBillPage>
                       ],
                     ),
                     const SizedBox(height: 4),
-                    Text(
-                      '₹${item.sellingPrice.toStringAsFixed(2)} × ${item.quantity} qty (${remainingQty} available)',
-                      style: TextStyle(
-                        fontFamily: 'Literata',
-                        fontSize: 11,
-                        color: Colors.grey[600],
-                      ),
+                    // Show sold quantity and what's returnable
+                    Row(
+                      children: [
+                        Text(
+                          '₹${item.sellingPrice.toStringAsFixed(2)} × ${item.quantity} sold',
+                          style: TextStyle(
+                            fontFamily: 'Literata',
+                            fontSize: 11,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                        if (item.returnedQuantity > 0) ...[
+                          Text(
+                            ' • ',
+                            style: TextStyle(
+                              fontFamily: 'Literata',
+                              fontSize: 11,
+                              color: Colors.grey[400],
+                            ),
+                          ),
+                          Text(
+                            '${item.returnedQuantity} returned',
+                            style: TextStyle(
+                              fontFamily: 'Literata',
+                              fontSize: 11,
+                              color: Colors.orange[600],
+                            ),
+                          ),
+                        ],
+                        Text(
+                          ' • ',
+                          style: TextStyle(
+                            fontFamily: 'Literata',
+                            fontSize: 11,
+                            color: Colors.grey[400],
+                          ),
+                        ),
+                        Text(
+                          '$remainingQty returnable',
+                          style: TextStyle(
+                            fontFamily: 'Literata',
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: remainingQty > 0 ? const Color(0xFF1B4D3E) : Colors.grey[500],
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
