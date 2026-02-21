@@ -2389,44 +2389,6 @@ class _DateRangePickerDialogState extends State<_DateRangePickerDialog> {
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Quick filters
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              _buildQuickFilter(AppLocalizations(LanguageService.instance.currentLanguage).today, () {
-                final now = DateTime.now();
-                setState(() {
-                  _startDate = DateTime(now.year, now.month, now.day);
-                  _endDate = DateTime(now.year, now.month, now.day, 23, 59, 59);
-                });
-              }),
-              _buildQuickFilter(AppLocalizations(LanguageService.instance.currentLanguage).thisWeek, () {
-                final now = DateTime.now();
-                final startOfWeek = now.subtract(
-                  Duration(days: now.weekday - 1),
-                );
-                setState(() {
-                  _startDate = DateTime(
-                    startOfWeek.year,
-                    startOfWeek.month,
-                    startOfWeek.day,
-                  );
-                  _endDate = DateTime(now.year, now.month, now.day, 23, 59, 59);
-                });
-              }),
-              _buildQuickFilter(AppLocalizations(LanguageService.instance.currentLanguage).thisMonth, () {
-                final now = DateTime.now();
-                setState(() {
-                  _startDate = DateTime(now.year, now.month, 1);
-                  _endDate = DateTime(now.year, now.month, now.day, 23, 59, 59);
-                });
-              }),
-            ],
-          ),
-          const SizedBox(height: 16),
-          const Divider(),
-          const SizedBox(height: 16),
           // Date pickers
           Row(
             children: [
@@ -2534,28 +2496,6 @@ class _DateRangePickerDialogState extends State<_DateRangePickerDialog> {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildQuickFilter(String label, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        decoration: BoxDecoration(
-          color: const Color(0xFF1B4D3E).withOpacity(0.1),
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Text(
-          label,
-          style: const TextStyle(
-            fontFamily: 'Literata',
-            fontSize: 12,
-            color: Color(0xFF1B4D3E),
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ),
     );
   }
 }
