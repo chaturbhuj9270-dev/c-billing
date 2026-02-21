@@ -1796,7 +1796,9 @@ class _BillsListPageState extends State<BillsListPage>
 
   Widget _buildBillCard(Bill bill) {
     final dateFormat = DateFormat('dd MMM, hh:mm a');
-    final isReturned = bill.returnStatus;
+    final isFullyReturned = bill.returnStatus;
+    final hasPartialReturn = bill.hasAnyReturns && !bill.returnStatus;
+    final hasAnyReturn = bill.hasAnyReturns;
     final isToday = _isToday(bill.billDate);
 
     return GestureDetector(
@@ -1807,25 +1809,31 @@ class _BillsListPageState extends State<BillsListPage>
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: isReturned 
-                ? [Colors.orange.withOpacity(0.03), Colors.white]
-                : [Colors.white, Colors.grey.shade50],
+            colors: isFullyReturned 
+                ? [Colors.red.withOpacity(0.03), Colors.white]
+                : hasPartialReturn
+                    ? [Colors.orange.withOpacity(0.03), Colors.white]
+                    : [Colors.white, Colors.grey.shade50],
           ),
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
-            color: isReturned 
-                ? Colors.orange.withOpacity(0.4)
-                : Colors.grey.withOpacity(0.12),
+            color: isFullyReturned 
+                ? Colors.red.withOpacity(0.4)
+                : hasPartialReturn
+                    ? Colors.orange.withOpacity(0.4)
+                    : Colors.grey.withOpacity(0.12),
             width: 1.5,
           ),
           boxShadow: [
             BoxShadow(
-              color: isReturned 
-                  ? Colors.orange.withOpacity(0.12)
-                  : Colors.black.withOpacity(0.06),
+              color: isFullyReturned 
+                  ? Colors.red.withOpacity(0.12)
+                  : hasPartialReturn
+                      ? Colors.orange.withOpacity(0.12)
+                      : Colors.black.withOpacity(0.06),
               blurRadius: 16,
               offset: const Offset(0, 4),
-              spreadRadius: isReturned ? 2 : 0,
+              spreadRadius: hasAnyReturn ? 2 : 0,
             ),
           ],
         ),
@@ -1844,9 +1852,11 @@ class _BillsListPageState extends State<BillsListPage>
                     gradient: LinearGradient(
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
-                      colors: isReturned 
-                          ? [Colors.orange, Colors.orange.shade300]
-                          : [const Color(0xFF1B4D3E), const Color(0xFF2E7D5B)],
+                      colors: isFullyReturned 
+                          ? [Colors.red, Colors.red.shade300]
+                          : hasPartialReturn
+                              ? [Colors.orange, Colors.orange.shade300]
+                              : [const Color(0xFF1B4D3E), const Color(0xFF2E7D5B)],
                     ),
                   ),
                 ),
@@ -1865,18 +1875,24 @@ class _BillsListPageState extends State<BillsListPage>
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                             decoration: BoxDecoration(
-                              gradient: isReturned 
+                              gradient: isFullyReturned 
                                   ? LinearGradient(
-                                      colors: [Colors.orange.withOpacity(0.2), Colors.orange.withOpacity(0.1)],
+                                      colors: [Colors.red.withOpacity(0.2), Colors.red.withOpacity(0.1)],
                                     )
-                                  : LinearGradient(
-                                      colors: [const Color(0xFF1B4D3E).withOpacity(0.15), const Color(0xFF1B4D3E).withOpacity(0.08)],
-                                    ),
+                                  : hasPartialReturn
+                                      ? LinearGradient(
+                                          colors: [Colors.orange.withOpacity(0.2), Colors.orange.withOpacity(0.1)],
+                                        )
+                                      : LinearGradient(
+                                          colors: [const Color(0xFF1B4D3E).withOpacity(0.15), const Color(0xFF1B4D3E).withOpacity(0.08)],
+                                        ),
                               borderRadius: BorderRadius.circular(8),
                               border: Border.all(
-                                color: isReturned 
-                                    ? Colors.orange.withOpacity(0.3)
-                                    : const Color(0xFF1B4D3E).withOpacity(0.2),
+                                color: isFullyReturned 
+                                    ? Colors.red.withOpacity(0.3)
+                                    : hasPartialReturn
+                                        ? Colors.orange.withOpacity(0.3)
+                                        : const Color(0xFF1B4D3E).withOpacity(0.2),
                                 width: 1,
                               ),
                             ),
@@ -1886,7 +1902,11 @@ class _BillsListPageState extends State<BillsListPage>
                                 Icon(
                                   Icons.receipt_outlined,
                                   size: 12,
-                                  color: isReturned ? Colors.orange[700] : const Color(0xFF1B4D3E),
+                                  color: isFullyReturned 
+                                      ? Colors.red[700] 
+                                      : hasPartialReturn 
+                                          ? Colors.orange[700] 
+                                          : const Color(0xFF1B4D3E),
                                 ),
                                 const SizedBox(width: 4),
                                 Flexible(
@@ -1896,7 +1916,11 @@ class _BillsListPageState extends State<BillsListPage>
                                       fontFamily: 'Literata',
                                       fontSize: 11,
                                       fontWeight: FontWeight.w700,
-                                      color: isReturned ? Colors.orange[800] : const Color(0xFF1B4D3E),
+                                      color: isFullyReturned 
+                                          ? Colors.red[800] 
+                                          : hasPartialReturn 
+                                              ? Colors.orange[800] 
+                                              : const Color(0xFF1B4D3E),
                                     ),
                                     overflow: TextOverflow.ellipsis,
                                   ),
@@ -1905,18 +1929,22 @@ class _BillsListPageState extends State<BillsListPage>
                             ),
                           ),
                         ),
-                        if (isReturned) ...[
+                        if (hasAnyReturn) ...[
                           const SizedBox(width: 6),
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
                             decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                colors: [Colors.orange, Color(0xFFFF7043)],
+                              gradient: LinearGradient(
+                                colors: isFullyReturned
+                                    ? [Colors.red, Colors.red.shade400]
+                                    : [Colors.orange, const Color(0xFFFF7043)],
                               ),
                               borderRadius: BorderRadius.circular(6),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.orange.withOpacity(0.3),
+                                  color: isFullyReturned 
+                                      ? Colors.red.withOpacity(0.3) 
+                                      : Colors.orange.withOpacity(0.3),
                                   blurRadius: 6,
                                   offset: const Offset(0, 2),
                                 ),
@@ -1932,7 +1960,9 @@ class _BillsListPageState extends State<BillsListPage>
                                 ),
                                 const SizedBox(width: 3),
                                 Text(
-                                  _localizations.returnedLabel,
+                                  isFullyReturned 
+                                      ? _localizations.returnedLabel 
+                                      : _localizations.partialReturn,
                                   style: const TextStyle(
                                     fontFamily: 'Literata',
                                     fontSize: 8,
@@ -1944,7 +1974,7 @@ class _BillsListPageState extends State<BillsListPage>
                             ),
                           ),
                         ],
-                        if (isToday && !isReturned) ...[
+                        if (isToday && !hasAnyReturn) ...[
                           const SizedBox(width: 6),
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
@@ -2157,15 +2187,19 @@ class _BillsListPageState extends State<BillsListPage>
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
-                              colors: isReturned 
-                                  ? [Colors.orange.withOpacity(0.15), Colors.orange.withOpacity(0.08)]
-                                  : [const Color(0xFF1B4D3E).withOpacity(0.12), const Color(0xFF1B4D3E).withOpacity(0.06)],
+                              colors: isFullyReturned 
+                                  ? [Colors.red.withOpacity(0.15), Colors.red.withOpacity(0.08)]
+                                  : hasPartialReturn
+                                      ? [Colors.orange.withOpacity(0.15), Colors.orange.withOpacity(0.08)]
+                                      : [const Color(0xFF1B4D3E).withOpacity(0.12), const Color(0xFF1B4D3E).withOpacity(0.06)],
                             ),
                             borderRadius: BorderRadius.circular(10),
                             border: Border.all(
-                              color: isReturned 
-                                  ? Colors.orange.withOpacity(0.2)
-                                  : const Color(0xFF1B4D3E).withOpacity(0.15),
+                              color: isFullyReturned 
+                                  ? Colors.red.withOpacity(0.2)
+                                  : hasPartialReturn
+                                      ? Colors.orange.withOpacity(0.2)
+                                      : const Color(0xFF1B4D3E).withOpacity(0.15),
                             ),
                           ),
                           child: Text(
@@ -2174,7 +2208,11 @@ class _BillsListPageState extends State<BillsListPage>
                               fontFamily: 'Literata',
                               fontSize: 15,
                               fontWeight: FontWeight.w800,
-                              color: isReturned ? Colors.orange[800] : const Color(0xFF1B4D3E),
+                              color: isFullyReturned 
+                                  ? Colors.red[800] 
+                                  : hasPartialReturn 
+                                      ? Colors.orange[800] 
+                                      : const Color(0xFF1B4D3E),
                             ),
                           ),
                         ),
@@ -2447,9 +2485,8 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
     );
 
     if (result == true && mounted) {
-      setState(() {
-        _bill = _bill.copyWith(returnStatus: true, returnDate: DateTime.now());
-      });
+      // Don't update local state - let the list page refresh from data source
+      // which will correctly reflect partial vs full return status
       Navigator.pop(context, const _BillDialogResult(action: _BillDialogAction.billReturned));
     }
   }
