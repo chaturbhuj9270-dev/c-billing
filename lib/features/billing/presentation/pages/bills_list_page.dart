@@ -64,10 +64,13 @@ class _BillsListPageState extends State<BillsListPage>
   DateTime? _startDate;
   DateTime? _endDate;
   String _sortOrder = 'newest';
+  bool _showReturnedOnly = false;
+  bool _showTodayOnly = true;
 
   // Stats
   double _totalSales = 0.0;
   int _totalBillsCount = 0;
+  int _returnedBillsCount = 0;
 
   // Offline-first stream subscription
   StreamSubscription<List<BillEntity>>? _billsSubscription;
@@ -99,6 +102,7 @@ class _BillsListPageState extends State<BillsListPage>
           _bills = bills;
           _totalSales = bills.fold(0.0, (sum, bill) => sum + bill.finalAmount);
           _totalBillsCount = bills.length;
+          _returnedBillsCount = bills.where((b) => b.returnStatus).length;
           _filterBills(_searchController.text);
         });
       }
@@ -789,22 +793,57 @@ class _BillsListPageState extends State<BillsListPage>
 
   void _filterBills(String query) {
     setState(() {
+      // Start with all bills
+      var bills = _bills.toList();
+      
+      // Apply Today filter
+      if (_showTodayOnly) {
+        final now = DateTime.now();
+        final todayStart = DateTime(now.year, now.month, now.day);
+        final todayEnd = todayStart.add(const Duration(days: 1));
+        bills = bills.where((bill) => 
+            bill.billDate.isAfter(todayStart.subtract(const Duration(seconds: 1))) && 
+            bill.billDate.isBefore(todayEnd)).toList();
+      }
+      
+      // Apply return filter
+      if (_showReturnedOnly) {
+        bills = bills.where((bill) => bill.returnStatus).toList();
+      }
+      
+      // Apply search query
       if (query.isEmpty) {
-        _filteredBills = _bills;
+        _filteredBills = bills;
       } else {
-        _filteredBills = _bills.where((bill) {
+        _filteredBills = bills.where((bill) {
           final customerName = bill.customerName?.toLowerCase() ?? '';
           final customerContact = bill.customerContact?.toLowerCase() ?? '';
           final billId = bill.id.toLowerCase();
+          final billNumber = bill.billNumber.toLowerCase();
           final searchQuery = query.toLowerCase();
 
           return customerName.contains(searchQuery) ||
               customerContact.contains(searchQuery) ||
-              billId.contains(searchQuery);
+              billId.contains(searchQuery) ||
+              billNumber.contains(searchQuery);
         }).toList();
       }
       _applySorting();
     });
+  }
+
+  void _toggleTodayFilter() {
+    setState(() {
+      _showTodayOnly = !_showTodayOnly;
+    });
+    _filterBills(_searchController.text);
+  }
+
+  void _toggleReturnFilter() {
+    setState(() {
+      _showReturnedOnly = !_showReturnedOnly;
+    });
+    _filterBills(_searchController.text);
   }
 
   void _applySorting() {
@@ -1133,36 +1172,265 @@ class _BillsListPageState extends State<BillsListPage>
   }
 
   Widget _buildStatsSection() {
+    // Calculate today's stats
+    final now = DateTime.now();
+    final todayStart = DateTime(now.year, now.month, now.day);
+    final todayEnd = todayStart.add(const Duration(days: 1));
+    final todayBills = _bills.where((b) => 
+        b.billDate.isAfter(todayStart.subtract(const Duration(seconds: 1))) && 
+        b.billDate.isBefore(todayEnd)).toList();
+    final todaySales = todayBills.fold(0.0, (sum, bill) => sum + bill.finalAmount);
+    
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Main Stats Row
+          Row(
+            children: [
+              // Total Sales - Featured Card
+              Expanded(
+                flex: 2,
+                child: _buildFeaturedStatCard(
+                  title: _localizations.totalSales,
+                  value: '₹${_formatAmount(_totalSales)}',
+                  icon: Icons.account_balance_wallet_rounded,
+                  gradient: const [Color(0xFF1B4D3E), Color(0xFF2E7D5B)],
+                ),
+              ),
+              const SizedBox(width: 12),
+              // Secondary Stats Column
+              Expanded(
+                flex: 1,
+                child: Column(
+                  children: [
+                    _buildMiniStatCard(
+                      title: _localizations.totalBills,
+                      value: '$_totalBillsCount',
+                      icon: Icons.receipt_long_rounded,
+                      color: const Color(0xFF2196F3),
+                    ),
+                    const SizedBox(height: 8),
+                    _buildMiniStatCard(
+                      title: _localizations.returns,
+                      value: '$_returnedBillsCount',
+                      icon: Icons.assignment_return_rounded,
+                      color: Colors.orange,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          // Today's Sales Banner
+          ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      const Color(0xFF9C27B0).withOpacity(0.15),
+                      const Color(0xFF673AB7).withOpacity(0.08),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: const Color(0xFF9C27B0).withOpacity(0.2),
+                    width: 1,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF9C27B0), Color(0xFF673AB7)],
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(
+                        Icons.today_rounded,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '${_localizations.today}\'s ${_localizations.totalSales}',
+                            style: TextStyle(
+                              fontFamily: 'Literata',
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.grey[700],
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            '${todayBills.length} bills',
+                            style: TextStyle(
+                              fontFamily: 'Literata',
+                              fontSize: 10,
+                              color: Colors.grey[500],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Text(
+                      '₹${_formatAmount(todaySales)}',
+                      style: const TextStyle(
+                        fontFamily: 'Literata',
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF9C27B0),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFeaturedStatCard({
+    required String title,
+    required String value,
+    required IconData icon,
+    required List<Color> gradient,
+  }) {
     return Container(
       padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: gradient,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: gradient[0].withOpacity(0.35),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: Colors.white, size: 22),
+              ),
+              Icon(
+                Icons.trending_up_rounded,
+                color: Colors.white.withOpacity(0.6),
+                size: 28,
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            value,
+            style: const TextStyle(
+              fontFamily: 'Literata',
+              fontSize: 26,
+              fontWeight: FontWeight.w900,
+              color: Colors.white,
+              letterSpacing: -0.5,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            title,
+            style: TextStyle(
+              fontFamily: 'Literata',
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              color: Colors.white.withOpacity(0.8),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMiniStatCard({
+    required String title,
+    required String value,
+    required IconData icon,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: color.withOpacity(0.15), width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
       child: Row(
         children: [
-          Expanded(
-            child: _buildStatCard(
-              _localizations.totalSales,
-              '₹${_formatAmount(_totalSales)}',
-              Icons.currency_rupee,
-              const Color(0xFF1B4D3E),
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(10),
             ),
+            child: Icon(icon, color: color, size: 16),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
           Expanded(
-            child: _buildStatCard(
-              _localizations.totalBills,
-              '$_totalBillsCount',
-              Icons.receipt_long,
-              const Color(0xFF2196F3),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: _buildStatCard(
-              _localizations.avgBill,
-              _totalBillsCount > 0
-                  ? '₹${_formatAmount(_totalSales / _totalBillsCount)}'
-                  : '₹0',
-              Icons.analytics,
-              const Color(0xFFFF9800),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontFamily: 'Literata',
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: color,
+                  ),
+                ),
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontFamily: 'Literata',
+                    fontSize: 9,
+                    color: Colors.grey[600],
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
             ),
           ),
         ],
@@ -1183,9 +1451,11 @@ class _BillsListPageState extends State<BillsListPage>
     String title,
     String value,
     IconData icon,
-    Color color,
-  ) {
+    Color color, {
+    double? width,
+  }) {
     return Container(
+      width: width,
       constraints: const BoxConstraints(minHeight: 100),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -1261,73 +1531,151 @@ class _BillsListPageState extends State<BillsListPage>
 
   Widget _buildSearchAndFilterSection() {
     final hasDateFilter = _startDate != null;
+    final hasActiveFilters = hasDateFilter || _showReturnedOnly || _showTodayOnly;
+    
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
         children: [
-          // ── Search bar ──
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(14),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.04),
-                  blurRadius: 10,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: TextField(
-              controller: _searchController,
-              onChanged: _filterBills,
-              decoration: InputDecoration(
-                hintText: _localizations.searchBills,
-                hintStyle: TextStyle(
-                  fontFamily: 'Literata',
-                  fontSize: 14,
-                  color: Colors.grey[400],
-                ),
-                prefixIcon: const Icon(
-                  Icons.search_rounded,
-                  color: Color(0xFF1B4D3E),
-                  size: 20,
-                ),
-                suffixIcon: _searchController.text.isNotEmpty
-                    ? GestureDetector(
-                        onTap: () {
-                          _searchController.clear();
-                          _filterBills('');
-                        },
-                        child: Icon(
-                          Icons.close_rounded,
-                          color: Colors.grey[400],
-                          size: 18,
-                        ),
-                      )
-                    : null,
-                filled: true,
-                fillColor: Colors.white,
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 14,
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14),
-                  borderSide: BorderSide.none,
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14),
-                  borderSide: const BorderSide(
-                    color: Color(0xFF1B4D3E),
+          // ── Enhanced Search bar with glassmorphism ──
+          ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Colors.white.withOpacity(0.9),
+                      Colors.white.withOpacity(0.8),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: Colors.white.withOpacity(0.5),
                     width: 1.5,
                   ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF1B4D3E).withOpacity(0.08),
+                      blurRadius: 20,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: TextField(
+                  controller: _searchController,
+                  onChanged: _filterBills,
+                  decoration: InputDecoration(
+                    hintText: _localizations.searchBills,
+                    hintStyle: TextStyle(
+                      fontFamily: 'Literata',
+                      fontSize: 14,
+                      color: Colors.grey[400],
+                    ),
+                    prefixIcon: Container(
+                      padding: const EdgeInsets.all(12),
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF1B4D3E), Color(0xFF2E7D5B)],
+                          ),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(
+                          Icons.search_rounded,
+                          color: Colors.white,
+                          size: 16,
+                        ),
+                      ),
+                    ),
+                    suffixIcon: _searchController.text.isNotEmpty
+                        ? GestureDetector(
+                            onTap: () {
+                              _searchController.clear();
+                              _filterBills('');
+                            },
+                            child: Container(
+                              margin: const EdgeInsets.all(12),
+                              padding: const EdgeInsets.all(4),
+                              decoration: BoxDecoration(
+                                color: Colors.grey[300],
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.close_rounded,
+                                color: Colors.white,
+                                size: 14,
+                              ),
+                            ),
+                          )
+                        : null,
+                    filled: true,
+                    fillColor: Colors.transparent,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 16,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide.none,
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                  style: const TextStyle(fontFamily: 'Literata', fontSize: 14),
                 ),
               ),
-              style: const TextStyle(fontFamily: 'Literata', fontSize: 14),
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
+          
+          // Filter section header
+          if (hasActiveFilters)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                children: [
+                  Icon(Icons.filter_list_rounded, size: 14, color: Colors.grey[600]),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Active Filters',
+                    style: TextStyle(
+                      fontFamily: 'Literata',
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                  const Spacer(),
+                  GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _showTodayOnly = false;
+                        _showReturnedOnly = false;
+                        _startDate = null;
+                        _endDate = null;
+                      });
+                      _filterBills(_searchController.text);
+                    },
+                    child: Text(
+                      _localizations.clearFilters,
+                      style: const TextStyle(
+                        fontFamily: 'Literata',
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF1B4D3E),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
 
           // ── Filter chips row ──
           SizedBox(
@@ -1336,15 +1684,33 @@ class _BillsListPageState extends State<BillsListPage>
               scrollDirection: Axis.horizontal,
               clipBehavior: Clip.none,
               children: [
+                // Today filter chip
+                _buildFilterChip(
+                  icon: Icons.today_rounded,
+                  label: _localizations.today,
+                  isActive: _showTodayOnly,
+                  onTap: _toggleTodayFilter,
+                  onClear: _showTodayOnly ? _toggleTodayFilter : null,
+                ),
+                const SizedBox(width: 8),
                 // Date range chip
                 _buildFilterChip(
-                  icon: Icons.calendar_today_rounded,
+                  icon: Icons.date_range_rounded,
                   label: hasDateFilter
                       ? '${DateFormat('dd MMM').format(_startDate!)} – ${DateFormat('dd MMM').format(_endDate!)}'
                       : _localizations.date,
                   isActive: hasDateFilter,
                   onTap: _showDateFilterDialog,
                   onClear: hasDateFilter ? _clearDateFilter : null,
+                ),
+                const SizedBox(width: 8),
+                // Sales Return filter chip
+                _buildFilterChip(
+                  icon: Icons.assignment_return_rounded,
+                  label: _localizations.returns,
+                  isActive: _showReturnedOnly,
+                  onTap: _toggleReturnFilter,
+                  onClear: _showReturnedOnly ? _toggleReturnFilter : null,
                 ),
                 const SizedBox(width: 8),
                 // Sort chips
@@ -1374,30 +1740,35 @@ class _BillsListPageState extends State<BillsListPage>
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 12),
+        duration: const Duration(milliseconds: 250),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: isActive ? const Color(0xFF1B4D3E) : Colors.white,
-          borderRadius: BorderRadius.circular(20),
+          gradient: isActive 
+              ? const LinearGradient(
+                  colors: [Color(0xFF1B4D3E), Color(0xFF2E7D5B)],
+                )
+              : null,
+          color: isActive ? null : Colors.white,
+          borderRadius: BorderRadius.circular(24),
           border: Border.all(
             color: isActive
-                ? const Color(0xFF1B4D3E)
-                : Colors.grey[300]!,
-            width: 1,
+                ? Colors.transparent
+                : Colors.grey[200]!,
+            width: 1.5,
           ),
           boxShadow: isActive
               ? [
                   BoxShadow(
-                    color: const Color(0xFF1B4D3E).withOpacity(0.25),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
+                    color: const Color(0xFF1B4D3E).withOpacity(0.3),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
                   ),
                 ]
               : [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.03),
-                    blurRadius: 4,
-                    offset: const Offset(0, 1),
+                    color: Colors.black.withOpacity(0.04),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
                   ),
                 ],
         ),
@@ -1406,7 +1777,7 @@ class _BillsListPageState extends State<BillsListPage>
           children: [
             Icon(
               icon,
-              size: 14,
+              size: 15,
               color: isActive ? Colors.white : Colors.grey[600],
             ),
             const SizedBox(width: 6),
@@ -1415,23 +1786,23 @@ class _BillsListPageState extends State<BillsListPage>
               style: TextStyle(
                 fontFamily: 'Literata',
                 fontSize: 12,
-                fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
+                fontWeight: FontWeight.w600,
                 color: isActive ? Colors.white : Colors.grey[700],
               ),
             ),
             if (onClear != null) ...[
-              const SizedBox(width: 4),
+              const SizedBox(width: 6),
               GestureDetector(
                 onTap: onClear,
                 child: Container(
-                  padding: const EdgeInsets.all(2),
+                  padding: const EdgeInsets.all(3),
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.25),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
                     Icons.close_rounded,
-                    size: 12,
+                    size: 10,
                     color: Colors.white,
                   ),
                 ),
@@ -1553,188 +1924,397 @@ class _BillsListPageState extends State<BillsListPage>
 
   Widget _buildBillCard(Bill bill) {
     final dateFormat = DateFormat('dd MMM, hh:mm a');
+    final isReturned = bill.returnStatus;
+    final isToday = _isToday(bill.billDate);
 
     return GestureDetector(
       onTap: () => _showBillDetails(bill),
       child: Container(
-        margin: const EdgeInsets.only(bottom: 10),
+        margin: const EdgeInsets.only(bottom: 12),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: isReturned 
+                ? [Colors.orange.withOpacity(0.03), Colors.white]
+                : [Colors.white, Colors.grey.shade50],
+          ),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: isReturned 
+                ? Colors.orange.withOpacity(0.4)
+                : Colors.grey.withOpacity(0.12),
+            width: 1.5,
+          ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
+              color: isReturned 
+                  ? Colors.orange.withOpacity(0.12)
+                  : Colors.black.withOpacity(0.06),
+              blurRadius: 16,
+              offset: const Offset(0, 4),
+              spreadRadius: isReturned ? 2 : 0,
             ),
           ],
         ),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(17),
+          child: Stack(
             children: [
-              // Header row - bill number and date
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF1B4D3E).withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Text(
-                      bill.billNumber,
-                      style: const TextStyle(
-                        fontFamily: 'Literata',
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF1B4D3E),
-                      ),
+              // Left accent bar
+              Positioned(
+                left: 0,
+                top: 0,
+                bottom: 0,
+                child: Container(
+                  width: 4,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: isReturned 
+                          ? [Colors.orange, Colors.orange.shade300]
+                          : [const Color(0xFF1B4D3E), const Color(0xFF2E7D5B)],
                     ),
                   ),
-                  const Spacer(),
-                  // Print button
-                  _printingBillId == bill.id
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              Color(0xFF1B4D3E),
-                            ),
-                          ),
-                        )
-                      : GestureDetector(
-                          onTap: () => _printBill(bill),
-                          child: Container(
-                            padding: const EdgeInsets.all(4),
-                            child: Icon(
-                              Icons.print_outlined,
-                              size: 18,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                        ),
-                  const SizedBox(width: 8),
-                  Flexible(
-                    child: Text(
-                      dateFormat.format(bill.billDate),
-                      style: TextStyle(
-                        fontFamily: 'Literata',
-                        fontSize: 11,
-                        color: Colors.grey[600],
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                      maxLines: 1,
-                    ),
-                  ),
-                ],
+                ),
               ),
-              const SizedBox(height: 10),
-              // Customer info - responsive
-              if (bill.hasCustomerInfo) ...[
-                Row(
+              // Content
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 14, 14, 14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(
-                      Icons.person_outline,
-                      size: 14,
-                      color: Colors.grey[600],
-                    ),
-                    const SizedBox(width: 4),
-                    Expanded(
-                      child: Text(
-                        bill.customerName ?? _localizations.unknown,
-                        style: const TextStyle(
-                          fontFamily: 'Literata',
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
+                    // Header row - bill number, badges, and date
+                    Row(
+                      children: [
+                        // Bill number badge
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                          decoration: BoxDecoration(
+                            gradient: isReturned 
+                                ? LinearGradient(
+                                    colors: [Colors.orange.withOpacity(0.2), Colors.orange.withOpacity(0.1)],
+                                  )
+                                : LinearGradient(
+                                    colors: [const Color(0xFF1B4D3E).withOpacity(0.15), const Color(0xFF1B4D3E).withOpacity(0.08)],
+                                  ),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: isReturned 
+                                  ? Colors.orange.withOpacity(0.3)
+                                  : const Color(0xFF1B4D3E).withOpacity(0.2),
+                              width: 1,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.receipt_outlined,
+                                size: 12,
+                                color: isReturned ? Colors.orange[700] : const Color(0xFF1B4D3E),
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                bill.billNumber,
+                                style: TextStyle(
+                                  fontFamily: 'Literata',
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: isReturned ? Colors.orange[800] : const Color(0xFF1B4D3E),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                        overflow: TextOverflow.ellipsis,
-                        maxLines: 1,
-                      ),
+                        if (isReturned) ...[
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [Colors.orange, Color(0xFFFF7043)],
+                              ),
+                              borderRadius: BorderRadius.circular(6),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.orange.withOpacity(0.3),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.assignment_return_rounded,
+                                  size: 11,
+                                  color: Colors.white,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  _localizations.returnedLabel,
+                                  style: const TextStyle(
+                                    fontFamily: 'Literata',
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                        if (isToday && !isReturned) ...[
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF2196F3).withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              _localizations.today,
+                              style: const TextStyle(
+                                fontFamily: 'Literata',
+                                fontSize: 8,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF2196F3),
+                              ),
+                            ),
+                          ),
+                        ],
+                        const Spacer(),
+                        // Date and Print
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.schedule_rounded,
+                              size: 12,
+                              color: Colors.grey[500],
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              dateFormat.format(bill.billDate),
+                              style: TextStyle(
+                                fontFamily: 'Literata',
+                                fontSize: 10,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            // Print button
+                            _printingBillId == bill.id
+                                ? const SizedBox(
+                                    width: 24,
+                                    height: 24,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        Color(0xFF1B4D3E),
+                                      ),
+                                    ),
+                                  )
+                                : GestureDetector(
+                                    onTap: () => _printBill(bill),
+                                    child: Container(
+                                      padding: const EdgeInsets.all(6),
+                                      decoration: BoxDecoration(
+                                        color: Colors.grey[100],
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Icon(
+                                        Icons.print_rounded,
+                                        size: 16,
+                                        color: Colors.grey[600],
+                                      ),
+                                    ),
+                                  ),
+                          ],
+                        ),
+                      ],
                     ),
-                    if (bill.customerContact != null) ...[
-                      const SizedBox(width: 8),
-                      Icon(
-                        Icons.phone_outlined,
-                        size: 12,
-                        color: Colors.grey[500],
-                      ),
-                      const SizedBox(width: 2),
-                      Text(
-                        bill.customerContact!,
-                        style: TextStyle(
-                          fontFamily: 'Literata',
-                          fontSize: 11,
-                          color: Colors.grey[600],
+                    const SizedBox(height: 12),
+                    // Customer info
+                    if (bill.hasCustomerInfo) ...[
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: Colors.grey[50],
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: Colors.grey.withOpacity(0.1)),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Icon(
+                                Icons.person_rounded,
+                                size: 14,
+                                color: const Color(0xFF1B4D3E),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    bill.customerName ?? _localizations.unknown,
+                                    style: const TextStyle(
+                                      fontFamily: 'Literata',
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700,
+                                      color: Color(0xFF1A1A1A),
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  if (bill.customerContact != null)
+                                    Text(
+                                      bill.customerContact!,
+                                      style: TextStyle(
+                                        fontFamily: 'Literata',
+                                        fontSize: 11,
+                                        color: Colors.grey[600],
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                            if (bill.customerContact != null)
+                              Icon(
+                                Icons.phone_rounded,
+                                size: 14,
+                                color: Colors.grey[400],
+                              ),
+                          ],
                         ),
                       ),
+                      const SizedBox(height: 10),
                     ],
+                    // Footer row - Items count, discount and total
+                    Row(
+                      children: [
+                        // Items info
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[100],
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.shopping_bag_outlined, size: 12, color: Colors.grey[600]),
+                              const SizedBox(width: 4),
+                              Text(
+                                '${bill.items.length} items',
+                                style: TextStyle(
+                                  fontFamily: 'Literata',
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.grey[700],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[100],
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.inventory_2_outlined, size: 12, color: Colors.grey[600]),
+                              const SizedBox(width: 4),
+                              Text(
+                                '${bill.totalQuantity} qty',
+                                style: TextStyle(
+                                  fontFamily: 'Literata',
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.grey[700],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const Spacer(),
+                        // Discount badge
+                        if (bill.discountAmount > 0) ...[
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [Colors.green.withOpacity(0.15), Colors.green.withOpacity(0.08)],
+                              ),
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(color: Colors.green.withOpacity(0.2)),
+                            ),
+                            child: Text(
+                              '-${bill.discountPercent.toStringAsFixed(0)}%',
+                              style: TextStyle(
+                                fontFamily: 'Literata',
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.green[700],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                        ],
+                        // Total amount
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: isReturned 
+                                  ? [Colors.orange.withOpacity(0.15), Colors.orange.withOpacity(0.08)]
+                                  : [const Color(0xFF1B4D3E).withOpacity(0.12), const Color(0xFF1B4D3E).withOpacity(0.06)],
+                            ),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: isReturned 
+                                  ? Colors.orange.withOpacity(0.2)
+                                  : const Color(0xFF1B4D3E).withOpacity(0.15),
+                            ),
+                          ),
+                          child: Text(
+                            '₹${bill.finalAmount.toStringAsFixed(2)}',
+                            style: TextStyle(
+                              fontFamily: 'Literata',
+                              fontSize: 15,
+                              fontWeight: FontWeight.w800,
+                              color: isReturned ? Colors.orange[800] : const Color(0xFF1B4D3E),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
-                const SizedBox(height: 8),
-              ],
-              // Items count and total - responsive
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      '${bill.items.length} items • ${bill.totalQuantity} ${_localizations.quantity}',
-                      style: TextStyle(
-                        fontFamily: 'Literata',
-                        fontSize: 11,
-                        color: Colors.grey[600],
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  if (bill.discountAmount > 0) ...[
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.green[50],
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        '-${bill.discountPercent.toStringAsFixed(0)}%',
-                        style: TextStyle(
-                          fontFamily: 'Literata',
-                          fontSize: 10,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.green[700],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                  ],
-                  FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Text(
-                      '₹${bill.finalAmount.toStringAsFixed(2)}',
-                      style: const TextStyle(
-                        fontFamily: 'Literata',
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF1B4D3E),
-                      ),
-                    ),
-                  ),
-                ],
               ),
             ],
           ),
         ),
       ),
     );
+  }
+
+  bool _isToday(DateTime date) {
+    final now = DateTime.now();
+    return date.year == now.year && date.month == now.month && date.day == now.day;
   }
 }
 
