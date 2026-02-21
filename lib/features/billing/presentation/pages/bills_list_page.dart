@@ -1,9 +1,11 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:c_billing/core/services/billing_service.dart';
 import 'package:c_billing/features/billing/data/repositories/firebase_bill_repository.dart';
@@ -23,6 +25,9 @@ import 'package:c_billing/core/localization/app_localizations.dart';
 import 'package:c_billing/features/billing/offline/controllers/bill_offline_controller.dart';
 import 'package:c_billing/features/billing/offline/entities/bill_entity.dart';
 import 'package:c_billing/features/billing/data/services/bill_sync_service.dart';
+import 'package:c_billing/features/billing/data/services/bill_report_pdf_generator.dart';
+import 'package:c_billing/common_widgets/file_preview_page.dart';
+import 'package:c_billing/features/billing/presentation/pages/bill_report_settings_page.dart';
 
 /// Quick date filter options for bill history
 enum _BillDateFilter { none, today, thisWeek, thisMonth, thisYear, custom }
@@ -57,6 +62,7 @@ class _BillsListPageState extends State<BillsListPage>
   late FirebaseCustomerRepository _customerRepository;
   String? _printingBillId; // Track which bill is being printed
   bool _isProcessingPdf = false; // Track PDF generation/share/save operations
+  bool _isGeneratingReport = false; // Track bill report generation
 
   List<Bill> _bills = [];
   List<Bill> _filteredBills = [];
@@ -754,6 +760,153 @@ class _BillsListPageState extends State<BillsListPage>
     }
   }
 
+  // ── Generate & show bill report ──
+  Future<void> _generateBillReport() async {
+    debugPrint('[BillReport] Button tapped! _isGeneratingReport=$_isGeneratingReport');
+    
+    if (_isGeneratingReport) {
+      debugPrint('[BillReport] Already generating, returning');
+      return;
+    }
+    
+    final filtered = _filteredBills;
+    debugPrint('[BillReport] Filtered bills: ${filtered.length}');
+    
+    if (filtered.isEmpty) {
+      debugPrint('[BillReport] No data - showing snackbar');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('No bill data to generate report'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+      return;
+    }
+
+    _isGeneratingReport = true;
+
+    // Show loading indicator
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Row(
+            children: [
+              SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white,
+                ),
+              ),
+              SizedBox(width: 12),
+              Text('Generating bill report...'),
+            ],
+          ),
+          duration: Duration(seconds: 30),
+        ),
+      );
+    }
+
+    try {
+      debugPrint('[BillReport] Generating PDF for ${filtered.length} bills...');
+      
+      final pdfBytes = await BillReportPdfGenerator.generate(
+        bills: filtered,
+        filterDescription: _buildFilterDescription(),
+      );
+      
+      debugPrint('[BillReport] PDF generated: ${pdfBytes.length} bytes');
+      
+      // Save to temporary file for preview
+      final tempDir = await getTemporaryDirectory();
+      final timestamp = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
+      final tempFile = File('${tempDir.path}/bill_report_$timestamp.pdf');
+      await tempFile.writeAsBytes(pdfBytes);
+      
+      // Dismiss loading snackbar
+      if (mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      }
+
+      if (!mounted) {
+        _isGeneratingReport = false;
+        return;
+      }
+
+      // Navigate to file preview page
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => FilePreviewPage(
+            file: tempFile,
+            fileName: 'Bill Report',
+            fileType: FilePreviewType.pdf,
+            subtitle: '${filtered.length} bills • ${DateFormat('dd MMM yyyy').format(DateTime.now())}',
+          ),
+        ),
+      );
+      
+      _isGeneratingReport = false;
+    } catch (e, stack) {
+      debugPrint('[BillReport] Error: $e');
+      debugPrint('[BillReport] Stack: $stack');
+      if (mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to generate report: $e'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    } finally {
+      _isGeneratingReport = false;
+    }
+  }
+
+  /// Build filter description for report header
+  String _buildFilterDescription() {
+    final parts = <String>[];
+    
+    switch (_dateFilter) {
+      case _BillDateFilter.today:
+        parts.add('Today');
+        break;
+      case _BillDateFilter.thisWeek:
+        parts.add('This Week');
+        break;
+      case _BillDateFilter.thisMonth:
+        parts.add('This Month');
+        break;
+      case _BillDateFilter.thisYear:
+        parts.add('This Year');
+        break;
+      case _BillDateFilter.custom:
+        if (_startDate != null && _endDate != null) {
+          final fmt = DateFormat('dd MMM yyyy');
+          parts.add('${fmt.format(_startDate!)} - ${fmt.format(_endDate!)}');
+        }
+        break;
+      case _BillDateFilter.none:
+        parts.add('All Time');
+        break;
+    }
+    
+    if (_showReturnedOnly) {
+      parts.add('Returned Bills Only');
+    }
+    
+    if (_searchController.text.isNotEmpty) {
+      parts.add('Search: "${_searchController.text}"');
+    }
+    
+    return parts.join(' | ');
+  }
+
   Future<void> _loadBills() async {
     try {
       if (_bills.isEmpty) {
@@ -944,25 +1097,8 @@ class _BillsListPageState extends State<BillsListPage>
 
     if (!mounted || result == null) return;
 
-    switch (result.action) {
-      case _BillDialogAction.share:
-        if (result.printData != null) {
-          _shareBillAsPdfWithData(result.printData!);
-        }
-        break;
-      case _BillDialogAction.savePdf:
-        if (result.printData != null) {
-          _saveBillAsPdfWithData(result.printData!);
-        }
-        break;
-      case _BillDialogAction.print:
-        if (result.printData != null) {
-          _printBillWithData(result.printData!);
-        }
-        break;
-      case _BillDialogAction.billReturned:
-        _loadBills();
-        break;
+    if (result.action == _BillDialogAction.billReturned) {
+      _loadBills();
     }
   }
 
@@ -1127,6 +1263,25 @@ class _BillsListPageState extends State<BillsListPage>
                       ],
                     ),
                   ),
+                  // Report button
+                  GestureDetector(
+                    onTap: _generateBillReport,
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(
+                        Icons.description_rounded,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  // Refresh button
                   GestureDetector(
                     onTap: _loadBills,
                     child: Container(
@@ -1142,6 +1297,55 @@ class _BillsListPageState extends State<BillsListPage>
                         size: 20,
                       ),
                     ),
+                  ),
+                  const SizedBox(width: 8),
+                  // Settings menu
+                  PopupMenuButton<String>(
+                    icon: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(
+                        Icons.settings_rounded,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    onSelected: (value) async {
+                      if (value == 'report_settings') {
+                        await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const BillReportSettingsPage(),
+                          ),
+                        );
+                      }
+                    },
+                    itemBuilder: (context) => [
+                      PopupMenuItem<String>(
+                        value: 'report_settings',
+                        child: Row(
+                          children: [
+                            Icon(Icons.tune_rounded, 
+                                color: Colors.grey[700], size: 20),
+                            const SizedBox(width: 12),
+                            const Text(
+                              'Report Settings',
+                              style: TextStyle(
+                                fontFamily: 'Literata',
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -2585,14 +2789,13 @@ class _DateRangePickerDialogState extends State<_DateRangePickerDialog> {
 }
 
 /// Actions that can be triggered from the bill details dialog
-enum _BillDialogAction { share, savePdf, print, billReturned }
+enum _BillDialogAction { billReturned }
 
 /// Result returned from the bill details dialog
 class _BillDialogResult {
   final _BillDialogAction action;
-  final PrintBillData? printData;
 
-  const _BillDialogResult({required this.action, this.printData});
+  const _BillDialogResult({required this.action});
 }
 
 class _BillDetailsDialog extends StatefulWidget {
@@ -2606,16 +2809,43 @@ class _BillDetailsDialog extends StatefulWidget {
   State<_BillDetailsDialog> createState() => _BillDetailsDialogState();
 }
 
-class _BillDetailsDialogState extends State<_BillDetailsDialog> {
+class _BillDetailsDialogState extends State<_BillDetailsDialog> 
+    with SingleTickerProviderStateMixin {
   late Bill _bill;
   bool _includeReturnsInPrint = true;
+  bool _isGeneratingPdf = false;
   late AppLocalizations _localizations;
+  late AnimationController _animController;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
+  final _pdfService = PdfBillService();
+  final _shopRepository = ShopRepository();
 
   @override
   void initState() {
     super.initState();
     _bill = widget.bill;
     _localizations = AppLocalizations(LanguageService.instance.currentLanguage);
+    
+    _animController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    );
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animController, curve: Curves.easeOut),
+    );
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.05),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _animController, curve: Curves.easeOut));
+    
+    _animController.forward();
+  }
+
+  @override
+  void dispose() {
+    _animController.dispose();
+    super.dispose();
   }
 
   void _navigateToReturnBill() async {
@@ -2668,451 +2898,206 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog> {
   Widget build(BuildContext context) {
     final dateFormat = DateFormat('dd MMM yyyy, hh:mm a');
 
-    return Dialog(
-      backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
-      child: Stack(
-        children: [
-          Container(color: Colors.black.withOpacity(0.3)),
-          Scaffold(
-            backgroundColor: Colors.transparent,
-            appBar: AppBar(
-              backgroundColor: Colors.transparent,
-              elevation: 0,
-              leading: IconButton(
-                icon: Container(
+    return Scaffold(
+      backgroundColor: const Color(0xFFF5F7F6),
+      body: CustomScrollView(
+        physics: const BouncingScrollPhysics(),
+        slivers: [
+          // ══════════ Premium Header ══════════
+          SliverAppBar(
+            expandedHeight: 120,
+            pinned: true,
+            stretch: true,
+            backgroundColor: const Color(0xFF1B4D3E),
+            leading: Padding(
+              padding: const EdgeInsets.all(8),
+              child: GestureDetector(
+                onTap: () => Navigator.pop(context),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(Icons.arrow_back_ios_new_rounded, 
+                    color: Colors.white, size: 20),
+                ),
+              ),
+            ),
+            title: Row(
+              children: [
+                Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white.withOpacity(0.3), width: 1),
+                    color: Colors.white.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(Icons.arrow_back, color: Colors.white),
+                  child: const Icon(Icons.receipt_long_rounded, 
+                    color: Colors.white, size: 20),
                 ),
-                onPressed: () => Navigator.pop(context),
-              ),
-              title: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    _localizations.billDetails,
-                    style: const TextStyle(
-                      fontFamily: 'Literata',
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                    ),
-                  ),
-                  Row(
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
+                      Text(
+                        _localizations.billDetails,
+                        style: const TextStyle(
+                          fontFamily: 'Literata',
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                        ),
+                      ),
                       Text(
                         _bill.billNumber,
                         style: TextStyle(
                           fontFamily: 'Literata',
                           fontSize: 12,
-                          color: Colors.white.withOpacity(0.7),
+                          color: Colors.white.withValues(alpha: 0.7),
                         ),
                       ),
-                      if (_bill.hasAnyReturns) ...[
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: _isFullyReturned
-                                ? Colors.red.withOpacity(0.3)
-                                : Colors.orange.withOpacity(0.3),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                              color: _isFullyReturned
-                                  ? Colors.red.withOpacity(0.5)
-                                  : Colors.orange.withOpacity(0.5),
-                            ),
-                          ),
-                          child: Text(
-                            _isFullyReturned ? _localizations.fullyReturned : _localizations.partialReturn,
-                            style: TextStyle(
-                              fontFamily: 'Literata',
-                              fontSize: 10,
-                              fontWeight: FontWeight.w600,
-                              color: _isFullyReturned ? Colors.red[300] : Colors.orange,
-                            ),
-                          ),
-                        ),
-                      ],
                     ],
                   ),
-                ],
-              ),
-              centerTitle: false,
+                ),
+              ],
             ),
-            body: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // ══════════ Bill Info ══════════
-                  _buildGlassyCard(
-                    Column(
-                      children: [
-                        _buildDetailRow(_localizations.billNo, _bill.billNumber, Icons.receipt_long),
-                        const SizedBox(height: 12),
-                        Container(height: 1, color: Colors.white.withOpacity(0.1)),
-                        const SizedBox(height: 12),
-                        _buildDetailRow(_localizations.date, dateFormat.format(_bill.billDate), Icons.calendar_today),
-                      ],
-                    ),
+            flexibleSpace: FlexibleSpaceBar(
+              background: Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [Color(0xFF1B4D3E), Color(0xFF0D2B24)],
                   ),
-                  const SizedBox(height: 12),
-
-                  // ══════════ Customer Info ══════════
-                  if (_bill.hasCustomerInfo) ...[
-                    _buildGlassyCard(
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildDetailRow(_localizations.customerName, _bill.customerName ?? 'N/A', Icons.person),
-                          if (_bill.customerContact != null) ...[
-                            const SizedBox(height: 12),
-                            Container(height: 1, color: Colors.white.withOpacity(0.1)),
-                            const SizedBox(height: 12),
-                            _buildDetailRow(_localizations.mobile, _bill.customerContact!, Icons.phone),
-                          ],
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                  ],
-
-                  // ══════════ Items Section ══════════
-                  _buildGlassyCard(
-                    Column(
+                ),
+                child: SafeArea(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 60, 16, 16),
+                    child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.end,
                       children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              _localizations.soldItems,
-                              style: const TextStyle(
-                                fontFamily: 'Literata',
-                                fontWeight: FontWeight.w700,
-                                fontSize: 16,
-                                color: Colors.white,
+                        if (_bill.hasAnyReturns)
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: _isFullyReturned
+                                  ? Colors.red.withValues(alpha: 0.2)
+                                  : Colors.orange.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: _isFullyReturned
+                                    ? Colors.red.withValues(alpha: 0.4)
+                                    : Colors.orange.withValues(alpha: 0.4),
                               ),
                             ),
-                            Text(
-                              '${_bill.items.length} items',
-                              style: TextStyle(
-                                fontFamily: 'Literata',
-                                fontSize: 12,
-                                color: Colors.white.withOpacity(0.6),
-                              ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.assignment_return_rounded,
+                                  size: 14,
+                                  color: _isFullyReturned ? Colors.red[200] : Colors.orange[200],
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  _isFullyReturned ? _localizations.fullyReturned : _localizations.partialReturn,
+                                  style: TextStyle(
+                                    fontFamily: 'Literata',
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: _isFullyReturned ? Colors.red[200] : Colors.orange[200],
+                                  ),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        // Items table header
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.08),
-                            borderRadius: BorderRadius.circular(6),
                           ),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                flex: 3,
-                                child: Text(_localizations.product, style: TextStyle(
-                                  fontFamily: 'Literata', fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white.withOpacity(0.7),
-                                )),
-                              ),
-                              SizedBox(
-                                width: 40,
-                                child: Text(_localizations.quantity, textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    fontFamily: 'Literata', fontSize: 11,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.white.withOpacity(0.7),
-                                  ),
-                                ),
-                              ),
-                              SizedBox(
-                                width: 55,
-                                child: Text(_localizations.rate, textAlign: TextAlign.right,
-                                  style: TextStyle(
-                                    fontFamily: 'Literata', fontSize: 11,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.white.withOpacity(0.7),
-                                  ),
-                                ),
-                              ),
-                              SizedBox(
-                                width: 65,
-                                child: Text(_localizations.amount, textAlign: TextAlign.right,
-                                  style: TextStyle(
-                                    fontFamily: 'Literata', fontSize: 11,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.white.withOpacity(0.7),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        // Items list
-                        ..._bill.items.map((item) => _buildItemRow(item)),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 12),
-
-                  // ══════════ Notes ══════════
-                  if (_bill.notes != null && _bill.notes!.isNotEmpty) ...[
-                    _buildGlassyCard(
-                      _buildDetailRow(_localizations.notes, _bill.notes!, Icons.note),
-                    ),
-                    const SizedBox(height: 12),
-                  ],
-
-                  // ══════════ Totals Section ══════════
-                  _buildGlassyCard(
-                    Column(
-                      children: [
-                        // Total Quantity
-                        _buildTotalDisplayRow(
-                          _localizations.totalQuantity,
-                          '${_bill.totalQuantity} ${_localizations.items}',
-                        ),
-                        _buildDivider(),
-                        // Subtotal (Gross Total)
-                        _buildTotalDisplayRow(
-                          _localizations.subtotal,
-                          '₹${_bill.totalAmount.toStringAsFixed(2)}',
-                        ),
-                        // Discount
-                        if (_bill.discountAmount > 0) ...[
-                          const SizedBox(height: 8),
-                          _buildTotalDisplayRow(
-                            'Discount (${_bill.discountPercent.toStringAsFixed(1)}%)',
-                            '-₹${_bill.discountAmount.toStringAsFixed(2)}',
-                            valueColor: Colors.greenAccent,
-                          ),
-                        ],
-                        _buildDivider(),
-                        // Bill Total (before returns)
-                        _buildTotalDisplayRow(
-                          _localizations.billTotalLabel,
-                          '₹${_bill.finalAmount.toStringAsFixed(2)}',
-                          isBold: true,
-                        ),
-                        // Return Deduction (if any returns)
-                        if (_bill.hasAnyReturns) ...[
-                          _buildDivider(),
-                          _buildTotalDisplayRow(
-                            '${_localizations.returnDeduction} (${_bill.totalReturnedQuantity} ${_localizations.quantity})',
-                            '-₹${_returnDeduction.toStringAsFixed(2)}',
-                            valueColor: Colors.orange,
-                          ),
-                          _buildDivider(),
-                          // Final Payable
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                _isFullyReturned ? _localizations.finalPayable : _localizations.finalPayable,
-                                style: TextStyle(
-                                  fontFamily: 'Literata',
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w700,
-                                  color: _isFullyReturned ? Colors.red[300] : Colors.white,
-                                ),
-                              ),
-                              Text(
-                                _isFullyReturned ? '₹0.00' : '₹${_finalPayable.toStringAsFixed(2)}',
-                                style: TextStyle(
-                                  fontFamily: 'Literata',
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.w800,
-                                  color: _isFullyReturned ? Colors.red[300] : Colors.white,
-                                ),
-                              ),
-                            ],
-                          ),
-                          if (_isFullyReturned) ...[
-                            const SizedBox(height: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                              decoration: BoxDecoration(
-                                color: Colors.red.withOpacity(0.15),
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: Colors.red.withOpacity(0.3)),
-                              ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(Icons.info_outline, size: 14, color: Colors.red[300]),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    _localizations.statusFullyReturned,
-                                    style: TextStyle(
-                                      fontFamily: 'Literata',
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w700,
-                                      color: Colors.red[300],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ],
-                        // Show final amount when no returns
-                        if (!_bill.hasAnyReturns) ...[
-                          _buildDivider(),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                _localizations.finalAmount,
-                                style: TextStyle(
-                                  fontFamily: 'Literata',
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white.withOpacity(0.9),
-                                ),
-                              ),
-                              Text(
-                                '₹${_bill.finalAmount.toStringAsFixed(2)}',
-                                style: const TextStyle(
-                                  fontFamily: 'Literata',
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.w800,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                        // Payment info
-                        if (_bill.paidAmount > 0 || _bill.pendingAmount > 0) ...[
-                          _buildDivider(),
-                          _buildTotalDisplayRow(
-                            _localizations.paidAmount,
-                            '₹${_bill.paidAmount.toStringAsFixed(2)}',
-                            valueColor: Colors.greenAccent,
-                          ),
-                          if (_bill.pendingAmount > 0) ...[
-                            const SizedBox(height: 8),
-                            _buildTotalDisplayRow(
-                              _localizations.pendingAmount,
-                              '₹${_bill.pendingAmount.toStringAsFixed(2)}',
-                              valueColor: Colors.orange,
-                            ),
-                          ],
-                        ],
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // ══════════ Include Returns Toggle ══════════
-                  if (_bill.hasAnyReturns) ...[
-                    _buildGlassyCard(
+                ),
+              ),
+            ),
+          ),
+          
+          // ══════════ Content ══════════
+          SliverToBoxAdapter(
+            child: FadeTransition(
+              opacity: _fadeAnimation,
+              child: SlideTransition(
+                position: _slideAnimation,
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // ══════════ Bill & Customer Info Row ══════════
                       Row(
                         children: [
-                          Icon(Icons.assignment_return, size: 20, color: Colors.orange[300]),
-                          const SizedBox(width: 10),
                           Expanded(
-                            child: Text(
-                              _localizations.includeReturnedItemsInPrint,
-                              style: TextStyle(
-                                fontFamily: 'Literata',
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.white.withOpacity(0.9),
-                              ),
+                            child: _buildInfoCard(
+                              icon: Icons.calendar_today_rounded,
+                              iconColor: const Color(0xFF1B4D3E),
+                              title: _localizations.date,
+                              value: dateFormat.format(_bill.billDate),
                             ),
                           ),
-                          Transform.scale(
-                            scale: 0.85,
-                            child: Switch(
-                              value: _includeReturnsInPrint,
-                              onChanged: (v) => setState(() => _includeReturnsInPrint = v),
-                              activeColor: Colors.orange,
-                              activeTrackColor: Colors.orange.withOpacity(0.3),
-                              inactiveThumbColor: Colors.grey[400],
-                              inactiveTrackColor: Colors.grey.withOpacity(0.3),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _buildInfoCard(
+                              icon: Icons.person_rounded,
+                              iconColor: const Color(0xFF2196F3),
+                              title: _localizations.customerName,
+                              value: _bill.customerName ?? 'Walk-in',
                             ),
                           ),
                         ],
                       ),
-                    ),
-                    const SizedBox(height: 16),
-                  ],
+                      if (_bill.customerContact != null) ...[
+                        const SizedBox(height: 12),
+                        _buildInfoCard(
+                          icon: Icons.phone_rounded,
+                          iconColor: const Color(0xFF4CAF50),
+                          title: _localizations.mobile,
+                          value: _bill.customerContact!,
+                          fullWidth: true,
+                        ),
+                      ],
+                      const SizedBox(height: 20),
 
-                  // ══════════ Action Buttons ══════════
-                  // Share & Save PDF row
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildActionButton(
-                          icon: Icons.share,
-                          label: _localizations.share,
-                          color: const Color(0xFF1B4D3E),
-                          onTap: () {
-                            final printData = _createPrintData();
-                            Navigator.pop(context, _BillDialogResult(
-                              action: _BillDialogAction.share,
-                              printData: printData,
-                            ));
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: _buildActionButton(
-                          icon: Icons.picture_as_pdf,
-                          label: _localizations.savePdf,
-                          color: const Color(0xFF1B4D3E),
-                          onTap: () {
-                            final printData = _createPrintData();
-                            Navigator.pop(context, _BillDialogResult(
-                              action: _BillDialogAction.savePdf,
-                              printData: printData,
-                            ));
-                          },
-                        ),
-                      ),
+                      // ══════════ Items Section ══════════
+                      _buildSectionHeader(_localizations.soldItems, '${_bill.items.length} ${_localizations.items}'),
+                      const SizedBox(height: 12),
+                      _buildItemsCard(),
+                      const SizedBox(height: 20),
+
+                      // ══════════ Notes Section ══════════
+                      if (_bill.notes != null && _bill.notes!.isNotEmpty) ...[
+                        _buildSectionHeader(_localizations.notes, null),
+                        const SizedBox(height: 12),
+                        _buildNotesCard(),
+                        const SizedBox(height: 20),
+                      ],
+
+                      // ══════════ Payment Summary ══════════
+                      _buildSectionHeader(_localizations.billTotal, null),
+                      const SizedBox(height: 12),
+                      _buildPaymentSummaryCard(),
+                      const SizedBox(height: 20),
+
+                      // ══════════ Include Returns Toggle ══════════
+                      if (_bill.hasAnyReturns) ...[
+                        _buildReturnToggleCard(),
+                        const SizedBox(height: 20),
+                      ],
+
+                      // ══════════ Action Buttons ══════════
+                      _buildActionButtonsSection(),
+                      const SizedBox(height: 24),
                     ],
                   ),
-                  const SizedBox(height: 10),
-                  // Print button
-                  _buildActionButton(
-                    icon: Icons.print,
-                    label: _localizations.printBill,
-                    color: const Color(0xFF1B4D3E),
-                    filled: true,
-                    onTap: () {
-                      final printData = _createPrintData();
-                      Navigator.pop(context, _BillDialogResult(
-                        action: _BillDialogAction.print,
-                        printData: printData,
-                      ));
-                    },
-                  ),
-                  const SizedBox(height: 10),
-
-                  // Return Bill Button
-                  if (!_bill.returnStatus && _bill.hasReturnableItems)
-                    _buildReturnBillButton()
-                  else if (_bill.returnStatus)
-                    _buildReturnedInfoCard(),
-                  const SizedBox(height: 24),
-                ],
+                ),
               ),
             ),
           ),
@@ -3121,17 +3106,438 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog> {
     );
   }
 
-  Widget _buildDivider() {
-    return Column(
+  Widget _buildSectionHeader(String title, String? subtitle) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        const SizedBox(height: 12),
-        Container(height: 1, color: Colors.white.withOpacity(0.1)),
-        const SizedBox(height: 12),
+        Text(
+          title,
+          style: const TextStyle(
+            fontFamily: 'Literata',
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF1B4D3E),
+          ),
+        ),
+        if (subtitle != null)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              subtitle,
+              style: TextStyle(
+                fontFamily: 'Literata',
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: const Color(0xFF1B4D3E).withValues(alpha: 0.8),
+              ),
+            ),
+          ),
       ],
     );
   }
 
-  Widget _buildTotalDisplayRow(String label, String value, {Color? valueColor, bool isBold = false}) {
+  Widget _buildInfoCard({
+    required IconData icon,
+    required Color iconColor,
+    required String title,
+    required String value,
+    bool fullWidth = false,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: iconColor.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: iconColor, size: 20),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontFamily: 'Literata',
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.grey[500],
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  value,
+                  style: const TextStyle(
+                    fontFamily: 'Literata',
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF2D3436),
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildItemsCard() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          // Table Header
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1B4D3E).withValues(alpha: 0.05),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  flex: 4,
+                  child: Text(
+                    _localizations.product,
+                    style: TextStyle(
+                      fontFamily: 'Literata',
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  width: 40,
+                  child: Text(
+                    _localizations.quantity,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontFamily: 'Literata',
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  width: 60,
+                  child: Text(
+                    _localizations.rate,
+                    textAlign: TextAlign.right,
+                    style: TextStyle(
+                      fontFamily: 'Literata',
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  width: 70,
+                  child: Text(
+                    _localizations.amount,
+                    textAlign: TextAlign.right,
+                    style: TextStyle(
+                      fontFamily: 'Literata',
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Items List
+          ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: _bill.items.length,
+            separatorBuilder: (_, __) => Divider(height: 1, color: Colors.grey[100]),
+            itemBuilder: (context, index) => _buildItemRow(_bill.items[index]),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNotesCard() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.amber.withValues(alpha: 0.3)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.amber.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(Icons.note_rounded, color: Colors.amber[700], size: 18),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              _bill.notes!,
+              style: TextStyle(
+                fontFamily: 'Literata',
+                fontSize: 13,
+                color: Colors.grey[700],
+                height: 1.4,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPaymentSummaryCard() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              children: [
+                // Quantity
+                _buildSummaryRow(
+                  _localizations.totalQuantity,
+                  '${_bill.totalQuantity} ${_localizations.items}',
+                ),
+                const SizedBox(height: 10),
+                // Subtotal
+                _buildSummaryRow(
+                  _localizations.subtotal,
+                  '₹${_bill.totalAmount.toStringAsFixed(2)}',
+                ),
+                // Discount
+                if (_bill.discountAmount > 0) ...[
+                  const SizedBox(height: 10),
+                  _buildSummaryRow(
+                    'Discount (${_bill.discountPercent.toStringAsFixed(1)}%)',
+                    '-₹${_bill.discountAmount.toStringAsFixed(2)}',
+                    valueColor: const Color(0xFF4CAF50),
+                  ),
+                ],
+                // Tax info
+                if (_bill.isGstApplied && _bill.totalTaxAmount > 0) ...[
+                  const SizedBox(height: 10),
+                  _buildSummaryRow(
+                    'Tax',
+                    '₹${_bill.totalTaxAmount.toStringAsFixed(2)}',
+                    valueColor: Colors.blue,
+                  ),
+                ],
+                const SizedBox(height: 10),
+                Container(height: 1, color: Colors.grey[200]),
+                const SizedBox(height: 10),
+                // Bill Total
+                _buildSummaryRow(
+                  _localizations.billTotalLabel,
+                  '₹${_bill.finalAmount.toStringAsFixed(2)}',
+                  isBold: true,
+                  valueSize: 16,
+                ),
+                // Returns
+                if (_bill.hasAnyReturns) ...[
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.orange.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.orange.withValues(alpha: 0.2)),
+                    ),
+                    child: Column(
+                      children: [
+                        _buildSummaryRow(
+                          '${_localizations.returnDeduction} (${_bill.totalReturnedQuantity} ${_localizations.quantity})',
+                          '-₹${_returnDeduction.toStringAsFixed(2)}',
+                          valueColor: Colors.orange,
+                        ),
+                        const SizedBox(height: 8),
+                        Container(height: 1, color: Colors.orange.withValues(alpha: 0.2)),
+                        const SizedBox(height: 8),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              _localizations.finalPayable,
+                              style: TextStyle(
+                                fontFamily: 'Literata',
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                color: _isFullyReturned ? Colors.red : const Color(0xFF2D3436),
+                              ),
+                            ),
+                            Text(
+                              _isFullyReturned ? '₹0.00' : '₹${_finalPayable.toStringAsFixed(2)}',
+                              style: TextStyle(
+                                fontFamily: 'Literata',
+                                fontSize: 18,
+                                fontWeight: FontWeight.w800,
+                                color: _isFullyReturned ? Colors.red : const Color(0xFF1B4D3E),
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (_isFullyReturned) ...[
+                          const SizedBox(height: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: Colors.red.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.info_outline, size: 14, color: Colors.red[700]),
+                                const SizedBox(width: 6),
+                                Text(
+                                  _localizations.statusFullyReturned,
+                                  style: TextStyle(
+                                    fontFamily: 'Literata',
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.red[700],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ],
+                // Payment Status
+                if (_bill.paidAmount > 0 || _bill.pendingAmount > 0) ...[
+                  const SizedBox(height: 12),
+                  Container(height: 1, color: Colors.grey[200]),
+                  const SizedBox(height: 12),
+                  _buildSummaryRow(
+                    _localizations.paidAmount,
+                    '₹${_bill.paidAmount.toStringAsFixed(2)}',
+                    valueColor: const Color(0xFF4CAF50),
+                  ),
+                  if (_bill.pendingAmount > 0) ...[
+                    const SizedBox(height: 10),
+                    _buildSummaryRow(
+                      _localizations.pendingAmount,
+                      '₹${_bill.pendingAmount.toStringAsFixed(2)}',
+                      valueColor: Colors.orange,
+                    ),
+                  ],
+                ],
+              ],
+            ),
+          ),
+          // Final Amount Banner (when no returns)
+          if (!_bill.hasAnyReturns)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Color(0xFF1B4D3E), Color(0xFF2E7D5B)],
+                ),
+                borderRadius: BorderRadius.vertical(bottom: Radius.circular(16)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    _localizations.finalAmount,
+                    style: const TextStyle(
+                      fontFamily: 'Literata',
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
+                  Text(
+                    '₹${_bill.finalAmount.toStringAsFixed(2)}',
+                    style: const TextStyle(
+                      fontFamily: 'Literata',
+                      fontSize: 22,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSummaryRow(String label, String value, {
+    Color? valueColor,
+    bool isBold = false,
+    double valueSize = 14,
+  }) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -3139,113 +3545,200 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog> {
           label,
           style: TextStyle(
             fontFamily: 'Literata',
-            fontSize: 14,
-            fontWeight: isBold ? FontWeight.w700 : FontWeight.normal,
-            color: valueColor ?? Colors.white.withOpacity(0.8),
+            fontSize: 13,
+            fontWeight: isBold ? FontWeight.w600 : FontWeight.w500,
+            color: Colors.grey[600],
           ),
         ),
         Text(
           value,
           style: TextStyle(
             fontFamily: 'Literata',
-            fontSize: isBold ? 16 : 14,
+            fontSize: valueSize,
             fontWeight: isBold ? FontWeight.w700 : FontWeight.w600,
-            color: valueColor ?? Colors.white.withOpacity(0.9),
+            color: valueColor ?? const Color(0xFF2D3436),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildActionButton({
+  Widget _buildReturnToggleCard() {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.orange.withValues(alpha: 0.2)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Colors.orange.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(Icons.assignment_return_rounded, 
+              color: Colors.orange[700], size: 20),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              _localizations.includeReturnedItemsInPrint,
+              style: TextStyle(
+                fontFamily: 'Literata',
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey[700],
+              ),
+            ),
+          ),
+          Transform.scale(
+            scale: 0.85,
+            child: Switch(
+              value: _includeReturnsInPrint,
+              onChanged: (v) => setState(() => _includeReturnsInPrint = v),
+              activeColor: Colors.orange,
+              activeTrackColor: Colors.orange.withValues(alpha: 0.3),
+              inactiveThumbColor: Colors.grey[400],
+              inactiveTrackColor: Colors.grey.withValues(alpha: 0.3),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _showPdfPreview() async {
+    if (_isGeneratingPdf) return;
+    
+    setState(() => _isGeneratingPdf = true);
+    try {
+      final printData = _createPrintData();
+      final shop = await _shopRepository.getShopDetails().timeout(
+        const Duration(seconds: 5),
+        onTimeout: () => Shop.empty,
+      );
+      
+      final file = await _pdfService.savePdfToFile(
+        billData: printData,
+        shopDetails: shop,
+      );
+      
+      if (!mounted) return;
+      
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => FilePreviewPage(
+            file: file,
+            fileName: '${_localizations.bills} - ${_bill.billNumber}',
+            fileType: FilePreviewType.pdf,
+            subtitle: DateFormat('dd MMM yyyy, hh:mm a').format(_bill.billDate),
+          ),
+        ),
+      );
+    } catch (e) {
+      debugPrint('[BillDetailsDialog] ERROR generating PDF: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error generating PDF: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isGeneratingPdf = false);
+    }
+  }
+
+  Widget _buildActionButtonsSection() {
+    return Column(
+      children: [
+        // Preview Bill Button (Primary)
+        _buildPremiumButton(
+          icon: _isGeneratingPdf ? Icons.hourglass_empty_rounded : Icons.preview_rounded,
+          label: _isGeneratingPdf ? 'Generating...' : 'Preview Bill',
+          isPrimary: true,
+          onTap: _isGeneratingPdf ? () {} : _showPdfPreview,
+        ),
+        const SizedBox(height: 10),
+        // Return Bill Button
+        if (!_bill.returnStatus && _bill.hasReturnableItems)
+          _buildReturnBillButton()
+        else if (_bill.returnStatus)
+          _buildReturnedInfoCard(),
+      ],
+    );
+  }
+
+  Widget _buildPremiumButton({
     required IconData icon,
     required String label,
-    required Color color,
+    required bool isPrimary,
     required VoidCallback onTap,
-    bool filled = false,
   }) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
         decoration: BoxDecoration(
-          color: filled ? color.withOpacity(0.4) : Colors.white.withOpacity(0.08),
+          gradient: isPrimary
+              ? const LinearGradient(
+                  colors: [Color(0xFF1B4D3E), Color(0xFF2E7D5B)],
+                )
+              : null,
+          color: isPrimary ? null : Colors.white,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: filled ? color.withOpacity(0.6) : Colors.white.withOpacity(0.2),
-            width: 1.5,
-          ),
+          border: isPrimary 
+              ? null 
+              : Border.all(color: const Color(0xFF1B4D3E).withValues(alpha: 0.3)),
+          boxShadow: isPrimary
+              ? [
+                  BoxShadow(
+                    color: const Color(0xFF1B4D3E).withValues(alpha: 0.3),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ]
+              : [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.04),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: filled ? Colors.white : Colors.white.withOpacity(0.8), size: 20),
-            const SizedBox(width: 8),
+            Icon(
+              icon,
+              size: 20,
+              color: isPrimary ? Colors.white : const Color(0xFF1B4D3E),
+            ),
+            const SizedBox(width: 10),
             Text(
               label,
               style: TextStyle(
                 fontFamily: 'Literata',
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: filled ? Colors.white : Colors.white.withOpacity(0.8),
+                color: isPrimary ? Colors.white : const Color(0xFF1B4D3E),
               ),
             ),
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildGlassyCard(Widget child) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withOpacity(0.2), width: 1.5),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(14),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: child,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDetailRow(String label, String value, IconData icon) {
-    return Row(
-      children: [
-        Icon(icon, size: 18, color: Colors.white.withOpacity(0.7)),
-        const SizedBox(width: 8),
-        Text(
-          '$label: ',
-          style: TextStyle(
-            fontFamily: 'Literata',
-            fontSize: 14,
-            color: Colors.white.withOpacity(0.7),
-          ),
-        ),
-        Expanded(
-          child: Text(
-            value,
-            style: const TextStyle(
-              fontFamily: 'Literata',
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: Colors.white,
-            ),
-          ),
-        ),
-      ],
     );
   }
 
@@ -3253,130 +3746,112 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog> {
     final bool hasReturn = item.returnedQuantity > 0;
     final bool isFullReturn = item.isFullyReturned;
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(isFullReturn ? 0.04 : 0.08),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: hasReturn
-                ? Colors.orange.withOpacity(0.3)
-                : Colors.white.withOpacity(0.1),
-            width: 1,
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Sold line
-            Row(
-              children: [
-                Expanded(
-                  flex: 3,
-                  child: Text(
-                    item.productName,
-                    style: TextStyle(
-                      fontFamily: 'Literata',
-                      fontWeight: FontWeight.w600,
-                      color: isFullReturn ? Colors.white.withOpacity(0.4) : Colors.white,
-                      decoration: isFullReturn ? TextDecoration.lineThrough : null,
-                      decorationColor: Colors.orange.withOpacity(0.7),
-                      decorationThickness: 2,
-                    ),
-                  ),
-                ),
-                SizedBox(
-                  width: 40,
-                  child: Text(
-                    '${item.quantity}',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontFamily: 'Literata',
-                      fontSize: 13,
-                      color: isFullReturn ? Colors.white.withOpacity(0.4) : Colors.white.withOpacity(0.8),
-                      decoration: isFullReturn ? TextDecoration.lineThrough : null,
-                      decorationColor: Colors.orange.withOpacity(0.7),
-                      decorationThickness: 2,
-                    ),
-                  ),
-                ),
-                SizedBox(
-                  width: 55,
-                  child: Text(
-                    '₹${item.sellingPrice.toStringAsFixed(0)}',
-                    textAlign: TextAlign.right,
-                    style: TextStyle(
-                      fontFamily: 'Literata',
-                      fontSize: 12,
-                      color: Colors.white.withOpacity(0.6),
-                    ),
-                  ),
-                ),
-                SizedBox(
-                  width: 65,
-                  child: Text(
-                    '₹${item.subtotal.toStringAsFixed(2)}',
-                    textAlign: TextAlign.right,
-                    style: TextStyle(
-                      fontFamily: 'Literata',
-                      fontWeight: FontWeight.w700,
-                      color: isFullReturn ? Colors.white.withOpacity(0.4) : Colors.white,
-                      decoration: isFullReturn ? TextDecoration.lineThrough : null,
-                      decorationColor: Colors.orange.withOpacity(0.7),
-                      decorationThickness: 2,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            // Return line (if any)
-            if (hasReturn) ...[
-              const SizedBox(height: 6),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-                decoration: BoxDecoration(
-                  color: Colors.orange.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(6),
-                  border: Border.all(color: Colors.orange.withOpacity(0.3)),
-                ),
-                child: Row(
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      color: hasReturn 
+          ? Colors.orange.withValues(alpha: 0.03)
+          : Colors.transparent,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Main item row
+          Row(
+            children: [
+              Expanded(
+                flex: 4,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.assignment_return, size: 13, color: Colors.orange[300]),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: Text(
-                        '${_localizations.returnLabel}: ${item.returnedQuantity} ${_localizations.quantity}',
-                        style: TextStyle(
-                          fontFamily: 'Literata',
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.orange[300],
-                          decoration: TextDecoration.lineThrough,
-                          decorationColor: Colors.orange.withOpacity(0.5),
-                          decorationThickness: 1.5,
-                        ),
-                      ),
-                    ),
                     Text(
-                      '(-₹${(item.sellingPrice * item.returnedQuantity).toStringAsFixed(2)})',
+                      item.productName,
                       style: TextStyle(
                         fontFamily: 'Literata',
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.orange[300],
-                        decoration: TextDecoration.lineThrough,
-                        decorationColor: Colors.orange.withOpacity(0.5),
-                        decorationThickness: 1.5,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: isFullReturn 
+                            ? Colors.grey[400] 
+                            : const Color(0xFF2D3436),
+                        decoration: isFullReturn 
+                            ? TextDecoration.lineThrough 
+                            : null,
+                        decorationColor: Colors.orange,
+                        decorationThickness: 2,
                       ),
                     ),
+                    if (hasReturn)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 2),
+                        child: Row(
+                          children: [
+                            Icon(Icons.assignment_return_rounded, 
+                              size: 11, color: Colors.orange[600]),
+                            const SizedBox(width: 3),
+                            Text(
+                              '${item.returnedQuantity} returned',
+                              style: TextStyle(
+                                fontFamily: 'Literata',
+                                fontSize: 10,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.orange[600],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                   ],
                 ),
               ),
+              SizedBox(
+                width: 40,
+                child: Text(
+                  '${item.quantity}',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontFamily: 'Literata',
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: isFullReturn ? Colors.grey[400] : Colors.grey[700],
+                    decoration: isFullReturn 
+                        ? TextDecoration.lineThrough 
+                        : null,
+                  ),
+                ),
+              ),
+              SizedBox(
+                width: 60,
+                child: Text(
+                  '₹${item.sellingPrice.toStringAsFixed(0)}',
+                  textAlign: TextAlign.right,
+                  style: TextStyle(
+                    fontFamily: 'Literata',
+                    fontSize: 12,
+                    color: Colors.grey[500],
+                  ),
+                ),
+              ),
+              SizedBox(
+                width: 70,
+                child: Text(
+                  '₹${item.subtotal.toStringAsFixed(2)}',
+                  textAlign: TextAlign.right,
+                  style: TextStyle(
+                    fontFamily: 'Literata',
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: isFullReturn 
+                        ? Colors.grey[400] 
+                        : const Color(0xFF1B4D3E),
+                    decoration: isFullReturn 
+                        ? TextDecoration.lineThrough 
+                        : null,
+                    decorationColor: Colors.orange,
+                    decorationThickness: 2,
+                  ),
+                ),
+              ),
             ],
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -3387,31 +3862,42 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Colors.orange.withOpacity(0.3),
-              Colors.orange.withOpacity(0.2),
-            ],
-          ),
+          color: Colors.white,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: Colors.orange.withOpacity(0.4), width: 1.5),
+          border: Border.all(color: Colors.orange.withValues(alpha: 0.5), width: 1.5),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.orange.withValues(alpha: 0.15),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.assignment_return, color: Colors.orange[300], size: 22),
-            const SizedBox(width: 10),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.orange.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(Icons.assignment_return_rounded, 
+                color: Colors.orange[700], size: 20),
+            ),
+            const SizedBox(width: 12),
             Text(
               _localizations.returnThisBill,
               style: TextStyle(
                 fontFamily: 'Literata',
-                fontSize: 16,
+                fontSize: 15,
                 fontWeight: FontWeight.w700,
-                color: Colors.orange[300],
+                color: Colors.orange[700],
               ),
             ),
+            const SizedBox(width: 8),
+            Icon(Icons.arrow_forward_ios_rounded, 
+              color: Colors.orange[400], size: 16),
           ],
         ),
       ),
@@ -3421,16 +3907,31 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog> {
   Widget _buildReturnedInfoCard() {
     final dateFormat = DateFormat('dd MMM yyyy, hh:mm a');
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.orange.withOpacity(0.15),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.orange.withOpacity(0.3), width: 1.5),
+        border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Row(
         children: [
-          Icon(Icons.assignment_return, color: Colors.orange[300], size: 24),
-          const SizedBox(width: 12),
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Colors.orange.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(Icons.assignment_return_rounded, 
+              color: Colors.orange[700], size: 22),
+          ),
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -3441,23 +3942,24 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog> {
                     fontFamily: 'Literata',
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
-                    color: Colors.orange[300],
+                    color: Colors.orange[700],
                   ),
                 ),
                 if (_bill.returnDate != null) ...[
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 3),
                   Text(
                     dateFormat.format(_bill.returnDate!),
                     style: TextStyle(
                       fontFamily: 'Literata',
                       fontSize: 12,
-                      color: Colors.orange[200],
+                      color: Colors.grey[500],
                     ),
                   ),
                 ],
               ],
             ),
           ),
+          Icon(Icons.check_circle_rounded, color: Colors.orange[400], size: 24),
         ],
       ),
     );
