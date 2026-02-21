@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/services/dashboard_refresh_service.dart';
 import '../../domain/entities/dashboard_summary.dart';
 import '../../domain/repositories/dashboard_repository_interface.dart';
 import '../../data/repositories/dashboard_repository_impl.dart';
@@ -17,6 +18,7 @@ import 'optimized_dashboard_state.dart';
 class OptimizedDashboardCubit extends Cubit<OptimizedDashboardState> {
   final DashboardRepositoryImpl _repository;
   StreamSubscription<DashboardSummary>? _realtimeSubscription;
+  StreamSubscription<void>? _refreshServiceSubscription;
   
   /// Track if initial load has completed
   bool _isInitialized = false;
@@ -76,6 +78,9 @@ class OptimizedDashboardCubit extends Cubit<OptimizedDashboardState> {
 
       // Start reactive Isar watchers — auto-refresh on any data change
       _subscribeToRealtimeUpdates();
+      
+      // Also subscribe to DashboardRefreshService for external refresh requests
+      _subscribeToRefreshService();
 
       stopwatch.stop();
       debugPrint('[DashboardCubit] Initialize completed in ${stopwatch.elapsedMilliseconds}ms');
@@ -236,6 +241,17 @@ class OptimizedDashboardCubit extends Cubit<OptimizedDashboardState> {
           },
         );
   }
+  
+  /// Subscribe to DashboardRefreshService for external refresh requests
+  /// This catches refreshes triggered from other parts of the app
+  void _subscribeToRefreshService() {
+    _refreshServiceSubscription?.cancel();
+    _refreshServiceSubscription = DashboardRefreshService.instance.onRefreshNeeded
+        .listen((_) {
+          debugPrint('[DashboardCubit] External refresh requested via DashboardRefreshService');
+          refresh();
+        });
+  }
 
   /// Handle errors gracefully
   void _handleError(Object error) {
@@ -262,6 +278,7 @@ class OptimizedDashboardCubit extends Cubit<OptimizedDashboardState> {
   Future<void> close() {
     _debounceTimer?.cancel();
     _realtimeSubscription?.cancel();
+    _refreshServiceSubscription?.cancel();
     _repository.dispose();
     return super.close();
   }

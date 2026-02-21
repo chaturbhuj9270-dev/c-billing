@@ -2,15 +2,20 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:isar_community/isar.dart';
 import '../../../../core/services/isar_service.dart';
+import '../../../../core/services/dashboard_refresh_service.dart';
 import '../../../billing/offline/controllers/bill_offline_controller.dart';
 import '../../../billing/offline/entities/bill_entity.dart';
 import '../../../customer/offline/controllers/customer_offline_controller.dart';
+import '../../../customer/offline/entities/customer_entity.dart';
 import '../../../inventory_management/offline/controllers/purchase_offline_controller.dart';
 import '../../../inventory_management/offline/entities/purchase_batch_entity.dart';
 import '../../../inventory_management/offline/entities/purchase_entity.dart';
 import '../../../product/offline/controllers/product_offline_controller.dart';
+import '../../../product/offline/entities/product_entity.dart';
 import '../../../supplier/offline/controllers/supplier_offline_controller.dart';
+import '../../../supplier/offline/entities/supplier_entity.dart';
 import '../../../company/offline/controllers/company_offline_controller.dart';
+import '../../../company/offline/entities/company_entity.dart';
 import '../../domain/entities/dashboard_summary.dart';
 import '../../domain/repositories/dashboard_repository_interface.dart';
 
@@ -151,7 +156,7 @@ class DashboardIsarDataSource {
         // Watch Isar collections for changes
         void onCollectionChanged() {
           _debounceTimer?.cancel();
-          _debounceTimer = Timer(const Duration(milliseconds: 300), () async {
+          _debounceTimer = Timer(const Duration(milliseconds: 150), () async {
             try {
               final updated = await fetchDashboardSummary(params: params);
               if (!controller.isClosed) {
@@ -163,7 +168,8 @@ class DashboardIsarDataSource {
           });
         }
 
-        // Watch all relevant collections
+        // Watch ALL relevant collections for complete real-time updates
+        // Bills, purchases, and batches for financial data
         _watchSubscriptions.add(
           _isar.billEntitys.watchLazy().listen((_) => onCollectionChanged()),
         );
@@ -172,6 +178,23 @@ class DashboardIsarDataSource {
         );
         _watchSubscriptions.add(
           _isar.purchaseBatchEntitys.watchLazy().listen((_) => onCollectionChanged()),
+        );
+        // Customers, products, suppliers, companies for count stats
+        _watchSubscriptions.add(
+          _isar.customerEntitys.watchLazy().listen((_) => onCollectionChanged()),
+        );
+        _watchSubscriptions.add(
+          _isar.productEntitys.watchLazy().listen((_) => onCollectionChanged()),
+        );
+        _watchSubscriptions.add(
+          _isar.supplierEntitys.watchLazy().listen((_) => onCollectionChanged()),
+        );
+        _watchSubscriptions.add(
+          _isar.companyEntitys.watchLazy().listen((_) => onCollectionChanged()),
+        );
+        // Also listen to DashboardRefreshService for external refresh requests
+        _watchSubscriptions.add(
+          DashboardRefreshService.instance.onRefreshNeeded.listen((_) => onCollectionChanged()),
         );
       },
       onCancel: () {
