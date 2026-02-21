@@ -1998,40 +1998,42 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
           child: FadeTransition(
             opacity: animation,
             child: Center(
-              child: Container(
-                margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 60),
-                constraints: BoxConstraints(
-                  maxHeight: MediaQuery.of(context).size.height * 0.7,
-                  maxWidth: 400,
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(28),
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 25, sigmaY: 25),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            Colors.white.withValues(alpha: 0.85),
-                            Colors.white.withValues(alpha: 0.75),
+              child: Material(
+                type: MaterialType.transparency,
+                child: Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 60),
+                  constraints: BoxConstraints(
+                    maxHeight: MediaQuery.of(context).size.height * 0.7,
+                    maxWidth: 400,
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(28),
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              const Color(0xFF1B4D3E).withValues(alpha: 0.65),
+                              const Color(0xFF0D2B20).withValues(alpha: 0.75),
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(28),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.15),
+                            width: 1.5,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.3),
+                              blurRadius: 30,
+                              spreadRadius: 5,
+                            ),
                           ],
                         ),
-                        borderRadius: BorderRadius.circular(28),
-                        border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.6),
-                          width: 1.5,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: gradientColors[0].withValues(alpha: 0.3),
-                            blurRadius: 30,
-                            spreadRadius: 5,
-                          ),
-                        ],
-                      ),
-                      child: Column(
+                        child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           // Header with gradient
@@ -2042,8 +2044,8 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
                                 colors: [
-                                  gradientColors[0].withValues(alpha: 0.15),
-                                  gradientColors[1].withValues(alpha: 0.08),
+                                  Colors.white.withValues(alpha: 0.08),
+                                  Colors.white.withValues(alpha: 0.03),
                                 ],
                               ),
                               borderRadius: const BorderRadius.vertical(
@@ -2088,9 +2090,10 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                                         style: const TextStyle(
                                           fontSize: 18,
                                           fontWeight: FontWeight.w700,
-                                          color: Color(0xFF1B4D3E),
+                                          color: Colors.white,
                                           fontFamily: 'Literata',
                                           letterSpacing: -0.3,
+                                          decoration: TextDecoration.none,
                                         ),
                                       ),
                                       const SizedBox(height: 2),
@@ -2099,31 +2102,29 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                                         style: TextStyle(
                                           fontSize: 12,
                                           fontWeight: FontWeight.w500,
-                                          color: gradientColors[0],
+                                          color: Colors.white.withValues(alpha: 0.7),
                                           fontFamily: 'Literata',
+                                          decoration: TextDecoration.none,
                                         ),
                                       ),
                                     ],
                                   ),
                                 ),
                                 // Close button
-                                Material(
-                                  color: Colors.transparent,
-                                  child: InkWell(
-                                    onTap: () => Navigator.of(context).pop(),
-                                    borderRadius: BorderRadius.circular(12),
-                                    child: Container(
-                                      width: 36,
-                                      height: 36,
-                                      decoration: BoxDecoration(
-                                        color: Colors.grey.withValues(alpha: 0.1),
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      child: const Icon(
-                                        Icons.close_rounded,
-                                        color: Color(0xFF1B4D3E),
-                                        size: 20,
-                                      ),
+                                InkWell(
+                                  onTap: () => Navigator.of(context).pop(),
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: Container(
+                                    width: 36,
+                                    height: 36,
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withValues(alpha: 0.1),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: const Icon(
+                                      Icons.close_rounded,
+                                      color: Colors.white,
+                                      size: 20,
                                     ),
                                   ),
                                 ),
@@ -2137,7 +2138,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                               gradient: LinearGradient(
                                 colors: [
                                   Colors.transparent,
-                                  gradientColors[0].withValues(alpha: 0.3),
+                                  Colors.white.withValues(alpha: 0.2),
                                   Colors.transparent,
                                 ],
                               ),
@@ -2164,6 +2165,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                 ),
               ),
             ),
+            ),
           ),
         );
       },
@@ -2183,14 +2185,14 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [colors[0].withValues(alpha: 0.2), colors[1].withValues(alpha: 0.1)],
+                colors: [colors[0].withValues(alpha: 0.3), colors[1].withValues(alpha: 0.2)],
               ),
               borderRadius: BorderRadius.circular(20),
             ),
-            child: Icon(
+            child: const Icon(
               Icons.inbox_outlined,
               size: 32,
-              color: colors[0],
+              color: Colors.white,
             ),
           ),
           const SizedBox(height: 16),
@@ -2199,8 +2201,9 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w500,
-              color: Colors.grey[600],
+              color: Colors.white.withValues(alpha: 0.7),
               fontFamily: 'Literata',
+              decoration: TextDecoration.none,
             ),
           ),
         ],
@@ -2265,13 +2268,13 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: isOverdue 
-            ? Colors.red.withValues(alpha: 0.08)
-            : colors[0].withValues(alpha: 0.06),
+            ? Colors.red.withValues(alpha: 0.15)
+            : Colors.white.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: isOverdue 
-              ? Colors.red.withValues(alpha: 0.2)
-              : colors[0].withValues(alpha: 0.15),
+              ? Colors.red.withValues(alpha: 0.3)
+              : Colors.white.withValues(alpha: 0.12),
         ),
       ),
       child: Row(
@@ -2303,8 +2306,9 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF1B4D3E),
+                    color: Colors.white,
                     fontFamily: 'Literata',
+                    decoration: TextDecoration.none,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -2317,9 +2321,10 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                           : '$daysPending days overdue',
                   style: TextStyle(
                     fontSize: 11,
-                    color: isOverdue ? Colors.red[600] : colors[0],
+                    color: isOverdue ? Colors.red[300] : Colors.white.withValues(alpha: 0.6),
                     fontWeight: FontWeight.w500,
                     fontFamily: 'Literata',
+                    decoration: TextDecoration.none,
                   ),
                 ),
               ],
@@ -2342,6 +2347,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                 fontWeight: FontWeight.w700,
                 color: Colors.white,
                 fontFamily: 'Literata',
+                decoration: TextDecoration.none,
               ),
             ),
           ),
@@ -2359,9 +2365,9 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: colors[0].withValues(alpha: 0.06),
+        color: Colors.white.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: colors[0].withValues(alpha: 0.15)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
       ),
       child: Row(
         children: [
@@ -2385,8 +2391,9 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
               style: const TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF1B4D3E),
+                color: Colors.white,
                 fontFamily: 'Literata',
+                decoration: TextDecoration.none,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -2405,6 +2412,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                 fontWeight: FontWeight.w700,
                 color: Colors.white,
                 fontFamily: 'Literata',
+                decoration: TextDecoration.none,
               ),
             ),
           ),
@@ -2423,9 +2431,9 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: colors[0].withValues(alpha: 0.06),
+        color: Colors.white.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: colors[0].withValues(alpha: 0.15)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
       ),
       child: Row(
         children: [
@@ -2452,8 +2460,9 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF1B4D3E),
+                    color: Colors.white,
                     fontFamily: 'Literata',
+                    decoration: TextDecoration.none,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -2463,9 +2472,10 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                     _formatDate(billDate),
                     style: TextStyle(
                       fontSize: 11,
-                      color: colors[0],
+                      color: Colors.white.withValues(alpha: 0.6),
                       fontWeight: FontWeight.w500,
                       fontFamily: 'Literata',
+                      decoration: TextDecoration.none,
                     ),
                   ),
               ],
@@ -2484,6 +2494,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                 fontWeight: FontWeight.w700,
                 color: Colors.white,
                 fontFamily: 'Literata',
+                decoration: TextDecoration.none,
               ),
             ),
           ),
@@ -2503,9 +2514,9 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: colors[0].withValues(alpha: 0.06),
+        color: Colors.white.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: colors[0].withValues(alpha: 0.15)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
       ),
       child: Row(
         children: [
@@ -2525,6 +2536,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                   fontWeight: FontWeight.w800,
                   color: Colors.white,
                   fontFamily: 'Literata',
+                  decoration: TextDecoration.none,
                 ),
               ),
             ),
@@ -2539,23 +2551,25 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF1B4D3E),
+                    color: Colors.white,
                     fontFamily: 'Literata',
+                    decoration: TextDecoration.none,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
                 Row(
                   children: [
-                    Icon(Icons.shopping_bag_outlined, size: 12, color: colors[0]),
+                    Icon(Icons.shopping_bag_outlined, size: 12, color: Colors.white.withValues(alpha: 0.6)),
                     const SizedBox(width: 4),
                     Text(
                       '$quantity sold',
                       style: TextStyle(
                         fontSize: 11,
-                        color: colors[0],
+                        color: Colors.white.withValues(alpha: 0.6),
                         fontWeight: FontWeight.w500,
                         fontFamily: 'Literata',
+                        decoration: TextDecoration.none,
                       ),
                     ),
                   ],
@@ -2576,6 +2590,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                 fontWeight: FontWeight.w700,
                 color: Colors.white,
                 fontFamily: 'Literata',
+                decoration: TextDecoration.none,
               ),
             ),
           ),
@@ -2598,13 +2613,13 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: isOutOfStock 
-            ? Colors.red.withValues(alpha: 0.08)
-            : colors[0].withValues(alpha: 0.06),
+            ? Colors.red.withValues(alpha: 0.15)
+            : Colors.white.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: isOutOfStock 
-              ? Colors.red.withValues(alpha: 0.2)
-              : colors[0].withValues(alpha: 0.15),
+              ? Colors.red.withValues(alpha: 0.3)
+              : Colors.white.withValues(alpha: 0.12),
         ),
       ),
       child: Row(
@@ -2636,8 +2651,9 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF1B4D3E),
+                    color: Colors.white,
                     fontFamily: 'Literata',
+                    decoration: TextDecoration.none,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -2648,9 +2664,9 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                   borderRadius: BorderRadius.circular(4),
                   child: LinearProgressIndicator(
                     value: stockPercent / 100,
-                    backgroundColor: Colors.grey.withValues(alpha: 0.2),
+                    backgroundColor: Colors.white.withValues(alpha: 0.15),
                     valueColor: AlwaysStoppedAnimation(
-                      isOutOfStock ? Colors.red : colors[0],
+                      isOutOfStock ? Colors.red[300]! : colors[0],
                     ),
                     minHeight: 4,
                   ),
@@ -2676,6 +2692,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                 fontWeight: FontWeight.w700,
                 color: Colors.white,
                 fontFamily: 'Literata',
+                decoration: TextDecoration.none,
               ),
             ),
           ),
