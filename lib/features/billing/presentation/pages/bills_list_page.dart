@@ -3253,18 +3253,26 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
     );
   }
 
+  static bool _globalPdfGenerationInProgress = false;
+  
   Future<void> _showPdfPreview() async {
-    if (_isGeneratingPdf) return;
+    // Prevent multiple simultaneous PDF generations globally
+    if (_globalPdfGenerationInProgress || _isGeneratingPdf) {
+      debugPrint('[BillDetailsDialog] PDF generation already in progress, ignoring request');
+      return;
+    }
     
     debugPrint('[BillDetailsDialog] Starting PDF preview for bill: ${_bill.billNumber}');
+    _globalPdfGenerationInProgress = true;
     setState(() => _isGeneratingPdf = true);
+    
     try {
       debugPrint('[BillDetailsDialog] Creating print data...');
       final printData = _createPrintData();
       
       debugPrint('[BillDetailsDialog] Fetching shop details...');
       final shop = await _shopRepository.getShopDetails().timeout(
-        const Duration(seconds: 5),
+        const Duration(seconds: 10),
         onTimeout: () {
           debugPrint('[BillDetailsDialog] Shop details timeout, using empty shop');
           return Shop.empty;
@@ -3277,18 +3285,33 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
         billData: printData,
         shopDetails: shop,
       ).timeout(
-        const Duration(seconds: 60),
-        onTimeout: () => throw Exception('PDF generation timed out after 60 seconds'),
+        const Duration(seconds: 90),
+        onTimeout: () => throw Exception('PDF generation timed out after 90 seconds'),
       );
+      
+      // Validate file creation
+      if (!file.existsSync()) {
+        throw Exception('PDF file was not created successfully');
+      }
+      
+      final fileSize = file.lengthSync();
+      if (fileSize == 0) {
+        throw Exception('PDF file is empty');
+      }
+      
       debugPrint('[BillDetailsDialog] PDF saved to: ${file.path}');
+      debugPrint('[BillDetailsDialog] File size: ${fileSize} bytes');
       
       if (!mounted) {
         debugPrint('[BillDetailsDialog] Widget not mounted, returning');
         return;
       }
       
-      // Hide loading before navigation
+      // Reset state before navigation
       setState(() => _isGeneratingPdf = false);
+      
+      // Small delay to ensure state is updated
+      await Future.delayed(const Duration(milliseconds: 100));
       
       debugPrint('[BillDetailsDialog] Navigating to FilePreviewPage...');
       await Navigator.push(
@@ -3303,19 +3326,28 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
         ),
       );
       debugPrint('[BillDetailsDialog] Returned from FilePreviewPage');
+      
     } catch (e, stack) {
       debugPrint('[BillDetailsDialog] ERROR generating PDF: $e');
       debugPrint('[BillDetailsDialog] Stack trace: $stack');
+      
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error generating PDF: $e'),
+            content: Text('Failed to generate PDF: ${e.toString()}'),
             backgroundColor: Colors.red,
+            duration: const Duration(seconds: 6),
+            action: SnackBarAction(
+              label: 'Retry',
+              textColor: Colors.white,
+              onPressed: () => _showPdfPreview(),
+            ),
           ),
         );
       }
     } finally {
       debugPrint('[BillDetailsDialog] Finally block - resetting state');
+      _globalPdfGenerationInProgress = false;
       if (mounted) setState(() => _isGeneratingPdf = false);
     }
   }

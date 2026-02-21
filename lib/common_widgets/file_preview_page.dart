@@ -119,16 +119,42 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
         final lines = const LineSplitter().convert(content);
         _csvData = lines.map((line) => _parseCSVLine(line)).toList();
       } else if (widget.fileType == FilePreviewType.pdf) {
-        // Pre-load PDF bytes for faster rendering
-        _pdfBytes = await widget.file.readAsBytes();
-        debugPrint('[FilePreviewPage] PDF bytes loaded: ${_pdfBytes!.length}');
-        
-        // Basic PDF validation - check magic bytes
-        if (_pdfBytes!.length < 4 || 
-            String.fromCharCodes(_pdfBytes!.take(4)) != '%PDF') {
-          throw Exception('Invalid PDF file format');
+        // Pre-load PDF bytes for faster rendering with retry mechanism
+        int retries = 3;
+        while (retries > 0) {
+          try {
+            _pdfBytes = await widget.file.readAsBytes().timeout(
+              const Duration(seconds: 30),
+              onTimeout: () => throw Exception('PDF file reading timed out'),
+            );
+            
+            if (_pdfBytes == null || _pdfBytes!.isEmpty) {
+              throw Exception('PDF file is empty after reading');
+            }
+            
+            debugPrint('[FilePreviewPage] PDF bytes loaded: ${_pdfBytes!.length}');
+            
+            // Basic PDF validation - check magic bytes
+            if (_pdfBytes!.length < 4 || 
+                String.fromCharCodes(_pdfBytes!.take(4)) != '%PDF') {
+              throw Exception('Invalid PDF file format');
+            }
+            
+            // Additional PDF validation - check for PDF trailer
+            final pdfString = String.fromCharCodes(_pdfBytes!);
+            if (!pdfString.contains('%%EOF')) {
+              throw Exception('Incomplete PDF file - missing EOF marker');
+            }
+            
+            debugPrint('[FilePreviewPage] PDF file validated successfully');
+            break;
+          } catch (e) {
+            retries--;
+            if (retries == 0) rethrow;
+            debugPrint('[FilePreviewPage] PDF loading failed, retrying... ($retries attempts left): $e');
+            await Future.delayed(const Duration(milliseconds: 500));
+          }
         }
-        debugPrint('[FilePreviewPage] PDF file validated successfully');
       }
       
       setState(() => _isLoading = false);

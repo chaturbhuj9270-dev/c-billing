@@ -15,6 +15,9 @@ class PdfBillService {
   static final PdfBillService _instance = PdfBillService._internal();
   factory PdfBillService() => _instance;
   PdfBillService._internal();
+  
+  static bool _isGenerating = false;
+  static final Set<String> _generatingBills = <String>{};
 
   /// Generate a PDF document from bill data (POS receipt format)
   Future<pw.Document> generateBillPdf({
@@ -1324,8 +1327,18 @@ class PdfBillService {
     required PrintBillData billData,
     required Shop shopDetails,
   }) async {
+    final billId = billData.billNumber;
+    
+    // Prevent concurrent PDF generation for the same bill
+    if (_generatingBills.contains(billId)) {
+      debugPrint('[PdfBillService] PDF generation already in progress for bill: $billId');
+      throw Exception('PDF generation already in progress for this bill');
+    }
+    
+    _generatingBills.add(billId);
+    
     try {
-      debugPrint('[PdfBillService] savePdfToFile started for bill: ${billData.billNumber}');
+      debugPrint('[PdfBillService] savePdfToFile started for bill: $billId');
       
       // Check bill type setting
       debugPrint('[PdfBillService] Getting SharedPreferences...');
@@ -1352,23 +1365,45 @@ class PdfBillService {
       final bytes = await pdf.save();
       debugPrint('[PdfBillService] PDF bytes saved: ${bytes.length} bytes');
       
+      if (bytes.isEmpty) {
+        throw Exception('PDF generation failed: empty bytes');
+      }
+      
       debugPrint('[PdfBillService] Getting application documents directory...');
       final dir = await getApplicationDocumentsDirectory();
       debugPrint('[PdfBillService] Directory: ${dir.path}');
       
-      final fileName =
-          'bill_${billData.billNumber.replaceAll('/', '_')}_${DateTime.now().millisecondsSinceEpoch}.pdf';
+      // Create a unique filename to avoid conflicts
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final fileName = 'bill_${billData.billNumber.replaceAll('/', '_')}_$timestamp.pdf';
       final file = File('${dir.path}/$fileName');
       
       debugPrint('[PdfBillService] Writing file to: ${file.path}');
-      await file.writeAsBytes(bytes);
-      debugPrint('[PdfBillService] File written successfully');
+      await file.writeAsBytes(bytes, flush: true);
+      
+      // Verify file was written successfully
+      if (!file.existsSync()) {
+        throw Exception('Failed to write PDF file to storage');
+      }
+      
+      final actualSize = file.lengthSync();
+      if (actualSize == 0) {
+        throw Exception('PDF file was written but is empty');
+      }
+      
+      if (actualSize != bytes.length) {
+        debugPrint('[PdfBillService] WARNING: File size mismatch. Expected: ${bytes.length}, Actual: $actualSize');
+      }
+      
+      debugPrint('[PdfBillService] File written successfully: $actualSize bytes');
       
       return file;
     } catch (e, stack) {
       debugPrint('[PdfBillService] ERROR in savePdfToFile: $e');
       debugPrint('[PdfBillService] Stack trace: $stack');
       rethrow;
+    } finally {
+      _generatingBills.remove(billId);
     }
   }
 

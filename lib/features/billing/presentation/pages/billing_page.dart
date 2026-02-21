@@ -1154,45 +1154,56 @@ class _BillingPageState extends State<BillingPage> {
   }
 
   /// Show bill PDF preview with share/print options (like purchase report)
+  static bool _pdfGenerationInProgress = false;
+  
   Future<void> _showBillPdfPreview(Bill bill) async {
+    // Prevent multiple simultaneous PDF generations globally
+    if (_pdfGenerationInProgress) {
+      debugPrint('[BillingPage] PDF generation already in progress globally, ignoring request');
+      return;
+    }
+
     BuildContext? dialogContext;
     
     try {
       debugPrint('[BillingPage] Starting PDF preview for bill: ${bill.billNumber}');
+      _pdfGenerationInProgress = true;
       
-      // Show loading indicator
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (ctx) {
-          dialogContext = ctx;
-          return Center(
-            child: Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const CircularProgressIndicator(
-                    valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF1B4D3E)),
+      // Show loading indicator with better isolation
+      if (mounted) {
+        await showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (ctx) {
+            dialogContext = ctx;
+            return WillPopScope(
+              onWillPop: () async => false,
+              child: Center(
+                child: Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  const SizedBox(height: 16),
-                  Text(
-                    _localizations.preparingPdf,
-                    style: const TextStyle(fontFamily: 'Literata', fontSize: 14),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF1B4D3E)),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        _localizations.preparingPdf,
+                        style: const TextStyle(fontFamily: 'Literata', fontSize: 14),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
-            ),
-          );
-        },
-      );
-      
-      // Small delay to ensure dialog is shown
-      await Future.delayed(const Duration(milliseconds: 100));
+            );
+          },
+        );
+      }
       
       debugPrint('[BillingPage] Creating print data...');
       final printData = _createPrintBillData(bill);
@@ -1200,7 +1211,7 @@ class _BillingPageState extends State<BillingPage> {
       
       debugPrint('[BillingPage] Getting shop details...');
       final shop = await _shopRepository.getShopDetails().timeout(
-        const Duration(seconds: 5),
+        const Duration(seconds: 10),
         onTimeout: () {
           debugPrint('[BillingPage] Shop details timeout, using empty shop');
           return Shop.empty;
@@ -1213,28 +1224,42 @@ class _BillingPageState extends State<BillingPage> {
         billData: printData,
         shopDetails: shop,
       ).timeout(
-        const Duration(seconds: 60),
-        onTimeout: () => throw Exception('PDF generation timed out after 60 seconds'),
+        const Duration(seconds: 90),
+        onTimeout: () => throw Exception('PDF generation timed out after 90 seconds'),
       );
+      
+      // Validate file creation
+      if (!file.existsSync()) {
+        throw Exception('PDF file was not created successfully');
+      }
+      
+      final fileSize = file.lengthSync();
+      if (fileSize == 0) {
+        throw Exception('PDF file is empty');
+      }
+      
       debugPrint('[BillingPage] PDF saved to: ${file.path}');
-      debugPrint('[BillingPage] File exists: ${file.existsSync()}, size: ${file.lengthSync()} bytes');
+      debugPrint('[BillingPage] File size: ${fileSize} bytes');
       
       if (!mounted) {
         debugPrint('[BillingPage] Widget not mounted, aborting');
         return;
       }
       
-      // Close loading dialog
-      debugPrint('[BillingPage] Closing loading dialog...');
-      if (dialogContext != null && Navigator.canPop(dialogContext!)) {
-        Navigator.pop(dialogContext!);
-      } else if (Navigator.canPop(context)) {
-        Navigator.pop(context);
+      // Close loading dialog safely
+      if (dialogContext != null) {
+        try {
+          if (Navigator.canPop(dialogContext!)) {
+            Navigator.of(dialogContext!).pop();
+          }
+        } catch (e) {
+          debugPrint('[BillingPage] Error closing dialog: $e');
+        }
+        dialogContext = null;
       }
-      debugPrint('[BillingPage] Loading dialog closed');
       
-      // Small delay before navigation
-      await Future.delayed(const Duration(milliseconds: 50));
+      // Small delay to ensure clean dialog closure
+      await Future.delayed(const Duration(milliseconds: 200));
       
       if (!mounted) return;
       
@@ -1252,23 +1277,44 @@ class _BillingPageState extends State<BillingPage> {
         ),
       );
       debugPrint('[BillingPage] Returned from FilePreviewPage');
+      
     } catch (e, stack) {
       debugPrint('[BillingPage] ERROR generating PDF preview: $e');
       debugPrint('[BillingPage] Stack trace: $stack');
       
-      // Close loading dialog if open
-      if (mounted) {
-        if (dialogContext != null && Navigator.canPop(dialogContext!)) {
-          Navigator.pop(dialogContext!);
-        } else if (Navigator.canPop(context)) {
-          Navigator.pop(context);
+      // Ensure dialog is closed
+      if (dialogContext != null) {
+        try {
+          if (Navigator.canPop(dialogContext!)) {
+            Navigator.of(dialogContext!).pop();
+          }
+        } catch (ex) {
+          debugPrint('[BillingPage] Error closing dialog in catch: $ex');
         }
-        _showSnackbar('Error generating PDF: $e', isError: true);
+        dialogContext = null;
       }
+      
+      // Small delay before showing error
+      await Future.delayed(const Duration(milliseconds: 300));
+      
+      if (mounted) {
+        _showSnackbar(
+          'Failed to generate PDF: ${e.toString()}', 
+          isError: true,
+          action: SnackBarAction(
+            label: 'Retry',
+            textColor: Colors.white,
+            onPressed: () => _showBillPdfPreview(bill),
+          ),
+        );
+      }
+    } finally {
+      debugPrint('[BillingPage] Resetting PDF generation state');
+      _pdfGenerationInProgress = false;
     }
   }
 
-  void _showSnackbar(String message, {bool isError = false}) {
+  void _showSnackbar(String message, {bool isError = false, SnackBarAction? action}) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -1277,6 +1323,8 @@ class _BillingPageState extends State<BillingPage> {
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         margin: const EdgeInsets.all(16),
+        duration: Duration(seconds: isError ? 6 : 4),
+        action: action,
       ),
     );
   }
