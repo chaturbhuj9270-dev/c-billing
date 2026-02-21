@@ -17,6 +17,7 @@ import '../../../billing/presentation/pages/bill_settings_page.dart';
 import '../../../billing/presentation/pages/bill_report_settings_page.dart';
 import '../../../billing/presentation/pages/bills_list_page.dart';
 import '../../../availability/presentation/pages/availability_page.dart';
+import '../../../event_order/presentation/pages/event_order_list_page.dart';
 import '../../../../core/services/session_manager.dart';
 import '../../../../core/services/language_service.dart';
 import '../../../../core/services/dashboard_refresh_service.dart';
@@ -889,6 +890,18 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const EnhancedCompanyPage()),
+            ).then((_) => _onDataChanged()),
+          ),
+          const SizedBox(width: 12),
+          _buildQuickStatItem(
+            icon: Icons.celebration_rounded,
+            value: 'Events',
+            label: 'Orders',
+            color: const Color(0xFFE91E63),
+            isLoading: isLoading,
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const EventOrderListPage()),
             ).then((_) => _onDataChanged()),
           ),
           const SizedBox(width: 12),

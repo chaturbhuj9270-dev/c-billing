@@ -8,6 +8,7 @@ import '../../features/inventory_management/offline/entities/purchase_entity.dar
 import '../../features/inventory_management/offline/entities/purchase_batch_entity.dart';
 import '../../features/inventory_management/offline/entities/stock_ledger_entity.dart';
 import '../../features/billing/offline/entities/bill_entity.dart';
+import '../../features/event_order/offline/entities/event_order_entity.dart';
 
 /// Singleton service for managing Isar database instance
 /// Handles initialization, instance access, and database cleanup
@@ -54,6 +55,7 @@ class IsarService {
         PurchaseBatchEntitySchema,
         StockLedgerEntitySchema,
         BillEntitySchema,
+        EventOrderEntitySchema,
       ],
       directory: dir.path,
       name: 'c_billing_db',

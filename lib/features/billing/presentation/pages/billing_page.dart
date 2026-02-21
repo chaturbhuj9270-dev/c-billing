@@ -41,6 +41,7 @@ import 'package:c_billing/features/inventory_management/presentation/pages/enhan
 import 'package:c_billing/features/supplier/presentation/pages/enhanced_supplier_page.dart';
 import 'package:c_billing/features/company/presentation/pages/enhanced_company_page.dart';
 import 'package:c_billing/features/purchase_return/presentation/pages/purchase_return_screen.dart';
+import 'package:c_billing/features/event_order/presentation/pages/event_order_list_page.dart';
 import 'package:c_billing/features/reports/presentation/pages/report_page.dart';
 import 'package:c_billing/features/dashboard/data/models/dashboard_data.dart';
 import 'package:c_billing/common_widgets/file_preview_page.dart';
@@ -4461,6 +4462,17 @@ class _BillingPageState extends State<BillingPage> {
           MaterialPageRoute(builder: (_) => const PurchaseReturnScreen()),
         ).then((_) => _loadQuickStats()),
       ),
+      _QuickStatItem(
+        icon: Icons.celebration_rounded,
+        value: 'Events',
+        label: 'Events/Orders',
+        color: const Color(0xFF6C63FF),
+        gradient: [const Color(0xFF6C63FF), const Color(0xFF8B5CF6)],
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const EventOrderListPage()),
+        ).then((_) => _loadQuickStats()),
+      ),
     ];
 
     return Column(
@@ -4482,6 +4494,8 @@ class _BillingPageState extends State<BillingPage> {
             Expanded(child: _buildPremiumStatCard(stats[3])),
             const SizedBox(width: 12),
             Expanded(child: _buildPremiumStatCard(stats[4])),
+            const SizedBox(width: 12),
+            Expanded(child: _buildPremiumStatCard(stats[5])),
           ],
         ),
       ],
