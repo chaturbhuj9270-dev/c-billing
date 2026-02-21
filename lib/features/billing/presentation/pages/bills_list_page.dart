@@ -69,6 +69,7 @@ class _BillsListPageState extends State<BillsListPage>
 
   // Stats
   double _totalSales = 0.0;
+  double _totalProfit = 0.0;
   int _totalBillsCount = 0;
   int _returnedBillsCount = 0;
 
@@ -101,6 +102,8 @@ class _BillsListPageState extends State<BillsListPage>
         setState(() {
           _bills = bills;
           _totalSales = bills.fold(0.0, (sum, bill) => sum + bill.finalAmount);
+          _totalProfit = bills.where((b) => !b.returnStatus).fold(0.0, (sum, bill) =>
+              sum + bill.items.fold(0.0, (s, item) => s + item.itemProfit) - bill.discountAmount);
           _totalBillsCount = bills.length;
           _returnedBillsCount = bills.where((b) => b.returnStatus).length;
           _filterBills(_searchController.text);
@@ -770,6 +773,8 @@ class _BillsListPageState extends State<BillsListPage>
 
       // Calculate stats (use finalAmount to account for discounts)
       _totalSales = bills.fold(0.0, (sum, bill) => sum + bill.finalAmount);
+      _totalProfit = bills.where((b) => !b.returnStatus).fold(0.0, (sum, bill) =>
+          sum + bill.items.fold(0.0, (s, item) => s + item.itemProfit) - bill.discountAmount);
       _totalBillsCount = bills.length;
 
       setState(() {
@@ -1186,12 +1191,11 @@ class _BillsListPageState extends State<BillsListPage>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Main Stats Row
+          // Main Stats Row - Sales and Profit
           Row(
             children: [
               // Total Sales - Featured Card
               Expanded(
-                flex: 2,
                 child: _buildFeaturedStatCard(
                   title: _localizations.totalSales,
                   value: '₹${_formatAmount(_totalSales)}',
@@ -1199,26 +1203,37 @@ class _BillsListPageState extends State<BillsListPage>
                   gradient: const [Color(0xFF1B4D3E), Color(0xFF2E7D5B)],
                 ),
               ),
-              const SizedBox(width: 12),
-              // Secondary Stats Column
+              const SizedBox(width: 10),
+              // Net Profit - Featured Card
               Expanded(
-                flex: 1,
-                child: Column(
-                  children: [
-                    _buildMiniStatCard(
-                      title: _localizations.totalBills,
-                      value: '$_totalBillsCount',
-                      icon: Icons.receipt_long_rounded,
-                      color: const Color(0xFF2196F3),
-                    ),
-                    const SizedBox(height: 8),
-                    _buildMiniStatCard(
-                      title: _localizations.returns,
-                      value: '$_returnedBillsCount',
-                      icon: Icons.assignment_return_rounded,
-                      color: Colors.orange,
-                    ),
-                  ],
+                child: _buildFeaturedStatCard(
+                  title: _localizations.netProfit,
+                  value: '₹${_formatAmount(_totalProfit)}',
+                  icon: Icons.trending_up_rounded,
+                  gradient: const [Color(0xFF4CAF50), Color(0xFF81C784)],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          // Secondary Stats Row - Bills and Returns
+          Row(
+            children: [
+              Expanded(
+                child: _buildMiniStatCard(
+                  title: _localizations.totalBills,
+                  value: '$_totalBillsCount',
+                  icon: Icons.receipt_long_rounded,
+                  color: const Color(0xFF2196F3),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _buildMiniStatCard(
+                  title: _localizations.returns,
+                  value: '$_returnedBillsCount',
+                  icon: Icons.assignment_return_rounded,
+                  color: Colors.orange,
                 ),
               ),
             ],
