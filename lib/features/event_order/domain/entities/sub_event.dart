@@ -15,12 +15,16 @@ class SubEvent {
   /// Optional notes for this sub-event
   final String? notes;
   
+  /// Custom column data (key: columnId, value: column value)
+  final Map<String, dynamic> customData;
+  
   const SubEvent({
     required this.id,
     required this.name,
     required this.date,
     required this.charges,
     this.notes,
+    this.customData = const {},
   });
   
   /// Create a copy with updated fields
@@ -30,6 +34,7 @@ class SubEvent {
     DateTime? date,
     double? charges,
     String? notes,
+    Map<String, dynamic>? customData,
   }) {
     return SubEvent(
       id: id ?? this.id,
@@ -37,6 +42,7 @@ class SubEvent {
       date: date ?? this.date,
       charges: charges ?? this.charges,
       notes: notes ?? this.notes,
+      customData: customData ?? this.customData,
     );
   }
   
@@ -48,6 +54,7 @@ class SubEvent {
       'date': date.toIso8601String(),
       'charges': charges,
       'notes': notes,
+      'customData': customData,
     };
   }
   
@@ -59,6 +66,7 @@ class SubEvent {
       date: DateTime.parse(json['date'] as String),
       charges: (json['charges'] as num?)?.toDouble() ?? 0.0,
       notes: json['notes'] as String?,
+      customData: (json['customData'] as Map<String, dynamic>?) ?? {},
     );
   }
   
@@ -69,6 +77,7 @@ class SubEvent {
       name: '',
       date: DateTime.now(),
       charges: 0.0,
+      customData: {},
     );
   }
   

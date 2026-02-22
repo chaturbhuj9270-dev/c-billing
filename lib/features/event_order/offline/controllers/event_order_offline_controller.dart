@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:isar_community/isar.dart';
 import '../../../../core/services/isar_service.dart';
@@ -46,13 +47,15 @@ class EventOrderOfflineController extends ChangeNotifier {
     String? eventLocation,
     List<SubEvent> subEvents = const [],
     List<OrderItem> items = const [],
+    double eventCharges = 0.0,
     double advanceAmount = 0.0,
     String? notes,
+    Map<String, dynamic>? customData,
   }) async {
     // Calculate total based on type
     double totalAmount = 0.0;
     if (orderType == OrderType.event) {
-      totalAmount = subEvents.fold(0.0, (sum, e) => sum + e.charges);
+      totalAmount = subEvents.fold(0.0, (sum, e) => sum + e.charges) + eventCharges;
     } else {
       totalAmount = items.fold(0.0, (sum, e) => sum + e.total);
     }
@@ -72,11 +75,13 @@ class EventOrderOfflineController extends ChangeNotifier {
       eventLocation: eventLocation,
       subEvents: subEvents.map((e) => SubEventEmbedded.fromDomain(e)).toList(),
       items: items.map((e) => OrderItemEmbedded.fromDomain(e)).toList(),
+      eventCharges: eventCharges,
       totalAmount: totalAmount,
       advanceAmount: advanceAmount,
       remainingAmount: remainingAmount,
       notes: notes,
       status: OrderStatus.pending.index,
+      customDataJson: customData != null && customData.isNotEmpty ? jsonEncode(customData) : null,
       createdAt: now,
       updatedAt: now,
       syncStatus: EventOrderSyncStatus.newRecord,
@@ -247,10 +252,12 @@ class EventOrderOfflineController extends ChangeNotifier {
     String? eventLocation,
     List<SubEvent>? subEvents,
     List<OrderItem>? items,
+    double? eventCharges,
     double? advanceAmount,
     String? notes,
     OrderStatus? status,
     String? convertedBillId,
+    Map<String, dynamic>? customData,
   }) async {
     final existing = await _isar.eventOrderEntitys.get(id);
     if (existing == null) {
@@ -274,14 +281,18 @@ class EventOrderOfflineController extends ChangeNotifier {
     if (items != null) {
       existing.items = items.map((e) => OrderItemEmbedded.fromDomain(e)).toList();
     }
+    if (eventCharges != null) existing.eventCharges = eventCharges;
     if (advanceAmount != null) existing.advanceAmount = advanceAmount;
     if (notes != null) existing.notes = notes;
     if (status != null) existing.status = status.index;
     if (convertedBillId != null) existing.convertedBillId = convertedBillId;
+    if (customData != null) {
+      existing.customDataJson = customData.isNotEmpty ? jsonEncode(customData) : null;
+    }
 
     // Recalculate totals
     if (existing.orderType == OrderType.event.index) {
-      existing.totalAmount = existing.subEvents.fold(0.0, (sum, e) => sum + e.charges);
+      existing.totalAmount = existing.subEvents.fold(0.0, (sum, e) => sum + e.charges) + existing.eventCharges;
     } else {
       existing.totalAmount = existing.items.fold(0.0, (sum, e) => sum + e.total);
     }

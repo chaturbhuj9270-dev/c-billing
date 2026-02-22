@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../domain/entities/event_order.dart';
+import 'event_order_custom_columns_page.dart';
 
 /// Settings page for Event/Order list configuration
 class EventOrderSettingsPage extends StatefulWidget {
@@ -20,7 +21,7 @@ class EventOrderSettingsPage extends StatefulWidget {
 
 class _EventOrderSettingsPageState extends State<EventOrderSettingsPage> {
   static const _prefsKey = 'event_order_show_event_mode';
-  static const _primaryColor = Color(0xFF6C63FF);
+  static const _primaryColor = Color(0xFF1B4D3E);
   static const _eventColor = Color(0xFF9C27B0);
   static const _salesColor = Color(0xFF2196F3);
 
@@ -286,6 +287,93 @@ class _EventOrderSettingsPageState extends State<EventOrderSettingsPage> {
                           ),
                         ),
                       ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  // Custom Columns Section
+                  Padding(
+                    padding: const EdgeInsets.only(left: 4, bottom: 12),
+                    child: Text(
+                      'Custom Fields',
+                      style: TextStyle(
+                        fontFamily: 'Literata',
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  ),
+                  // Custom columns navigation card
+                  InkWell(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const EventOrderCustomColumnsPage(),
+                        ),
+                      );
+                    },
+                    borderRadius: BorderRadius.circular(16),
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.04),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: _primaryColor.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Icon(
+                              Icons.view_column_rounded,
+                              color: _primaryColor,
+                              size: 22,
+                            ),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Custom Columns',
+                                  style: TextStyle(
+                                    fontFamily: 'Literata',
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    color: Color(0xFF1A1A2E),
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'Add custom fields for events & sub-events',
+                                  style: TextStyle(
+                                    fontFamily: 'Literata',
+                                    fontSize: 12,
+                                    color: Colors.grey[600],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Icon(
+                            Icons.arrow_forward_ios_rounded,
+                            color: Colors.grey[400],
+                            size: 16,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ],

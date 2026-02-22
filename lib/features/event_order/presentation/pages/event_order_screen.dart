@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../../../core/services/event_order_settings_service.dart';
 import '../../domain/entities/event_order.dart';
 import '../../domain/entities/sub_event.dart';
 import '../../domain/entities/order_item.dart';
@@ -52,6 +53,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
   final _descriptionController = TextEditingController();
   final _locationController = TextEditingController();
   final _advanceController = TextEditingController(text: '0');
+  final _eventChargesController = TextEditingController(text: '0');
   final _notesController = TextEditingController();
 
   // State
@@ -73,6 +75,10 @@ class _EventOrderScreenState extends State<EventOrderScreen>
   // ignore: unused_field
   bool _isLoadingProducts = false;
 
+  // Custom fields for events
+  final Map<String, TextEditingController> _customTextControllers = {};
+  final Map<String, dynamic> _customFieldValues = {};
+
   bool get _isEditing => widget.existingOrder != null;
 
   @override
@@ -80,6 +86,9 @@ class _EventOrderScreenState extends State<EventOrderScreen>
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     _tabController.addListener(_onTabChanged);
+
+    // Initialize custom field controllers
+    _initializeCustomFieldControllers();
 
     // Initialize with existing data or defaults
     if (_isEditing) {
@@ -99,6 +108,28 @@ class _EventOrderScreenState extends State<EventOrderScreen>
     _loadProducts();
   }
 
+  void _initializeCustomFieldControllers() {
+    final eventColumns = EventOrderSettingsService.instance.activeEventColumns;
+    for (final column in eventColumns) {
+      if (column.type == EventCustomColumnType.text ||
+          column.type == EventCustomColumnType.number ||
+          column.type == EventCustomColumnType.decimal) {
+        _customTextControllers[column.id] = TextEditingController(
+          text: column.defaultValue ?? '',
+        );
+      } else if (column.type == EventCustomColumnType.boolean) {
+        _customFieldValues[column.id] = column.defaultValue == 'true';
+      } else if (column.type == EventCustomColumnType.dropdown) {
+        _customFieldValues[column.id] = column.defaultValue ??
+            ((column.dropdownOptions?.isNotEmpty ?? false)
+                ? column.dropdownOptions!.first
+                : '');
+      } else if (column.type == EventCustomColumnType.date) {
+        _customFieldValues[column.id] = column.defaultValue;
+      }
+    }
+  }
+
   void _loadExistingOrder() {
     final order = widget.existingOrder!;
     _orderType = order.orderType;
@@ -114,7 +145,20 @@ class _EventOrderScreenState extends State<EventOrderScreen>
     _subEvents = List.from(order.subEvents);
     _orderItems = List.from(order.items);
     _advanceController.text = order.advanceAmount.toStringAsFixed(0);
+    _eventChargesController.text = order.eventCharges.toStringAsFixed(0);
     _notesController.text = order.notes ?? '';
+    
+    // Load custom field values from existing order
+    final customData = order.customData;
+    for (final entry in customData.entries) {
+      final columnId = entry.key;
+      final value = entry.value;
+      if (_customTextControllers.containsKey(columnId)) {
+        _customTextControllers[columnId]!.text = value?.toString() ?? '';
+      } else {
+        _customFieldValues[columnId] = value;
+      }
+    }
   }
 
   void _onTabChanged() {
@@ -203,10 +247,14 @@ class _EventOrderScreenState extends State<EventOrderScreen>
     return _orderItems.fold(0.0, (sum, e) => sum + e.total);
   }
 
+  double get _eventCharges {
+    return double.tryParse(_eventChargesController.text) ?? 0.0;
+  }
+
   double get _totalAmount {
     if (_orderType == OrderType.event) {
-      // Events can have both sub-events and products
-      return _subEventsTotal + _productsTotal;
+      // Events can have event charges, sub-events and products
+      return _eventCharges + _subEventsTotal + _productsTotal;
     } else {
       return _productsTotal;
     }
@@ -228,8 +276,41 @@ class _EventOrderScreenState extends State<EventOrderScreen>
     _descriptionController.dispose();
     _locationController.dispose();
     _advanceController.dispose();
+    _eventChargesController.dispose();
     _notesController.dispose();
+    // Dispose custom field controllers
+    for (final controller in _customTextControllers.values) {
+      controller.dispose();
+    }
     super.dispose();
+  }
+
+  /// Collect custom field values into a single map
+  Map<String, dynamic> _collectCustomData() {
+    final customData = <String, dynamic>{};
+    final eventColumns = EventOrderSettingsService.instance.activeEventColumns;
+    
+    for (final column in eventColumns) {
+      if (_customTextControllers.containsKey(column.id)) {
+        final value = _customTextControllers[column.id]!.text.trim();
+        if (value.isNotEmpty) {
+          if (column.type == EventCustomColumnType.number) {
+            customData[column.id] = int.tryParse(value) ?? 0;
+          } else if (column.type == EventCustomColumnType.decimal) {
+            customData[column.id] = double.tryParse(value) ?? 0.0;
+          } else {
+            customData[column.id] = value;
+          }
+        }
+      } else if (_customFieldValues.containsKey(column.id)) {
+        final value = _customFieldValues[column.id];
+        if (value != null && value.toString().isNotEmpty) {
+          customData[column.id] = value;
+        }
+      }
+    }
+    
+    return customData;
   }
 
   Future<void> _saveOrder() async {
@@ -276,10 +357,12 @@ class _EventOrderScreenState extends State<EventOrderScreen>
               : _locationController.text.trim(),
           subEvents: _subEvents,
           items: _orderItems,
+          eventCharges: _eventCharges,
           advanceAmount: _advanceAmount,
           notes: _notesController.text.trim().isEmpty
               ? null
               : _notesController.text.trim(),
+          customData: _collectCustomData(),
         );
       } else {
         await cubit.createEventOrder(
@@ -300,10 +383,12 @@ class _EventOrderScreenState extends State<EventOrderScreen>
               : _locationController.text.trim(),
           subEvents: _subEvents,
           items: _orderItems,
+          eventCharges: _eventCharges,
           advanceAmount: _advanceAmount,
           notes: _notesController.text.trim().isEmpty
               ? null
               : _notesController.text.trim(),
+          customData: _collectCustomData(),
         );
       }
 
@@ -376,9 +461,18 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                         _buildGrandTotalSection(),
                       if (_orderType == OrderType.event && (_subEvents.isNotEmpty || _orderItems.isNotEmpty))
                         const SizedBox(height: 16),
+                      // Event charges field for event orders only
+                      if (_orderType == OrderType.event) ...[
+                        _buildEventChargesSection(),
+                        const SizedBox(height: 16),
+                      ],
                       _buildAdvanceSection(),
                       const SizedBox(height: 16),
                       _buildNotesSection(),
+                      const SizedBox(height: 16),
+                      // Custom fields section for events only
+                      if (_orderType == OrderType.event)
+                        _buildCustomFieldsSection(),
                       const SizedBox(height: 100), // Space for bottom bar
                     ],
                   ),
@@ -402,11 +496,11 @@ class _EventOrderScreenState extends State<EventOrderScreen>
         icon: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: const Color(0xFF6C63FF).withOpacity(0.1),
+            color: const Color(0xFF1B4D3E).withOpacity(0.1),
             borderRadius: BorderRadius.circular(10),
           ),
           child: const Icon(Icons.arrow_back_ios_new, 
-            color: Color(0xFF6C63FF), 
+            color: Color(0xFF1B4D3E), 
             size: 18,
           ),
         ),
@@ -429,7 +523,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
             icon: Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: const Color(0xFF6C63FF).withOpacity(0.1),
+                color: const Color(0xFF1B4D3E).withOpacity(0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: _isPdfLoading
@@ -438,11 +532,11 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                       height: 18,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: Color(0xFF6C63FF),
+                        color: Color(0xFF1B4D3E),
                       ),
                     )
                   : const Icon(Icons.share_rounded, 
-                      color: Color(0xFF6C63FF), 
+                      color: Color(0xFF1B4D3E), 
                       size: 18,
                     ),
             ),
@@ -470,7 +564,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
               height: 20,
               child: CircularProgressIndicator(
                 strokeWidth: 2,
-                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF6C63FF)),
+                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF1B4D3E)),
               ),
             ),
           ),
@@ -497,12 +591,12 @@ class _EventOrderScreenState extends State<EventOrderScreen>
         controller: _tabController,
         indicator: BoxDecoration(
           gradient: const LinearGradient(
-            colors: [Color(0xFF6C63FF), Color(0xFF5A52D5)],
+            colors: [Color(0xFF1B4D3E), Color(0xFF2D6B5A)],
           ),
           borderRadius: BorderRadius.circular(10),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF6C63FF).withOpacity(0.3),
+              color: const Color(0xFF1B4D3E).withOpacity(0.3),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -546,19 +640,19 @@ class _EventOrderScreenState extends State<EventOrderScreen>
       icon: Icons.person_outline,
       trailing: TextButton.icon(
         onPressed: _showCustomerPickerSheet,
-        icon: const Icon(Icons.person_search, size: 18, color: Color(0xFF6C63FF)),
+        icon: const Icon(Icons.person_search, size: 18, color: Color(0xFF1B4D3E)),
         label: const Text(
           'Select',
           style: TextStyle(
             fontFamily: 'Literata',
-            color: Color(0xFF6C63FF),
+            color: Color(0xFF1B4D3E),
             fontWeight: FontWeight.w600,
             fontSize: 13,
           ),
         ),
         style: TextButton.styleFrom(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          backgroundColor: const Color(0xFF6C63FF).withOpacity(0.1),
+          backgroundColor: const Color(0xFF1B4D3E).withOpacity(0.1),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),
           ),
@@ -602,7 +696,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                         padding: EdgeInsets.all(16),
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          color: Color(0xFF6C63FF),
+                          color: Color(0xFF1B4D3E),
                         ),
                       ),
                     )
@@ -615,12 +709,12 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                           dense: true,
                           leading: CircleAvatar(
                             radius: 16,
-                            backgroundColor: const Color(0xFF6C63FF).withOpacity(0.15),
+                            backgroundColor: const Color(0xFF1B4D3E).withOpacity(0.15),
                             child: Text(
                               customer.name.isNotEmpty ? customer.name[0].toUpperCase() : '?',
                               style: const TextStyle(
                                 fontFamily: 'Literata',
-                                color: Color(0xFF6C63FF),
+                                color: Color(0xFF1B4D3E),
                                 fontWeight: FontWeight.bold,
                                 fontSize: 14,
                               ),
@@ -756,7 +850,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
             return Theme(
               data: ThemeData.light().copyWith(
                 colorScheme: const ColorScheme.light(
-                  primary: Color(0xFF6C63FF),
+                  primary: Color(0xFF1B4D3E),
                   surface: Colors.white,
                   onSurface: Color(0xFF1A1A2E),
                 ),
@@ -825,7 +919,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
       title: 'Sub Events',
       icon: Icons.event_note,
       trailing: IconButton(
-        icon: const Icon(Icons.add_circle, color: Color(0xFF6C63FF)),
+        icon: const Icon(Icons.add_circle, color: Color(0xFF1B4D3E)),
         onPressed: _showAddSubEventDialog,
       ),
       child: Column(
@@ -883,10 +977,10 @@ class _EventOrderScreenState extends State<EventOrderScreen>
         leading: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: const Color(0xFF6C63FF).withOpacity(0.1),
+            color: const Color(0xFF1B4D3E).withOpacity(0.1),
             borderRadius: BorderRadius.circular(8),
           ),
-          child: const Icon(Icons.celebration, color: Color(0xFF6C63FF)),
+          child: const Icon(Icons.celebration, color: Color(0xFF1B4D3E)),
         ),
         title: Text(
           subEvent.name,
@@ -979,7 +1073,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
       title: 'Event Products',
       icon: Icons.shopping_bag,
       trailing: IconButton(
-        icon: const Icon(Icons.add_circle, color: Color(0xFF6C63FF)),
+        icon: const Icon(Icons.add_circle, color: Color(0xFF1B4D3E)),
         onPressed: _showAddProductDialog,
       ),
       child: Column(
@@ -1036,14 +1130,14 @@ class _EventOrderScreenState extends State<EventOrderScreen>
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            const Color(0xFF6C63FF).withOpacity(0.08),
-            const Color(0xFF6C63FF).withOpacity(0.03),
+            const Color(0xFF1B4D3E).withOpacity(0.08),
+            const Color(0xFF1B4D3E).withOpacity(0.03),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFF6C63FF).withOpacity(0.15)),
+        border: Border.all(color: const Color(0xFF1B4D3E).withOpacity(0.15)),
       ),
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -1054,10 +1148,10 @@ class _EventOrderScreenState extends State<EventOrderScreen>
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF6C63FF).withOpacity(0.15),
+                  color: const Color(0xFF1B4D3E).withOpacity(0.15),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(Icons.receipt_long, color: Color(0xFF6C63FF), size: 20),
+                child: const Icon(Icons.receipt_long, color: Color(0xFF1B4D3E), size: 20),
               ),
               const SizedBox(width: 12),
               const Text(
@@ -1078,7 +1172,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
               'Sub-Events (${_subEvents.length})',
               _subEventsTotal,
               Icons.celebration,
-              const Color(0xFF6C63FF),
+              const Color(0xFF1B4D3E),
             ),
             const SizedBox(height: 8),
           ],
@@ -1097,7 +1191,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
             Container(
               height: 1,
               margin: const EdgeInsets.symmetric(vertical: 8),
-              color: const Color(0xFF6C63FF).withOpacity(0.2),
+              color: const Color(0xFF1B4D3E).withOpacity(0.2),
             ),
           ],
           // Grand total
@@ -1172,7 +1266,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
       title: 'Products',
       icon: Icons.inventory_2,
       trailing: IconButton(
-        icon: const Icon(Icons.add_circle, color: Color(0xFF6C63FF)),
+        icon: const Icon(Icons.add_circle, color: Color(0xFF1B4D3E)),
         onPressed: _showAddProductDialog,
       ),
       child: Column(
@@ -1345,6 +1439,20 @@ class _EventOrderScreenState extends State<EventOrderScreen>
     );
   }
 
+  Widget _buildEventChargesSection() {
+    return _buildSectionCard(
+      title: 'Event Charges',
+      icon: Icons.event_note,
+      child: _buildTextField(
+        controller: _eventChargesController,
+        label: 'Additional Event Charges',
+        icon: Icons.currency_rupee,
+        keyboardType: TextInputType.number,
+        onChanged: (_) => setState(() {}),
+      ),
+    );
+  }
+
   Widget _buildAdvanceSection() {
     return _buildSectionCard(
       title: 'Advance Payment',
@@ -1369,6 +1477,156 @@ class _EventOrderScreenState extends State<EventOrderScreen>
         icon: Icons.note_add,
         maxLines: 3,
       ),
+    );
+  }
+
+  Widget _buildCustomFieldsSection() {
+    final eventColumns = EventOrderSettingsService.instance.activeEventColumns;
+    if (eventColumns.isEmpty) return const SizedBox.shrink();
+
+    return _buildSectionCard(
+      title: 'Custom Fields',
+      icon: Icons.edit_attributes,
+      child: Column(
+        children: eventColumns.map((column) => _buildCustomFieldWidget(column)).toList(),
+      ),
+    );
+  }
+
+  Widget _buildCustomFieldWidget(EventCustomColumn column) {
+    switch (column.type) {
+      case EventCustomColumnType.text:
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: _buildTextField(
+            controller: _customTextControllers[column.id]!,
+            label: column.name,
+            icon: Icons.text_fields,
+            required: column.isRequired,
+          ),
+        );
+      case EventCustomColumnType.number:
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: _buildTextField(
+            controller: _customTextControllers[column.id]!,
+            label: column.name,
+            icon: Icons.numbers,
+            keyboardType: TextInputType.number,
+            required: column.isRequired,
+          ),
+        );
+      case EventCustomColumnType.decimal:
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: _buildTextField(
+            controller: _customTextControllers[column.id]!,
+            label: column.name,
+            icon: Icons.attach_money,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            required: column.isRequired,
+          ),
+        );
+      case EventCustomColumnType.date:
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: _buildCustomDateField(column),
+        );
+      case EventCustomColumnType.dropdown:
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: _buildCustomDropdownField(column),
+        );
+      case EventCustomColumnType.boolean:
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: _buildCustomBooleanField(column),
+        );
+    }
+  }
+
+  Widget _buildCustomDateField(EventCustomColumn column) {
+    final dateStr = _customFieldValues[column.id] as String?;
+    DateTime? selectedDate;
+    if (dateStr != null && dateStr.isNotEmpty) {
+      try {
+        selectedDate = DateTime.parse(dateStr);
+      } catch (_) {}
+    }
+
+    return InkWell(
+      onTap: () async {
+        final picked = await showDatePicker(
+          context: context,
+          initialDate: selectedDate ?? DateTime.now(),
+          firstDate: DateTime(2020),
+          lastDate: DateTime(2100),
+        );
+        if (picked != null) {
+          setState(() {
+            _customFieldValues[column.id] = picked.toIso8601String().split('T')[0];
+          });
+        }
+      },
+      child: InputDecorator(
+        decoration: InputDecoration(
+          labelText: column.name,
+          prefixIcon: const Icon(Icons.calendar_today),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+        child: Text(
+          selectedDate != null
+              ? DateFormat('dd/MM/yyyy').format(selectedDate)
+              : 'Select Date',
+          style: TextStyle(
+            color: selectedDate != null ? Colors.black : Colors.grey,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCustomDropdownField(EventCustomColumn column) {
+    final currentValue = _customFieldValues[column.id] as String?;
+    final options = column.dropdownOptions ?? [];
+
+    return DropdownButtonFormField<String>(
+      value: options.contains(currentValue) ? currentValue : null,
+      decoration: InputDecoration(
+        labelText: column.name,
+        prefixIcon: const Icon(Icons.list),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+      items: options.map((option) {
+        return DropdownMenuItem(value: option, child: Text(option));
+      }).toList(),
+      onChanged: (value) {
+        setState(() {
+          _customFieldValues[column.id] = value;
+        });
+      },
+      validator: column.isRequired
+          ? (value) => value == null || value.isEmpty ? 'Required' : null
+          : null,
+    );
+  }
+
+  Widget _buildCustomBooleanField(EventCustomColumn column) {
+    final value = _customFieldValues[column.id] as bool? ?? false;
+
+    return SwitchListTile(
+      title: Text(
+        column.name,
+        style: const TextStyle(fontFamily: 'Literata'),
+      ),
+      value: value,
+      onChanged: (newValue) {
+        setState(() {
+          _customFieldValues[column.id] = newValue;
+        });
+      },
+      activeColor: const Color(0xFF1B4D3E),
+      contentPadding: EdgeInsets.zero,
     );
   }
 
@@ -1435,7 +1693,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                 style: const TextStyle(fontFamily: 'Literata', fontWeight: FontWeight.w600),
               ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF6C63FF),
+                backgroundColor: const Color(0xFF1B4D3E),
                 foregroundColor: Colors.white,
                 padding:
                     const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
@@ -1504,10 +1762,10 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF6C63FF).withOpacity(0.1),
+                    color: const Color(0xFF1B4D3E).withOpacity(0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: Icon(icon, color: const Color(0xFF6C63FF), size: 20),
+                  child: Icon(icon, color: const Color(0xFF1B4D3E), size: 20),
                 ),
                 const SizedBox(width: 12),
                 Text(
@@ -1543,6 +1801,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
     int maxLines = 1,
     String? Function(String?)? validator,
     void Function(String)? onChanged,
+    bool required = false,
   }) {
     return Container(
       decoration: BoxDecoration(
@@ -1554,7 +1813,9 @@ class _EventOrderScreenState extends State<EventOrderScreen>
         controller: controller,
         keyboardType: keyboardType,
         maxLines: maxLines,
-        validator: validator,
+        validator: validator ?? (required
+            ? (value) => value == null || value.isEmpty ? 'Required' : null
+            : null),
         onChanged: onChanged,
         style: const TextStyle(
           fontFamily: 'Literata',
@@ -1592,6 +1853,31 @@ class _EventOrderScreenState extends State<EventOrderScreen>
         TextEditingController(text: subEvent?.charges.toStringAsFixed(0) ?? '');
     final notesController = TextEditingController(text: subEvent?.notes ?? '');
     DateTime selectedDate = subEvent?.date ?? _eventDate;
+    
+    // Initialize custom field controllers for sub-event
+    final subEventColumns = EventOrderSettingsService.instance.activeSubEventColumns;
+    final dialogCustomTextControllers = <String, TextEditingController>{};
+    final dialogCustomFieldValues = <String, dynamic>{};
+    
+    for (final column in subEventColumns) {
+      final existingValue = subEvent?.customData[column.id];
+      if (column.type == EventCustomColumnType.text ||
+          column.type == EventCustomColumnType.number ||
+          column.type == EventCustomColumnType.decimal) {
+        dialogCustomTextControllers[column.id] = TextEditingController(
+          text: existingValue?.toString() ?? column.defaultValue ?? '',
+        );
+      } else if (column.type == EventCustomColumnType.boolean) {
+        dialogCustomFieldValues[column.id] = existingValue ?? (column.defaultValue == 'true');
+      } else if (column.type == EventCustomColumnType.dropdown) {
+        dialogCustomFieldValues[column.id] = existingValue ?? column.defaultValue ??
+            ((column.dropdownOptions?.isNotEmpty ?? false)
+                ? column.dropdownOptions!.first
+                : '');
+      } else if (column.type == EventCustomColumnType.date) {
+        dialogCustomFieldValues[column.id] = existingValue ?? column.defaultValue;
+      }
+    }
 
     showDialog(
       context: context,
@@ -1676,7 +1962,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                         builder: (context, child) => Theme(
                           data: ThemeData.light().copyWith(
                             colorScheme: const ColorScheme.light(
-                              primary: Color(0xFF6C63FF),
+                              primary: Color(0xFF1B4D3E),
                               surface: Colors.white,
                               onSurface: Color(0xFF1A1A2E),
                             ),
@@ -1733,12 +2019,43 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                       ),
                     ),
                   ),
+                  // Custom fields for sub-events
+                  if (subEventColumns.isNotEmpty) ...[
+                    const SizedBox(height: 16),
+                    const Divider(),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: Text(
+                        'Custom Fields',
+                        style: TextStyle(
+                          fontFamily: 'Literata',
+                          color: Colors.grey[700],
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    ...subEventColumns.map((column) => Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: _buildDialogCustomField(
+                        column: column,
+                        textControllers: dialogCustomTextControllers,
+                        fieldValues: dialogCustomFieldValues,
+                        setDialogState: setDialogState,
+                      ),
+                    )),
+                  ],
                 ],
               ),
             ),
             actions: [
               TextButton(
-                onPressed: () => Navigator.pop(context),
+                onPressed: () {
+                  // Dispose text controllers
+                  for (final controller in dialogCustomTextControllers.values) {
+                    controller.dispose();
+                  }
+                  Navigator.pop(context);
+                },
                 child: Text('Cancel',
                     style: TextStyle(
                       fontFamily: 'Literata',
@@ -1758,6 +2075,28 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                     return;
                   }
 
+                  // Collect custom data for sub-event
+                  final customData = <String, dynamic>{};
+                  for (final column in subEventColumns) {
+                    if (dialogCustomTextControllers.containsKey(column.id)) {
+                      final value = dialogCustomTextControllers[column.id]!.text.trim();
+                      if (value.isNotEmpty) {
+                        if (column.type == EventCustomColumnType.number) {
+                          customData[column.id] = int.tryParse(value) ?? 0;
+                        } else if (column.type == EventCustomColumnType.decimal) {
+                          customData[column.id] = double.tryParse(value) ?? 0.0;
+                        } else {
+                          customData[column.id] = value;
+                        }
+                      }
+                    } else if (dialogCustomFieldValues.containsKey(column.id)) {
+                      final value = dialogCustomFieldValues[column.id];
+                      if (value != null && value.toString().isNotEmpty) {
+                        customData[column.id] = value;
+                      }
+                    }
+                  }
+
                   final newSubEvent = SubEvent(
                     id: subEvent?.id ?? _uuid.v4(),
                     name: name,
@@ -1766,6 +2105,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                     notes: notesController.text.trim().isEmpty
                         ? null
                         : notesController.text.trim(),
+                    customData: customData,
                   );
 
                   setState(() {
@@ -1775,10 +2115,15 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                       _subEvents.add(newSubEvent);
                     }
                   });
+                  
+                  // Dispose text controllers
+                  for (final controller in dialogCustomTextControllers.values) {
+                    controller.dispose();
+                  }
                   Navigator.pop(context);
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF6C63FF),
+                  backgroundColor: const Color(0xFF1B4D3E),
                   foregroundColor: Colors.white,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
@@ -1795,6 +2140,147 @@ class _EventOrderScreenState extends State<EventOrderScreen>
         },
       ),
     );
+  }
+
+  /// Build a custom field widget for dialogs (sub-event dialog)
+  Widget _buildDialogCustomField({
+    required EventCustomColumn column,
+    required Map<String, TextEditingController> textControllers,
+    required Map<String, dynamic> fieldValues,
+    required void Function(void Function()) setDialogState,
+  }) {
+    switch (column.type) {
+      case EventCustomColumnType.text:
+        return TextField(
+          controller: textControllers[column.id],
+          style: const TextStyle(fontFamily: 'Literata', color: Color(0xFF1A1A2E)),
+          decoration: InputDecoration(
+            labelText: column.isRequired ? '${column.name} *' : column.name,
+            labelStyle: TextStyle(fontFamily: 'Literata', color: Colors.grey[600]),
+            filled: true,
+            fillColor: const Color(0xFFF8F9FC),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+          ),
+        );
+      case EventCustomColumnType.number:
+        return TextField(
+          controller: textControllers[column.id],
+          keyboardType: TextInputType.number,
+          style: const TextStyle(fontFamily: 'Literata', color: Color(0xFF1A1A2E)),
+          decoration: InputDecoration(
+            labelText: column.isRequired ? '${column.name} *' : column.name,
+            labelStyle: TextStyle(fontFamily: 'Literata', color: Colors.grey[600]),
+            filled: true,
+            fillColor: const Color(0xFFF8F9FC),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+          ),
+        );
+      case EventCustomColumnType.decimal:
+        return TextField(
+          controller: textControllers[column.id],
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          style: const TextStyle(fontFamily: 'Literata', color: Color(0xFF1A1A2E)),
+          decoration: InputDecoration(
+            labelText: column.isRequired ? '${column.name} *' : column.name,
+            labelStyle: TextStyle(fontFamily: 'Literata', color: Colors.grey[600]),
+            filled: true,
+            fillColor: const Color(0xFFF8F9FC),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+          ),
+        );
+      case EventCustomColumnType.date:
+        final dateStr = fieldValues[column.id] as String?;
+        DateTime? selectedDate;
+        if (dateStr != null && dateStr.isNotEmpty) {
+          try {
+            selectedDate = DateTime.parse(dateStr);
+          } catch (_) {}
+        }
+        return InkWell(
+          onTap: () async {
+            final picked = await showDatePicker(
+              context: context,
+              initialDate: selectedDate ?? DateTime.now(),
+              firstDate: DateTime(2020),
+              lastDate: DateTime(2100),
+            );
+            if (picked != null) {
+              setDialogState(() {
+                fieldValues[column.id] = picked.toIso8601String().split('T')[0];
+              });
+            }
+          },
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF8F9FC),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.calendar_today, color: Colors.grey[600], size: 18),
+                const SizedBox(width: 12),
+                Text(
+                  selectedDate != null
+                      ? DateFormat('dd/MM/yyyy').format(selectedDate)
+                      : column.name,
+                  style: TextStyle(
+                    fontFamily: 'Literata',
+                    color: selectedDate != null ? const Color(0xFF1A1A2E) : Colors.grey[600],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      case EventCustomColumnType.dropdown:
+        final options = column.dropdownOptions ?? [];
+        final currentValue = fieldValues[column.id] as String?;
+        return DropdownButtonFormField<String>(
+          value: options.contains(currentValue) ? currentValue : null,
+          decoration: InputDecoration(
+            labelText: column.name,
+            labelStyle: TextStyle(fontFamily: 'Literata', color: Colors.grey[600]),
+            filled: true,
+            fillColor: const Color(0xFFF8F9FC),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+          ),
+          items: options.map((option) => DropdownMenuItem(
+            value: option,
+            child: Text(option, style: const TextStyle(fontFamily: 'Literata')),
+          )).toList(),
+          onChanged: (value) {
+            setDialogState(() {
+              fieldValues[column.id] = value;
+            });
+          },
+        );
+      case EventCustomColumnType.boolean:
+        final value = fieldValues[column.id] as bool? ?? false;
+        return SwitchListTile(
+          title: Text(column.name, style: const TextStyle(fontFamily: 'Literata')),
+          value: value,
+          onChanged: (newValue) {
+            setDialogState(() {
+              fieldValues[column.id] = newValue;
+            });
+          },
+          activeColor: const Color(0xFF1B4D3E),
+          contentPadding: EdgeInsets.zero,
+        );
+    }
   }
 
   void _deleteSubEvent(int index) {
@@ -1948,7 +2434,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                               dense: true,
                               selected: isSelected,
                               selectedTileColor:
-                                  const Color(0xFF6C63FF).withOpacity(0.1),
+                                  const Color(0xFF1B4D3E).withOpacity(0.1),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8),
                               ),
@@ -1957,7 +2443,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                                 style: TextStyle(
                                   fontFamily: 'Literata',
                                   color: isSelected
-                                      ? const Color(0xFF6C63FF)
+                                      ? const Color(0xFF1B4D3E)
                                       : const Color(0xFF1A1A2E),
                                   fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                                 ),
@@ -1988,13 +2474,13 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF6C63FF).withOpacity(0.1),
+                          color: const Color(0xFF1B4D3E).withOpacity(0.1),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Row(
                           children: [
                             const Icon(Icons.inventory,
-                                color: Color(0xFF6C63FF)),
+                                color: Color(0xFF1B4D3E)),
                             const SizedBox(width: 12),
                             Expanded(
                               child: Text(
@@ -2152,7 +2638,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                   Navigator.pop(context);
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF6C63FF),
+                  backgroundColor: const Color(0xFF1B4D3E),
                   foregroundColor: Colors.white,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
@@ -2349,12 +2835,12 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF6C63FF).withOpacity(0.1),
+                      color: const Color(0xFF1B4D3E).withOpacity(0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Icon(
                       Icons.person_outline,
-                      color: Color(0xFF6C63FF),
+                      color: Color(0xFF1B4D3E),
                       size: 22,
                     ),
                   ),
@@ -2396,7 +2882,7 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
                 decoration: InputDecoration(
                   hintText: 'Search by name, phone or address',
                   hintStyle: TextStyle(color: Colors.grey[500]),
-                  prefixIcon: const Icon(Icons.search, color: Color(0xFF6C63FF)),
+                  prefixIcon: const Icon(Icons.search, color: Color(0xFF1B4D3E)),
                   suffixIcon: _searchController.text.isNotEmpty
                       ? IconButton(
                           icon: const Icon(Icons.clear, size: 20),
@@ -2469,7 +2955,7 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
                                 child: Row(
                                   children: [
                                     CircleAvatar(
-                                      backgroundColor: const Color(0xFF6C63FF),
+                                      backgroundColor: const Color(0xFF1B4D3E),
                                       child: Text(
                                         customer.name.isNotEmpty
                                             ? customer.name[0].toUpperCase()

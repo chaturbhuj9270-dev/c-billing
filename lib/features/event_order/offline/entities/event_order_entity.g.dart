@@ -32,90 +32,100 @@ const EventOrderEntitySchema = CollectionSchema(
       name: r'createdAt',
       type: IsarType.dateTime,
     ),
-    r'customerAddress': PropertySchema(
+    r'customDataJson': PropertySchema(
       id: 3,
+      name: r'customDataJson',
+      type: IsarType.string,
+    ),
+    r'customerAddress': PropertySchema(
+      id: 4,
       name: r'customerAddress',
       type: IsarType.string,
     ),
     r'customerContact': PropertySchema(
-      id: 4,
+      id: 5,
       name: r'customerContact',
       type: IsarType.string,
     ),
     r'customerId': PropertySchema(
-      id: 5,
+      id: 6,
       name: r'customerId',
       type: IsarType.string,
     ),
     r'customerName': PropertySchema(
-      id: 6,
+      id: 7,
       name: r'customerName',
       type: IsarType.string,
     ),
     r'description': PropertySchema(
-      id: 7,
+      id: 8,
       name: r'description',
       type: IsarType.string,
     ),
+    r'eventCharges': PropertySchema(
+      id: 9,
+      name: r'eventCharges',
+      type: IsarType.double,
+    ),
     r'eventDate': PropertySchema(
-      id: 8,
+      id: 10,
       name: r'eventDate',
       type: IsarType.dateTime,
     ),
     r'eventLocation': PropertySchema(
-      id: 9,
+      id: 11,
       name: r'eventLocation',
       type: IsarType.string,
     ),
     r'items': PropertySchema(
-      id: 10,
+      id: 12,
       name: r'items',
       type: IsarType.objectList,
 
       target: r'OrderItemEmbedded',
     ),
-    r'notes': PropertySchema(id: 11, name: r'notes', type: IsarType.string),
+    r'notes': PropertySchema(id: 13, name: r'notes', type: IsarType.string),
     r'orderName': PropertySchema(
-      id: 12,
+      id: 14,
       name: r'orderName',
       type: IsarType.string,
     ),
     r'orderType': PropertySchema(
-      id: 13,
+      id: 15,
       name: r'orderType',
       type: IsarType.long,
     ),
     r'remainingAmount': PropertySchema(
-      id: 14,
+      id: 16,
       name: r'remainingAmount',
       type: IsarType.double,
     ),
     r'serverId': PropertySchema(
-      id: 15,
+      id: 17,
       name: r'serverId',
       type: IsarType.string,
     ),
-    r'status': PropertySchema(id: 16, name: r'status', type: IsarType.long),
+    r'status': PropertySchema(id: 18, name: r'status', type: IsarType.long),
     r'subEvents': PropertySchema(
-      id: 17,
+      id: 19,
       name: r'subEvents',
       type: IsarType.objectList,
 
       target: r'SubEventEmbedded',
     ),
     r'syncStatus': PropertySchema(
-      id: 18,
+      id: 20,
       name: r'syncStatus',
       type: IsarType.byte,
       enumMap: _EventOrderEntitysyncStatusEnumValueMap,
     ),
     r'totalAmount': PropertySchema(
-      id: 19,
+      id: 21,
       name: r'totalAmount',
       type: IsarType.double,
     ),
     r'updatedAt': PropertySchema(
-      id: 20,
+      id: 22,
       name: r'updatedAt',
       type: IsarType.dateTime,
     ),
@@ -231,6 +241,12 @@ int _eventOrderEntityEstimateSize(
     }
   }
   {
+    final value = object.customDataJson;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
+  {
     final value = object.customerAddress;
     if (value != null) {
       bytesCount += 3 + value.length * 3;
@@ -305,34 +321,36 @@ void _eventOrderEntitySerialize(
   writer.writeDouble(offsets[0], object.advanceAmount);
   writer.writeString(offsets[1], object.convertedBillId);
   writer.writeDateTime(offsets[2], object.createdAt);
-  writer.writeString(offsets[3], object.customerAddress);
-  writer.writeString(offsets[4], object.customerContact);
-  writer.writeString(offsets[5], object.customerId);
-  writer.writeString(offsets[6], object.customerName);
-  writer.writeString(offsets[7], object.description);
-  writer.writeDateTime(offsets[8], object.eventDate);
-  writer.writeString(offsets[9], object.eventLocation);
+  writer.writeString(offsets[3], object.customDataJson);
+  writer.writeString(offsets[4], object.customerAddress);
+  writer.writeString(offsets[5], object.customerContact);
+  writer.writeString(offsets[6], object.customerId);
+  writer.writeString(offsets[7], object.customerName);
+  writer.writeString(offsets[8], object.description);
+  writer.writeDouble(offsets[9], object.eventCharges);
+  writer.writeDateTime(offsets[10], object.eventDate);
+  writer.writeString(offsets[11], object.eventLocation);
   writer.writeObjectList<OrderItemEmbedded>(
-    offsets[10],
+    offsets[12],
     allOffsets,
     OrderItemEmbeddedSchema.serialize,
     object.items,
   );
-  writer.writeString(offsets[11], object.notes);
-  writer.writeString(offsets[12], object.orderName);
-  writer.writeLong(offsets[13], object.orderType);
-  writer.writeDouble(offsets[14], object.remainingAmount);
-  writer.writeString(offsets[15], object.serverId);
-  writer.writeLong(offsets[16], object.status);
+  writer.writeString(offsets[13], object.notes);
+  writer.writeString(offsets[14], object.orderName);
+  writer.writeLong(offsets[15], object.orderType);
+  writer.writeDouble(offsets[16], object.remainingAmount);
+  writer.writeString(offsets[17], object.serverId);
+  writer.writeLong(offsets[18], object.status);
   writer.writeObjectList<SubEventEmbedded>(
-    offsets[17],
+    offsets[19],
     allOffsets,
     SubEventEmbeddedSchema.serialize,
     object.subEvents,
   );
-  writer.writeByte(offsets[18], object.syncStatus.index);
-  writer.writeDouble(offsets[19], object.totalAmount);
-  writer.writeDateTime(offsets[20], object.updatedAt);
+  writer.writeByte(offsets[20], object.syncStatus.index);
+  writer.writeDouble(offsets[21], object.totalAmount);
+  writer.writeDateTime(offsets[22], object.updatedAt);
 }
 
 EventOrderEntity _eventOrderEntityDeserialize(
@@ -345,30 +363,32 @@ EventOrderEntity _eventOrderEntityDeserialize(
     advanceAmount: reader.readDoubleOrNull(offsets[0]) ?? 0.0,
     convertedBillId: reader.readStringOrNull(offsets[1]),
     createdAt: reader.readDateTime(offsets[2]),
-    customerAddress: reader.readStringOrNull(offsets[3]),
-    customerContact: reader.readStringOrNull(offsets[4]) ?? '',
-    customerId: reader.readStringOrNull(offsets[5]),
-    customerName: reader.readStringOrNull(offsets[6]) ?? '',
-    description: reader.readStringOrNull(offsets[7]),
-    eventDate: reader.readDateTime(offsets[8]),
-    eventLocation: reader.readStringOrNull(offsets[9]),
+    customDataJson: reader.readStringOrNull(offsets[3]),
+    customerAddress: reader.readStringOrNull(offsets[4]),
+    customerContact: reader.readStringOrNull(offsets[5]) ?? '',
+    customerId: reader.readStringOrNull(offsets[6]),
+    customerName: reader.readStringOrNull(offsets[7]) ?? '',
+    description: reader.readStringOrNull(offsets[8]),
+    eventCharges: reader.readDoubleOrNull(offsets[9]) ?? 0.0,
+    eventDate: reader.readDateTime(offsets[10]),
+    eventLocation: reader.readStringOrNull(offsets[11]),
     items:
         reader.readObjectList<OrderItemEmbedded>(
-          offsets[10],
+          offsets[12],
           OrderItemEmbeddedSchema.deserialize,
           allOffsets,
           OrderItemEmbedded(),
         ) ??
         [],
-    notes: reader.readStringOrNull(offsets[11]),
-    orderName: reader.readStringOrNull(offsets[12]) ?? '',
-    orderType: reader.readLongOrNull(offsets[13]) ?? 0,
-    remainingAmount: reader.readDoubleOrNull(offsets[14]) ?? 0.0,
-    serverId: reader.readStringOrNull(offsets[15]),
-    status: reader.readLongOrNull(offsets[16]) ?? 0,
+    notes: reader.readStringOrNull(offsets[13]),
+    orderName: reader.readStringOrNull(offsets[14]) ?? '',
+    orderType: reader.readLongOrNull(offsets[15]) ?? 0,
+    remainingAmount: reader.readDoubleOrNull(offsets[16]) ?? 0.0,
+    serverId: reader.readStringOrNull(offsets[17]),
+    status: reader.readLongOrNull(offsets[18]) ?? 0,
     subEvents:
         reader.readObjectList<SubEventEmbedded>(
-          offsets[17],
+          offsets[19],
           SubEventEmbeddedSchema.deserialize,
           allOffsets,
           SubEventEmbedded(),
@@ -376,11 +396,11 @@ EventOrderEntity _eventOrderEntityDeserialize(
         [],
     syncStatus:
         _EventOrderEntitysyncStatusValueEnumMap[reader.readByteOrNull(
-          offsets[18],
+          offsets[20],
         )] ??
         EventOrderSyncStatus.newRecord,
-    totalAmount: reader.readDoubleOrNull(offsets[19]) ?? 0.0,
-    updatedAt: reader.readDateTime(offsets[20]),
+    totalAmount: reader.readDoubleOrNull(offsets[21]) ?? 0.0,
+    updatedAt: reader.readDateTime(offsets[22]),
   );
   object.id = id;
   return object;
@@ -402,18 +422,22 @@ P _eventOrderEntityDeserializeProp<P>(
     case 3:
       return (reader.readStringOrNull(offset)) as P;
     case 4:
-      return (reader.readStringOrNull(offset) ?? '') as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 5:
-      return (reader.readStringOrNull(offset)) as P;
-    case 6:
       return (reader.readStringOrNull(offset) ?? '') as P;
+    case 6:
+      return (reader.readStringOrNull(offset)) as P;
     case 7:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readStringOrNull(offset) ?? '') as P;
     case 8:
-      return (reader.readDateTime(offset)) as P;
-    case 9:
       return (reader.readStringOrNull(offset)) as P;
+    case 9:
+      return (reader.readDoubleOrNull(offset) ?? 0.0) as P;
     case 10:
+      return (reader.readDateTime(offset)) as P;
+    case 11:
+      return (reader.readStringOrNull(offset)) as P;
+    case 12:
       return (reader.readObjectList<OrderItemEmbedded>(
                 offset,
                 OrderItemEmbeddedSchema.deserialize,
@@ -422,19 +446,19 @@ P _eventOrderEntityDeserializeProp<P>(
               ) ??
               [])
           as P;
-    case 11:
-      return (reader.readStringOrNull(offset)) as P;
-    case 12:
-      return (reader.readStringOrNull(offset) ?? '') as P;
     case 13:
-      return (reader.readLongOrNull(offset) ?? 0) as P;
-    case 14:
-      return (reader.readDoubleOrNull(offset) ?? 0.0) as P;
-    case 15:
       return (reader.readStringOrNull(offset)) as P;
-    case 16:
+    case 14:
+      return (reader.readStringOrNull(offset) ?? '') as P;
+    case 15:
       return (reader.readLongOrNull(offset) ?? 0) as P;
+    case 16:
+      return (reader.readDoubleOrNull(offset) ?? 0.0) as P;
     case 17:
+      return (reader.readStringOrNull(offset)) as P;
+    case 18:
+      return (reader.readLongOrNull(offset) ?? 0) as P;
+    case 19:
       return (reader.readObjectList<SubEventEmbedded>(
                 offset,
                 SubEventEmbeddedSchema.deserialize,
@@ -443,15 +467,15 @@ P _eventOrderEntityDeserializeProp<P>(
               ) ??
               [])
           as P;
-    case 18:
+    case 20:
       return (_EventOrderEntitysyncStatusValueEnumMap[reader.readByteOrNull(
                 offset,
               )] ??
               EventOrderSyncStatus.newRecord)
           as P;
-    case 19:
+    case 21:
       return (reader.readDoubleOrNull(offset) ?? 0.0) as P;
-    case 20:
+    case 22:
       return (reader.readDateTime(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -1384,6 +1408,165 @@ extension EventOrderEntityQueryFilter
   }
 
   QueryBuilder<EventOrderEntity, EventOrderEntity, QAfterFilterCondition>
+  customDataJsonIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const FilterCondition.isNull(property: r'customDataJson'),
+      );
+    });
+  }
+
+  QueryBuilder<EventOrderEntity, EventOrderEntity, QAfterFilterCondition>
+  customDataJsonIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const FilterCondition.isNotNull(property: r'customDataJson'),
+      );
+    });
+  }
+
+  QueryBuilder<EventOrderEntity, EventOrderEntity, QAfterFilterCondition>
+  customDataJsonEqualTo(String? value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'customDataJson',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventOrderEntity, EventOrderEntity, QAfterFilterCondition>
+  customDataJsonGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'customDataJson',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventOrderEntity, EventOrderEntity, QAfterFilterCondition>
+  customDataJsonLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'customDataJson',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventOrderEntity, EventOrderEntity, QAfterFilterCondition>
+  customDataJsonBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'customDataJson',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventOrderEntity, EventOrderEntity, QAfterFilterCondition>
+  customDataJsonStartsWith(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.startsWith(
+          property: r'customDataJson',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventOrderEntity, EventOrderEntity, QAfterFilterCondition>
+  customDataJsonEndsWith(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.endsWith(
+          property: r'customDataJson',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventOrderEntity, EventOrderEntity, QAfterFilterCondition>
+  customDataJsonContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.contains(
+          property: r'customDataJson',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventOrderEntity, EventOrderEntity, QAfterFilterCondition>
+  customDataJsonMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.matches(
+          property: r'customDataJson',
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventOrderEntity, EventOrderEntity, QAfterFilterCondition>
+  customDataJsonIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'customDataJson', value: ''),
+      );
+    });
+  }
+
+  QueryBuilder<EventOrderEntity, EventOrderEntity, QAfterFilterCondition>
+  customDataJsonIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(property: r'customDataJson', value: ''),
+      );
+    });
+  }
+
+  QueryBuilder<EventOrderEntity, EventOrderEntity, QAfterFilterCondition>
   customerAddressIsNull() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
@@ -2138,6 +2321,81 @@ extension EventOrderEntityQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         FilterCondition.greaterThan(property: r'description', value: ''),
+      );
+    });
+  }
+
+  QueryBuilder<EventOrderEntity, EventOrderEntity, QAfterFilterCondition>
+  eventChargesEqualTo(double value, {double epsilon = Query.epsilon}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'eventCharges',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventOrderEntity, EventOrderEntity, QAfterFilterCondition>
+  eventChargesGreaterThan(
+    double value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'eventCharges',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventOrderEntity, EventOrderEntity, QAfterFilterCondition>
+  eventChargesLessThan(
+    double value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'eventCharges',
+          value: value,
+
+          epsilon: epsilon,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventOrderEntity, EventOrderEntity, QAfterFilterCondition>
+  eventChargesBetween(
+    double lower,
+    double upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'eventCharges',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+
+          epsilon: epsilon,
+        ),
       );
     });
   }
@@ -3412,6 +3670,20 @@ extension EventOrderEntityQuerySortBy
   }
 
   QueryBuilder<EventOrderEntity, EventOrderEntity, QAfterSortBy>
+  sortByCustomDataJson() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'customDataJson', Sort.asc);
+    });
+  }
+
+  QueryBuilder<EventOrderEntity, EventOrderEntity, QAfterSortBy>
+  sortByCustomDataJsonDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'customDataJson', Sort.desc);
+    });
+  }
+
+  QueryBuilder<EventOrderEntity, EventOrderEntity, QAfterSortBy>
   sortByCustomerAddress() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'customerAddress', Sort.asc);
@@ -3478,6 +3750,20 @@ extension EventOrderEntityQuerySortBy
   sortByDescriptionDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'description', Sort.desc);
+    });
+  }
+
+  QueryBuilder<EventOrderEntity, EventOrderEntity, QAfterSortBy>
+  sortByEventCharges() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'eventCharges', Sort.asc);
+    });
+  }
+
+  QueryBuilder<EventOrderEntity, EventOrderEntity, QAfterSortBy>
+  sortByEventChargesDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'eventCharges', Sort.desc);
     });
   }
 
@@ -3680,6 +3966,20 @@ extension EventOrderEntityQuerySortThenBy
   }
 
   QueryBuilder<EventOrderEntity, EventOrderEntity, QAfterSortBy>
+  thenByCustomDataJson() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'customDataJson', Sort.asc);
+    });
+  }
+
+  QueryBuilder<EventOrderEntity, EventOrderEntity, QAfterSortBy>
+  thenByCustomDataJsonDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'customDataJson', Sort.desc);
+    });
+  }
+
+  QueryBuilder<EventOrderEntity, EventOrderEntity, QAfterSortBy>
   thenByCustomerAddress() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'customerAddress', Sort.asc);
@@ -3746,6 +4046,20 @@ extension EventOrderEntityQuerySortThenBy
   thenByDescriptionDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'description', Sort.desc);
+    });
+  }
+
+  QueryBuilder<EventOrderEntity, EventOrderEntity, QAfterSortBy>
+  thenByEventCharges() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'eventCharges', Sort.asc);
+    });
+  }
+
+  QueryBuilder<EventOrderEntity, EventOrderEntity, QAfterSortBy>
+  thenByEventChargesDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'eventCharges', Sort.desc);
     });
   }
 
@@ -3943,6 +4257,16 @@ extension EventOrderEntityQueryWhereDistinct
   }
 
   QueryBuilder<EventOrderEntity, EventOrderEntity, QDistinct>
+  distinctByCustomDataJson({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(
+        r'customDataJson',
+        caseSensitive: caseSensitive,
+      );
+    });
+  }
+
+  QueryBuilder<EventOrderEntity, EventOrderEntity, QDistinct>
   distinctByCustomerAddress({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(
@@ -3980,6 +4304,13 @@ extension EventOrderEntityQueryWhereDistinct
   distinctByDescription({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'description', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<EventOrderEntity, EventOrderEntity, QDistinct>
+  distinctByEventCharges() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'eventCharges');
     });
   }
 
@@ -4095,6 +4426,13 @@ extension EventOrderEntityQueryProperty
   }
 
   QueryBuilder<EventOrderEntity, String?, QQueryOperations>
+  customDataJsonProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'customDataJson');
+    });
+  }
+
+  QueryBuilder<EventOrderEntity, String?, QQueryOperations>
   customerAddressProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'customerAddress');
@@ -4126,6 +4464,13 @@ extension EventOrderEntityQueryProperty
   descriptionProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'description');
+    });
+  }
+
+  QueryBuilder<EventOrderEntity, double, QQueryOperations>
+  eventChargesProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'eventCharges');
     });
   }
 
@@ -4228,10 +4573,15 @@ const SubEventEmbeddedSchema = Schema(
   id: -5356900810270092634,
   properties: {
     r'charges': PropertySchema(id: 0, name: r'charges', type: IsarType.double),
-    r'date': PropertySchema(id: 1, name: r'date', type: IsarType.dateTime),
-    r'id': PropertySchema(id: 2, name: r'id', type: IsarType.string),
-    r'name': PropertySchema(id: 3, name: r'name', type: IsarType.string),
-    r'notes': PropertySchema(id: 4, name: r'notes', type: IsarType.string),
+    r'customDataJson': PropertySchema(
+      id: 1,
+      name: r'customDataJson',
+      type: IsarType.string,
+    ),
+    r'date': PropertySchema(id: 2, name: r'date', type: IsarType.dateTime),
+    r'id': PropertySchema(id: 3, name: r'id', type: IsarType.string),
+    r'name': PropertySchema(id: 4, name: r'name', type: IsarType.string),
+    r'notes': PropertySchema(id: 5, name: r'notes', type: IsarType.string),
   },
 
   estimateSize: _subEventEmbeddedEstimateSize,
@@ -4246,6 +4596,12 @@ int _subEventEmbeddedEstimateSize(
   Map<Type, List<int>> allOffsets,
 ) {
   var bytesCount = offsets.last;
+  {
+    final value = object.customDataJson;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   {
     final value = object.id;
     if (value != null) {
@@ -4274,10 +4630,11 @@ void _subEventEmbeddedSerialize(
   Map<Type, List<int>> allOffsets,
 ) {
   writer.writeDouble(offsets[0], object.charges);
-  writer.writeDateTime(offsets[1], object.date);
-  writer.writeString(offsets[2], object.id);
-  writer.writeString(offsets[3], object.name);
-  writer.writeString(offsets[4], object.notes);
+  writer.writeString(offsets[1], object.customDataJson);
+  writer.writeDateTime(offsets[2], object.date);
+  writer.writeString(offsets[3], object.id);
+  writer.writeString(offsets[4], object.name);
+  writer.writeString(offsets[5], object.notes);
 }
 
 SubEventEmbedded _subEventEmbeddedDeserialize(
@@ -4288,10 +4645,11 @@ SubEventEmbedded _subEventEmbeddedDeserialize(
 ) {
   final object = SubEventEmbedded(
     charges: reader.readDoubleOrNull(offsets[0]) ?? 0.0,
-    date: reader.readDateTimeOrNull(offsets[1]),
-    id: reader.readStringOrNull(offsets[2]),
-    name: reader.readStringOrNull(offsets[3]),
-    notes: reader.readStringOrNull(offsets[4]),
+    customDataJson: reader.readStringOrNull(offsets[1]),
+    date: reader.readDateTimeOrNull(offsets[2]),
+    id: reader.readStringOrNull(offsets[3]),
+    name: reader.readStringOrNull(offsets[4]),
+    notes: reader.readStringOrNull(offsets[5]),
   );
   return object;
 }
@@ -4306,12 +4664,14 @@ P _subEventEmbeddedDeserializeProp<P>(
     case 0:
       return (reader.readDoubleOrNull(offset) ?? 0.0) as P;
     case 1:
-      return (reader.readDateTimeOrNull(offset)) as P;
-    case 2:
       return (reader.readStringOrNull(offset)) as P;
+    case 2:
+      return (reader.readDateTimeOrNull(offset)) as P;
     case 3:
       return (reader.readStringOrNull(offset)) as P;
     case 4:
+      return (reader.readStringOrNull(offset)) as P;
+    case 5:
       return (reader.readStringOrNull(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -4391,6 +4751,165 @@ extension SubEventEmbeddedQueryFilter
 
           epsilon: epsilon,
         ),
+      );
+    });
+  }
+
+  QueryBuilder<SubEventEmbedded, SubEventEmbedded, QAfterFilterCondition>
+  customDataJsonIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const FilterCondition.isNull(property: r'customDataJson'),
+      );
+    });
+  }
+
+  QueryBuilder<SubEventEmbedded, SubEventEmbedded, QAfterFilterCondition>
+  customDataJsonIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const FilterCondition.isNotNull(property: r'customDataJson'),
+      );
+    });
+  }
+
+  QueryBuilder<SubEventEmbedded, SubEventEmbedded, QAfterFilterCondition>
+  customDataJsonEqualTo(String? value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'customDataJson',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<SubEventEmbedded, SubEventEmbedded, QAfterFilterCondition>
+  customDataJsonGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'customDataJson',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<SubEventEmbedded, SubEventEmbedded, QAfterFilterCondition>
+  customDataJsonLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'customDataJson',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<SubEventEmbedded, SubEventEmbedded, QAfterFilterCondition>
+  customDataJsonBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'customDataJson',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<SubEventEmbedded, SubEventEmbedded, QAfterFilterCondition>
+  customDataJsonStartsWith(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.startsWith(
+          property: r'customDataJson',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<SubEventEmbedded, SubEventEmbedded, QAfterFilterCondition>
+  customDataJsonEndsWith(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.endsWith(
+          property: r'customDataJson',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<SubEventEmbedded, SubEventEmbedded, QAfterFilterCondition>
+  customDataJsonContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.contains(
+          property: r'customDataJson',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<SubEventEmbedded, SubEventEmbedded, QAfterFilterCondition>
+  customDataJsonMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.matches(
+          property: r'customDataJson',
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<SubEventEmbedded, SubEventEmbedded, QAfterFilterCondition>
+  customDataJsonIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'customDataJson', value: ''),
+      );
+    });
+  }
+
+  QueryBuilder<SubEventEmbedded, SubEventEmbedded, QAfterFilterCondition>
+  customDataJsonIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(property: r'customDataJson', value: ''),
       );
     });
   }

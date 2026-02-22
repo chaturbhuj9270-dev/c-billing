@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:isar_community/isar.dart';
 import '../../domain/entities/event_order.dart';
 import '../../domain/entities/sub_event.dart';
@@ -28,6 +29,8 @@ class SubEventEmbedded {
   DateTime? date;
   double charges;
   String? notes;
+  /// Custom data stored as JSON string
+  String? customDataJson;
   
   SubEventEmbedded({
     this.id,
@@ -35,15 +38,23 @@ class SubEventEmbedded {
     this.date,
     this.charges = 0.0,
     this.notes,
+    this.customDataJson,
   });
   
   SubEvent toDomain() {
+    Map<String, dynamic> customData = {};
+    if (customDataJson != null && customDataJson!.isNotEmpty) {
+      try {
+        customData = jsonDecode(customDataJson!) as Map<String, dynamic>;
+      } catch (_) {}
+    }
     return SubEvent(
       id: id ?? '',
       name: name ?? '',
       date: date ?? DateTime.now(),
       charges: charges,
       notes: notes,
+      customData: customData,
     );
   }
   
@@ -54,6 +65,7 @@ class SubEventEmbedded {
       date: subEvent.date,
       charges: subEvent.charges,
       notes: subEvent.notes,
+      customDataJson: subEvent.customData.isNotEmpty ? jsonEncode(subEvent.customData) : null,
     );
   }
 }
@@ -182,6 +194,9 @@ class EventOrderEntity {
   /// Order items (for sales order type)
   List<OrderItemEmbedded> items;
   
+  /// Event-level charges (separate from sub-events/products)
+  double eventCharges;
+  
   /// Total amount
   double totalAmount;
   
@@ -200,6 +215,9 @@ class EventOrderEntity {
   
   /// Converted bill ID
   String? convertedBillId;
+  
+  /// Custom data stored as JSON string
+  String? customDataJson;
   
   /// Created timestamp
   @Index()
@@ -225,12 +243,14 @@ class EventOrderEntity {
     this.eventLocation,
     required this.subEvents,
     required this.items,
+    this.eventCharges = 0.0,
     this.totalAmount = 0.0,
     this.advanceAmount = 0.0,
     this.remainingAmount = 0.0,
     this.notes,
     this.status = 0,
     this.convertedBillId,
+    this.customDataJson,
     required this.createdAt,
     required this.updatedAt,
     this.syncStatus = EventOrderSyncStatus.newRecord,
@@ -250,12 +270,14 @@ class EventOrderEntity {
     this.eventLocation,
     List<SubEventEmbedded>? subEvents,
     List<OrderItemEmbedded>? items,
+    this.eventCharges = 0.0,
     this.totalAmount = 0.0,
     this.advanceAmount = 0.0,
     this.remainingAmount = 0.0,
     this.notes,
     this.status = 0,
     this.convertedBillId,
+    this.customDataJson,
     DateTime? createdAt,
     DateTime? updatedAt,
     this.syncStatus = EventOrderSyncStatus.newRecord,
@@ -267,6 +289,12 @@ class EventOrderEntity {
   
   /// Convert to domain entity
   EventOrder toDomain() {
+    Map<String, dynamic> customData = {};
+    if (customDataJson != null && customDataJson!.isNotEmpty) {
+      try {
+        customData = jsonDecode(customDataJson!) as Map<String, dynamic>;
+      } catch (_) {}
+    }
     return EventOrder(
       id: serverId ?? 'local_$id',
       orderType: OrderType.values[orderType],
@@ -280,12 +308,14 @@ class EventOrderEntity {
       eventLocation: eventLocation,
       subEvents: subEvents.map((e) => e.toDomain()).toList(),
       items: items.map((e) => e.toDomain()).toList(),
+      eventCharges: eventCharges,
       totalAmount: totalAmount,
       advanceAmount: advanceAmount,
       remainingAmount: remainingAmount,
       notes: notes,
       status: OrderStatus.values[status],
       convertedBillId: convertedBillId,
+      customData: customData,
       createdAt: createdAt,
       updatedAt: updatedAt,
     );
@@ -306,12 +336,14 @@ class EventOrderEntity {
       eventLocation: order.eventLocation,
       subEvents: order.subEvents.map((e) => SubEventEmbedded.fromDomain(e)).toList(),
       items: order.items.map((e) => OrderItemEmbedded.fromDomain(e)).toList(),
+      eventCharges: order.eventCharges,
       totalAmount: order.totalAmount,
       advanceAmount: order.advanceAmount,
       remainingAmount: order.remainingAmount,
       notes: order.notes,
       status: order.status.index,
       convertedBillId: order.convertedBillId,
+      customDataJson: order.customData.isNotEmpty ? jsonEncode(order.customData) : null,
       createdAt: order.createdAt,
       updatedAt: order.updatedAt,
     );

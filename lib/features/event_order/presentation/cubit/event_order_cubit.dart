@@ -89,8 +89,10 @@ class EventOrderCubit extends Cubit<EventOrderState> {
     String? eventLocation,
     List<SubEvent> subEvents = const [],
     List<OrderItem> items = const [],
+    double eventCharges = 0.0,
     double advanceAmount = 0.0,
     String? notes,
+    Map<String, dynamic>? customData,
   }) async {
     emit(const EventOrderSaving());
 
@@ -107,8 +109,10 @@ class EventOrderCubit extends Cubit<EventOrderState> {
         eventLocation: eventLocation,
         subEvents: subEvents,
         items: items,
+        eventCharges: eventCharges,
         advanceAmount: advanceAmount,
         notes: notes,
+        customData: customData,
       );
 
       emit(EventOrderSaved(
@@ -138,10 +142,12 @@ class EventOrderCubit extends Cubit<EventOrderState> {
     String? eventLocation,
     List<SubEvent>? subEvents,
     List<OrderItem>? items,
+    double? eventCharges,
     double? advanceAmount,
     String? notes,
     OrderStatus? status,
     String? convertedBillId,
+    Map<String, dynamic>? customData,
   }) async {
     emit(const EventOrderSaving());
 
@@ -159,10 +165,12 @@ class EventOrderCubit extends Cubit<EventOrderState> {
         eventLocation: eventLocation,
         subEvents: subEvents,
         items: items,
+        eventCharges: eventCharges,
         advanceAmount: advanceAmount,
         notes: notes,
         status: status,
         convertedBillId: convertedBillId,
+        customData: customData,
       );
 
       if (entity != null) {

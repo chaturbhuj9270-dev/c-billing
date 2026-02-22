@@ -87,7 +87,10 @@ class EventOrder {
   /// List of order items (only for sales order type)
   final List<OrderItem> items;
   
-  /// Total amount (calculated from sub-events or items)
+  /// Event-level charges (separate from sub-events/products)
+  final double eventCharges;
+  
+  /// Total amount (calculated from sub-events or items + event charges)
   final double totalAmount;
   
   /// Advance amount received
@@ -104,6 +107,9 @@ class EventOrder {
   
   /// Bill ID if order is converted to bill
   final String? convertedBillId;
+  
+  /// Custom column data (key: columnId, value: column value)
+  final Map<String, dynamic> customData;
   
   /// Created timestamp
   final DateTime createdAt;
@@ -124,12 +130,14 @@ class EventOrder {
     this.eventLocation,
     this.subEvents = const [],
     this.items = const [],
+    this.eventCharges = 0.0,
     required this.totalAmount,
     this.advanceAmount = 0.0,
     required this.remainingAmount,
     this.notes,
     this.status = OrderStatus.pending,
     this.convertedBillId,
+    this.customData = const {},
     required this.createdAt,
     required this.updatedAt,
   });
@@ -175,12 +183,14 @@ class EventOrder {
     String? eventLocation,
     List<SubEvent>? subEvents,
     List<OrderItem>? items,
+    double? eventCharges,
     double? totalAmount,
     double? advanceAmount,
     double? remainingAmount,
     String? notes,
     OrderStatus? status,
     String? convertedBillId,
+    Map<String, dynamic>? customData,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -197,12 +207,14 @@ class EventOrder {
       eventLocation: eventLocation ?? this.eventLocation,
       subEvents: subEvents ?? this.subEvents,
       items: items ?? this.items,
+      eventCharges: eventCharges ?? this.eventCharges,
       totalAmount: totalAmount ?? this.totalAmount,
       advanceAmount: advanceAmount ?? this.advanceAmount,
       remainingAmount: remainingAmount ?? this.remainingAmount,
       notes: notes ?? this.notes,
       status: status ?? this.status,
       convertedBillId: convertedBillId ?? this.convertedBillId,
+      customData: customData ?? this.customData,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -223,12 +235,14 @@ class EventOrder {
       'eventLocation': eventLocation,
       'subEvents': subEvents.map((e) => e.toJson()).toList(),
       'items': items.map((e) => e.toJson()).toList(),
+      'eventCharges': eventCharges,
       'totalAmount': totalAmount,
       'advanceAmount': advanceAmount,
       'remainingAmount': remainingAmount,
       'notes': notes,
       'status': status.index,
       'convertedBillId': convertedBillId,
+      'customData': customData,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
     };
@@ -253,12 +267,14 @@ class EventOrder {
       items: (json['items'] as List<dynamic>?)
           ?.map((e) => OrderItem.fromJson(e as Map<String, dynamic>))
           .toList() ?? [],
+      eventCharges: (json['eventCharges'] as num?)?.toDouble() ?? 0.0,
       totalAmount: (json['totalAmount'] as num?)?.toDouble() ?? 0.0,
       advanceAmount: (json['advanceAmount'] as num?)?.toDouble() ?? 0.0,
       remainingAmount: (json['remainingAmount'] as num?)?.toDouble() ?? 0.0,
       notes: json['notes'] as String?,
       status: OrderStatus.values[json['status'] as int? ?? 0],
       convertedBillId: json['convertedBillId'] as String?,
+      customData: (json['customData'] as Map<String, dynamic>?) ?? {},
       createdAt: DateTime.parse(json['createdAt'] as String),
       updatedAt: DateTime.parse(json['updatedAt'] as String),
     );

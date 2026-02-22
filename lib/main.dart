@@ -7,6 +7,7 @@ import 'core/services/credentials_manager.dart';
 import 'core/services/language_service.dart';
 import 'core/services/purchase_settings_service.dart';
 import 'core/services/product_settings_service.dart';
+import 'core/services/event_order_settings_service.dart';
 import 'core/services/purchase_report_settings_service.dart';
 import 'core/services/bill_report_settings_service.dart';
 import 'core/services/stock_report_settings_service.dart';
@@ -55,6 +56,7 @@ Future<void> initializeServices() async {
   Future.wait([
     _safeInit(() => PurchaseSettingsService.instance.init(), 'PurchaseSettingsService'),
     _safeInit(() => ProductSettingsService.instance.init(), 'ProductSettingsService'),
+    _safeInit(() => EventOrderSettingsService.instance.init(), 'EventOrderSettingsService'),
     _safeInit(() => PurchaseReportSettingsService.instance.init(), 'PurchaseReportSettingsService'),
     _safeInit(() => BillReportSettingsService.instance.init(), 'BillReportSettingsService'),
     _safeInit(() => StockReportSettingsService.instance.init(), 'StockReportSettingsService'),

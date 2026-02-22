@@ -49,9 +49,9 @@ class _EventOrderListPageState extends State<EventOrderListPage>
   DateTime? _customStartDate;
   DateTime? _customEndDate;
 
-  // Primary colors
-  static const _primaryColor = Color(0xFF6C63FF);
-  static const _primaryDark = Color(0xFF5A52D5);
+  // Primary colors - aligned with app theme (availability screen style)
+  static const _primaryColor = Color(0xFF1B4D3E);
+  static const _primaryDark = Color(0xFF2D6B5A);
   static const _eventColor = Color(0xFF9C27B0);
   static const _salesColor = Color(0xFF2196F3);
 
@@ -71,22 +71,24 @@ class _EventOrderListPageState extends State<EventOrderListPage>
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (_) => EventOrderCubit()..loadEventOrders(filterType: _selectedType),
-      child: Scaffold(
-        backgroundColor: const Color(0xFFF8F9FC),
-        body: CustomScrollView(
-          slivers: [
-            _buildPremiumAppBar(),
-            SliverToBoxAdapter(child: _buildStatsSection()),
-            SliverToBoxAdapter(child: _buildSearchAndFilters()),
-            _buildOrdersSliver(),
-          ],
+      child: Builder(
+        builder: (context) => Scaffold(
+          backgroundColor: const Color(0xFFF8F9FC),
+          body: CustomScrollView(
+            slivers: [
+              _buildPremiumAppBar(context),
+              SliverToBoxAdapter(child: _buildStatsSection()),
+              SliverToBoxAdapter(child: _buildSearchAndFilters()),
+              _buildOrdersSliver(),
+            ],
+          ),
+          floatingActionButton: _buildFAB(),
         ),
-        floatingActionButton: _buildFAB(),
       ),
     );
   }
 
-  Widget _buildPremiumAppBar() {
+  Widget _buildPremiumAppBar(BuildContext context) {
     return SliverAppBar(
       expandedHeight: 120,
       floating: false,
@@ -310,7 +312,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                   icon: Icons.all_inbox_rounded,
                   gradient: [_primaryColor, _primaryDark],
                   isActive: _selectedType == null,
-                  onTap: () => _onTypeFilterChanged(null),
+                  onTap: () => _onTypeFilterChanged(context, null),
                 ),
                 const SizedBox(width: 10),
                 _buildStatCard(
@@ -319,7 +321,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                   icon: Icons.celebration_rounded,
                   gradient: [_eventColor, const Color(0xFFBA68C8)],
                   isActive: _selectedType == OrderType.event,
-                  onTap: () => _onTypeFilterChanged(OrderType.event),
+                  onTap: () => _onTypeFilterChanged(context, OrderType.event),
                 ),
                 const SizedBox(width: 10),
                 _buildStatCard(
@@ -328,7 +330,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                   icon: Icons.shopping_bag_rounded,
                   gradient: [_salesColor, const Color(0xFF64B5F6)],
                   isActive: _selectedType == OrderType.salesOrder,
-                  onTap: () => _onTypeFilterChanged(OrderType.salesOrder),
+                  onTap: () => _onTypeFilterChanged(context, OrderType.salesOrder),
                 ),
                 const SizedBox(width: 10),
                 _buildStatCard(
@@ -337,7 +339,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                   icon: Icons.schedule_rounded,
                   gradient: [Colors.orange, Colors.orangeAccent],
                   isActive: _selectedStatus == OrderStatus.pending,
-                  onTap: () => _onStatusFilterChanged(OrderStatus.pending),
+                  onTap: () => _onStatusFilterChanged(context, OrderStatus.pending),
                 ),
                 const SizedBox(width: 10),
                 _buildStatCard(
@@ -346,7 +348,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                   icon: Icons.check_circle_rounded,
                   gradient: [Colors.green, Colors.lightGreen],
                   isActive: _selectedStatus == OrderStatus.confirmed,
-                  onTap: () => _onStatusFilterChanged(OrderStatus.confirmed),
+                  onTap: () => _onStatusFilterChanged(context, OrderStatus.confirmed),
                 ),
               ],
             ),
@@ -566,7 +568,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                   const Spacer(),
                   if (_selectedStatus != null)
                     GestureDetector(
-                      onTap: () => _onStatusFilterChanged(null),
+                      onTap: () => _onStatusFilterChanged(context, null),
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                         decoration: BoxDecoration(
@@ -1375,18 +1377,18 @@ class _EventOrderListPageState extends State<EventOrderListPage>
     }).toList();
   }
 
-  void _onTypeFilterChanged(OrderType? type) {
+  void _onTypeFilterChanged(BuildContext ctx, OrderType? type) {
     setState(() {
       _selectedType = type;
       _selectedStatus = null;
     });
-    context.read<EventOrderCubit>().loadEventOrders(
+    ctx.read<EventOrderCubit>().loadEventOrders(
       filterType: type,
       searchQuery: _searchQuery,
     );
   }
 
-  void _onStatusFilterChanged(OrderStatus? status) {
+  void _onStatusFilterChanged(BuildContext ctx, OrderStatus? status) {
     setState(() {
       if (_selectedStatus == status) {
         _selectedStatus = null;
@@ -1394,7 +1396,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
         _selectedStatus = status;
       }
     });
-    context.read<EventOrderCubit>().loadEventOrders(
+    ctx.read<EventOrderCubit>().loadEventOrders(
       filterType: _selectedType,
       filterStatus: _selectedStatus,
       searchQuery: _searchQuery,
@@ -1437,6 +1439,8 @@ class _EventOrderListPageState extends State<EventOrderListPage>
 
   /// Open settings page
   void _openSettings(BuildContext context) async {
+    // Capture cubit reference before navigation
+    final cubit = context.read<EventOrderCubit>();
     await Navigator.push(
       context,
       MaterialPageRoute(
@@ -1446,7 +1450,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
             setState(() {
               _selectedType = newType;
             });
-            context.read<EventOrderCubit>().loadEventOrders(
+            cubit.loadEventOrders(
               filterType: newType,
               searchQuery: _searchQuery,
             );
@@ -1490,7 +1494,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
               ],
             ),
             duration: Duration(seconds: 20),
-            backgroundColor: Color(0xFF6C63FF),
+            backgroundColor: _primaryColor,
           ),
         );
       }
@@ -1993,7 +1997,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
             ],
           ),
           duration: Duration(seconds: 30),
-          backgroundColor: Color(0xFF6C63FF),
+          backgroundColor: _primaryColor,
         ),
       );
 
