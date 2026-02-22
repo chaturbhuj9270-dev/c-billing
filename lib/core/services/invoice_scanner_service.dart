@@ -259,6 +259,9 @@ class InvoiceScannerService {
   
   InvoiceScannerService._internal();
 
+  // Default API key for invoice scanning
+  static const String _defaultApiKey = 'AIzaSyBvOITAj5_Rm5Jx8UDIPiCNQpCuwEEZ1fI';
+
   GenerativeModel? _model;
   String? _apiKey;
 
@@ -269,6 +272,10 @@ class InvoiceScannerService {
       await _saveApiKey(apiKey);
     } else {
       _apiKey = await _loadApiKey();
+      // Use default API key if none is stored
+      if (_apiKey == null || _apiKey!.isEmpty) {
+        _apiKey = _defaultApiKey;
+      }
     }
     
     if (_apiKey != null && _apiKey!.isNotEmpty) {
@@ -280,7 +287,7 @@ class InvoiceScannerService {
     if (_apiKey == null || _apiKey!.isEmpty) return;
     
     _model = GenerativeModel(
-      model: 'gemini-1.5-flash',
+      model: 'gemini-2.0-flash',
       apiKey: _apiKey!,
       generationConfig: GenerationConfig(
         temperature: 0.1, // Low temperature for accuracy

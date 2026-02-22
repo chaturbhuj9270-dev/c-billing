@@ -25,6 +25,7 @@ import '../widgets/purchase_list_widget.dart';
 import 'purchase_page.dart';
 import 'purchase_settings_page.dart';
 import 'purchase_report_settings_page.dart';
+import 'invoice_scanner_page.dart';
 
 /// Enhanced Purchase Screen with purchase list as default view
 /// Features: Modern UI, filters, FAB for adding purchases, real-time updates
@@ -1579,6 +1580,35 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                   ],
                 ),
               ),
+              // Scan Invoice button
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () async {
+                    final result = await Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const InvoiceScannerPage()),
+                    );
+                    if (result == true && mounted) {
+                      setState(() {});
+                    }
+                  },
+                  borderRadius: BorderRadius.circular(10),
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(
+                      Icons.document_scanner_rounded,
+                      size: 22,
+                      color: Color(0xFF1B4D3E),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
               // Report button
               Material(
                 color: Colors.transparent,

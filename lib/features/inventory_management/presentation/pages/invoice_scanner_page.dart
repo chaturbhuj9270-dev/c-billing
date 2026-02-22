@@ -54,9 +54,10 @@ class _InvoiceScannerPageState extends State<InvoiceScannerPage> {
 
   Future<void> _initializeService() async {
     await _scannerService.initialize();
-    if (!_scannerService.isConfigured) {
+    // API key is pre-configured, no need to show input
+    if (mounted) {
       setState(() {
-        _showApiKeyInput = true;
+        _showApiKeyInput = false;
       });
     }
   }
