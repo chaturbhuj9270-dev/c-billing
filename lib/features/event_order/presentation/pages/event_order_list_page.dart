@@ -7,6 +7,7 @@ import '../cubit/event_order_cubit.dart';
 import '../cubit/event_order_state.dart';
 import '../../data/services/event_order_pdf_service.dart';
 import '../../../shop/data/repositories/shop_repository.dart';
+import '../../../../common_widgets/file_preview_page.dart';
 import 'event_order_screen.dart';
 
 /// Event Orders List Page - Premium UI Design
@@ -897,6 +898,15 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                   children: [
                     _buildActionButton(
                       context,
+                      icon: Icons.receipt_long_rounded,
+                      label: 'Invoice',
+                      color: Colors.teal,
+                      isLoading: _processingOrderId == order.id,
+                      onTap: () => _showInvoicePreview(context, order),
+                    ),
+                    const SizedBox(width: 8),
+                    _buildActionButton(
+                      context,
                       icon: Icons.share_rounded,
                       label: 'Share',
                       color: _primaryColor,
@@ -1152,6 +1162,85 @@ class _EventOrderListPageState extends State<EventOrderListPage>
     );
     if (result == true) {
       cubit.loadEventOrders(filterType: _selectedType);
+    }
+  }
+
+  /// Show invoice preview with share/print options
+  Future<void> _showInvoicePreview(BuildContext context, EventOrder order) async {
+    if (_processingOrderId != null) return;
+    
+    setState(() => _processingOrderId = order.id);
+    try {
+      // Show loading snackbar
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Row(
+              children: [
+                SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                ),
+                SizedBox(width: 12),
+                Text(
+                  'Generating invoice...',
+                  style: TextStyle(fontFamily: 'Literata'),
+                ),
+              ],
+            ),
+            duration: Duration(seconds: 60),
+            backgroundColor: Color(0xFF6C63FF),
+          ),
+        );
+      }
+
+      final shop = await ShopRepository().getShopDetails();
+      final file = await _pdfService.saveOrderPdf(order: order, shopDetails: shop);
+
+      // Hide loading snackbar
+      if (mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      }
+
+      if (!mounted) return;
+
+      final isEvent = order.orderType == OrderType.event;
+      final title = isEvent ? 'Event Invoice' : 'Order Invoice';
+      
+      // Navigate to PDF preview
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => FilePreviewPage(
+            file: file,
+            fileName: '$title - ${order.orderName}',
+            fileType: FilePreviewType.pdf,
+            subtitle: DateFormat('dd MMM yyyy').format(order.eventDate),
+          ),
+        ),
+      );
+    } catch (e) {
+      // Hide loading snackbar
+      if (mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      }
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to generate invoice: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _processingOrderId = null);
+      }
     }
   }
 
