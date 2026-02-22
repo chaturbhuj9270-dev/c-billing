@@ -819,13 +819,18 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                       DateFormat('dd MMM yyyy').format(order.eventDate),
                       Colors.grey[600]!,
                     ),
-                    _buildInfoBadge(
-                      isEvent ? Icons.event_note_rounded : Icons.inventory_2_rounded,
-                      isEvent
-                          ? '${order.subEvents.length} sub-events'
-                          : '${order.items.length} items',
-                      typeColor,
-                    ),
+                    if (isEvent && order.subEvents.isNotEmpty)
+                      _buildInfoBadge(
+                        Icons.event_note_rounded,
+                        '${order.subEvents.length} sub-events',
+                        typeColor,
+                      ),
+                    if (order.items.isNotEmpty)
+                      _buildInfoBadge(
+                        Icons.shopping_bag_rounded,
+                        '${order.items.length} products',
+                        isEvent ? Colors.green : typeColor,
+                      ),
                     if (order.customerContact.isNotEmpty)
                       _buildInfoBadge(
                         Icons.phone_rounded,

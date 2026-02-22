@@ -189,11 +189,20 @@ class _EventOrderScreenState extends State<EventOrderScreen>
     });
   }
 
+  double get _subEventsTotal {
+    return _subEvents.fold(0.0, (sum, e) => sum + e.charges);
+  }
+
+  double get _productsTotal {
+    return _orderItems.fold(0.0, (sum, e) => sum + e.total);
+  }
+
   double get _totalAmount {
     if (_orderType == OrderType.event) {
-      return _subEvents.fold(0.0, (sum, e) => sum + e.charges);
+      // Events can have both sub-events and products
+      return _subEventsTotal + _productsTotal;
     } else {
-      return _orderItems.fold(0.0, (sum, e) => sum + e.total);
+      return _productsTotal;
     }
   }
 
@@ -219,8 +228,8 @@ class _EventOrderScreenState extends State<EventOrderScreen>
     if (!_formKey.currentState!.validate()) return;
 
     // Validate mode-specific data
-    if (_orderType == OrderType.event && _subEvents.isEmpty) {
-      _showErrorSnackBar('Please add at least one sub-event');
+    if (_orderType == OrderType.event && _subEvents.isEmpty && _orderItems.isEmpty) {
+      _showErrorSnackBar('Please add at least one sub-event or product');
       return;
     }
     if (_orderType == OrderType.salesOrder && _orderItems.isEmpty) {
@@ -335,11 +344,18 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                       _buildOrderDetailsSection(),
                       const SizedBox(height: 16),
                       // Mode-specific content
-                      if (_orderType == OrderType.event)
-                        _buildSubEventsSection()
-                      else
+                      if (_orderType == OrderType.event) ...[
+                        _buildSubEventsSection(),
+                        const SizedBox(height: 16),
+                        _buildEventProductsSection(),
+                      ] else
                         _buildSalesOrderSection(),
                       const SizedBox(height: 16),
+                      // Show grand total breakdown for events with both items
+                      if (_orderType == OrderType.event && (_subEvents.isNotEmpty || _orderItems.isNotEmpty))
+                        _buildGrandTotalSection(),
+                      if (_orderType == OrderType.event && (_subEvents.isNotEmpty || _orderItems.isNotEmpty))
+                        const SizedBox(height: 16),
                       _buildAdvanceSection(),
                       const SizedBox(height: 16),
                       _buildNotesSection(),
@@ -849,6 +865,200 @@ class _EventOrderScreenState extends State<EventOrderScreen>
           ],
         ),
       ),
+    );
+  }
+
+  /// Products section for Event type - allows adding products to events
+  Widget _buildEventProductsSection() {
+    return _buildSectionCard(
+      title: 'Event Products',
+      icon: Icons.shopping_bag,
+      trailing: IconButton(
+        icon: const Icon(Icons.add_circle, color: Color(0xFF6C63FF)),
+        onPressed: _showAddProductDialog,
+      ),
+      child: Column(
+        children: [
+          if (_orderItems.isEmpty)
+            Container(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                children: [
+                  Icon(
+                    Icons.shopping_bag,
+                    size: 48,
+                    color: Colors.grey.withOpacity(0.3),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'No products added',
+                    style: TextStyle(
+                      fontFamily: 'Literata',
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Tap + to add products for this event (optional)',
+                    style: TextStyle(
+                      fontFamily: 'Literata',
+                      color: Colors.grey[400],
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            )
+          else
+            ...List.generate(_orderItems.length, (index) {
+              final item = _orderItems[index];
+              return _buildOrderItemCard(item, index);
+            }),
+        ],
+      ),
+    );
+  }
+
+  /// Grand total section showing breakdown of sub-events + products
+  Widget _buildGrandTotalSection() {
+    final hasSubEvents = _subEvents.isNotEmpty;
+    final hasProducts = _orderItems.isNotEmpty;
+    
+    // Only show breakdown if there are items to display
+    if (!hasSubEvents && !hasProducts) return const SizedBox.shrink();
+    
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            const Color(0xFF6C63FF).withOpacity(0.08),
+            const Color(0xFF6C63FF).withOpacity(0.03),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFF6C63FF).withOpacity(0.15)),
+      ),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF6C63FF).withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.receipt_long, color: Color(0xFF6C63FF), size: 20),
+              ),
+              const SizedBox(width: 12),
+              const Text(
+                'Total Summary',
+                style: TextStyle(
+                  fontFamily: 'Literata',
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF1A1A2E),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          // Sub-events total
+          if (hasSubEvents) ...[
+            _buildTotalRow(
+              'Sub-Events (${_subEvents.length})',
+              _subEventsTotal,
+              Icons.celebration,
+              const Color(0xFF6C63FF),
+            ),
+            const SizedBox(height: 8),
+          ],
+          // Products total
+          if (hasProducts) ...[
+            _buildTotalRow(
+              'Products (${_orderItems.length})',
+              _productsTotal,
+              Icons.shopping_bag,
+              Colors.green,
+            ),
+            const SizedBox(height: 8),
+          ],
+          // Divider
+          if (hasSubEvents && hasProducts) ...[
+            Container(
+              height: 1,
+              margin: const EdgeInsets.symmetric(vertical: 8),
+              color: const Color(0xFF6C63FF).withOpacity(0.2),
+            ),
+          ],
+          // Grand total
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Grand Total',
+                style: TextStyle(
+                  fontFamily: 'Literata',
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF1A1A2E),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF4CAF50).withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  '₹${_totalAmount.toStringAsFixed(0)}',
+                  style: const TextStyle(
+                    fontFamily: 'Literata',
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF4CAF50),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTotalRow(String label, double amount, IconData icon, Color color) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Row(
+          children: [
+            Icon(icon, size: 16, color: color),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: TextStyle(
+                fontFamily: 'Literata',
+                fontSize: 14,
+                color: Colors.grey[700],
+              ),
+            ),
+          ],
+        ),
+        Text(
+          '₹${amount.toStringAsFixed(0)}',
+          style: TextStyle(
+            fontFamily: 'Literata',
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Colors.grey[800],
+          ),
+        ),
+      ],
     );
   }
 

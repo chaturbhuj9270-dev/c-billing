@@ -246,11 +246,16 @@ class EventOrderPdfService {
           ),
 
           // ═══════════════════════════════════════════
-          // ITEMS TABLE (Sub-events or Products)
+          // ITEMS TABLES (Sub-events and/or Products)
           // ═══════════════════════════════════════════
-          if (isEvent && order.subEvents.isNotEmpty)
-            _buildSubEventsTable(order.subEvents, dateFormatter, borderSide, thinBorder)
-          else if (!isEvent && order.items.isNotEmpty)
+          // For events: show both sub-events AND products if present
+          if (isEvent) ...[
+            if (order.subEvents.isNotEmpty)
+              _buildSubEventsTable(order.subEvents, dateFormatter, borderSide, thinBorder),
+            if (order.items.isNotEmpty)
+              _buildProductsTable(order.items, borderSide, thinBorder, 
+                title: order.subEvents.isNotEmpty ? 'Event Products' : 'Products'),
+          ] else if (order.items.isNotEmpty)
             _buildProductsTable(order.items, borderSide, thinBorder),
 
           // ═══════════════════════════════════════════
@@ -438,12 +443,13 @@ class EventOrderPdfService {
     );
   }
 
-  /// Build products table for Sales Order type
+  /// Build products table for Sales Order type or Event products
   pw.Widget _buildProductsTable(
     List<OrderItem> items,
     pw.BorderSide borderSide,
-    pw.BorderSide thinBorder,
-  ) {
+    pw.BorderSide thinBorder, {
+    String title = 'PRODUCTS',
+  }) {
     return pw.Container(
       child: pw.Column(
         crossAxisAlignment: pw.CrossAxisAlignment.start,
@@ -456,7 +462,7 @@ class EventOrderPdfService {
               border: pw.Border(bottom: thinBorder),
             ),
             child: pw.Text(
-              'PRODUCTS',
+              title.toUpperCase(),
               style: pw.TextStyle(
                 fontSize: 10,
                 fontWeight: pw.FontWeight.bold,
