@@ -56,10 +56,12 @@ class ProductListWidget extends StatelessWidget {
         final company = p.companyName.toLowerCase();
         final category = p.category.toLowerCase();
         final barcode = (p.barcode ?? '').toLowerCase();
+        final productCode = p.indexNo.toString();
         return name.contains(query) ||
             company.contains(query) ||
             category.contains(query) ||
-            barcode.contains(query);
+            barcode.contains(query) ||
+            productCode.contains(query);
       }).toList();
     }
 
@@ -353,6 +355,36 @@ class _ProductCard extends StatelessWidget {
                       children: [
                         Row(
                           children: [
+                            // Product Code Badge
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 3,
+                              ),
+                              margin: const EdgeInsets.only(right: 8),
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [accentColor, accentColor.withOpacity(0.8)],
+                                ),
+                                borderRadius: BorderRadius.circular(6),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: accentColor.withOpacity(0.2),
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: Text(
+                                '#${product.indexNo}',
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                  fontFamily: 'Literata',
+                                ),
+                              ),
+                            ),
                             Expanded(
                               child: Text(
                                 product.name,

@@ -678,7 +678,7 @@ class _PurchasePageState extends State<PurchasePage>
       final productOfflineController = ProductOfflineController.instance;
 
       // This will throw if duplicate exists
-      await productOfflineController.addProduct(
+      final newProduct = await productOfflineController.addProduct(
         name: nameController.text.trim(),
         companyName: selectedCompany?['companyName'] ?? '',
         category: '', // No category required
@@ -726,8 +726,34 @@ class _PurchasePageState extends State<PurchasePage>
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(_localizations.productAddedSuccessfully),
+              content: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      '#${newProduct.indexNo}',
+                      style: const TextStyle(
+                        fontFamily: 'Literata',
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      '${_localizations.productAddedSuccessfully} - ${newProduct.name}',
+                      style: const TextStyle(fontFamily: 'Literata'),
+                    ),
+                  ),
+                ],
+              ),
               backgroundColor: Colors.green,
+              duration: const Duration(seconds: 4),
             ),
           );
         }

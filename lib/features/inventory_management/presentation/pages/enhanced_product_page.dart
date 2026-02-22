@@ -1858,7 +1858,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
     }
 
     try {
-      await ProductOfflineController.instance.addProduct(
+      final newProduct = await ProductOfflineController.instance.addProduct(
         name: name,
         companyName: selectedCompany?['companyName'] ?? '',
         category: categoryController.text.trim(),
@@ -1880,11 +1880,34 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              _localizations.productAddedSuccessfully,
-              style: const TextStyle(fontFamily: 'Literata'),
+            content: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    '#${newProduct.indexNo}',
+                    style: const TextStyle(
+                      fontFamily: 'Literata',
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    '${_localizations.productAddedSuccessfully} - $name',
+                    style: const TextStyle(fontFamily: 'Literata'),
+                  ),
+                ),
+              ],
             ),
             backgroundColor: const Color(0xFF1B4D3E),
+            duration: const Duration(seconds: 4),
           ),
         );
       }
