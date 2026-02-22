@@ -26,6 +26,7 @@ import '../../../company/offline/entities/company_entity.dart';
 import '../../../product/offline/entities/product_entity.dart';
 import '../../../../core/services/inventory_integration_service.dart';
 import 'purchase_settings_page.dart';
+import 'invoice_scanner_page.dart';
 
 class PurchasePage extends StatefulWidget {
   final bool isEmbedded;
@@ -3339,6 +3340,31 @@ class _PurchasePageState extends State<PurchasePage>
               ],
             ),
           ),
+          GestureDetector(
+            onTap: () async {
+              final result = await Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const InvoiceScannerPage()),
+              );
+              if (result == true && mounted) {
+                // Data auto-refreshes via Isar streams
+                setState(() {});
+              }
+            },
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(
+                Icons.document_scanner_rounded,
+                color: Colors.white,
+                size: 22,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
           GestureDetector(
             onTap: () => Navigator.push(
               context,

@@ -18,7 +18,7 @@ dependencies:
   bloc: ^8.1.0
   equatable: ^2.0.5
   get_it: ^8.2.0
-  http: ^0.13.6
+  http: ^1.6.0
   firebase_core: ^3.3.0
   firebase_auth: ^5.1.4
   cloud_firestore: ^5.2.1
@@ -37,6 +37,8 @@ dependencies:
   path_provider: ^2.1.4
   share_plus: ^10.0.3
   url_launcher: ^6.3.2
+  # Google Gemini AI for Invoice Scanning
+  google_generative_ai: ^0.4.6
   # Offline-First Database (community maintained with AGP support)
   isar_community: ^3.3.0
   isar_community_flutter_libs: ^3.3.0
