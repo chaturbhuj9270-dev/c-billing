@@ -10,6 +10,15 @@ import '../../../shop/data/repositories/shop_repository.dart';
 import '../../../../common_widgets/file_preview_page.dart';
 import 'event_order_screen.dart';
 
+/// Date filter options for event/order list
+enum DateFilter {
+  thisWeek,
+  today,
+  thisMonth,
+  thisYear,
+  custom,
+}
+
 /// Event Orders List Page - Premium UI Design
 class EventOrderListPage extends StatefulWidget {
   final OrderType? filterType;
@@ -28,6 +37,11 @@ class _EventOrderListPageState extends State<EventOrderListPage>
   OrderStatus? _selectedStatus;
   OrderType? _selectedType;
   String? _processingOrderId;
+  
+  // Date filter
+  DateFilter _selectedDateFilter = DateFilter.thisWeek;
+  DateTime? _customStartDate;
+  DateTime? _customEndDate;
 
   // Primary colors
   static const _primaryColor = Color(0xFF6C63FF);
@@ -448,10 +462,15 @@ class _EventOrderListPageState extends State<EventOrderListPage>
             ),
           ),
           const SizedBox(height: 12),
+          // Date filter chips
+          _buildDateFilterChips(),
+          const SizedBox(height: 12),
           // Active filters row
           BlocBuilder<EventOrderCubit, EventOrderState>(
             builder: (context, state) {
-              final itemCount = state is EventOrderLoaded ? state.orders.length : 0;
+              final allOrders = state is EventOrderLoaded ? state.orders : <EventOrder>[];
+              final filteredOrders = _filterOrdersByDate(allOrders);
+              final itemCount = filteredOrders.length;
               return Row(
                 children: [
                   Container(
@@ -542,7 +561,8 @@ class _EventOrderListPageState extends State<EventOrderListPage>
         }
 
         if (state is EventOrderLoaded) {
-          final orders = state.orders;
+          final allOrders = state.orders;
+          final orders = _filterOrdersByDate(allOrders);
 
           if (orders.isEmpty) {
             return SliverFillRemaining(child: _buildEmptyState());
@@ -1103,6 +1123,193 @@ class _EventOrderListPageState extends State<EventOrderListPage>
       return '${(amount / 1000).toStringAsFixed(1)}K';
     }
     return amount.toStringAsFixed(0);
+  }
+
+  /// Build date filter chips row
+  Widget _buildDateFilterChips() {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: [
+          _buildDateFilterChip(
+            label: 'This Week',
+            filter: DateFilter.thisWeek,
+            icon: Icons.view_week_rounded,
+          ),
+          const SizedBox(width: 8),
+          _buildDateFilterChip(
+            label: 'Today',
+            filter: DateFilter.today,
+            icon: Icons.today_rounded,
+          ),
+          const SizedBox(width: 8),
+          _buildDateFilterChip(
+            label: 'This Month',
+            filter: DateFilter.thisMonth,
+            icon: Icons.calendar_month_rounded,
+          ),
+          const SizedBox(width: 8),
+          _buildDateFilterChip(
+            label: 'This Year',
+            filter: DateFilter.thisYear,
+            icon: Icons.calendar_today_rounded,
+          ),
+          const SizedBox(width: 8),
+          _buildDateFilterChip(
+            label: _selectedDateFilter == DateFilter.custom && _customStartDate != null
+                ? '${DateFormat('dd/MM').format(_customStartDate!)} - ${DateFormat('dd/MM').format(_customEndDate ?? _customStartDate!)}'
+                : 'Custom',
+            filter: DateFilter.custom,
+            icon: Icons.date_range_rounded,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDateFilterChip({
+    required String label,
+    required DateFilter filter,
+    required IconData icon,
+  }) {
+    final isSelected = _selectedDateFilter == filter;
+    return GestureDetector(
+      onTap: () => _onDateFilterChanged(filter),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? _primaryColor : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected ? _primaryColor : Colors.grey.withOpacity(0.2),
+          ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: _primaryColor.withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 14,
+              color: isSelected ? Colors.white : Colors.grey[600],
+            ),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                fontFamily: 'Literata',
+                color: isSelected ? Colors.white : Colors.grey[700],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _onDateFilterChanged(DateFilter filter) async {
+    if (filter == DateFilter.custom) {
+      await _showCustomDateRangePicker();
+    } else {
+      setState(() {
+        _selectedDateFilter = filter;
+        _customStartDate = null;
+        _customEndDate = null;
+      });
+    }
+  }
+
+  Future<void> _showCustomDateRangePicker() async {
+    final now = DateTime.now();
+    final initialRange = DateTimeRange(
+      start: _customStartDate ?? now.subtract(const Duration(days: 7)),
+      end: _customEndDate ?? now,
+    );
+
+    final picked = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(now.year - 2),
+      lastDate: DateTime(now.year + 2),
+      initialDateRange: initialRange,
+      builder: (context, child) {
+        return Theme(
+          data: ThemeData.light().copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: _primaryColor,
+              onPrimary: Colors.white,
+              surface: Colors.white,
+              onSurface: Color(0xFF1A1A2E),
+            ),
+            dialogBackgroundColor: Colors.white,
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null) {
+      setState(() {
+        _selectedDateFilter = DateFilter.custom;
+        _customStartDate = picked.start;
+        _customEndDate = picked.end;
+      });
+    }
+  }
+
+  /// Get date range based on selected filter
+  (DateTime start, DateTime end) _getDateRange() {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
+    switch (_selectedDateFilter) {
+      case DateFilter.today:
+        return (today, today.add(const Duration(days: 1)));
+      case DateFilter.thisWeek:
+        // Get start of week (Monday)
+        final weekStart = today.subtract(Duration(days: today.weekday - 1));
+        final weekEnd = weekStart.add(const Duration(days: 7));
+        return (weekStart, weekEnd);
+      case DateFilter.thisMonth:
+        final monthStart = DateTime(now.year, now.month, 1);
+        final monthEnd = DateTime(now.year, now.month + 1, 1);
+        return (monthStart, monthEnd);
+      case DateFilter.thisYear:
+        final yearStart = DateTime(now.year, 1, 1);
+        final yearEnd = DateTime(now.year + 1, 1, 1);
+        return (yearStart, yearEnd);
+      case DateFilter.custom:
+        if (_customStartDate != null) {
+          final start = DateTime(_customStartDate!.year, _customStartDate!.month, _customStartDate!.day);
+          final end = _customEndDate != null
+              ? DateTime(_customEndDate!.year, _customEndDate!.month, _customEndDate!.day).add(const Duration(days: 1))
+              : start.add(const Duration(days: 1));
+          return (start, end);
+        }
+        // Default to this week if no custom dates
+        final weekStart = today.subtract(Duration(days: today.weekday - 1));
+        final weekEnd = weekStart.add(const Duration(days: 7));
+        return (weekStart, weekEnd);
+    }
+  }
+
+  /// Filter orders by date range
+  List<EventOrder> _filterOrdersByDate(List<EventOrder> orders) {
+    final (start, end) = _getDateRange();
+    return orders.where((order) {
+      final orderDate = DateTime(order.eventDate.year, order.eventDate.month, order.eventDate.day);
+      return orderDate.isAfter(start.subtract(const Duration(days: 1))) && orderDate.isBefore(end);
+    }).toList();
   }
 
   void _onTypeFilterChanged(OrderType? type) {
