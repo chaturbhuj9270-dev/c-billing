@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -1379,10 +1381,14 @@ class _EventOrderListPageState extends State<EventOrderListPage>
     if (_processingOrderId != null) return;
     
     setState(() => _processingOrderId = order.id);
+    
+    // Clear any existing snackbars first
+    ScaffoldMessenger.of(context).clearSnackBars();
+    
     try {
       debugPrint('[EventOrderList] Starting invoice preview for: ${order.orderName}');
       
-      // Show loading snackbar
+      // Show loading snackbar with shorter duration as fallback
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -1403,35 +1409,51 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                 ),
               ],
             ),
-            duration: Duration(seconds: 60),
+            duration: Duration(seconds: 20),
             backgroundColor: Color(0xFF6C63FF),
           ),
         );
       }
 
       debugPrint('[EventOrderList] Fetching shop details...');
-      final shop = await ShopRepository().getShopDetails().timeout(
-        const Duration(seconds: 5),
-        onTimeout: () {
-          debugPrint('[EventOrderList] Shop details timeout, using empty shop');
-          return Shop.empty;
-        },
-      );
-      debugPrint('[EventOrderList] Got shop: ${shop.shopName}');
+      Shop shop;
+      try {
+        shop = await ShopRepository().getShopDetails().timeout(
+          const Duration(seconds: 5),
+          onTimeout: () {
+            debugPrint('[EventOrderList] Shop details timeout, using empty shop');
+            return Shop.empty;
+          },
+        );
+        debugPrint('[EventOrderList] Got shop: ${shop.shopName}');
+      } catch (shopError) {
+        debugPrint('[EventOrderList] Shop fetch error: $shopError, using empty shop');
+        shop = Shop.empty;
+      }
       
       debugPrint('[EventOrderList] Generating PDF file...');
-      final file = await _pdfService.saveOrderPdf(
-        order: order,
-        shopDetails: shop,
-      ).timeout(
-        const Duration(seconds: 15),
-        onTimeout: () => throw Exception('PDF generation timed out'),
-      );
-      debugPrint('[EventOrderList] PDF saved to: ${file.path}');
+      debugPrint('[EventOrderList] Order details - name: ${order.orderName}, type: ${order.orderType}, items: ${order.items.length}, subEvents: ${order.subEvents.length}');
+      
+      late File file;
+      try {
+        file = await _pdfService.saveOrderPdf(
+          order: order,
+          shopDetails: shop,
+        ).timeout(
+          const Duration(seconds: 30),
+          onTimeout: () => throw Exception('PDF generation timed out after 30 seconds'),
+        );
+        debugPrint('[EventOrderList] PDF saved to: ${file.path}');
+        debugPrint('[EventOrderList] File exists: ${file.existsSync()}, size: ${file.existsSync() ? file.lengthSync() : 0}');
+      } catch (pdfError, pdfStack) {
+        debugPrint('[EventOrderList] PDF generation error: $pdfError');
+        debugPrint('[EventOrderList] PDF stack: $pdfStack');
+        rethrow;
+      }
 
-      // Hide loading snackbar
+      // Clear loading snackbar immediately
       if (mounted) {
-        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        ScaffoldMessenger.of(context).clearSnackBars();
       }
 
       if (!mounted) {
@@ -1463,9 +1485,9 @@ class _EventOrderListPageState extends State<EventOrderListPage>
       debugPrint('[EventOrderList] ERROR generating invoice: $e');
       debugPrint('[EventOrderList] Stack trace: $stack');
       
-      // Hide loading snackbar
+      // Clear loading snackbar immediately
       if (mounted) {
-        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        ScaffoldMessenger.of(context).clearSnackBars();
       }
       
       if (mounted) {
@@ -1473,6 +1495,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
           SnackBar(
             content: Text('Failed to generate invoice: ${e.toString()}'),
             backgroundColor: Colors.red,
+            duration: const Duration(seconds: 4),
           ),
         );
       }

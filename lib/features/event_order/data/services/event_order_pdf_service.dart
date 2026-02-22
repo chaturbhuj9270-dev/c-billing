@@ -51,7 +51,7 @@ class EventOrderPdfService {
   ) {
     final isEvent = order.orderType == OrderType.event;
     final borderSide = pw.BorderSide(color: PdfColors.grey800, width: 0.8);
-    final thinBorder = pw.BorderSide(color: PdfColors.grey400, width: 0.5);
+    final thinBorder = pw.BorderSide(color: PdfColors.grey600, width: 0.5);
 
     return pw.Container(
       decoration: pw.BoxDecoration(
@@ -66,9 +66,8 @@ class EventOrderPdfService {
           // ═══════════════════════════════════════════
           pw.Container(
             width: double.infinity,
-            padding: const pw.EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+            padding: const pw.EdgeInsets.symmetric(vertical: 10, horizontal: 12),
             decoration: pw.BoxDecoration(
-              color: PdfColors.grey100,
               border: pw.Border(bottom: borderSide),
             ),
             child: pw.Column(
@@ -78,42 +77,44 @@ class EventOrderPdfService {
                       ? shopDetails.shopName.toUpperCase()
                       : 'STORE',
                   style: pw.TextStyle(
-                    fontSize: 20,
+                    fontSize: 18,
                     fontWeight: pw.FontWeight.bold,
-                    letterSpacing: 1.2,
+                    letterSpacing: 1.0,
                   ),
                   textAlign: pw.TextAlign.center,
                 ),
                 if (shopDetails.address.isNotEmpty) ...[
-                  pw.SizedBox(height: 4),
+                  pw.SizedBox(height: 3),
                   pw.Text(
-                    shopDetails.address,
-                    style: const pw.TextStyle(fontSize: 10),
+                    shopDetails.address.toUpperCase(),
+                    style: const pw.TextStyle(fontSize: 9),
                     textAlign: pw.TextAlign.center,
                   ),
                 ],
-                pw.SizedBox(height: 4),
-                pw.Row(
-                  mainAxisAlignment: pw.MainAxisAlignment.center,
-                  children: [
-                    if (shopDetails.phone.isNotEmpty)
-                      pw.Text(
-                        'Ph: ${shopDetails.phone}',
-                        style: const pw.TextStyle(fontSize: 9),
-                      ),
-                    if (shopDetails.phone.isNotEmpty && shopDetails.email != null)
-                      pw.Text(' | ', style: const pw.TextStyle(fontSize: 9)),
-                    if (shopDetails.email != null && shopDetails.email!.isNotEmpty)
-                      pw.Text(
-                        'Email: ${shopDetails.email}',
-                        style: const pw.TextStyle(fontSize: 9),
-                      ),
-                  ],
+                pw.SizedBox(height: 3),
+                pw.Align(
+                  alignment: pw.Alignment.centerRight,
+                  child: pw.Wrap(
+                    alignment: pw.WrapAlignment.end,
+                    spacing: 12,
+                    children: [
+                      if (shopDetails.phone.isNotEmpty)
+                        pw.Text(
+                          'Mo. No: ${shopDetails.phone}',
+                          style: const pw.TextStyle(fontSize: 9),
+                        ),
+                      if (shopDetails.email != null && shopDetails.email!.isNotEmpty)
+                        pw.Text(
+                          shopDetails.email!,
+                          style: const pw.TextStyle(fontSize: 9),
+                        ),
+                    ],
+                  ),
                 ),
                 if (shopDetails.gstNumber != null && shopDetails.gstNumber!.isNotEmpty) ...[
                   pw.SizedBox(height: 2),
                   pw.Text(
-                    'GST: ${shopDetails.gstNumber}',
+                    'GST No: ${shopDetails.gstNumber}',
                     style: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold),
                   ),
                 ],
@@ -122,121 +123,65 @@ class EventOrderPdfService {
           ),
 
           // ═══════════════════════════════════════════
-          // ORDER TYPE HEADER
+          // CUSTOMER INFO + INVOICE INFO (side by side)
           // ═══════════════════════════════════════════
           pw.Container(
-            width: double.infinity,
-            padding: const pw.EdgeInsets.symmetric(vertical: 8, horizontal: 16),
             decoration: pw.BoxDecoration(
-              color: isEvent ? PdfColor.fromHex('#9C27B0').shade(0.9) : PdfColor.fromHex('#2196F3').shade(0.9),
               border: pw.Border(bottom: borderSide),
             ),
             child: pw.Row(
-              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
               children: [
-                pw.Text(
-                  isEvent ? 'EVENT ORDER' : 'SALES ORDER',
-                  style: pw.TextStyle(
-                    fontSize: 14,
-                    fontWeight: pw.FontWeight.bold,
-                    color: isEvent ? PdfColor.fromHex('#9C27B0') : PdfColor.fromHex('#2196F3'),
-                  ),
-                ),
-                pw.Container(
-                  padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: pw.BoxDecoration(
-                    color: _getStatusColor(order.status),
-                    borderRadius: pw.BorderRadius.circular(12),
-                  ),
-                  child: pw.Text(
-                    order.status.displayName.toUpperCase(),
-                    style: pw.TextStyle(
-                      fontSize: 9,
-                      fontWeight: pw.FontWeight.bold,
-                      color: PdfColors.white,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // ═══════════════════════════════════════════
-          // ORDER & CUSTOMER DETAILS
-          // ═══════════════════════════════════════════
-          pw.Container(
-            padding: const pw.EdgeInsets.all(12),
-            decoration: pw.BoxDecoration(
-              border: pw.Border(bottom: thinBorder),
-            ),
-            child: pw.Row(
-              crossAxisAlignment: pw.CrossAxisAlignment.start,
-              children: [
-                // Left: Order Details
+                // Left: Customer Details
                 pw.Expanded(
-                  child: pw.Column(
-                    crossAxisAlignment: pw.CrossAxisAlignment.start,
-                    children: [
-                      pw.Text(
-                        order.orderName,
-                        style: pw.TextStyle(
-                          fontSize: 14,
-                          fontWeight: pw.FontWeight.bold,
-                        ),
-                      ),
-                      pw.SizedBox(height: 4),
-                      pw.Text(
-                        '${isEvent ? "Event" : "Delivery"} Date: ${dateFormatter.format(order.eventDate)}',
-                        style: const pw.TextStyle(fontSize: 10),
-                      ),
-                      if (order.description != null && order.description!.isNotEmpty) ...[
-                        pw.SizedBox(height: 2),
-                        pw.Text(
-                          order.description!,
-                          style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey700),
-                        ),
-                      ],
-                      pw.SizedBox(height: 4),
-                      pw.Text(
-                        'Created: ${dateFormatter.format(order.createdAt)}',
-                        style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey600),
-                      ),
-                    ],
-                  ),
-                ),
-                pw.SizedBox(width: 20),
-                // Right: Customer Details
-                pw.Expanded(
+                  flex: 3,
                   child: pw.Container(
                     padding: const pw.EdgeInsets.all(8),
                     decoration: pw.BoxDecoration(
-                      color: PdfColors.grey100,
-                      borderRadius: pw.BorderRadius.circular(4),
+                      border: pw.Border(right: thinBorder),
                     ),
                     child: pw.Column(
                       crossAxisAlignment: pw.CrossAxisAlignment.start,
                       children: [
-                        pw.Text(
-                          'CUSTOMER DETAILS',
-                          style: pw.TextStyle(
-                            fontSize: 8,
-                            fontWeight: pw.FontWeight.bold,
-                            color: PdfColors.grey700,
-                          ),
+                        _buildCompactInfoRow('Customer Name', order.customerName.toUpperCase(), bold: true),
+                        if (order.customerContact.isNotEmpty) ...[
+                          pw.SizedBox(height: 3),
+                          _buildCompactInfoRow('Contact', order.customerContact),
+                        ],
+                        if (order.customerAddress != null && order.customerAddress!.isNotEmpty) ...[
+                          pw.SizedBox(height: 3),
+                          _buildCompactInfoRow('Address', order.customerAddress!),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+                // Right: Invoice Details
+                pw.Expanded(
+                  flex: 2,
+                  child: pw.Container(
+                    padding: const pw.EdgeInsets.all(8),
+                    child: pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.start,
+                      children: [
+                        _buildCompactInfoRow(
+                          isEvent ? 'Event Date' : 'Delivery Date',
+                          dateFormatter.format(order.eventDate),
                         ),
-                        pw.SizedBox(height: 4),
-                        pw.Text(
-                          order.customerName,
-                          style: pw.TextStyle(
-                            fontSize: 11,
-                            fontWeight: pw.FontWeight.bold,
-                          ),
+                        pw.SizedBox(height: 3),
+                        _buildCompactInfoRow(
+                          isEvent ? 'Event Name' : 'Order Name',
+                          order.orderName,
+                          bold: true,
                         ),
-                        pw.SizedBox(height: 2),
-                        pw.Text(
-                          order.customerContact,
-                          style: const pw.TextStyle(fontSize: 10),
+                        pw.SizedBox(height: 3),
+                        _buildCompactInfoRow(
+                          'Status',
+                          order.status.displayName.toUpperCase(),
                         ),
+                        if (order.eventLocation != null && order.eventLocation!.isNotEmpty) ...[
+                          pw.SizedBox(height: 3),
+                          _buildCompactInfoRow('Location', order.eventLocation!),
+                        ],
                       ],
                     ),
                   ),
@@ -248,7 +193,6 @@ class EventOrderPdfService {
           // ═══════════════════════════════════════════
           // ITEMS TABLES (Sub-events and/or Products)
           // ═══════════════════════════════════════════
-          // For events: show both sub-events AND products if present
           if (isEvent) ...[
             if (order.subEvents.isNotEmpty)
               _buildSubEventsTable(order.subEvents, dateFormatter, borderSide, thinBorder),
@@ -259,114 +203,269 @@ class EventOrderPdfService {
             _buildProductsTable(order.items, borderSide, thinBorder),
 
           // ═══════════════════════════════════════════
-          // PAYMENT SUMMARY
+          // BOTTOM SECTION — Notes (left) + Totals (right)
+          // ═══════════════════════════════════════════
+          pw.Row(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              // Left: Notes + Terms
+              pw.Expanded(
+                flex: 3,
+                child: pw.Container(
+                  padding: const pw.EdgeInsets.all(8),
+                  decoration: pw.BoxDecoration(
+                    border: pw.Border(right: thinBorder),
+                  ),
+                  child: pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      if (order.description != null && order.description!.isNotEmpty) ...[
+                        pw.Text(
+                          'Description:',
+                          style: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold),
+                        ),
+                        pw.SizedBox(height: 2),
+                        pw.Text(
+                          order.description!,
+                          style: const pw.TextStyle(fontSize: 7),
+                        ),
+                        pw.SizedBox(height: 6),
+                      ],
+                      if (order.notes != null && order.notes!.isNotEmpty) ...[
+                        pw.Text(
+                          'Notes:',
+                          style: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold),
+                        ),
+                        pw.SizedBox(height: 2),
+                        pw.Text(
+                          order.notes!,
+                          style: const pw.TextStyle(fontSize: 7),
+                        ),
+                        pw.SizedBox(height: 6),
+                      ],
+                      pw.Text(
+                        'Terms & Conditions:',
+                        style: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold),
+                      ),
+                      pw.SizedBox(height: 2),
+                      pw.Text(
+                        '1. Advance payment is non-refundable.',
+                        style: const pw.TextStyle(fontSize: 7),
+                      ),
+                      pw.Text(
+                        '2. Balance to be paid before delivery/event.',
+                        style: const pw.TextStyle(fontSize: 7),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              // Right: Financial Summary
+              pw.Expanded(
+                flex: 2,
+                child: pw.Column(
+                  children: [
+                    // Sub-events total (if any)
+                    if (isEvent && order.subEvents.isNotEmpty)
+                      _buildCompactAmountRow(
+                        'SUB-EVENTS TOTAL',
+                        order.subEvents.fold(0.0, (sum, e) => sum + e.charges),
+                        border: thinBorder,
+                      ),
+                    // Products total (if any)
+                    if (order.items.isNotEmpty)
+                      _buildCompactAmountRow(
+                        'PRODUCTS TOTAL',
+                        order.items.fold(0.0, (sum, item) => sum + item.total),
+                        border: thinBorder,
+                      ),
+                    // Grand Total
+                    pw.Container(
+                      padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                      decoration: pw.BoxDecoration(
+                        color: PdfColors.grey200,
+                        border: pw.Border(bottom: thinBorder),
+                      ),
+                      child: pw.Row(
+                        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                        children: [
+                          pw.Text(
+                            'GRAND TOTAL',
+                            style: pw.TextStyle(
+                              fontSize: 10,
+                              fontWeight: pw.FontWeight.bold,
+                            ),
+                          ),
+                          pw.Text(
+                            'Rs. ${order.totalAmount.toStringAsFixed(2)}',
+                            style: pw.TextStyle(
+                              fontSize: 11,
+                              fontWeight: pw.FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Advance Paid
+                    _buildCompactAmountRow(
+                      'ADVANCE PAID',
+                      order.advanceAmount,
+                      border: thinBorder,
+                      color: PdfColors.green800,
+                    ),
+                    // Balance Amount
+                    pw.Container(
+                      padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                      decoration: pw.BoxDecoration(
+                        color: order.remainingAmount > 0 ? PdfColors.orange50 : PdfColors.green50,
+                        border: pw.Border(bottom: thinBorder),
+                      ),
+                      child: pw.Row(
+                        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                        children: [
+                          pw.Text(
+                            'BALANCE AMT',
+                            style: pw.TextStyle(
+                              fontSize: 10,
+                              fontWeight: pw.FontWeight.bold,
+                              color: order.remainingAmount > 0 ? PdfColors.orange900 : PdfColors.green900,
+                            ),
+                          ),
+                          pw.Text(
+                            'Rs. ${order.remainingAmount.toStringAsFixed(2)}',
+                            style: pw.TextStyle(
+                              fontSize: 11,
+                              fontWeight: pw.FontWeight.bold,
+                              color: order.remainingAmount > 0 ? PdfColors.orange900 : PdfColors.green900,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+
+          // ═══════════════════════════════════════════
+          // FOOTER — Signature
           // ═══════════════════════════════════════════
           pw.Container(
+            padding: const pw.EdgeInsets.fromLTRB(12, 8, 12, 10),
             decoration: pw.BoxDecoration(
               border: pw.Border(top: borderSide),
             ),
             child: pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: pw.CrossAxisAlignment.end,
               children: [
-                // Notes section
-                pw.Expanded(
-                  flex: 3,
-                  child: pw.Container(
-                    padding: const pw.EdgeInsets.all(12),
-                    child: pw.Column(
-                      crossAxisAlignment: pw.CrossAxisAlignment.start,
-                      children: [
-                        if (order.notes != null && order.notes!.isNotEmpty) ...[
-                          pw.Text(
-                            'Notes:',
-                            style: pw.TextStyle(
-                              fontSize: 9,
-                              fontWeight: pw.FontWeight.bold,
-                            ),
-                          ),
-                          pw.SizedBox(height: 2),
-                          pw.Text(
-                            order.notes!,
-                            style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey700),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                ),
-                // Financial summary
-                pw.Expanded(
-                  flex: 2,
-                  child: pw.Container(
-                    padding: const pw.EdgeInsets.all(8),
-                    decoration: pw.BoxDecoration(
-                      color: PdfColors.grey100,
-                    ),
-                    child: pw.Column(
-                      children: [
-                        _buildAmountRow('Total Amount', order.totalAmount, thinBorder),
-                        _buildAmountRow('Advance Paid', order.advanceAmount, thinBorder, 
-                          color: PdfColors.green700),
-                        pw.Container(
-                          padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                          decoration: pw.BoxDecoration(
-                            color: order.remainingAmount > 0 ? PdfColors.orange100 : PdfColors.green100,
-                          ),
-                          child: pw.Row(
-                            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                            children: [
-                              pw.Text(
-                                'REMAINING',
-                                style: pw.TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: pw.FontWeight.bold,
-                                ),
-                              ),
-                              pw.Text(
-                                '₹${order.remainingAmount.toStringAsFixed(0)}',
-                                style: pw.TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: pw.FontWeight.bold,
-                                  color: order.remainingAmount > 0 ? PdfColors.orange800 : PdfColors.green800,
-                                ),
-                              ),
-                            ],
-                          ),
+                // Customer Signature
+                pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  children: [
+                    pw.SizedBox(height: 20),
+                    pw.Container(
+                      width: 100,
+                      decoration: const pw.BoxDecoration(
+                        border: pw.Border(
+                          bottom: pw.BorderSide(color: PdfColors.grey500, width: 0.5),
                         ),
-                      ],
+                      ),
                     ),
-                  ),
+                    pw.SizedBox(height: 3),
+                    pw.Text(
+                      'Customer Signature',
+                      style: const pw.TextStyle(fontSize: 8),
+                    ),
+                  ],
+                ),
+                // Generated date
+                pw.Text(
+                  'Generated: ${DateFormat('dd/MM/yyyy hh:mm a').format(DateTime.now())}',
+                  style: const pw.TextStyle(fontSize: 7, color: PdfColors.grey600),
+                ),
+                // Shop Signature
+                pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.end,
+                  children: [
+                    pw.Text(
+                      'For ${shopDetails.shopName.isNotEmpty ? shopDetails.shopName.toUpperCase() : 'STORE'}',
+                      style: pw.TextStyle(
+                        fontSize: 8,
+                        fontWeight: pw.FontWeight.bold,
+                      ),
+                    ),
+                    pw.SizedBox(height: 16),
+                    pw.Text(
+                      'Authorized Signatory',
+                      style: const pw.TextStyle(fontSize: 8),
+                    ),
+                  ],
                 ),
               ],
             ),
           ),
+        ],
+      ),
+    );
+  }
 
-          // ═══════════════════════════════════════════
-          // FOOTER
-          // ═══════════════════════════════════════════
-          pw.Container(
-            width: double.infinity,
-            padding: const pw.EdgeInsets.all(10),
-            decoration: pw.BoxDecoration(
-              color: PdfColors.grey200,
-              border: pw.Border(top: borderSide),
+  /// Compact info row (label: value) for customer/invoice section
+  pw.Widget _buildCompactInfoRow(String label, String value, {bool bold = false}) {
+    return pw.Row(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        pw.Text(
+          '$label: ',
+          style: pw.TextStyle(
+            fontSize: 8,
+            fontWeight: pw.FontWeight.bold,
+          ),
+        ),
+        pw.Expanded(
+          child: pw.Text(
+            value,
+            style: pw.TextStyle(
+              fontSize: 8,
+              fontWeight: bold ? pw.FontWeight.bold : pw.FontWeight.normal,
             ),
-            child: pw.Column(
-              children: [
-                pw.Text(
-                  'Thank you for your business!',
-                  style: pw.TextStyle(
-                    fontSize: 10,
-                    fontWeight: pw.FontWeight.bold,
-                  ),
-                  textAlign: pw.TextAlign.center,
-                ),
-                pw.SizedBox(height: 4),
-                pw.Text(
-                  'Generated on ${DateFormat('dd MMM yyyy, hh:mm a').format(DateTime.now())}',
-                  style: const pw.TextStyle(fontSize: 7, color: PdfColors.grey600),
-                  textAlign: pw.TextAlign.center,
-                ),
-              ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Compact amount row for totals section
+  pw.Widget _buildCompactAmountRow(
+    String label,
+    double amount, {
+    required pw.BorderSide border,
+    PdfColor? color,
+    bool bold = false,
+  }) {
+    return pw.Container(
+      padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: pw.BoxDecoration(
+        border: pw.Border(bottom: border),
+      ),
+      child: pw.Row(
+        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+        children: [
+          pw.Text(
+            label,
+            style: pw.TextStyle(
+              fontSize: 9,
+              fontWeight: bold ? pw.FontWeight.bold : pw.FontWeight.normal,
+              color: color,
+            ),
+          ),
+          pw.Text(
+            'Rs. ${amount.toStringAsFixed(2)}',
+            style: pw.TextStyle(
+              fontSize: 9,
+              fontWeight: bold ? pw.FontWeight.bold : pw.FontWeight.normal,
+              color: color,
             ),
           ),
         ],
@@ -431,7 +530,7 @@ class EventOrderPdfService {
                     _buildTableCell('${idx + 1}'),
                     _buildTableCell(subEvent.name),
                     _buildTableCell(dateFormatter.format(subEvent.date)),
-                    _buildTableCell('₹${subEvent.charges.toStringAsFixed(0)}', 
+                    _buildTableCell('Rs. ${subEvent.charges.toStringAsFixed(0)}', 
                       align: pw.TextAlign.right),
                   ],
                 );
@@ -504,13 +603,13 @@ class EventOrderPdfService {
                     _buildTableCell('${idx + 1}'),
                     _buildTableCell(item.productName),
                     _buildTableCell('${item.quantity}', align: pw.TextAlign.center),
-                    _buildTableCell('₹${item.rate.toStringAsFixed(0)}', 
+                    _buildTableCell('Rs. ${item.rate.toStringAsFixed(0)}', 
                       align: pw.TextAlign.right),
                     _buildTableCell(item.discountPercent > 0 
                       ? '${item.discountPercent.toStringAsFixed(0)}%' 
                       : '-', 
                       align: pw.TextAlign.center),
-                    _buildTableCell('₹${item.total.toStringAsFixed(0)}', 
+                    _buildTableCell('Rs. ${item.total.toStringAsFixed(0)}', 
                       align: pw.TextAlign.right),
                   ],
                 );
@@ -539,56 +638,6 @@ class EventOrderPdfService {
         textAlign: align,
       ),
     );
-  }
-
-  /// Build amount row
-  pw.Widget _buildAmountRow(
-    String label,
-    double amount,
-    pw.BorderSide border, {
-    PdfColor? color,
-  }) {
-    return pw.Container(
-      padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: pw.BoxDecoration(
-        border: pw.Border(bottom: border),
-      ),
-      child: pw.Row(
-        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-        children: [
-          pw.Text(
-            label,
-            style: const pw.TextStyle(fontSize: 9),
-          ),
-          pw.Text(
-            '₹${amount.toStringAsFixed(0)}',
-            style: pw.TextStyle(
-              fontSize: 10,
-              fontWeight: pw.FontWeight.bold,
-              color: color,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// Get status color
-  PdfColor _getStatusColor(OrderStatus status) {
-    switch (status) {
-      case OrderStatus.pending:
-        return PdfColors.orange;
-      case OrderStatus.confirmed:
-        return PdfColors.blue;
-      case OrderStatus.inProgress:
-        return PdfColors.purple;
-      case OrderStatus.delivered:
-        return PdfColors.green;
-      case OrderStatus.cancelled:
-        return PdfColors.red;
-      case OrderStatus.convertedToBill:
-        return PdfColors.teal;
-    }
   }
 
   /// Share the order as PDF via the system share sheet
@@ -689,14 +738,15 @@ class EventOrderPdfService {
         throw Exception('PDF generation failed: empty bytes');
       }
       
-      debugPrint('[EventOrderPdfService] Getting application documents directory...');
-      final dir = await getApplicationDocumentsDirectory();
+      debugPrint('[EventOrderPdfService] Getting temporary directory...');
+      final dir = await getTemporaryDirectory();
       debugPrint('[EventOrderPdfService] Directory: ${dir.path}');
       
       final isEvent = order.orderType == OrderType.event;
       final prefix = isEvent ? 'event_invoice' : 'order_invoice';
       final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final fileName = '${prefix}_${order.orderName.replaceAll(RegExp(r'[^\w\s]'), '_')}_$timestamp.pdf';
+      final safeOrderName = order.orderName.replaceAll(RegExp(r'[^\w\s]'), '').replaceAll(' ', '_');
+      final fileName = '${prefix}_${safeOrderName}_$timestamp.pdf';
       final file = File('${dir.path}/$fileName');
       
       debugPrint('[EventOrderPdfService] Writing file to: ${file.path}');
