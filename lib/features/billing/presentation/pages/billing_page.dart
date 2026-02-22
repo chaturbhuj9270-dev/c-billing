@@ -2097,6 +2097,9 @@ class _BillingPageState extends State<BillingPage> {
           batches: productBatches,
           localizations: _localizations,
           existingBillItems: _billItems,
+          cgstPercent: product.cgstPercent,
+          sgstPercent: product.sgstPercent,
+          hsnCode: product.hsnCode,
           onBatchSelected: (batch, quantity) {
             final uniqueKey = '${product.id}_batch_${batch.id}';
             final existingIndex = _billItems.indexWhere(
@@ -2136,6 +2139,11 @@ class _BillingPageState extends State<BillingPage> {
               '${_localizations.added}: ${product.name}',
               isError: false,
             );
+          },
+          onItemRemoved: (uniqueKey) {
+            setState(() {
+              _billItems.removeWhere((item) => item.productId == uniqueKey);
+            });
           },
         ),
       );
@@ -5045,14 +5053,323 @@ class _AddItemsBottomSheetState extends State<_AddItemsBottomSheet> {
     return total;
   }
 
+  /// Show dialog to adjust quantity or remove a product
+  void _showProductQuantityDialog({
+    required String productId,
+    required String productName,
+    required String companyName,
+    required int? batchLocalId,
+    required double sellingPrice,
+    required double purchasePrice,
+    required int currentQty,
+    required int maxStock,
+    required double cgstPercent,
+    required double sgstPercent,
+    required String? hsnCode,
+  }) {
+    final qtyController = TextEditingController(text: currentQty.toString());
+    String? errorText;
+    
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          void validateQty() {
+            final qty = int.tryParse(qtyController.text) ?? 0;
+            setDialogState(() {
+              if (qty < 0) {
+                errorText = widget.localizations.pleaseEnterValidNumber;
+              } else if (qty > maxStock) {
+                errorText = '${widget.localizations.maxStock}: $maxStock';
+              } else {
+                errorText = null;
+              }
+            });
+          }
+          
+          return AlertDialog(
+            backgroundColor: Colors.white,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            title: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.edit,
+                    color: Color(0xFF1B4D3E),
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        productName,
+                        style: const TextStyle(
+                          fontFamily: 'Literata',
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF1A1A2E),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      if (companyName.isNotEmpty)
+                        Text(
+                          companyName,
+                          style: TextStyle(
+                            fontFamily: 'Literata',
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Price info
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF5F5F5),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Price: ₹${sellingPrice.toStringAsFixed(0)}',
+                        style: const TextStyle(
+                          fontFamily: 'Literata',
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF1B4D3E),
+                        ),
+                      ),
+                      Text(
+                        '${widget.localizations.stock}: $maxStock',
+                        style: TextStyle(
+                          fontFamily: 'Literata',
+                          fontSize: 13,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                // Quantity input with +/- buttons
+                Row(
+                  children: [
+                    // Minus button
+                    IconButton(
+                      onPressed: () {
+                        final current = int.tryParse(qtyController.text) ?? 0;
+                        if (current > 0) {
+                          qtyController.text = (current - 1).toString();
+                          validateQty();
+                        }
+                      },
+                      icon: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.red[50],
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(Icons.remove, color: Colors.red[700], size: 20),
+                      ),
+                    ),
+                    // Quantity field
+                    Expanded(
+                      child: TextField(
+                        controller: qtyController,
+                        keyboardType: TextInputType.number,
+                        textAlign: TextAlign.center,
+                        onChanged: (_) => validateQty(),
+                        style: const TextStyle(
+                          fontFamily: 'Literata',
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                        ),
+                        decoration: InputDecoration(
+                          errorText: errorText,
+                          errorStyle: const TextStyle(fontSize: 11),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 12,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: Colors.grey[300]!),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(
+                              color: Color(0xFF1B4D3E),
+                              width: 2,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    // Plus button
+                    IconButton(
+                      onPressed: () {
+                        final current = int.tryParse(qtyController.text) ?? 0;
+                        if (current < maxStock) {
+                          qtyController.text = (current + 1).toString();
+                          validateQty();
+                        }
+                      },
+                      icon: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.green[50],
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(Icons.add, color: Colors.green[700], size: 20),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            actions: [
+              // Remove button
+              TextButton.icon(
+                onPressed: () {
+                  final uniqueKey = batchLocalId != null
+                      ? '${productId}_batch_$batchLocalId'
+                      : productId;
+                  widget.onItemRemoved(uniqueKey);
+                  setState(() {});
+                  Navigator.pop(ctx);
+                  widget.showSnackbar(
+                    '$productName ${widget.localizations.delete}d',
+                    isError: false,
+                  );
+                },
+                icon: Icon(Icons.delete_outline, color: Colors.red[700], size: 20),
+                label: Text(
+                  widget.localizations.delete,
+                  style: TextStyle(
+                    fontFamily: 'Literata',
+                    color: Colors.red[700],
+                  ),
+                ),
+              ),
+              const Spacer(),
+              // Cancel button
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: Text(
+                  widget.localizations.cancel,
+                  style: TextStyle(
+                    fontFamily: 'Literata',
+                    color: Colors.grey[600],
+                  ),
+                ),
+              ),
+              // Update button
+              ElevatedButton(
+                onPressed: errorText == null
+                    ? () {
+                        final qty = int.tryParse(qtyController.text) ?? 0;
+                        if (qty == 0) {
+                          // Remove item
+                          final uniqueKey = batchLocalId != null
+                              ? '${productId}_batch_$batchLocalId'
+                              : productId;
+                          widget.onItemRemoved(uniqueKey);
+                          setState(() {});
+                          Navigator.pop(ctx);
+                          widget.showSnackbar(
+                            '$productName ${widget.localizations.delete}d',
+                            isError: false,
+                          );
+                        } else {
+                          // Update quantity
+                          widget.onBatchItemAdded(
+                            productId,
+                            productName,
+                            companyName,
+                            batchLocalId,
+                            sellingPrice,
+                            purchasePrice,
+                            qty,
+                            maxStock,
+                            cgstPercent,
+                            sgstPercent,
+                            hsnCode,
+                          );
+                          setState(() {});
+                          Navigator.pop(ctx);
+                          widget.showSnackbar(
+                            '$productName ${widget.localizations.update}d',
+                            isError: false,
+                          );
+                        }
+                      }
+                    : null,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF1B4D3E),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  elevation: 0,
+                ),
+                child: Text(
+                  widget.localizations.update,
+                  style: const TextStyle(
+                    fontFamily: 'Literata',
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
   void _showBatchSelection(_GroupedBillingProduct group) {
-    // Fallback product with no batches — add directly
+    // Fallback product with no batches — toggle add/remove
     if (group.batches.isEmpty && group.fallbackProduct != null) {
       final product = group.fallbackProduct!;
       final existingQty = widget.billItems
           .where((item) => item.productId == product.id)
           .fold<int>(0, (s, item) => s + item.quantity);
 
+      // If already in bill, show quantity adjustment dialog
+      if (existingQty > 0) {
+        _showProductQuantityDialog(
+          productId: product.id,
+          productName: product.name,
+          companyName: product.companyName,
+          batchLocalId: null,
+          sellingPrice: product.salesPrice,
+          purchasePrice: product.purchasePrice,
+          currentQty: existingQty,
+          maxStock: product.currentStock,
+          cgstPercent: group.cgstPercent,
+          sgstPercent: group.sgstPercent,
+          hsnCode: group.hsnCode,
+        );
+        return;
+      }
+
+      // Not in bill — add with quantity 1
       if (existingQty < product.currentStock) {
         widget.onBatchItemAdded(
           product.id,
@@ -5061,7 +5378,7 @@ class _AddItemsBottomSheetState extends State<_AddItemsBottomSheet> {
           null,
           product.salesPrice,
           product.purchasePrice,
-          existingQty + 1,
+          1,
           product.currentStock,
           group.cgstPercent,
           group.sgstPercent,
@@ -5092,6 +5409,9 @@ class _AddItemsBottomSheetState extends State<_AddItemsBottomSheet> {
         batches: group.batches,
         localizations: widget.localizations,
         existingBillItems: widget.billItems,
+        cgstPercent: group.cgstPercent,
+        sgstPercent: group.sgstPercent,
+        hsnCode: group.hsnCode,
         onBatchSelected: (batch, quantity) {
           widget.onBatchItemAdded(
             batch.productId,
@@ -5112,6 +5432,10 @@ class _AddItemsBottomSheetState extends State<_AddItemsBottomSheet> {
             '${widget.localizations.added}: ${batch.productName}',
             isError: false,
           );
+        },
+        onItemRemoved: (uniqueKey) {
+          widget.onItemRemoved(uniqueKey);
+          setState(() {});
         },
       ),
     );
@@ -5979,6 +6303,10 @@ class _BatchSelectionSheet extends StatefulWidget {
   final AppLocalizations localizations;
   final List<BillItem> existingBillItems;
   final Function(PurchaseBatchEntity batch, int quantity) onBatchSelected;
+  final Function(String uniqueKey) onItemRemoved;
+  final double cgstPercent;
+  final double sgstPercent;
+  final String? hsnCode;
 
   const _BatchSelectionSheet({
     required this.productName,
@@ -5987,6 +6315,10 @@ class _BatchSelectionSheet extends StatefulWidget {
     required this.localizations,
     required this.existingBillItems,
     required this.onBatchSelected,
+    required this.onItemRemoved,
+    this.cgstPercent = 0.0,
+    this.sgstPercent = 0.0,
+    this.hsnCode,
   });
 
   @override
@@ -6057,6 +6389,280 @@ class _BatchSelectionSheetState extends State<_BatchSelectionSheet> {
         _qtyError = null;
       }
     });
+  }
+
+  /// Show dialog to adjust quantity or remove a batch item
+  void _showBatchQuantityDialog({
+    required PurchaseBatchEntity batch,
+    required int existingQty,
+  }) {
+    final qtyController = TextEditingController(text: existingQty.toString());
+    final maxStock = batch.quantityRemaining;
+    String? errorText;
+    
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          void validateQty() {
+            final qty = int.tryParse(qtyController.text) ?? 0;
+            setDialogState(() {
+              if (qty < 0) {
+                errorText = widget.localizations.pleaseEnterValidNumber;
+              } else if (qty > maxStock) {
+                errorText = '${widget.localizations.maxStock}: $maxStock';
+              } else {
+                errorText = null;
+              }
+            });
+          }
+          
+          return AlertDialog(
+            backgroundColor: Colors.white,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            title: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.edit,
+                    color: Color(0xFF1B4D3E),
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        batch.productName,
+                        style: const TextStyle(
+                          fontFamily: 'Literata',
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF1A1A2E),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      if (batch.companyName.isNotEmpty)
+                        Text(
+                          batch.companyName,
+                          style: TextStyle(
+                            fontFamily: 'Literata',
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Price info
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF5F5F5),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Price: ₹${batch.sellingPrice.toStringAsFixed(0)}',
+                        style: const TextStyle(
+                          fontFamily: 'Literata',
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF1B4D3E),
+                        ),
+                      ),
+                      Text(
+                        '${widget.localizations.stock}: $maxStock',
+                        style: TextStyle(
+                          fontFamily: 'Literata',
+                          fontSize: 13,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                // Quantity input with +/- buttons
+                Row(
+                  children: [
+                    // Minus button
+                    IconButton(
+                      onPressed: () {
+                        final current = int.tryParse(qtyController.text) ?? 0;
+                        if (current > 0) {
+                          qtyController.text = (current - 1).toString();
+                          validateQty();
+                        }
+                      },
+                      icon: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.red[50],
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(Icons.remove, color: Colors.red[700], size: 20),
+                      ),
+                    ),
+                    // Quantity field
+                    Expanded(
+                      child: TextField(
+                        controller: qtyController,
+                        keyboardType: TextInputType.number,
+                        textAlign: TextAlign.center,
+                        onChanged: (_) => validateQty(),
+                        style: const TextStyle(
+                          fontFamily: 'Literata',
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                        ),
+                        decoration: InputDecoration(
+                          errorText: errorText,
+                          errorStyle: const TextStyle(fontSize: 11),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 12,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: Colors.grey[300]!),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(
+                              color: Color(0xFF1B4D3E),
+                              width: 2,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    // Plus button
+                    IconButton(
+                      onPressed: () {
+                        final current = int.tryParse(qtyController.text) ?? 0;
+                        if (current < maxStock) {
+                          qtyController.text = (current + 1).toString();
+                          validateQty();
+                        }
+                      },
+                      icon: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.green[50],
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(Icons.add, color: Colors.green[700], size: 20),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            actions: [
+              // Remove button
+              TextButton.icon(
+                onPressed: () {
+                  final uniqueKey = '${batch.productId}_batch_${batch.id}';
+                  widget.onItemRemoved(uniqueKey);
+                  setState(() {});
+                  Navigator.pop(ctx);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        '${batch.productName} ${widget.localizations.delete}d',
+                        style: const TextStyle(fontFamily: 'Literata'),
+                      ),
+                      backgroundColor: Colors.green[600],
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                },
+                icon: Icon(Icons.delete_outline, color: Colors.red[700], size: 20),
+                label: Text(
+                  widget.localizations.delete,
+                  style: TextStyle(
+                    fontFamily: 'Literata',
+                    color: Colors.red[700],
+                  ),
+                ),
+              ),
+              const Spacer(),
+              // Cancel button
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: Text(
+                  widget.localizations.cancel,
+                  style: TextStyle(
+                    fontFamily: 'Literata',
+                    color: Colors.grey[600],
+                  ),
+                ),
+              ),
+              // Update button
+              ElevatedButton(
+                onPressed: errorText == null
+                    ? () {
+                        final qty = int.tryParse(qtyController.text) ?? 0;
+                        if (qty == 0) {
+                          // Remove item
+                          final uniqueKey = '${batch.productId}_batch_${batch.id}';
+                          widget.onItemRemoved(uniqueKey);
+                          setState(() {});
+                          Navigator.pop(ctx);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                '${batch.productName} ${widget.localizations.delete}d',
+                                style: const TextStyle(fontFamily: 'Literata'),
+                              ),
+                              backgroundColor: Colors.green[600],
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
+                        } else {
+                          // Update quantity
+                          widget.onBatchSelected(batch, qty);
+                          setState(() {});
+                          Navigator.pop(ctx);
+                        }
+                      }
+                    : null,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF1B4D3E),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  elevation: 0,
+                ),
+                child: Text(
+                  widget.localizations.update,
+                  style: const TextStyle(
+                    fontFamily: 'Literata',
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
   }
 
   @override
@@ -6310,11 +6916,19 @@ class _BatchSelectionSheetState extends State<_BatchSelectionSheet> {
                             child: InkWell(
                               borderRadius: BorderRadius.circular(14),
                               onTap: () {
+                                // If already in bill, show edit dialog
+                                if (alreadyInBill) {
+                                  _showBatchQuantityDialog(
+                                    batch: batch,
+                                    existingQty: existingQty,
+                                  );
+                                  return;
+                                }
                                 // Add item directly with quantity 1
                                 final maxAvailable =
                                     batch.quantityRemaining - existingQty;
                                 if (maxAvailable > 0) {
-                                  widget.onBatchSelected(batch, 1);
+                                  widget.onBatchSelected(batch, existingQty + 1);
                                 } else {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
