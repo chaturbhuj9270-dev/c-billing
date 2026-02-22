@@ -671,18 +671,53 @@ class EventOrderPdfService {
     required EventOrder order,
     required Shop shopDetails,
   }) async {
-    final pdf = await generateEventOrderPdf(
-      order: order,
-      shopDetails: shopDetails,
-    );
+    debugPrint('[EventOrderPdfService] saveOrderPdf started for: ${order.orderName}');
+    
+    try {
+      debugPrint('[EventOrderPdfService] Generating PDF document...');
+      final pdf = await generateEventOrderPdf(
+        order: order,
+        shopDetails: shopDetails,
+      );
+      debugPrint('[EventOrderPdfService] PDF document generated successfully');
 
-    final bytes = await pdf.save();
-    final dir = await getApplicationDocumentsDirectory();
-    final isEvent = order.orderType == OrderType.event;
-    final prefix = isEvent ? 'event' : 'order';
-    final fileName = '${prefix}_${order.orderName.replaceAll(RegExp(r'[^\w\s]'), '_')}_${DateTime.now().millisecondsSinceEpoch}.pdf';
-    final file = File('${dir.path}/$fileName');
-    await file.writeAsBytes(bytes);
-    return file;
+      debugPrint('[EventOrderPdfService] Saving PDF bytes...');
+      final bytes = await pdf.save();
+      debugPrint('[EventOrderPdfService] PDF bytes saved: ${bytes.length} bytes');
+      
+      if (bytes.isEmpty) {
+        throw Exception('PDF generation failed: empty bytes');
+      }
+      
+      debugPrint('[EventOrderPdfService] Getting application documents directory...');
+      final dir = await getApplicationDocumentsDirectory();
+      debugPrint('[EventOrderPdfService] Directory: ${dir.path}');
+      
+      final isEvent = order.orderType == OrderType.event;
+      final prefix = isEvent ? 'event_invoice' : 'order_invoice';
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final fileName = '${prefix}_${order.orderName.replaceAll(RegExp(r'[^\w\s]'), '_')}_$timestamp.pdf';
+      final file = File('${dir.path}/$fileName');
+      
+      debugPrint('[EventOrderPdfService] Writing file to: ${file.path}');
+      await file.writeAsBytes(bytes, flush: true);
+      
+      // Verify file was written successfully
+      if (!file.existsSync()) {
+        throw Exception('Failed to write PDF file to storage');
+      }
+      
+      final actualSize = file.lengthSync();
+      if (actualSize == 0) {
+        throw Exception('PDF file was written but is empty');
+      }
+      
+      debugPrint('[EventOrderPdfService] File written successfully: $actualSize bytes');
+      return file;
+    } catch (e, stack) {
+      debugPrint('[EventOrderPdfService] ERROR in saveOrderPdf: $e');
+      debugPrint('[EventOrderPdfService] Stack trace: $stack');
+      rethrow;
+    }
   }
 }

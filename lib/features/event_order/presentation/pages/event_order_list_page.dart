@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
@@ -7,6 +8,7 @@ import '../cubit/event_order_cubit.dart';
 import '../cubit/event_order_state.dart';
 import '../../data/services/event_order_pdf_service.dart';
 import '../../../shop/data/repositories/shop_repository.dart';
+import '../../../shop/domain/entities/shop.dart';
 import '../../../../common_widgets/file_preview_page.dart';
 import 'event_order_screen.dart';
 
@@ -1378,6 +1380,8 @@ class _EventOrderListPageState extends State<EventOrderListPage>
     
     setState(() => _processingOrderId = order.id);
     try {
+      debugPrint('[EventOrderList] Starting invoice preview for: ${order.orderName}');
+      
       // Show loading snackbar
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1405,20 +1409,44 @@ class _EventOrderListPageState extends State<EventOrderListPage>
         );
       }
 
-      final shop = await ShopRepository().getShopDetails();
-      final file = await _pdfService.saveOrderPdf(order: order, shopDetails: shop);
+      debugPrint('[EventOrderList] Fetching shop details...');
+      final shop = await ShopRepository().getShopDetails().timeout(
+        const Duration(seconds: 5),
+        onTimeout: () {
+          debugPrint('[EventOrderList] Shop details timeout, using empty shop');
+          return Shop.empty;
+        },
+      );
+      debugPrint('[EventOrderList] Got shop: ${shop.shopName}');
+      
+      debugPrint('[EventOrderList] Generating PDF file...');
+      final file = await _pdfService.saveOrderPdf(
+        order: order,
+        shopDetails: shop,
+      ).timeout(
+        const Duration(seconds: 15),
+        onTimeout: () => throw Exception('PDF generation timed out'),
+      );
+      debugPrint('[EventOrderList] PDF saved to: ${file.path}');
 
       // Hide loading snackbar
       if (mounted) {
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
       }
 
-      if (!mounted) return;
+      if (!mounted) {
+        debugPrint('[EventOrderList] Widget not mounted, returning');
+        return;
+      }
+      
+      // Reset processing state before navigation
+      setState(() => _processingOrderId = null);
 
       final isEvent = order.orderType == OrderType.event;
       final title = isEvent ? 'Event Invoice' : 'Order Invoice';
       
       // Navigate to PDF preview
+      debugPrint('[EventOrderList] Navigating to FilePreviewPage...');
       await Navigator.push(
         context,
         MaterialPageRoute(
@@ -1430,7 +1458,11 @@ class _EventOrderListPageState extends State<EventOrderListPage>
           ),
         ),
       );
-    } catch (e) {
+      debugPrint('[EventOrderList] Returned from FilePreviewPage');
+    } catch (e, stack) {
+      debugPrint('[EventOrderList] ERROR generating invoice: $e');
+      debugPrint('[EventOrderList] Stack trace: $stack');
+      
       // Hide loading snackbar
       if (mounted) {
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
@@ -1445,6 +1477,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
         );
       }
     } finally {
+      debugPrint('[EventOrderList] Finally block - resetting state');
       if (mounted) {
         setState(() => _processingOrderId = null);
       }
