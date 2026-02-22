@@ -14,6 +14,7 @@ import '../../../shop/data/repositories/shop_repository.dart';
 import '../../../shop/domain/entities/shop.dart';
 import '../../../../common_widgets/file_preview_page.dart';
 import 'event_order_screen.dart';
+import 'event_order_settings_page.dart';
 
 /// Date filter options for event/order list
 enum DateFilter {
@@ -153,6 +154,21 @@ class _EventOrderListPageState extends State<EventOrderListPage>
             );
           },
         ),
+        // Settings button
+        IconButton(
+          onPressed: () => _openSettings(context),
+          icon: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: _primaryColor.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Icon(Icons.settings_rounded, 
+              color: _primaryColor, 
+              size: 20,
+            ),
+          ),
+        ),
         const SizedBox(width: 8),
       ],
       flexibleSpace: FlexibleSpaceBar(
@@ -179,20 +195,30 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                       Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [_primaryColor, _primaryDark],
+                          gradient: LinearGradient(
+                            colors: _selectedType == OrderType.salesOrder
+                                ? [_salesColor, _salesColor.withOpacity(0.7)]
+                                : _selectedType == OrderType.event
+                                    ? [_eventColor, _eventColor.withOpacity(0.7)]
+                                    : [_primaryColor, _primaryDark],
                           ),
                           borderRadius: BorderRadius.circular(12),
                           boxShadow: [
                             BoxShadow(
-                              color: _primaryColor.withOpacity(0.3),
+                              color: (_selectedType == OrderType.salesOrder 
+                                  ? _salesColor 
+                                  : _selectedType == OrderType.event 
+                                      ? _eventColor 
+                                      : _primaryColor).withOpacity(0.3),
                               blurRadius: 8,
                               offset: const Offset(0, 4),
                             ),
                           ],
                         ),
-                        child: const Icon(
-                          Icons.celebration_rounded,
+                        child: Icon(
+                          _selectedType == OrderType.salesOrder
+                              ? Icons.shopping_bag_rounded
+                              : Icons.celebration_rounded,
                           color: Colors.white,
                           size: 22,
                         ),
@@ -202,9 +228,13 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
-                              'Events & Orders',
-                              style: TextStyle(
+                            Text(
+                              _selectedType == OrderType.event
+                                  ? 'Events'
+                                  : _selectedType == OrderType.salesOrder
+                                      ? 'Sales Orders'
+                                      : 'Events & Orders',
+                              style: const TextStyle(
                                 fontFamily: 'Literata',
                                 fontSize: 22,
                                 fontWeight: FontWeight.w800,
@@ -213,7 +243,11 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              'Manage your events and sales orders',
+                              _selectedType == OrderType.event
+                                  ? 'Manage your events'
+                                  : _selectedType == OrderType.salesOrder
+                                      ? 'Manage your sales orders'
+                                      : 'Manage your events and sales orders',
                               style: TextStyle(
                                 fontFamily: 'Literata',
                                 fontSize: 12,
@@ -1399,6 +1433,27 @@ class _EventOrderListPageState extends State<EventOrderListPage>
     if (result == true) {
       cubit.loadEventOrders(filterType: _selectedType);
     }
+  }
+
+  /// Open settings page
+  void _openSettings(BuildContext context) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => EventOrderSettingsPage(
+          currentType: _selectedType,
+          onTypeChanged: (newType) {
+            setState(() {
+              _selectedType = newType;
+            });
+            context.read<EventOrderCubit>().loadEventOrders(
+              filterType: newType,
+              searchQuery: _searchQuery,
+            );
+          },
+        ),
+      ),
+    );
   }
 
   /// Show invoice preview with share/print options
