@@ -9,6 +9,7 @@ import '../../domain/entities/event_order.dart';
 import '../cubit/event_order_cubit.dart';
 import '../cubit/event_order_state.dart';
 import '../../data/services/event_order_pdf_service.dart';
+import '../../data/services/event_order_report_pdf_generator.dart';
 import '../../../shop/data/repositories/shop_repository.dart';
 import '../../../shop/domain/entities/shop.dart';
 import '../../../../common_widgets/file_preview_page.dart';
@@ -107,6 +108,30 @@ class _EventOrderListPageState extends State<EventOrderListPage>
         ),
       ),
       actions: [
+        // Report button
+        BlocBuilder<EventOrderCubit, EventOrderState>(
+          builder: (context, state) {
+            return IconButton(
+              onPressed: state is EventOrderLoaded && state.orders.isNotEmpty
+                  ? () => _showReportBottomSheet(context, state.orders)
+                  : null,
+              icon: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: _primaryColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(Icons.summarize_rounded, 
+                  color: state is EventOrderLoaded && state.orders.isNotEmpty
+                      ? _primaryColor
+                      : Colors.grey,
+                  size: 20,
+                ),
+              ),
+            );
+          },
+        ),
+        // Refresh button
         BlocBuilder<EventOrderCubit, EventOrderState>(
           builder: (context, state) {
             return IconButton(
@@ -1614,5 +1639,355 @@ class _EventOrderListPageState extends State<EventOrderListPage>
         ],
       ),
     );
+  }
+
+  /// Show report generation bottom sheet
+  void _showReportBottomSheet(BuildContext context, List<EventOrder> allOrders) {
+    final filteredOrders = _filterOrdersByDate(allOrders);
+    
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Handle bar
+            const SizedBox(height: 12),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            // Header
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: _primaryColor.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(
+                      Icons.summarize_rounded,
+                      color: _primaryColor,
+                      size: 22,
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _selectedType == OrderType.event
+                              ? 'Generate Event Report'
+                              : _selectedType == OrderType.salesOrder
+                                  ? 'Generate Order Report'
+                                  : 'Generate Report',
+                          style: const TextStyle(
+                            fontFamily: 'Literata',
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF1A1A2E),
+                          ),
+                        ),
+                        Text(
+                          'Export as PDF',
+                          style: TextStyle(
+                            fontFamily: 'Literata',
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(height: 1),
+            // Filter info banner
+            Container(
+              margin: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: _primaryColor.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: _primaryColor.withOpacity(0.2),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    _getDateFilterIcon(),
+                    color: _primaryColor,
+                    size: 22,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Filter: ${_getDateFilterLabel()}',
+                          style: const TextStyle(
+                            fontFamily: 'Literata',
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF1A1A2E),
+                          ),
+                        ),
+                        Text(
+                          '${filteredOrders.length} ${_selectedType == OrderType.event ? 'events' : _selectedType == OrderType.salesOrder ? 'orders' : 'items'} will be included',
+                          style: TextStyle(
+                            fontFamily: 'Literata',
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // Summary info
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.grey[50],
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _buildReportSummaryItem(
+                    'Total Amount',
+                    'Rs. ${_formatAmount(filteredOrders.fold(0.0, (sum, o) => sum + o.totalAmount))}',
+                    Colors.green,
+                  ),
+                  Container(
+                    height: 30,
+                    width: 1,
+                    color: Colors.grey[300],
+                  ),
+                  _buildReportSummaryItem(
+                    'Advance',
+                    'Rs. ${_formatAmount(filteredOrders.fold(0.0, (sum, o) => sum + o.advanceAmount))}',
+                    Colors.blue,
+                  ),
+                  Container(
+                    height: 30,
+                    width: 1,
+                    color: Colors.grey[300],
+                  ),
+                  _buildReportSummaryItem(
+                    'Due',
+                    'Rs. ${_formatAmount(filteredOrders.fold(0.0, (sum, o) => sum + o.remainingAmount))}',
+                    Colors.orange,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            // Generate Button
+            Padding(
+              padding: EdgeInsets.only(
+                left: 16,
+                right: 16,
+                bottom: MediaQuery.of(context).padding.bottom + 16,
+              ),
+              child: SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: filteredOrders.isEmpty
+                      ? null
+                      : () {
+                          Navigator.pop(ctx);
+                          _generateReport(filteredOrders);
+                        },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _primaryColor,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.picture_as_pdf, size: 20, color: Colors.white),
+                      SizedBox(width: 8),
+                      Text(
+                        'Preview & Generate PDF',
+                        style: TextStyle(
+                          fontFamily: 'Literata',
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildReportSummaryItem(String label, String value, Color color) {
+    return Column(
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontFamily: 'Literata',
+            fontSize: 10,
+            color: Colors.grey[600],
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: TextStyle(
+            fontFamily: 'Literata',
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+            color: color,
+          ),
+        ),
+      ],
+    );
+  }
+
+  IconData _getDateFilterIcon() {
+    switch (_selectedDateFilter) {
+      case DateFilter.today:
+        return Icons.today_rounded;
+      case DateFilter.thisWeek:
+        return Icons.view_week_rounded;
+      case DateFilter.thisMonth:
+        return Icons.calendar_month_rounded;
+      case DateFilter.thisYear:
+        return Icons.calendar_today_rounded;
+      case DateFilter.custom:
+        return Icons.date_range_rounded;
+    }
+  }
+
+  String _getDateFilterLabel() {
+    switch (_selectedDateFilter) {
+      case DateFilter.today:
+        return 'Today';
+      case DateFilter.thisWeek:
+        return 'This Week';
+      case DateFilter.thisMonth:
+        return 'This Month';
+      case DateFilter.thisYear:
+        return 'This Year';
+      case DateFilter.custom:
+        if (_customStartDate != null) {
+          final start = DateFormat('dd/MM').format(_customStartDate!);
+          final end = DateFormat('dd/MM').format(_customEndDate ?? _customStartDate!);
+          return '$start - $end';
+        }
+        return 'Custom';
+    }
+  }
+
+  Future<void> _generateReport(List<EventOrder> orders) async {
+    try {
+      // Show loading
+      ScaffoldMessenger.of(context).clearSnackBars();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Row(
+            children: [
+              SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white,
+                ),
+              ),
+              SizedBox(width: 12),
+              Text(
+                'Generating report...',
+                style: TextStyle(fontFamily: 'Literata'),
+              ),
+            ],
+          ),
+          duration: Duration(seconds: 30),
+          backgroundColor: Color(0xFF6C63FF),
+        ),
+      );
+
+      final isEvent = _selectedType == OrderType.event;
+      final filterDesc = _getDateFilterLabel();
+
+      // Generate PDF bytes
+      final pdfBytes = await EventOrderReportPdfGenerator.generate(
+        orders: orders,
+        filterDescription: filterDesc,
+        isEventReport: isEvent,
+      );
+
+      // Save to file
+      final file = await EventOrderReportPdfGenerator.saveToFile(
+        pdfBytes,
+        isEvent: isEvent,
+      );
+
+      // Clear snackbar
+      if (mounted) {
+        ScaffoldMessenger.of(context).clearSnackBars();
+      }
+
+      if (!mounted) return;
+
+      // Navigate to preview
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => FilePreviewPage(
+            file: file,
+            fileName: isEvent ? 'Event Report' : 'Order Report',
+            fileType: FilePreviewType.pdf,
+            subtitle: _getDateFilterLabel(),
+          ),
+        ),
+      );
+    } catch (e) {
+      debugPrint('[EventOrderList] Report generation error: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).clearSnackBars();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to generate report: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 }
