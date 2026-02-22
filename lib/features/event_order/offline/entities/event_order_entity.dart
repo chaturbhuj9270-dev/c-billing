@@ -159,6 +159,9 @@ class EventOrderEntity {
   /// Customer contact
   String customerContact;
   
+  /// Customer address
+  String? customerAddress;
+  
   /// Order name
   @Index()
   String orderName;
@@ -169,6 +172,9 @@ class EventOrderEntity {
   /// Event/Delivery date
   @Index()
   DateTime eventDate;
+  
+  /// Event/Order location
+  String? eventLocation;
   
   /// Sub-events (for event type)
   List<SubEventEmbedded> subEvents;
@@ -212,9 +218,11 @@ class EventOrderEntity {
     this.customerId,
     this.customerName = '',
     this.customerContact = '',
+    this.customerAddress,
     this.orderName = '',
     this.description,
     required this.eventDate,
+    this.eventLocation,
     required this.subEvents,
     required this.items,
     this.totalAmount = 0.0,
@@ -235,9 +243,11 @@ class EventOrderEntity {
     this.customerId,
     this.customerName = '',
     this.customerContact = '',
+    this.customerAddress,
     this.orderName = '',
     this.description,
     DateTime? eventDate,
+    this.eventLocation,
     List<SubEventEmbedded>? subEvents,
     List<OrderItemEmbedded>? items,
     this.totalAmount = 0.0,
@@ -263,9 +273,11 @@ class EventOrderEntity {
       customerId: customerId,
       customerName: customerName,
       customerContact: customerContact,
+      customerAddress: customerAddress,
       orderName: orderName,
       description: description,
       eventDate: eventDate,
+      eventLocation: eventLocation,
       subEvents: subEvents.map((e) => e.toDomain()).toList(),
       items: items.map((e) => e.toDomain()).toList(),
       totalAmount: totalAmount,
@@ -287,9 +299,11 @@ class EventOrderEntity {
       customerId: order.customerId,
       customerName: order.customerName,
       customerContact: order.customerContact,
+      customerAddress: order.customerAddress,
       orderName: order.orderName,
       description: order.description,
       eventDate: order.eventDate,
+      eventLocation: order.eventLocation,
       subEvents: order.subEvents.map((e) => SubEventEmbedded.fromDomain(e)).toList(),
       items: order.items.map((e) => OrderItemEmbedded.fromDomain(e)).toList(),
       totalAmount: order.totalAmount,

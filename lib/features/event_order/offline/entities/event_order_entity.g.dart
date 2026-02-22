@@ -32,80 +32,90 @@ const EventOrderEntitySchema = CollectionSchema(
       name: r'createdAt',
       type: IsarType.dateTime,
     ),
-    r'customerContact': PropertySchema(
+    r'customerAddress': PropertySchema(
       id: 3,
+      name: r'customerAddress',
+      type: IsarType.string,
+    ),
+    r'customerContact': PropertySchema(
+      id: 4,
       name: r'customerContact',
       type: IsarType.string,
     ),
     r'customerId': PropertySchema(
-      id: 4,
+      id: 5,
       name: r'customerId',
       type: IsarType.string,
     ),
     r'customerName': PropertySchema(
-      id: 5,
+      id: 6,
       name: r'customerName',
       type: IsarType.string,
     ),
     r'description': PropertySchema(
-      id: 6,
+      id: 7,
       name: r'description',
       type: IsarType.string,
     ),
     r'eventDate': PropertySchema(
-      id: 7,
+      id: 8,
       name: r'eventDate',
       type: IsarType.dateTime,
     ),
+    r'eventLocation': PropertySchema(
+      id: 9,
+      name: r'eventLocation',
+      type: IsarType.string,
+    ),
     r'items': PropertySchema(
-      id: 8,
+      id: 10,
       name: r'items',
       type: IsarType.objectList,
 
       target: r'OrderItemEmbedded',
     ),
-    r'notes': PropertySchema(id: 9, name: r'notes', type: IsarType.string),
+    r'notes': PropertySchema(id: 11, name: r'notes', type: IsarType.string),
     r'orderName': PropertySchema(
-      id: 10,
+      id: 12,
       name: r'orderName',
       type: IsarType.string,
     ),
     r'orderType': PropertySchema(
-      id: 11,
+      id: 13,
       name: r'orderType',
       type: IsarType.long,
     ),
     r'remainingAmount': PropertySchema(
-      id: 12,
+      id: 14,
       name: r'remainingAmount',
       type: IsarType.double,
     ),
     r'serverId': PropertySchema(
-      id: 13,
+      id: 15,
       name: r'serverId',
       type: IsarType.string,
     ),
-    r'status': PropertySchema(id: 14, name: r'status', type: IsarType.long),
+    r'status': PropertySchema(id: 16, name: r'status', type: IsarType.long),
     r'subEvents': PropertySchema(
-      id: 15,
+      id: 17,
       name: r'subEvents',
       type: IsarType.objectList,
 
       target: r'SubEventEmbedded',
     ),
     r'syncStatus': PropertySchema(
-      id: 16,
+      id: 18,
       name: r'syncStatus',
       type: IsarType.byte,
       enumMap: _EventOrderEntitysyncStatusEnumValueMap,
     ),
     r'totalAmount': PropertySchema(
-      id: 17,
+      id: 19,
       name: r'totalAmount',
       type: IsarType.double,
     ),
     r'updatedAt': PropertySchema(
-      id: 18,
+      id: 20,
       name: r'updatedAt',
       type: IsarType.dateTime,
     ),
@@ -220,6 +230,12 @@ int _eventOrderEntityEstimateSize(
       bytesCount += 3 + value.length * 3;
     }
   }
+  {
+    final value = object.customerAddress;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   bytesCount += 3 + object.customerContact.length * 3;
   {
     final value = object.customerId;
@@ -230,6 +246,12 @@ int _eventOrderEntityEstimateSize(
   bytesCount += 3 + object.customerName.length * 3;
   {
     final value = object.description;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
+  {
+    final value = object.eventLocation;
     if (value != null) {
       bytesCount += 3 + value.length * 3;
     }
@@ -283,32 +305,34 @@ void _eventOrderEntitySerialize(
   writer.writeDouble(offsets[0], object.advanceAmount);
   writer.writeString(offsets[1], object.convertedBillId);
   writer.writeDateTime(offsets[2], object.createdAt);
-  writer.writeString(offsets[3], object.customerContact);
-  writer.writeString(offsets[4], object.customerId);
-  writer.writeString(offsets[5], object.customerName);
-  writer.writeString(offsets[6], object.description);
-  writer.writeDateTime(offsets[7], object.eventDate);
+  writer.writeString(offsets[3], object.customerAddress);
+  writer.writeString(offsets[4], object.customerContact);
+  writer.writeString(offsets[5], object.customerId);
+  writer.writeString(offsets[6], object.customerName);
+  writer.writeString(offsets[7], object.description);
+  writer.writeDateTime(offsets[8], object.eventDate);
+  writer.writeString(offsets[9], object.eventLocation);
   writer.writeObjectList<OrderItemEmbedded>(
-    offsets[8],
+    offsets[10],
     allOffsets,
     OrderItemEmbeddedSchema.serialize,
     object.items,
   );
-  writer.writeString(offsets[9], object.notes);
-  writer.writeString(offsets[10], object.orderName);
-  writer.writeLong(offsets[11], object.orderType);
-  writer.writeDouble(offsets[12], object.remainingAmount);
-  writer.writeString(offsets[13], object.serverId);
-  writer.writeLong(offsets[14], object.status);
+  writer.writeString(offsets[11], object.notes);
+  writer.writeString(offsets[12], object.orderName);
+  writer.writeLong(offsets[13], object.orderType);
+  writer.writeDouble(offsets[14], object.remainingAmount);
+  writer.writeString(offsets[15], object.serverId);
+  writer.writeLong(offsets[16], object.status);
   writer.writeObjectList<SubEventEmbedded>(
-    offsets[15],
+    offsets[17],
     allOffsets,
     SubEventEmbeddedSchema.serialize,
     object.subEvents,
   );
-  writer.writeByte(offsets[16], object.syncStatus.index);
-  writer.writeDouble(offsets[17], object.totalAmount);
-  writer.writeDateTime(offsets[18], object.updatedAt);
+  writer.writeByte(offsets[18], object.syncStatus.index);
+  writer.writeDouble(offsets[19], object.totalAmount);
+  writer.writeDateTime(offsets[20], object.updatedAt);
 }
 
 EventOrderEntity _eventOrderEntityDeserialize(
@@ -321,28 +345,30 @@ EventOrderEntity _eventOrderEntityDeserialize(
     advanceAmount: reader.readDoubleOrNull(offsets[0]) ?? 0.0,
     convertedBillId: reader.readStringOrNull(offsets[1]),
     createdAt: reader.readDateTime(offsets[2]),
-    customerContact: reader.readStringOrNull(offsets[3]) ?? '',
-    customerId: reader.readStringOrNull(offsets[4]),
-    customerName: reader.readStringOrNull(offsets[5]) ?? '',
-    description: reader.readStringOrNull(offsets[6]),
-    eventDate: reader.readDateTime(offsets[7]),
+    customerAddress: reader.readStringOrNull(offsets[3]),
+    customerContact: reader.readStringOrNull(offsets[4]) ?? '',
+    customerId: reader.readStringOrNull(offsets[5]),
+    customerName: reader.readStringOrNull(offsets[6]) ?? '',
+    description: reader.readStringOrNull(offsets[7]),
+    eventDate: reader.readDateTime(offsets[8]),
+    eventLocation: reader.readStringOrNull(offsets[9]),
     items:
         reader.readObjectList<OrderItemEmbedded>(
-          offsets[8],
+          offsets[10],
           OrderItemEmbeddedSchema.deserialize,
           allOffsets,
           OrderItemEmbedded(),
         ) ??
         [],
-    notes: reader.readStringOrNull(offsets[9]),
-    orderName: reader.readStringOrNull(offsets[10]) ?? '',
-    orderType: reader.readLongOrNull(offsets[11]) ?? 0,
-    remainingAmount: reader.readDoubleOrNull(offsets[12]) ?? 0.0,
-    serverId: reader.readStringOrNull(offsets[13]),
-    status: reader.readLongOrNull(offsets[14]) ?? 0,
+    notes: reader.readStringOrNull(offsets[11]),
+    orderName: reader.readStringOrNull(offsets[12]) ?? '',
+    orderType: reader.readLongOrNull(offsets[13]) ?? 0,
+    remainingAmount: reader.readDoubleOrNull(offsets[14]) ?? 0.0,
+    serverId: reader.readStringOrNull(offsets[15]),
+    status: reader.readLongOrNull(offsets[16]) ?? 0,
     subEvents:
         reader.readObjectList<SubEventEmbedded>(
-          offsets[15],
+          offsets[17],
           SubEventEmbeddedSchema.deserialize,
           allOffsets,
           SubEventEmbedded(),
@@ -350,11 +376,11 @@ EventOrderEntity _eventOrderEntityDeserialize(
         [],
     syncStatus:
         _EventOrderEntitysyncStatusValueEnumMap[reader.readByteOrNull(
-          offsets[16],
+          offsets[18],
         )] ??
         EventOrderSyncStatus.newRecord,
-    totalAmount: reader.readDoubleOrNull(offsets[17]) ?? 0.0,
-    updatedAt: reader.readDateTime(offsets[18]),
+    totalAmount: reader.readDoubleOrNull(offsets[19]) ?? 0.0,
+    updatedAt: reader.readDateTime(offsets[20]),
   );
   object.id = id;
   return object;
@@ -374,16 +400,20 @@ P _eventOrderEntityDeserializeProp<P>(
     case 2:
       return (reader.readDateTime(offset)) as P;
     case 3:
-      return (reader.readStringOrNull(offset) ?? '') as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 4:
-      return (reader.readStringOrNull(offset)) as P;
-    case 5:
       return (reader.readStringOrNull(offset) ?? '') as P;
-    case 6:
+    case 5:
       return (reader.readStringOrNull(offset)) as P;
+    case 6:
+      return (reader.readStringOrNull(offset) ?? '') as P;
     case 7:
-      return (reader.readDateTime(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 8:
+      return (reader.readDateTime(offset)) as P;
+    case 9:
+      return (reader.readStringOrNull(offset)) as P;
+    case 10:
       return (reader.readObjectList<OrderItemEmbedded>(
                 offset,
                 OrderItemEmbeddedSchema.deserialize,
@@ -392,19 +422,19 @@ P _eventOrderEntityDeserializeProp<P>(
               ) ??
               [])
           as P;
-    case 9:
-      return (reader.readStringOrNull(offset)) as P;
-    case 10:
-      return (reader.readStringOrNull(offset) ?? '') as P;
     case 11:
-      return (reader.readLongOrNull(offset) ?? 0) as P;
-    case 12:
-      return (reader.readDoubleOrNull(offset) ?? 0.0) as P;
-    case 13:
       return (reader.readStringOrNull(offset)) as P;
-    case 14:
+    case 12:
+      return (reader.readStringOrNull(offset) ?? '') as P;
+    case 13:
       return (reader.readLongOrNull(offset) ?? 0) as P;
+    case 14:
+      return (reader.readDoubleOrNull(offset) ?? 0.0) as P;
     case 15:
+      return (reader.readStringOrNull(offset)) as P;
+    case 16:
+      return (reader.readLongOrNull(offset) ?? 0) as P;
+    case 17:
       return (reader.readObjectList<SubEventEmbedded>(
                 offset,
                 SubEventEmbeddedSchema.deserialize,
@@ -413,15 +443,15 @@ P _eventOrderEntityDeserializeProp<P>(
               ) ??
               [])
           as P;
-    case 16:
+    case 18:
       return (_EventOrderEntitysyncStatusValueEnumMap[reader.readByteOrNull(
                 offset,
               )] ??
               EventOrderSyncStatus.newRecord)
           as P;
-    case 17:
+    case 19:
       return (reader.readDoubleOrNull(offset) ?? 0.0) as P;
-    case 18:
+    case 20:
       return (reader.readDateTime(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -1354,6 +1384,165 @@ extension EventOrderEntityQueryFilter
   }
 
   QueryBuilder<EventOrderEntity, EventOrderEntity, QAfterFilterCondition>
+  customerAddressIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const FilterCondition.isNull(property: r'customerAddress'),
+      );
+    });
+  }
+
+  QueryBuilder<EventOrderEntity, EventOrderEntity, QAfterFilterCondition>
+  customerAddressIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const FilterCondition.isNotNull(property: r'customerAddress'),
+      );
+    });
+  }
+
+  QueryBuilder<EventOrderEntity, EventOrderEntity, QAfterFilterCondition>
+  customerAddressEqualTo(String? value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'customerAddress',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventOrderEntity, EventOrderEntity, QAfterFilterCondition>
+  customerAddressGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'customerAddress',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventOrderEntity, EventOrderEntity, QAfterFilterCondition>
+  customerAddressLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'customerAddress',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventOrderEntity, EventOrderEntity, QAfterFilterCondition>
+  customerAddressBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'customerAddress',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventOrderEntity, EventOrderEntity, QAfterFilterCondition>
+  customerAddressStartsWith(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.startsWith(
+          property: r'customerAddress',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventOrderEntity, EventOrderEntity, QAfterFilterCondition>
+  customerAddressEndsWith(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.endsWith(
+          property: r'customerAddress',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventOrderEntity, EventOrderEntity, QAfterFilterCondition>
+  customerAddressContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.contains(
+          property: r'customerAddress',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventOrderEntity, EventOrderEntity, QAfterFilterCondition>
+  customerAddressMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.matches(
+          property: r'customerAddress',
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventOrderEntity, EventOrderEntity, QAfterFilterCondition>
+  customerAddressIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'customerAddress', value: ''),
+      );
+    });
+  }
+
+  QueryBuilder<EventOrderEntity, EventOrderEntity, QAfterFilterCondition>
+  customerAddressIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(property: r'customerAddress', value: ''),
+      );
+    });
+  }
+
+  QueryBuilder<EventOrderEntity, EventOrderEntity, QAfterFilterCondition>
   customerContactEqualTo(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
@@ -2004,6 +2193,165 @@ extension EventOrderEntityQueryFilter
           upper: upper,
           includeUpper: includeUpper,
         ),
+      );
+    });
+  }
+
+  QueryBuilder<EventOrderEntity, EventOrderEntity, QAfterFilterCondition>
+  eventLocationIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const FilterCondition.isNull(property: r'eventLocation'),
+      );
+    });
+  }
+
+  QueryBuilder<EventOrderEntity, EventOrderEntity, QAfterFilterCondition>
+  eventLocationIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const FilterCondition.isNotNull(property: r'eventLocation'),
+      );
+    });
+  }
+
+  QueryBuilder<EventOrderEntity, EventOrderEntity, QAfterFilterCondition>
+  eventLocationEqualTo(String? value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'eventLocation',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventOrderEntity, EventOrderEntity, QAfterFilterCondition>
+  eventLocationGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'eventLocation',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventOrderEntity, EventOrderEntity, QAfterFilterCondition>
+  eventLocationLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'eventLocation',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventOrderEntity, EventOrderEntity, QAfterFilterCondition>
+  eventLocationBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'eventLocation',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventOrderEntity, EventOrderEntity, QAfterFilterCondition>
+  eventLocationStartsWith(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.startsWith(
+          property: r'eventLocation',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventOrderEntity, EventOrderEntity, QAfterFilterCondition>
+  eventLocationEndsWith(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.endsWith(
+          property: r'eventLocation',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventOrderEntity, EventOrderEntity, QAfterFilterCondition>
+  eventLocationContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.contains(
+          property: r'eventLocation',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventOrderEntity, EventOrderEntity, QAfterFilterCondition>
+  eventLocationMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.matches(
+          property: r'eventLocation',
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<EventOrderEntity, EventOrderEntity, QAfterFilterCondition>
+  eventLocationIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'eventLocation', value: ''),
+      );
+    });
+  }
+
+  QueryBuilder<EventOrderEntity, EventOrderEntity, QAfterFilterCondition>
+  eventLocationIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(property: r'eventLocation', value: ''),
       );
     });
   }
@@ -3064,6 +3412,20 @@ extension EventOrderEntityQuerySortBy
   }
 
   QueryBuilder<EventOrderEntity, EventOrderEntity, QAfterSortBy>
+  sortByCustomerAddress() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'customerAddress', Sort.asc);
+    });
+  }
+
+  QueryBuilder<EventOrderEntity, EventOrderEntity, QAfterSortBy>
+  sortByCustomerAddressDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'customerAddress', Sort.desc);
+    });
+  }
+
+  QueryBuilder<EventOrderEntity, EventOrderEntity, QAfterSortBy>
   sortByCustomerContact() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'customerContact', Sort.asc);
@@ -3130,6 +3492,20 @@ extension EventOrderEntityQuerySortBy
   sortByEventDateDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'eventDate', Sort.desc);
+    });
+  }
+
+  QueryBuilder<EventOrderEntity, EventOrderEntity, QAfterSortBy>
+  sortByEventLocation() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'eventLocation', Sort.asc);
+    });
+  }
+
+  QueryBuilder<EventOrderEntity, EventOrderEntity, QAfterSortBy>
+  sortByEventLocationDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'eventLocation', Sort.desc);
     });
   }
 
@@ -3304,6 +3680,20 @@ extension EventOrderEntityQuerySortThenBy
   }
 
   QueryBuilder<EventOrderEntity, EventOrderEntity, QAfterSortBy>
+  thenByCustomerAddress() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'customerAddress', Sort.asc);
+    });
+  }
+
+  QueryBuilder<EventOrderEntity, EventOrderEntity, QAfterSortBy>
+  thenByCustomerAddressDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'customerAddress', Sort.desc);
+    });
+  }
+
+  QueryBuilder<EventOrderEntity, EventOrderEntity, QAfterSortBy>
   thenByCustomerContact() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'customerContact', Sort.asc);
@@ -3370,6 +3760,20 @@ extension EventOrderEntityQuerySortThenBy
   thenByEventDateDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'eventDate', Sort.desc);
+    });
+  }
+
+  QueryBuilder<EventOrderEntity, EventOrderEntity, QAfterSortBy>
+  thenByEventLocation() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'eventLocation', Sort.asc);
+    });
+  }
+
+  QueryBuilder<EventOrderEntity, EventOrderEntity, QAfterSortBy>
+  thenByEventLocationDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'eventLocation', Sort.desc);
     });
   }
 
@@ -3539,6 +3943,16 @@ extension EventOrderEntityQueryWhereDistinct
   }
 
   QueryBuilder<EventOrderEntity, EventOrderEntity, QDistinct>
+  distinctByCustomerAddress({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(
+        r'customerAddress',
+        caseSensitive: caseSensitive,
+      );
+    });
+  }
+
+  QueryBuilder<EventOrderEntity, EventOrderEntity, QDistinct>
   distinctByCustomerContact({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(
@@ -3573,6 +3987,16 @@ extension EventOrderEntityQueryWhereDistinct
   distinctByEventDate() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'eventDate');
+    });
+  }
+
+  QueryBuilder<EventOrderEntity, EventOrderEntity, QDistinct>
+  distinctByEventLocation({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(
+        r'eventLocation',
+        caseSensitive: caseSensitive,
+      );
     });
   }
 
@@ -3670,6 +4094,13 @@ extension EventOrderEntityQueryProperty
     });
   }
 
+  QueryBuilder<EventOrderEntity, String?, QQueryOperations>
+  customerAddressProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'customerAddress');
+    });
+  }
+
   QueryBuilder<EventOrderEntity, String, QQueryOperations>
   customerContactProperty() {
     return QueryBuilder.apply(this, (query) {
@@ -3702,6 +4133,13 @@ extension EventOrderEntityQueryProperty
   eventDateProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'eventDate');
+    });
+  }
+
+  QueryBuilder<EventOrderEntity, String?, QQueryOperations>
+  eventLocationProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'eventLocation');
     });
   }
 

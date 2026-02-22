@@ -66,6 +66,9 @@ class EventOrder {
   /// Customer contact number
   final String customerContact;
   
+  /// Customer address (optional)
+  final String? customerAddress;
+  
   /// Event/Order name (e.g., "John's Wedding", "Bulk Order #123")
   final String orderName;
   
@@ -74,6 +77,9 @@ class EventOrder {
   
   /// Main event date / delivery date
   final DateTime eventDate;
+  
+  /// Event/Order location (optional)
+  final String? eventLocation;
   
   /// List of sub-events (only for event type)
   final List<SubEvent> subEvents;
@@ -111,9 +117,11 @@ class EventOrder {
     this.customerId,
     required this.customerName,
     required this.customerContact,
+    this.customerAddress,
     required this.orderName,
     this.description,
     required this.eventDate,
+    this.eventLocation,
     this.subEvents = const [],
     this.items = const [],
     required this.totalAmount,
@@ -160,9 +168,11 @@ class EventOrder {
     String? customerId,
     String? customerName,
     String? customerContact,
+    String? customerAddress,
     String? orderName,
     String? description,
     DateTime? eventDate,
+    String? eventLocation,
     List<SubEvent>? subEvents,
     List<OrderItem>? items,
     double? totalAmount,
@@ -180,9 +190,11 @@ class EventOrder {
       customerId: customerId ?? this.customerId,
       customerName: customerName ?? this.customerName,
       customerContact: customerContact ?? this.customerContact,
+      customerAddress: customerAddress ?? this.customerAddress,
       orderName: orderName ?? this.orderName,
       description: description ?? this.description,
       eventDate: eventDate ?? this.eventDate,
+      eventLocation: eventLocation ?? this.eventLocation,
       subEvents: subEvents ?? this.subEvents,
       items: items ?? this.items,
       totalAmount: totalAmount ?? this.totalAmount,
@@ -204,9 +216,11 @@ class EventOrder {
       'customerId': customerId,
       'customerName': customerName,
       'customerContact': customerContact,
+      'customerAddress': customerAddress,
       'orderName': orderName,
       'description': description,
       'eventDate': eventDate.toIso8601String(),
+      'eventLocation': eventLocation,
       'subEvents': subEvents.map((e) => e.toJson()).toList(),
       'items': items.map((e) => e.toJson()).toList(),
       'totalAmount': totalAmount,
@@ -228,9 +242,11 @@ class EventOrder {
       customerId: json['customerId'] as String?,
       customerName: json['customerName'] as String? ?? '',
       customerContact: json['customerContact'] as String? ?? '',
+      customerAddress: json['customerAddress'] as String?,
       orderName: json['orderName'] as String? ?? '',
       description: json['description'] as String?,
       eventDate: DateTime.parse(json['eventDate'] as String),
+      eventLocation: json['eventLocation'] as String?,
       subEvents: (json['subEvents'] as List<dynamic>?)
           ?.map((e) => SubEvent.fromJson(e as Map<String, dynamic>))
           .toList() ?? [],

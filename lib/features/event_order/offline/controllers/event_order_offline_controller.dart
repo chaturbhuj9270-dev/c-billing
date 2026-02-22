@@ -39,9 +39,11 @@ class EventOrderOfflineController extends ChangeNotifier {
     String? customerId,
     required String customerName,
     String customerContact = '',
+    String? customerAddress,
     required String orderName,
     String? description,
     required DateTime eventDate,
+    String? eventLocation,
     List<SubEvent> subEvents = const [],
     List<OrderItem> items = const [],
     double advanceAmount = 0.0,
@@ -63,9 +65,11 @@ class EventOrderOfflineController extends ChangeNotifier {
       customerId: customerId,
       customerName: customerName,
       customerContact: customerContact,
+      customerAddress: customerAddress,
       orderName: orderName,
       description: description,
       eventDate: eventDate,
+      eventLocation: eventLocation,
       subEvents: subEvents.map((e) => SubEventEmbedded.fromDomain(e)).toList(),
       items: items.map((e) => OrderItemEmbedded.fromDomain(e)).toList(),
       totalAmount: totalAmount,
@@ -236,9 +240,11 @@ class EventOrderOfflineController extends ChangeNotifier {
     String? customerId,
     String? customerName,
     String? customerContact,
+    String? customerAddress,
     String? orderName,
     String? description,
     DateTime? eventDate,
+    String? eventLocation,
     List<SubEvent>? subEvents,
     List<OrderItem>? items,
     double? advanceAmount,
@@ -257,9 +263,11 @@ class EventOrderOfflineController extends ChangeNotifier {
     if (customerId != null) existing.customerId = customerId;
     if (customerName != null) existing.customerName = customerName;
     if (customerContact != null) existing.customerContact = customerContact;
+    if (customerAddress != null) existing.customerAddress = customerAddress;
     if (orderName != null) existing.orderName = orderName;
     if (description != null) existing.description = description;
     if (eventDate != null) existing.eventDate = eventDate;
+    if (eventLocation != null) existing.eventLocation = eventLocation;
     if (subEvents != null) {
       existing.subEvents = subEvents.map((e) => SubEventEmbedded.fromDomain(e)).toList();
     }

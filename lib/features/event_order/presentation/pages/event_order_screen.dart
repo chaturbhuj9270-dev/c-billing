@@ -47,8 +47,10 @@ class _EventOrderScreenState extends State<EventOrderScreen>
   // Controllers
   final _customerNameController = TextEditingController();
   final _customerContactController = TextEditingController();
+  final _customerAddressController = TextEditingController();
   final _orderNameController = TextEditingController();
   final _descriptionController = TextEditingController();
+  final _locationController = TextEditingController();
   final _advanceController = TextEditingController(text: '0');
   final _notesController = TextEditingController();
 
@@ -104,9 +106,11 @@ class _EventOrderScreenState extends State<EventOrderScreen>
     _selectedCustomerId = order.customerId;
     _customerNameController.text = order.customerName;
     _customerContactController.text = order.customerContact;
+    _customerAddressController.text = order.customerAddress ?? '';
     _orderNameController.text = order.orderName;
     _descriptionController.text = order.description ?? '';
     _eventDate = order.eventDate;
+    _locationController.text = order.eventLocation ?? '';
     _subEvents = List.from(order.subEvents);
     _orderItems = List.from(order.items);
     _advanceController.text = order.advanceAmount.toStringAsFixed(0);
@@ -129,6 +133,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
         setState(() {
           _selectedCustomer = customer;
           _customerContactController.text = customer.mobile;
+          _customerAddressController.text = customer.address ?? '';
         });
       }
     } catch (e) {
@@ -185,6 +190,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
       _selectedCustomerId = customer.id.toString();
       _customerNameController.text = customer.name;
       _customerContactController.text = customer.mobile;
+      _customerAddressController.text = customer.address ?? '';
       _customers = [];
     });
   }
@@ -217,8 +223,10 @@ class _EventOrderScreenState extends State<EventOrderScreen>
     _tabController.dispose();
     _customerNameController.dispose();
     _customerContactController.dispose();
+    _customerAddressController.dispose();
     _orderNameController.dispose();
     _descriptionController.dispose();
+    _locationController.dispose();
     _advanceController.dispose();
     _notesController.dispose();
     super.dispose();
@@ -255,11 +263,17 @@ class _EventOrderScreenState extends State<EventOrderScreen>
           customerId: _selectedCustomerId,
           customerName: _customerNameController.text.trim(),
           customerContact: _customerContactController.text.trim(),
+          customerAddress: _customerAddressController.text.trim().isEmpty
+              ? null
+              : _customerAddressController.text.trim(),
           orderName: _orderNameController.text.trim(),
           description: _descriptionController.text.trim().isEmpty
               ? null
               : _descriptionController.text.trim(),
           eventDate: _eventDate,
+          eventLocation: _locationController.text.trim().isEmpty
+              ? null
+              : _locationController.text.trim(),
           subEvents: _subEvents,
           items: _orderItems,
           advanceAmount: _advanceAmount,
@@ -273,11 +287,17 @@ class _EventOrderScreenState extends State<EventOrderScreen>
           customerId: _selectedCustomerId,
           customerName: _customerNameController.text.trim(),
           customerContact: _customerContactController.text.trim(),
+          customerAddress: _customerAddressController.text.trim().isEmpty
+              ? null
+              : _customerAddressController.text.trim(),
           orderName: _orderNameController.text.trim(),
           description: _descriptionController.text.trim().isEmpty
               ? null
               : _descriptionController.text.trim(),
           eventDate: _eventDate,
+          eventLocation: _locationController.text.trim().isEmpty
+              ? null
+              : _locationController.text.trim(),
           subEvents: _subEvents,
           items: _orderItems,
           advanceAmount: _advanceAmount,
@@ -524,6 +544,26 @@ class _EventOrderScreenState extends State<EventOrderScreen>
     return _buildSectionCard(
       title: 'Customer Details',
       icon: Icons.person_outline,
+      trailing: TextButton.icon(
+        onPressed: _showCustomerPickerSheet,
+        icon: const Icon(Icons.person_search, size: 18, color: Color(0xFF6C63FF)),
+        label: const Text(
+          'Select',
+          style: TextStyle(
+            fontFamily: 'Literata',
+            color: Color(0xFF6C63FF),
+            fontWeight: FontWeight.w600,
+            fontSize: 13,
+          ),
+        ),
+        style: TextButton.styleFrom(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          backgroundColor: const Color(0xFF6C63FF).withOpacity(0.1),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+        ),
+      ),
       child: Column(
         children: [
           // Customer name with autocomplete
@@ -543,7 +583,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
           if (_customers.isNotEmpty || _isSearchingCustomers)
             Container(
               margin: const EdgeInsets.only(top: 4),
-              constraints: const BoxConstraints(maxHeight: 150),
+              constraints: const BoxConstraints(maxHeight: 180),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(12),
@@ -573,6 +613,19 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                         final customer = _customers[index];
                         return ListTile(
                           dense: true,
+                          leading: CircleAvatar(
+                            radius: 16,
+                            backgroundColor: const Color(0xFF6C63FF).withOpacity(0.15),
+                            child: Text(
+                              customer.name.isNotEmpty ? customer.name[0].toUpperCase() : '?',
+                              style: const TextStyle(
+                                fontFamily: 'Literata',
+                                color: Color(0xFF6C63FF),
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ),
                           title: Text(
                             customer.name,
                             style: const TextStyle(
@@ -581,12 +634,29 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                               fontWeight: FontWeight.w600,
                             ),
                           ),
-                          subtitle: Text(
-                            customer.mobile,
-                            style: TextStyle(
-                              fontFamily: 'Literata',
-                              color: Colors.grey[600],
-                            ),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                customer.mobile,
+                                style: TextStyle(
+                                  fontFamily: 'Literata',
+                                  color: Colors.grey[600],
+                                  fontSize: 12,
+                                ),
+                              ),
+                              if (customer.address?.isNotEmpty == true)
+                                Text(
+                                  customer.address!,
+                                  style: TextStyle(
+                                    fontFamily: 'Literata',
+                                    color: Colors.grey[500],
+                                    fontSize: 11,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                            ],
                           ),
                           onTap: () => _selectCustomer(customer),
                         );
@@ -600,7 +670,36 @@ class _EventOrderScreenState extends State<EventOrderScreen>
             icon: Icons.phone,
             keyboardType: TextInputType.phone,
           ),
+          const SizedBox(height: 12),
+          _buildTextField(
+            controller: _customerAddressController,
+            label: 'Address (Optional)',
+            icon: Icons.location_on,
+            maxLines: 2,
+          ),
         ],
+      ),
+    );
+  }
+
+  /// Show customer picker bottom sheet
+  Future<void> _showCustomerPickerSheet() async {
+    // Load all customers
+    final controller = CustomerOfflineController.instance;
+    final allCustomers = await controller.getAllCustomers();
+    
+    if (!mounted) return;
+    
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => _CustomerPickerSheet(
+        customers: allCustomers,
+        onCustomerSelected: (customer) {
+          _selectCustomer(customer);
+          Navigator.pop(ctx);
+        },
       ),
     );
   }
@@ -630,6 +729,12 @@ class _EventOrderScreenState extends State<EventOrderScreen>
             label: 'Description (Optional)',
             icon: Icons.description,
             maxLines: 2,
+          ),
+          const SizedBox(height: 12),
+          _buildTextField(
+            controller: _locationController,
+            label: 'Location/Venue (Optional)',
+            icon: Icons.location_on,
           ),
           const SizedBox(height: 12),
           // Date picker
@@ -2164,5 +2269,290 @@ class _EventOrderScreenState extends State<EventOrderScreen>
         setState(() => _isPdfLoading = false);
       }
     }
+  }
+}
+
+/// Customer picker bottom sheet widget
+class _CustomerPickerSheet extends StatefulWidget {
+  final List<CustomerEntity> customers;
+  final Function(CustomerEntity customer) onCustomerSelected;
+
+  const _CustomerPickerSheet({
+    required this.customers,
+    required this.onCustomerSelected,
+  });
+
+  @override
+  State<_CustomerPickerSheet> createState() => _CustomerPickerSheetState();
+}
+
+class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
+  late List<CustomerEntity> _filteredCustomers;
+  final _searchController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _filteredCustomers = widget.customers;
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _filterCustomers(String query) {
+    setState(() {
+      if (query.isEmpty) {
+        _filteredCustomers = widget.customers;
+      } else {
+        final lowerQuery = query.toLowerCase();
+        _filteredCustomers = widget.customers
+            .where((c) =>
+                c.name.toLowerCase().contains(lowerQuery) ||
+                c.mobile.toLowerCase().contains(lowerQuery) ||
+                (c.address?.toLowerCase().contains(lowerQuery) ?? false))
+            .toList();
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return DraggableScrollableSheet(
+      initialChildSize: 0.6,
+      maxChildSize: 0.9,
+      minChildSize: 0.4,
+      builder: (_, controller) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          children: [
+            // Handle bar
+            const SizedBox(height: 12),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            // Header
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF6C63FF).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(
+                      Icons.person_outline,
+                      color: Color(0xFF6C63FF),
+                      size: 22,
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Select Customer',
+                          style: TextStyle(
+                            fontFamily: 'Literata',
+                            fontSize: 20,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF1A1A2E),
+                          ),
+                        ),
+                        Text(
+                          'Choose from existing customers',
+                          style: TextStyle(
+                            fontFamily: 'Literata',
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // Search bar
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: TextField(
+                controller: _searchController,
+                onChanged: _filterCustomers,
+                style: const TextStyle(fontFamily: 'Literata', fontSize: 14),
+                decoration: InputDecoration(
+                  hintText: 'Search by name, phone or address',
+                  hintStyle: TextStyle(color: Colors.grey[500]),
+                  prefixIcon: const Icon(Icons.search, color: Color(0xFF6C63FF)),
+                  suffixIcon: _searchController.text.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.clear, size: 20),
+                          onPressed: () {
+                            _searchController.clear();
+                            _filterCustomers('');
+                          },
+                        )
+                      : null,
+                  filled: true,
+                  fillColor: const Color(0xFFF5F5F5),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            // Customers list
+            Expanded(
+              child: _filteredCustomers.isEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.person_outline,
+                            size: 48,
+                            color: Colors.grey[400],
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            'No customers found',
+                            style: TextStyle(
+                              fontFamily: 'Literata',
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : ListView.builder(
+                      controller: controller,
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      itemCount: _filteredCustomers.length,
+                      itemBuilder: (context, index) {
+                        final customer = _filteredCustomers[index];
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: Colors.grey[200]!,
+                              width: 1,
+                            ),
+                          ),
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(12),
+                              onTap: () => widget.onCustomerSelected(customer),
+                              child: Padding(
+                                padding: const EdgeInsets.all(12),
+                                child: Row(
+                                  children: [
+                                    CircleAvatar(
+                                      backgroundColor: const Color(0xFF6C63FF),
+                                      child: Text(
+                                        customer.name.isNotEmpty
+                                            ? customer.name[0].toUpperCase()
+                                            : '?',
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 16,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            customer.name,
+                                            style: const TextStyle(
+                                              fontFamily: 'Literata',
+                                              fontWeight: FontWeight.w700,
+                                              fontSize: 15,
+                                              color: Color(0xFF1A1A2E),
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Row(
+                                            children: [
+                                              Icon(Icons.phone, size: 12, color: Colors.grey[500]),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                customer.mobile.isNotEmpty ? customer.mobile : '—',
+                                                style: TextStyle(
+                                                  fontFamily: 'Literata',
+                                                  color: Colors.grey[600],
+                                                  fontSize: 12,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          if (customer.address?.isNotEmpty == true) ...[
+                                            const SizedBox(height: 2),
+                                            Row(
+                                              children: [
+                                                Icon(Icons.location_on, size: 12, color: Colors.grey[500]),
+                                                const SizedBox(width: 4),
+                                                Expanded(
+                                                  child: Text(
+                                                    customer.address!,
+                                                    style: TextStyle(
+                                                      fontFamily: 'Literata',
+                                                      color: Colors.grey[500],
+                                                      fontSize: 11,
+                                                    ),
+                                                    maxLines: 1,
+                                                    overflow: TextOverflow.ellipsis,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Icon(
+                                      Icons.chevron_right,
+                                      color: Colors.grey[400],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
