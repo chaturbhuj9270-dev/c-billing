@@ -2857,22 +2857,16 @@ class _BillingPageState extends State<BillingPage> {
                                       child: Container(
                                         padding: const EdgeInsets.all(8),
                                         decoration: BoxDecoration(
-                                          color: item.quantity > 1
-                                              ? const Color(0xFF1B4D3E).withValues(alpha: 0.08)
-                                              : Colors.red[50],
+                                          color: const Color(0xFF1B4D3E).withValues(alpha: 0.08),
                                           borderRadius: const BorderRadius.only(
                                             topLeft: Radius.circular(11),
                                             bottomLeft: Radius.circular(11),
                                           ),
                                         ),
-                                        child: Icon(
-                                          item.quantity > 1
-                                              ? Icons.remove_rounded
-                                              : Icons.delete_outline_rounded,
+                                        child: const Icon(
+                                          Icons.remove_rounded,
                                           size: 18,
-                                          color: item.quantity > 1
-                                              ? const Color(0xFF1B4D3E)
-                                              : Colors.red[400],
+                                          color: Color(0xFF1B4D3E),
                                         ),
                                       ),
                                     ),
