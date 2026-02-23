@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../data/services/event_order_sync_service.dart';
 import '../../domain/entities/event_order.dart';
 import '../../domain/entities/sub_event.dart';
 import '../../domain/entities/order_item.dart';
@@ -120,6 +121,9 @@ class EventOrderCubit extends Cubit<EventOrderState> {
         isNew: true,
       ));
 
+      // Trigger sync to upload to server
+      EventOrderSyncService.instance.syncNow();
+
       // Reload list after creating
       await loadEventOrders();
     } catch (e) {
@@ -178,6 +182,9 @@ class EventOrderCubit extends Cubit<EventOrderState> {
           order: entity.toDomain(),
           isNew: false,
         ));
+
+        // Trigger sync to upload to server
+        EventOrderSyncService.instance.syncNow();
       } else {
         emit(const EventOrderError(message: 'Order not found'));
       }
@@ -198,6 +205,10 @@ class EventOrderCubit extends Cubit<EventOrderState> {
       final success = await _controller.deleteEventOrder(id);
       if (success) {
         emit(const EventOrderDeleted());
+
+        // Trigger sync to update server
+        EventOrderSyncService.instance.syncNow();
+
         // Reload list after deleting
         await loadEventOrders();
       } else {

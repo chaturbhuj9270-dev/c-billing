@@ -448,4 +448,93 @@ class EventOrderOfflineController extends ChangeNotifier {
     debugPrint('[EventOrderOffline] Purged ${toDelete.length} deleted records');
     return toDelete.length;
   }
+
+  /// Import an event order from server (used during sync)
+  Future<void> importEventOrder(EventOrderEntity entity) async {
+    await _isar.writeTxn(() async {
+      await _isar.eventOrderEntitys.put(entity);
+    });
+    debugPrint('[EventOrderOffline] Imported order from server: ${entity.serverId}');
+    notifyListeners();
+  }
+
+  /// Update an order from server data (used during sync)
+  Future<void> updateFromServer(Id localId, Map<String, dynamic> data) async {
+    final existing = await _isar.eventOrderEntitys.get(localId);
+    if (existing == null) return;
+
+    // Parse sub-events
+    final subEvents = (data['subEvents'] as List<dynamic>?)
+        ?.map((e) => SubEventEmbedded(
+              id: e['id'] as String?,
+              name: e['name'] as String?,
+              date: DateTime.tryParse(e['date']?.toString() ?? ''),
+              charges: (e['charges'] as num?)?.toDouble() ?? 0.0,
+              notes: e['notes'] as String?,
+              customDataJson: e['customDataJson'] as String?,
+            ))
+        .toList() ?? existing.subEvents;
+
+    // Parse items
+    final items = (data['items'] as List<dynamic>?)
+        ?.map((e) => OrderItemEmbedded(
+              id: e['id'] as String?,
+              productId: e['productId'] as String?,
+              productName: e['productName'] as String?,
+              hsnCode: e['hsnCode'] as String?,
+              quantity: (e['quantity'] as num?)?.toInt() ?? 0,
+              rate: (e['rate'] as num?)?.toDouble() ?? 0.0,
+              discountPercent: (e['discountPercent'] as num?)?.toDouble() ?? 0.0,
+              discountAmount: (e['discountAmount'] as num?)?.toDouble() ?? 0.0,
+              cgstPercent: (e['cgstPercent'] as num?)?.toDouble() ?? 0.0,
+              sgstPercent: (e['sgstPercent'] as num?)?.toDouble() ?? 0.0,
+              cgstAmount: (e['cgstAmount'] as num?)?.toDouble() ?? 0.0,
+              sgstAmount: (e['sgstAmount'] as num?)?.toDouble() ?? 0.0,
+              taxAmount: (e['taxAmount'] as num?)?.toDouble() ?? 0.0,
+              subtotal: (e['subtotal'] as num?)?.toDouble() ?? 0.0,
+              total: (e['total'] as num?)?.toDouble() ?? 0.0,
+            ))
+        .toList() ?? existing.items;
+
+    // Update fields
+    existing.orderType = (data['orderType'] as num?)?.toInt() ?? existing.orderType;
+    existing.customerId = data['customerId'] as String? ?? existing.customerId;
+    existing.customerName = data['customerName'] as String? ?? existing.customerName;
+    existing.customerContact = data['customerContact'] as String? ?? existing.customerContact;
+    existing.customerAddress = data['customerAddress'] as String? ?? existing.customerAddress;
+    existing.orderName = data['orderName'] as String? ?? existing.orderName;
+    existing.description = data['description'] as String? ?? existing.description;
+    existing.eventDate = DateTime.tryParse(data['eventDate']?.toString() ?? '') ?? existing.eventDate;
+    existing.eventLocation = data['eventLocation'] as String? ?? existing.eventLocation;
+    existing.subEvents = subEvents;
+    existing.items = items;
+    existing.eventCharges = (data['eventCharges'] as num?)?.toDouble() ?? existing.eventCharges;
+    existing.totalAmount = (data['totalAmount'] as num?)?.toDouble() ?? existing.totalAmount;
+    existing.advanceAmount = (data['advanceAmount'] as num?)?.toDouble() ?? existing.advanceAmount;
+    existing.remainingAmount = (data['remainingAmount'] as num?)?.toDouble() ?? existing.remainingAmount;
+    existing.notes = data['notes'] as String? ?? existing.notes;
+    existing.status = (data['status'] as num?)?.toInt() ?? existing.status;
+    existing.convertedBillId = data['convertedBillId'] as String? ?? existing.convertedBillId;
+    existing.customDataJson = data['customDataJson'] as String? ?? existing.customDataJson;
+    existing.updatedAt = DateTime.tryParse(data['updatedAt']?.toString() ?? '') ?? DateTime.now();
+    existing.syncStatus = EventOrderSyncStatus.synced;
+
+    await _isar.writeTxn(() async {
+      await _isar.eventOrderEntitys.put(existing);
+    });
+    
+    debugPrint('[EventOrderOffline] Updated from server: $localId');
+    notifyListeners();
+  }
+
+  /// Get count of unsynced records
+  Future<int> getUnsyncedCount() async {
+    return await _isar.eventOrderEntitys
+        .filter()
+        .not()
+        .syncStatusEqualTo(EventOrderSyncStatus.synced)
+        .not()
+        .syncStatusEqualTo(EventOrderSyncStatus.deleted)
+        .count();
+  }
 }

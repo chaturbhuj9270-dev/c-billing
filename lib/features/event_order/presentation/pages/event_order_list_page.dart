@@ -10,6 +10,8 @@ import '../cubit/event_order_cubit.dart';
 import '../cubit/event_order_state.dart';
 import '../../data/services/event_order_pdf_service.dart';
 import '../../data/services/event_order_report_pdf_generator.dart';
+import '../../data/services/event_order_sync_service.dart';
+import '../../offline/controllers/event_order_offline_controller.dart';
 import '../../../shop/data/repositories/shop_repository.dart';
 import '../../../shop/domain/entities/shop.dart';
 import '../../../../common_widgets/file_preview_page.dart';
@@ -49,6 +51,10 @@ class _EventOrderListPageState extends State<EventOrderListPage>
   DateTime? _customStartDate;
   DateTime? _customEndDate;
 
+  // Sync state
+  int _unsyncedCount = 0;
+  VoidCallback? _offlineControllerListener;
+
   // Primary colors - aligned with app theme (availability screen style)
   static const _primaryColor = Color(0xFF1B4D3E);
   static const _primaryDark = Color(0xFF2D6B5A);
@@ -59,11 +65,38 @@ class _EventOrderListPageState extends State<EventOrderListPage>
   void initState() {
     super.initState();
     _selectedType = widget.filterType;
+    _initSyncService();
+  }
+
+  void _initSyncService() {
+    // Initialize sync service
+    EventOrderSyncService.instance.initialize();
+    
+    // Load initial unsynced count
+    _loadUnsyncedCount();
+    
+    // Listen for offline controller changes
+    _offlineControllerListener = () => _loadUnsyncedCount();
+    EventOrderOfflineController.instance.addListener(_offlineControllerListener!);
+    
+    // Also listen for sync service changes
+    EventOrderSyncService.instance.addListener(_loadUnsyncedCount);
+  }
+
+  Future<void> _loadUnsyncedCount() async {
+    final count = await EventOrderOfflineController.instance.getUnsyncedCount();
+    if (mounted) {
+      setState(() => _unsyncedCount = count);
+    }
   }
 
   @override
   void dispose() {
     _searchController.dispose();
+    if (_offlineControllerListener != null) {
+      EventOrderOfflineController.instance.removeListener(_offlineControllerListener!);
+    }
+    EventOrderSyncService.instance.removeListener(_loadUnsyncedCount);
     super.dispose();
   }
 
@@ -111,6 +144,54 @@ class _EventOrderListPageState extends State<EventOrderListPage>
         ),
       ),
       actions: [
+        // Cloud sync indicator
+        if (_unsyncedCount > 0)
+          Padding(
+            padding: const EdgeInsets.only(right: 4),
+            child: GestureDetector(
+              onTap: () {
+                EventOrderSyncService.instance.syncNow();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Row(
+                      children: const [
+                        SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        ),
+                        SizedBox(width: 12),
+                        Text('Syncing...', style: TextStyle(fontFamily: 'Literata')),
+                      ],
+                    ),
+                    backgroundColor: _primaryColor,
+                    behavior: SnackBarBehavior.floating,
+                    duration: const Duration(seconds: 2),
+                  ),
+                );
+              },
+              child: Chip(
+                backgroundColor: Colors.orange[50],
+                avatar: Icon(
+                  Icons.cloud_upload_rounded,
+                  size: 16,
+                  color: Colors.orange[700],
+                ),
+                label: Text(
+                  '$_unsyncedCount',
+                  style: TextStyle(
+                    fontFamily: 'Literata',
+                    fontWeight: FontWeight.w600,
+                    fontSize: 12,
+                    color: Colors.orange[700],
+                  ),
+                ),
+              ),
+            ),
+          ),
         // Report button
         BlocBuilder<EventOrderCubit, EventOrderState>(
           builder: (context, state) {
