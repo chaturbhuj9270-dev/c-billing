@@ -8,6 +8,7 @@ import '../../../billing/offline/entities/bill_entity.dart';
 import '../../../customer/offline/controllers/customer_offline_controller.dart';
 import '../../../customer/offline/entities/customer_entity.dart';
 import '../../../inventory_management/offline/controllers/purchase_offline_controller.dart';
+import '../../../inventory_management/offline/controllers/purchase_batch_offline_controller.dart';
 import '../../../inventory_management/offline/entities/purchase_batch_entity.dart';
 import '../../../inventory_management/offline/entities/purchase_entity.dart';
 import '../../../product/offline/controllers/product_offline_controller.dart';
@@ -278,12 +279,16 @@ class DashboardIsarDataSource {
 
   // ==================== PURCHASE CALCULATION ====================
 
+  /// Calculate purchase totals from PurchaseBatchEntity for real-time accuracy.
+  /// Using batches instead of PurchaseEntity ensures dashboard updates immediately
+  /// when users edit purchase records (which modify batch data).
   Future<_PurchaseResult> _getPurchaseDataForPeriod(
     DateTime? startDate,
     DateTime? endDate,
   ) async {
-    final purchases = await PurchaseOfflineController.instance
-        .getPurchasesByDateRange(
+    // Use PurchaseBatchEntity for real-time accuracy since edits update batches
+    final batches = await PurchaseBatchOfflineController.instance
+        .getBatchesByDateRange(
       startDate ?? DateTime(2000),
       endDate ?? DateTime.now().add(const Duration(days: 1)),
     );
@@ -291,14 +296,15 @@ class DashboardIsarDataSource {
     double totalAmount = 0;
     int totalQty = 0;
 
-    for (final purchase in purchases) {
-      totalAmount += purchase.totalAmount;
-      totalQty += purchase.quantity;
+    for (final batch in batches) {
+      // Calculate total purchase amount: quantityPurchased × purchasePrice
+      totalAmount += batch.quantityPurchased * batch.purchasePrice;
+      totalQty += batch.quantityPurchased;
     }
 
     return _PurchaseResult(
       totalAmount: totalAmount,
-      orderCount: purchases.length,
+      orderCount: batches.length,
       totalQty: totalQty,
     );
   }
