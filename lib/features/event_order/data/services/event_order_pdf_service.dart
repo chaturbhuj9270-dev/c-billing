@@ -723,6 +723,9 @@ class EventOrderPdfService {
     debugPrint('[EventOrderPdfService] saveOrderPdf started for: ${order.orderName}');
     
     try {
+      // Yield to allow UI to update
+      await Future.delayed(Duration.zero);
+      
       debugPrint('[EventOrderPdfService] Generating PDF document...');
       final pdf = await generateEventOrderPdf(
         order: order,
@@ -730,6 +733,9 @@ class EventOrderPdfService {
       );
       debugPrint('[EventOrderPdfService] PDF document generated successfully');
 
+      // Yield again before heavy save operation
+      await Future.delayed(Duration.zero);
+      
       debugPrint('[EventOrderPdfService] Saving PDF bytes...');
       final bytes = await pdf.save();
       debugPrint('[EventOrderPdfService] PDF bytes saved: ${bytes.length} bytes');
@@ -737,6 +743,9 @@ class EventOrderPdfService {
       if (bytes.isEmpty) {
         throw Exception('PDF generation failed: empty bytes');
       }
+      
+      // Yield before file operations
+      await Future.delayed(Duration.zero);
       
       debugPrint('[EventOrderPdfService] Getting temporary directory...');
       final dir = await getTemporaryDirectory();

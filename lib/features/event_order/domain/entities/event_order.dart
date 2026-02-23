@@ -117,6 +117,9 @@ class EventOrder {
   /// Updated timestamp
   final DateTime updatedAt;
   
+  /// Whether this record is synced to cloud
+  final bool isSynced;
+  
   const EventOrder({
     required this.id,
     required this.orderType,
@@ -140,6 +143,7 @@ class EventOrder {
     this.customData = const {},
     required this.createdAt,
     required this.updatedAt,
+    this.isSynced = false,
   });
   
   /// Check if this is an event type
@@ -193,6 +197,7 @@ class EventOrder {
     Map<String, dynamic>? customData,
     DateTime? createdAt,
     DateTime? updatedAt,
+    bool? isSynced,
   }) {
     return EventOrder(
       id: id ?? this.id,
@@ -217,6 +222,7 @@ class EventOrder {
       customData: customData ?? this.customData,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      isSynced: isSynced ?? this.isSynced,
     );
   }
   

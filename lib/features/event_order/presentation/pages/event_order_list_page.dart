@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:printing/printing.dart';
 
 import '../../domain/entities/event_order.dart';
 import '../cubit/event_order_cubit.dart';
@@ -983,6 +984,38 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                   spacing: 8,
                   runSpacing: 8,
                   children: [
+                    // Sync status badge
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: order.isSynced ? Colors.green[50] : Colors.orange[50],
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: order.isSynced ? Colors.green[200]! : Colors.orange[200]!,
+                          width: 0.5,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            order.isSynced ? Icons.cloud_done_rounded : Icons.cloud_upload_rounded,
+                            size: 14,
+                            color: order.isSynced ? Colors.green[700] : Colors.orange[700],
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            order.isSynced ? 'Synced' : 'Pending',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w500,
+                              fontFamily: 'Literata',
+                              color: order.isSynced ? Colors.green[700] : Colors.orange[700],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                     _buildInfoBadge(
                       Icons.calendar_today_rounded,
                       DateFormat('dd MMM yyyy').format(order.eventDate),
@@ -1567,41 +1600,48 @@ class _EventOrderListPageState extends State<EventOrderListPage>
 
   /// Show invoice preview with share/print options
   Future<void> _showInvoicePreview(BuildContext context, EventOrder order) async {
-    if (_processingOrderId != null) return;
+    if (_processingOrderId != null) {
+      debugPrint('[EventOrderList] Already processing order: $_processingOrderId, skipping');
+      return;
+    }
     
     setState(() => _processingOrderId = order.id);
     
     // Clear any existing snackbars first
     ScaffoldMessenger.of(context).clearSnackBars();
     
-    try {
-      debugPrint('[EventOrderList] Starting invoice preview for: ${order.orderName}');
-      
-      // Show loading snackbar with shorter duration as fallback
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Row(
-              children: [
-                SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Colors.white,
-                  ),
-                ),
-                SizedBox(width: 12),
-                Text(
+    debugPrint('[EventOrderList] Starting invoice preview for: ${order.orderName}');
+    
+    // Show loading dialog instead of snackbar for better UX
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => PopScope(
+        canPop: false,
+        child: AlertDialog(
+          content: Row(
+            children: [
+              const CircularProgressIndicator(color: _primaryColor),
+              const SizedBox(width: 20),
+              const Expanded(
+                child: Text(
                   'Generating invoice...',
                   style: TextStyle(fontFamily: 'Literata'),
                 ),
-              ],
-            ),
-            duration: Duration(seconds: 20),
-            backgroundColor: _primaryColor,
+              ),
+            ],
           ),
-        );
+        ),
+      ),
+    );
+    
+    // Allow dialog to render
+    await Future.delayed(const Duration(milliseconds: 50));
+    
+    try {
+      if (!mounted) {
+        Navigator.of(context).pop(); // Close dialog
+        return;
       }
 
       debugPrint('[EventOrderList] Fetching shop details...');
@@ -1620,29 +1660,27 @@ class _EventOrderListPageState extends State<EventOrderListPage>
         shop = Shop.empty;
       }
       
-      debugPrint('[EventOrderList] Generating PDF file...');
+      if (!mounted) {
+        Navigator.of(context).pop();
+        return;
+      }
+      
+      debugPrint('[EventOrderList] Generating PDF...');
       debugPrint('[EventOrderList] Order details - name: ${order.orderName}, type: ${order.orderType}, items: ${order.items.length}, subEvents: ${order.subEvents.length}');
       
-      late File file;
-      try {
-        file = await _pdfService.saveOrderPdf(
-          order: order,
-          shopDetails: shop,
-        ).timeout(
-          const Duration(seconds: 30),
-          onTimeout: () => throw Exception('PDF generation timed out after 30 seconds'),
-        );
-        debugPrint('[EventOrderList] PDF saved to: ${file.path}');
-        debugPrint('[EventOrderList] File exists: ${file.existsSync()}, size: ${file.existsSync() ? file.lengthSync() : 0}');
-      } catch (pdfError, pdfStack) {
-        debugPrint('[EventOrderList] PDF generation error: $pdfError');
-        debugPrint('[EventOrderList] PDF stack: $pdfStack');
-        rethrow;
-      }
+      // Generate PDF document directly
+      final pdf = await _pdfService.generateEventOrderPdf(
+        order: order,
+        shopDetails: shop,
+      );
+      
+      debugPrint('[EventOrderList] PDF document generated, saving bytes...');
+      final pdfBytes = await pdf.save();
+      debugPrint('[EventOrderList] PDF bytes: ${pdfBytes.length}');
 
-      // Clear loading snackbar immediately
-      if (mounted) {
-        ScaffoldMessenger.of(context).clearSnackBars();
+      // Close loading dialog
+      if (mounted && Navigator.of(context).canPop()) {
+        Navigator.of(context).pop();
       }
 
       if (!mounted) {
@@ -1650,33 +1688,26 @@ class _EventOrderListPageState extends State<EventOrderListPage>
         return;
       }
       
-      // Reset processing state before navigation
+      // Reset processing state before preview
       setState(() => _processingOrderId = null);
 
       final isEvent = order.orderType == OrderType.event;
       final title = isEvent ? 'Event Invoice' : 'Order Invoice';
       
-      // Navigate to PDF preview
-      debugPrint('[EventOrderList] Navigating to FilePreviewPage...');
-      await Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => FilePreviewPage(
-            file: file,
-            fileName: '$title - ${order.orderName}',
-            fileType: FilePreviewType.pdf,
-            subtitle: DateFormat('dd MMM yyyy').format(order.eventDate),
-          ),
-        ),
+      // Use Printing.layoutPdf for direct preview (more reliable)
+      debugPrint('[EventOrderList] Opening PDF preview...');
+      await Printing.layoutPdf(
+        onLayout: (format) async => pdfBytes,
+        name: '$title - ${order.orderName}',
       );
-      debugPrint('[EventOrderList] Returned from FilePreviewPage');
+      debugPrint('[EventOrderList] PDF preview closed');
     } catch (e, stack) {
       debugPrint('[EventOrderList] ERROR generating invoice: $e');
       debugPrint('[EventOrderList] Stack trace: $stack');
       
-      // Clear loading snackbar immediately
-      if (mounted) {
-        ScaffoldMessenger.of(context).clearSnackBars();
+      // Close loading dialog
+      if (mounted && Navigator.of(context).canPop()) {
+        Navigator.of(context).pop();
       }
       
       if (mounted) {
@@ -1701,8 +1732,14 @@ class _EventOrderListPageState extends State<EventOrderListPage>
     
     setState(() => _processingOrderId = order.id);
     try {
-      final shop = await ShopRepository().getShopDetails();
-      await _pdfService.shareOrderAsPdf(order: order, shopDetails: shop);
+      final shop = await ShopRepository().getShopDetails().timeout(
+        const Duration(seconds: 5),
+        onTimeout: () => Shop.empty,
+      );
+      await _pdfService.shareOrderAsPdf(order: order, shopDetails: shop).timeout(
+        const Duration(seconds: 30),
+        onTimeout: () => throw Exception('Share timed out'),
+      );
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1724,8 +1761,14 @@ class _EventOrderListPageState extends State<EventOrderListPage>
     
     setState(() => _processingOrderId = order.id);
     try {
-      final shop = await ShopRepository().getShopDetails();
-      await _pdfService.printOrder(order: order, shopDetails: shop);
+      final shop = await ShopRepository().getShopDetails().timeout(
+        const Duration(seconds: 5),
+        onTimeout: () => Shop.empty,
+      );
+      await _pdfService.printOrder(order: order, shopDetails: shop).timeout(
+        const Duration(seconds: 30),
+        onTimeout: () => throw Exception('Print timed out'),
+      );
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

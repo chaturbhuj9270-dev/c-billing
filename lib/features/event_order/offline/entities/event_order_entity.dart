@@ -318,6 +318,7 @@ class EventOrderEntity {
       customData: customData,
       createdAt: createdAt,
       updatedAt: updatedAt,
+      isSynced: syncStatus == EventOrderSyncStatus.synced,
     );
   }
   
