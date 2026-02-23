@@ -17,6 +17,8 @@ import '../../../supplier/offline/controllers/supplier_offline_controller.dart';
 import '../../../supplier/offline/entities/supplier_entity.dart';
 import '../../../company/offline/controllers/company_offline_controller.dart';
 import '../../../company/offline/entities/company_entity.dart';
+import '../../../event_order/offline/entities/event_order_entity.dart';
+import '../../../event_order/domain/entities/event_order.dart';
 import '../../domain/entities/dashboard_summary.dart';
 import '../../domain/repositories/dashboard_repository_interface.dart';
 
@@ -69,6 +71,8 @@ class DashboardIsarDataSource {
       _getStockDataFromBatches(),
       // Pending amounts (9)
       _getTotalPendingAmount(),
+      // Event/Order data (10)
+      _getEventOrderData(),
     ]);
 
     // Extract counts
@@ -90,6 +94,9 @@ class DashboardIsarDataSource {
 
     // Extract pending amount
     final totalPendingAmount = results[9] as double;
+    
+    // Extract event/order data
+    final eventOrderData = results[10] as _EventOrderResult;
 
     // Net Sales = Gross Sales - Returns
     final netSales = salesData.grossSales - salesData.totalReturns;
@@ -105,7 +112,8 @@ class DashboardIsarDataSource {
       'GrossSales: ${salesData.grossSales.toStringAsFixed(0)}, '
       'Returns: ${salesData.totalReturns.toStringAsFixed(0)}, '
       'NetSales: ${netSales.toStringAsFixed(0)}, '
-      'Profit: ${profit.toStringAsFixed(0)}',
+      'Profit: ${profit.toStringAsFixed(0)}, '
+      'Events/Orders: ${eventOrderData.totalCount}',
     );
 
     return DashboardSummary(
@@ -129,6 +137,12 @@ class DashboardIsarDataSource {
       stockValue: stockData.stockValue,
       lowStockCount: stockData.lowStockCount,
       totalPendingAmount: totalPendingAmount,
+      totalEventOrders: eventOrderData.totalCount,
+      upcomingEvents: eventOrderData.upcomingEvents,
+      pendingOrders: eventOrderData.pendingOrders,
+      eventOrdersAmount: eventOrderData.totalAmount,
+      eventOrdersAdvance: eventOrderData.totalAdvance,
+      eventOrdersPending: eventOrderData.totalPending,
       lastUpdated: DateTime.now(),
       isFromCache: false,
     );
@@ -192,6 +206,10 @@ class DashboardIsarDataSource {
         );
         _watchSubscriptions.add(
           _isar.companyEntitys.watchLazy().listen((_) => onCollectionChanged()),
+        );
+        // Event orders for real-time event/order updates
+        _watchSubscriptions.add(
+          _isar.eventOrderEntitys.watchLazy().listen((_) => onCollectionChanged()),
         );
         // Also listen to DashboardRefreshService for external refresh requests
         _watchSubscriptions.add(
@@ -371,6 +389,53 @@ class DashboardIsarDataSource {
     return total;
   }
 
+  // ==================== EVENT ORDER CALCULATION ====================
+
+  /// Get event/order statistics from Isar
+  /// Returns total count, upcoming events, pending orders, and financial totals
+  Future<_EventOrderResult> _getEventOrderData() async {
+    // Get all non-deleted event orders
+    final allOrders = await _isar.eventOrderEntitys
+        .filter()
+        .not()
+        .syncStatusEqualTo(EventOrderSyncStatus.deleted)
+        .findAll();
+
+    final now = DateTime.now();
+    int totalCount = allOrders.length;
+    int upcomingEvents = 0;
+    int pendingOrders = 0;
+    double totalAmount = 0;
+    double totalAdvance = 0;
+    double totalPending = 0;
+
+    for (final order in allOrders) {
+      totalAmount += order.totalAmount;
+      totalAdvance += order.advanceAmount;
+      totalPending += order.remainingAmount;
+
+      // Count upcoming events (event date in future, type = event)
+      if (order.orderType == OrderType.event.index && 
+          order.eventDate.isAfter(now)) {
+        upcomingEvents++;
+      }
+
+      // Count pending orders (not delivered, cancelled, or converted)
+      if (order.status < OrderStatus.delivered.index) {
+        pendingOrders++;
+      }
+    }
+
+    return _EventOrderResult(
+      totalCount: totalCount,
+      upcomingEvents: upcomingEvents,
+      pendingOrders: pendingOrders,
+      totalAmount: totalAmount,
+      totalAdvance: totalAdvance,
+      totalPending: totalPending,
+    );
+  }
+
   /// Dispose resources
   void dispose() {
     _debounceTimer?.cancel();
@@ -420,5 +485,23 @@ class _StockResult {
   const _StockResult({
     required this.stockValue,
     required this.lowStockCount,
+  });
+}
+
+class _EventOrderResult {
+  final int totalCount;
+  final int upcomingEvents;
+  final int pendingOrders;
+  final double totalAmount;
+  final double totalAdvance;
+  final double totalPending;
+
+  const _EventOrderResult({
+    required this.totalCount,
+    required this.upcomingEvents,
+    required this.pendingOrders,
+    required this.totalAmount,
+    required this.totalAdvance,
+    required this.totalPending,
   });
 }

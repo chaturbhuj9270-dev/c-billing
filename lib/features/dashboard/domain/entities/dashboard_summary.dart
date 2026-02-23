@@ -44,6 +44,20 @@ class DashboardSummary extends Equatable {
   /// Total pending amount across all bills (unpaid / partially paid)
   final double totalPendingAmount;
   
+  // Event/Order tracking fields
+  /// Total count of all events and orders
+  final int totalEventOrders;
+  /// Count of upcoming events (event date in future)
+  final int upcomingEvents;
+  /// Count of pending orders (not delivered/cancelled)
+  final int pendingOrders;
+  /// Total amount from all events/orders
+  final double eventOrdersAmount;
+  /// Total advance collected
+  final double eventOrdersAdvance;
+  /// Total pending/remaining amount
+  final double eventOrdersPending;
+  
   final DateTime lastUpdated;
   final bool isFromCache;
 
@@ -68,6 +82,12 @@ class DashboardSummary extends Equatable {
     this.stockValue = 0,
     this.lowStockCount = 0,
     this.totalPendingAmount = 0,
+    this.totalEventOrders = 0,
+    this.upcomingEvents = 0,
+    this.pendingOrders = 0,
+    this.eventOrdersAmount = 0,
+    this.eventOrdersAdvance = 0,
+    this.eventOrdersPending = 0,
     required this.lastUpdated,
     this.isFromCache = false,
   });
@@ -104,6 +124,12 @@ class DashboardSummary extends Equatable {
     double? stockValue,
     int? lowStockCount,
     double? totalPendingAmount,
+    int? totalEventOrders,
+    int? upcomingEvents,
+    int? pendingOrders,
+    double? eventOrdersAmount,
+    double? eventOrdersAdvance,
+    double? eventOrdersPending,
     DateTime? lastUpdated,
     bool? isFromCache,
   }) {
@@ -128,6 +154,12 @@ class DashboardSummary extends Equatable {
       stockValue: stockValue ?? this.stockValue,
       lowStockCount: lowStockCount ?? this.lowStockCount,
       totalPendingAmount: totalPendingAmount ?? this.totalPendingAmount,
+      totalEventOrders: totalEventOrders ?? this.totalEventOrders,
+      upcomingEvents: upcomingEvents ?? this.upcomingEvents,
+      pendingOrders: pendingOrders ?? this.pendingOrders,
+      eventOrdersAmount: eventOrdersAmount ?? this.eventOrdersAmount,
+      eventOrdersAdvance: eventOrdersAdvance ?? this.eventOrdersAdvance,
+      eventOrdersPending: eventOrdersPending ?? this.eventOrdersPending,
       lastUpdated: lastUpdated ?? this.lastUpdated,
       isFromCache: isFromCache ?? this.isFromCache,
     );
@@ -156,6 +188,12 @@ class DashboardSummary extends Equatable {
       'stockValue': stockValue,
       'lowStockCount': lowStockCount,
       'totalPendingAmount': totalPendingAmount,
+      'totalEventOrders': totalEventOrders,
+      'upcomingEvents': upcomingEvents,
+      'pendingOrders': pendingOrders,
+      'eventOrdersAmount': eventOrdersAmount,
+      'eventOrdersAdvance': eventOrdersAdvance,
+      'eventOrdersPending': eventOrdersPending,
       'lastUpdated': lastUpdated.toIso8601String(),
     };
   }
@@ -183,6 +221,12 @@ class DashboardSummary extends Equatable {
       stockValue: (json['stockValue'] as num?)?.toDouble() ?? 0,
       lowStockCount: json['lowStockCount'] as int? ?? 0,
       totalPendingAmount: (json['totalPendingAmount'] as num?)?.toDouble() ?? 0,
+      totalEventOrders: json['totalEventOrders'] as int? ?? 0,
+      upcomingEvents: json['upcomingEvents'] as int? ?? 0,
+      pendingOrders: json['pendingOrders'] as int? ?? 0,
+      eventOrdersAmount: (json['eventOrdersAmount'] as num?)?.toDouble() ?? 0,
+      eventOrdersAdvance: (json['eventOrdersAdvance'] as num?)?.toDouble() ?? 0,
+      eventOrdersPending: (json['eventOrdersPending'] as num?)?.toDouble() ?? 0,
       lastUpdated: json['lastUpdated'] != null
           ? DateTime.parse(json['lastUpdated'] as String)
           : DateTime.now(),
@@ -212,6 +256,12 @@ class DashboardSummary extends Equatable {
         stockValue,
         lowStockCount,
         totalPendingAmount,
+        totalEventOrders,
+        upcomingEvents,
+        pendingOrders,
+        eventOrdersAmount,
+        eventOrdersAdvance,
+        eventOrdersPending,
         lastUpdated,
         isFromCache,
       ];

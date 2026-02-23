@@ -895,8 +895,8 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
           const SizedBox(width: 12),
           _buildQuickStatItem(
             icon: Icons.celebration_rounded,
-            value: 'Events',
-            label: 'Orders',
+            value: '${data.totalEventOrders}',
+            label: '${data.upcomingEvents} Upcoming',
             color: const Color(0xFFE91E63),
             isLoading: isLoading,
             onTap: () => Navigator.push(

@@ -23,6 +23,14 @@ class DashboardData extends Equatable {
   final double stockValue;
   final int lowStockCount;
   final double totalPendingAmount;
+  
+  // Event/Order data
+  final int totalEventOrders;
+  final int upcomingEvents;
+  final int pendingOrders;
+  final double eventOrdersAmount;
+  final double eventOrdersAdvance;
+  final double eventOrdersPending;
 
   const DashboardData({
     this.invoicesCount = 0,
@@ -46,6 +54,12 @@ class DashboardData extends Equatable {
     this.stockValue = 0,
     this.lowStockCount = 0,
     this.totalPendingAmount = 0,
+    this.totalEventOrders = 0,
+    this.upcomingEvents = 0,
+    this.pendingOrders = 0,
+    this.eventOrdersAmount = 0,
+    this.eventOrdersAdvance = 0,
+    this.eventOrdersPending = 0,
   });
 
   /// Empty dashboard data
@@ -73,6 +87,12 @@ class DashboardData extends Equatable {
     double? stockValue,
     int? lowStockCount,
     double? totalPendingAmount,
+    int? totalEventOrders,
+    int? upcomingEvents,
+    int? pendingOrders,
+    double? eventOrdersAmount,
+    double? eventOrdersAdvance,
+    double? eventOrdersPending,
   }) {
     return DashboardData(
       invoicesCount: invoicesCount ?? this.invoicesCount,
@@ -96,6 +116,12 @@ class DashboardData extends Equatable {
       stockValue: stockValue ?? this.stockValue,
       lowStockCount: lowStockCount ?? this.lowStockCount,
       totalPendingAmount: totalPendingAmount ?? this.totalPendingAmount,
+      totalEventOrders: totalEventOrders ?? this.totalEventOrders,
+      upcomingEvents: upcomingEvents ?? this.upcomingEvents,
+      pendingOrders: pendingOrders ?? this.pendingOrders,
+      eventOrdersAmount: eventOrdersAmount ?? this.eventOrdersAmount,
+      eventOrdersAdvance: eventOrdersAdvance ?? this.eventOrdersAdvance,
+      eventOrdersPending: eventOrdersPending ?? this.eventOrdersPending,
     );
   }
 
@@ -122,5 +148,11 @@ class DashboardData extends Equatable {
     stockValue,
     lowStockCount,
     totalPendingAmount,
+    totalEventOrders,
+    upcomingEvents,
+    pendingOrders,
+    eventOrdersAmount,
+    eventOrdersAdvance,
+    eventOrdersPending,
   ];
 }
