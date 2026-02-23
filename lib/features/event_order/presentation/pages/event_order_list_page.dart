@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -1601,8 +1599,10 @@ class _EventOrderListPageState extends State<EventOrderListPage>
   /// Show invoice preview with share/print options
   Future<void> _showInvoicePreview(BuildContext context, EventOrder order) async {
     if (_processingOrderId != null) {
-      debugPrint('[EventOrderList] Already processing order: $_processingOrderId, skipping');
-      return;
+      debugPrint('[EventOrderList] Already processing order: $_processingOrderId, resetting...');
+      // Reset stale state and allow retry
+      setState(() => _processingOrderId = null);
+      _pdfService.resetGeneratingState();
     }
     
     setState(() => _processingOrderId = order.id);
@@ -1611,6 +1611,21 @@ class _EventOrderListPageState extends State<EventOrderListPage>
     ScaffoldMessenger.of(context).clearSnackBars();
     
     debugPrint('[EventOrderList] Starting invoice preview for: ${order.orderName}');
+    
+    // Track if dialog is shown to ensure proper cleanup
+    bool dialogShown = false;
+    
+    // Helper to safely close dialog
+    void closeDialog() {
+      if (dialogShown && mounted) {
+        try {
+          Navigator.of(context, rootNavigator: true).pop();
+          dialogShown = false;
+        } catch (e) {
+          debugPrint('[EventOrderList] Error closing dialog: $e');
+        }
+      }
+    }
     
     // Show loading dialog instead of snackbar for better UX
     showDialog(
@@ -1634,13 +1649,14 @@ class _EventOrderListPageState extends State<EventOrderListPage>
         ),
       ),
     );
+    dialogShown = true;
     
     // Allow dialog to render
     await Future.delayed(const Duration(milliseconds: 50));
     
     try {
       if (!mounted) {
-        Navigator.of(context).pop(); // Close dialog
+        closeDialog();
         return;
       }
 
@@ -1661,27 +1677,39 @@ class _EventOrderListPageState extends State<EventOrderListPage>
       }
       
       if (!mounted) {
-        Navigator.of(context).pop();
+        closeDialog();
         return;
       }
       
       debugPrint('[EventOrderList] Generating PDF...');
       debugPrint('[EventOrderList] Order details - name: ${order.orderName}, type: ${order.orderType}, items: ${order.items.length}, subEvents: ${order.subEvents.length}');
       
-      // Generate PDF document directly
+      // Generate PDF document with timeout to prevent hanging
       final pdf = await _pdfService.generateEventOrderPdf(
         order: order,
         shopDetails: shop,
+      ).timeout(
+        const Duration(seconds: 30),
+        onTimeout: () {
+          throw Exception('PDF generation timed out. Please try again.');
+        },
       );
       
       debugPrint('[EventOrderList] PDF document generated, saving bytes...');
-      final pdfBytes = await pdf.save();
+      final pdfBytes = await pdf.save().timeout(
+        const Duration(seconds: 15),
+        onTimeout: () {
+          throw Exception('PDF save timed out. Please try again.');
+        },
+      );
       debugPrint('[EventOrderList] PDF bytes: ${pdfBytes.length}');
+      
+      if (pdfBytes.isEmpty) {
+        throw Exception('PDF generation failed - empty result');
+      }
 
       // Close loading dialog
-      if (mounted && Navigator.of(context).canPop()) {
-        Navigator.of(context).pop();
-      }
+      closeDialog();
 
       if (!mounted) {
         debugPrint('[EventOrderList] Widget not mounted, returning');
@@ -1706,9 +1734,10 @@ class _EventOrderListPageState extends State<EventOrderListPage>
       debugPrint('[EventOrderList] Stack trace: $stack');
       
       // Close loading dialog
-      if (mounted && Navigator.of(context).canPop()) {
-        Navigator.of(context).pop();
-      }
+      closeDialog();
+      
+      // Reset PDF service state on error
+      _pdfService.resetGeneratingState();
       
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1721,6 +1750,8 @@ class _EventOrderListPageState extends State<EventOrderListPage>
       }
     } finally {
       debugPrint('[EventOrderList] Finally block - resetting state');
+      // Ensure dialog is closed in all cases
+      closeDialog();
       if (mounted) {
         setState(() => _processingOrderId = null);
       }
@@ -1728,9 +1759,37 @@ class _EventOrderListPageState extends State<EventOrderListPage>
   }
 
   Future<void> _shareOrder(BuildContext context, EventOrder order) async {
-    if (_processingOrderId != null) return;
+    if (_processingOrderId != null) {
+      debugPrint('[EventOrderList] Already processing, resetting state...');
+      setState(() => _processingOrderId = null);
+      _pdfService.resetGeneratingState();
+    }
     
     setState(() => _processingOrderId = order.id);
+    
+    // Show loading indicator
+    ScaffoldMessenger.of(context).clearSnackBars();
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Row(
+          children: [
+            SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Colors.white,
+              ),
+            ),
+            SizedBox(width: 12),
+            Text('Preparing to share...', style: TextStyle(fontFamily: 'Literata')),
+          ],
+        ),
+        duration: Duration(seconds: 30),
+        backgroundColor: _primaryColor,
+      ),
+    );
+    
     try {
       final shop = await ShopRepository().getShopDetails().timeout(
         const Duration(seconds: 5),
@@ -1740,8 +1799,16 @@ class _EventOrderListPageState extends State<EventOrderListPage>
         const Duration(seconds: 30),
         onTimeout: () => throw Exception('Share timed out'),
       );
-    } catch (e) {
+      
+      // Clear loading snackbar on success
       if (mounted) {
+        ScaffoldMessenger.of(context).clearSnackBars();
+      }
+    } catch (e) {
+      debugPrint('[EventOrderList] Share error: $e');
+      _pdfService.resetGeneratingState();
+      if (mounted) {
+        ScaffoldMessenger.of(context).clearSnackBars();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to share: ${e.toString()}'),
@@ -1757,9 +1824,37 @@ class _EventOrderListPageState extends State<EventOrderListPage>
   }
 
   Future<void> _printOrder(BuildContext context, EventOrder order) async {
-    if (_processingOrderId != null) return;
+    if (_processingOrderId != null) {
+      debugPrint('[EventOrderList] Already processing, resetting state...');
+      setState(() => _processingOrderId = null);
+      _pdfService.resetGeneratingState();
+    }
     
     setState(() => _processingOrderId = order.id);
+    
+    // Show loading indicator
+    ScaffoldMessenger.of(context).clearSnackBars();
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Row(
+          children: [
+            SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Colors.white,
+              ),
+            ),
+            SizedBox(width: 12),
+            Text('Preparing to print...', style: TextStyle(fontFamily: 'Literata')),
+          ],
+        ),
+        duration: Duration(seconds: 30),
+        backgroundColor: _primaryColor,
+      ),
+    );
+    
     try {
       final shop = await ShopRepository().getShopDetails().timeout(
         const Duration(seconds: 5),
@@ -1769,8 +1864,16 @@ class _EventOrderListPageState extends State<EventOrderListPage>
         const Duration(seconds: 30),
         onTimeout: () => throw Exception('Print timed out'),
       );
-    } catch (e) {
+      
+      // Clear loading snackbar on success
       if (mounted) {
+        ScaffoldMessenger.of(context).clearSnackBars();
+      }
+    } catch (e) {
+      debugPrint('[EventOrderList] Print error: $e');
+      _pdfService.resetGeneratingState();
+      if (mounted) {
+        ScaffoldMessenger.of(context).clearSnackBars();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to print: ${e.toString()}'),
@@ -2152,7 +2255,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
               ),
             ],
           ),
-          duration: Duration(seconds: 30),
+          duration: Duration(seconds: 60),
           backgroundColor: _primaryColor,
         ),
       );
@@ -2160,17 +2263,31 @@ class _EventOrderListPageState extends State<EventOrderListPage>
       final isEvent = _selectedType == OrderType.event;
       final filterDesc = _getDateFilterLabel();
 
-      // Generate PDF bytes
+      // Generate PDF bytes with timeout
       final pdfBytes = await EventOrderReportPdfGenerator.generate(
         orders: orders,
         filterDescription: filterDesc,
         isEventReport: isEvent,
+      ).timeout(
+        const Duration(seconds: 45),
+        onTimeout: () {
+          throw Exception('Report generation timed out. Please try again with fewer orders.');
+        },
       );
+      
+      if (pdfBytes.isEmpty) {
+        throw Exception('Report generation failed - empty result');
+      }
 
-      // Save to file
+      // Save to file with timeout
       final file = await EventOrderReportPdfGenerator.saveToFile(
         pdfBytes,
         isEvent: isEvent,
+      ).timeout(
+        const Duration(seconds: 15),
+        onTimeout: () {
+          throw Exception('Failed to save report file');
+        },
       );
 
       // Clear snackbar
@@ -2200,6 +2317,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
           SnackBar(
             content: Text('Failed to generate report: ${e.toString()}'),
             backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
           ),
         );
       }

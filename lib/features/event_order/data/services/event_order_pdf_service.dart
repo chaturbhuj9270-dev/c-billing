@@ -18,7 +18,15 @@ class EventOrderPdfService {
   factory EventOrderPdfService() => _instance;
   EventOrderPdfService._internal();
 
-  static bool _isGenerating = false;
+  bool _isGenerating = false;
+  
+  /// Reset the generating flag - useful for error recovery
+  void resetGeneratingState() {
+    _isGenerating = false;
+  }
+  
+  /// Check if PDF generation is in progress
+  bool get isGenerating => _isGenerating;
 
   /// Generate PDF document for an Event Order
   Future<pw.Document> generateEventOrderPdf({
@@ -646,8 +654,9 @@ class EventOrderPdfService {
     required Shop shopDetails,
   }) async {
     if (_isGenerating) {
-      debugPrint('[EventOrderPdfService] Already generating PDF, skipping...');
-      return;
+      debugPrint('[EventOrderPdfService] Already generating PDF, resetting flag and retrying...');
+      // Reset flag and allow retry instead of silently returning
+      _isGenerating = false;
     }
 
     try {
@@ -694,8 +703,9 @@ class EventOrderPdfService {
     required Shop shopDetails,
   }) async {
     if (_isGenerating) {
-      debugPrint('[EventOrderPdfService] Already generating PDF, skipping...');
-      return;
+      debugPrint('[EventOrderPdfService] Already generating PDF, resetting flag and retrying...');
+      // Reset flag and allow retry instead of silently returning
+      _isGenerating = false;
     }
 
     try {
