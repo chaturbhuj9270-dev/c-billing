@@ -21,8 +21,10 @@ import 'event_order_settings_page.dart';
 /// Date filter options for event/order list
 enum DateFilter {
   thisWeek,
+  nextWeek,
   today,
   thisMonth,
+  nextMonth,
   thisYear,
   custom,
 }
@@ -1284,6 +1286,12 @@ class _EventOrderListPageState extends State<EventOrderListPage>
           ),
           const SizedBox(width: 8),
           _buildDateFilterChip(
+            label: 'Next Week',
+            filter: DateFilter.nextWeek,
+            icon: Icons.next_week_rounded,
+          ),
+          const SizedBox(width: 8),
+          _buildDateFilterChip(
             label: 'Today',
             filter: DateFilter.today,
             icon: Icons.today_rounded,
@@ -1293,6 +1301,12 @@ class _EventOrderListPageState extends State<EventOrderListPage>
             label: 'This Month',
             filter: DateFilter.thisMonth,
             icon: Icons.calendar_month_rounded,
+          ),
+          const SizedBox(width: 8),
+          _buildDateFilterChip(
+            label: 'Next Month',
+            filter: DateFilter.nextMonth,
+            icon: Icons.event_rounded,
           ),
           const SizedBox(width: 8),
           _buildDateFilterChip(
@@ -1426,10 +1440,20 @@ class _EventOrderListPageState extends State<EventOrderListPage>
         final weekStart = today.subtract(Duration(days: today.weekday - 1));
         final weekEnd = weekStart.add(const Duration(days: 7));
         return (weekStart, weekEnd);
+      case DateFilter.nextWeek:
+        // Get start of next week (Monday)
+        final thisWeekStart = today.subtract(Duration(days: today.weekday - 1));
+        final nextWeekStart = thisWeekStart.add(const Duration(days: 7));
+        final nextWeekEnd = nextWeekStart.add(const Duration(days: 7));
+        return (nextWeekStart, nextWeekEnd);
       case DateFilter.thisMonth:
         final monthStart = DateTime(now.year, now.month, 1);
         final monthEnd = DateTime(now.year, now.month + 1, 1);
         return (monthStart, monthEnd);
+      case DateFilter.nextMonth:
+        final nextMonthStart = DateTime(now.year, now.month + 1, 1);
+        final nextMonthEnd = DateTime(now.year, now.month + 2, 1);
+        return (nextMonthStart, nextMonthEnd);
       case DateFilter.thisYear:
         final yearStart = DateTime(now.year, 1, 1);
         final yearEnd = DateTime(now.year + 1, 1, 1);
@@ -2025,8 +2049,12 @@ class _EventOrderListPageState extends State<EventOrderListPage>
         return Icons.today_rounded;
       case DateFilter.thisWeek:
         return Icons.view_week_rounded;
+      case DateFilter.nextWeek:
+        return Icons.next_week_rounded;
       case DateFilter.thisMonth:
         return Icons.calendar_month_rounded;
+      case DateFilter.nextMonth:
+        return Icons.event_rounded;
       case DateFilter.thisYear:
         return Icons.calendar_today_rounded;
       case DateFilter.custom:
@@ -2040,8 +2068,12 @@ class _EventOrderListPageState extends State<EventOrderListPage>
         return 'Today';
       case DateFilter.thisWeek:
         return 'This Week';
+      case DateFilter.nextWeek:
+        return 'Next Week';
       case DateFilter.thisMonth:
         return 'This Month';
+      case DateFilter.nextMonth:
+        return 'Next Month';
       case DateFilter.thisYear:
         return 'This Year';
       case DateFilter.custom:
