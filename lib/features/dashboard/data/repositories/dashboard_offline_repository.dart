@@ -6,6 +6,7 @@ import '../../../supplier/offline/controllers/supplier_offline_controller.dart';
 import '../../../company/offline/controllers/company_offline_controller.dart';
 import '../../../billing/offline/controllers/bill_offline_controller.dart';
 import '../../../inventory_management/offline/controllers/purchase_offline_controller.dart';
+import '../../../inventory_management/offline/controllers/purchase_batch_offline_controller.dart';
 import '../../../event_order/offline/controllers/event_order_offline_controller.dart';
 import '../../../event_order/domain/entities/event_order.dart';
 
@@ -374,31 +375,49 @@ class DashboardOfflineRepository {
   }
 
   /// Get low stock products (products below minimum stock level or below 10 if not set)
+  /// Uses batch-based stock calculation for accurate real-time stock levels
   Future<List<Map<String, dynamic>>> getLowStockProducts({int limit = 5}) async {
     final allProducts = await ProductOfflineController.instance.getAllProducts();
+    final allBatches = await PurchaseBatchOfflineController.instance.getAllBatches(includeConsumed: false);
     
-    // Filter products that are low on stock
-    final lowStockProducts = allProducts.where((p) {
-      if (p.currentStock <= 0) return false; // Out of stock shown separately
+    // Calculate actual stock from batches for each product
+    final Map<String, int> productStockFromBatches = {};
+    for (final batch in allBatches) {
+      final productId = batch.productId;
+      productStockFromBatches[productId] = 
+          (productStockFromBatches[productId] ?? 0) + batch.quantityRemaining;
+    }
+    
+    // Filter products that are low on stock (using batch-based stock)
+    final lowStockProducts = <Map<String, dynamic>>[];
+    
+    for (final p in allProducts) {
+      final productId = p.serverId ?? p.id.toString();
+      // Use batch stock if available, otherwise fall back to product's currentStock
+      final actualStock = productStockFromBatches[productId] ?? p.currentStock;
+      
+      if (actualStock <= 0) continue; // Out of stock shown separately
+      
       final minStock = p.minStockLevel ?? 10; // Default threshold of 10
-      return p.currentStock < minStock;
-    }).toList();
+      if (actualStock < minStock) {
+        lowStockProducts.add({
+          'id': productId,
+          'name': p.name,
+          'currentStock': actualStock,
+          'minStockLevel': minStock,
+          'stockPercent': actualStock / minStock,
+        });
+      }
+    }
     
     // Sort by urgency (lowest stock percentage first)
     lowStockProducts.sort((a, b) {
-      final aMin = a.minStockLevel ?? 10;
-      final bMin = b.minStockLevel ?? 10;
-      final aPercent = a.currentStock / aMin;
-      final bPercent = b.currentStock / bMin;
+      final aPercent = a['stockPercent'] as double;
+      final bPercent = b['stockPercent'] as double;
       return aPercent.compareTo(bPercent);
     });
     
-    return lowStockProducts.take(limit).map((p) => {
-      'id': p.serverId ?? p.id.toString(),
-      'name': p.name,
-      'currentStock': p.currentStock,
-      'minStockLevel': p.minStockLevel ?? 10,
-    }).toList();
+    return lowStockProducts.take(limit).toList();
   }
 
   /// Get customers with pending payments

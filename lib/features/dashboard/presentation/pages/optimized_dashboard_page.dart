@@ -2354,7 +2354,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
-              '₹${_formatAmount(amount)}',
+              _formatAmount(amount),
               style: const TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
@@ -2419,7 +2419,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
-              '₹${_formatAmount(amount)}',
+              _formatAmount(amount),
               style: const TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
@@ -2501,7 +2501,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
-              '₹${_formatAmount(amount)}',
+              _formatAmount(amount),
               style: const TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
@@ -2597,7 +2597,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
-              '₹${_formatCompactAmount(revenue)}',
+              _formatCompactAmount(revenue),
               style: const TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
