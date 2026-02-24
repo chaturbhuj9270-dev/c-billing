@@ -178,7 +178,7 @@ class EventOrderReportPdfGenerator {
             ],
           ),
           build: (context) => [
-            pw.Table.fromTextArray(
+            pw.TableHelper.fromTextArray(
               headerStyle: pw.TextStyle(
                   fontSize: 8, fontWeight: pw.FontWeight.bold),
               cellStyle: const pw.TextStyle(fontSize: 8),
