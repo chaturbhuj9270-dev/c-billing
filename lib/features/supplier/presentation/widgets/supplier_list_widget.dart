@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/services/communication_service.dart';
 import 'supplier_filter_widget.dart';
 
 /// Enhanced list widget for displaying suppliers
@@ -447,6 +448,21 @@ class _SupplierCard extends StatelessWidget {
                       ),
                     ],
                   ),
+                ),
+              ],
+              // Communication action icons (call, SMS, WhatsApp)
+              if (contact.isNotEmpty) ...[  
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    CommunicationActionIcons(
+                      phoneNumber: contact,
+                      iconSize: 16,
+                      containerSize: 32,
+                      spacing: 8,
+                    ),
+                  ],
                 ),
               ],
             ],
