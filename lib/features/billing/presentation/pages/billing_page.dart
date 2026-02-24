@@ -122,7 +122,7 @@ class _BillingPageState extends State<BillingPage> {
   final DashboardOfflineRepository _dashboardRepo =
       DashboardOfflineRepository.instance;
   DashboardData? _quickStatsData;
-  bool _isLoadingQuickStats = true;
+  bool _isLoadingQuickStats = false;
   bool _showQuickStats = false;
 
   // GST/Tax settings
@@ -4670,6 +4670,7 @@ class _BillingPageState extends State<BillingPage> {
     });
     // Load data on first open
     if (_showQuickStats && _quickStatsData == null) {
+      setState(() => _isLoadingQuickStats = true);
       _loadQuickStats();
     }
   }
