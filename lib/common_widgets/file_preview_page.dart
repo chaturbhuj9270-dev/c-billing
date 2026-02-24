@@ -349,7 +349,8 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
         child: Column(
           children: [
             _buildHeader(),
-            _buildZoomControls(),
+            // Show zoom controls only for CSV (PdfPreview has built-in pinch-to-zoom)
+            if (widget.fileType == FilePreviewType.csv) _buildZoomControls(),
             Expanded(
               child: _isLoading
                   ? _buildLoadingState()
@@ -720,36 +721,26 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(16),
-        child: InteractiveViewer(
-          transformationController: _transformationController,
-          minScale: _minZoom,
-          maxScale: _maxZoom,
-          onInteractionUpdate: (details) {
-            final scale = _transformationController.value.getMaxScaleOnAxis();
-            if ((scale - _zoomLevel).abs() > 0.01) {
-              setState(() => _zoomLevel = scale.clamp(_minZoom, _maxZoom));
-            }
-          },
-          child: PdfPreview(
-            build: (format) async => _pdfBytes!,
-            canChangeOrientation: false,
-            canChangePageFormat: false,
-            canDebug: false,
-            allowPrinting: false,
-            allowSharing: false,
-            pdfFileName: widget.fileName,
-            loadingWidget: _buildLoadingState(),
-            scrollViewDecoration: const BoxDecoration(color: Colors.white),
-            pdfPreviewPageDecoration: BoxDecoration(
-              color: Colors.white,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.08),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
+        // PdfPreview has its own scrolling/zooming - removed InteractiveViewer wrapper
+        child: PdfPreview(
+          build: (format) async => _pdfBytes!,
+          canChangeOrientation: false,
+          canChangePageFormat: false,
+          canDebug: false,
+          allowPrinting: false,
+          allowSharing: false,
+          pdfFileName: widget.fileName,
+          loadingWidget: _buildLoadingState(),
+          scrollViewDecoration: const BoxDecoration(color: Colors.white),
+          pdfPreviewPageDecoration: BoxDecoration(
+            color: Colors.white,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.08),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
         ),
       ),
