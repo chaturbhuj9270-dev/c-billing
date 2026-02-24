@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/services/dashboard_refresh_service.dart';
 import '../../data/services/event_order_sync_service.dart';
 import '../../domain/entities/event_order.dart';
 import '../../domain/entities/sub_event.dart';
@@ -123,6 +124,9 @@ class EventOrderCubit extends Cubit<EventOrderState> {
 
       // Trigger sync to upload to server
       EventOrderSyncService.instance.syncNow();
+      
+      // Notify dashboard to refresh profit calculations
+      DashboardRefreshService.instance.notifyDataChanged(DataChangeType.eventOrder);
 
       // Reload list after creating
       await loadEventOrders();
@@ -185,6 +189,9 @@ class EventOrderCubit extends Cubit<EventOrderState> {
 
         // Trigger sync to upload to server
         EventOrderSyncService.instance.syncNow();
+        
+        // Notify dashboard to refresh profit calculations
+        DashboardRefreshService.instance.notifyDataChanged(DataChangeType.eventOrder);
       } else {
         emit(const EventOrderError(message: 'Order not found'));
       }
@@ -208,6 +215,9 @@ class EventOrderCubit extends Cubit<EventOrderState> {
 
         // Trigger sync to update server
         EventOrderSyncService.instance.syncNow();
+        
+        // Notify dashboard to refresh profit calculations
+        DashboardRefreshService.instance.notifyDataChanged(DataChangeType.eventOrder);
 
         // Reload list after deleting
         await loadEventOrders();

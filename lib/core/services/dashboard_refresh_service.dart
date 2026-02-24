@@ -12,6 +12,7 @@ enum DataChangeType {
   purchase,
   purchaseReturn,
   billSettings,
+  eventOrder,
 }
 
 /// Singleton service to notify screens to refresh when data changes.
@@ -47,6 +48,7 @@ class DashboardRefreshService {
   final StreamController<void> _purchaseChangeController = StreamController<void>.broadcast();
   final StreamController<void> _purchaseReturnChangeController = StreamController<void>.broadcast();
   final StreamController<void> _billSettingsChangeController = StreamController<void>.broadcast();
+  final StreamController<void> _eventOrderChangeController = StreamController<void>.broadcast();
   
   /// Stream that emits when any data changes (for dashboard)
   Stream<void> get onRefreshNeeded => _refreshController.stream;
@@ -74,6 +76,9 @@ class DashboardRefreshService {
   
   /// Stream that emits when bill settings change
   Stream<void> get onBillSettingsChanged => _billSettingsChangeController.stream;
+  
+  /// Stream that emits when event/order data changes
+  Stream<void> get onEventOrderChanged => _eventOrderChangeController.stream;
   
   /// Call this method when any data that affects dashboard stats changes.
   /// Optionally specify the data type that changed for more granular notifications.
@@ -111,6 +116,9 @@ class DashboardRefreshService {
         case DataChangeType.billSettings:
           _billSettingsChangeController.add(null);
           break;
+        case DataChangeType.eventOrder:
+          _eventOrderChangeController.add(null);
+          break;
       }
       print('[DashboardRefreshService] ${dataType.name} data changed - notifying listeners');
     } else {
@@ -123,6 +131,7 @@ class DashboardRefreshService {
       _purchaseChangeController.add(null);
       _purchaseReturnChangeController.add(null);
       _billSettingsChangeController.add(null);
+      _eventOrderChangeController.add(null);
       print('[DashboardRefreshService] All data changed - notifying all listeners');
     }
   }
@@ -138,5 +147,6 @@ class DashboardRefreshService {
     _purchaseChangeController.close();
     _purchaseReturnChangeController.close();
     _billSettingsChangeController.close();
+    _eventOrderChangeController.close();
   }
 }

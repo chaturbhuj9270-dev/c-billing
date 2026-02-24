@@ -6,6 +6,8 @@ import '../../../supplier/offline/controllers/supplier_offline_controller.dart';
 import '../../../company/offline/controllers/company_offline_controller.dart';
 import '../../../billing/offline/controllers/bill_offline_controller.dart';
 import '../../../inventory_management/offline/controllers/purchase_offline_controller.dart';
+import '../../../event_order/offline/controllers/event_order_offline_controller.dart';
+import '../../../event_order/domain/entities/event_order.dart';
 
 /// Ultra-fast offline-first dashboard repository
 /// Uses Isar local database for microsecond-level data loading
@@ -46,6 +48,9 @@ class DashboardOfflineRepository {
       
       // Stock data
       _getStockData(),                                           // 8
+      
+      // Event/Order data for period
+      _getEventOrderDataForPeriod(startDate, endDate),          // 9
     ]);
 
     // Extract counts
@@ -75,11 +80,22 @@ class DashboardOfflineRepository {
     final stockValue = stockData['stockValue'] as double;
     final lowStockCount = stockData['lowStockCount'] as int;
 
-    // Calculate profit from net sales (after returns)
+    // Extract event/order data
+    final eventOrderData = results[9] as Map<String, dynamic>;
+    final totalEventOrders = eventOrderData['totalCount'] as int;
+    final upcomingEvents = eventOrderData['upcomingEvents'] as int;
+    final pendingOrders = eventOrderData['pendingOrders'] as int;
+    final eventOrdersAmount = eventOrderData['totalAmount'] as double;
+    final eventOrdersAdvance = eventOrderData['totalAdvance'] as double;
+    final eventOrdersPending = eventOrderData['totalPending'] as double;
+    final eventOrdersProfit = eventOrderData['profit'] as double;
+
+    // Calculate profit from net sales (after returns) + event/order profit
     final netSales = totalSalesAmount - totalReturns;
-    final profit = salesData['netProfit'] as double;
-    final profitPercentage = netSales > 0
-        ? (profit / netSales) * 100
+    final billsProfit = salesData['netProfit'] as double;
+    final totalProfit = billsProfit + eventOrdersProfit;
+    final profitPercentage = (netSales + eventOrdersAmount) > 0
+        ? (totalProfit / (netSales + eventOrdersAmount)) * 100
         : 0.0;
 
     stopwatch.stop();
@@ -104,11 +120,17 @@ class DashboardOfflineRepository {
       totalPurchases: totalPurchaseAmount,
       purchaseOrders: purchaseOrdersCount,
       purchaseQty: totalPurchaseQty,
-      profit: profit,
+      profit: totalProfit,
       profitPercentage: profitPercentage,
       stockValue: stockValue,
       lowStockCount: lowStockCount,
       totalPendingAmount: totalPending,
+      totalEventOrders: totalEventOrders,
+      upcomingEvents: upcomingEvents,
+      pendingOrders: pendingOrders,
+      eventOrdersAmount: eventOrdersAmount,
+      eventOrdersAdvance: eventOrdersAdvance,
+      eventOrdersPending: eventOrdersPending,
     );
   }
 
@@ -218,6 +240,93 @@ class DashboardOfflineRepository {
     return {
       'stockValue': stockValue,
       'lowStockCount': lowStockCount,
+    };
+  }
+
+  /// Get event/order data for the specified period
+  /// Calculates profit from sales orders and event charges
+  Future<Map<String, dynamic>> _getEventOrderDataForPeriod(
+    DateTime? startDate,
+    DateTime? endDate,
+  ) async {
+    final orders = await EventOrderOfflineController.instance.getEventOrdersByDateRange(
+      startDate ?? DateTime(2000),
+      endDate ?? DateTime.now().add(const Duration(days: 1)),
+    );
+
+    // Get all products for looking up purchase prices
+    final products = await ProductOfflineController.instance.getAllProducts();
+    final productPriceMap = <String, double>{};
+    for (final product in products) {
+      // Map both serverId and local id for lookup
+      if (product.serverId != null) {
+        productPriceMap[product.serverId!] = product.purchasePrice;
+      }
+      productPriceMap['local_${product.id}'] = product.purchasePrice;
+    }
+
+    int totalCount = 0;
+    int upcomingEvents = 0;
+    int pendingOrders = 0;
+    double totalAmount = 0.0;
+    double totalAdvance = 0.0;
+    double totalPending = 0.0;
+    double profit = 0.0;
+
+    final now = DateTime.now();
+
+    for (final order in orders) {
+      // Skip cancelled orders from calculations
+      if (order.status == OrderStatus.cancelled.index) continue;
+      
+      // Skip orders that have been converted to bills (already counted in bill profit)
+      if (order.status == OrderStatus.convertedToBill.index) continue;
+      
+      totalCount++;
+      totalAmount += order.totalAmount;
+      totalAdvance += order.advanceAmount;
+      totalPending += order.remainingAmount;
+
+      // Count upcoming events (event date in future)
+      if (order.eventDate.isAfter(now) && order.orderType == OrderType.event.index) {
+        upcomingEvents++;
+      }
+
+      // Count pending orders (not delivered, cancelled, or converted)
+      if (order.status < OrderStatus.delivered.index) {
+        pendingOrders++;
+      }
+
+      // Calculate profit based on order type
+      if (order.orderType == OrderType.event.index) {
+        // For events: profit = eventCharges + sum of sub-event charges (service revenue)
+        // Events are service-based, so we count the full amount as profit
+        profit += order.eventCharges;
+        for (final subEvent in order.subEvents) {
+          profit += subEvent.charges;
+        }
+      } else {
+        // For sales orders: profit = (selling price - purchase price) * quantity for each item
+        for (final item in order.items) {
+          final productId = item.productId ?? '';
+          final purchasePrice = productPriceMap[productId] ?? 0.0;
+          
+          // Calculate profit: (rate - purchasePrice) * quantity
+          // Note: Using subtotal before tax and after discount
+          final itemProfit = (item.rate - purchasePrice) * item.quantity;
+          profit += itemProfit;
+        }
+      }
+    }
+
+    return {
+      'totalCount': totalCount,
+      'upcomingEvents': upcomingEvents,
+      'pendingOrders': pendingOrders,
+      'totalAmount': totalAmount,
+      'totalAdvance': totalAdvance,
+      'totalPending': totalPending,
+      'profit': profit,
     };
   }
 
