@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/services/communication_service.dart';
 import 'customer_filter_widget.dart';
 
 /// Enhanced list widget for displaying customers
@@ -432,6 +433,21 @@ class _CustomerCard extends StatelessWidget {
                       ),
                     ],
                   ),
+                ),
+              ],
+              // Communication action icons (Call, SMS, WhatsApp)
+              if (contact.isNotEmpty) ...[
+                const SizedBox(height: 10),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    CommunicationActionIcons(
+                      phoneNumber: contact,
+                      iconSize: 16,
+                      containerSize: 34,
+                      spacing: 8,
+                    ),
+                  ],
                 ),
               ],
             ],
