@@ -607,11 +607,21 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
           ),
           const SizedBox(height: 20),
           Text(
-            'Loading preview...',
+            'Rendering PDF...',
             style: TextStyle(
               fontFamily: 'Literata',
               fontSize: 14,
-              color: Colors.grey[600],
+              fontWeight: FontWeight.w600,
+              color: Colors.grey[700],
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Please wait a moment',
+            style: TextStyle(
+              fontFamily: 'Literata',
+              fontSize: 12,
+              color: Colors.grey[500],
             ),
           ),
         ],
@@ -729,9 +739,13 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
           canDebug: false,
           allowPrinting: false,
           allowSharing: false,
+          useActions: false,
+          maxPageWidth: 700,
           pdfFileName: widget.fileName,
           loadingWidget: _buildLoadingState(),
           scrollViewDecoration: const BoxDecoration(color: Colors.white),
+          padding: EdgeInsets.zero,
+          previewPageMargin: const EdgeInsets.symmetric(vertical: 8),
           pdfPreviewPageDecoration: BoxDecoration(
             color: Colors.white,
             boxShadow: [
