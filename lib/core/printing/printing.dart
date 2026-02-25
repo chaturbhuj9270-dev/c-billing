@@ -4,6 +4,7 @@
 /// - Bluetooth printers
 /// - 58mm and 80mm paper sizes
 /// - Bill formatting with shop details
+/// - Barcode label printing
 /// 
 /// Usage:
 /// ```dart
@@ -13,6 +14,13 @@
 /// await printerService.startScan();
 /// await printerService.connectPrinter(device);
 /// await printerService.printBill(billData: billData, shopDetails: shop);
+/// 
+/// // Barcode printing
+/// await printerService.printSingleBarcode(
+///   barcodeData: '123456789',
+///   productName: 'Product Name',
+///   price: 99.99,
+/// );
 /// ```
 
 // Models
@@ -21,6 +29,7 @@ export 'models/printer_models.dart';
 
 // Formatters
 export 'formatters/esc_pos_bill_formatter.dart';
+export 'formatters/esc_pos_barcode_formatter.dart';
 
 // Services
 export 'services/pos_printer_service.dart';

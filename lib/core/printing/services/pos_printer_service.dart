@@ -5,6 +5,7 @@ import 'package:permission_handler/permission_handler.dart';
 import '../models/printer_models.dart';
 import '../models/print_bill_data.dart';
 import '../formatters/esc_pos_bill_formatter.dart';
+import '../formatters/esc_pos_barcode_formatter.dart';
 import '../../../features/shop/domain/entities/shop.dart';
 
 /// Service class for managing POS thermal printer connections and printing
@@ -356,6 +357,83 @@ class PosPrinterService {
   void _updateStatus(PrinterStatus newStatus) {
     _status = newStatus;
     _statusController.add(newStatus);
+  }
+
+  /// Print barcode labels using the connected POS printer
+  Future<PrinterResult> printBarcodeLabels({
+    required List<BarcodeLabelData> labels,
+    BarcodeLabelConfig? config,
+  }) async {
+    if (_connectedDevice == null || _writeCharacteristic == null) {
+      return PrinterResult.failure('No printer connected');
+    }
+
+    try {
+      _updateStatus(PrinterStatus.printing);
+      
+      final labelConfig = config ?? BarcodeLabelConfig(
+        labelsPerLine: _config.paperSize == PosPaperSize.mm80 ? 2 : 1,
+      );
+      
+      // Generate barcode bytes using formatter
+      final formatter = EscPosBarcodeFormatter(paperSize: _config.paperSize);
+      final bytes = formatter.generateBarcodeLabels(
+        labels: labels,
+        config: labelConfig,
+      );
+
+      // Send bytes to printer in chunks
+      await _sendBytes(bytes);
+      
+      _updateStatus(PrinterStatus.connected);
+      return PrinterResult.success('Barcode labels printed successfully');
+    } catch (e) {
+      _updateStatus(PrinterStatus.error);
+      return PrinterResult.failure('Failed to print barcodes: $e');
+    }
+  }
+
+  /// Print a single barcode label
+  Future<PrinterResult> printSingleBarcode({
+    required String barcodeData,
+    String? productName,
+    String? productCode,
+    double? price,
+    String barcodeFormat = 'CODE128',
+    int quantity = 1,
+    BarcodeLabelConfig? config,
+  }) async {
+    final labels = List.generate(quantity, (_) => BarcodeLabelData(
+      barcodeData: barcodeData,
+      productName: productName,
+      productCode: productCode,
+      price: price,
+      barcodeFormat: barcodeFormat,
+    ));
+    
+    return printBarcodeLabels(labels: labels, config: config);
+  }
+
+  /// Test print barcode - prints a simple test barcode label
+  Future<PrinterResult> printBarcodeTest() async {
+    if (_connectedDevice == null || _writeCharacteristic == null) {
+      return PrinterResult.failure('No printer connected');
+    }
+
+    try {
+      _updateStatus(PrinterStatus.printing);
+
+      final formatter = EscPosBarcodeFormatter(paperSize: _config.paperSize);
+      final bytes = formatter.generateTestBarcode();
+
+      await _sendBytes(bytes);
+      
+      _updateStatus(PrinterStatus.connected);
+      return PrinterResult.success('Test barcode printed successfully');
+    } catch (e) {
+      _updateStatus(PrinterStatus.error);
+      return PrinterResult.failure('Failed to print test barcode: $e');
+    }
   }
 
   /// Dispose resources

@@ -7,8 +7,14 @@ import 'package:printing/printing.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/services/language_service.dart';
 import '../../../../core/localization/app_localizations.dart';
+import '../../../../core/printing/services/pos_printer_service.dart';
+import '../../../../core/printing/formatters/esc_pos_barcode_formatter.dart';
+import '../../../../core/printing/models/printer_models.dart';
 import '../../../product/offline/controllers/product_offline_controller.dart';
 import '../../../product/offline/entities/product_entity.dart';
+
+/// Enum for printer type selection
+enum PrinterType { regular, pos }
 
 /// Barcode Management Page with tabs for Generate, Bulk Generate, and Printed List
 class BarcodeManagementPage extends StatefulWidget {
@@ -29,6 +35,13 @@ class _BarcodeManagementPageState extends State<BarcodeManagementPage>
   List<ProductEntity> _products = [];
   List<ProductEntity> _filteredProducts = [];
   String _searchQuery = '';
+  
+  // Printer selection
+  PrinterType _selectedPrinterType = PrinterType.regular;
+  PosPrinterDevice? _connectedPosPrinter;
+  bool _isPosConnecting = false;
+  bool _isScanning = false;
+  List<PosPrinterDevice> _discoveredPrinters = [];
   
   // Single barcode generation
   ProductEntity? _selectedProduct;
@@ -51,6 +64,9 @@ class _BarcodeManagementPageState extends State<BarcodeManagementPage>
 
   // Services
   final _auth = FirebaseAuth.instance;
+  final _posPrinterService = PosPrinterService();
+  StreamSubscription<PrinterStatus>? _printerStatusSubscription;
+  StreamSubscription<List<PosPrinterDevice>>? _printerDevicesSubscription;
 
   @override
   void initState() {
@@ -61,6 +77,37 @@ class _BarcodeManagementPageState extends State<BarcodeManagementPage>
     );
     LanguageService.instance.addListener(_onLanguageChanged);
     _loadProducts();
+    _initPrinterListeners();
+  }
+
+  void _initPrinterListeners() {
+    // Listen to printer status changes
+    _printerStatusSubscription = _posPrinterService.statusStream.listen((status) {
+      if (mounted) {
+        setState(() {
+          _isPosConnecting = status == PrinterStatus.connecting;
+          if (status == PrinterStatus.connected) {
+            _connectedPosPrinter = _posPrinterService.connectedPrinter;
+          } else if (status == PrinterStatus.disconnected) {
+            _connectedPosPrinter = null;
+          }
+        });
+      }
+    });
+    
+    // Listen to discovered devices
+    _printerDevicesSubscription = _posPrinterService.devicesStream.listen((devices) {
+      if (mounted) {
+        setState(() {
+          _discoveredPrinters = devices;
+        });
+      }
+    });
+    
+    // Check if already connected
+    if (_posPrinterService.isConnected) {
+      _connectedPosPrinter = _posPrinterService.connectedPrinter;
+    }
   }
 
   void _onLanguageChanged() {
@@ -76,6 +123,8 @@ class _BarcodeManagementPageState extends State<BarcodeManagementPage>
     _tabController.dispose();
     _searchController.dispose();
     _quantityController.dispose();
+    _printerStatusSubscription?.cancel();
+    _printerDevicesSubscription?.cancel();
     LanguageService.instance.removeListener(_onLanguageChanged);
     super.dispose();
   }
@@ -113,6 +162,519 @@ class _BarcodeManagementPageState extends State<BarcodeManagementPage>
         }).toList();
       }
     });
+  }
+
+  // ============ POS PRINTER METHODS ============
+  
+  Future<void> _scanForPrinters() async {
+    if (_isScanning) return;
+    
+    setState(() {
+      _isScanning = true;
+      _discoveredPrinters = [];
+    });
+    
+    try {
+      final result = await _posPrinterService.startScan(
+        timeout: const Duration(seconds: 10),
+      );
+      
+      if (!result.success && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result.message ?? 'Failed to scan'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isScanning = false);
+    }
+  }
+  
+  Future<void> _connectToPrinter(PosPrinterDevice device) async {
+    setState(() => _isPosConnecting = true);
+    
+    try {
+      final result = await _posPrinterService.connectPrinter(device);
+      
+      if (mounted) {
+        if (result.success) {
+          setState(() {
+            _connectedPosPrinter = device;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  const Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
+                  const SizedBox(width: 10),
+                  Text('Connected to ${device.name}'),
+                ],
+              ),
+              backgroundColor: const Color(0xFF1B4D3E),
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+          );
+          Navigator.pop(context); // Close the dialog
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(result.message ?? 'Failed to connect'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    } finally {
+      if (mounted) setState(() => _isPosConnecting = false);
+    }
+  }
+  
+  Future<void> _disconnectPrinter() async {
+    await _posPrinterService.disconnectPrinter();
+    if (mounted) {
+      setState(() {
+        _connectedPosPrinter = null;
+      });
+    }
+  }
+  
+  void _showPrinterSelectionDialog() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _buildPrinterSelectionSheet(),
+    );
+  }
+  
+  Widget _buildPrinterSelectionSheet() {
+    return StatefulBuilder(
+      builder: (context, setSheetState) {
+        return Container(
+          height: MediaQuery.of(context).size.height * 0.7,
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Column(
+            children: [
+              // Handle
+              Container(
+                margin: const EdgeInsets.only(top: 12),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              
+              // Header
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(Icons.bluetooth, color: Color(0xFF1B4D3E)),
+                    ),
+                    const SizedBox(width: 12),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Select POS Printer',
+                            style: TextStyle(
+                              fontFamily: 'Literata',
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            'Choose a Bluetooth thermal printer',
+                            style: TextStyle(
+                              color: Colors.grey,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    TextButton.icon(
+                      onPressed: () async {
+                        setSheetState(() => _isScanning = true);
+                        await _scanForPrinters();
+                        setSheetState(() => _isScanning = false);
+                      },
+                      icon: _isScanning 
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.refresh_rounded),
+                      label: Text(_isScanning ? 'Scanning...' : 'Scan'),
+                    ),
+                  ],
+                ),
+              ),
+              
+              const Divider(height: 1),
+              
+              // Printer List
+              Expanded(
+                child: StreamBuilder<List<PosPrinterDevice>>(
+                  stream: _posPrinterService.devicesStream,
+                  initialData: _discoveredPrinters,
+                  builder: (context, snapshot) {
+                    final devices = snapshot.data ?? [];
+                    
+                    if (devices.isEmpty && !_isScanning) {
+                      return Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.bluetooth_searching,
+                              size: 48,
+                              color: Colors.grey[400],
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'No printers found',
+                              style: TextStyle(
+                                color: Colors.grey[600],
+                                fontSize: 16,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Tap "Scan" to search for printers',
+                              style: TextStyle(
+                                color: Colors.grey[400],
+                                fontSize: 12,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            ElevatedButton.icon(
+                              onPressed: () async {
+                                setSheetState(() => _isScanning = true);
+                                await _scanForPrinters();
+                                setSheetState(() => _isScanning = false);
+                              },
+                              icon: const Icon(Icons.bluetooth_searching),
+                              label: const Text('Start Scanning'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF1B4D3E),
+                                foregroundColor: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+                    
+                    return ListView.separated(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: devices.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 8),
+                      itemBuilder: (context, index) {
+                        final device = devices[index];
+                        final isConnected = _connectedPosPrinter?.id == device.id;
+                        
+                        return Material(
+                          color: isConnected 
+                              ? const Color(0xFF1B4D3E).withOpacity(0.1) 
+                              : Colors.grey[50],
+                          borderRadius: BorderRadius.circular(12),
+                          child: InkWell(
+                            onTap: isConnected ? null : () => _connectToPrinter(device),
+                            borderRadius: BorderRadius.circular(12),
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    width: 40,
+                                    height: 40,
+                                    decoration: BoxDecoration(
+                                      color: isConnected 
+                                          ? const Color(0xFF1B4D3E) 
+                                          : Colors.grey[200],
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: Icon(
+                                      Icons.print_rounded,
+                                      color: isConnected ? Colors.white : Colors.grey[600],
+                                      size: 20,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          device.name,
+                                          style: TextStyle(
+                                            fontFamily: 'Literata',
+                                            fontWeight: FontWeight.w600,
+                                            color: isConnected 
+                                                ? const Color(0xFF1B4D3E) 
+                                                : Colors.black87,
+                                          ),
+                                        ),
+                                        Text(
+                                          device.address ?? 'Unknown address',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.grey[500],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  if (isConnected)
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 10,
+                                        vertical: 4,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFF1B4D3E),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: const Text(
+                                        'Connected',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    )
+                                  else if (_isPosConnecting)
+                                    const SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(strokeWidth: 2),
+                                    )
+                                  else
+                                    const Icon(
+                                      Icons.chevron_right_rounded,
+                                      color: Colors.grey,
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+  
+  Widget _buildPrinterSelection() {
+    return Column(
+      children: [
+        // Printer Type Toggle
+        Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFFF8F9FA),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          padding: const EdgeInsets.all(4),
+          child: Row(
+            children: [
+              Expanded(
+                child: _buildPrinterTypeButton(
+                  type: PrinterType.regular,
+                  icon: Icons.description_rounded,
+                  label: 'Regular Printer',
+                  subtitle: 'PDF Print',
+                ),
+              ),
+              const SizedBox(width: 4),
+              Expanded(
+                child: _buildPrinterTypeButton(
+                  type: PrinterType.pos,
+                  icon: Icons.receipt_long_rounded,
+                  label: 'POS Printer',
+                  subtitle: 'Thermal',
+                ),
+              ),
+            ],
+          ),
+        ),
+        
+        // POS Printer Status (shown when POS is selected)
+        if (_selectedPrinterType == PrinterType.pos) ...[
+          const SizedBox(height: 12),
+          _buildPosPrinterStatus(),
+        ],
+      ],
+    );
+  }
+  
+  Widget _buildPrinterTypeButton({
+    required PrinterType type,
+    required IconData icon,
+    required String label,
+    required String subtitle,
+  }) {
+    final isSelected = _selectedPrinterType == type;
+    
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => setState(() => _selectedPrinterType = type),
+        borderRadius: BorderRadius.circular(10),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+          decoration: BoxDecoration(
+            color: isSelected ? Colors.white : Colors.transparent,
+            borderRadius: BorderRadius.circular(10),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ]
+                : null,
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                size: 20,
+                color: isSelected ? const Color(0xFF1B4D3E) : Colors.grey[500],
+              ),
+              const SizedBox(width: 8),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontFamily: 'Literata',
+                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                      fontSize: 12,
+                      color: isSelected ? const Color(0xFF1B4D3E) : Colors.grey[600],
+                    ),
+                  ),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontSize: 9,
+                      color: Colors.grey[400],
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+  
+  Widget _buildPosPrinterStatus() {
+    return Material(
+      color: _connectedPosPrinter != null
+          ? const Color(0xFF1B4D3E).withOpacity(0.08)
+          : Colors.orange.withOpacity(0.08),
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        onTap: _showPrinterSelectionDialog,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: _connectedPosPrinter != null
+                      ? const Color(0xFF1B4D3E)
+                      : Colors.orange,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  _connectedPosPrinter != null
+                      ? Icons.bluetooth_connected_rounded
+                      : Icons.bluetooth_disabled_rounded,
+                  color: Colors.white,
+                  size: 18,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _connectedPosPrinter != null
+                          ? _connectedPosPrinter!.name
+                          : 'No Printer Connected',
+                      style: TextStyle(
+                        fontFamily: 'Literata',
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                        color: _connectedPosPrinter != null
+                            ? const Color(0xFF1B4D3E)
+                            : Colors.orange[700],
+                      ),
+                    ),
+                    Text(
+                      _connectedPosPrinter != null
+                          ? 'Tap to change printer'
+                          : 'Tap to connect a printer',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.grey[500],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (_connectedPosPrinter != null)
+                IconButton(
+                  icon: const Icon(Icons.link_off_rounded, size: 18),
+                  onPressed: _disconnectPrinter,
+                  color: Colors.red[400],
+                  tooltip: 'Disconnect',
+                )
+              else
+                Icon(
+                  Icons.chevron_right_rounded,
+                  color: Colors.grey[400],
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -221,6 +783,15 @@ class _BarcodeManagementPageState extends State<BarcodeManagementPage>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Printer Selection
+          _buildSectionCard(
+            icon: Icons.print_rounded,
+            title: 'Printer Selection',
+            subtitle: 'Choose your printer type',
+            child: _buildPrinterSelection(),
+          ),
+          const SizedBox(height: 16),
+          
           // Product Search & Selection
           _buildSectionCard(
             icon: Icons.inventory_2_rounded,
@@ -873,89 +1444,45 @@ class _BarcodeManagementPageState extends State<BarcodeManagementPage>
   Future<void> _generateAndPrintBarcodes() async {
     if (_selectedProduct == null) return;
     
+    // Check if POS printer is selected but not connected
+    if (_selectedPrinterType == PrinterType.pos && _connectedPosPrinter == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Row(
+            children: [
+              Icon(Icons.warning_amber_rounded, color: Colors.white, size: 20),
+              SizedBox(width: 10),
+              Text('Please connect a POS printer first'),
+            ],
+          ),
+          backgroundColor: Colors.orange,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          action: SnackBarAction(
+            label: 'Connect',
+            textColor: Colors.white,
+            onPressed: _showPrinterSelectionDialog,
+          ),
+        ),
+      );
+      return;
+    }
+    
     try {
       final product = _selectedProduct!;
       final barcodeData = product.barcode ?? product.indexNo.toString();
       
-      // Generate PDF with barcodes
-      final pdf = pw.Document();
-      
-      // Calculate barcode type
-      final barcodeType = _getBarcodeType(_barcodeFormat);
-      
-      // Create labels (4 columns x N rows per page)
-      const labelsPerRow = 4;
-      const labelsPerPage = 20; // 4 columns x 5 rows
-      
-      int totalLabels = _labelQuantity;
-      int pageCount = (totalLabels / labelsPerPage).ceil();
-      
-      for (int page = 0; page < pageCount; page++) {
-        int labelsOnThisPage = (page == pageCount - 1)
-            ? totalLabels - (page * labelsPerPage)
-            : labelsPerPage;
-        
-        int rowCount = (labelsOnThisPage / labelsPerRow).ceil();
-        
-        pdf.addPage(
-          pw.Page(
-            pageFormat: PdfPageFormat.a4,
-            margin: const pw.EdgeInsets.all(10),
-            build: (context) {
-              return pw.Column(
-                children: List.generate(rowCount, (rowIndex) {
-                  int startIndex = rowIndex * labelsPerRow;
-                  int endIndex = (startIndex + labelsPerRow).clamp(0, labelsOnThisPage);
-                  int labelsInRow = endIndex - startIndex;
-                  
-                  return pw.Padding(
-                    padding: const pw.EdgeInsets.symmetric(vertical: 4),
-                    child: pw.Row(
-                      mainAxisAlignment: pw.MainAxisAlignment.spaceEvenly,
-                      children: List.generate(labelsInRow, (_) {
-                        return _buildPdfBarcodeLabel(
-                          product: product,
-                          barcodeData: barcodeData,
-                          barcodeType: barcodeType,
-                        );
-                      }),
-                    ),
-                  );
-                }),
-              );
-            },
-          ),
-        );
+      if (_selectedPrinterType == PrinterType.pos) {
+        // POS Thermal Printer
+        await _printToPosThePrinter(product, barcodeData);
+      } else {
+        // Regular PDF Printer
+        await _printToPdfPrinter(product, barcodeData);
       }
-      
-      // Print or save PDF
-      await Printing.layoutPdf(
-        onLayout: (format) => pdf.save(),
-        name: 'Barcode_${product.name}_${DateTime.now().millisecondsSinceEpoch}',
-      );
       
       // Add to print history
       _addToPrintHistory(product, _labelQuantity);
       
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
-                const SizedBox(width: 10),
-                Text(
-                  'Generated $_labelQuantity barcode labels',
-                  style: const TextStyle(fontFamily: 'Literata'),
-                ),
-              ],
-            ),
-            backgroundColor: const Color(0xFF1B4D3E),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          ),
-        );
-      }
     } catch (e) {
       debugPrint('[BarcodeManagement] Error generating barcodes: $e');
       if (mounted) {
@@ -966,6 +1493,138 @@ class _BarcodeManagementPageState extends State<BarcodeManagementPage>
           ),
         );
       }
+    }
+  }
+  
+  /// Print barcodes to POS thermal printer
+  Future<void> _printToPosThePrinter(ProductEntity product, String barcodeData) async {
+    // Generate barcode labels using ESC/POS formatter
+    final labelConfig = BarcodeLabelConfig(
+      showProductName: _includeName,
+      showPrice: _includePrice,
+      showProductCode: _includeProductCode,
+      showHriText: true,
+      barcodeHeight: 50,
+      barcodeWidth: 2,
+    );
+    
+    final result = await _posPrinterService.printSingleBarcode(
+      barcodeData: barcodeData,
+      productName: _includeName ? product.name : null,
+      productCode: _includeProductCode ? product.indexNo.toString() : null,
+      price: _includePrice ? product.salesPrice : null,
+      barcodeFormat: _barcodeFormat,
+      quantity: _labelQuantity,
+      config: labelConfig,
+    );
+    
+    if (mounted) {
+      if (result.success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
+                const SizedBox(width: 10),
+                Text(
+                  'Printed $_labelQuantity barcode labels to POS printer',
+                  style: const TextStyle(fontFamily: 'Literata'),
+                ),
+              ],
+            ),
+            backgroundColor: const Color(0xFF1B4D3E),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result.message ?? 'Failed to print'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+  
+  /// Print barcodes to regular PDF printer
+  Future<void> _printToPdfPrinter(ProductEntity product, String barcodeData) async {
+    // Generate PDF with barcodes
+    final pdf = pw.Document();
+    
+    // Calculate barcode type
+    final barcodeType = _getBarcodeType(_barcodeFormat);
+    
+    // Create labels (4 columns x N rows per page)
+    const labelsPerRow = 4;
+    const labelsPerPage = 20; // 4 columns x 5 rows
+    
+    int totalLabels = _labelQuantity;
+    int pageCount = (totalLabels / labelsPerPage).ceil();
+    
+    for (int page = 0; page < pageCount; page++) {
+      int labelsOnThisPage = (page == pageCount - 1)
+          ? totalLabels - (page * labelsPerPage)
+          : labelsPerPage;
+      
+      int rowCount = (labelsOnThisPage / labelsPerRow).ceil();
+      
+      pdf.addPage(
+        pw.Page(
+          pageFormat: PdfPageFormat.a4,
+          margin: const pw.EdgeInsets.all(10),
+          build: (context) {
+            return pw.Column(
+              children: List.generate(rowCount, (rowIndex) {
+                int startIndex = rowIndex * labelsPerRow;
+                int endIndex = (startIndex + labelsPerRow).clamp(0, labelsOnThisPage);
+                int labelsInRow = endIndex - startIndex;
+                
+                return pw.Padding(
+                  padding: const pw.EdgeInsets.symmetric(vertical: 4),
+                  child: pw.Row(
+                    mainAxisAlignment: pw.MainAxisAlignment.spaceEvenly,
+                    children: List.generate(labelsInRow, (_) {
+                      return _buildPdfBarcodeLabel(
+                        product: product,
+                        barcodeData: barcodeData,
+                        barcodeType: barcodeType,
+                      );
+                    }),
+                  ),
+                );
+              }),
+            );
+          },
+        ),
+      );
+    }
+    
+    // Print or save PDF
+    await Printing.layoutPdf(
+      onLayout: (format) => pdf.save(),
+      name: 'Barcode_${product.name}_${DateTime.now().millisecondsSinceEpoch}',
+    );
+    
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
+              const SizedBox(width: 10),
+              Text(
+                'Generated $_labelQuantity barcode labels',
+                style: const TextStyle(fontFamily: 'Literata'),
+              ),
+            ],
+          ),
+          backgroundColor: const Color(0xFF1B4D3E),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ),
+      );
     }
   }
 
@@ -1094,6 +1753,22 @@ class _BarcodeManagementPageState extends State<BarcodeManagementPage>
   Widget _buildBulkGenerateTab() {
     return Column(
       children: [
+        // Printer Selection Card (at top)
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withOpacity(0.1),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: _buildPrinterSelection(),
+        ),
+        
         // Header with Select All
         _buildBulkHeader(),
         
@@ -1415,10 +2090,31 @@ class _BarcodeManagementPageState extends State<BarcodeManagementPage>
   }
 
   Future<void> _generateBulkBarcodes() async {
+    // Check if POS printer is selected but not connected
+    if (_selectedPrinterType == PrinterType.pos && _connectedPosPrinter == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Row(
+            children: [
+              Icon(Icons.warning_amber_rounded, color: Colors.white, size: 20),
+              SizedBox(width: 10),
+              Text('Please connect a POS printer first'),
+            ],
+          ),
+          backgroundColor: Colors.orange,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          action: SnackBarAction(
+            label: 'Connect',
+            textColor: Colors.white,
+            onPressed: _showPrinterSelectionDialog,
+          ),
+        ),
+      );
+      return;
+    }
+        
     try {
-      final pdf = pw.Document();
-      final barcodeType = _getBarcodeType(_barcodeFormat);
-      
       // Collect all labels
       List<ProductEntity> labelsToGenerate = [];
       for (var entry in _bulkSelections.entries) {
@@ -1428,56 +2124,15 @@ class _BarcodeManagementPageState extends State<BarcodeManagementPage>
         }
       }
       
-      // Generate PDF pages (20 labels per page - 4 columns x 5 rows)
-      const labelsPerRow = 4;
-      const labelsPerPage = 20;
+      final totalLabels = labelsToGenerate.length;
       
-      int pageCount = (labelsToGenerate.length / labelsPerPage).ceil();
-      
-      for (int page = 0; page < pageCount; page++) {
-        int startIndex = page * labelsPerPage;
-        int endIndex = (startIndex + labelsPerPage).clamp(0, labelsToGenerate.length);
-        List<ProductEntity> pageProducts = labelsToGenerate.sublist(startIndex, endIndex);
-        
-        int rowCount = (pageProducts.length / labelsPerRow).ceil();
-        
-        pdf.addPage(
-          pw.Page(
-            pageFormat: PdfPageFormat.a4,
-            margin: const pw.EdgeInsets.all(10),
-            build: (context) {
-              return pw.Column(
-                children: List.generate(rowCount, (rowIndex) {
-                  int rowStart = rowIndex * labelsPerRow;
-                  int rowEnd = (rowStart + labelsPerRow).clamp(0, pageProducts.length);
-                  List<ProductEntity> rowProducts = pageProducts.sublist(rowStart, rowEnd);
-                  
-                  return pw.Padding(
-                    padding: const pw.EdgeInsets.symmetric(vertical: 4),
-                    child: pw.Row(
-                      mainAxisAlignment: pw.MainAxisAlignment.spaceEvenly,
-                      children: rowProducts.map((product) {
-                        final barcodeData = product.barcode ?? product.indexNo.toString();
-                        return _buildPdfBarcodeLabel(
-                          product: product,
-                          barcodeData: barcodeData,
-                          barcodeType: barcodeType,
-                        );
-                      }).toList(),
-                    ),
-                  );
-                }),
-              );
-            },
-          ),
-        );
+      if (_selectedPrinterType == PrinterType.pos) {
+        // POS Thermal Printer - generate ESC/POS commands
+        await _printBulkToPosThePrinter(labelsToGenerate);
+      } else {
+        // Regular PDF Printer
+        await _printBulkToPdfPrinter(labelsToGenerate);
       }
-      
-      // Print or save PDF
-      await Printing.layoutPdf(
-        onLayout: (format) => pdf.save(),
-        name: 'Bulk_Barcodes_${DateTime.now().millisecondsSinceEpoch}',
-      );
       
       // Add to print history
       for (var entry in _bulkSelections.entries) {
@@ -1486,7 +2141,6 @@ class _BarcodeManagementPageState extends State<BarcodeManagementPage>
       }
       
       if (mounted) {
-        final totalLabels = _bulkSelections.values.fold<int>(0, (sum, q) => sum + q);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(
@@ -1519,6 +2173,100 @@ class _BarcodeManagementPageState extends State<BarcodeManagementPage>
         );
       }
     }
+  }
+  
+  /// Print bulk barcodes to POS thermal printer
+  Future<void> _printBulkToPosThePrinter(List<ProductEntity> products) async {
+    final labelConfig = BarcodeLabelConfig(
+      showProductName: _includeName,
+      showPrice: _includePrice,
+      showProductCode: _includeProductCode,
+      showHriText: true,
+      barcodeHeight: 50,
+      barcodeWidth: 2,
+    );
+    
+    final labels = products.map((product) {
+      final barcodeData = product.barcode ?? product.indexNo.toString();
+      return BarcodeLabelData(
+        barcodeData: barcodeData,
+        productName: _includeName ? product.name : null,
+        productCode: _includeProductCode ? product.indexNo.toString() : null,
+        price: _includePrice ? product.salesPrice : null,
+        barcodeFormat: _barcodeFormat,
+      );
+    }).toList();
+    
+    final result = await _posPrinterService.printBarcodeLabels(
+      labels: labels,
+      config: labelConfig,
+    );
+    
+    if (!result.success && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result.message ?? 'Failed to print to POS printer'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+  
+  /// Print bulk barcodes to regular PDF printer
+  Future<void> _printBulkToPdfPrinter(List<ProductEntity> products) async {
+    final pdf = pw.Document();
+    final barcodeType = _getBarcodeType(_barcodeFormat);
+    
+    // Generate PDF pages (20 labels per page - 4 columns x 5 rows)
+    const labelsPerRow = 4;
+    const labelsPerPage = 20;
+    
+    int pageCount = (products.length / labelsPerPage).ceil();
+    
+    for (int page = 0; page < pageCount; page++) {
+      int startIndex = page * labelsPerPage;
+      int endIndex = (startIndex + labelsPerPage).clamp(0, products.length);
+      List<ProductEntity> pageProducts = products.sublist(startIndex, endIndex);
+      
+      int rowCount = (pageProducts.length / labelsPerRow).ceil();
+      
+      pdf.addPage(
+        pw.Page(
+          pageFormat: PdfPageFormat.a4,
+          margin: const pw.EdgeInsets.all(10),
+          build: (context) {
+            return pw.Column(
+              children: List.generate(rowCount, (rowIndex) {
+                int rowStart = rowIndex * labelsPerRow;
+                int rowEnd = (rowStart + labelsPerRow).clamp(0, pageProducts.length);
+                List<ProductEntity> rowProducts = pageProducts.sublist(rowStart, rowEnd);
+                
+                return pw.Padding(
+                  padding: const pw.EdgeInsets.symmetric(vertical: 4),
+                  child: pw.Row(
+                    mainAxisAlignment: pw.MainAxisAlignment.spaceEvenly,
+                    children: rowProducts.map((product) {
+                      final barcodeData = product.barcode ?? product.indexNo.toString();
+                      return _buildPdfBarcodeLabel(
+                        product: product,
+                        barcodeData: barcodeData,
+                        barcodeType: barcodeType,
+                      );
+                    }).toList(),
+                  ),
+                );
+              }),
+            );
+          },
+        ),
+      );
+    }
+    
+    // Print or save PDF
+    await Printing.layoutPdf(
+      onLayout: (format) => pdf.save(),
+      name: 'Bulk_Barcodes_${DateTime.now().millisecondsSinceEpoch}',
+    );
   }
 
   // ============ PRINTED LIST TAB ============
