@@ -44,6 +44,7 @@ import 'package:c_billing/features/purchase_return/presentation/pages/purchase_r
 import 'package:c_billing/features/event_order/presentation/pages/event_order_list_page.dart';
 import 'package:c_billing/features/reports/presentation/pages/report_page.dart';
 import 'package:c_billing/features/dashboard/data/models/dashboard_data.dart';
+import 'package:c_billing/features/inventory_management/presentation/pages/barcode_management_page.dart';
 import 'package:c_billing/common_widgets/file_preview_page.dart';
 
 class BillingPage extends StatefulWidget {
@@ -5084,6 +5085,17 @@ class _BillingPageState extends State<BillingPage> {
           MaterialPageRoute(builder: (_) => const EventOrderListPage()),
         ).then((_) => _loadQuickStats()),
       ),
+      _QuickStatItem(
+        icon: Icons.qr_code_rounded,
+        value: 'Barcode',
+        label: 'Barcode Mgmt',
+        color: const Color(0xFF00897B),
+        gradient: [const Color(0xFF00897B), const Color(0xFF26A69A)],
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const BarcodeManagementPage()),
+        ).then((_) => _loadQuickStats()),
+      ),
     ];
 
     return Column(
@@ -5107,6 +5119,17 @@ class _BillingPageState extends State<BillingPage> {
             Expanded(child: _buildPremiumStatCard(stats[4])),
             const SizedBox(width: 12),
             Expanded(child: _buildPremiumStatCard(stats[5])),
+          ],
+        ),
+        const SizedBox(height: 12),
+        // Third row - Barcode Management centered
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            SizedBox(
+              width: MediaQuery.of(context).size.width * 0.35,
+              child: _buildPremiumStatCard(stats[6]),
+            ),
           ],
         ),
       ],
