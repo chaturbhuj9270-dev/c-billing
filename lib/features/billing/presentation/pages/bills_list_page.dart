@@ -254,6 +254,7 @@ class _BillsListPageState extends State<BillsListPage>
             fileName: '${_localizations.bills} - ${bill.billNumber}',
             fileType: FilePreviewType.pdf,
             subtitle: DateFormat('dd MMM yyyy, hh:mm a').format(bill.billDate),
+            customerPhone: bill.customerContact,
           ),
         ),
       );
@@ -3322,6 +3323,7 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
             fileName: '${_localizations.bills} - ${_bill.billNumber}',
             fileType: FilePreviewType.pdf,
             subtitle: DateFormat('dd MMM yyyy, hh:mm a').format(_bill.billDate),
+            customerPhone: _bill.customerContact,
           ),
         ),
       );

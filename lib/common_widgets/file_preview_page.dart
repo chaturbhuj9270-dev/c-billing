@@ -2,9 +2,11 @@ import 'dart:io';
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:printing/printing.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:pdf/pdf.dart';
+import 'package:c_billing/core/services/communication_service.dart';
 
 /// A reusable page for previewing PDF and CSV files with share and print functionality.
 ///
@@ -27,6 +29,8 @@ class FilePreviewPage extends StatefulWidget {
   final FilePreviewType fileType;
   final String? subtitle;
   final VoidCallback? onClose;
+  /// Optional customer phone number for direct WhatsApp sharing
+  final String? customerPhone;
 
   const FilePreviewPage({
     super.key,
@@ -35,6 +39,7 @@ class FilePreviewPage extends StatefulWidget {
     required this.fileType,
     this.subtitle,
     this.onClose,
+    this.customerPhone,
   });
 
   @override
@@ -44,6 +49,7 @@ class FilePreviewPage extends StatefulWidget {
 class _FilePreviewPageState extends State<FilePreviewPage> {
   bool _isLoading = true;
   bool _isSharing = false;
+  bool _isSharingWhatsApp = false;
   bool _isPrinting = false;
   List<List<String>>? _csvData;
   String? _errorMessage;
@@ -302,6 +308,129 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
         setState(() => _isSharing = false);
       }
     }
+  }
+
+  /// Share via WhatsApp - opens WhatsApp with customer number if available
+  Future<void> _handleWhatsAppShare() async {
+    if (_isSharingWhatsApp) return;
+    
+    setState(() => _isSharingWhatsApp = true);
+    try {
+      final customerPhone = widget.customerPhone;
+      
+      if (customerPhone != null && customerPhone.isNotEmpty) {
+        // If customer phone is available, open WhatsApp chat with that number
+        // Then share the file - user can attach in the opened chat
+        final message = 'Please find attached: ${widget.fileName}';
+        
+        // First share the file using system share sheet
+        await Share.shareXFiles(
+          [XFile(widget.file.path)],
+          subject: widget.fileName,
+          text: message,
+        );
+        
+        // After sharing, optionally open WhatsApp chat with the customer
+        // This gives them the option to send to the specific customer
+        if (mounted) {
+          _showWhatsAppOptionDialog(customerPhone);
+        }
+      } else {
+        // No customer phone, just open share sheet
+        await Share.shareXFiles(
+          [XFile(widget.file.path)],
+          subject: widget.fileName,
+          text: 'Sharing: ${widget.fileName}',
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        _showSnackBar('Error sharing via WhatsApp: $e', isError: true);
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSharingWhatsApp = false);
+      }
+    }
+  }
+
+  /// Show dialog with option to open WhatsApp chat with customer
+  void _showWhatsAppOptionDialog(String phoneNumber) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xFF25D366).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const FaIcon(
+                FontAwesomeIcons.whatsapp,
+                color: Color(0xFF25D366),
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Text(
+                'Open Customer Chat?',
+                style: TextStyle(
+                  fontFamily: 'Literata',
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          'Would you like to open WhatsApp chat with the customer ($phoneNumber) to send the file directly?',
+          style: TextStyle(
+            fontFamily: 'Literata',
+            fontSize: 14,
+            color: Colors.grey[700],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'Cancel',
+              style: TextStyle(
+                fontFamily: 'Literata',
+                color: Colors.grey[600],
+              ),
+            ),
+          ),
+          ElevatedButton.icon(
+            onPressed: () {
+              Navigator.pop(context);
+              CommunicationService.instance.openWhatsApp(
+                phoneNumber,
+                message: 'Please find attached: ${widget.fileName}',
+                context: context,
+              );
+            },
+            icon: const FaIcon(FontAwesomeIcons.whatsapp, size: 16),
+            label: const Text(
+              'Open Chat',
+              style: TextStyle(fontFamily: 'Literata'),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF25D366),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _handlePrint() async {
@@ -1498,7 +1627,12 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
               isPrimary: false,
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
+          // WhatsApp button
+          Expanded(
+            child: _buildWhatsAppButton(),
+          ),
+          const SizedBox(width: 10),
           // Print button
           Expanded(
             child: _buildActionButton(
@@ -1511,6 +1645,50 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildWhatsAppButton() {
+    final hasCustomerPhone = widget.customerPhone != null && widget.customerPhone!.isNotEmpty;
+    
+    return ElevatedButton(
+      onPressed: _isSharingWhatsApp ? null : _handleWhatsAppShare,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: const Color(0xFF25D366),
+        foregroundColor: Colors.white,
+        elevation: 2,
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
+      child: _isSharingWhatsApp
+          ? const SizedBox(
+              height: 20,
+              width: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Colors.white,
+              ),
+            )
+          : Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const FaIcon(FontAwesomeIcons.whatsapp, size: 18),
+                const SizedBox(width: 6),
+                Flexible(
+                  child: Text(
+                    hasCustomerPhone ? 'Send' : 'WhatsApp',
+                    style: const TextStyle(
+                      fontFamily: 'Literata',
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
     );
   }
 

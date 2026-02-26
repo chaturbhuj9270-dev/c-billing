@@ -1251,6 +1251,7 @@ class _BillingPageState extends State<BillingPage> {
             fileName: '${_localizations.bills} - ${bill.billNumber}',
             fileType: FilePreviewType.pdf,
             subtitle: DateFormat('dd MMM yyyy, hh:mm a').format(bill.billDate),
+            customerPhone: bill.customerContact,
           ),
         ),
       );
