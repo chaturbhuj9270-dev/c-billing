@@ -49,12 +49,22 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
   String? _errorMessage;
   Uint8List? _pdfBytes; // Pre-loaded PDF bytes
   
-  // Zoom controls
+  // PDF page rendering state
+  List<Uint8List?> _renderedPages = [];
+  int _totalPages = 0;
+  int _pagesRendered = 0;
+  bool _isRenderingPdf = false;
+  String _renderingStatus = '';
+  
+  // Zoom controls for CSV
   double _zoomLevel = 1.0;
   static const double _minZoom = 0.5;
   static const double _maxZoom = 3.0;
   static const double _zoomStep = 0.25;
   final TransformationController _transformationController = TransformationController();
+  
+  // Scroll controller for PDF
+  final ScrollController _pdfScrollController = ScrollController();
 
   @override
   void initState() {
@@ -65,6 +75,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
   @override
   void dispose() {
     _transformationController.dispose();
+    _pdfScrollController.dispose();
     super.dispose();
   }
 
@@ -118,6 +129,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
         final content = await widget.file.readAsString();
         final lines = const LineSplitter().convert(content);
         _csvData = lines.map((line) => _parseCSVLine(line)).toList();
+        setState(() => _isLoading = false);
       } else if (widget.fileType == FilePreviewType.pdf) {
         // Pre-load PDF bytes for faster rendering with retry mechanism
         int retries = 3;
@@ -140,12 +152,6 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
               throw Exception('Invalid PDF file format');
             }
             
-            // Additional PDF validation - check for PDF trailer
-            final pdfString = String.fromCharCodes(_pdfBytes!);
-            if (!pdfString.contains('%%EOF')) {
-              throw Exception('Incomplete PDF file - missing EOF marker');
-            }
-            
             debugPrint('[FilePreviewPage] PDF file validated successfully');
             break;
           } catch (e) {
@@ -155,17 +161,101 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
             await Future.delayed(const Duration(milliseconds: 500));
           }
         }
+        
+        // Start rendering PDF pages
+        setState(() {
+          _isLoading = false;
+          _isRenderingPdf = true;
+          _renderingStatus = 'Preparing document...';
+        });
+        
+        // Render PDF pages as images (more reliable than PdfPreview)
+        await _renderPdfPages();
       }
       
-      setState(() => _isLoading = false);
       debugPrint('[FilePreviewPage] File loaded successfully');
     } catch (e, stack) {
       debugPrint('[FilePreviewPage] Error loading file: $e');
       debugPrint('[FilePreviewPage] Stack: $stack');
       setState(() {
         _isLoading = false;
+        _isRenderingPdf = false;
         _errorMessage = 'Error loading file: $e';
       });
+    }
+  }
+
+  /// Render PDF pages as images for reliable display
+  Future<void> _renderPdfPages() async {
+    if (_pdfBytes == null || _pdfBytes!.isEmpty) {
+      setState(() {
+        _isRenderingPdf = false;
+        _errorMessage = 'PDF data not available for rendering';
+      });
+      return;
+    }
+    
+    try {
+      debugPrint('[FilePreviewPage] Starting PDF page rendering...');
+      
+      // Get screen width for optimal DPI calculation
+      final screenWidth = MediaQuery.of(context).size.width;
+      final dpi = (screenWidth * 1.5).clamp(150, 300).toDouble(); // Adaptive DPI
+      
+      // Collect all pages first to know total count
+      final pages = <Uint8List>[];
+      int pageCount = 0;
+      
+      setState(() {
+        _renderingStatus = 'Rendering pages...';
+      });
+      
+      // Use Printing.raster to convert PDF pages to images
+      await for (final page in Printing.raster(
+        _pdfBytes!,
+        pages: null, // Render all pages
+        dpi: dpi,
+      )) {
+        // Convert raster page to PNG bytes
+        final pngBytes = await page.toPng();
+        pages.add(pngBytes);
+        pageCount++;
+        
+        debugPrint('[FilePreviewPage] Rendered page $pageCount');
+        
+        if (mounted) {
+          setState(() {
+            _totalPages = pageCount;
+            _pagesRendered = pageCount;
+            _renderingStatus = 'Rendered page $pageCount';
+            _renderedPages = List<Uint8List?>.from(pages);
+          });
+        }
+      }
+      
+      if (pages.isEmpty) {
+        throw Exception('No pages were rendered from PDF');
+      }
+      
+      debugPrint('[FilePreviewPage] PDF rendering complete: $pageCount pages');
+      
+      if (mounted) {
+        setState(() {
+          _isRenderingPdf = false;
+          _totalPages = pageCount;
+          _renderedPages = pages.cast<Uint8List?>();
+        });
+      }
+    } catch (e, stack) {
+      debugPrint('[FilePreviewPage] Error rendering PDF pages: $e');
+      debugPrint('[FilePreviewPage] Stack: $stack');
+      
+      if (mounted) {
+        setState(() {
+          _isRenderingPdf = false;
+          _errorMessage = 'Failed to render PDF: $e';
+        });
+      }
     }
   }
 
@@ -349,7 +439,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
         child: Column(
           children: [
             _buildHeader(),
-            // Show zoom controls only for CSV (PdfPreview has built-in pinch-to-zoom)
+            // Show zoom controls only for CSV (PDF pages are rendered at optimal size)
             if (widget.fileType == FilePreviewType.csv) _buildZoomControls(),
             Expanded(
               child: _isLoading
@@ -607,7 +697,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
           ),
           const SizedBox(height: 20),
           Text(
-            'Rendering PDF...',
+            'Loading document...',
             style: TextStyle(
               fontFamily: 'Literata',
               fontSize: 14,
@@ -617,7 +707,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
           ),
           const SizedBox(height: 6),
           Text(
-            'Please wait a moment',
+            'Please wait',
             style: TextStyle(
               fontFamily: 'Literata',
               fontSize: 12,
@@ -695,20 +785,67 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
   }
 
   Widget _buildPdfPreview() {
-    // If PDF bytes not loaded, show error
-    if (_pdfBytes == null || _pdfBytes!.isEmpty) {
+    // Show rendering progress if still rendering
+    if (_isRenderingPdf) {
+      return _buildPdfRenderingProgress();
+    }
+    
+    // If no pages rendered, show error
+    if (_renderedPages.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.error_outline, size: 48, color: Colors.red[400]),
-            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.orange.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Icon(
+                Icons.picture_as_pdf_rounded,
+                size: 48,
+                color: Colors.orange[700],
+              ),
+            ),
+            const SizedBox(height: 20),
             Text(
-              'PDF data not available',
+              'PDF not rendered yet',
               style: TextStyle(
                 fontFamily: 'Literata',
-                fontSize: 14,
-                color: Colors.grey[600],
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey[700],
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Tap to retry rendering',
+              style: TextStyle(
+                fontFamily: 'Literata',
+                fontSize: 13,
+                color: Colors.grey[500],
+              ),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton.icon(
+              onPressed: () {
+                setState(() {
+                  _isRenderingPdf = true;
+                  _renderedPages.clear();
+                  _pagesRendered = 0;
+                });
+                _renderPdfPages();
+              },
+              icon: const Icon(Icons.refresh_rounded, size: 18),
+              label: const Text('Retry'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF1B4D3E),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
               ),
             ),
           ],
@@ -716,46 +853,271 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
       );
     }
     
+    // Show rendered PDF pages in a scrollable list
+    return Column(
+      children: [
+        // Page indicator
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border(
+              bottom: BorderSide(color: Colors.grey.shade200),
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.description_outlined,
+                      size: 14,
+                      color: Color(0xFF1B4D3E),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      '$_totalPages ${_totalPages == 1 ? 'page' : 'pages'}',
+                      style: const TextStyle(
+                        fontFamily: 'Literata',
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF1B4D3E),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        // PDF Pages
+        Expanded(
+          child: Container(
+            color: const Color(0xFFF0F0F0),
+            child: ListView.builder(
+              controller: _pdfScrollController,
+              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+              itemCount: _renderedPages.length,
+              itemBuilder: (context, index) {
+                final pageBytes = _renderedPages[index];
+                if (pageBytes == null) {
+                  return _buildPagePlaceholder(index + 1);
+                }
+                return _buildPdfPage(pageBytes, index + 1);
+              },
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+  
+  Widget _buildPdfRenderingProgress() {
+    final progress = _totalPages > 0 ? _pagesRendered / _totalPages : 0.0;
+    
+    return Center(
+      child: Container(
+        margin: const EdgeInsets.all(32),
+        padding: const EdgeInsets.all(32),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 20,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Animated PDF icon
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    const Color(0xFF1B4D3E).withOpacity(0.1),
+                    const Color(0xFF2D6A4F).withOpacity(0.1),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: const Icon(
+                Icons.picture_as_pdf_rounded,
+                size: 40,
+                color: Color(0xFF1B4D3E),
+              ),
+            ),
+            const SizedBox(height: 24),
+            // Progress indicator
+            SizedBox(
+              width: 200,
+              child: Column(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: LinearProgressIndicator(
+                      value: _totalPages > 0 ? progress : null,
+                      minHeight: 8,
+                      backgroundColor: Colors.grey[200],
+                      valueColor: const AlwaysStoppedAnimation<Color>(
+                        Color(0xFF1B4D3E),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    _totalPages > 0 
+                        ? 'Page $_pagesRendered of $_totalPages'
+                        : _renderingStatus,
+                    style: TextStyle(
+                      fontFamily: 'Literata',
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Rendering PDF...',
+              style: TextStyle(
+                fontFamily: 'Literata',
+                fontSize: 11,
+                color: Colors.grey[500],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  Widget _buildPdfPage(Uint8List pageBytes, int pageNumber) {
     return Container(
-      margin: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(8),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        // PdfPreview has its own scrolling/zooming - removed InteractiveViewer wrapper
-        child: PdfPreview(
-          build: (format) async => _pdfBytes!,
-          canChangeOrientation: false,
-          canChangePageFormat: false,
-          canDebug: false,
-          allowPrinting: false,
-          allowSharing: false,
-          useActions: false,
-          maxPageWidth: 700,
-          pdfFileName: widget.fileName,
-          loadingWidget: _buildLoadingState(),
-          scrollViewDecoration: const BoxDecoration(color: Colors.white),
-          padding: EdgeInsets.zero,
-          previewPageMargin: const EdgeInsets.symmetric(vertical: 8),
-          pdfPreviewPageDecoration: BoxDecoration(
-            color: Colors.white,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.08),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
+        borderRadius: BorderRadius.circular(8),
+        child: Column(
+          children: [
+            // Page image
+            Image.memory(
+              pageBytes,
+              fit: BoxFit.fitWidth,
+              errorBuilder: (context, error, stackTrace) {
+                return Container(
+                  height: 200,
+                  color: Colors.grey[100],
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.broken_image_outlined,
+                          size: 32,
+                          color: Colors.grey[400],
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Failed to load page $pageNumber',
+                          style: TextStyle(
+                            fontFamily: 'Literata',
+                            fontSize: 12,
+                            color: Colors.grey[500],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+            // Page number footer
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.grey[50],
+                border: Border(
+                  top: BorderSide(color: Colors.grey.shade200),
+                ),
               ),
-            ],
+              child: Center(
+                child: Text(
+                  'Page $pageNumber of $_totalPages',
+                  style: TextStyle(
+                    fontFamily: 'Literata',
+                    fontSize: 11,
+                    color: Colors.grey[500],
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  Widget _buildPagePlaceholder(int pageNumber) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      height: 400,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
+        ],
+      ),
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const CircularProgressIndicator(
+              color: Color(0xFF1B4D3E),
+              strokeWidth: 2,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Loading page $pageNumber...',
+              style: TextStyle(
+                fontFamily: 'Literata',
+                fontSize: 12,
+                color: Colors.grey[500],
+              ),
+            ),
+          ],
         ),
       ),
     );
