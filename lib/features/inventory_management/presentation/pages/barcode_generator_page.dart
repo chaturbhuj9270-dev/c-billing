@@ -8,6 +8,9 @@ import 'package:printing/printing.dart';
 import '../../../../core/services/barcode_service.dart';
 import '../../../../core/services/language_service.dart';
 import '../../../../core/localization/app_localizations.dart';
+import '../../../../core/printing/services/pos_printer_service.dart';
+import '../../../../core/printing/formatters/esc_pos_bill_formatter.dart';
+import '../../../../common_widgets/printer_selection_widget.dart';
 import '../../../product/offline/controllers/product_offline_controller.dart';
 import '../../../product/offline/entities/product_entity.dart';
 import '../../offline/controllers/purchase_batch_offline_controller.dart';
@@ -52,6 +55,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
   final _customBarcodeController = TextEditingController();
   final _quantityController = TextEditingController(text: '1');
   final _barcodeKey = GlobalKey();
+  final _printerService = PosPrinterService();
 
   // Localization (for future i18n support)
   // ignore: unused_field
@@ -198,11 +202,28 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
     if (!_autoGenerate && _customBarcodeController.text.isNotEmpty) {
       barcode = _customBarcodeController.text.trim();
     } else {
-      // Generate based on selected format
+      // Generate based on selected format - always include batch when available
+      final batchId = _selectedBatch?.id;
+
       switch (_selectedFormat) {
         case BarcodeFormat.ean13:
           barcode = BarcodeService.instance.generateEAN13(
             productIndexNo: _selectedProduct!.indexNo,
+            batchNo: batchId,
+          );
+          break;
+        case BarcodeFormat.ean8:
+          // EAN-8: 2 digits prefix + 5 digits product (include batch in product)
+          final productWithBatch =
+              (_selectedProduct!.indexNo * 100 + (batchId ?? 0) % 100) % 100000;
+          barcode = BarcodeService.instance.generateEAN8(
+            productIndexNo: productWithBatch,
+          );
+          break;
+        case BarcodeFormat.upcA:
+          barcode = BarcodeService.instance.generateUPCA(
+            productIndexNo: _selectedProduct!.indexNo,
+            batchNo: batchId,
           );
           break;
         case BarcodeFormat.code128:
@@ -212,13 +233,19 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
             companyCode: _selectedProduct!.companyName.isNotEmpty
                 ? _selectedProduct!.companyName
                 : null,
-            batchNo: _selectedBatch != null ? _selectedBatch!.id : null,
+            batchNo: batchId,
           );
           break;
-        default:
-          barcode = BarcodeService.instance.generateProductBarcode(
-            _selectedProduct!.serverId ?? _selectedProduct!.id.toString(),
+        case BarcodeFormat.qrCode:
+          // QR Code can contain more data - include batch info in text
+          barcode = BarcodeService.instance.generateQRData(
+            productId:
+                _selectedProduct!.serverId ?? _selectedProduct!.id.toString(),
+            productName: _selectedProduct!.name,
+            batchNo: batchId,
+            price: _selectedBatch?.sellingPrice ?? _selectedProduct!.salesPrice,
           );
+          break;
       }
     }
 
@@ -276,6 +303,136 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
     } catch (e) {
       _showSnackBar('Error printing barcode: $e', isError: true);
     }
+  }
+
+  /// Print barcode using POS thermal printer
+  Future<void> _printBarcodePos() async {
+    if (_generatedBarcode.isEmpty) return;
+
+    // Check if printer is connected
+    if (!_printerService.isConnected) {
+      // Show printer selection dialog
+      final selectedPrinter = await PrinterSelectionWidget.show(context);
+      if (selectedPrinter == null) {
+        _showSnackBar('No printer selected', isError: true);
+        return;
+      }
+    }
+
+    final quantity = int.tryParse(_quantityController.text) ?? 1;
+
+    try {
+      // Generate barcode label bytes
+      final bytes = _generateBarcodeLabelBytes(quantity);
+
+      // Print using POS printer
+      final result = await _printerService.printRaw(bytes);
+
+      if (result.success) {
+        _showSnackBar('Barcode printed successfully!', isError: false);
+      } else {
+        _showSnackBar(result.message ?? 'Print failed', isError: true);
+      }
+    } catch (e) {
+      _showSnackBar('Error printing barcode: $e', isError: true);
+    }
+  }
+
+  /// Generate ESC/POS bytes for barcode label
+  List<int> _generateBarcodeLabelBytes(int quantity) {
+    final bytes = <int>[];
+
+    // Initialize printer
+    bytes.addAll(EscPosCommands.init);
+    bytes.addAll(EscPosCommands.setLineSpacing(30));
+
+    for (int i = 0; i < quantity; i++) {
+      // Center align
+      bytes.addAll(EscPosCommands.alignCenter);
+
+      // Company name (if enabled)
+      if (_includeCompany && _selectedProduct?.companyName.isNotEmpty == true) {
+        bytes.addAll(EscPosCommands.textNormal);
+        bytes.addAll(_selectedProduct!.companyName.codeUnits);
+        bytes.addAll(EscPosCommands.lineFeed);
+      }
+
+      // Product name (bold)
+      bytes.addAll(EscPosCommands.boldOn);
+      bytes.addAll((_selectedProduct?.name ?? '').codeUnits);
+      bytes.addAll(EscPosCommands.boldOff);
+      bytes.addAll(EscPosCommands.lineFeed);
+
+      // Line feed before barcode
+      bytes.addAll(EscPosCommands.lineFeed);
+
+      // Barcode settings
+      bytes.addAll(EscPosCommands.setBarcodeHeight(60)); // Height in dots
+      bytes.addAll(EscPosCommands.setBarcodeWidth(3)); // Width multiplier
+      bytes.addAll(EscPosCommands.setHRIPosition(2)); // Print below barcode
+      bytes.addAll(EscPosCommands.setHRIFont(0)); // Font A
+
+      // Print barcode based on format
+      switch (_selectedFormat) {
+        case BarcodeFormat.code128:
+          bytes.addAll(EscPosCommands.printCode128(_generatedBarcode));
+          break;
+        case BarcodeFormat.code39:
+          bytes.addAll(EscPosCommands.printCode39(_generatedBarcode));
+          break;
+        case BarcodeFormat.ean13:
+          bytes.addAll(EscPosCommands.printEAN13(_generatedBarcode));
+          break;
+        case BarcodeFormat.ean8:
+          bytes.addAll(EscPosCommands.printEAN8(_generatedBarcode));
+          break;
+        case BarcodeFormat.upcA:
+          bytes.addAll(EscPosCommands.printUPCA(_generatedBarcode));
+          break;
+        case BarcodeFormat.qrCode:
+          bytes.addAll(
+            EscPosCommands.printQRCode(_generatedBarcode, moduleSize: 6),
+          );
+          break;
+      }
+
+      bytes.addAll(EscPosCommands.lineFeed);
+
+      // Price (if enabled)
+      if (_includePrice) {
+        bytes.addAll(EscPosCommands.textDoubleSize);
+        bytes.addAll(EscPosCommands.boldOn);
+        final price =
+            _selectedBatch?.sellingPrice ?? _selectedProduct?.salesPrice ?? 0;
+        bytes.addAll('Rs.${price.toStringAsFixed(0)}'.codeUnits);
+        bytes.addAll(EscPosCommands.boldOff);
+        bytes.addAll(EscPosCommands.textNormal);
+        bytes.addAll(EscPosCommands.lineFeed);
+      }
+
+      // Add spacing between labels
+      bytes.addAll(EscPosCommands.feedLines(3));
+
+      // Batch info (if available)
+      if (_selectedBatch != null) {
+        bytes.addAll(EscPosCommands.alignLeft);
+        bytes.addAll('Batch: #${_selectedBatch!.id}'.codeUnits);
+        bytes.addAll(EscPosCommands.lineFeed);
+        bytes.addAll(EscPosCommands.alignCenter);
+      }
+
+      // Separator line between multiple labels
+      if (i < quantity - 1) {
+        bytes.addAll('--------------------------------'.codeUnits);
+        bytes.addAll(EscPosCommands.lineFeed);
+        bytes.addAll(EscPosCommands.feedLines(2));
+      }
+    }
+
+    // Final feed
+    bytes.addAll(EscPosCommands.feedLines(4));
+
+    return bytes;
   }
 
   Future<Uint8List> _generateBarcodePdf(int quantity) async {
@@ -710,14 +867,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
                     ),
                   ),
                   const SizedBox(width: 12),
-                  Expanded(
-                    child: _buildActionButton(
-                      icon: Icons.print_rounded,
-                      label: 'Print',
-                      onTap: _printBarcode,
-                      isPrimary: true,
-                    ),
-                  ),
+                  Expanded(child: _buildPrintButtonWithOptions(isMobile: true)),
                 ],
               ),
             ),
@@ -1664,12 +1814,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: _buildActionButton(
-                      icon: Icons.print_rounded,
-                      label: 'Print Barcode',
-                      onTap: _printBarcode,
-                      isPrimary: true,
-                    ),
+                    child: _buildPrintButtonWithOptions(isMobile: false),
                   ),
                 ],
               ),
@@ -2355,6 +2500,150 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  /// Build print button with popup menu for PDF and POS options
+  Widget _buildPrintButtonWithOptions({required bool isMobile}) {
+    return PopupMenuButton<String>(
+      onSelected: (value) {
+        if (value == 'pdf') {
+          _printBarcode();
+        } else if (value == 'pos') {
+          _printBarcodePos();
+        }
+      },
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      color: Colors.white,
+      elevation: 8,
+      offset: const Offset(0, -100),
+      itemBuilder: (context) => [
+        PopupMenuItem(
+          value: 'pdf',
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: _primaryColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.picture_as_pdf_rounded,
+                  size: 20,
+                  color: _primaryColor,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Print as PDF',
+                    style: TextStyle(
+                      fontFamily: 'Literata',
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                      color: _primaryColor,
+                    ),
+                  ),
+                  Text(
+                    'Standard paper printer',
+                    style: TextStyle(
+                      fontFamily: 'Literata',
+                      fontSize: 11,
+                      color: Colors.grey,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        const PopupMenuDivider(),
+        PopupMenuItem(
+          value: 'pos',
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: _accentColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.receipt_long_rounded,
+                  size: 20,
+                  color: _accentColor,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'POS Printer',
+                    style: TextStyle(
+                      fontFamily: 'Literata',
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                      color: _primaryColor,
+                    ),
+                  ),
+                  Text(
+                    _printerService.isConnected
+                        ? 'Connected: ${_printerService.connectedPrinter?.name ?? "Unknown"}'
+                        : 'Tap to connect printer',
+                    style: TextStyle(
+                      fontFamily: 'Literata',
+                      fontSize: 11,
+                      color: _printerService.isConnected
+                          ? _successColor
+                          : Colors.grey,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [_primaryColor, _accentColor],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.print_rounded, size: 20, color: Colors.white),
+            const SizedBox(width: 10),
+            Text(
+              isMobile ? 'Print' : 'Print Barcode',
+              style: const TextStyle(
+                fontFamily: 'Literata',
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(width: 4),
+            const Icon(
+              Icons.arrow_drop_up_rounded,
+              size: 20,
+              color: Colors.white,
+            ),
+          ],
         ),
       ),
     );

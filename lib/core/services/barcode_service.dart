@@ -1,9 +1,6 @@
 import 'dart:async';
-import 'dart:typed_data';
-import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:barcode/barcode.dart';
-import 'package:flutter/rendering.dart';
 import '../../features/product/offline/controllers/product_offline_controller.dart';
 import '../../features/product/offline/entities/product_entity.dart';
 import '../../features/inventory_management/offline/controllers/purchase_batch_offline_controller.dart';
@@ -151,18 +148,21 @@ class BarcodeService {
   }
 
   /// Generate EAN-13 compatible barcode (13 digits with check digit)
+  /// Includes batch information when available
   String generateEAN13({
     required int productIndexNo,
+    int? batchNo,
     int prefixCode = 200, // 200-299 is for internal use
   }) {
-    // Format: PPP-OOOO-NNNNN-C
+    // Format: PPP-BB-NNNNNN-C
     // PPP = prefix (200-299 for internal use)
-    // OOOO = organization code (use 0000)
-    // NNNNN = product index no (padded)
+    // BB = batch number (00-99, 00 if no batch)
+    // NNNNNN = product index no (padded to 6 digits)
     // C = check digit
 
-    final base =
-        '${prefixCode}0000${productIndexNo.toString().padLeft(5, '0')}';
+    final batchPart = (batchNo ?? 0).clamp(0, 99).toString().padLeft(2, '0');
+    final productPart = (productIndexNo % 1000000).toString().padLeft(6, '0');
+    final base = '$prefixCode$batchPart$productPart';
     final checkDigit = _calculateEAN13CheckDigit(base);
     return '$base$checkDigit';
   }
@@ -175,6 +175,82 @@ class BarcodeService {
       sum += (i % 2 == 0) ? digit : digit * 3;
     }
     return (10 - (sum % 10)) % 10;
+  }
+
+  /// Generate EAN-8 compatible barcode (8 digits with check digit)
+  String generateEAN8({
+    required int productIndexNo,
+    int prefixCode = 20, // 2-digit prefix for internal use
+  }) {
+    // Format: PP-NNNNN-C
+    // PP = prefix (20-29 for internal use)
+    // NNNNN = product index no (padded to 5 digits)
+    // C = check digit
+
+    final productPart = (productIndexNo % 100000).toString().padLeft(5, '0');
+    final base = '$prefixCode$productPart';
+    final checkDigit = _calculateEAN8CheckDigit(base);
+    return '$base$checkDigit';
+  }
+
+  /// Calculate EAN-8 check digit
+  int _calculateEAN8CheckDigit(String code7) {
+    int sum = 0;
+    for (int i = 0; i < 7; i++) {
+      final digit = int.parse(code7[i]);
+      sum += (i % 2 == 0) ? digit * 3 : digit;
+    }
+    return (10 - (sum % 10)) % 10;
+  }
+
+  /// Generate UPC-A compatible barcode (12 digits with check digit)
+  /// Includes batch information when available
+  String generateUPCA({
+    required int productIndexNo,
+    int? batchNo,
+    int prefixCode = 0, // Number system digit (0 for regular UPC)
+  }) {
+    // Format: P-MMMMM-NNNNN-C
+    // P = number system (0-9)
+    // MMMMM = manufacturer code (include batch info)
+    // NNNNN = product code
+    // C = check digit
+
+    final batchPart = (batchNo ?? 0).clamp(0, 99999).toString().padLeft(5, '0');
+    final productPart = (productIndexNo % 100000).toString().padLeft(5, '0');
+    final base = '$prefixCode$batchPart$productPart';
+    final checkDigit = _calculateUPCACheckDigit(base);
+    return '$base$checkDigit';
+  }
+
+  /// Calculate UPC-A check digit
+  int _calculateUPCACheckDigit(String code11) {
+    int sum = 0;
+    for (int i = 0; i < 11; i++) {
+      final digit = int.parse(code11[i]);
+      sum += (i % 2 == 0) ? digit * 3 : digit;
+    }
+    return (10 - (sum % 10)) % 10;
+  }
+
+  /// Generate QR Code data string with product and batch info
+  String generateQRData({
+    required String productId,
+    required String productName,
+    int? batchNo,
+    double? price,
+  }) {
+    final parts = <String>[
+      'P:$productId',
+      'N:${productName.length > 20 ? productName.substring(0, 20) : productName}',
+    ];
+    if (batchNo != null) {
+      parts.add('B:$batchNo');
+    }
+    if (price != null) {
+      parts.add('R:${price.toStringAsFixed(2)}');
+    }
+    return parts.join('|');
   }
 
   /// Get the barcode renderer for a given format
