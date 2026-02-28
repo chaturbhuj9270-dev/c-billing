@@ -1551,38 +1551,64 @@ class _BillingPageState extends State<BillingPage> {
                   ),
                 ),
                 const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        _generateBillViaContact
-                            ? _localizations.phoneNumber
-                            : isCustomerRequired
-                            ? '${_localizations.customerOptional.replaceAll('(Optional)', '')}(Required)'
-                            : _localizations.customerOptional,
-                        style: TextStyle(
-                          fontFamily: 'Literata',
-                          fontWeight: FontWeight.w700,
-                          fontSize: 14,
-                          color: isCustomerRequired && _selectedCustomer == null
-                              ? Colors.red[700]!
-                              : const Color(0xFF1B4D3E),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          _generateBillViaContact
+                              ? _localizations.phoneNumber
+                              : isCustomerRequired
+                              ? '${_localizations.customerOptional.replaceAll('(Optional)', '')}(Required)'
+                              : _localizations.customerOptional,
+                          style: TextStyle(
+                            fontFamily: 'Literata',
+                            fontWeight: FontWeight.w700,
+                            fontSize: 14,
+                            color: isCustomerRequired && _selectedCustomer == null
+                                ? Colors.red[700]!
+                                : const Color(0xFF1B4D3E),
+                          ),
                         ),
+                        // Add Customer button - immediately after text
+                        if (!_generateBillViaContact && !_isLoadingCustomers) ...[
+                          const SizedBox(width: 8),
+                          GestureDetector(
+                            onTap: () {
+                              final phone = _customerContactController.text.trim();
+                              _showAddCustomerDialog(phone);
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: const Icon(
+                                Icons.person_add_rounded,
+                                color: Color(0xFF1B4D3E),
+                                size: 16,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                    Text(
+                      _generateBillViaContact
+                          ? 'Auto-link customer by phone'
+                          : 'Link a customer to this bill',
+                      style: TextStyle(
+                        fontFamily: 'Literata',
+                        fontSize: 11,
+                        color: Colors.grey[600],
                       ),
-                      Text(
-                        _generateBillViaContact
-                            ? 'Auto-link customer by phone'
-                            : 'Link a customer to this bill',
-                        style: TextStyle(
-                          fontFamily: 'Literata',
-                          fontSize: 11,
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
+                const Spacer(),
                 // Loading indicator for customer list
                 if (_isLoadingCustomers)
                   Container(
@@ -1592,30 +1618,6 @@ class _BillingPageState extends State<BillingPage> {
                     child: const CircularProgressIndicator(
                       strokeWidth: 2,
                       color: Color(0xFF1B4D3E),
-                    ),
-                  ),
-                // Add Customer button
-                if (!_generateBillViaContact && !_isLoadingCustomers)
-                  Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: () {
-                        final phone = _customerContactController.text.trim();
-                        _showAddCustomerDialog(phone);
-                      },
-                      borderRadius: BorderRadius.circular(8),
-                      child: Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF1B4D3E).withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Icon(
-                          Icons.person_add_rounded,
-                          color: Color(0xFF1B4D3E),
-                          size: 18,
-                        ),
-                      ),
                     ),
                   ),
               ],
@@ -1952,10 +1954,11 @@ class _BillingPageState extends State<BillingPage> {
         GestureDetector(
           onTap: _showCustomerPicker,
           child: Container(
-            padding: const EdgeInsets.all(8),
+            height: 44,
+            padding: const EdgeInsets.symmetric(horizontal: 10),
             decoration: BoxDecoration(
               color: Colors.grey[50],
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(10),
               border: Border.all(
                 color: isCustomerRequired
                     ? Colors.red[200]!
@@ -1965,38 +1968,38 @@ class _BillingPageState extends State<BillingPage> {
             child: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(4),
+                  padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
                     color: const Color(0xFF1B4D3E).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(5),
+                    borderRadius: BorderRadius.circular(6),
                   ),
                   child: Icon(
                     Icons.search_rounded,
                     color: const Color(0xFF1B4D3E).withOpacity(0.7),
-                    size: 14,
+                    size: 16,
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 10),
                 Expanded(
                   child: Text(
                     _localizations.searchExistingCustomer,
                     style: TextStyle(
                       fontFamily: 'Literata',
                       color: Colors.grey[500],
-                      fontSize: 12,
+                      fontSize: 13,
                     ),
                   ),
                 ),
                 Icon(
                   Icons.chevron_right_rounded,
                   color: Colors.grey[400],
-                  size: 16,
+                  size: 18,
                 ),
               ],
             ),
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 10),
         // Manual input fields
         Row(
           children: [
@@ -2007,7 +2010,7 @@ class _BillingPageState extends State<BillingPage> {
                 icon: Icons.person_outline_rounded,
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 10),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -2119,21 +2122,22 @@ class _BillingPageState extends State<BillingPage> {
     Widget? suffixIcon,
   }) {
     return Container(
+      height: 44,
       decoration: BoxDecoration(
         color: Colors.grey[50],
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(color: Colors.grey[200]!),
       ),
       child: TextField(
         controller: controller,
         keyboardType: keyboardType,
-        style: const TextStyle(fontFamily: 'Literata', fontSize: 12),
+        style: const TextStyle(fontFamily: 'Literata', fontSize: 13),
         decoration: InputDecoration(
           labelText: label,
-          labelStyle: TextStyle(color: Colors.grey[600], fontSize: 11),
+          labelStyle: TextStyle(color: Colors.grey[600], fontSize: 12),
           contentPadding: const EdgeInsets.symmetric(
-            horizontal: 10,
-            vertical: 6,
+            horizontal: 12,
+            vertical: 10,
           ),
           border: InputBorder.none,
           isDense: true,
@@ -2541,116 +2545,29 @@ class _BillingPageState extends State<BillingPage> {
                             ),
                           ),
                           const Spacer(),
-                          Icon(
-                            Icons.arrow_forward_ios_rounded,
-                            color: Colors.grey[400],
-                            size: 16,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                // Barcode scan button - FAST BILLING
-                Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(10),
-                    onTap: _showBarcodeScannerSheet,
-                    child: Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            const Color(0xFF1B4D3E).withOpacity(0.15),
-                            const Color(0xFF2D6A4F).withOpacity(0.1),
-                          ],
-                        ),
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(
-                          color: const Color(0xFF1B4D3E).withOpacity(0.3),
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(6),
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  const Color(0xFF1B4D3E),
-                                  const Color(0xFF2D6A4F),
-                                ],
+                          // Barcode scan icon
+                          GestureDetector(
+                            onTap: () {
+                              // Prevent triggering the parent InkWell
+                              _showBarcodeScannerSheet();
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    const Color(0xFF1B4D3E),
+                                    const Color(0xFF2D6A4F),
+                                  ],
+                                ),
+                                borderRadius: BorderRadius.circular(6),
                               ),
-                              borderRadius: BorderRadius.circular(6),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: const Color(
-                                    0xFF1B4D3E,
-                                  ).withOpacity(0.3),
-                                  blurRadius: 4,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            child: const Icon(
-                              Icons.qr_code_scanner_rounded,
-                              color: Colors.white,
-                              size: 16,
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          const Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Scan Barcode',
-                                  style: TextStyle(
-                                    fontFamily: 'Literata',
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 13,
-                                    color: Color(0xFF1B4D3E),
-                                  ),
-                                ),
-                                Text(
-                                  'Fast billing with camera scan',
-                                  style: TextStyle(
-                                    fontFamily: 'Literata',
-                                    fontSize: 10,
-                                    color: Color(0xFF1B4D3E),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF1B4D3E),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: const Text(
-                              'FAST',
-                              style: TextStyle(
-                                fontFamily: 'Literata',
-                                fontSize: 9,
-                                fontWeight: FontWeight.w800,
+                              child: const Icon(
+                                Icons.barcode_reader,
                                 color: Colors.white,
-                                letterSpacing: 0.5,
+                                size: 16,
                               ),
                             ),
-                          ),
-                          const SizedBox(width: 8),
-                          Icon(
-                            Icons.arrow_forward_ios_rounded,
-                            color: const Color(0xFF1B4D3E).withOpacity(0.6),
-                            size: 16,
                           ),
                         ],
                       ),
@@ -5008,7 +4925,7 @@ class _BillingPageState extends State<BillingPage> {
                   );
                 },
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                  padding: const EdgeInsets.fromLTRB(16, 18, 16, 0),
                   child: GestureDetector(
                     onTap: () {}, // Prevent closing when tapping panel
                     child: _buildGlassyQuickStatsCard(),
