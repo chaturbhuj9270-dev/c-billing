@@ -198,6 +198,97 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
     }
   }
 
+  /// Build a safe barcode widget that validates data before rendering
+  /// Returns a placeholder if data is invalid for the format
+  Widget _buildSafeBarcodeWidget({
+    required String data,
+    required BarcodeFormat format,
+    double width = 200,
+    double height = 70,
+  }) {
+    // Check if data is empty
+    if (data.isEmpty) {
+      return _buildBarcodePlaceholder(
+        width: width,
+        height: height,
+        message: 'No barcode generated',
+      );
+    }
+
+    // Validate data for format
+    if (!BarcodeService.instance.validateBarcodeData(data, format)) {
+      return _buildBarcodePlaceholder(
+        width: width,
+        height: height,
+        message: 'Invalid for ${format.code}',
+        isError: true,
+      );
+    }
+
+    // Wrap in try-catch for safety
+    try {
+      return bw.BarcodeWidget(
+        barcode: BarcodeService.instance.getBarcodeRenderer(format),
+        data: data,
+        drawText: false,
+        color: Colors.black,
+        backgroundColor: Colors.transparent,
+      );
+    } catch (e) {
+      return _buildBarcodePlaceholder(
+        width: width,
+        height: height,
+        message: 'Render error',
+        isError: true,
+      );
+    }
+  }
+
+  /// Build a placeholder for invalid/empty barcode
+  Widget _buildBarcodePlaceholder({
+    required double width,
+    required double height,
+    required String message,
+    bool isError = false,
+  }) {
+    return Container(
+      width: width,
+      height: height,
+      decoration: BoxDecoration(
+        color: isError
+            ? Colors.red.withOpacity(0.05)
+            : Colors.grey.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: isError
+              ? Colors.red.withOpacity(0.2)
+              : Colors.grey.withOpacity(0.2),
+          style: BorderStyle.solid,
+        ),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            isError ? Icons.error_outline_rounded : Icons.qr_code_2_rounded,
+            size: 24,
+            color: isError ? Colors.red.shade300 : Colors.grey.shade400,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            message,
+            style: TextStyle(
+              fontFamily: 'Literata',
+              fontSize: 10,
+              color: isError ? Colors.red.shade300 : Colors.grey.shade500,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
   void _generateBarcode() {
     if (_selectedProduct == null) return;
 
@@ -954,9 +1045,16 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
               final isSelected = _selectedFormat == format;
               return GestureDetector(
                 onTap: () {
-                  setState(() => _selectedFormat = format);
-                  if (_autoGenerate && _selectedProduct != null) {
-                    _generateBarcode();
+                  if (_selectedFormat != format) {
+                    setState(() {
+                      _selectedFormat = format;
+                      // Clear barcode when format changes - will regenerate if product selected
+                      _generatedBarcode = '';
+                    });
+                    // Always regenerate when format changes if product is selected
+                    if (_selectedProduct != null) {
+                      _generateBarcode();
+                    }
                   }
                 },
                 child: Container(
@@ -2005,14 +2103,11 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
                   SizedBox(
                     width: 200,
                     height: 70,
-                    child: bw.BarcodeWidget(
-                      barcode: BarcodeService.instance.getBarcodeRenderer(
-                        _selectedFormat,
-                      ),
+                    child: _buildSafeBarcodeWidget(
                       data: _generatedBarcode,
-                      drawText: false,
-                      color: Colors.black,
-                      backgroundColor: Colors.transparent,
+                      format: _selectedFormat,
+                      width: 200,
+                      height: 70,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -2148,9 +2243,16 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
                     color: Colors.transparent,
                     child: InkWell(
                       onTap: () {
-                        setState(() => _selectedFormat = format);
-                        if (_autoGenerate && _selectedProduct != null) {
-                          _generateBarcode();
+                        if (_selectedFormat != format) {
+                          setState(() {
+                            _selectedFormat = format;
+                            // Clear barcode when format changes - will regenerate if product selected
+                            _generatedBarcode = '';
+                          });
+                          // Always regenerate when format changes if product is selected
+                          if (_selectedProduct != null) {
+                            _generateBarcode();
+                          }
                         }
                       },
                       borderRadius: BorderRadius.circular(10),
@@ -2695,14 +2797,11 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
                   SizedBox(
                     width: 240,
                     height: 80,
-                    child: bw.BarcodeWidget(
-                      barcode: BarcodeService.instance.getBarcodeRenderer(
-                        _selectedFormat,
-                      ),
+                    child: _buildSafeBarcodeWidget(
                       data: _generatedBarcode,
-                      drawText: false,
-                      color: Colors.black,
-                      backgroundColor: Colors.transparent,
+                      format: _selectedFormat,
+                      width: 240,
+                      height: 80,
                     ),
                   ),
                   const SizedBox(height: 10),
