@@ -215,8 +215,8 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
       );
     }
 
-    // Validate data for format
-    if (!BarcodeService.instance.validateBarcodeData(data, format)) {
+    // Quick pre-validation without calling the barcode library
+    if (!_quickValidateFormat(data, format)) {
       return _buildBarcodePlaceholder(
         width: width,
         height: height,
@@ -225,22 +225,62 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
       );
     }
 
-    // Wrap in try-catch for safety
-    try {
-      return bw.BarcodeWidget(
-        barcode: BarcodeService.instance.getBarcodeRenderer(format),
-        data: data,
-        drawText: false,
-        color: Colors.black,
-        backgroundColor: Colors.transparent,
-      );
-    } catch (e) {
-      return _buildBarcodePlaceholder(
-        width: width,
-        height: height,
-        message: 'Render error',
-        isError: true,
-      );
+    // Use RepaintBoundary to isolate rendering and prevent UI freeze
+    return RepaintBoundary(
+      child: Builder(
+        builder: (context) {
+          try {
+            return bw.BarcodeWidget(
+              barcode: BarcodeService.instance.getBarcodeRenderer(format),
+              data: data,
+              drawText: false,
+              color: Colors.black,
+              backgroundColor: Colors.transparent,
+              errorBuilder: (context, error) => _buildBarcodePlaceholder(
+                width: width,
+                height: height,
+                message: 'Render error',
+                isError: true,
+              ),
+            );
+          } catch (e) {
+            return _buildBarcodePlaceholder(
+              width: width,
+              height: height,
+              message: 'Render error',
+              isError: true,
+            );
+          }
+        },
+      ),
+    );
+  }
+
+  /// Quick validation without calling barcode library (prevents hangs)
+  bool _quickValidateFormat(String data, BarcodeFormat format) {
+    switch (format) {
+      case BarcodeFormat.ean13:
+        // EAN-13: exactly 13 digits
+        return data.length == 13 && RegExp(r'^\d+$').hasMatch(data);
+      case BarcodeFormat.ean8:
+        // EAN-8: exactly 8 digits
+        return data.length == 8 && RegExp(r'^\d+$').hasMatch(data);
+      case BarcodeFormat.upcA:
+        // UPC-A: exactly 12 digits
+        return data.length == 12 && RegExp(r'^\d+$').hasMatch(data);
+      case BarcodeFormat.code128:
+        // Code128: ASCII characters only, non-empty
+        return data.isNotEmpty && data.length <= 80;
+      case BarcodeFormat.code39:
+        // Code39: alphanumeric + special chars
+        return data.isNotEmpty &&
+            RegExp(
+              r'^[A-Z0-9\-\.\$\/\+\%\s]+$',
+              caseSensitive: false,
+            ).hasMatch(data);
+      case BarcodeFormat.qrCode:
+        // QR Code: any data up to reasonable length
+        return data.isNotEmpty && data.length <= 2953;
     }
   }
 
@@ -1051,9 +1091,11 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
                       // Clear barcode when format changes - will regenerate if product selected
                       _generatedBarcode = '';
                     });
-                    // Always regenerate when format changes if product is selected
+                    // Defer barcode generation to next frame to prevent UI hang
                     if (_selectedProduct != null) {
-                      _generateBarcode();
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (mounted) _generateBarcode();
+                      });
                     }
                   }
                 },
@@ -2249,9 +2291,11 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
                             // Clear barcode when format changes - will regenerate if product selected
                             _generatedBarcode = '';
                           });
-                          // Always regenerate when format changes if product is selected
+                          // Defer barcode generation to next frame to prevent UI hang
                           if (_selectedProduct != null) {
-                            _generateBarcode();
+                            WidgetsBinding.instance.addPostFrameCallback((_) {
+                              if (mounted) _generateBarcode();
+                            });
                           }
                         }
                       },
