@@ -6,7 +6,7 @@ import '../entities/product_entity.dart';
 
 /// Controller for handling offline-first Product CRUD operations
 /// All UI reads should go through this controller (never directly from API)
-/// 
+///
 /// Key features:
 /// - Immediate local saves (no network blocking)
 /// - Proper syncStatus management for delta sync
@@ -14,7 +14,7 @@ import '../entities/product_entity.dart';
 /// - Reactive streams for UI updates
 class ProductOfflineController extends ChangeNotifier {
   static ProductOfflineController? _instance;
-  
+
   Isar get _isar => IsarService.instance.isar;
 
   ProductOfflineController._();
@@ -29,17 +29,20 @@ class ProductOfflineController extends ChangeNotifier {
 
   /// Check if a product with the same name and company already exists
   /// Returns the existing product if found, null otherwise
-  Future<ProductEntity?> findDuplicateProduct(String name, String companyName) async {
+  Future<ProductEntity?> findDuplicateProduct(
+    String name,
+    String companyName,
+  ) async {
     final normalizedName = name.trim().toLowerCase();
     final normalizedCompany = companyName.trim().toLowerCase();
-    
+
     // Search for product with matching name and company (case-insensitive)
     final products = await _isar.productEntitys
         .filter()
         .not()
         .syncStatusEqualTo(SyncStatus.deleted)
         .findAll();
-    
+
     for (final product in products) {
       if (product.name.trim().toLowerCase() == normalizedName &&
           product.companyName.trim().toLowerCase() == normalizedCompany) {
@@ -58,9 +61,9 @@ class ProductOfflineController extends ChangeNotifier {
         .not()
         .syncStatusEqualTo(SyncStatus.deleted)
         .findAll();
-    
+
     if (allProducts.isEmpty) return 1;
-    
+
     int maxIndex = 0;
     for (final p in allProducts) {
       if (p.indexNo > maxIndex) {
@@ -97,16 +100,20 @@ class ProductOfflineController extends ChangeNotifier {
     String? customFieldsJson,
   }) async {
     debugPrint('[ProductOffline] Adding product: $name');
-    
+
     // Check for duplicate product (same name + company)
     if (!skipDuplicateCheck) {
       final existingProduct = await findDuplicateProduct(name, companyName);
       if (existingProduct != null) {
-        debugPrint('[ProductOffline] Duplicate product found: ${existingProduct.name} (${existingProduct.companyName})');
-        throw Exception('Product "${name.trim()}" ${companyName.isNotEmpty ? "from $companyName " : ""}already exists');
+        debugPrint(
+          '[ProductOffline] Duplicate product found: ${existingProduct.name} (${existingProduct.companyName})',
+        );
+        throw Exception(
+          'Product "${name.trim()}" ${companyName.isNotEmpty ? "from $companyName " : ""}already exists',
+        );
       }
     }
-    
+
     // Auto-generate product code if not provided
     final effectiveIndexNo = indexNo > 0 ? indexNo : await _getNextIndexNo();
     debugPrint('[ProductOffline] Assigned product code: $effectiveIndexNo');
@@ -137,7 +144,7 @@ class ProductOfflineController extends ChangeNotifier {
     await _isar.writeTxn(() async {
       await _isar.productEntitys.put(product);
     });
-    
+
     debugPrint('[ProductOffline] Product saved with ID: ${product.id}');
     notifyListeners();
     return product;
@@ -190,10 +197,20 @@ class ProductOfflineController extends ChangeNotifier {
         .findFirst();
   }
 
+  /// Get product by index number
+  Future<ProductEntity?> getProductByIndexNo(int indexNo) async {
+    return await _isar.productEntitys
+        .filter()
+        .indexNoEqualTo(indexNo)
+        .not()
+        .syncStatusEqualTo(SyncStatus.deleted)
+        .findFirst();
+  }
+
   /// Search products by name (case-insensitive, indexed)
   Future<List<ProductEntity>> searchByName(String query) async {
     if (query.isEmpty) return getAllProducts();
-    
+
     return await _isar.productEntitys
         .filter()
         .not()
@@ -206,15 +223,17 @@ class ProductOfflineController extends ChangeNotifier {
   /// Search products by name or barcode
   Future<List<ProductEntity>> searchProducts(String query) async {
     if (query.isEmpty) return getAllProducts();
-    
+
     return await _isar.productEntitys
         .filter()
         .not()
         .syncStatusEqualTo(SyncStatus.deleted)
-        .group((q) => q
-            .nameContains(query, caseSensitive: false)
-            .or()
-            .barcodeContains(query))
+        .group(
+          (q) => q
+              .nameContains(query, caseSensitive: false)
+              .or()
+              .barcodeContains(query),
+        )
         .sortByName()
         .findAll();
   }
@@ -317,7 +336,9 @@ class ProductOfflineController extends ChangeNotifier {
       await _isar.productEntitys.put(updated);
     });
 
-    debugPrint('[ProductOffline] Product updated: ${updated.id}, syncStatus: ${updated.syncStatus}');
+    debugPrint(
+      '[ProductOffline] Product updated: ${updated.id}, syncStatus: ${updated.syncStatus}',
+    );
     notifyListeners();
     return updated;
   }
@@ -331,46 +352,62 @@ class ProductOfflineController extends ChangeNotifier {
   Future<ProductEntity?> adjustStock(Id id, int adjustment) async {
     final existing = await _isar.productEntitys.get(id);
     if (existing == null) return null;
-    
+
     final newQuantity = existing.currentStock + adjustment;
     return await updateProduct(id: id, currentStock: newQuantity);
   }
 
   /// Decrement stock by product server ID (used when creating bills)
   /// Reduces stock by the specified quantity
-  Future<ProductEntity?> decrementStock(String productServerId, int quantity) async {
+  Future<ProductEntity?> decrementStock(
+    String productServerId,
+    int quantity,
+  ) async {
     // First find the product by server ID
     final existing = await _isar.productEntitys
         .filter()
         .serverIdEqualTo(productServerId)
         .findFirst();
-    
+
     if (existing == null) {
-      debugPrint('[ProductOffline] Cannot decrement stock: product not found with serverId: $productServerId');
+      debugPrint(
+        '[ProductOffline] Cannot decrement stock: product not found with serverId: $productServerId',
+      );
       return null;
     }
-    
-    final newQuantity = (existing.currentStock - quantity).clamp(0, double.maxFinite).toInt();
-    debugPrint('[ProductOffline] Decrementing stock for ${existing.name}: ${existing.currentStock} - $quantity = $newQuantity');
+
+    final newQuantity = (existing.currentStock - quantity)
+        .clamp(0, double.maxFinite)
+        .toInt();
+    debugPrint(
+      '[ProductOffline] Decrementing stock for ${existing.name}: ${existing.currentStock} - $quantity = $newQuantity',
+    );
     return await updateProduct(id: existing.id, currentStock: newQuantity);
   }
 
   /// Increment stock by product server ID (used when restocking or returns)
   /// Increases stock by the specified quantity
-  Future<ProductEntity?> incrementStock(String productServerId, int quantity) async {
+  Future<ProductEntity?> incrementStock(
+    String productServerId,
+    int quantity,
+  ) async {
     // First find the product by server ID
     final existing = await _isar.productEntitys
         .filter()
         .serverIdEqualTo(productServerId)
         .findFirst();
-    
+
     if (existing == null) {
-      debugPrint('[ProductOffline] Cannot increment stock: product not found with serverId: $productServerId');
+      debugPrint(
+        '[ProductOffline] Cannot increment stock: product not found with serverId: $productServerId',
+      );
       return null;
     }
-    
+
     final newQuantity = existing.currentStock + quantity;
-    debugPrint('[ProductOffline] Incrementing stock for ${existing.name}: ${existing.currentStock} + $quantity = $newQuantity');
+    debugPrint(
+      '[ProductOffline] Incrementing stock for ${existing.name}: ${existing.currentStock} + $quantity = $newQuantity',
+    );
     return await updateProduct(id: existing.id, currentStock: newQuantity);
   }
 
@@ -474,9 +511,11 @@ class ProductOfflineController extends ChangeNotifier {
 
   /// Import products from server (for initial sync or refresh)
   /// Merges by serverId, only updates if server version is newer
-  Future<int> importFromServer(List<Map<String, dynamic>> serverProducts) async {
+  Future<int> importFromServer(
+    List<Map<String, dynamic>> serverProducts,
+  ) async {
     int imported = 0;
-    
+
     await _isar.writeTxn(() async {
       for (final productData in serverProducts) {
         final serverId = productData['id'] as String?;
@@ -516,7 +555,8 @@ class ProductOfflineController extends ChangeNotifier {
             final serverUpdatedAt = DateTime.tryParse(
               productData['updatedAt']?.toString() ?? '',
             );
-            if (serverUpdatedAt != null && serverUpdatedAt.isAfter(existing.updatedAt)) {
+            if (serverUpdatedAt != null &&
+                serverUpdatedAt.isAfter(existing.updatedAt)) {
               final updated = ProductEntity.fromServer(productData);
               updated.id = existing.id; // Keep local ID
               await _isar.productEntitys.put(updated);
@@ -536,13 +576,16 @@ class ProductOfflineController extends ChangeNotifier {
     if (imported > 0) {
       notifyListeners();
     }
-    
+
     debugPrint('[ProductOffline] Imported $imported products from server');
     return imported;
   }
 
   /// Update product with server response (after successful create)
-  Future<void> updateWithServerResponse(Id localId, Map<String, dynamic> serverResponse) async {
+  Future<void> updateWithServerResponse(
+    Id localId,
+    Map<String, dynamic> serverResponse,
+  ) async {
     final existing = await _isar.productEntitys.get(localId);
     if (existing == null) return;
 

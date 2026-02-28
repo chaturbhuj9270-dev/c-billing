@@ -357,7 +357,13 @@ class BarcodeService {
   // ==================== BARCODE LOOKUP (FOR FAST BILLING) ====================
 
   /// Look up product by barcode - primary method for fast billing
-  /// Returns product and optionally matching batch
+  /// Supports:
+  /// - Direct barcode field match
+  /// - EAN-13 format (200BBNNNNNNC) - extracts product index
+  /// - EAN-8 format (20NNNNNC) - extracts product index
+  /// - UPC-A format (0BBBBBNNNNC) - extracts product index
+  /// - Code128 format (any alphanumeric)
+  /// - Batch-specific barcodes (B prefix)
   Future<BarcodeLookupResult> lookupByBarcode(String barcode) async {
     if (barcode.isEmpty) {
       return BarcodeLookupResult(
@@ -367,22 +373,42 @@ class BarcodeService {
     }
 
     try {
-      // First try to find product by barcode field
-      final product = await ProductOfflineController.instance
-          .getProductByBarcode(barcode);
+      // First try to find product by exact barcode field match
+      var product = await ProductOfflineController.instance.getProductByBarcode(
+        barcode,
+      );
 
       if (product != null) {
-        // Try to get the latest batch with stock (for FIFO)
-        final batches = await PurchaseBatchOfflineController.instance
-            .getBatchesByProductId(
-              product.serverId ?? product.id.toString(),
-              onlyWithStock: true,
-            );
+        return await _buildLookupResult(product);
+      }
 
-        return BarcodeLookupResult.success(
-          product: product,
-          batch: batches.isNotEmpty ? batches.first : null,
+      // Try to parse barcode and extract product index number
+      final parsedResult = _parseGeneratedBarcode(barcode);
+      if (parsedResult != null) {
+        final indexNo = parsedResult['indexNo'] as int;
+        final batchNo = parsedResult['batchNo'] as int?;
+
+        product = await ProductOfflineController.instance.getProductByIndexNo(
+          indexNo,
         );
+
+        if (product != null) {
+          // Try to get the specific batch if batch number was in barcode
+          PurchaseBatchEntity? batch;
+          final batches = await PurchaseBatchOfflineController.instance
+              .getBatchesByProductId(
+                product.serverId ?? product.id.toString(),
+                onlyWithStock: true,
+              );
+
+          if (batchNo != null && batchNo > 0 && batches.length >= batchNo) {
+            batch = batches[batchNo - 1];
+          } else if (batches.isNotEmpty) {
+            batch = batches.first;
+          }
+
+          return BarcodeLookupResult.success(product: product, batch: batch);
+        }
       }
 
       // If barcode starts with 'B', it might be a batch-specific barcode
@@ -407,6 +433,31 @@ class BarcodeService {
         }
       }
 
+      // If barcode starts with 'P', it might be a product-specific barcode
+      if (barcode.startsWith('P') && barcode.length > 9) {
+        // Format: P{productIdPart}{timestamp} - timestamp is 8 chars
+        final productIdPart = barcode.substring(1, barcode.length - 8);
+        final products = await ProductOfflineController.instance
+            .getAllProducts();
+
+        for (final prod in products) {
+          final prodId = prod.serverId ?? prod.id.toString();
+          if (prodId.contains(productIdPart)) {
+            return await _buildLookupResult(prod);
+          }
+        }
+      }
+
+      // Try Code128 - could be any alphanumeric string matching product name/code
+      if (barcode.length >= 3) {
+        final products = await ProductOfflineController.instance.searchProducts(
+          barcode,
+        );
+        if (products.isNotEmpty) {
+          return await _buildLookupResult(products.first);
+        }
+      }
+
       return BarcodeLookupResult.notFound(barcode);
     } catch (e) {
       return BarcodeLookupResult(
@@ -414,6 +465,72 @@ class BarcodeService {
         errorMessage: 'Error looking up barcode: $e',
       );
     }
+  }
+
+  /// Build lookup result with batch info
+  Future<BarcodeLookupResult> _buildLookupResult(ProductEntity product) async {
+    final batches = await PurchaseBatchOfflineController.instance
+        .getBatchesByProductId(
+          product.serverId ?? product.id.toString(),
+          onlyWithStock: true,
+        );
+
+    return BarcodeLookupResult.success(
+      product: product,
+      batch: batches.isNotEmpty ? batches.first : null,
+    );
+  }
+
+  /// Parse generated barcode to extract product index and batch number
+  /// Returns null if barcode format is not recognized
+  Map<String, dynamic>? _parseGeneratedBarcode(String barcode) {
+    // Remove any whitespace
+    final code = barcode.trim();
+
+    // Only process numeric barcodes for EAN/UPC
+    if (code.isEmpty) return null;
+    final isNumeric = RegExp(r'^\d+$').hasMatch(code);
+
+    if (isNumeric) {
+      // EAN-13: 13 digits, format PPP-BB-NNNNNNN-C
+      // Our generated EAN-13 uses prefix 200-299
+      if (code.length == 13 && code.startsWith('20')) {
+        // Format: PPP(3) + BB(2) + NNNNNNN(7) + C(1)
+        final batchStr = code.substring(3, 5);
+        final indexStr = code.substring(5, 12);
+        final batchNo = int.tryParse(batchStr);
+        final indexNo = int.tryParse(indexStr);
+        if (indexNo != null) {
+          return {'format': 'EAN-13', 'indexNo': indexNo, 'batchNo': batchNo};
+        }
+      }
+
+      // EAN-8: 8 digits, format PP-NNNNN-C
+      // Our generated EAN-8 uses prefix 20-29
+      if (code.length == 8 && code.startsWith('2')) {
+        // Format: PP(2) + NNNNN(5) + C(1)
+        final indexStr = code.substring(2, 7);
+        final indexNo = int.tryParse(indexStr);
+        if (indexNo != null) {
+          return {'format': 'EAN-8', 'indexNo': indexNo, 'batchNo': null};
+        }
+      }
+
+      // UPC-A: 12 digits, format P-BBBBB-NNNNN-C
+      // Our generated UPC-A uses prefix 0
+      if (code.length == 12 && code.startsWith('0')) {
+        // Format: P(1) + BBBBB(5) + NNNNN(5) + C(1)
+        final batchStr = code.substring(1, 6);
+        final indexStr = code.substring(6, 11);
+        final batchNo = int.tryParse(batchStr);
+        final indexNo = int.tryParse(indexStr);
+        if (indexNo != null) {
+          return {'format': 'UPC-A', 'indexNo': indexNo, 'batchNo': batchNo};
+        }
+      }
+    }
+
+    return null;
   }
 
   /// Scan and add to bill - convenience method for billing
