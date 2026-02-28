@@ -46,6 +46,7 @@ import 'package:c_billing/features/reports/presentation/pages/report_page.dart';
 import 'package:c_billing/features/dashboard/data/models/dashboard_data.dart';
 import 'package:c_billing/common_widgets/file_preview_page.dart';
 import 'package:c_billing/features/inventory_management/presentation/pages/barcode_generator_page.dart';
+import 'package:c_billing/features/customer/presentation/pages/enhanced_customer_page.dart';
 
 class BillingPage extends StatefulWidget {
   final bool isEmbedded;
@@ -4902,159 +4903,29 @@ class _BillingPageState extends State<BillingPage> {
     );
   }
 
-  /// Premium glass-morphism Quick Stats Panel
+  /// Premium glass-morphism Quick Stats Panel - Compact Edition
   Widget _buildQuickStatsPremiumPanel() {
     return Positioned.fill(
       child: GestureDetector(
         onTap: _toggleQuickStats, // Tap outside to close
         child: Container(
-          color: Colors.black.withOpacity(0.3),
+          color: Colors.black.withOpacity(0.4),
           child: TweenAnimationBuilder<double>(
             tween: Tween(begin: 0.0, end: 1.0),
-            duration: const Duration(milliseconds: 350),
-            curve: Curves.easeOutCubic,
+            duration: const Duration(milliseconds: 400),
+            curve: Curves.easeOutBack,
             builder: (context, value, child) {
-              return Transform.translate(
-                offset: Offset(0, 30 * (1 - value)),
+              return Transform.scale(
+                scale: 0.8 + (0.2 * value),
                 child: Opacity(opacity: value, child: child),
               );
             },
-            child: SafeArea(
+            child: Center(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 80, 16, 16),
-                child: SingleChildScrollView(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // Premium Panel Card
-                      GestureDetector(
-                        onTap: () {}, // Prevent closing when tapping panel
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(24),
-                          child: BackdropFilter(
-                            filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-                            child: Container(
-                              padding: const EdgeInsets.all(20),
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                  colors: [
-                                    Colors.white.withOpacity(0.95),
-                                    Colors.white.withOpacity(0.88),
-                                  ],
-                                ),
-                                borderRadius: BorderRadius.circular(24),
-                                border: Border.all(
-                                  color: Colors.white.withOpacity(0.5),
-                                  width: 1.5,
-                                ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: const Color(
-                                      0xFF1B4D3E,
-                                    ).withOpacity(0.15),
-                                    blurRadius: 30,
-                                    offset: const Offset(0, 10),
-                                  ),
-                                ],
-                              ),
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  // Header
-                                  Row(
-                                    children: [
-                                      Container(
-                                        width: 44,
-                                        height: 44,
-                                        decoration: BoxDecoration(
-                                          gradient: const LinearGradient(
-                                            colors: [
-                                              Color(0xFF1B4D3E),
-                                              Color(0xFF2D6A4F),
-                                            ],
-                                          ),
-                                          borderRadius: BorderRadius.circular(
-                                            12,
-                                          ),
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color: const Color(
-                                                0xFF1B4D3E,
-                                              ).withOpacity(0.3),
-                                              blurRadius: 8,
-                                              offset: const Offset(0, 4),
-                                            ),
-                                          ],
-                                        ),
-                                        child: const Icon(
-                                          Icons.analytics_rounded,
-                                          color: Colors.white,
-                                          size: 22,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 14),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            const Text(
-                                              'Quick Stats',
-                                              style: TextStyle(
-                                                fontFamily: 'Literata',
-                                                fontWeight: FontWeight.w800,
-                                                fontSize: 18,
-                                                color: Color(0xFF1B4D3E),
-                                              ),
-                                            ),
-                                            const SizedBox(height: 2),
-                                            Text(
-                                              'Overview of your business',
-                                              style: TextStyle(
-                                                fontFamily: 'Literata',
-                                                fontSize: 12,
-                                                color: Colors.grey[600],
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      // Close button
-                                      GestureDetector(
-                                        onTap: _toggleQuickStats,
-                                        child: Container(
-                                          width: 36,
-                                          height: 36,
-                                          decoration: BoxDecoration(
-                                            color: Colors.grey[100],
-                                            borderRadius: BorderRadius.circular(
-                                              10,
-                                            ),
-                                          ),
-                                          child: const Icon(
-                                            Icons.close_rounded,
-                                            color: Color(0xFF1B4D3E),
-                                            size: 20,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 20),
-                                  // Stats Grid - 2x3 layout
-                                  _isLoadingQuickStats
-                                      ? _buildQuickStatsPremiumShimmer()
-                                      : _buildQuickStatsGrid(),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: GestureDetector(
+                  onTap: () {}, // Prevent closing when tapping panel
+                  child: _buildGlassyQuickStatsCard(),
                 ),
               ),
             ),
@@ -5064,244 +4935,384 @@ class _BillingPageState extends State<BillingPage> {
     );
   }
 
-  /// Premium 2x3 stats grid
+  /// Glassy card with shining border
+  Widget _buildGlassyQuickStatsCard() {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(28),
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0x33FFFFFF),
+            Color(0x99FFFFFF),
+            Color(0x4D1B4D3E),
+            Color(0x99FFFFFF),
+            Color(0x33FFFFFF),
+          ],
+          stops: [0.0, 0.25, 0.5, 0.75, 1.0],
+        ),
+      ),
+      padding: const EdgeInsets.all(2),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(26),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 25, sigmaY: 25),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Color(0xD9FFFFFF),
+                  Color(0xBFFFFFFF),
+                  Color(0xCCF8FFFC),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(26),
+              border: Border.all(width: 1.5, color: const Color(0xCCFFFFFF)),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x261B4D3E),
+                  blurRadius: 40,
+                  spreadRadius: 5,
+                  offset: Offset(0, 15),
+                ),
+                BoxShadow(
+                  color: Color(0xCCFFFFFF),
+                  blurRadius: 20,
+                  spreadRadius: -5,
+                  offset: Offset(-5, -5),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Compact Header
+                _buildCompactHeader(),
+                const SizedBox(height: 14),
+                // Stats Grid - Compact 4 columns
+                _isLoadingQuickStats
+                    ? _buildQuickStatsPremiumShimmer()
+                    : _buildQuickStatsGrid(),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Compact header for Quick Stats
+  Widget _buildCompactHeader() {
+    return Row(
+      children: [
+        // Animated icon container
+        Container(
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Color(0xFF1B4D3E), Color(0xFF2D6A4F)],
+            ),
+            borderRadius: BorderRadius.circular(10),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF1B4D3E).withOpacity(0.4),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: const Icon(
+            Icons.dashboard_customize_rounded,
+            color: Colors.white,
+            size: 18,
+          ),
+        ),
+        const SizedBox(width: 12),
+        const Expanded(
+          child: Text(
+            'Quick Actions',
+            style: TextStyle(
+              fontFamily: 'Literata',
+              fontWeight: FontWeight.w800,
+              fontSize: 16,
+              color: Color(0xFF1B4D3E),
+              letterSpacing: -0.3,
+            ),
+          ),
+        ),
+        // Close button with glass effect
+        GestureDetector(
+          onTap: _toggleQuickStats,
+          child: Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: const Color(0xFF1B4D3E).withOpacity(0.08),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: const Color(0xFF1B4D3E).withOpacity(0.15),
+              ),
+            ),
+            child: const Icon(
+              Icons.close_rounded,
+              color: Color(0xFF1B4D3E),
+              size: 18,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Premium compact 4-column stats grid (icon + name only)
   Widget _buildQuickStatsGrid() {
     final stats = [
       _QuickStatItem(
         icon: Icons.receipt_long_rounded,
-        value: '${_quickStatsData?.invoicesCount ?? 0}',
+        value: '',
         label: _localizations.invoices,
         color: const Color(0xFF667eea),
         gradient: [const Color(0xFF667eea), const Color(0xFF764ba2)],
-        onTap: () => Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const BillsListPage()),
-        ).then((_) => _loadQuickStats()),
+        onTap: () {
+          _toggleQuickStats();
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const BillsListPage()),
+          ).then((_) => _loadQuickStats());
+        },
       ),
       _QuickStatItem(
         icon: Icons.inventory_2_rounded,
-        value: '${_quickStatsData?.productsCount ?? 0}',
+        value: '',
         label: _localizations.products,
         color: const Color(0xFFf093fb),
         gradient: [const Color(0xFFf093fb), const Color(0xFFf5576c)],
-        onTap: () => Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const EnhancedProductPage()),
-        ).then((_) => _loadQuickStats()),
+        onTap: () {
+          _toggleQuickStats();
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const EnhancedProductPage()),
+          ).then((_) => _loadQuickStats());
+        },
       ),
       _QuickStatItem(
         icon: Icons.local_shipping_rounded,
-        value: '${_quickStatsData?.suppliersCount ?? 0}',
+        value: '',
         label: _localizations.suppliers,
         color: const Color(0xFFFF6B6B),
         gradient: [const Color(0xFFFF6B6B), const Color(0xFFee5a24)],
-        onTap: () => Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const EnhancedSupplierPage()),
-        ).then((_) => _loadQuickStats()),
+        onTap: () {
+          _toggleQuickStats();
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const EnhancedSupplierPage()),
+          ).then((_) => _loadQuickStats());
+        },
       ),
       _QuickStatItem(
         icon: Icons.business_rounded,
-        value: '${_quickStatsData?.companiesCount ?? 0}',
+        value: '',
         label: _localizations.companies,
         color: const Color(0xFF9C27B0),
         gradient: [const Color(0xFF9C27B0), const Color(0xFF7B1FA2)],
-        onTap: () => Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const EnhancedCompanyPage()),
-        ).then((_) => _loadQuickStats()),
+        onTap: () {
+          _toggleQuickStats();
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const EnhancedCompanyPage()),
+          ).then((_) => _loadQuickStats());
+        },
       ),
       _QuickStatItem(
         icon: Icons.keyboard_return_rounded,
-        value: '${_quickStatsData?.totalReturnedItems ?? 0}',
+        value: '',
         label: 'P. Return',
         color: const Color(0xFFE65100),
         gradient: [const Color(0xFFE65100), const Color(0xFFFF8F00)],
-        onTap: () => Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const PurchaseReturnScreen()),
-        ).then((_) => _loadQuickStats()),
+        onTap: () {
+          _toggleQuickStats();
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const PurchaseReturnScreen()),
+          ).then((_) => _loadQuickStats());
+        },
       ),
       _QuickStatItem(
         icon: Icons.celebration_rounded,
-        value: 'Events',
-        label: 'Events/Orders',
+        value: '',
+        label: 'Events',
         color: const Color(0xFF6C63FF),
         gradient: [const Color(0xFF6C63FF), const Color(0xFF8B5CF6)],
-        onTap: () => Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const EventOrderListPage()),
-        ).then((_) => _loadQuickStats()),
+        onTap: () {
+          _toggleQuickStats();
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const EventOrderListPage()),
+          ).then((_) => _loadQuickStats());
+        },
       ),
       _QuickStatItem(
         icon: Icons.qr_code_2_rounded,
-        value: 'Barcode',
-        label: 'Generator',
+        value: '',
+        label: 'Barcode',
         color: const Color(0xFF00897B),
         gradient: [const Color(0xFF00897B), const Color(0xFF004D40)],
-        onTap: () => Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const BarcodeGeneratorPage()),
-        ).then((_) => _loadQuickStats()),
+        onTap: () {
+          _toggleQuickStats();
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const BarcodeGeneratorPage()),
+          ).then((_) => _loadQuickStats());
+        },
+      ),
+      _QuickStatItem(
+        icon: Icons.people_alt_rounded,
+        value: '',
+        label: 'Customers',
+        color: const Color(0xFF00ACC1),
+        gradient: [const Color(0xFF00ACC1), const Color(0xFF0097A7)],
+        onTap: () {
+          _toggleQuickStats();
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const EnhancedCustomerPage()),
+          ).then((_) => _loadQuickStats());
+        },
       ),
     ];
 
-    return Column(
-      children: [
-        // First row
-        Row(
-          children: [
-            Expanded(child: _buildPremiumStatCard(stats[0])),
-            const SizedBox(width: 12),
-            Expanded(child: _buildPremiumStatCard(stats[1])),
-            const SizedBox(width: 12),
-            Expanded(child: _buildPremiumStatCard(stats[2])),
-          ],
-        ),
-        const SizedBox(height: 12),
-        // Second row
-        Row(
-          children: [
-            Expanded(child: _buildPremiumStatCard(stats[3])),
-            const SizedBox(width: 12),
-            Expanded(child: _buildPremiumStatCard(stats[4])),
-            const SizedBox(width: 12),
-            Expanded(child: _buildPremiumStatCard(stats[5])),
-          ],
-        ),
-        const SizedBox(height: 12),
-        // Third row
-        Row(
-          children: [
-            Expanded(child: _buildPremiumStatCard(stats[6])),
-            const SizedBox(width: 12),
-            const Expanded(child: SizedBox()),
-            const SizedBox(width: 12),
-            const Expanded(child: SizedBox()),
-          ],
-        ),
-      ],
+    return Wrap(
+      spacing: 10,
+      runSpacing: 10,
+      alignment: WrapAlignment.center,
+      children: stats
+          .asMap()
+          .entries
+          .map((entry) => _buildCompactStatChip(entry.value, entry.key))
+          .toList(),
     );
   }
 
-  /// Premium stat card with gradient and animation
-  Widget _buildPremiumStatCard(_QuickStatItem stat) {
+  /// Compact stat chip with glass effect and shining border
+  Widget _buildCompactStatChip(_QuickStatItem stat, int index) {
     return GestureDetector(
       onTap: stat.onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              stat.color.withOpacity(0.12),
-              stat.color.withOpacity(0.04),
+      child: TweenAnimationBuilder<double>(
+        tween: Tween(begin: 0.0, end: 1.0),
+        duration: Duration(milliseconds: 400 + (index * 50).clamp(0, 350)),
+        curve: Curves.easeOutCubic,
+        builder: (context, value, child) {
+          return Transform.scale(scale: value, child: child);
+        },
+        child: Container(
+          width: 72,
+          height: 72,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Colors.white.withOpacity(0.9),
+                stat.color.withOpacity(0.08),
+              ],
+            ),
+            border: Border.all(color: stat.color.withOpacity(0.25), width: 1.5),
+            boxShadow: [
+              BoxShadow(
+                color: stat.color.withOpacity(0.2),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+              BoxShadow(
+                color: Colors.white.withOpacity(0.8),
+                blurRadius: 8,
+                spreadRadius: -2,
+                offset: const Offset(-2, -2),
+              ),
             ],
           ),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: stat.color.withOpacity(0.2), width: 1),
-        ),
-        child: Column(
-          children: [
-            // Icon with gradient background
-            Container(
-              width: 42,
-              height: 42,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: stat.gradient,
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: stat.color.withOpacity(0.35),
-                    blurRadius: 8,
-                    offset: const Offset(0, 3),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Icon with gradient glow
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: stat.gradient,
                   ),
-                ],
+                  borderRadius: BorderRadius.circular(10),
+                  boxShadow: [
+                    BoxShadow(
+                      color: stat.color.withOpacity(0.4),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: Icon(stat.icon, color: Colors.white, size: 16),
               ),
-              child: Icon(stat.icon, color: Colors.white, size: 20),
-            ),
-            const SizedBox(height: 10),
-            // Value
-            Text(
-              stat.value,
-              style: const TextStyle(
-                fontFamily: 'Literata',
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
-                color: Color(0xFF1B4D3E),
+              const SizedBox(height: 6),
+              // Label
+              Text(
+                stat.label,
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontFamily: 'Literata',
+                  fontSize: 9,
+                  fontWeight: FontWeight.w700,
+                  color: stat.color.withOpacity(0.9),
+                  letterSpacing: -0.2,
+                ),
               ),
-            ),
-            const SizedBox(height: 2),
-            // Label
-            Text(
-              stat.label,
-              textAlign: TextAlign.center,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontFamily: 'Literata',
-                fontSize: 10,
-                fontWeight: FontWeight.w600,
-                color: Colors.grey[600],
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 
-  /// Premium shimmer loading for stats grid
+  /// Premium shimmer loading for compact stats grid
   Widget _buildQuickStatsPremiumShimmer() {
-    return Column(
-      children: [
-        Row(
-          children: List.generate(
-            3,
-            (index) => Expanded(
-              child: Padding(
-                padding: EdgeInsets.only(
-                  left: index == 0 ? 0 : 6,
-                  right: index == 2 ? 0 : 6,
-                ),
-                child: Container(
-                  height: 110,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[100],
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                ),
+    return Wrap(
+      spacing: 10,
+      runSpacing: 10,
+      alignment: WrapAlignment.center,
+      children: List.generate(
+        8,
+        (index) => Container(
+          width: 72,
+          height: 72,
+          decoration: BoxDecoration(
+            color: Colors.grey[100],
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.grey.shade200),
+          ),
+          child: Center(
+            child: Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color: Colors.grey[200],
+                borderRadius: BorderRadius.circular(10),
               ),
             ),
           ),
         ),
-        const SizedBox(height: 12),
-        Row(
-          children: List.generate(
-            3,
-            (index) => Expanded(
-              child: Padding(
-                padding: EdgeInsets.only(
-                  left: index == 0 ? 0 : 6,
-                  right: index == 2 ? 0 : 6,
-                ),
-                child: Container(
-                  height: 110,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[100],
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
+      ),
     );
   }
 
