@@ -8,6 +8,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:barcode_widget/barcode_widget.dart' as bw;
 import '../../../../core/services/barcode_service.dart';
 import '../../../../core/services/language_service.dart';
 import '../../../../core/localization/app_localizations.dart';
@@ -2004,11 +2005,14 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
                   SizedBox(
                     width: 200,
                     height: 70,
-                    child: CustomPaint(
-                      painter: BarcodePainter(
-                        data: _generatedBarcode,
-                        format: _selectedFormat,
+                    child: bw.BarcodeWidget(
+                      barcode: BarcodeService.instance.getBarcodeRenderer(
+                        _selectedFormat,
                       ),
+                      data: _generatedBarcode,
+                      drawText: false,
+                      color: Colors.black,
+                      backgroundColor: Colors.transparent,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -2691,11 +2695,14 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
                   SizedBox(
                     width: 240,
                     height: 80,
-                    child: CustomPaint(
-                      painter: BarcodePainter(
-                        data: _generatedBarcode,
-                        format: _selectedFormat,
+                    child: bw.BarcodeWidget(
+                      barcode: BarcodeService.instance.getBarcodeRenderer(
+                        _selectedFormat,
                       ),
+                      data: _generatedBarcode,
+                      drawText: false,
+                      color: Colors.black,
+                      backgroundColor: Colors.transparent,
                     ),
                   ),
                   const SizedBox(height: 10),
@@ -2872,94 +2879,5 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
     } catch (e) {
       _showSnackBar('Error sharing barcode: $e', isError: true);
     }
-  }
-}
-
-/// Custom painter for rendering barcode
-class BarcodePainter extends CustomPainter {
-  final String data;
-  final BarcodeFormat format;
-
-  BarcodePainter({required this.data, required this.format});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    try {
-      final barcode = BarcodeService.instance.getBarcodeRenderer(format);
-      final svg = barcode.toSvg(
-        data,
-        width: size.width,
-        height: size.height,
-        drawText: false,
-      );
-
-      final paint = Paint()
-        ..color = Colors.black
-        ..style = PaintingStyle.fill;
-
-      // Draw barcode bars from SVG
-      _drawBarcodeFromSvg(canvas, size, svg, paint);
-    } catch (e) {
-      // Draw error placeholder with icon
-      final paint = Paint()
-        ..color = Colors.red.withOpacity(0.1)
-        ..style = PaintingStyle.fill;
-      canvas.drawRect(Offset.zero & size, paint);
-
-      // Draw error text
-      final textPainter = TextPainter(
-        text: TextSpan(
-          text: 'Invalid barcode',
-          style: TextStyle(color: Colors.red.shade300, fontSize: 10),
-        ),
-        textDirection: TextDirection.ltr,
-      );
-      textPainter.layout();
-      textPainter.paint(
-        canvas,
-        Offset(
-          (size.width - textPainter.width) / 2,
-          (size.height - textPainter.height) / 2,
-        ),
-      );
-    }
-  }
-
-  void _drawBarcodeFromSvg(Canvas canvas, Size size, String svg, Paint paint) {
-    // More robust regex to handle different attribute orders in SVG rect elements
-    // Matches rect elements and extracts all attributes
-    final rectPattern = RegExp(r'<rect\s+([^>]*)/?>', caseSensitive: false);
-    final matches = rectPattern.allMatches(svg);
-
-    for (final match in matches) {
-      try {
-        final attributes = match.group(1) ?? '';
-
-        // Extract individual attributes
-        final xMatch = RegExp(r'x="([^"]*)"').firstMatch(attributes);
-        final yMatch = RegExp(r'y="([^"]*)"').firstMatch(attributes);
-        final widthMatch = RegExp(r'width="([^"]*)"').firstMatch(attributes);
-        final heightMatch = RegExp(r'height="([^"]*)"').firstMatch(attributes);
-
-        final x = double.tryParse(xMatch?.group(1) ?? '0') ?? 0;
-        final y = double.tryParse(yMatch?.group(1) ?? '0') ?? 0;
-        final width = double.tryParse(widthMatch?.group(1) ?? '0') ?? 0;
-        final height =
-            double.tryParse(heightMatch?.group(1) ?? size.height.toString()) ??
-            size.height;
-
-        // Only draw if it's a visible bar (not the background)
-        if (width > 0 && width < size.width) {
-          canvas.drawRect(Rect.fromLTWH(x, y, width, height), paint);
-        }
-      } catch (e) {
-        // Skip invalid rect
-      }
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant BarcodePainter oldDelegate) {
-    return oldDelegate.data != data || oldDelegate.format != format;
   }
 }

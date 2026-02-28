@@ -47,6 +47,7 @@ dependencies:
   font_awesome_flutter: ^10.12.0
   # Barcode Generation
   barcode: ^2.2.8
+  barcode_widget: ^2.0.4
 
 dev_dependencies:
   flutter_test:
