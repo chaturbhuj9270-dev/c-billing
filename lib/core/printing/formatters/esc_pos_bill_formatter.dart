@@ -45,6 +45,116 @@ class EscPosCommands {
   static List<int> setCharSpacing(int n) => [0x1B, 0x20, n];
   static List<int> setLineSpacing(int n) => [0x1B, 0x33, n];
   static final List<int> resetLineSpacing = [0x1B, 0x32];
+
+  // ══════════ BARCODE COMMANDS (ESC/POS GS k) ══════════
+
+  /// Set barcode height (1-255 dots, default 162)
+  static List<int> setBarcodeHeight(int height) => [
+    0x1D,
+    0x68,
+    height.clamp(1, 255),
+  ];
+
+  /// Set barcode width (2-6, default 3)
+  static List<int> setBarcodeWidth(int width) => [
+    0x1D,
+    0x77,
+    width.clamp(2, 6),
+  ];
+
+  /// Set HRI (Human Readable Interpretation) position
+  /// 0 = not printed, 1 = above, 2 = below, 3 = both
+  static List<int> setHRIPosition(int position) => [
+    0x1D,
+    0x48,
+    position.clamp(0, 3),
+  ];
+
+  /// Set HRI font: 0 = Font A, 1 = Font B
+  static List<int> setHRIFont(int font) => [0x1D, 0x66, font.clamp(0, 1)];
+
+  /// Print CODE128 barcode
+  static List<int> printCode128(String data) {
+    final bytes = <int>[0x1D, 0x6B, 73, data.length]; // GS k m n
+    bytes.addAll(data.codeUnits);
+    return bytes;
+  }
+
+  /// Print CODE39 barcode (data must be uppercase alphanumeric)
+  static List<int> printCode39(String data) {
+    final bytes = <int>[0x1D, 0x6B, 69, data.length]; // GS k m n
+    bytes.addAll(data.toUpperCase().codeUnits);
+    return bytes;
+  }
+
+  /// Print EAN-13 barcode (13 digits)
+  static List<int> printEAN13(String data) {
+    if (data.length != 13) return [];
+    final bytes = <int>[0x1D, 0x6B, 67, 13]; // GS k m n
+    bytes.addAll(data.codeUnits);
+    return bytes;
+  }
+
+  /// Print EAN-8 barcode (8 digits)
+  static List<int> printEAN8(String data) {
+    if (data.length != 8) return [];
+    final bytes = <int>[0x1D, 0x6B, 68, 8]; // GS k m n
+    bytes.addAll(data.codeUnits);
+    return bytes;
+  }
+
+  /// Print UPC-A barcode (12 digits)
+  static List<int> printUPCA(String data) {
+    if (data.length != 12) return [];
+    final bytes = <int>[0x1D, 0x6B, 65, 12]; // GS k m n
+    bytes.addAll(data.codeUnits);
+    return bytes;
+  }
+
+  /// Print QR Code
+  /// PL, PH = (data.length + 3) as low/high byte
+  static List<int> printQRCode(
+    String data, {
+    int moduleSize = 4,
+    int errorCorrection = 1,
+  }) {
+    final bytes = <int>[];
+    final dataLength = data.length + 3;
+    final pL = dataLength % 256;
+    final pH = dataLength ~/ 256;
+
+    // Set QR model (Model 2)
+    bytes.addAll([0x1D, 0x28, 0x6B, 0x04, 0x00, 0x31, 0x41, 0x32, 0x00]);
+    // Set module size (1-16)
+    bytes.addAll([
+      0x1D,
+      0x28,
+      0x6B,
+      0x03,
+      0x00,
+      0x31,
+      0x43,
+      moduleSize.clamp(1, 16),
+    ]);
+    // Set error correction level (0=L, 1=M, 2=Q, 3=H)
+    bytes.addAll([
+      0x1D,
+      0x28,
+      0x6B,
+      0x03,
+      0x00,
+      0x31,
+      0x45,
+      errorCorrection.clamp(0, 3) + 48,
+    ]);
+    // Store data
+    bytes.addAll([0x1D, 0x28, 0x6B, pL, pH, 0x31, 0x50, 0x30]);
+    bytes.addAll(data.codeUnits);
+    // Print QR code
+    bytes.addAll([0x1D, 0x28, 0x6B, 0x03, 0x00, 0x31, 0x51, 0x30]);
+
+    return bytes;
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -210,20 +320,24 @@ class EscPosBillFormatter {
     final showHsn = settings.isColumnVisible('hsn_code');
     final showCompany = settings.isColumnVisible('company');
     final showTax = settings.isColumnVisible('tax');
-    
+
     // Fallback: ensure at least basic columns are shown
     final effectiveShowQty = showQty || (!showQty && !showRate && !showAmount);
-    final effectiveShowRate = showRate || (!showQty && !showRate && !showAmount);
-    final effectiveShowAmount = showAmount || (!showQty && !showRate && !showAmount);
+    final effectiveShowRate =
+        showRate || (!showQty && !showRate && !showAmount);
+    final effectiveShowAmount =
+        showAmount || (!showQty && !showRate && !showAmount);
 
     // Build dynamic header based on visible columns
     b.addAll(EscPosCommands.boldOn);
-    b.addAll(_dynamicItemRow(
-      'Item',
-      effectiveShowQty ? 'Qty' : null,
-      effectiveShowRate ? 'Rate' : null,
-      effectiveShowAmount ? 'Amt' : null,
-    ));
+    b.addAll(
+      _dynamicItemRow(
+        'Item',
+        effectiveShowQty ? 'Qty' : null,
+        effectiveShowRate ? 'Rate' : null,
+        effectiveShowAmount ? 'Amt' : null,
+      ),
+    );
     b.addAll(EscPosCommands.boldOff);
     b.addAll(_thinDiv());
 
@@ -231,41 +345,53 @@ class EscPosBillFormatter {
     for (final item in d.items) {
       // Build item name with optional company
       String itemName = item.name;
-      if (showCompany && item.companyName != null && item.companyName!.isNotEmpty) {
+      if (showCompany &&
+          item.companyName != null &&
+          item.companyName!.isNotEmpty) {
         itemName = '$itemName (${item.companyName})';
       }
 
-      b.addAll(_dynamicItemRow(
-        itemName,
-        effectiveShowQty ? '${item.quantity}' : null,
-        effectiveShowRate ? _fmt(item.rate) : null,
-        effectiveShowAmount ? _fmt(item.amount) : null,
-      ));
+      b.addAll(
+        _dynamicItemRow(
+          itemName,
+          effectiveShowQty ? '${item.quantity}' : null,
+          effectiveShowRate ? _fmt(item.rate) : null,
+          effectiveShowAmount ? _fmt(item.amount) : null,
+        ),
+      );
 
       // HSN code (only if enabled)
       if (showHsn) {
-        final hsn = (item.hsnCode != null && item.hsnCode!.isNotEmpty) ? item.hsnCode! : '-';
+        final hsn = (item.hsnCode != null && item.hsnCode!.isNotEmpty)
+            ? item.hsnCode!
+            : '-';
         b.addAll(_left('  HSN: $hsn'));
       }
 
       // Per-item return note
       if (item.hasReturns) {
-        b.addAll(_left(
-          '  Ret: ${item.returnedQuantity} qty  -${_fmt(item.returnedAmount)}',
-        ));
+        b.addAll(
+          _left(
+            '  Ret: ${item.returnedQuantity} qty  -${_fmt(item.returnedAmount)}',
+          ),
+        );
       }
 
       // Per-item GST breakdown (only if tax column is enabled)
       if (showTax && item.hasItemGst) {
         if (item.cgstPercent > 0) {
-          b.addAll(_left(
-            '  CGST(${_fmt(item.cgstPercent)}%): ${_fmt(item.cgstAmount)}',
-          ));
+          b.addAll(
+            _left(
+              '  CGST(${_fmt(item.cgstPercent)}%): ${_fmt(item.cgstAmount)}',
+            ),
+          );
         }
         if (item.sgstPercent > 0) {
-          b.addAll(_left(
-            '  SGST(${_fmt(item.sgstPercent)}%): ${_fmt(item.sgstAmount)}',
-          ));
+          b.addAll(
+            _left(
+              '  SGST(${_fmt(item.sgstPercent)}%): ${_fmt(item.sgstAmount)}',
+            ),
+          );
         }
       }
     }
@@ -283,26 +409,33 @@ class EscPosBillFormatter {
   }
 
   /// Dynamic item row that only shows visible columns
-  List<int> _dynamicItemRow(String item, String? qty, String? rate, String? amt) {
+  List<int> _dynamicItemRow(
+    String item,
+    String? qty,
+    String? rate,
+    String? amt,
+  ) {
     final b = <int>[];
     b.addAll(EscPosCommands.alignLeft);
-    
+
     // Calculate available width for item name
     int usedWidth = 0;
     if (qty != null) usedWidth += 5; // Qty column
     if (rate != null) usedWidth += 7; // Rate column
     if (amt != null) usedWidth += 9; // Amount column
-    
+
     final itemWidth = _cols - usedWidth;
     // Truncate item name if needed
-    final truncatedItem = item.length > itemWidth ? item.substring(0, itemWidth - 1) : item;
-    
+    final truncatedItem = item.length > itemWidth
+        ? item.substring(0, itemWidth - 1)
+        : item;
+
     // Build the row
     final row = StringBuffer(truncatedItem.padRight(itemWidth));
     if (qty != null) row.write(qty.padLeft(5));
     if (rate != null) row.write(rate.padLeft(7));
     if (amt != null) row.write(amt.padLeft(9));
-    
+
     b.addAll(utf8.encode('$row\n'));
     return b;
   }
@@ -489,10 +622,16 @@ class EscPosBillFormatter {
     int nameW, qtyW, rateW, amtW;
     if (paperSize == PosPaperSize.mm58) {
       // 32 = 13 + 4 + 7 + 8
-      nameW = 13; qtyW = 4; rateW = 7; amtW = 8;
+      nameW = 13;
+      qtyW = 4;
+      rateW = 7;
+      amtW = 8;
     } else {
       // 48 = 21 + 5 + 10 + 12
-      nameW = 21; qtyW = 5; rateW = 10; amtW = 12;
+      nameW = 21;
+      qtyW = 5;
+      rateW = 10;
+      amtW = 12;
     }
 
     final n = name.length > nameW

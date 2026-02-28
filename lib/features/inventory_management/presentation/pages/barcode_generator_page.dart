@@ -344,33 +344,27 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
 
     // Initialize printer
     bytes.addAll(EscPosCommands.init);
-    bytes.addAll(EscPosCommands.setLineSpacing(30));
+    bytes.addAll(EscPosCommands.setLineSpacing(26)); // Tighter line spacing
 
     for (int i = 0; i < quantity; i++) {
       // Center align
       bytes.addAll(EscPosCommands.alignCenter);
 
-      // Company name (if enabled)
-      if (_includeCompany && _selectedProduct?.companyName.isNotEmpty == true) {
-        bytes.addAll(EscPosCommands.textNormal);
-        bytes.addAll(_selectedProduct!.companyName.codeUnits);
-        bytes.addAll(EscPosCommands.lineFeed);
-      }
-
-      // Product name (bold)
+      // TOP LINE: Product Name | Rs.Price | Batch (all in one line, normal size)
+      bytes.addAll(EscPosCommands.textNormal);
       bytes.addAll(EscPosCommands.boldOn);
-      bytes.addAll((_selectedProduct?.name ?? '').codeUnits);
+      final topLine = _buildTopLine();
+      bytes.addAll(topLine.codeUnits);
       bytes.addAll(EscPosCommands.boldOff);
       bytes.addAll(EscPosCommands.lineFeed);
 
-      // Line feed before barcode
-      bytes.addAll(EscPosCommands.lineFeed);
-
       // Barcode settings
-      bytes.addAll(EscPosCommands.setBarcodeHeight(60)); // Height in dots
-      bytes.addAll(EscPosCommands.setBarcodeWidth(3)); // Width multiplier
+      bytes.addAll(EscPosCommands.setBarcodeHeight(50)); // Slightly smaller
+      bytes.addAll(
+        EscPosCommands.setBarcodeWidth(2),
+      ); // Narrower for more chars
       bytes.addAll(EscPosCommands.setHRIPosition(2)); // Print below barcode
-      bytes.addAll(EscPosCommands.setHRIFont(0)); // Font A
+      bytes.addAll(EscPosCommands.setHRIFont(1)); // Font B (smaller)
 
       // Print barcode based on format
       switch (_selectedFormat) {
@@ -391,48 +385,53 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
           break;
         case BarcodeFormat.qrCode:
           bytes.addAll(
-            EscPosCommands.printQRCode(_generatedBarcode, moduleSize: 6),
+            EscPosCommands.printQRCode(_generatedBarcode, moduleSize: 5),
           );
           break;
       }
 
       bytes.addAll(EscPosCommands.lineFeed);
 
-      // Price (if enabled)
-      if (_includePrice) {
-        bytes.addAll(EscPosCommands.textDoubleSize);
-        bytes.addAll(EscPosCommands.boldOn);
-        final price =
-            _selectedBatch?.sellingPrice ?? _selectedProduct?.salesPrice ?? 0;
-        bytes.addAll('Rs.${price.toStringAsFixed(0)}'.codeUnits);
-        bytes.addAll(EscPosCommands.boldOff);
-        bytes.addAll(EscPosCommands.textNormal);
-        bytes.addAll(EscPosCommands.lineFeed);
-      }
-
       // Add spacing between labels
-      bytes.addAll(EscPosCommands.feedLines(3));
-
-      // Batch info (if available)
-      if (_selectedBatch != null) {
-        bytes.addAll(EscPosCommands.alignLeft);
-        bytes.addAll('Batch: #${_selectedBatch!.id}'.codeUnits);
-        bytes.addAll(EscPosCommands.lineFeed);
-        bytes.addAll(EscPosCommands.alignCenter);
-      }
+      bytes.addAll(EscPosCommands.feedLines(2));
 
       // Separator line between multiple labels
       if (i < quantity - 1) {
         bytes.addAll('--------------------------------'.codeUnits);
         bytes.addAll(EscPosCommands.lineFeed);
-        bytes.addAll(EscPosCommands.feedLines(2));
+        bytes.addAll(EscPosCommands.feedLines(1));
       }
     }
 
     // Final feed
-    bytes.addAll(EscPosCommands.feedLines(4));
+    bytes.addAll(EscPosCommands.feedLines(3));
 
     return bytes;
+  }
+
+  /// Build top line: Product Name | Rs.Price | Batch (single line)
+  String _buildTopLine() {
+    final parts = <String>[];
+
+    // Product name (truncate to fit in line)
+    final productName = _selectedProduct?.name ?? '';
+    parts.add(
+      productName.length > 16 ? productName.substring(0, 16) : productName,
+    );
+
+    // Price
+    if (_includePrice) {
+      final price =
+          _selectedBatch?.sellingPrice ?? _selectedProduct?.salesPrice ?? 0;
+      parts.add('Rs.${price.toStringAsFixed(0)}');
+    }
+
+    // Batch
+    if (_selectedBatch != null) {
+      parts.add('B#${_selectedBatch!.id}');
+    }
+
+    return parts.join('|');
   }
 
   Future<Uint8List> _generateBarcodePdf(int quantity) async {
@@ -446,45 +445,56 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
       barcodeWidgets.add(
         pw.Container(
           width: 60 * PdfPageFormat.mm,
-          height: 40 * PdfPageFormat.mm,
-          padding: const pw.EdgeInsets.all(4),
+          height: 35 * PdfPageFormat.mm, // Slightly smaller height
+          padding: const pw.EdgeInsets.all(3),
           child: pw.Column(
             mainAxisAlignment: pw.MainAxisAlignment.center,
             children: [
-              if (_includeCompany &&
-                  _selectedProduct?.companyName.isNotEmpty == true)
-                pw.Text(
-                  _selectedProduct!.companyName,
-                  style: pw.TextStyle(
-                    fontSize: 8,
-                    fontWeight: pw.FontWeight.bold,
+              // TOP LINE: Product Name | Rs.Price | Batch (single line, smaller font)
+              pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.center,
+                children: [
+                  pw.Flexible(
+                    child: pw.Text(
+                      (_selectedProduct?.name ?? '').length > 18
+                          ? (_selectedProduct?.name ?? '').substring(0, 18)
+                          : (_selectedProduct?.name ?? ''),
+                      style: pw.TextStyle(
+                        fontSize: 7,
+                        fontWeight: pw.FontWeight.bold,
+                      ),
+                      maxLines: 1,
+                    ),
                   ),
-                ),
-              pw.Text(
-                _selectedProduct?.name ?? '',
-                style: pw.TextStyle(
-                  fontSize: 9,
-                  fontWeight: pw.FontWeight.bold,
-                ),
-                maxLines: 1,
+                  if (_includePrice) ...[
+                    pw.Text('|', style: const pw.TextStyle(fontSize: 6)),
+                    pw.Text(
+                      'Rs.${(_selectedBatch?.sellingPrice ?? _selectedProduct?.salesPrice ?? 0).toStringAsFixed(0)}',
+                      style: pw.TextStyle(
+                        fontSize: 7,
+                        fontWeight: pw.FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                  if (_selectedBatch != null) ...[
+                    pw.Text('|', style: const pw.TextStyle(fontSize: 6)),
+                    pw.Text(
+                      'B#${_selectedBatch!.id}',
+                      style: const pw.TextStyle(fontSize: 6),
+                    ),
+                  ],
+                ],
               ),
-              pw.SizedBox(height: 4),
+              pw.SizedBox(height: 2),
+              // BARCODE
               pw.BarcodeWidget(
                 barcode: barcode,
                 data: _generatedBarcode,
                 width: 50 * PdfPageFormat.mm,
-                height: 15 * PdfPageFormat.mm,
+                height: 14 * PdfPageFormat.mm,
                 drawText: true,
-                textStyle: const pw.TextStyle(fontSize: 8),
+                textStyle: const pw.TextStyle(fontSize: 7),
               ),
-              if (_includePrice)
-                pw.Text(
-                  '₹${_selectedBatch?.sellingPrice ?? _selectedProduct?.salesPrice ?? 0}',
-                  style: pw.TextStyle(
-                    fontSize: 10,
-                    fontWeight: pw.FontWeight.bold,
-                  ),
-                ),
             ],
           ),
         ),
