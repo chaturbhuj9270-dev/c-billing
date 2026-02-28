@@ -2595,7 +2595,7 @@ class _BillingPageState extends State<BillingPage> {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'Tap quantity to edit • Swipe to remove',
+                        'Tap price/qty to edit • Swipe to remove',
                         style: TextStyle(
                           fontFamily: 'Literata',
                           fontSize: 10,
@@ -2811,24 +2811,45 @@ class _BillingPageState extends State<BillingPage> {
                                 spacing: 6,
                                 runSpacing: 4,
                                 children: [
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                      vertical: 4,
+                                  GestureDetector(
+                                    onTap: () => _showEditSellPriceDialog(
+                                      index: index,
+                                      item: item,
                                     ),
-                                    decoration: BoxDecoration(
-                                      color: const Color(
-                                        0xFF1B4D3E,
-                                      ).withValues(alpha: 0.08),
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                    child: Text(
-                                      '₹${item.sellingPrice.toStringAsFixed(0)}/unit',
-                                      style: const TextStyle(
-                                        fontFamily: 'Literata',
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w600,
-                                        color: Color(0xFF1B4D3E),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 4,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: const Color(
+                                          0xFF1B4D3E,
+                                        ).withValues(alpha: 0.08),
+                                        borderRadius: BorderRadius.circular(6),
+                                        border: Border.all(
+                                          color: const Color(0xFF1B4D3E).withValues(alpha: 0.2),
+                                          width: 1,
+                                        ),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Text(
+                                            '₹${item.sellingPrice.toStringAsFixed(0)}/unit',
+                                            style: const TextStyle(
+                                              fontFamily: 'Literata',
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w600,
+                                              color: Color(0xFF1B4D3E),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Icon(
+                                            Icons.edit_rounded,
+                                            size: 12,
+                                            color: const Color(0xFF1B4D3E).withValues(alpha: 0.6),
+                                          ),
+                                        ],
                                       ),
                                     ),
                                   ),
@@ -3478,6 +3499,307 @@ class _BillingPageState extends State<BillingPage> {
                             );
                           });
                           Navigator.pop(ctx);
+                        }
+                      }
+                    : null,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF1B4D3E),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
+                  ),
+                  elevation: 0,
+                ),
+                child: Text(
+                  _localizations.update,
+                  style: const TextStyle(
+                    fontFamily: 'Literata',
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  /// Show dialog to edit sell price for a bill item
+  void _showEditSellPriceDialog({
+    required int index,
+    required BillItem item,
+  }) {
+    final priceController = TextEditingController(
+      text: item.sellingPrice.toStringAsFixed(2),
+    );
+    String? errorText;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          void validatePrice() {
+            final price = double.tryParse(priceController.text) ?? 0;
+            setDialogState(() {
+              if (price <= 0) {
+                errorText = 'Please enter a valid price';
+              } else {
+                errorText = null;
+              }
+            });
+          }
+
+          return AlertDialog(
+            backgroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(24),
+            ),
+            title: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF1B4D3E), Color(0xFF2D6A4F)],
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF1B4D3E).withValues(alpha: 0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.currency_rupee_rounded,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _localizations.edit + ' ' + _localizations.price,
+                        style: const TextStyle(
+                          fontFamily: 'Literata',
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF1A1A2E),
+                        ),
+                      ),
+                      Text(
+                        item.productName,
+                        style: TextStyle(
+                          fontFamily: 'Literata',
+                          fontSize: 12,
+                          color: Colors.grey[600],
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Info row showing current quantity and subtotal
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[50],
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: Colors.grey.withValues(alpha: 0.1),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _localizations.quantity,
+                            style: TextStyle(
+                              fontFamily: 'Literata',
+                              fontSize: 11,
+                              color: Colors.grey[500],
+                            ),
+                          ),
+                          Text(
+                            '${item.quantity}',
+                            style: const TextStyle(
+                              fontFamily: 'Literata',
+                              fontWeight: FontWeight.w700,
+                              fontSize: 16,
+                              color: Color(0xFF1B4D3E),
+                            ),
+                          ),
+                        ],
+                      ),
+                      Container(width: 1, height: 36, color: Colors.grey[200]),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            'Subtotal',
+                            style: TextStyle(
+                              fontFamily: 'Literata',
+                              fontSize: 11,
+                              color: Colors.grey[500],
+                            ),
+                          ),
+                          Text(
+                            '₹${((double.tryParse(priceController.text) ?? item.sellingPrice) * item.quantity).toStringAsFixed(0)}',
+                            style: TextStyle(
+                              fontFamily: 'Literata',
+                              fontWeight: FontWeight.w700,
+                              fontSize: 16,
+                              color: Colors.blue[700],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+                // Price input field
+                TextField(
+                  controller: priceController,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  textAlign: TextAlign.center,
+                  autofocus: true,
+                  onChanged: (_) => validatePrice(),
+                  style: const TextStyle(
+                    fontFamily: 'Literata',
+                    fontSize: 24,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF1B4D3E),
+                  ),
+                  decoration: InputDecoration(
+                    prefixText: '₹ ',
+                    prefixStyle: const TextStyle(
+                      fontFamily: 'Literata',
+                      fontSize: 24,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF1B4D3E),
+                    ),
+                    errorText: errorText,
+                    errorStyle: const TextStyle(fontSize: 11),
+                    filled: true,
+                    fillColor: Colors.grey[50],
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 16,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: BorderSide(color: Colors.grey[300]!),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: const BorderSide(
+                        color: Color(0xFF1B4D3E),
+                        width: 2,
+                      ),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: BorderSide(color: Colors.grey[200]!),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              // Reset to original button
+              TextButton.icon(
+                onPressed: () {
+                  // Find original product price
+                  final realProductId = item.productId.split('_batch_').first;
+                  final product = _products.firstWhere(
+                    (p) => p.id == realProductId,
+                    orElse: () => Product(
+                      id: realProductId,
+                      indexNo: 0,
+                      name: item.productName,
+                      companyName: '',
+                      category: '',
+                      purchasePrice: 0,
+                      salesPrice: item.sellingPrice,
+                      currentStock: 0,
+                      createdAt: DateTime.now(),
+                      updatedAt: DateTime.now(),
+                    ),
+                  );
+                  priceController.text = product.salesPrice.toStringAsFixed(2);
+                  validatePrice();
+                },
+                icon: Icon(
+                  Icons.refresh_rounded,
+                  color: Colors.orange[700],
+                  size: 20,
+                ),
+                label: Text(
+                  'Reset',
+                  style: TextStyle(
+                    fontFamily: 'Literata',
+                    color: Colors.orange[700],
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              const Spacer(),
+              // Cancel button
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: Text(
+                  _localizations.cancel,
+                  style: TextStyle(
+                    fontFamily: 'Literata',
+                    color: Colors.grey[600],
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              // Update button
+              ElevatedButton(
+                onPressed: errorText == null
+                    ? () {
+                        final price = double.tryParse(priceController.text) ?? 0;
+                        if (price > 0) {
+                          setState(() {
+                            _billItems[index] = BillItem.create(
+                              productId: item.productId,
+                              productName: item.productName,
+                              companyName: item.companyName,
+                              sellingPrice: price,
+                              purchasePrice: item.purchasePrice,
+                              quantity: item.quantity,
+                              cgstPercent: item.cgstPercent,
+                              sgstPercent: item.sgstPercent,
+                              hsnCode: item.hsnCode,
+                            );
+                          });
+                          Navigator.pop(ctx);
+                          _showSnackbar(
+                            'Price updated to ₹${price.toStringAsFixed(0)}',
+                            isError: false,
+                          );
                         }
                       }
                     : null,
