@@ -2523,128 +2523,91 @@ class _BillingPageState extends State<BillingPage> {
       margin: const EdgeInsets.fromLTRB(12, 6, 12, 6),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.withValues(alpha: 0.1)),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.grey.withValues(alpha: 0.08)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 15,
-            offset: const Offset(0, 4),
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Section Header with enhanced design
+          // Compact Header
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  const Color(0xFF7B68EE).withValues(alpha: 0.12),
-                  const Color(0xFF7B68EE).withValues(alpha: 0.04),
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
+              color: const Color(0xFF7B68EE).withValues(alpha: 0.06),
               borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(16),
-                topRight: Radius.circular(16),
+                topLeft: Radius.circular(14),
+                topRight: Radius.circular(14),
               ),
             ),
             child: Row(
               children: [
                 Container(
-                  width: 34,
-                  height: 34,
+                  width: 28,
+                  height: 28,
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
                       colors: [Color(0xFF7B68EE), Color(0xFF9B8DFF)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
                     ),
-                    borderRadius: BorderRadius.circular(10),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFF7B68EE).withValues(alpha: 0.35),
-                        blurRadius: 8,
-                        offset: const Offset(0, 3),
-                      ),
-                    ],
+                    borderRadius: BorderRadius.circular(8),
                   ),
                   child: const Icon(
-                    Icons.shopping_cart_rounded,
+                    Icons.receipt_long_rounded,
                     color: Colors.white,
-                    size: 18,
+                    size: 15,
                   ),
                 ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        _localizations.billItems,
-                        style: const TextStyle(
-                          fontFamily: 'Literata',
-                          fontWeight: FontWeight.w700,
-                          fontSize: 14,
-                          color: Color(0xFF1A1A2E),
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'Tap price/qty to edit • Swipe to remove',
-                        style: TextStyle(
-                          fontFamily: 'Literata',
-                          fontSize: 10,
-                          color: Colors.grey[500],
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
+                const SizedBox(width: 8),
+                Text(
+                  _localizations.billItems,
+                  style: const TextStyle(
+                    fontFamily: 'Literata',
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                    color: Color(0xFF1A1A2E),
                   ),
                 ),
+                const Spacer(),
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 5,
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF1B4D3E), Color(0xFF2D6A4F)],
-                    ),
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFF1B4D3E).withValues(alpha: 0.25),
-                        blurRadius: 6,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
+                    color: const Color(0xFF1B4D3E),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
-                    '${_billItems.length} ${_localizations.items.toLowerCase()}',
+                    '${_billItems.length}',
                     style: const TextStyle(
                       fontFamily: 'Literata',
-                      fontSize: 12,
+                      fontSize: 11,
                       color: Colors.white,
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ),
               ],
             ),
           ),
-          // Enhanced Items List
-          ListView.builder(
+          // Compact Items List
+          ListView.separated(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
+            padding: const EdgeInsets.symmetric(vertical: 6),
             itemCount: _billItems.length,
+            separatorBuilder: (_, __) => Divider(
+              height: 1,
+              thickness: 0.5,
+              indent: 12,
+              endIndent: 12,
+              color: Colors.grey.withValues(alpha: 0.12),
+            ),
             itemBuilder: (context, index) {
               final item = _billItems[index];
-              // Parse batch-specific key to find the real product
               final realProductId = item.productId.split('_batch_').first;
               final product = _products.firstWhere(
                 (p) => p.id == realProductId,
@@ -2662,12 +2625,9 @@ class _BillingPageState extends State<BillingPage> {
                 ),
               );
 
-              // Calculate max stock for this item
               int maxStock;
               final parts = item.productId.split('_batch_');
-              final batchLocalId = parts.length > 1
-                  ? int.tryParse(parts.last)
-                  : null;
+              final batchLocalId = parts.length > 1 ? int.tryParse(parts.last) : null;
               if (batchLocalId != null) {
                 final batch = _availableBatches
                     .cast<PurchaseBatchEntity?>()
@@ -2678,463 +2638,285 @@ class _BillingPageState extends State<BillingPage> {
                 maxStock = batch?.quantityRemaining ?? 0;
               } else {
                 final batchStock = _availableBatches
-                    .where(
-                      (b) =>
-                          b.productId == realProductId &&
-                          b.quantityRemaining > 0,
-                    )
+                    .where((b) => b.productId == realProductId && b.quantityRemaining > 0)
                     .fold<int>(0, (s, b) => s + b.quantityRemaining);
                 maxStock = batchStock > 0 ? batchStock : product.currentStock;
               }
-
-              final isLastItem = index == _billItems.length - 1;
 
               return Dismissible(
                 key: Key('${item.productId}_$index'),
                 direction: DismissDirection.endToStart,
                 background: Container(
                   alignment: Alignment.centerRight,
-                  padding: const EdgeInsets.only(right: 24),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [Colors.red[300]!, Colors.red[500]!],
-                    ),
-                    borderRadius: isLastItem
-                        ? const BorderRadius.only(
-                            bottomLeft: Radius.circular(20),
-                            bottomRight: Radius.circular(20),
-                          )
-                        : null,
-                  ),
+                  padding: const EdgeInsets.only(right: 16),
+                  color: Colors.red[400],
+                  child: const Icon(Icons.delete_outline_rounded, color: Colors.white, size: 20),
+                ),
+                onDismissed: (_) => setState(() => _billItems.removeAt(index)),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Text(
-                        _localizations.delete,
-                        style: const TextStyle(
-                          fontFamily: 'Literata',
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14,
+                      // Index number badge
+                      Container(
+                        width: 22,
+                        height: 22,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[100],
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Center(
+                          child: Text(
+                            '${index + 1}',
+                            style: TextStyle(
+                              fontFamily: 'Literata',
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.grey[600],
+                            ),
+                          ),
                         ),
                       ),
                       const SizedBox(width: 8),
-                      const Icon(
-                        Icons.delete_rounded,
-                        color: Colors.white,
-                        size: 24,
-                      ),
-                    ],
-                  ),
-                ),
-                confirmDismiss: (direction) async {
-                  // Optional: Add haptic feedback
-                  return true;
-                },
-                onDismissed: (_) => setState(() => _billItems.removeAt(index)),
-                child: Container(
-                  margin: EdgeInsets.only(
-                    left: 12,
-                    right: 12,
-                    top: index == 0 ? 12 : 6,
-                    bottom: isLastItem ? 12 : 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.grey[50],
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: Colors.grey.withValues(alpha: 0.12),
-                      width: 1,
-                    ),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        // Product info - Left side
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // Product name with delete button
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      item.productName,
-                                      style: const TextStyle(
-                                        fontFamily: 'Literata',
-                                        fontWeight: FontWeight.w700,
-                                        fontSize: 14,
-                                        color: Color(0xFF1A1A2E),
-                                      ),
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                  // Delete button
-                                  Material(
-                                    color: Colors.transparent,
-                                    child: InkWell(
-                                      borderRadius: BorderRadius.circular(8),
-                                      onTap: () {
-                                        setState(
-                                          () => _billItems.removeAt(index),
-                                        );
-                                        _showSnackbar(
-                                          '${item.productName} ${_localizations.delete}d',
-                                          isError: false,
-                                        );
-                                      },
-                                      child: Container(
-                                        padding: const EdgeInsets.all(6),
-                                        decoration: BoxDecoration(
-                                          color: Colors.red[50],
-                                          borderRadius: BorderRadius.circular(
-                                            8,
-                                          ),
-                                        ),
-                                        child: Icon(
-                                          Icons.close_rounded,
-                                          size: 16,
-                                          color: Colors.red[400],
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
+                      // Product name and price
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              item.productName,
+                              style: const TextStyle(
+                                fontFamily: 'Literata',
+                                fontWeight: FontWeight.w600,
+                                fontSize: 12,
+                                color: Color(0xFF1A1A2E),
+                                height: 1.2,
                               ),
-                              const SizedBox(height: 8),
-                              // Price and GST info
-                              Wrap(
-                                spacing: 6,
-                                runSpacing: 4,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 2),
+                            // Price row - tappable
+                            GestureDetector(
+                              onTap: () => _showEditSellPriceDialog(index: index, item: item),
+                              child: Row(
                                 children: [
-                                  GestureDetector(
-                                    onTap: () => _showEditSellPriceDialog(
-                                      index: index,
-                                      item: item,
-                                    ),
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 8,
-                                        vertical: 4,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: const Color(
-                                          0xFF1B4D3E,
-                                        ).withValues(alpha: 0.08),
-                                        borderRadius: BorderRadius.circular(6),
-                                        border: Border.all(
-                                          color: const Color(0xFF1B4D3E).withValues(alpha: 0.2),
-                                          width: 1,
-                                        ),
-                                      ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Text(
-                                            '₹${item.sellingPrice.toStringAsFixed(0)}/unit',
-                                            style: const TextStyle(
-                                              fontFamily: 'Literata',
-                                              fontSize: 11,
-                                              fontWeight: FontWeight.w600,
-                                              color: Color(0xFF1B4D3E),
-                                            ),
-                                          ),
-                                          const SizedBox(width: 4),
-                                          Icon(
-                                            Icons.edit_rounded,
-                                            size: 12,
-                                            color: const Color(0xFF1B4D3E).withValues(alpha: 0.6),
-                                          ),
-                                        ],
-                                      ),
+                                  Text(
+                                    '₹${item.sellingPrice.toStringAsFixed(0)}',
+                                    style: TextStyle(
+                                      fontFamily: 'Literata',
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                      color: const Color(0xFF1B4D3E).withValues(alpha: 0.8),
                                     ),
                                   ),
-                                  if (item.cgstPercent > 0 ||
-                                      item.sgstPercent > 0)
+                                  const SizedBox(width: 3),
+                                  Icon(
+                                    Icons.edit_rounded,
+                                    size: 10,
+                                    color: Colors.grey[400],
+                                  ),
+                                  if (item.cgstPercent > 0 || item.sgstPercent > 0) ...[
+                                    const SizedBox(width: 6),
                                     Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 8,
-                                        vertical: 4,
-                                      ),
+                                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                                       decoration: BoxDecoration(
                                         color: Colors.orange[50],
-                                        borderRadius: BorderRadius.circular(6),
+                                        borderRadius: BorderRadius.circular(3),
                                       ),
                                       child: Text(
-                                        'GST ${(item.cgstPercent + item.sgstPercent).toStringAsFixed(0)}%',
+                                        '${(item.cgstPercent + item.sgstPercent).toStringAsFixed(0)}%',
                                         style: TextStyle(
                                           fontFamily: 'Literata',
-                                          fontSize: 10,
-                                          color: Colors.orange[800],
+                                          fontSize: 9,
+                                          color: Colors.orange[700],
                                           fontWeight: FontWeight.w600,
                                         ),
                                       ),
                                     ),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                      vertical: 4,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: Colors.blue[50],
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                    child: Text(
-                                      '${_localizations.stock}: $maxStock',
-                                      style: TextStyle(
-                                        fontFamily: 'Literata',
-                                        fontSize: 10,
-                                        color: Colors.blue[700],
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        // Quantity and Total - Right side
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            // Quantity controls with editable field
-                            Container(
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: const Color(
-                                    0xFF1B4D3E,
-                                  ).withValues(alpha: 0.2),
-                                ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withValues(alpha: 0.04),
-                                    blurRadius: 4,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ],
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  // Minus button
-                                  Material(
-                                    color: Colors.transparent,
-                                    child: InkWell(
-                                      borderRadius: const BorderRadius.only(
-                                        topLeft: Radius.circular(11),
-                                        bottomLeft: Radius.circular(11),
-                                      ),
-                                      onTap: () {
-                                        if (item.quantity > 1) {
-                                          setState(() {
-                                            _billItems[index] = BillItem.create(
-                                              productId: item.productId,
-                                              productName: item.productName,
-                                              companyName: item.companyName,
-                                              sellingPrice: item.sellingPrice,
-                                              purchasePrice: item.purchasePrice,
-                                              quantity: item.quantity - 1,
-                                              cgstPercent: item.cgstPercent,
-                                              sgstPercent: item.sgstPercent,
-                                              hsnCode: item.hsnCode,
-                                            );
-                                          });
-                                        } else {
-                                          setState(
-                                            () => _billItems.removeAt(index),
-                                          );
-                                        }
-                                      },
-                                      child: Container(
-                                        padding: const EdgeInsets.all(8),
-                                        decoration: BoxDecoration(
-                                          color: const Color(
-                                            0xFF1B4D3E,
-                                          ).withValues(alpha: 0.08),
-                                          borderRadius: const BorderRadius.only(
-                                            topLeft: Radius.circular(11),
-                                            bottomLeft: Radius.circular(11),
-                                          ),
-                                        ),
-                                        child: const Icon(
-                                          Icons.remove_rounded,
-                                          size: 18,
-                                          color: Color(0xFF1B4D3E),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  // Editable Quantity input - inline
-                                  SizedBox(
-                                    width: 48,
-                                    child: TextField(
-                                      controller: TextEditingController(
-                                        text: '${item.quantity}',
-                                      ),
-                                      keyboardType: TextInputType.number,
-                                      textAlign: TextAlign.center,
-                                      style: const TextStyle(
-                                        fontFamily: 'Literata',
-                                        fontWeight: FontWeight.w800,
-                                        fontSize: 15,
-                                        color: Color(0xFF1B4D3E),
-                                      ),
-                                      decoration: InputDecoration(
-                                        isDense: true,
-                                        contentPadding:
-                                            const EdgeInsets.symmetric(
-                                              horizontal: 4,
-                                              vertical: 10,
-                                            ),
-                                        border: InputBorder.none,
-                                        enabledBorder: InputBorder.none,
-                                        focusedBorder: UnderlineInputBorder(
-                                          borderSide: BorderSide(
-                                            color: const Color(
-                                              0xFF1B4D3E,
-                                            ).withValues(alpha: 0.5),
-                                            width: 2,
-                                          ),
-                                        ),
-                                      ),
-                                      onSubmitted: (value) {
-                                        final qty =
-                                            int.tryParse(value) ??
-                                            item.quantity;
-                                        if (qty <= 0) {
-                                          setState(
-                                            () => _billItems.removeAt(index),
-                                          );
-                                        } else if (qty > maxStock) {
-                                          _showSnackbar(
-                                            '${_localizations.maxStock}: $maxStock',
-                                            isError: true,
-                                          );
-                                        } else {
-                                          setState(() {
-                                            _billItems[index] = BillItem.create(
-                                              productId: item.productId,
-                                              productName: item.productName,
-                                              companyName: item.companyName,
-                                              sellingPrice: item.sellingPrice,
-                                              purchasePrice: item.purchasePrice,
-                                              quantity: qty,
-                                              cgstPercent: item.cgstPercent,
-                                              sgstPercent: item.sgstPercent,
-                                              hsnCode: item.hsnCode,
-                                            );
-                                          });
-                                        }
-                                      },
-                                    ),
-                                  ),
-                                  // Plus button
-                                  Material(
-                                    color: Colors.transparent,
-                                    child: InkWell(
-                                      borderRadius: const BorderRadius.only(
-                                        topRight: Radius.circular(11),
-                                        bottomRight: Radius.circular(11),
-                                      ),
-                                      onTap: () {
-                                        if (item.quantity < maxStock) {
-                                          setState(() {
-                                            _billItems[index] = BillItem.create(
-                                              productId: item.productId,
-                                              productName: item.productName,
-                                              companyName: item.companyName,
-                                              sellingPrice: item.sellingPrice,
-                                              purchasePrice: item.purchasePrice,
-                                              quantity: item.quantity + 1,
-                                              cgstPercent: item.cgstPercent,
-                                              sgstPercent: item.sgstPercent,
-                                              hsnCode: item.hsnCode,
-                                            );
-                                          });
-                                        } else {
-                                          _showSnackbar(
-                                            '${_localizations.maxStock}: $maxStock',
-                                            isError: true,
-                                          );
-                                        }
-                                      },
-                                      child: Container(
-                                        padding: const EdgeInsets.all(8),
-                                        decoration: BoxDecoration(
-                                          color: item.quantity < maxStock
-                                              ? const Color(
-                                                  0xFF1B4D3E,
-                                                ).withValues(alpha: 0.08)
-                                              : Colors.grey[100],
-                                          borderRadius: const BorderRadius.only(
-                                            topRight: Radius.circular(11),
-                                            bottomRight: Radius.circular(11),
-                                          ),
-                                        ),
-                                        child: Icon(
-                                          Icons.add_rounded,
-                                          size: 18,
-                                          color: item.quantity < maxStock
-                                              ? const Color(0xFF1B4D3E)
-                                              : Colors.grey[400],
-                                        ),
-                                      ),
-                                    ),
-                                  ),
+                                  ],
                                 ],
                               ),
                             ),
-                            const SizedBox(height: 8),
-                            // Subtotal with enhanced styling
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                gradient: const LinearGradient(
-                                  colors: [
-                                    Color(0xFF1B4D3E),
-                                    Color(0xFF2D6A4F),
-                                  ],
-                                ),
-                                borderRadius: BorderRadius.circular(10),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: const Color(
-                                      0xFF1B4D3E,
-                                    ).withValues(alpha: 0.2),
-                                    blurRadius: 4,
-                                    offset: const Offset(0, 2),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      // Compact Quantity stepper
+                      Container(
+                        height: 30,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[50],
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.grey.withValues(alpha: 0.15)),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // Minus
+                            GestureDetector(
+                              onTap: () {
+                                if (item.quantity > 1) {
+                                  setState(() {
+                                    _billItems[index] = BillItem.create(
+                                      productId: item.productId,
+                                      productName: item.productName,
+                                      companyName: item.companyName,
+                                      sellingPrice: item.sellingPrice,
+                                      purchasePrice: item.purchasePrice,
+                                      quantity: item.quantity - 1,
+                                      cgstPercent: item.cgstPercent,
+                                      sgstPercent: item.sgstPercent,
+                                      hsnCode: item.hsnCode,
+                                    );
+                                  });
+                                } else {
+                                  setState(() => _billItems.removeAt(index));
+                                }
+                              },
+                              child: Container(
+                                width: 28,
+                                height: 30,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF1B4D3E).withValues(alpha: 0.08),
+                                  borderRadius: const BorderRadius.only(
+                                    topLeft: Radius.circular(7),
+                                    bottomLeft: Radius.circular(7),
                                   ),
-                                ],
+                                ),
+                                child: const Icon(Icons.remove, size: 14, color: Color(0xFF1B4D3E)),
                               ),
-                              child: Text(
-                                '₹${item.subtotal.toStringAsFixed(0)}',
-                                style: const TextStyle(
-                                  fontFamily: 'Literata',
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 14,
-                                  color: Colors.white,
+                            ),
+                            // Quantity display - tappable for manual entry
+                            GestureDetector(
+                              onTap: () => _showBillItemQuantityDialog(
+                                index: index,
+                                item: item,
+                                maxStock: maxStock,
+                              ),
+                              child: Container(
+                                width: 36,
+                                alignment: Alignment.center,
+                                child: Text(
+                                  '${item.quantity}',
+                                  style: const TextStyle(
+                                    fontFamily: 'Literata',
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 13,
+                                    color: Color(0xFF1B4D3E),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            // Plus
+                            GestureDetector(
+                              onTap: () {
+                                if (item.quantity < maxStock) {
+                                  setState(() {
+                                    _billItems[index] = BillItem.create(
+                                      productId: item.productId,
+                                      productName: item.productName,
+                                      companyName: item.companyName,
+                                      sellingPrice: item.sellingPrice,
+                                      purchasePrice: item.purchasePrice,
+                                      quantity: item.quantity + 1,
+                                      cgstPercent: item.cgstPercent,
+                                      sgstPercent: item.sgstPercent,
+                                      hsnCode: item.hsnCode,
+                                    );
+                                  });
+                                } else {
+                                  _showSnackbar('${_localizations.maxStock}: $maxStock', isError: true);
+                                }
+                              },
+                              child: Container(
+                                width: 28,
+                                height: 30,
+                                decoration: BoxDecoration(
+                                  color: item.quantity < maxStock
+                                      ? const Color(0xFF1B4D3E).withValues(alpha: 0.08)
+                                      : Colors.grey[100],
+                                  borderRadius: const BorderRadius.only(
+                                    topRight: Radius.circular(7),
+                                    bottomRight: Radius.circular(7),
+                                  ),
+                                ),
+                                child: Icon(
+                                  Icons.add,
+                                  size: 14,
+                                  color: item.quantity < maxStock ? const Color(0xFF1B4D3E) : Colors.grey[400],
                                 ),
                               ),
                             ),
                           ],
                         ),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(width: 10),
+                      // Subtotal - right aligned
+                      SizedBox(
+                        width: 60,
+                        child: Text(
+                          '₹${item.subtotal.toStringAsFixed(0)}',
+                          textAlign: TextAlign.right,
+                          style: const TextStyle(
+                            fontFamily: 'Literata',
+                            fontWeight: FontWeight.w700,
+                            fontSize: 13,
+                            color: Color(0xFF1B4D3E),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               );
             },
+          ),
+          // Footer with total
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1B4D3E).withValues(alpha: 0.04),
+              borderRadius: const BorderRadius.only(
+                bottomLeft: Radius.circular(14),
+                bottomRight: Radius.circular(14),
+              ),
+            ),
+            child: Row(
+              children: [
+                Text(
+                  '${_totalQuantity} ${_localizations.items.toLowerCase()}',
+                  style: TextStyle(
+                    fontFamily: 'Literata',
+                    fontSize: 11,
+                    color: Colors.grey[600],
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const Spacer(),
+                Text(
+                  'Subtotal',
+                  style: TextStyle(
+                    fontFamily: 'Literata',
+                    fontSize: 12,
+                    color: Colors.grey[600],
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  '₹${_totalAmount.toStringAsFixed(0)}',
+                  style: const TextStyle(
+                    fontFamily: 'Literata',
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF1B4D3E),
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
