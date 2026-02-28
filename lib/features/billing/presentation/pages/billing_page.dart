@@ -2414,36 +2414,35 @@ class _BillingPageState extends State<BillingPage> {
             padding: const EdgeInsets.all(12),
             child: Column(
               children: [
-                // Quick add by index number
+                // Combined: Product code input + Search + Barcode scan
                 Container(
-                  padding: const EdgeInsets.all(10),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        Colors.amber.withOpacity(0.1),
-                        Colors.amber.withOpacity(0.05),
-                      ],
-                    ),
+                    color: Colors.grey[50],
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: Colors.amber.withOpacity(0.3)),
+                    border: Border.all(
+                      color: const Color(0xFF1B4D3E).withOpacity(0.2),
+                    ),
                   ),
                   child: Row(
                     children: [
+                      // Flash icon for quick add
                       Container(
-                        padding: const EdgeInsets.all(8),
+                        padding: const EdgeInsets.all(6),
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             colors: [Colors.amber[700]!, Colors.amber[600]!],
                           ),
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(6),
                         ),
                         child: const Icon(
                           Icons.flash_on_rounded,
                           color: Colors.white,
-                          size: 16,
+                          size: 14,
                         ),
                       ),
                       const SizedBox(width: 10),
+                      // Text input for product code
                       Expanded(
                         child: TextField(
                           controller: _indexNoController,
@@ -2452,7 +2451,7 @@ class _BillingPageState extends State<BillingPage> {
                           style: const TextStyle(
                             fontFamily: 'Literata',
                             fontSize: 14,
-                            fontWeight: FontWeight.w600,
+                            fontWeight: FontWeight.w500,
                           ),
                           decoration: InputDecoration(
                             hintText: _localizations.enterProductCode,
@@ -2469,109 +2468,46 @@ class _BillingPageState extends State<BillingPage> {
                           onSubmitted: (_) => _addProductByIndexNoOnPage(),
                         ),
                       ),
-                      Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(8),
-                          onTap: _addProductByIndexNoOnPage,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 8,
+                      const SizedBox(width: 8),
+                      // Search icon - opens search product bottom sheet
+                      GestureDetector(
+                        onTap: _showAddItemsPopup,
+                        child: Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: const Icon(
+                            Icons.search_rounded,
+                            color: Color(0xFF1B4D3E),
+                            size: 18,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      // Barcode scan icon
+                      GestureDetector(
+                        onTap: _showBarcodeScannerSheet,
+                        child: Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                const Color(0xFF1B4D3E),
+                                const Color(0xFF2D6A4F),
+                              ],
                             ),
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  const Color(0xFF1B4D3E),
-                                  const Color(0xFF2D6A4F),
-                                ],
-                              ),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              _localizations.add,
-                              style: const TextStyle(
-                                fontFamily: 'Literata',
-                                color: Colors.white,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 13,
-                              ),
-                            ),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: const Icon(
+                            Icons.barcode_reader,
+                            color: Colors.white,
+                            size: 18,
                           ),
                         ),
                       ),
                     ],
-                  ),
-                ),
-                const SizedBox(height: 10),
-                // Search product button
-                Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(10),
-                    onTap: _showAddItemsPopup,
-                    child: Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[50],
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(
-                          color: const Color(0xFF1B4D3E).withOpacity(0.2),
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(6),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF1B4D3E).withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: const Icon(
-                              Icons.search_rounded,
-                              color: Color(0xFF1B4D3E),
-                              size: 16,
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Text(
-                            _localizations.searchProduct,
-                            style: const TextStyle(
-                              fontFamily: 'Literata',
-                              fontWeight: FontWeight.w600,
-                              fontSize: 13,
-                              color: Color(0xFF1B4D3E),
-                            ),
-                          ),
-                          const Spacer(),
-                          // Barcode scan icon
-                          GestureDetector(
-                            onTap: () {
-                              // Prevent triggering the parent InkWell
-                              _showBarcodeScannerSheet();
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.all(6),
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [
-                                    const Color(0xFF1B4D3E),
-                                    const Color(0xFF2D6A4F),
-                                  ],
-                                ),
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: const Icon(
-                                Icons.barcode_reader,
-                                color: Colors.white,
-                                size: 16,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
                   ),
                 ),
               ],
