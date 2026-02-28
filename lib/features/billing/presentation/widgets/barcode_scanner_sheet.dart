@@ -18,12 +18,16 @@ class BarcodeScannerSheet extends StatefulWidget {
   /// Callback when a product is scanned successfully
   final Function(Map<String, dynamic> productData) onProductScanned;
 
+  /// Callback when a product is removed from bill
+  final Function(String productKey)? onProductRemoved;
+
   /// Callback when scanner is closed
   final VoidCallback? onClose;
 
   const BarcodeScannerSheet({
     super.key,
     required this.onProductScanned,
+    this.onProductRemoved,
     this.onClose,
   });
 
@@ -31,6 +35,7 @@ class BarcodeScannerSheet extends StatefulWidget {
   static Future<void> show(
     BuildContext context, {
     required Function(Map<String, dynamic> productData) onProductScanned,
+    Function(String productKey)? onProductRemoved,
   }) {
     return showModalBottomSheet(
       context: context,
@@ -38,6 +43,7 @@ class BarcodeScannerSheet extends StatefulWidget {
       backgroundColor: Colors.transparent,
       builder: (context) => BarcodeScannerSheet(
         onProductScanned: onProductScanned,
+        onProductRemoved: onProductRemoved,
         onClose: () => Navigator.of(context).pop(),
       ),
     );
@@ -125,12 +131,20 @@ class _BarcodeScannerSheetState extends State<BarcodeScannerSheet>
       // Success!
       HapticFeedback.heavyImpact();
 
+      // Create the unique product key (same format as billing page)
+      final productId = productData['productId'] as String;
+      final batchId = productData['batchId'] as String?;
+      final productKey = batchId != null
+          ? '${productId}_batch_$batchId'
+          : productId;
+
       setState(() {
         _scannedItems.insert(
           0,
           _ScannedItem(
             barcode: barcode,
             productName: productData['productName'] ?? 'Unknown',
+            productKey: productKey,
             success: true,
             timestamp: now,
           ),
@@ -213,12 +227,21 @@ class _BarcodeScannerSheetState extends State<BarcodeScannerSheet>
 
     if (productData != null) {
       HapticFeedback.heavyImpact();
+
+      // Create the unique product key (same format as billing page)
+      final productId = productData['productId'] as String;
+      final batchId = productData['batchId'] as String?;
+      final productKey = batchId != null
+          ? '${productId}_batch_$batchId'
+          : productId;
+
       setState(() {
         _scannedItems.insert(
           0,
           _ScannedItem(
             barcode: barcode,
             productName: productData['productName'] ?? 'Unknown',
+            productKey: productKey,
             success: true,
             timestamp: DateTime.now(),
           ),
@@ -712,7 +735,7 @@ class _BarcodeScannerSheetState extends State<BarcodeScannerSheet>
     if (_scannedItems.isEmpty) return const SizedBox.shrink();
 
     return Container(
-      height: 90,
+      height: 100,
       margin: const EdgeInsets.symmetric(vertical: 8),
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
@@ -720,17 +743,25 @@ class _BarcodeScannerSheetState extends State<BarcodeScannerSheet>
         itemCount: _scannedItems.length,
         itemBuilder: (context, index) {
           final item = _scannedItems[index];
+          final isRemoved = item.isRemoved;
+          final canRemove =
+              item.success && !isRemoved && item.productKey != null;
+
           return Container(
-            width: 140,
+            width: 150,
             margin: const EdgeInsets.only(right: 10),
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: item.success
+              color: isRemoved
+                  ? Colors.grey.withOpacity(0.2)
+                  : item.success
                   ? const Color(0xFF1B4D3E).withOpacity(0.2)
                   : Colors.red.withOpacity(0.2),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: item.success
+                color: isRemoved
+                    ? Colors.grey.withOpacity(0.3)
+                    : item.success
                     ? const Color(0xFF1B4D3E).withOpacity(0.5)
                     : Colors.red.withOpacity(0.5),
               ),
@@ -742,10 +773,14 @@ class _BarcodeScannerSheetState extends State<BarcodeScannerSheet>
                 Row(
                   children: [
                     Icon(
-                      item.success
+                      isRemoved
+                          ? Icons.remove_circle_outline_rounded
+                          : item.success
                           ? Icons.check_circle_rounded
                           : Icons.error_rounded,
-                      color: item.success
+                      color: isRemoved
+                          ? Colors.grey
+                          : item.success
                           ? const Color(0xFF1B4D3E)
                           : Colors.red,
                       size: 16,
@@ -753,17 +788,43 @@ class _BarcodeScannerSheetState extends State<BarcodeScannerSheet>
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
-                        item.productName,
+                        isRemoved
+                            ? '${item.productName} (Removed)'
+                            : item.productName,
                         style: TextStyle(
                           fontFamily: 'Literata',
-                          fontSize: 12,
+                          fontSize: 11,
                           fontWeight: FontWeight.w700,
-                          color: item.success ? Colors.white : Colors.red[200],
+                          color: isRemoved
+                              ? Colors.grey[500]
+                              : item.success
+                              ? Colors.white
+                              : Colors.red[200],
+                          decoration: isRemoved
+                              ? TextDecoration.lineThrough
+                              : null,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
+                    // Remove button
+                    if (canRemove)
+                      GestureDetector(
+                        onTap: () => _removeScannedItem(index),
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: Colors.red.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: const Icon(
+                            Icons.close_rounded,
+                            color: Colors.red,
+                            size: 14,
+                          ),
+                        ),
+                      ),
                   ],
                 ),
                 const SizedBox(height: 4),
@@ -791,6 +852,22 @@ class _BarcodeScannerSheetState extends State<BarcodeScannerSheet>
         },
       ),
     );
+  }
+
+  void _removeScannedItem(int index) {
+    final item = _scannedItems[index];
+    if (item.productKey == null || item.isRemoved) return;
+
+    HapticFeedback.mediumImpact();
+
+    setState(() {
+      item.isRemoved = true;
+    });
+
+    // Call the removal callback
+    widget.onProductRemoved?.call(item.productKey!);
+
+    _showScanFeedback(false, 'Removed: ${item.productName}');
   }
 
   String _formatTime(DateTime time) {
@@ -901,14 +978,19 @@ class _BarcodeScannerSheetState extends State<BarcodeScannerSheet>
 class _ScannedItem {
   final String barcode;
   final String productName;
+  final String?
+  productKey; // The unique key used in billing (productId_batch_batchId)
   final bool success;
   final DateTime timestamp;
+  bool isRemoved; // Track if item was removed from bill
 
   _ScannedItem({
     required this.barcode,
     required this.productName,
+    this.productKey,
     required this.success,
     required this.timestamp,
+    this.isRemoved = false,
   });
 }
 

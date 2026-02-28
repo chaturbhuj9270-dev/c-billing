@@ -901,7 +901,17 @@ class _BillingPageState extends State<BillingPage> {
       onProductScanned: (productData) {
         _addScannedProductToBill(productData);
       },
+      onProductRemoved: (productKey) {
+        _removeScannedProductFromBill(productKey);
+      },
     );
+  }
+
+  /// Remove a scanned product from the bill
+  void _removeScannedProductFromBill(String productKey) {
+    setState(() {
+      _billItems.removeWhere((item) => item.productId == productKey);
+    });
   }
 
   /// Add a scanned product to the bill
