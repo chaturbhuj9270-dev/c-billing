@@ -8,11 +8,11 @@ import '../../features/inventory_management/offline/entities/purchase_batch_enti
 
 /// Barcode types supported for generation
 enum BarcodeFormat {
-  code128('CODE128', 'Code 128 - Alphanumeric'),
-  code39('CODE39', 'Code 39 - Alphanumeric'),
   ean13('EAN13', 'EAN-13 - 13 digits'),
   ean8('EAN8', 'EAN-8 - 8 digits'),
   upcA('UPCA', 'UPC-A - 12 digits'),
+  code128('CODE128', 'Code 128 - Alphanumeric'),
+  code39('CODE39', 'Code 39 - Alphanumeric'),
   qrCode('QRCODE', 'QR Code - Any data');
 
   final String code;

@@ -48,7 +48,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
   List<PurchaseBatchEntity> _productBatches = [];
   PurchaseBatchEntity? _selectedBatch;
   String _searchQuery = '';
-  BarcodeFormat _selectedFormat = BarcodeFormat.code128;
+  BarcodeFormat _selectedFormat = BarcodeFormat.ean13;
   String _generatedBarcode = '';
   bool _includePrice = true;
   bool _includeCompany = true;
