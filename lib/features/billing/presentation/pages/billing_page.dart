@@ -1418,27 +1418,33 @@ class _BillingPageState extends State<BillingPage> {
           : widget.isEmbedded
           ? Stack(
               children: [
-                // Main billing content
-                SingleChildScrollView(
-                  physics: const BouncingScrollPhysics(),
-                  child: Column(
-                    children: [
-                      const SizedBox(height: 8),
-                      if (_showCustomerOnBill || _generateBillViaContact)
-                        _buildCustomerSection(),
-                      _buildAddItemsSection(),
-                      if (_billItems.isNotEmpty) _buildBillItemsSection(),
-                      if (_billItems.isNotEmpty) _buildDiscountSection(),
-                      if (_billItems.isNotEmpty &&
-                          _taxSettings.hasAnyTaxEnabled)
-                        _buildGstModeSection(),
-                      if (_billItems.isNotEmpty) _buildPaymentSection(),
-                      const SizedBox(height: 100),
-                    ],
-                  ),
+                // Main billing content with top nav bar
+                Column(
+                  children: [
+                    // Top Navigation Bar
+                    _buildEmbeddedTopBar(),
+                    // Scrollable content
+                    Expanded(
+                      child: SingleChildScrollView(
+                        physics: const BouncingScrollPhysics(),
+                        child: Column(
+                          children: [
+                            if (_showCustomerOnBill || _generateBillViaContact)
+                              _buildCustomerSection(),
+                            _buildAddItemsSection(),
+                            if (_billItems.isNotEmpty) _buildBillItemsSection(),
+                            if (_billItems.isNotEmpty) _buildDiscountSection(),
+                            if (_billItems.isNotEmpty &&
+                                _taxSettings.hasAnyTaxEnabled)
+                              _buildGstModeSection(),
+                            if (_billItems.isNotEmpty) _buildPaymentSection(),
+                            const SizedBox(height: 100),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-                // Floating Quick Stats Icon (z-index 1) - hide when panel is open
-                if (!_showQuickStats) _buildQuickStatsInlineBar(),
                 // Quick Stats Premium Panel (z-index above everything)
                 if (_showQuickStats) _buildQuickStatsPremiumPanel(),
               ],
@@ -4896,6 +4902,125 @@ class _BillingPageState extends State<BillingPage> {
     });
   }
 
+  // ============ EMBEDDED TOP NAV BAR ============
+
+  Widget _buildEmbeddedTopBar() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        bottom: false,
+        child: Row(
+          children: [
+            // Title
+            Expanded(
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF1B4D3E), Color(0xFF2D6A4F)],
+                      ),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(
+                      Icons.receipt_long_rounded,
+                      color: Colors.white,
+                      size: 18,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        _localizations.createBill,
+                        style: const TextStyle(
+                          fontFamily: 'Literata',
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF1A1A2E),
+                        ),
+                      ),
+                      if (_billItems.isNotEmpty)
+                        Text(
+                          '${_billItems.length} ${_localizations.items.toLowerCase()} • ₹${_totalAmount.toStringAsFixed(0)}',
+                          style: TextStyle(
+                            fontFamily: 'Literata',
+                            fontSize: 11,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            // Quick Stats Button
+            GestureDetector(
+              onTap: _toggleQuickStats,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  gradient: _showQuickStats
+                      ? null
+                      : const LinearGradient(
+                          colors: [Color(0xFF1B4D3E), Color(0xFF2D6A4F)],
+                        ),
+                  color: _showQuickStats ? Colors.grey[200] : null,
+                  borderRadius: BorderRadius.circular(10),
+                  boxShadow: _showQuickStats
+                      ? null
+                      : [
+                          BoxShadow(
+                            color: const Color(0xFF1B4D3E).withOpacity(0.25),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      _showQuickStats
+                          ? Icons.close_rounded
+                          : Icons.insights_rounded,
+                      color: _showQuickStats ? Colors.grey[600] : Colors.white,
+                      size: 16,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      _showQuickStats ? 'Close' : 'Stats',
+                      style: TextStyle(
+                        fontFamily: 'Literata',
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: _showQuickStats ? Colors.grey[600] : Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   // ============ QUICK STATS FAB + OVERLAY ============
 
   Future<void> _loadQuickStats() async {
@@ -4924,55 +5049,7 @@ class _BillingPageState extends State<BillingPage> {
     }
   }
 
-  /// Premium inline Quick Stats bar - replaces FAB for better UX
-  Widget _buildQuickStatsInlineBar() {
-    return Positioned(
-      top: 8,
-      right: 16,
-      child: GestureDetector(
-        onTap: _toggleQuickStats,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 250),
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [Color(0xFF1B4D3E), Color(0xFF2D6A4F)],
-            ),
-            borderRadius: BorderRadius.circular(14),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFF1B4D3E).withOpacity(0.35),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
-              ),
-              const BoxShadow(
-                color: Color(0x33FFFFFF),
-                blurRadius: 8,
-                spreadRadius: -2,
-                offset: Offset(-2, -2),
-              ),
-            ],
-          ),
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 200),
-            child: Icon(
-              _showQuickStats
-                  ? Icons.close_rounded
-                  : Icons.dashboard_customize_rounded,
-              key: ValueKey(_showQuickStats),
-              color: Colors.white,
-              size: 22,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  /// Premium glass-morphism Quick Stats Panel - Near Navbar
+  /// Premium glass-morphism Quick Stats Panel - Below top nav bar
   Widget _buildQuickStatsPremiumPanel() {
     return Positioned(
       top: 0,
@@ -4984,29 +5061,34 @@ class _BillingPageState extends State<BillingPage> {
         child: Container(
           color: Colors.black.withOpacity(0.3),
           child: SafeArea(
-            child: Align(
-              alignment: Alignment.topRight,
-              child: TweenAnimationBuilder<double>(
-                tween: Tween(begin: 0.0, end: 1.0),
-                duration: const Duration(milliseconds: 300),
-                curve: Curves.easeOutCubic,
-                builder: (context, value, child) {
-                  return Transform.translate(
-                    offset: Offset(0, -20 * (1 - value)),
-                    child: Opacity(
-                      opacity: value.clamp(0.0, 1.0),
-                      child: child,
+            bottom: false,
+            child: Column(
+              children: [
+                // Space for top nav bar (approximately 60px)
+                const SizedBox(height: 56),
+                // Panel content - aligned to top
+                TweenAnimationBuilder<double>(
+                  tween: Tween(begin: 0.0, end: 1.0),
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeOutCubic,
+                  builder: (context, value, child) {
+                    return Transform.translate(
+                      offset: Offset(0, -20 * (1 - value)),
+                      child: Opacity(
+                        opacity: value.clamp(0.0, 1.0),
+                        child: child,
+                      ),
+                    );
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    child: GestureDetector(
+                      onTap: () {}, // Prevent closing when tapping panel
+                      child: _buildGlassyQuickStatsCard(),
                     ),
-                  );
-                },
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 18, 16, 0),
-                  child: GestureDetector(
-                    onTap: () {}, // Prevent closing when tapping panel
-                    child: _buildGlassyQuickStatsCard(),
                   ),
                 ),
-              ),
+              ],
             ),
           ),
         ),
