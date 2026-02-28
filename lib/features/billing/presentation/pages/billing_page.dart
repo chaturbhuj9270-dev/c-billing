@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'package:c_billing/core/services/billing_service.dart';
@@ -684,8 +685,15 @@ class _BillingPageState extends State<BillingPage> {
                 TextFormField(
                   controller: phoneController,
                   keyboardType: TextInputType.phone,
+                  maxLength: 10,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                    LengthLimitingTextInputFormatter(10),
+                  ],
                   decoration: InputDecoration(
                     labelText: _localizations.phoneNumberOptional,
+                    hintText: '10 digit number',
+                    counterText: '',
                     prefixIcon: const Icon(Icons.phone_outlined),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -1808,11 +1816,17 @@ class _BillingPageState extends State<BillingPage> {
           child: TextField(
             controller: _customerContactController,
             keyboardType: TextInputType.phone,
+            maxLength: 10,
+            inputFormatters: [
+              FilteringTextInputFormatter.digitsOnly,
+              LengthLimitingTextInputFormatter(10),
+            ],
             style: const TextStyle(fontFamily: 'Literata', fontSize: 12),
             decoration: InputDecoration(
               labelText: '${_localizations.enterPhoneNumber} *',
-              hintText: _localizations.enterCustomerPhone,
+              hintText: '10 digit number',
               hintStyle: TextStyle(color: Colors.grey[400], fontSize: 11),
+              counterText: '',
               labelStyle: const TextStyle(
                 color: Color(0xFF1B4D3E),
                 fontSize: 11,
@@ -2133,6 +2147,7 @@ class _BillingPageState extends State<BillingPage> {
     TextInputType keyboardType = TextInputType.text,
     Widget? suffixIcon,
   }) {
+    final isPhone = keyboardType == TextInputType.phone;
     return Container(
       height: 44,
       decoration: BoxDecoration(
@@ -2143,10 +2158,18 @@ class _BillingPageState extends State<BillingPage> {
       child: TextField(
         controller: controller,
         keyboardType: keyboardType,
+        maxLength: isPhone ? 10 : null,
+        inputFormatters: isPhone
+            ? [
+                FilteringTextInputFormatter.digitsOnly,
+                LengthLimitingTextInputFormatter(10),
+              ]
+            : null,
         style: const TextStyle(fontFamily: 'Literata', fontSize: 13),
         decoration: InputDecoration(
           labelText: label,
           labelStyle: TextStyle(color: Colors.grey[600], fontSize: 12),
+          counterText: '',
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 12,
             vertical: 10,
