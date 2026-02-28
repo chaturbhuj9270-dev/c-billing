@@ -45,6 +45,7 @@ import 'package:c_billing/features/event_order/presentation/pages/event_order_li
 import 'package:c_billing/features/reports/presentation/pages/report_page.dart';
 import 'package:c_billing/features/dashboard/data/models/dashboard_data.dart';
 import 'package:c_billing/common_widgets/file_preview_page.dart';
+import 'package:c_billing/features/inventory_management/presentation/pages/barcode_generator_page.dart';
 
 class BillingPage extends StatefulWidget {
   final bool isEmbedded;
@@ -1156,18 +1157,22 @@ class _BillingPageState extends State<BillingPage> {
 
   /// Show bill PDF preview with share/print options (like purchase report)
   static bool _pdfGenerationInProgress = false;
-  
+
   Future<void> _showBillPdfPreview(Bill bill) async {
     // Prevent multiple simultaneous PDF generations globally
     if (_pdfGenerationInProgress) {
-      debugPrint('[BillingPage] PDF generation already in progress globally, ignoring request');
+      debugPrint(
+        '[BillingPage] PDF generation already in progress globally, ignoring request',
+      );
       return;
     }
 
     try {
-      debugPrint('[BillingPage] Starting PDF preview for bill: ${bill.billNumber}');
+      debugPrint(
+        '[BillingPage] Starting PDF preview for bill: ${bill.billNumber}',
+      );
       _pdfGenerationInProgress = true;
-      
+
       // Show loading snackbar (non-blocking like purchase page)
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1194,11 +1199,13 @@ class _BillingPageState extends State<BillingPage> {
           ),
         );
       }
-      
+
       debugPrint('[BillingPage] Creating print data...');
       final printData = _createPrintBillData(bill);
-      debugPrint('[BillingPage] Print data created: ${printData.items.length} items');
-      
+      debugPrint(
+        '[BillingPage] Print data created: ${printData.items.length} items',
+      );
+
       debugPrint('[BillingPage] Getting shop details...');
       final shop = await _shopRepository.getShopDetails().timeout(
         const Duration(seconds: 10),
@@ -1208,39 +1215,39 @@ class _BillingPageState extends State<BillingPage> {
         },
       );
       debugPrint('[BillingPage] Shop: ${shop.shopName}');
-      
+
       debugPrint('[BillingPage] Generating PDF file...');
-      final file = await _pdfService.savePdfToFile(
-        billData: printData,
-        shopDetails: shop,
-      ).timeout(
-        const Duration(seconds: 90),
-        onTimeout: () => throw Exception('PDF generation timed out after 90 seconds'),
-      );
-      
+      final file = await _pdfService
+          .savePdfToFile(billData: printData, shopDetails: shop)
+          .timeout(
+            const Duration(seconds: 90),
+            onTimeout: () =>
+                throw Exception('PDF generation timed out after 90 seconds'),
+          );
+
       // Validate file creation
       if (!file.existsSync()) {
         throw Exception('PDF file was not created successfully');
       }
-      
+
       final fileSize = file.lengthSync();
       if (fileSize == 0) {
         throw Exception('PDF file is empty');
       }
-      
+
       debugPrint('[BillingPage] PDF saved to: ${file.path}');
       debugPrint('[BillingPage] File size: ${fileSize} bytes');
-      
+
       // Hide loading snackbar
       if (mounted) {
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
       }
-      
+
       if (!mounted) {
         debugPrint('[BillingPage] Widget not mounted, aborting');
         return;
       }
-      
+
       // Navigate to PDF preview
       debugPrint('[BillingPage] Navigating to FilePreviewPage...');
       await Navigator.push(
@@ -1256,22 +1263,21 @@ class _BillingPageState extends State<BillingPage> {
         ),
       );
       debugPrint('[BillingPage] Returned from FilePreviewPage');
-      
     } catch (e, stack) {
       debugPrint('[BillingPage] ERROR generating PDF preview: $e');
       debugPrint('[BillingPage] Stack trace: $stack');
-      
+
       // Hide loading snackbar
       if (mounted) {
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
       }
-      
+
       // Small delay before showing error
       await Future.delayed(const Duration(milliseconds: 300));
-      
+
       if (mounted) {
         _showSnackbar(
-          'Failed to generate PDF: ${e.toString()}', 
+          'Failed to generate PDF: ${e.toString()}',
           isError: true,
           action: SnackBarAction(
             label: 'Retry',
@@ -1286,7 +1292,11 @@ class _BillingPageState extends State<BillingPage> {
     }
   }
 
-  void _showSnackbar(String message, {bool isError = false, SnackBarAction? action}) {
+  void _showSnackbar(
+    String message, {
+    bool isError = false,
+    SnackBarAction? action,
+  }) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -1377,7 +1387,9 @@ class _BillingPageState extends State<BillingPage> {
         onReportSettingsTap: () {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => const BillReportSettingsPage()),
+            MaterialPageRoute(
+              builder: (context) => const BillReportSettingsPage(),
+            ),
           );
         },
       ),
@@ -2605,18 +2617,24 @@ class _BillingPageState extends State<BillingPage> {
               // Calculate max stock for this item
               int maxStock;
               final parts = item.productId.split('_batch_');
-              final batchLocalId =
-                  parts.length > 1 ? int.tryParse(parts.last) : null;
+              final batchLocalId = parts.length > 1
+                  ? int.tryParse(parts.last)
+                  : null;
               if (batchLocalId != null) {
-                final batch = _availableBatches.cast<PurchaseBatchEntity?>().firstWhere(
+                final batch = _availableBatches
+                    .cast<PurchaseBatchEntity?>()
+                    .firstWhere(
                       (b) => b!.id == batchLocalId && b.quantityRemaining > 0,
                       orElse: () => null,
                     );
                 maxStock = batch?.quantityRemaining ?? 0;
               } else {
                 final batchStock = _availableBatches
-                    .where((b) =>
-                        b.productId == realProductId && b.quantityRemaining > 0)
+                    .where(
+                      (b) =>
+                          b.productId == realProductId &&
+                          b.quantityRemaining > 0,
+                    )
                     .fold<int>(0, (s, b) => s + b.quantityRemaining);
                 maxStock = batchStock > 0 ? batchStock : product.currentStock;
               }
@@ -2713,7 +2731,9 @@ class _BillingPageState extends State<BillingPage> {
                                     child: InkWell(
                                       borderRadius: BorderRadius.circular(8),
                                       onTap: () {
-                                        setState(() => _billItems.removeAt(index));
+                                        setState(
+                                          () => _billItems.removeAt(index),
+                                        );
                                         _showSnackbar(
                                           '${item.productName} ${_localizations.delete}d',
                                           isError: false,
@@ -2723,7 +2743,9 @@ class _BillingPageState extends State<BillingPage> {
                                         padding: const EdgeInsets.all(6),
                                         decoration: BoxDecoration(
                                           color: Colors.red[50],
-                                          borderRadius: BorderRadius.circular(8),
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
                                         ),
                                         child: Icon(
                                           Icons.close_rounded,
@@ -2747,7 +2769,9 @@ class _BillingPageState extends State<BillingPage> {
                                       vertical: 4,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFF1B4D3E).withValues(alpha: 0.08),
+                                      color: const Color(
+                                        0xFF1B4D3E,
+                                      ).withValues(alpha: 0.08),
                                       borderRadius: BorderRadius.circular(6),
                                     ),
                                     child: Text(
@@ -2760,7 +2784,8 @@ class _BillingPageState extends State<BillingPage> {
                                       ),
                                     ),
                                   ),
-                                  if (item.cgstPercent > 0 || item.sgstPercent > 0)
+                                  if (item.cgstPercent > 0 ||
+                                      item.sgstPercent > 0)
                                     Container(
                                       padding: const EdgeInsets.symmetric(
                                         horizontal: 8,
@@ -2815,7 +2840,9 @@ class _BillingPageState extends State<BillingPage> {
                                 color: Colors.white,
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(
-                                  color: const Color(0xFF1B4D3E).withValues(alpha: 0.2),
+                                  color: const Color(
+                                    0xFF1B4D3E,
+                                  ).withValues(alpha: 0.2),
                                 ),
                                 boxShadow: [
                                   BoxShadow(
@@ -2852,13 +2879,17 @@ class _BillingPageState extends State<BillingPage> {
                                             );
                                           });
                                         } else {
-                                          setState(() => _billItems.removeAt(index));
+                                          setState(
+                                            () => _billItems.removeAt(index),
+                                          );
                                         }
                                       },
                                       child: Container(
                                         padding: const EdgeInsets.all(8),
                                         decoration: BoxDecoration(
-                                          color: const Color(0xFF1B4D3E).withValues(alpha: 0.08),
+                                          color: const Color(
+                                            0xFF1B4D3E,
+                                          ).withValues(alpha: 0.08),
                                           borderRadius: const BorderRadius.only(
                                             topLeft: Radius.circular(11),
                                             bottomLeft: Radius.circular(11),
@@ -2876,7 +2907,9 @@ class _BillingPageState extends State<BillingPage> {
                                   SizedBox(
                                     width: 48,
                                     child: TextField(
-                                      controller: TextEditingController(text: '${item.quantity}'),
+                                      controller: TextEditingController(
+                                        text: '${item.quantity}',
+                                      ),
                                       keyboardType: TextInputType.number,
                                       textAlign: TextAlign.center,
                                       style: const TextStyle(
@@ -2887,23 +2920,30 @@ class _BillingPageState extends State<BillingPage> {
                                       ),
                                       decoration: InputDecoration(
                                         isDense: true,
-                                        contentPadding: const EdgeInsets.symmetric(
-                                          horizontal: 4,
-                                          vertical: 10,
-                                        ),
+                                        contentPadding:
+                                            const EdgeInsets.symmetric(
+                                              horizontal: 4,
+                                              vertical: 10,
+                                            ),
                                         border: InputBorder.none,
                                         enabledBorder: InputBorder.none,
                                         focusedBorder: UnderlineInputBorder(
                                           borderSide: BorderSide(
-                                            color: const Color(0xFF1B4D3E).withValues(alpha: 0.5),
+                                            color: const Color(
+                                              0xFF1B4D3E,
+                                            ).withValues(alpha: 0.5),
                                             width: 2,
                                           ),
                                         ),
                                       ),
                                       onSubmitted: (value) {
-                                        final qty = int.tryParse(value) ?? item.quantity;
+                                        final qty =
+                                            int.tryParse(value) ??
+                                            item.quantity;
                                         if (qty <= 0) {
-                                          setState(() => _billItems.removeAt(index));
+                                          setState(
+                                            () => _billItems.removeAt(index),
+                                          );
                                         } else if (qty > maxStock) {
                                           _showSnackbar(
                                             '${_localizations.maxStock}: $maxStock',
@@ -2961,7 +3001,9 @@ class _BillingPageState extends State<BillingPage> {
                                         padding: const EdgeInsets.all(8),
                                         decoration: BoxDecoration(
                                           color: item.quantity < maxStock
-                                              ? const Color(0xFF1B4D3E).withValues(alpha: 0.08)
+                                              ? const Color(
+                                                  0xFF1B4D3E,
+                                                ).withValues(alpha: 0.08)
                                               : Colors.grey[100],
                                           borderRadius: const BorderRadius.only(
                                             topRight: Radius.circular(11),
@@ -2990,12 +3032,17 @@ class _BillingPageState extends State<BillingPage> {
                               ),
                               decoration: BoxDecoration(
                                 gradient: const LinearGradient(
-                                  colors: [Color(0xFF1B4D3E), Color(0xFF2D6A4F)],
+                                  colors: [
+                                    Color(0xFF1B4D3E),
+                                    Color(0xFF2D6A4F),
+                                  ],
                                 ),
                                 borderRadius: BorderRadius.circular(10),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: const Color(0xFF1B4D3E).withValues(alpha: 0.2),
+                                    color: const Color(
+                                      0xFF1B4D3E,
+                                    ).withValues(alpha: 0.2),
                                     blurRadius: 4,
                                     offset: const Offset(0, 2),
                                   ),
@@ -3053,7 +3100,9 @@ class _BillingPageState extends State<BillingPage> {
 
           return AlertDialog(
             backgroundColor: Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(24),
+            ),
             title: Row(
               children: [
                 Container(
@@ -3115,7 +3164,9 @@ class _BillingPageState extends State<BillingPage> {
                   decoration: BoxDecoration(
                     color: Colors.grey[50],
                     borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: Colors.grey.withValues(alpha: 0.1)),
+                    border: Border.all(
+                      color: Colors.grey.withValues(alpha: 0.1),
+                    ),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -3142,11 +3193,7 @@ class _BillingPageState extends State<BillingPage> {
                           ),
                         ],
                       ),
-                      Container(
-                        width: 1,
-                        height: 36,
-                        color: Colors.grey[200],
-                      ),
+                      Container(width: 1, height: 36, color: Colors.grey[200]),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
@@ -3193,9 +3240,15 @@ class _BillingPageState extends State<BillingPage> {
                           decoration: BoxDecoration(
                             color: Colors.red[50],
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.red.withValues(alpha: 0.2)),
+                            border: Border.all(
+                              color: Colors.red.withValues(alpha: 0.2),
+                            ),
                           ),
-                          child: Icon(Icons.remove_rounded, color: Colors.red[700], size: 24),
+                          child: Icon(
+                            Icons.remove_rounded,
+                            color: Colors.red[700],
+                            size: 24,
+                          ),
                         ),
                       ),
                     ),
@@ -3258,9 +3311,15 @@ class _BillingPageState extends State<BillingPage> {
                           decoration: BoxDecoration(
                             color: Colors.green[50],
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.green.withValues(alpha: 0.2)),
+                            border: Border.all(
+                              color: Colors.green.withValues(alpha: 0.2),
+                            ),
                           ),
-                          child: Icon(Icons.add_rounded, color: Colors.green[700], size: 24),
+                          child: Icon(
+                            Icons.add_rounded,
+                            color: Colors.green[700],
+                            size: 24,
+                          ),
                         ),
                       ),
                     ),
@@ -3323,7 +3382,11 @@ class _BillingPageState extends State<BillingPage> {
                     isError: false,
                   );
                 },
-                icon: Icon(Icons.delete_outline_rounded, color: Colors.red[600], size: 20),
+                icon: Icon(
+                  Icons.delete_outline_rounded,
+                  color: Colors.red[600],
+                  size: 20,
+                ),
                 label: Text(
                   _localizations.delete,
                   style: TextStyle(
@@ -4719,13 +4782,18 @@ class _BillingPageState extends State<BillingPage> {
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: _showQuickStats
-                        ? [Colors.white.withOpacity(0.2), Colors.white.withOpacity(0.1)]
+                        ? [
+                            Colors.white.withOpacity(0.2),
+                            Colors.white.withOpacity(0.1),
+                          ]
                         : [const Color(0xFF1B4D3E), const Color(0xFF2D6A4F)],
                   ),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
-                  _showQuickStats ? Icons.close_rounded : Icons.analytics_rounded,
+                  _showQuickStats
+                      ? Icons.close_rounded
+                      : Icons.analytics_rounded,
                   color: _showQuickStats ? Colors.white : Colors.white,
                   size: 20,
                 ),
@@ -4743,12 +4811,14 @@ class _BillingPageState extends State<BillingPage> {
                         fontFamily: 'Literata',
                         fontWeight: FontWeight.w700,
                         fontSize: 14,
-                        color: _showQuickStats ? Colors.white : const Color(0xFF1B4D3E),
+                        color: _showQuickStats
+                            ? Colors.white
+                            : const Color(0xFF1B4D3E),
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      _showQuickStats 
+                      _showQuickStats
                           ? 'Tap to close panel'
                           : 'View invoices, products & more',
                       style: TextStyle(
@@ -4792,7 +4862,9 @@ class _BillingPageState extends State<BillingPage> {
                 duration: const Duration(milliseconds: 300),
                 child: Icon(
                   Icons.keyboard_arrow_down_rounded,
-                  color: _showQuickStats ? Colors.white : const Color(0xFF1B4D3E),
+                  color: _showQuickStats
+                      ? Colors.white
+                      : const Color(0xFF1B4D3E),
                   size: 24,
                 ),
               ),
@@ -4837,53 +4909,56 @@ class _BillingPageState extends State<BillingPage> {
         onTap: _toggleQuickStats, // Tap outside to close
         child: Container(
           color: Colors.black.withOpacity(0.3),
-          child: GestureDetector(
-            onTap: () {}, // Prevent closing when tapping panel
-            child: TweenAnimationBuilder<double>(
-              tween: Tween(begin: 0.0, end: 1.0),
-              duration: const Duration(milliseconds: 350),
-              curve: Curves.easeOutCubic,
-              builder: (context, value, child) {
-                return Transform.translate(
-                  offset: Offset(0, 30 * (1 - value)),
-                  child: Opacity(opacity: value, child: child),
-                );
-              },
-              child: SafeArea(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 80, 16, 16),
+          child: TweenAnimationBuilder<double>(
+            tween: Tween(begin: 0.0, end: 1.0),
+            duration: const Duration(milliseconds: 350),
+            curve: Curves.easeOutCubic,
+            builder: (context, value, child) {
+              return Transform.translate(
+                offset: Offset(0, 30 * (1 - value)),
+                child: Opacity(opacity: value, child: child),
+              );
+            },
+            child: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 80, 16, 16),
+                child: SingleChildScrollView(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       // Premium Panel Card
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(24),
-                        child: BackdropFilter(
-                          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-                          child: Container(
-                            padding: const EdgeInsets.all(20),
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                                colors: [
-                                  Colors.white.withOpacity(0.95),
-                                  Colors.white.withOpacity(0.88),
+                      GestureDetector(
+                        onTap: () {}, // Prevent closing when tapping panel
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(24),
+                          child: BackdropFilter(
+                            filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                            child: Container(
+                              padding: const EdgeInsets.all(20),
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: [
+                                    Colors.white.withOpacity(0.95),
+                                    Colors.white.withOpacity(0.88),
+                                  ],
+                                ),
+                                borderRadius: BorderRadius.circular(24),
+                                border: Border.all(
+                                  color: Colors.white.withOpacity(0.5),
+                                  width: 1.5,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(
+                                      0xFF1B4D3E,
+                                    ).withOpacity(0.15),
+                                    blurRadius: 30,
+                                    offset: const Offset(0, 10),
+                                  ),
                                 ],
                               ),
-                              borderRadius: BorderRadius.circular(24),
-                              border: Border.all(
-                                color: Colors.white.withOpacity(0.5),
-                                width: 1.5,
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: const Color(0xFF1B4D3E).withOpacity(0.15),
-                                  blurRadius: 30,
-                                  offset: const Offset(0, 10),
-                                ),
-                              ],
-                            ),
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
@@ -4895,12 +4970,17 @@ class _BillingPageState extends State<BillingPage> {
                                       height: 44,
                                       decoration: BoxDecoration(
                                         gradient: const LinearGradient(
-                                          colors: [Color(0xFF1B4D3E), Color(0xFF2D6A4F)],
+                                          colors: [
+                                            Color(0xFF1B4D3E),
+                                            Color(0xFF2D6A4F),
+                                          ],
                                         ),
                                         borderRadius: BorderRadius.circular(12),
                                         boxShadow: [
                                           BoxShadow(
-                                            color: const Color(0xFF1B4D3E).withOpacity(0.3),
+                                            color: const Color(
+                                              0xFF1B4D3E,
+                                            ).withOpacity(0.3),
                                             blurRadius: 8,
                                             offset: const Offset(0, 4),
                                           ),
@@ -4915,7 +4995,8 @@ class _BillingPageState extends State<BillingPage> {
                                     const SizedBox(width: 14),
                                     Expanded(
                                       child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
                                           const Text(
                                             'Quick Stats',
@@ -4946,7 +5027,9 @@ class _BillingPageState extends State<BillingPage> {
                                         height: 36,
                                         decoration: BoxDecoration(
                                           color: Colors.grey[100],
-                                          borderRadius: BorderRadius.circular(10),
+                                          borderRadius: BorderRadius.circular(
+                                            10,
+                                          ),
                                         ),
                                         child: const Icon(
                                           Icons.close_rounded,
@@ -5047,6 +5130,17 @@ class _BillingPageState extends State<BillingPage> {
           MaterialPageRoute(builder: (_) => const EventOrderListPage()),
         ).then((_) => _loadQuickStats()),
       ),
+      _QuickStatItem(
+        icon: Icons.qr_code_2_rounded,
+        value: 'Barcode',
+        label: 'Generator',
+        color: const Color(0xFF00897B),
+        gradient: [const Color(0xFF00897B), const Color(0xFF004D40)],
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const BarcodeGeneratorPage()),
+        ).then((_) => _loadQuickStats()),
+      ),
     ];
 
     return Column(
@@ -5072,6 +5166,17 @@ class _BillingPageState extends State<BillingPage> {
             Expanded(child: _buildPremiumStatCard(stats[5])),
           ],
         ),
+        const SizedBox(height: 12),
+        // Third row
+        Row(
+          children: [
+            Expanded(child: _buildPremiumStatCard(stats[6])),
+            const SizedBox(width: 12),
+            const Expanded(child: SizedBox()),
+            const SizedBox(width: 12),
+            const Expanded(child: SizedBox()),
+          ],
+        ),
       ],
     );
   }
@@ -5092,10 +5197,7 @@ class _BillingPageState extends State<BillingPage> {
             ],
           ),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: stat.color.withOpacity(0.2),
-            width: 1,
-          ),
+          border: Border.all(color: stat.color.withOpacity(0.2), width: 1),
         ),
         child: Column(
           children: [
@@ -5156,33 +5258,45 @@ class _BillingPageState extends State<BillingPage> {
     return Column(
       children: [
         Row(
-          children: List.generate(3, (index) => Expanded(
-            child: Padding(
-              padding: EdgeInsets.only(left: index == 0 ? 0 : 6, right: index == 2 ? 0 : 6),
-              child: Container(
-                height: 110,
-                decoration: BoxDecoration(
-                  color: Colors.grey[100],
-                  borderRadius: BorderRadius.circular(16),
+          children: List.generate(
+            3,
+            (index) => Expanded(
+              child: Padding(
+                padding: EdgeInsets.only(
+                  left: index == 0 ? 0 : 6,
+                  right: index == 2 ? 0 : 6,
+                ),
+                child: Container(
+                  height: 110,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[100],
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                 ),
               ),
             ),
-          )),
+          ),
         ),
         const SizedBox(height: 12),
         Row(
-          children: List.generate(3, (index) => Expanded(
-            child: Padding(
-              padding: EdgeInsets.only(left: index == 0 ? 0 : 6, right: index == 2 ? 0 : 6),
-              child: Container(
-                height: 110,
-                decoration: BoxDecoration(
-                  color: Colors.grey[100],
-                  borderRadius: BorderRadius.circular(16),
+          children: List.generate(
+            3,
+            (index) => Expanded(
+              child: Padding(
+                padding: EdgeInsets.only(
+                  left: index == 0 ? 0 : 6,
+                  right: index == 2 ? 0 : 6,
+                ),
+                child: Container(
+                  height: 110,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[100],
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                 ),
               ),
             ),
-          )),
+          ),
         ),
       ],
     );
@@ -5635,7 +5749,7 @@ class _AddItemsBottomSheetState extends State<_AddItemsBottomSheet> {
   }) {
     final qtyController = TextEditingController(text: currentQty.toString());
     String? errorText;
-    
+
     showDialog(
       context: context,
       builder: (ctx) => StatefulBuilder(
@@ -5652,10 +5766,12 @@ class _AddItemsBottomSheetState extends State<_AddItemsBottomSheet> {
               }
             });
           }
-          
+
           return AlertDialog(
             backgroundColor: Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
             title: Row(
               children: [
                 Container(
@@ -5751,7 +5867,11 @@ class _AddItemsBottomSheetState extends State<_AddItemsBottomSheet> {
                           color: Colors.red[50],
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: Icon(Icons.remove, color: Colors.red[700], size: 20),
+                        child: Icon(
+                          Icons.remove,
+                          color: Colors.red[700],
+                          size: 20,
+                        ),
                       ),
                     ),
                     // Quantity field
@@ -5802,7 +5922,11 @@ class _AddItemsBottomSheetState extends State<_AddItemsBottomSheet> {
                           color: Colors.green[50],
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: Icon(Icons.add, color: Colors.green[700], size: 20),
+                        child: Icon(
+                          Icons.add,
+                          color: Colors.green[700],
+                          size: 20,
+                        ),
                       ),
                     ),
                   ],
@@ -5824,7 +5948,11 @@ class _AddItemsBottomSheetState extends State<_AddItemsBottomSheet> {
                     isError: false,
                   );
                 },
-                icon: Icon(Icons.delete_outline, color: Colors.red[700], size: 20),
+                icon: Icon(
+                  Icons.delete_outline,
+                  color: Colors.red[700],
+                  size: 20,
+                ),
                 label: Text(
                   widget.localizations.delete,
                   style: TextStyle(
@@ -6965,7 +7093,7 @@ class _BatchSelectionSheetState extends State<_BatchSelectionSheet> {
     final qtyController = TextEditingController(text: existingQty.toString());
     final maxStock = batch.quantityRemaining;
     String? errorText;
-    
+
     showDialog(
       context: context,
       builder: (ctx) => StatefulBuilder(
@@ -6982,10 +7110,12 @@ class _BatchSelectionSheetState extends State<_BatchSelectionSheet> {
               }
             });
           }
-          
+
           return AlertDialog(
             backgroundColor: Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
             title: Row(
               children: [
                 Container(
@@ -7081,7 +7211,11 @@ class _BatchSelectionSheetState extends State<_BatchSelectionSheet> {
                           color: Colors.red[50],
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: Icon(Icons.remove, color: Colors.red[700], size: 20),
+                        child: Icon(
+                          Icons.remove,
+                          color: Colors.red[700],
+                          size: 20,
+                        ),
                       ),
                     ),
                     // Quantity field
@@ -7132,7 +7266,11 @@ class _BatchSelectionSheetState extends State<_BatchSelectionSheet> {
                           color: Colors.green[50],
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: Icon(Icons.add, color: Colors.green[700], size: 20),
+                        child: Icon(
+                          Icons.add,
+                          color: Colors.green[700],
+                          size: 20,
+                        ),
                       ),
                     ),
                   ],
@@ -7158,7 +7296,11 @@ class _BatchSelectionSheetState extends State<_BatchSelectionSheet> {
                     ),
                   );
                 },
-                icon: Icon(Icons.delete_outline, color: Colors.red[700], size: 20),
+                icon: Icon(
+                  Icons.delete_outline,
+                  color: Colors.red[700],
+                  size: 20,
+                ),
                 label: Text(
                   widget.localizations.delete,
                   style: TextStyle(
@@ -7186,7 +7328,8 @@ class _BatchSelectionSheetState extends State<_BatchSelectionSheet> {
                         final qty = int.tryParse(qtyController.text) ?? 0;
                         if (qty == 0) {
                           // Remove item
-                          final uniqueKey = '${batch.productId}_batch_${batch.id}';
+                          final uniqueKey =
+                              '${batch.productId}_batch_${batch.id}';
                           widget.onItemRemoved(uniqueKey);
                           setState(() {});
                           Navigator.pop(ctx);
@@ -7494,7 +7637,10 @@ class _BatchSelectionSheetState extends State<_BatchSelectionSheet> {
                                 final maxAvailable =
                                     batch.quantityRemaining - existingQty;
                                 if (maxAvailable > 0) {
-                                  widget.onBatchSelected(batch, existingQty + 1);
+                                  widget.onBatchSelected(
+                                    batch,
+                                    existingQty + 1,
+                                  );
                                 } else {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
@@ -8078,7 +8224,9 @@ class _BillingHeaderDelegate extends SliverPersistentHeaderDelegate {
                                   width: 36,
                                   height: 36,
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                                    color: const Color(
+                                      0xFF1B4D3E,
+                                    ).withOpacity(0.1),
                                     borderRadius: BorderRadius.circular(10),
                                   ),
                                   child: const Icon(
@@ -8107,7 +8255,9 @@ class _BillingHeaderDelegate extends SliverPersistentHeaderDelegate {
                                   width: 36,
                                   height: 36,
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFF2196F3).withOpacity(0.1),
+                                    color: const Color(
+                                      0xFF2196F3,
+                                    ).withOpacity(0.1),
                                     borderRadius: BorderRadius.circular(10),
                                   ),
                                   child: const Icon(
