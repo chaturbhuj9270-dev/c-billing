@@ -1551,64 +1551,76 @@ class _BillingPageState extends State<BillingPage> {
                   ),
                 ),
                 const SizedBox(width: 10),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          _generateBillViaContact
-                              ? _localizations.phoneNumber
-                              : isCustomerRequired
-                              ? '${_localizations.customerOptional.replaceAll('(Optional)', '')}(Required)'
-                              : _localizations.customerOptional,
-                          style: TextStyle(
-                            fontFamily: 'Literata',
-                            fontWeight: FontWeight.w700,
-                            fontSize: 14,
-                            color: isCustomerRequired && _selectedCustomer == null
-                                ? Colors.red[700]!
-                                : const Color(0xFF1B4D3E),
-                          ),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _generateBillViaContact
+                            ? _localizations.phoneNumber
+                            : isCustomerRequired
+                            ? '${_localizations.customerOptional.replaceAll('(Optional)', '')}(Required)'
+                            : _localizations.customerOptional,
+                        style: TextStyle(
+                          fontFamily: 'Literata',
+                          fontWeight: FontWeight.w700,
+                          fontSize: 14,
+                          color: isCustomerRequired && _selectedCustomer == null
+                              ? Colors.red[700]!
+                              : const Color(0xFF1B4D3E),
                         ),
-                        // Add Customer button - immediately after text
-                        if (!_generateBillViaContact && !_isLoadingCustomers) ...[
-                          const SizedBox(width: 8),
-                          GestureDetector(
-                            onTap: () {
-                              final phone = _customerContactController.text.trim();
-                              _showAddCustomerDialog(phone);
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.all(4),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF1B4D3E).withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: const Icon(
-                                Icons.person_add_rounded,
-                                color: Color(0xFF1B4D3E),
-                                size: 16,
-                              ),
+                      ),
+                      Text(
+                        _generateBillViaContact
+                            ? 'Auto-link customer by phone'
+                            : 'Link a customer to this bill',
+                        style: TextStyle(
+                          fontFamily: 'Literata',
+                          fontSize: 11,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                // Add Customer button - right side
+                if (!_generateBillViaContact && !_isLoadingCustomers)
+                  GestureDetector(
+                    onTap: () {
+                      final phone = _customerContactController.text.trim();
+                      _showAddCustomerDialog(phone);
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1B4D3E).withOpacity(0.08),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: const Color(0xFF1B4D3E).withOpacity(0.15),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.person_add_rounded,
+                            color: Color(0xFF1B4D3E),
+                            size: 14,
+                          ),
+                          const SizedBox(width: 4),
+                          const Text(
+                            'Add',
+                            style: TextStyle(
+                              fontFamily: 'Literata',
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF1B4D3E),
                             ),
                           ),
                         ],
-                      ],
-                    ),
-                    Text(
-                      _generateBillViaContact
-                          ? 'Auto-link customer by phone'
-                          : 'Link a customer to this bill',
-                      style: TextStyle(
-                        fontFamily: 'Literata',
-                        fontSize: 11,
-                        color: Colors.grey[600],
                       ),
                     ),
-                  ],
-                ),
-                const Spacer(),
+                  ),
                 // Loading indicator for customer list
                 if (_isLoadingCustomers)
                   Container(
