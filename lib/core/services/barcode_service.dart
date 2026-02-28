@@ -154,24 +154,37 @@ class BarcodeService {
     int? batchNo,
     int prefixCode = 200, // 200-299 is for internal use
   }) {
-    // Format: PPP-BB-NNNNNN-C
-    // PPP = prefix (200-299 for internal use)
-    // BB = batch number (00-99, 00 if no batch)
-    // NNNNNN = product index no (padded to 6 digits)
-    // C = check digit
+    // Format: PPP-BB-NNNNNNN-C (total 13 digits)
+    // PPP = prefix (200-299 for internal use) - 3 digits
+    // BB = batch number (00-99, 00 if no batch) - 2 digits
+    // NNNNNNN = product index no (padded to 7 digits) - 7 digits
+    // C = check digit - 1 digit
+    // Total: 3 + 2 + 7 = 12 base digits + 1 check = 13
 
     final batchPart = (batchNo ?? 0).clamp(0, 99).toString().padLeft(2, '0');
-    final productPart = (productIndexNo % 1000000).toString().padLeft(6, '0');
+    final productPart = (productIndexNo % 10000000).toString().padLeft(7, '0');
     final base = '$prefixCode$batchPart$productPart';
+
+    // Safety check - ensure exactly 12 digits
+    if (base.length != 12) {
+      // Fallback: truncate or pad to 12 digits
+      final safeBase = base
+          .padLeft(12, '0')
+          .substring(base.length > 12 ? base.length - 12 : 0);
+      final checkDigit = _calculateEAN13CheckDigit(safeBase);
+      return '$safeBase$checkDigit';
+    }
+
     final checkDigit = _calculateEAN13CheckDigit(base);
     return '$base$checkDigit';
   }
 
   /// Calculate EAN-13 check digit
   int _calculateEAN13CheckDigit(String code12) {
+    if (code12.length < 12) return 0;
     int sum = 0;
     for (int i = 0; i < 12; i++) {
-      final digit = int.parse(code12[i]);
+      final digit = int.tryParse(code12[i]) ?? 0;
       sum += (i % 2 == 0) ? digit : digit * 3;
     }
     return (10 - (sum % 10)) % 10;
@@ -182,22 +195,34 @@ class BarcodeService {
     required int productIndexNo,
     int prefixCode = 20, // 2-digit prefix for internal use
   }) {
-    // Format: PP-NNNNN-C
-    // PP = prefix (20-29 for internal use)
-    // NNNNN = product index no (padded to 5 digits)
-    // C = check digit
+    // Format: PP-NNNNN-C (total 8 digits)
+    // PP = prefix (20-29 for internal use) - 2 digits
+    // NNNNN = product index no (padded to 5 digits) - 5 digits
+    // C = check digit - 1 digit
+    // Total: 2 + 5 = 7 base digits + 1 check = 8
 
     final productPart = (productIndexNo % 100000).toString().padLeft(5, '0');
     final base = '$prefixCode$productPart';
+
+    // Safety check - ensure exactly 7 digits
+    if (base.length != 7) {
+      final safeBase = base
+          .padLeft(7, '0')
+          .substring(base.length > 7 ? base.length - 7 : 0);
+      final checkDigit = _calculateEAN8CheckDigit(safeBase);
+      return '$safeBase$checkDigit';
+    }
+
     final checkDigit = _calculateEAN8CheckDigit(base);
     return '$base$checkDigit';
   }
 
   /// Calculate EAN-8 check digit
   int _calculateEAN8CheckDigit(String code7) {
+    if (code7.length < 7) return 0;
     int sum = 0;
     for (int i = 0; i < 7; i++) {
-      final digit = int.parse(code7[i]);
+      final digit = int.tryParse(code7[i]) ?? 0;
       sum += (i % 2 == 0) ? digit * 3 : digit;
     }
     return (10 - (sum % 10)) % 10;
@@ -210,24 +235,36 @@ class BarcodeService {
     int? batchNo,
     int prefixCode = 0, // Number system digit (0 for regular UPC)
   }) {
-    // Format: P-MMMMM-NNNNN-C
-    // P = number system (0-9)
-    // MMMMM = manufacturer code (include batch info)
-    // NNNNN = product code
-    // C = check digit
+    // Format: P-MMMMM-NNNNN-C (total 12 digits)
+    // P = number system (0-9) - 1 digit
+    // MMMMM = manufacturer code (include batch info) - 5 digits
+    // NNNNN = product code - 5 digits
+    // C = check digit - 1 digit
+    // Total: 1 + 5 + 5 = 11 base digits + 1 check = 12
 
     final batchPart = (batchNo ?? 0).clamp(0, 99999).toString().padLeft(5, '0');
     final productPart = (productIndexNo % 100000).toString().padLeft(5, '0');
     final base = '$prefixCode$batchPart$productPart';
+
+    // Safety check - ensure exactly 11 digits
+    if (base.length != 11) {
+      final safeBase = base
+          .padLeft(11, '0')
+          .substring(base.length > 11 ? base.length - 11 : 0);
+      final checkDigit = _calculateUPCACheckDigit(safeBase);
+      return '$safeBase$checkDigit';
+    }
+
     final checkDigit = _calculateUPCACheckDigit(base);
     return '$base$checkDigit';
   }
 
   /// Calculate UPC-A check digit
   int _calculateUPCACheckDigit(String code11) {
+    if (code11.length < 11) return 0;
     int sum = 0;
     for (int i = 0; i < 11; i++) {
-      final digit = int.parse(code11[i]);
+      final digit = int.tryParse(code11[i]) ?? 0;
       sum += (i % 2 == 0) ? digit * 3 : digit;
     }
     return (10 - (sum % 10)) % 10;
