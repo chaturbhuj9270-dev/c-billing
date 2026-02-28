@@ -181,6 +181,7 @@ class _BarcodeScannerSheetState extends State<BarcodeScannerSheet>
   }
 
   void _showScanFeedback(bool success, String message) {
+    if (!mounted) return;
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -389,7 +390,14 @@ class _BarcodeScannerSheetState extends State<BarcodeScannerSheet>
             color: Colors.transparent,
             child: InkWell(
               borderRadius: BorderRadius.circular(10),
-              onTap: widget.onClose ?? () => Navigator.of(context).pop(),
+              onTap: () {
+                ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                if (widget.onClose != null) {
+                  widget.onClose!();
+                } else {
+                  Navigator.of(context).pop();
+                }
+              },
               child: Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
@@ -860,14 +868,47 @@ class _BarcodeScannerSheetState extends State<BarcodeScannerSheet>
 
     HapticFeedback.mediumImpact();
 
+    // Call the removal callback first
+    widget.onProductRemoved?.call(item.productKey!);
+
     setState(() {
       item.isRemoved = true;
     });
 
-    // Call the removal callback
-    widget.onProductRemoved?.call(item.productKey!);
-
-    _showScanFeedback(false, 'Removed: ${item.productName}');
+    // Show feedback only if still mounted
+    if (mounted) {
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(
+                Icons.remove_circle_rounded,
+                color: Colors.white,
+                size: 20,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'Removed: ${item.productName}',
+                  style: const TextStyle(
+                    fontFamily: 'Literata',
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          backgroundColor: Colors.orange[700],
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          duration: const Duration(seconds: 1),
+        ),
+      );
+    }
   }
 
   String _formatTime(DateTime time) {
@@ -926,7 +967,15 @@ class _BarcodeScannerSheetState extends State<BarcodeScannerSheet>
               color: Colors.transparent,
               child: InkWell(
                 borderRadius: BorderRadius.circular(12),
-                onTap: widget.onClose ?? () => Navigator.of(context).pop(),
+                onTap: () {
+                  // Dismiss any active snackbars before closing
+                  ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                  if (widget.onClose != null) {
+                    widget.onClose!();
+                  } else {
+                    Navigator.of(context).pop();
+                  }
+                },
                 child: Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 24,
