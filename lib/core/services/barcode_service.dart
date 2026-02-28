@@ -349,9 +349,9 @@ class BarcodeService {
       }
 
       // If barcode starts with 'B', it might be a batch-specific barcode
-      if (barcode.startsWith('B')) {
+      if (barcode.startsWith('B') && barcode.length > 9) {
         // Try to parse batch ID from barcode
-        // Format: B{batchId}{timestamp}
+        // Format: B{batchId}{timestamp} - timestamp is 8 chars
         final batchIdPart = barcode.substring(1, barcode.length - 8);
         final batches = await PurchaseBatchOfflineController.instance
             .getAllBatches(includeConsumed: false);
