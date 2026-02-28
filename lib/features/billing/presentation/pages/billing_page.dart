@@ -47,6 +47,7 @@ import 'package:c_billing/features/dashboard/data/models/dashboard_data.dart';
 import 'package:c_billing/common_widgets/file_preview_page.dart';
 import 'package:c_billing/features/inventory_management/presentation/pages/barcode_generator_page.dart';
 import 'package:c_billing/features/customer/presentation/pages/enhanced_customer_page.dart';
+import 'package:c_billing/features/billing/presentation/widgets/barcode_scanner_sheet.dart';
 
 class BillingPage extends StatefulWidget {
   final bool isEmbedded;
@@ -891,6 +892,82 @@ class _BillingPageState extends State<BillingPage> {
         showSnackbar: _showSnackbar,
       ),
     );
+  }
+
+  /// Show the barcode scanner bottom sheet for fast billing
+  void _showBarcodeScannerSheet() {
+    BarcodeScannerSheet.show(
+      context,
+      onProductScanned: (productData) {
+        _addScannedProductToBill(productData);
+      },
+    );
+  }
+
+  /// Add a scanned product to the bill
+  void _addScannedProductToBill(Map<String, dynamic> productData) {
+    final productId = productData['productId'] as String;
+    final batchId = productData['batchId'] as String?;
+    final productName = productData['productName'] as String;
+    final companyName = productData['companyName'] as String?;
+    final unitPrice = (productData['unitPrice'] as num?)?.toDouble() ?? 0.0;
+    final purchasePrice =
+        (productData['purchasePrice'] as num?)?.toDouble() ?? 0.0;
+    final availableStock =
+        (productData['availableStock'] as num?)?.toDouble() ?? 0.0;
+    final cgst = (productData['cgst'] as num?)?.toDouble() ?? 0.0;
+    final sgst = (productData['sgst'] as num?)?.toDouble() ?? 0.0;
+    final hsnCode = productData['hsnCode'] as String?;
+
+    // Create unique key with batch
+    final uniqueKey = batchId != null
+        ? '${productId}_batch_$batchId'
+        : productId;
+
+    setState(() {
+      final existingIndex = _billItems.indexWhere(
+        (item) => item.productId == uniqueKey,
+      );
+
+      if (existingIndex != -1) {
+        // Update existing item
+        final existing = _billItems[existingIndex];
+        if (existing.quantity < availableStock) {
+          _billItems[existingIndex] = BillItem.create(
+            productId: uniqueKey,
+            productName: productName,
+            companyName: companyName,
+            sellingPrice: existing.sellingPrice,
+            purchasePrice: purchasePrice,
+            quantity: existing.quantity + 1,
+            cgstPercent: cgst,
+            sgstPercent: sgst,
+            hsnCode: hsnCode,
+          );
+        } else {
+          _showSnackbar(
+            '${_localizations.maxStock}: ${availableStock.toInt()}',
+            isError: true,
+          );
+          return;
+        }
+      } else {
+        // Add new item
+        _billItems.add(
+          BillItem.create(
+            productId: uniqueKey,
+            productName: productName,
+            companyName: companyName,
+            sellingPrice: unitPrice,
+            purchasePrice: purchasePrice,
+            quantity: 1,
+            cgstPercent: cgst,
+            sgstPercent: sgst,
+            hsnCode: hsnCode,
+          ),
+        );
+      }
+    });
   }
 
   double get _totalAmount =>
@@ -2457,6 +2534,112 @@ class _BillingPageState extends State<BillingPage> {
                           Icon(
                             Icons.arrow_forward_ios_rounded,
                             color: Colors.grey[400],
+                            size: 16,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                // Barcode scan button - FAST BILLING
+                Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(10),
+                    onTap: _showBarcodeScannerSheet,
+                    child: Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            const Color(0xFF1B4D3E).withOpacity(0.15),
+                            const Color(0xFF2D6A4F).withOpacity(0.1),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: const Color(0xFF1B4D3E).withOpacity(0.3),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  const Color(0xFF1B4D3E),
+                                  const Color(0xFF2D6A4F),
+                                ],
+                              ),
+                              borderRadius: BorderRadius.circular(6),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(
+                                    0xFF1B4D3E,
+                                  ).withOpacity(0.3),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: const Icon(
+                              Icons.qr_code_scanner_rounded,
+                              color: Colors.white,
+                              size: 16,
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          const Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Scan Barcode',
+                                  style: TextStyle(
+                                    fontFamily: 'Literata',
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 13,
+                                    color: Color(0xFF1B4D3E),
+                                  ),
+                                ),
+                                Text(
+                                  'Fast billing with camera scan',
+                                  style: TextStyle(
+                                    fontFamily: 'Literata',
+                                    fontSize: 10,
+                                    color: Color(0xFF1B4D3E),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF1B4D3E),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: const Text(
+                              'FAST',
+                              style: TextStyle(
+                                fontFamily: 'Literata',
+                                fontSize: 9,
+                                fontWeight: FontWeight.w800,
+                                color: Colors.white,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Icon(
+                            Icons.arrow_forward_ios_rounded,
+                            color: const Color(0xFF1B4D3E).withOpacity(0.6),
                             size: 16,
                           ),
                         ],

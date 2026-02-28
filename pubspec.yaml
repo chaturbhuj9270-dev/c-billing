@@ -48,6 +48,8 @@ dependencies:
   # Barcode Generation
   barcode: ^2.2.8
   barcode_widget: ^2.0.4
+  # Barcode Scanning
+  mobile_scanner: ^5.2.3
 
 dev_dependencies:
   flutter_test:
