@@ -1328,8 +1328,7 @@ class _BillingPageState extends State<BillingPage> {
                   physics: const BouncingScrollPhysics(),
                   child: Column(
                     children: [
-                      // Quick Stats inline bar at top
-                      _buildQuickStatsInlineBar(),
+                      const SizedBox(height: 8),
                       if (_showCustomerOnBill || _generateBillViaContact)
                         _buildCustomerSection(),
                       _buildAddItemsSection(),
@@ -1343,6 +1342,8 @@ class _BillingPageState extends State<BillingPage> {
                     ],
                   ),
                 ),
+                // Floating Quick Stats Icon (z-index 1) - hide when panel is open
+                if (!_showQuickStats) _buildQuickStatsInlineBar(),
                 // Quick Stats Premium Panel (z-index above everything)
                 if (_showQuickStats) _buildQuickStatsPremiumPanel(),
               ],
@@ -4740,192 +4741,85 @@ class _BillingPageState extends State<BillingPage> {
 
   /// Premium inline Quick Stats bar - replaces FAB for better UX
   Widget _buildQuickStatsInlineBar() {
-    return Container(
-      margin: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+    return Positioned(
+      top: 8,
+      right: 16,
       child: GestureDetector(
         onTap: _toggleQuickStats,
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOutCubic,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          duration: const Duration(milliseconds: 250),
+          width: 44,
+          height: 44,
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: _showQuickStats
-                  ? [const Color(0xFF1B4D3E), const Color(0xFF2D6A4F)]
-                  : [Colors.white, Colors.white],
+            gradient: const LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
+              colors: [Color(0xFF1B4D3E), Color(0xFF2D6A4F)],
             ),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: _showQuickStats
-                  ? Colors.transparent
-                  : const Color(0xFF1B4D3E).withOpacity(0.15),
-              width: 1.5,
-            ),
+            borderRadius: BorderRadius.circular(14),
             boxShadow: [
               BoxShadow(
-                color: _showQuickStats
-                    ? const Color(0xFF1B4D3E).withOpacity(0.25)
-                    : Colors.black.withOpacity(0.06),
-                blurRadius: _showQuickStats ? 16 : 10,
+                color: const Color(0xFF1B4D3E).withOpacity(0.35),
+                blurRadius: 12,
                 offset: const Offset(0, 4),
+              ),
+              const BoxShadow(
+                color: Color(0x33FFFFFF),
+                blurRadius: 8,
+                spreadRadius: -2,
+                offset: Offset(-2, -2),
               ),
             ],
           ),
-          child: Row(
-            children: [
-              // Icon with animated background
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 300),
-                width: 38,
-                height: 38,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: _showQuickStats
-                        ? [
-                            Colors.white.withOpacity(0.2),
-                            Colors.white.withOpacity(0.1),
-                          ]
-                        : [const Color(0xFF1B4D3E), const Color(0xFF2D6A4F)],
-                  ),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(
-                  _showQuickStats
-                      ? Icons.close_rounded
-                      : Icons.analytics_rounded,
-                  color: _showQuickStats ? Colors.white : Colors.white,
-                  size: 20,
-                ),
-              ),
-              const SizedBox(width: 12),
-              // Text content
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      _showQuickStats ? 'Hide Quick Stats' : 'Quick Stats',
-                      style: TextStyle(
-                        fontFamily: 'Literata',
-                        fontWeight: FontWeight.w700,
-                        fontSize: 14,
-                        color: _showQuickStats
-                            ? Colors.white
-                            : const Color(0xFF1B4D3E),
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      _showQuickStats
-                          ? 'Tap to close panel'
-                          : 'View invoices, products & more',
-                      style: TextStyle(
-                        fontFamily: 'Literata',
-                        fontSize: 11,
-                        color: _showQuickStats
-                            ? Colors.white.withOpacity(0.8)
-                            : Colors.grey[600],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              // Stats preview chips (only when collapsed)
-              if (!_showQuickStats && !_isLoadingQuickStats) ...[
-                _buildMiniStatChip(
-                  Icons.receipt_long_rounded,
-                  '${_quickStatsData?.invoicesCount ?? 0}',
-                  const Color(0xFF667eea),
-                ),
-                const SizedBox(width: 6),
-                _buildMiniStatChip(
-                  Icons.inventory_2_rounded,
-                  '${_quickStatsData?.productsCount ?? 0}',
-                  const Color(0xFFf093fb),
-                ),
-              ],
-              if (!_showQuickStats && _isLoadingQuickStats)
-                const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Color(0xFF1B4D3E),
-                  ),
-                ),
-              const SizedBox(width: 8),
-              // Arrow indicator
-              AnimatedRotation(
-                turns: _showQuickStats ? 0.5 : 0,
-                duration: const Duration(milliseconds: 300),
-                child: Icon(
-                  Icons.keyboard_arrow_down_rounded,
-                  color: _showQuickStats
-                      ? Colors.white
-                      : const Color(0xFF1B4D3E),
-                  size: 24,
-                ),
-              ),
-            ],
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 200),
+            child: Icon(
+              _showQuickStats
+                  ? Icons.close_rounded
+                  : Icons.dashboard_customize_rounded,
+              key: ValueKey(_showQuickStats),
+              color: Colors.white,
+              size: 22,
+            ),
           ),
         ),
       ),
     );
   }
 
-  /// Mini stat chip for the inline bar preview
-  Widget _buildMiniStatChip(IconData icon, String value, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 12, color: color),
-          const SizedBox(width: 4),
-          Text(
-            value,
-            style: TextStyle(
-              fontFamily: 'Literata',
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              color: color,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// Premium glass-morphism Quick Stats Panel - Compact Edition
+  /// Premium glass-morphism Quick Stats Panel - Near Navbar
   Widget _buildQuickStatsPremiumPanel() {
-    return Positioned.fill(
+    return Positioned(
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
       child: GestureDetector(
         onTap: _toggleQuickStats, // Tap outside to close
         child: Container(
-          color: Colors.black.withOpacity(0.4),
-          child: TweenAnimationBuilder<double>(
-            tween: Tween(begin: 0.0, end: 1.0),
-            duration: const Duration(milliseconds: 400),
-            curve: Curves.easeOutBack,
-            builder: (context, value, child) {
-              return Transform.scale(
-                scale: 0.8 + (0.2 * value),
-                child: Opacity(opacity: value, child: child),
-              );
-            },
-            child: Center(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: GestureDetector(
-                  onTap: () {}, // Prevent closing when tapping panel
-                  child: _buildGlassyQuickStatsCard(),
+          color: Colors.black.withOpacity(0.3),
+          child: SafeArea(
+            child: Align(
+              alignment: Alignment.topRight,
+              child: TweenAnimationBuilder<double>(
+                tween: Tween(begin: 0.0, end: 1.0),
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeOutCubic,
+                builder: (context, value, child) {
+                  return Transform.translate(
+                    offset: Offset(0, -20 * (1 - value)),
+                    child: Opacity(
+                      opacity: value.clamp(0.0, 1.0),
+                      child: child,
+                    ),
+                  );
+                },
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                  child: GestureDetector(
+                    onTap: () {}, // Prevent closing when tapping panel
+                    child: _buildGlassyQuickStatsCard(),
+                  ),
                 ),
               ),
             ),
@@ -5211,74 +5105,85 @@ class _BillingPageState extends State<BillingPage> {
         builder: (context, value, child) {
           return Transform.scale(scale: value, child: child);
         },
-        child: Container(
-          width: 72,
-          height: 72,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Colors.white.withOpacity(0.9),
-                stat.color.withOpacity(0.08),
-              ],
-            ),
-            border: Border.all(color: stat.color.withOpacity(0.25), width: 1.5),
-            boxShadow: [
-              BoxShadow(
-                color: stat.color.withOpacity(0.2),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
-              ),
-              BoxShadow(
-                color: Colors.white.withOpacity(0.8),
-                blurRadius: 8,
-                spreadRadius: -2,
-                offset: const Offset(-2, -2),
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // Icon with gradient glow
-              Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: stat.gradient,
-                  ),
-                  borderRadius: BorderRadius.circular(10),
-                  boxShadow: [
-                    BoxShadow(
-                      color: stat.color.withOpacity(0.4),
-                      blurRadius: 8,
-                      offset: const Offset(0, 3),
-                    ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: Container(
+              width: 72,
+              height: 72,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Colors.white.withOpacity(0.7),
+                    Colors.white.withOpacity(0.4),
+                    stat.color.withOpacity(0.15),
                   ],
+                  stops: const [0.0, 0.5, 1.0],
                 ),
-                child: Icon(stat.icon, color: Colors.white, size: 16),
-              ),
-              const SizedBox(height: 6),
-              // Label
-              Text(
-                stat.label,
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontFamily: 'Literata',
-                  fontSize: 9,
-                  fontWeight: FontWeight.w700,
-                  color: stat.color.withOpacity(0.9),
-                  letterSpacing: -0.2,
+                border: Border.all(
+                  color: Colors.white.withOpacity(0.5),
+                  width: 1.5,
                 ),
+                boxShadow: [
+                  BoxShadow(
+                    color: stat.color.withOpacity(0.15),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                  BoxShadow(
+                    color: Colors.white.withOpacity(0.6),
+                    blurRadius: 6,
+                    spreadRadius: -2,
+                    offset: const Offset(-2, -2),
+                  ),
+                ],
               ),
-            ],
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Icon with gradient glow
+                  Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: stat.gradient,
+                      ),
+                      borderRadius: BorderRadius.circular(10),
+                      boxShadow: [
+                        BoxShadow(
+                          color: stat.color.withOpacity(0.4),
+                          blurRadius: 8,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: Icon(stat.icon, color: Colors.white, size: 16),
+                  ),
+                  const SizedBox(height: 6),
+                  // Label
+                  Text(
+                    stat.label,
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontFamily: 'Literata',
+                      fontSize: 9,
+                      fontWeight: FontWeight.w700,
+                      color: stat.color,
+                      letterSpacing: -0.2,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
       ),
