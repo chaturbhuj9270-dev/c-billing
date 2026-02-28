@@ -30,6 +30,9 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
   late Animation<Offset> _slideAnimation;
   late Animation<double> _scaleAnimation;
 
+  // Tab Controller for mobile view
+  late TabController _tabController;
+
   // State
   bool _isLoading = true;
   List<ProductEntity> _products = [];
@@ -69,6 +72,9 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
       LanguageService.instance.currentLanguage,
     );
 
+    // Initialize tab controller
+    _tabController = TabController(length: 2, vsync: this);
+
     // Setup animations
     _fadeController = AnimationController(
       vsync: this,
@@ -103,6 +109,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
     _fadeController.dispose();
     _slideController.dispose();
     _scaleController.dispose();
+    _tabController.dispose();
     _searchController.dispose();
     _customBarcodeController.dispose();
     _quantityController.dispose();
@@ -173,6 +180,11 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
       }
 
       _scaleController.forward(from: 0);
+
+      // Switch to barcode tab on mobile after selecting product
+      if (MediaQuery.of(context).size.width < 600) {
+        _tabController.animateTo(1);
+      }
     } catch (e) {
       _showSnackBar('Error loading batches: $e', isError: true);
     }
@@ -377,6 +389,9 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 600;
+
     return Scaffold(
       backgroundColor: _backgroundColor,
       body: SafeArea(
@@ -388,25 +403,665 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
                   position: _slideAnimation,
                   child: Column(
                     children: [
-                      _buildHeader(),
-                      Expanded(
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Left Panel - Product Selection
-                            Expanded(
-                              flex: 4,
-                              child: _buildProductSelectionPanel(),
-                            ),
-                            // Right Panel - Barcode Preview & Options
-                            Expanded(flex: 6, child: _buildBarcodePanel()),
-                          ],
+                      _buildHeader(isMobile),
+                      if (isMobile) ...[
+                        // Mobile: Tab-based layout
+                        _buildMobileTabBar(),
+                        Expanded(
+                          child: TabBarView(
+                            controller: _tabController,
+                            children: [
+                              _buildMobileProductList(),
+                              _buildMobileBarcodeView(),
+                            ],
+                          ),
                         ),
-                      ),
+                      ] else ...[
+                        // Tablet/Desktop: Side-by-side layout
+                        Expanded(
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                flex: 4,
+                                child: _buildProductSelectionPanel(),
+                              ),
+                              Expanded(flex: 6, child: _buildBarcodePanel()),
+                            ],
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ),
               ),
+      ),
+    );
+  }
+
+  Widget _buildMobileTabBar() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: _primaryColor.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: TabBar(
+        controller: _tabController,
+        indicator: BoxDecoration(
+          color: _primaryColor,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        indicatorSize: TabBarIndicatorSize.tab,
+        labelColor: Colors.white,
+        unselectedLabelColor: _primaryColor,
+        labelStyle: const TextStyle(
+          fontFamily: 'Literata',
+          fontWeight: FontWeight.w600,
+          fontSize: 14,
+        ),
+        unselectedLabelStyle: const TextStyle(
+          fontFamily: 'Literata',
+          fontWeight: FontWeight.w500,
+          fontSize: 14,
+        ),
+        dividerColor: Colors.transparent,
+        padding: const EdgeInsets.all(4),
+        tabs: [
+          Tab(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.inventory_2_rounded, size: 18),
+                const SizedBox(width: 8),
+                Text('Products (${_products.length})'),
+              ],
+            ),
+          ),
+          Tab(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.qr_code_2_rounded, size: 18),
+                const SizedBox(width: 8),
+                const Text('Barcode'),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMobileProductList() {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+      decoration: BoxDecoration(
+        color: _cardColor,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          // Search bar
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: TextField(
+              controller: _searchController,
+              onChanged: _filterProducts,
+              style: const TextStyle(fontFamily: 'Literata', fontSize: 14),
+              decoration: InputDecoration(
+                hintText: 'Search products...',
+                hintStyle: TextStyle(
+                  fontFamily: 'Literata',
+                  color: Colors.grey[400],
+                  fontSize: 13,
+                ),
+                prefixIcon: Icon(
+                  Icons.search,
+                  color: Colors.grey[400],
+                  size: 20,
+                ),
+                suffixIcon: _searchQuery.isNotEmpty
+                    ? IconButton(
+                        icon: Icon(
+                          Icons.clear,
+                          color: Colors.grey[400],
+                          size: 20,
+                        ),
+                        onPressed: () {
+                          _searchController.clear();
+                          _filterProducts('');
+                        },
+                      )
+                    : null,
+                filled: true,
+                fillColor: Colors.grey[50],
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(
+                    color: _primaryColor,
+                    width: 1.5,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          // Product list
+          Expanded(
+            child: _filteredProducts.isEmpty
+                ? _buildEmptyProductState()
+                : ListView.builder(
+                    padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                    itemCount: _filteredProducts.length,
+                    itemBuilder: (context, index) {
+                      final product = _filteredProducts[index];
+                      final isSelected = _selectedProduct?.id == product.id;
+                      return _buildProductCard(product, isSelected);
+                    },
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMobileBarcodeView() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+      child: Column(
+        children: [
+          // Barcode Preview Card
+          _buildMobileBarcodePreviewCard(),
+          const SizedBox(height: 12),
+          // Options Card
+          _buildMobileOptionsCard(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMobileBarcodePreviewCard() {
+    return Container(
+      decoration: BoxDecoration(
+        color: _cardColor,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Header
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  _primaryColor.withOpacity(0.08),
+                  _accentColor.withOpacity(0.04),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(16),
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: _primaryColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.qr_code_scanner_rounded,
+                    color: _primaryColor,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Barcode Preview',
+                        style: TextStyle(
+                          fontFamily: 'Literata',
+                          fontWeight: FontWeight.w700,
+                          fontSize: 16,
+                          color: _primaryColor,
+                        ),
+                      ),
+                      if (_selectedProduct != null)
+                        Text(
+                          _selectedProduct!.name,
+                          style: TextStyle(
+                            fontFamily: 'Literata',
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                    ],
+                  ),
+                ),
+                if (_generatedBarcode.isNotEmpty)
+                  IconButton(
+                    onPressed: _copyBarcodeToClipboard,
+                    icon: const Icon(
+                      Icons.copy_rounded,
+                      color: _primaryColor,
+                      size: 20,
+                    ),
+                    tooltip: 'Copy barcode',
+                  ),
+              ],
+            ),
+          ),
+          // Barcode Display
+          Container(
+            constraints: const BoxConstraints(minHeight: 200),
+            padding: const EdgeInsets.all(16),
+            child: _selectedProduct == null
+                ? _buildSelectProductPrompt()
+                : _generatedBarcode.isEmpty
+                ? _buildGenerateBarcodePrompt()
+                : ScaleTransition(
+                    scale: _scaleAnimation,
+                    child: _buildBarcodeDisplay(),
+                  ),
+          ),
+          // Action Buttons
+          if (_generatedBarcode.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _buildActionButton(
+                      icon: Icons.save_alt_rounded,
+                      label: 'Assign',
+                      onTap: _assignBarcodeToProduct,
+                      isPrimary: false,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _buildActionButton(
+                      icon: Icons.print_rounded,
+                      label: 'Print',
+                      onTap: _printBarcode,
+                      isPrimary: true,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMobileOptionsCard() {
+    return Container(
+      decoration: BoxDecoration(
+        color: _cardColor,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Section Header
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: _accentColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.tune_rounded,
+                  color: _accentColor,
+                  size: 16,
+                ),
+              ),
+              const SizedBox(width: 10),
+              const Text(
+                'Options',
+                style: TextStyle(
+                  fontFamily: 'Literata',
+                  fontWeight: FontWeight.w700,
+                  fontSize: 15,
+                  color: _primaryColor,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // Format Selection
+          const Text(
+            'Barcode Format',
+            style: TextStyle(
+              fontFamily: 'Literata',
+              fontWeight: FontWeight.w600,
+              fontSize: 13,
+              color: _primaryColor,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: BarcodeFormat.values.map((format) {
+              final isSelected = _selectedFormat == format;
+              return GestureDetector(
+                onTap: () {
+                  setState(() => _selectedFormat = format);
+                  if (_autoGenerate && _selectedProduct != null) {
+                    _generateBarcode();
+                  }
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: isSelected ? _primaryColor : Colors.grey[100],
+                    borderRadius: BorderRadius.circular(8),
+                    border: isSelected
+                        ? null
+                        : Border.all(color: Colors.grey.shade300),
+                  ),
+                  child: Text(
+                    format.code,
+                    style: TextStyle(
+                      fontFamily: 'Literata',
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: isSelected ? Colors.white : Colors.grey[700],
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+
+          const SizedBox(height: 16),
+
+          // Batch Selection (if available)
+          if (_productBatches.isNotEmpty) ...[
+            const Text(
+              'Select Batch',
+              style: TextStyle(
+                fontFamily: 'Literata',
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+                color: _primaryColor,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              decoration: BoxDecoration(
+                color: Colors.grey[50],
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.grey.shade200),
+              ),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<PurchaseBatchEntity>(
+                  value: _selectedBatch,
+                  isExpanded: true,
+                  hint: const Text(
+                    'Select batch',
+                    style: TextStyle(fontFamily: 'Literata', fontSize: 13),
+                  ),
+                  items: _productBatches.map((batch) {
+                    return DropdownMenuItem(
+                      value: batch,
+                      child: Text(
+                        'Batch #${batch.id} - ₹${batch.sellingPrice.toStringAsFixed(0)} (${batch.quantityRemaining} left)',
+                        style: const TextStyle(
+                          fontFamily: 'Literata',
+                          fontSize: 13,
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                  onChanged: (batch) {
+                    setState(() => _selectedBatch = batch);
+                    if (_autoGenerate) _generateBarcode();
+                  },
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
+
+          // Toggle Options
+          _buildToggleOption(
+            'Auto-generate barcode',
+            'Auto create when selecting product',
+            _autoGenerate,
+            (value) {
+              setState(() => _autoGenerate = value);
+              if (value && _selectedProduct != null) _generateBarcode();
+            },
+          ),
+          _buildToggleOption(
+            'Include price',
+            'Show price on label',
+            _includePrice,
+            (value) => setState(() => _includePrice = value),
+          ),
+          _buildToggleOption(
+            'Include company',
+            'Show company name',
+            _includeCompany,
+            (value) => setState(() => _includeCompany = value),
+          ),
+
+          const SizedBox(height: 16),
+
+          // Print Quantity
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Print Quantity',
+                      style: TextStyle(
+                        fontFamily: 'Literata',
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                        color: _primaryColor,
+                      ),
+                    ),
+                    Text(
+                      'Number of labels',
+                      style: TextStyle(
+                        fontFamily: 'Literata',
+                        fontSize: 11,
+                        color: Colors.grey[500],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.grey[50],
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.grey.shade200),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      onPressed: () {
+                        final current =
+                            int.tryParse(_quantityController.text) ?? 1;
+                        if (current > 1) {
+                          _quantityController.text = (current - 1).toString();
+                        }
+                      },
+                      icon: const Icon(Icons.remove, size: 18),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(
+                        minWidth: 36,
+                        minHeight: 36,
+                      ),
+                    ),
+                    SizedBox(
+                      width: 40,
+                      child: TextField(
+                        controller: _quantityController,
+                        textAlign: TextAlign.center,
+                        keyboardType: TextInputType.number,
+                        style: const TextStyle(
+                          fontFamily: 'Literata',
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                        ),
+                        decoration: const InputDecoration(
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.zero,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () {
+                        final current =
+                            int.tryParse(_quantityController.text) ?? 1;
+                        _quantityController.text = (current + 1).toString();
+                      },
+                      icon: const Icon(Icons.add, size: 18),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(
+                        minWidth: 36,
+                        minHeight: 36,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+
+          // Custom Barcode Input (when auto-generate is off)
+          if (!_autoGenerate) ...[
+            const SizedBox(height: 16),
+            const Text(
+              'Custom Barcode',
+              style: TextStyle(
+                fontFamily: 'Literata',
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+                color: _primaryColor,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _customBarcodeController,
+                    style: const TextStyle(
+                      fontFamily: 'Literata',
+                      fontSize: 14,
+                      letterSpacing: 1,
+                    ),
+                    decoration: InputDecoration(
+                      hintText: 'Enter barcode...',
+                      hintStyle: TextStyle(
+                        fontFamily: 'Literata',
+                        color: Colors.grey[400],
+                        fontSize: 13,
+                      ),
+                      filled: true,
+                      fillColor: Colors.grey[50],
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 12,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide(color: Colors.grey.shade200),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide(color: Colors.grey.shade200),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: _primaryColor),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                ElevatedButton(
+                  onPressed: _generateBarcode,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _primaryColor,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 14,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: const Text(
+                    'Go',
+                    style: TextStyle(
+                      fontFamily: 'Literata',
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
       ),
     );
   }
@@ -442,9 +1097,14 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(bool isMobile) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+      padding: EdgeInsets.fromLTRB(
+        isMobile ? 12 : 16,
+        12,
+        isMobile ? 12 : 16,
+        12,
+      ),
       decoration: BoxDecoration(
         color: _cardColor,
         boxShadow: [
@@ -461,94 +1121,102 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
           GestureDetector(
             onTap: () => Navigator.pop(context),
             child: Container(
-              padding: const EdgeInsets.all(10),
+              padding: EdgeInsets.all(isMobile ? 8 : 10),
               decoration: BoxDecoration(
                 color: _primaryColor.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(isMobile ? 10 : 12),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.arrow_back_ios_rounded,
-                size: 20,
+                size: isMobile ? 18 : 20,
                 color: _primaryColor,
               ),
             ),
           ),
-          const SizedBox(width: 16),
+          SizedBox(width: isMobile ? 12 : 16),
           // Title and subtitle
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.all(8),
+                      padding: EdgeInsets.all(isMobile ? 6 : 8),
                       decoration: BoxDecoration(
                         gradient: const LinearGradient(
                           colors: [_primaryColor, _accentColor],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                         ),
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(isMobile ? 8 : 10),
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.qr_code_2_rounded,
-                        size: 22,
+                        size: isMobile ? 18 : 22,
                         color: Colors.white,
                       ),
                     ),
-                    const SizedBox(width: 12),
-                    const Text(
-                      'Barcode Generator',
-                      style: TextStyle(
-                        fontFamily: 'Literata',
-                        fontWeight: FontWeight.w800,
-                        fontSize: 22,
-                        color: _primaryColor,
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Barcode Generator',
+                        style: TextStyle(
+                          fontFamily: 'Literata',
+                          fontWeight: FontWeight.w800,
+                          fontSize: isMobile ? 16 : 22,
+                          color: _primaryColor,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  'Generate & print barcodes for products and batches',
-                  style: TextStyle(
-                    fontFamily: 'Literata',
-                    fontWeight: FontWeight.w400,
-                    fontSize: 12,
-                    color: Colors.grey[600],
+                if (!isMobile) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    'Generate & print barcodes for products and batches',
+                    style: TextStyle(
+                      fontFamily: 'Literata',
+                      fontWeight: FontWeight.w400,
+                      fontSize: 12,
+                      color: Colors.grey[600],
+                    ),
                   ),
-                ),
+                ],
               ],
             ),
           ),
-          // Quick Stats
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            decoration: BoxDecoration(
-              color: _primaryColor.withOpacity(0.08),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              children: [
-                const Icon(
-                  Icons.inventory_2_outlined,
-                  size: 18,
-                  color: _primaryColor,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  '${_products.length} Products',
-                  style: const TextStyle(
-                    fontFamily: 'Literata',
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
+          // Quick Stats - only for tablet/desktop
+          if (!isMobile)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: _primaryColor.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.inventory_2_outlined,
+                    size: 18,
                     color: _primaryColor,
                   ),
-                ),
-              ],
+                  const SizedBox(width: 8),
+                  Text(
+                    '${_products.length} Products',
+                    style: const TextStyle(
+                      fontFamily: 'Literata',
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                      color: _primaryColor,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
         ],
       ),
     );
@@ -1711,37 +2379,64 @@ class BarcodePainter extends CustomPainter {
         drawText: false,
       );
 
-      // Parse SVG and draw rectangles
-      // Simplified drawing - actual implementation would parse SVG properly
       final paint = Paint()
         ..color = Colors.black
         ..style = PaintingStyle.fill;
 
-      // Draw barcode bars based on format
+      // Draw barcode bars from SVG
       _drawBarcodeFromSvg(canvas, size, svg, paint);
     } catch (e) {
-      // Draw error placeholder
+      // Draw error placeholder with icon
       final paint = Paint()
-        ..color = Colors.red.withOpacity(0.2)
+        ..color = Colors.red.withOpacity(0.1)
         ..style = PaintingStyle.fill;
       canvas.drawRect(Offset.zero & size, paint);
+
+      // Draw error text
+      final textPainter = TextPainter(
+        text: TextSpan(
+          text: 'Invalid barcode',
+          style: TextStyle(color: Colors.red.shade300, fontSize: 10),
+        ),
+        textDirection: TextDirection.ltr,
+      );
+      textPainter.layout();
+      textPainter.paint(
+        canvas,
+        Offset(
+          (size.width - textPainter.width) / 2,
+          (size.height - textPainter.height) / 2,
+        ),
+      );
     }
   }
 
   void _drawBarcodeFromSvg(Canvas canvas, Size size, String svg, Paint paint) {
-    // Extract rect elements from SVG and draw them
-    final rectPattern = RegExp(
-      r'<rect[^>]*x="([^"]*)"[^>]*width="([^"]*)"[^>]*/?>',
-    );
+    // More robust regex to handle different attribute orders in SVG rect elements
+    // Matches rect elements and extracts all attributes
+    final rectPattern = RegExp(r'<rect\s+([^>]*)/?>', caseSensitive: false);
     final matches = rectPattern.allMatches(svg);
 
     for (final match in matches) {
       try {
-        final x = double.tryParse(match.group(1) ?? '0') ?? 0;
-        final width = double.tryParse(match.group(2) ?? '0') ?? 0;
+        final attributes = match.group(1) ?? '';
 
-        if (width > 0) {
-          canvas.drawRect(Rect.fromLTWH(x, 0, width, size.height), paint);
+        // Extract individual attributes
+        final xMatch = RegExp(r'x="([^"]*)"').firstMatch(attributes);
+        final yMatch = RegExp(r'y="([^"]*)"').firstMatch(attributes);
+        final widthMatch = RegExp(r'width="([^"]*)"').firstMatch(attributes);
+        final heightMatch = RegExp(r'height="([^"]*)"').firstMatch(attributes);
+
+        final x = double.tryParse(xMatch?.group(1) ?? '0') ?? 0;
+        final y = double.tryParse(yMatch?.group(1) ?? '0') ?? 0;
+        final width = double.tryParse(widthMatch?.group(1) ?? '0') ?? 0;
+        final height =
+            double.tryParse(heightMatch?.group(1) ?? size.height.toString()) ??
+            size.height;
+
+        // Only draw if it's a visible bar (not the background)
+        if (width > 0 && width < size.width) {
+          canvas.drawRect(Rect.fromLTWH(x, y, width, height), paint);
         }
       } catch (e) {
         // Skip invalid rect

@@ -4959,93 +4959,96 @@ class _BillingPageState extends State<BillingPage> {
                                   ),
                                 ],
                               ),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                // Header
-                                Row(
-                                  children: [
-                                    Container(
-                                      width: 44,
-                                      height: 44,
-                                      decoration: BoxDecoration(
-                                        gradient: const LinearGradient(
-                                          colors: [
-                                            Color(0xFF1B4D3E),
-                                            Color(0xFF2D6A4F),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  // Header
+                                  Row(
+                                    children: [
+                                      Container(
+                                        width: 44,
+                                        height: 44,
+                                        decoration: BoxDecoration(
+                                          gradient: const LinearGradient(
+                                            colors: [
+                                              Color(0xFF1B4D3E),
+                                              Color(0xFF2D6A4F),
+                                            ],
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: const Color(
+                                                0xFF1B4D3E,
+                                              ).withOpacity(0.3),
+                                              blurRadius: 8,
+                                              offset: const Offset(0, 4),
+                                            ),
                                           ],
                                         ),
-                                        borderRadius: BorderRadius.circular(12),
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: const Color(
-                                              0xFF1B4D3E,
-                                            ).withOpacity(0.3),
-                                            blurRadius: 8,
-                                            offset: const Offset(0, 4),
-                                          ),
-                                        ],
-                                      ),
-                                      child: const Icon(
-                                        Icons.analytics_rounded,
-                                        color: Colors.white,
-                                        size: 22,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 14),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          const Text(
-                                            'Quick Stats',
-                                            style: TextStyle(
-                                              fontFamily: 'Literata',
-                                              fontWeight: FontWeight.w800,
-                                              fontSize: 18,
-                                              color: Color(0xFF1B4D3E),
-                                            ),
-                                          ),
-                                          const SizedBox(height: 2),
-                                          Text(
-                                            'Overview of your business',
-                                            style: TextStyle(
-                                              fontFamily: 'Literata',
-                                              fontSize: 12,
-                                              color: Colors.grey[600],
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    // Close button
-                                    GestureDetector(
-                                      onTap: _toggleQuickStats,
-                                      child: Container(
-                                        width: 36,
-                                        height: 36,
-                                        decoration: BoxDecoration(
-                                          color: Colors.grey[100],
-                                          borderRadius: BorderRadius.circular(
-                                            10,
-                                          ),
-                                        ),
                                         child: const Icon(
-                                          Icons.close_rounded,
-                                          color: Color(0xFF1B4D3E),
-                                          size: 20,
+                                          Icons.analytics_rounded,
+                                          color: Colors.white,
+                                          size: 22,
                                         ),
                                       ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 20),
-                                // Stats Grid - 2x3 layout
-                                _isLoadingQuickStats
-                                    ? _buildQuickStatsPremiumShimmer()
-                                    : _buildQuickStatsGrid(),
-                              ],
+                                      const SizedBox(width: 14),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            const Text(
+                                              'Quick Stats',
+                                              style: TextStyle(
+                                                fontFamily: 'Literata',
+                                                fontWeight: FontWeight.w800,
+                                                fontSize: 18,
+                                                color: Color(0xFF1B4D3E),
+                                              ),
+                                            ),
+                                            const SizedBox(height: 2),
+                                            Text(
+                                              'Overview of your business',
+                                              style: TextStyle(
+                                                fontFamily: 'Literata',
+                                                fontSize: 12,
+                                                color: Colors.grey[600],
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      // Close button
+                                      GestureDetector(
+                                        onTap: _toggleQuickStats,
+                                        child: Container(
+                                          width: 36,
+                                          height: 36,
+                                          decoration: BoxDecoration(
+                                            color: Colors.grey[100],
+                                            borderRadius: BorderRadius.circular(
+                                              10,
+                                            ),
+                                          ),
+                                          child: const Icon(
+                                            Icons.close_rounded,
+                                            color: Color(0xFF1B4D3E),
+                                            size: 20,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 20),
+                                  // Stats Grid - 2x3 layout
+                                  _isLoadingQuickStats
+                                      ? _buildQuickStatsPremiumShimmer()
+                                      : _buildQuickStatsGrid(),
+                                ],
+                              ),
                             ),
                           ),
                         ),
