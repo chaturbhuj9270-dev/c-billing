@@ -45,6 +45,8 @@ dependencies:
   # Network Connectivity
   connectivity_plus: ^6.1.4
   font_awesome_flutter: ^10.12.0
+  # Barcode Generation
+  barcode: ^2.2.8
 
 dev_dependencies:
   flutter_test:

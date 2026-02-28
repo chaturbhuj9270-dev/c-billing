@@ -21,6 +21,7 @@ import '../widgets/product_summary_widget.dart';
 import '../widgets/product_filter_widget.dart';
 import '../widgets/product_list_widget.dart';
 import 'product_settings_page.dart';
+import 'barcode_generator_page.dart';
 
 class EnhancedProductPage extends StatefulWidget {
   final bool isEmbedded;
@@ -82,20 +83,14 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
       vsync: this,
       duration: const Duration(milliseconds: 600),
     );
-    _offsetAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.05),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _animController,
-      curve: Curves.easeOutCubic,
-    ));
+    _offsetAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.05), end: Offset.zero).animate(
+          CurvedAnimation(parent: _animController, curve: Curves.easeOutCubic),
+        );
     _opacityAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _animController,
-      curve: Curves.easeOut,
-    ));
+    ).animate(CurvedAnimation(parent: _animController, curve: Curves.easeOut));
 
     _checkUserAuthentication();
     _setupIsarStream();
@@ -151,7 +146,9 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
         });
         _updateUnsyncedCount();
         _rebuildGroupedProducts();
-        debugPrint('[EnhancedProduct] Isar stream: ${entities.length} products');
+        debugPrint(
+          '[EnhancedProduct] Isar stream: ${entities.length} products',
+        );
       },
       onError: (e) {
         debugPrint('[EnhancedProduct] Isar stream error: $e');
@@ -166,26 +163,32 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
     _batchStreamSub = batchController
         .watchAllBatches(includeConsumed: false)
         .listen(
-      (batches) {
-        if (mounted) {
-          _allBatches = batches;
-          _rebuildGroupedProducts();
-        }
-      },
-      onError: (e) {
-        debugPrint('[EnhancedProduct] Batch stream error: $e');
-      },
-    );
+          (batches) {
+            if (mounted) {
+              _allBatches = batches;
+              _rebuildGroupedProducts();
+            }
+          },
+          onError: (e) {
+            debugPrint('[EnhancedProduct] Batch stream error: $e');
+          },
+        );
   }
 
   /// Listen for purchase/product changes from other pages
   void _setupCrossPageRefresh() {
-    _purchaseChangeSubscription = DashboardRefreshService.instance.onPurchaseChanged.listen((_) {
-      if (mounted) _reloadFromIsar();
-    });
-    _productChangeSubscription = DashboardRefreshService.instance.onProductChanged.listen((_) {
-      if (mounted) _reloadFromIsar();
-    });
+    _purchaseChangeSubscription = DashboardRefreshService
+        .instance
+        .onPurchaseChanged
+        .listen((_) {
+          if (mounted) _reloadFromIsar();
+        });
+    _productChangeSubscription = DashboardRefreshService
+        .instance
+        .onProductChanged
+        .listen((_) {
+          if (mounted) _reloadFromIsar();
+        });
   }
 
   Future<void> _reloadFromIsar() async {
@@ -214,9 +217,12 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
   void _rebuildGroupedProducts() {
     // Find products that have NO batches (e.g., only initial stock)
     final productIdsInBatches = _allBatches.map((b) => b.productId).toSet();
-    final productsWithoutBatches = _products.where(
-      (p) => !productIdsInBatches.contains(p.serverId ?? p.id.toString()),
-    ).map((e) => Product.fromProductEntity(e)).toList();
+    final productsWithoutBatches = _products
+        .where(
+          (p) => !productIdsInBatches.contains(p.serverId ?? p.id.toString()),
+        )
+        .map((e) => Product.fromProductEntity(e))
+        .toList();
 
     final grouped = GroupedProduct.buildFromBatches(
       _allBatches,
@@ -240,29 +246,30 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
         .collection('products')
         .snapshots()
         .listen(
-      (snapshot) async {
-        if (!mounted || _isNavigatingAway) return;
+          (snapshot) async {
+            if (!mounted || _isNavigatingAway) return;
 
-        debugPrint('[EnhancedProduct] Firestore stream: ${snapshot.docs.length} docs');
+            debugPrint(
+              '[EnhancedProduct] Firestore stream: ${snapshot.docs.length} docs',
+            );
 
-        final serverProducts = snapshot.docs.map((doc) {
-          final data = doc.data();
-          return <String, dynamic>{
-            'id': doc.id,
-            ...data,
-          };
-        }).toList();
+            final serverProducts = snapshot.docs.map((doc) {
+              final data = doc.data();
+              return <String, dynamic>{'id': doc.id, ...data};
+            }).toList();
 
-        // Import to Isar — the Isar stream listener auto-updates the UI
-        await ProductOfflineController.instance.importFromServer(serverProducts);
+            // Import to Isar — the Isar stream listener auto-updates the UI
+            await ProductOfflineController.instance.importFromServer(
+              serverProducts,
+            );
 
-        // Trigger sync for any local-only changes
-        ProductSyncService.instance.syncNow();
-      },
-      onError: (e) {
-        debugPrint('[EnhancedProduct] Firestore stream error: $e');
-      },
-    );
+            // Trigger sync for any local-only changes
+            ProductSyncService.instance.syncNow();
+          },
+          onError: (e) {
+            debugPrint('[EnhancedProduct] Firestore stream error: $e');
+          },
+        );
   }
 
   // ━━━ CATEGORY HELPERS ━━━
@@ -356,7 +363,8 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                             onProductTap: _showProductDetails,
                             onProductLongPress: _showProductContextMenu,
                             emptyTitle: _localizations.noProductsFound,
-                            emptySubtitle: 'Add your first product to get started',
+                            emptySubtitle:
+                                'Add your first product to get started',
                             noResultsTitle: _localizations.noResultsFound,
                             noResultsSubtitle: 'Try a different search term',
                           ),
@@ -421,18 +429,24 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
               ),
             ),
           ),
-        // Settings
+        // Barcode Generator
         IconButton(
-          icon: const Icon(
-            Icons.settings_outlined,
-            color: Color(0xFF1B4D3E),
-          ),
+          icon: const Icon(Icons.qr_code_2_rounded, color: Color(0xFF1B4D3E)),
+          tooltip: 'Generate Barcode',
           onPressed: () {
             Navigator.push(
               context,
-              MaterialPageRoute(
-                builder: (_) => const ProductSettingsPage(),
-              ),
+              MaterialPageRoute(builder: (_) => const BarcodeGeneratorPage()),
+            );
+          },
+        ),
+        // Settings
+        IconButton(
+          icon: const Icon(Icons.settings_outlined, color: Color(0xFF1B4D3E)),
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const ProductSettingsPage()),
             );
           },
         ),
@@ -550,9 +564,11 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
     if (_selectedCategory != null && _selectedCategory!.isNotEmpty) {
       // Grouped products don't have category, so we filter by product name match
       filteredGroups = filteredGroups.where((group) {
-        return _products.any((p) =>
-            p.name.toLowerCase() == group.productName.toLowerCase() &&
-            p.category.toLowerCase() == _selectedCategory!.toLowerCase());
+        return _products.any(
+          (p) =>
+              p.name.toLowerCase() == group.productName.toLowerCase() &&
+              p.category.toLowerCase() == _selectedCategory!.toLowerCase(),
+        );
       }).toList();
     }
 
@@ -561,7 +577,9 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
       int result;
       switch (_sortField) {
         case ProductSortField.name:
-          result = a.productName.toLowerCase().compareTo(b.productName.toLowerCase());
+          result = a.productName.toLowerCase().compareTo(
+            b.productName.toLowerCase(),
+          );
           break;
         case ProductSortField.stock:
           result = a.totalStock.compareTo(b.totalStock);
@@ -570,7 +588,9 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
           result = a.maxSalesPrice.compareTo(b.maxSalesPrice);
           break;
         case ProductSortField.category:
-          result = a.productName.toLowerCase().compareTo(b.productName.toLowerCase());
+          result = a.productName.toLowerCase().compareTo(
+            b.productName.toLowerCase(),
+          );
           break;
       }
       return _sortAscending ? result : -result;
@@ -647,9 +667,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
         ],
       ),
       child: Theme(
-        data: Theme.of(context).copyWith(
-          dividerColor: Colors.transparent,
-        ),
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
         child: ExpansionTile(
           tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
           childrenPadding: EdgeInsets.zero,
@@ -679,7 +697,10 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
             child: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: isLow
                         ? Colors.red.withOpacity(0.15)
@@ -699,7 +720,10 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                 const SizedBox(width: 8),
                 if (group.hasMultipleVariants)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.blue.withOpacity(0.12),
                       borderRadius: BorderRadius.circular(12),
@@ -751,7 +775,10 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
               final isEven = i % 2 == 0;
 
               return Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
                 decoration: BoxDecoration(
                   color: isEven ? Colors.white : Colors.grey[50],
                   border: Border(
@@ -906,11 +933,11 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                           colors: isOutOfStock
                               ? [Colors.red[400]!, Colors.red[300]!]
                               : isLowStock
-                                  ? [Colors.orange[400]!, Colors.orange[300]!]
-                                  : [
-                                      const Color(0xFF1B4D3E),
-                                      const Color(0xFF1B4D3E).withOpacity(0.7),
-                                    ],
+                              ? [Colors.orange[400]!, Colors.orange[300]!]
+                              : [
+                                  const Color(0xFF1B4D3E),
+                                  const Color(0xFF1B4D3E).withOpacity(0.7),
+                                ],
                         ),
                       ),
                       child: Center(
@@ -971,9 +998,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                                 ),
                                 const SizedBox(width: 4),
                                 Text(
-                                  isSynced
-                                      ? 'Synced'
-                                      : 'Pending Sync',
+                                  isSynced ? 'Synced' : 'Pending Sync',
                                   style: TextStyle(
                                     fontFamily: 'Literata',
                                     fontWeight: FontWeight.w600,
@@ -1047,7 +1072,8 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                           Expanded(
                             child: _buildPriceCard(
                               label: _localizations.purchasePrice,
-                              value: '₹${product.purchasePrice.toStringAsFixed(2)}',
+                              value:
+                                  '₹${product.purchasePrice.toStringAsFixed(2)}',
                               color: Colors.grey[700]!,
                             ),
                           ),
@@ -1055,7 +1081,8 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                           Expanded(
                             child: _buildPriceCard(
                               label: _localizations.salesPrice,
-                              value: '₹${product.salesPrice.toStringAsFixed(2)}',
+                              value:
+                                  '₹${product.salesPrice.toStringAsFixed(2)}',
                               color: Colors.green[700]!,
                             ),
                           ),
@@ -1072,15 +1099,16 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                               color: isOutOfStock
                                   ? Colors.red[700]!
                                   : isLowStock
-                                      ? Colors.orange[700]!
-                                      : const Color(0xFF1B4D3E),
+                                  ? Colors.orange[700]!
+                                  : const Color(0xFF1B4D3E),
                             ),
                           ),
                           const SizedBox(width: 12),
                           Expanded(
                             child: _buildPriceCard(
                               label: 'GST',
-                              value: '${(product.cgstPercent + product.sgstPercent).toStringAsFixed(1)}%',
+                              value:
+                                  '${(product.cgstPercent + product.sgstPercent).toStringAsFixed(1)}%',
                               color: Colors.blue[700]!,
                             ),
                           ),
@@ -1088,7 +1116,8 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                       ),
 
                       // HSN Code
-                      if (product.hsnCode != null && product.hsnCode!.isNotEmpty) ...[
+                      if (product.hsnCode != null &&
+                          product.hsnCode!.isNotEmpty) ...[
                         const SizedBox(height: 12),
                         _buildInfoCard(
                           icon: Icons.tag_rounded,
@@ -1098,7 +1127,8 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                       ],
 
                       // Description
-                      if (product.description != null && product.description!.isNotEmpty) ...[
+                      if (product.description != null &&
+                          product.description!.isNotEmpty) ...[
                         const SizedBox(height: 16),
                         Text(
                           _localizations.description,
@@ -1143,8 +1173,12 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                               label: Text(_localizations.edit),
                               style: OutlinedButton.styleFrom(
                                 foregroundColor: const Color(0xFF1B4D3E),
-                                side: const BorderSide(color: Color(0xFF1B4D3E)),
-                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                side: const BorderSide(
+                                  color: Color(0xFF1B4D3E),
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 12,
+                                ),
                               ),
                             ),
                           ),
@@ -1160,7 +1194,9 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.red,
                                 foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 12,
+                                ),
                               ),
                             ),
                           ),
@@ -1334,7 +1370,10 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
               ),
               const Divider(height: 1),
               ListTile(
-                leading: const Icon(Icons.visibility_rounded, color: Color(0xFF1B4D3E)),
+                leading: const Icon(
+                  Icons.visibility_rounded,
+                  color: Color(0xFF1B4D3E),
+                ),
                 title: Text(
                   'View Details',
                   style: const TextStyle(fontFamily: 'Literata'),
@@ -1345,7 +1384,10 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.edit_rounded, color: Color(0xFF1B4D3E)),
+                leading: const Icon(
+                  Icons.edit_rounded,
+                  color: Color(0xFF1B4D3E),
+                ),
                 title: Text(
                   _localizations.edit,
                   style: const TextStyle(fontFamily: 'Literata'),
@@ -1356,7 +1398,10 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.delete_outline_rounded, color: Colors.red),
+                leading: const Icon(
+                  Icons.delete_outline_rounded,
+                  color: Colors.red,
+                ),
                 title: Text(
                   _localizations.delete,
                   style: const TextStyle(
@@ -1429,7 +1474,9 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
   Future<void> _deleteProduct(ProductEntity product) async {
     try {
       await ProductOfflineController.instance.deleteProduct(product.id);
-      DashboardRefreshService.instance.notifyDataChanged(DataChangeType.product);
+      DashboardRefreshService.instance.notifyDataChanged(
+        DataChangeType.product,
+      );
       ProductSyncService.instance.syncNow();
 
       if (mounted) {
@@ -1492,7 +1539,8 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
       } else if (column.type == CustomColumnType.boolean) {
         customFieldValues[column.id] = column.defaultValue == 'true';
       } else if (column.type == CustomColumnType.dropdown) {
-        customFieldValues[column.id] = column.defaultValue ??
+        customFieldValues[column.id] =
+            column.defaultValue ??
             ((column.dropdownOptions?.isNotEmpty ?? false)
                 ? column.dropdownOptions!.first
                 : '');
@@ -1503,19 +1551,29 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
 
     // Load companies and suppliers
     loadCompaniesAndSuppliers() async {
-      final companyEntities = await CompanyOfflineController.instance.getAllCompanies();
-      dialogCompanies = companyEntities.map((e) => {
-        'id': e.serverId ?? e.id.toString(),
-        'companyName': e.companyName,
-      }).toList();
+      final companyEntities = await CompanyOfflineController.instance
+          .getAllCompanies();
+      dialogCompanies = companyEntities
+          .map(
+            (e) => {
+              'id': e.serverId ?? e.id.toString(),
+              'companyName': e.companyName,
+            },
+          )
+          .toList();
 
-      final supplierEntities = await SupplierOfflineController.instance.getAllSuppliers();
-      dialogSuppliers = supplierEntities.map((e) => {
-        'id': e.serverId ?? e.id.toString(),
-        'firstName': e.firstName,
-        'lastName': e.lastName,
-        'fullName': '${e.firstName} ${e.lastName}'.trim(),
-      }).toList();
+      final supplierEntities = await SupplierOfflineController.instance
+          .getAllSuppliers();
+      dialogSuppliers = supplierEntities
+          .map(
+            (e) => {
+              'id': e.serverId ?? e.id.toString(),
+              'firstName': e.firstName,
+              'lastName': e.lastName,
+              'fullName': '${e.firstName} ${e.lastName}'.trim(),
+            },
+          )
+          .toList();
     }
 
     loadCompaniesAndSuppliers();
@@ -1564,7 +1622,10 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                       const Spacer(),
                       IconButton(
                         onPressed: () => Navigator.pop(context),
-                        icon: Icon(Icons.close_rounded, color: Colors.grey[600]),
+                        icon: Icon(
+                          Icons.close_rounded,
+                          color: Colors.grey[600],
+                        ),
                       ),
                     ],
                   ),
@@ -1594,7 +1655,9 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                               dialogCompanies,
                             );
                             if (company != null) {
-                              setDialogState(() => dialogSelectedCompany = company);
+                              setDialogState(
+                                () => dialogSelectedCompany = company,
+                              );
                             }
                           },
                         ),
@@ -1610,7 +1673,9 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                               dialogSuppliers,
                             );
                             if (supplier != null) {
-                              setDialogState(() => dialogSelectedSupplier = supplier);
+                              setDialogState(
+                                () => dialogSelectedSupplier = supplier,
+                              );
                             }
                           },
                         ),
@@ -1692,15 +1757,17 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                             ),
                           ),
                           const SizedBox(height: 12),
-                          ...customColumns.map((column) => Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
-                            child: _buildCustomFieldWidget(
-                              column,
-                              customTextControllers[column.id],
-                              customFieldValues,
-                              setDialogState,
+                          ...customColumns.map(
+                            (column) => Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: _buildCustomFieldWidget(
+                                column,
+                                customTextControllers[column.id],
+                                customFieldValues,
+                                setDialogState,
+                              ),
                             ),
-                          )),
+                          ),
                         ],
                         const SizedBox(height: 24),
                       ],
@@ -1844,7 +1911,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
       } else if (column.type == CustomColumnType.boolean) {
         value = (customFieldValues[column.id] ?? false).toString();
       } else if (column.type == CustomColumnType.dropdown ||
-                 column.type == CustomColumnType.date) {
+          column.type == CustomColumnType.date) {
         value = customFieldValues[column.id]?.toString();
       }
       if (value != null && value.isNotEmpty) {
@@ -1873,7 +1940,9 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
         customFieldsJson: customFieldsJson,
       );
 
-      DashboardRefreshService.instance.notifyDataChanged(DataChangeType.product);
+      DashboardRefreshService.instance.notifyDataChanged(
+        DataChangeType.product,
+      );
       ProductSyncService.instance.syncNow();
 
       if (mounted) {
@@ -1883,7 +1952,10 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
             content: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(8),
@@ -1932,10 +2004,18 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
     final nameController = TextEditingController(text: product.name);
     final categoryController = TextEditingController(text: product.category);
     final companyController = TextEditingController(text: product.companyName);
-    final purchasePriceController = TextEditingController(text: product.purchasePrice.toString());
-    final salesPriceController = TextEditingController(text: product.salesPrice.toString());
-    final cgstController = TextEditingController(text: product.cgstPercent.toString());
-    final sgstController = TextEditingController(text: product.sgstPercent.toString());
+    final purchasePriceController = TextEditingController(
+      text: product.purchasePrice.toString(),
+    );
+    final salesPriceController = TextEditingController(
+      text: product.salesPrice.toString(),
+    );
+    final cgstController = TextEditingController(
+      text: product.cgstPercent.toString(),
+    );
+    final sgstController = TextEditingController(
+      text: product.sgstPercent.toString(),
+    );
     final hsnController = TextEditingController(text: product.hsnCode ?? '');
 
     // Custom fields
@@ -1945,9 +2025,11 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
 
     // Parse existing custom fields
     Map<String, dynamic> existingCustomFields = {};
-    if (product.customFieldsJson != null && product.customFieldsJson!.isNotEmpty) {
+    if (product.customFieldsJson != null &&
+        product.customFieldsJson!.isNotEmpty) {
       try {
-        existingCustomFields = jsonDecode(product.customFieldsJson!) as Map<String, dynamic>;
+        existingCustomFields =
+            jsonDecode(product.customFieldsJson!) as Map<String, dynamic>;
       } catch (_) {}
     }
 
@@ -1961,10 +2043,13 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
           text: existingValue ?? column.defaultValue ?? '',
         );
       } else if (column.type == CustomColumnType.boolean) {
-        customFieldValues[column.id] = existingValue == 'true' ||
+        customFieldValues[column.id] =
+            existingValue == 'true' ||
             (existingValue == null && column.defaultValue == 'true');
       } else if (column.type == CustomColumnType.dropdown) {
-        customFieldValues[column.id] = existingValue ?? column.defaultValue ??
+        customFieldValues[column.id] =
+            existingValue ??
+            column.defaultValue ??
             ((column.dropdownOptions?.isNotEmpty ?? false)
                 ? column.dropdownOptions!.first
                 : '');
@@ -2017,7 +2102,10 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                       const Spacer(),
                       IconButton(
                         onPressed: () => Navigator.pop(context),
-                        icon: Icon(Icons.close_rounded, color: Colors.grey[600]),
+                        icon: Icon(
+                          Icons.close_rounded,
+                          color: Colors.grey[600],
+                        ),
                       ),
                     ],
                   ),
@@ -2110,7 +2198,11 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                           ),
                           child: Row(
                             children: [
-                              Icon(Icons.inventory_rounded, color: Colors.grey[600], size: 20),
+                              Icon(
+                                Icons.inventory_rounded,
+                                color: Colors.grey[600],
+                                size: 20,
+                              ),
                               const SizedBox(width: 12),
                               Expanded(
                                 child: Column(
@@ -2151,15 +2243,17 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                             ),
                           ),
                           const SizedBox(height: 12),
-                          ...customColumns.map((column) => Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
-                            child: _buildCustomFieldWidget(
-                              column,
-                              customTextControllers[column.id],
-                              customFieldValues,
-                              setDialogState,
+                          ...customColumns.map(
+                            (column) => Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: _buildCustomFieldWidget(
+                                column,
+                                customTextControllers[column.id],
+                                customFieldValues,
+                                setDialogState,
+                              ),
                             ),
-                          )),
+                          ),
                         ],
                         const SizedBox(height: 24),
                       ],
@@ -2300,7 +2394,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
       } else if (column.type == CustomColumnType.boolean) {
         value = (customFieldValues[column.id] ?? false).toString();
       } else if (column.type == CustomColumnType.dropdown ||
-                 column.type == CustomColumnType.date) {
+          column.type == CustomColumnType.date) {
         value = customFieldValues[column.id]?.toString();
       }
       if (value != null && value.isNotEmpty) {
@@ -2327,7 +2421,9 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
         customFieldsJson: customFieldsJson,
       );
 
-      DashboardRefreshService.instance.notifyDataChanged(DataChangeType.product);
+      DashboardRefreshService.instance.notifyDataChanged(
+        DataChangeType.product,
+      );
       ProductSyncService.instance.syncNow();
 
       if (mounted) {
@@ -2383,7 +2479,10 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: Color(0xFF1B4D3E), width: 2),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
+        ),
       ),
       style: const TextStyle(fontFamily: 'Literata'),
     );
@@ -2411,7 +2510,11 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
         ),
         child: Row(
           children: [
-            Icon(icon, color: hasValue ? const Color(0xFF1B4D3E) : Colors.grey, size: 20),
+            Icon(
+              icon,
+              color: hasValue ? const Color(0xFF1B4D3E) : Colors.grey,
+              size: 20,
+            ),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
@@ -2533,14 +2636,19 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
             );
             if (date != null) {
               setDialogState(() {
-                fieldValues[column.id] = date.toIso8601String().split('T').first;
+                fieldValues[column.id] = date
+                    .toIso8601String()
+                    .split('T')
+                    .first;
               });
             }
           },
           child: InputDecorator(
             decoration: InputDecoration(
               labelText: column.name,
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
             child: Text(
               fieldValues[column.id] ?? 'Select Date',
