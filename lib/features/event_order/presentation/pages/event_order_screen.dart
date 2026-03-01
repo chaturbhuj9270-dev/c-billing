@@ -57,6 +57,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
   // State
   OrderType _orderType = OrderType.event;
   DateTime _eventDate = DateTime.now().add(const Duration(days: 7));
+  TimeOfDay _eventTime = const TimeOfDay(hour: 10, minute: 0);
   List<SubEvent> _subEvents = [];
   List<OrderItem> _orderItems = [];
   String? _selectedCustomerId;
@@ -140,6 +141,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
     _orderNameController.text = order.orderName;
     _descriptionController.text = order.description ?? '';
     _eventDate = order.eventDate;
+    _eventTime = TimeOfDay.fromDateTime(order.eventDate);
     _locationController.text = order.eventLocation ?? '';
     _subEvents = List.from(order.subEvents);
     _orderItems = List.from(order.items);
@@ -315,19 +317,18 @@ class _EventOrderScreenState extends State<EventOrderScreen>
   Future<void> _saveOrder() async {
     if (!_formKey.currentState!.validate()) return;
 
-    // Validate mode-specific data
-    if (_orderType == OrderType.event &&
-        _subEvents.isEmpty &&
-        _orderItems.isEmpty) {
-      _showErrorSnackBar('Please add at least one sub-event or product');
-      return;
-    }
-    if (_orderType == OrderType.salesOrder && _orderItems.isEmpty) {
-      _showErrorSnackBar('Please add at least one product');
-      return;
-    }
+    // Products and sub-events are optional - removed validation
 
     setState(() => _isLoading = true);
+
+    // Combine date and time for the main event
+    final eventDateTime = DateTime(
+      _eventDate.year,
+      _eventDate.month,
+      _eventDate.day,
+      _eventTime.hour,
+      _eventTime.minute,
+    );
 
     try {
       final cubit = context.read<EventOrderCubit>();
@@ -352,7 +353,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
           description: _descriptionController.text.trim().isEmpty
               ? null
               : _descriptionController.text.trim(),
-          eventDate: _eventDate,
+          eventDate: eventDateTime,
           eventLocation: _locationController.text.trim().isEmpty
               ? null
               : _locationController.text.trim(),
@@ -378,7 +379,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
           description: _descriptionController.text.trim().isEmpty
               ? null
               : _descriptionController.text.trim(),
-          eventDate: _eventDate,
+          eventDate: eventDateTime,
           eventLocation: _locationController.text.trim().isEmpty
               ? null
               : _locationController.text.trim(),
@@ -849,8 +850,14 @@ class _EventOrderScreenState extends State<EventOrderScreen>
             icon: Icons.location_on,
           ),
           const SizedBox(height: 12),
-          // Date picker
-          _buildDatePicker(),
+          // Date and Time pickers
+          Row(
+            children: [
+              Expanded(flex: 3, child: _buildDatePicker()),
+              const SizedBox(width: 8),
+              Expanded(flex: 2, child: _buildTimePicker()),
+            ],
+          ),
         ],
       ),
     );
@@ -883,7 +890,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
         }
       },
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
         decoration: BoxDecoration(
           color: const Color(0xFFF8F9FC),
           borderRadius: BorderRadius.circular(12),
@@ -896,36 +903,100 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                   ? Icons.calendar_today
                   : Icons.local_shipping,
               color: Colors.grey[500],
+              size: 20,
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 8),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    _orderType == OrderType.event
-                        ? 'Event Date *'
-                        : 'Delivery Date *',
+                    'Date *',
                     style: TextStyle(
                       fontFamily: 'Literata',
                       color: Colors.grey[500],
-                      fontSize: 12,
+                      fontSize: 11,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 2),
                   Text(
-                    DateFormat('EEEE, dd MMM yyyy').format(_eventDate),
+                    DateFormat('dd MMM yyyy').format(_eventDate),
                     style: const TextStyle(
                       fontFamily: 'Literata',
                       color: Color(0xFF1A1A2E),
-                      fontSize: 16,
+                      fontSize: 14,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
                 ],
               ),
             ),
-            Icon(Icons.arrow_drop_down, color: Colors.grey[500]),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTimePicker() {
+    return InkWell(
+      onTap: () async {
+        final picked = await showTimePicker(
+          context: context,
+          initialTime: _eventTime,
+          builder: (context, child) {
+            return Theme(
+              data: ThemeData.light().copyWith(
+                colorScheme: const ColorScheme.light(
+                  primary: Color(0xFF1B4D3E),
+                  surface: Colors.white,
+                  onSurface: Color(0xFF1A1A2E),
+                ),
+                dialogTheme: DialogThemeData(backgroundColor: Colors.white),
+              ),
+              child: child!,
+            );
+          },
+        );
+        if (picked != null) {
+          setState(() => _eventTime = picked);
+        }
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF8F9FC),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey.withOpacity(0.15)),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.access_time, color: Colors.grey[500], size: 20),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Time *',
+                    style: TextStyle(
+                      fontFamily: 'Literata',
+                      color: Colors.grey[500],
+                      fontSize: 11,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    _eventTime.format(context),
+                    style: const TextStyle(
+                      fontFamily: 'Literata',
+                      color: Color(0xFF1A1A2E),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),
@@ -1924,6 +1995,9 @@ class _EventOrderScreenState extends State<EventOrderScreen>
     );
     final notesController = TextEditingController(text: subEvent?.notes ?? '');
     DateTime selectedDate = subEvent?.date ?? _eventDate;
+    TimeOfDay selectedTime = subEvent != null
+        ? TimeOfDay.fromDateTime(subEvent.date)
+        : _eventTime;
 
     // Initialize custom field controllers for sub-event
     final subEventColumns =
@@ -2029,55 +2103,127 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                     ),
                   ),
                   const SizedBox(height: 12),
-                  InkWell(
-                    onTap: () async {
-                      final picked = await showDatePicker(
-                        context: context,
-                        initialDate: selectedDate,
-                        firstDate: DateTime.now(),
-                        lastDate: DateTime.now().add(const Duration(days: 730)),
-                        builder: (context, child) => Theme(
-                          data: ThemeData.light().copyWith(
-                            colorScheme: const ColorScheme.light(
-                              primary: Color(0xFF1B4D3E),
-                              surface: Colors.white,
-                              onSurface: Color(0xFF1A1A2E),
+                  // Date and Time pickers in a row
+                  Row(
+                    children: [
+                      Expanded(
+                        flex: 3,
+                        child: InkWell(
+                          onTap: () async {
+                            final picked = await showDatePicker(
+                              context: context,
+                              initialDate: selectedDate,
+                              firstDate: DateTime.now(),
+                              lastDate: DateTime.now().add(
+                                const Duration(days: 730),
+                              ),
+                              builder: (context, child) => Theme(
+                                data: ThemeData.light().copyWith(
+                                  colorScheme: const ColorScheme.light(
+                                    primary: Color(0xFF1B4D3E),
+                                    surface: Colors.white,
+                                    onSurface: Color(0xFF1A1A2E),
+                                  ),
+                                  dialogTheme: DialogThemeData(
+                                    backgroundColor: Colors.white,
+                                  ),
+                                ),
+                                child: child!,
+                              ),
+                            );
+                            if (picked != null) {
+                              setDialogState(() => selectedDate = picked);
+                            }
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 12,
                             ),
-                            dialogTheme: DialogThemeData(
-                              backgroundColor: Colors.white,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF8F9FC),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.calendar_today,
+                                  color: Colors.grey[600],
+                                  size: 18,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  DateFormat(
+                                    'dd MMM yyyy',
+                                  ).format(selectedDate),
+                                  style: const TextStyle(
+                                    fontFamily: 'Literata',
+                                    color: Color(0xFF1A1A2E),
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                          child: child!,
                         ),
-                      );
-                      if (picked != null) {
-                        setDialogState(() => selectedDate = picked);
-                      }
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF8F9FC),
-                        borderRadius: BorderRadius.circular(12),
                       ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.calendar_today,
-                            color: Colors.grey[600],
-                            size: 18,
-                          ),
-                          const SizedBox(width: 12),
-                          Text(
-                            DateFormat('dd MMM yyyy').format(selectedDate),
-                            style: const TextStyle(
-                              fontFamily: 'Literata',
-                              color: Color(0xFF1A1A2E),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        flex: 2,
+                        child: InkWell(
+                          onTap: () async {
+                            final picked = await showTimePicker(
+                              context: context,
+                              initialTime: selectedTime,
+                              builder: (context, child) => Theme(
+                                data: ThemeData.light().copyWith(
+                                  colorScheme: const ColorScheme.light(
+                                    primary: Color(0xFF1B4D3E),
+                                    surface: Colors.white,
+                                    onSurface: Color(0xFF1A1A2E),
+                                  ),
+                                  dialogTheme: DialogThemeData(
+                                    backgroundColor: Colors.white,
+                                  ),
+                                ),
+                                child: child!,
+                              ),
+                            );
+                            if (picked != null) {
+                              setDialogState(() => selectedTime = picked);
+                            }
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 12,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF8F9FC),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.access_time,
+                                  color: Colors.grey[600],
+                                  size: 18,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  selectedTime.format(context),
+                                  style: const TextStyle(
+                                    fontFamily: 'Literata',
+                                    color: Color(0xFF1A1A2E),
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                        ],
+                        ),
                       ),
-                    ),
+                    ],
                   ),
                   const SizedBox(height: 12),
                   TextField(
@@ -2185,10 +2331,19 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                     }
                   }
 
+                  // Combine date and time
+                  final combinedDateTime = DateTime(
+                    selectedDate.year,
+                    selectedDate.month,
+                    selectedDate.day,
+                    selectedTime.hour,
+                    selectedTime.minute,
+                  );
+
                   final newSubEvent = SubEvent(
                     id: subEvent?.id ?? _uuid.v4(),
                     name: name,
-                    date: selectedDate,
+                    date: combinedDateTime,
                     charges: charges,
                     notes: notesController.text.trim().isEmpty
                         ? null
