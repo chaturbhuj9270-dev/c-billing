@@ -1,6 +1,7 @@
 import 'package:isar_community/isar.dart';
 import 'package:path_provider/path_provider.dart';
 import '../../features/customer/offline/entities/customer_entity.dart';
+import '../../features/customer/offline/entities/customer_transaction_entity.dart';
 import '../../features/product/offline/entities/product_entity.dart';
 import '../../features/supplier/offline/entities/supplier_entity.dart';
 import '../../features/company/offline/entities/company_entity.dart';
@@ -44,10 +45,11 @@ class IsarService {
     }
 
     final dir = await getApplicationDocumentsDirectory();
-    
+
     _isar = await Isar.open(
       [
         CustomerEntitySchema,
+        CustomerTransactionEntitySchema,
         ProductEntitySchema,
         SupplierEntitySchema,
         CompanyEntitySchema,

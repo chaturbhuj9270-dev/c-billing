@@ -14,6 +14,7 @@ class CustomerListWidget extends StatelessWidget {
   final void Function(Map<String, dynamic>) onCustomerTap;
   final void Function(Map<String, dynamic>)? onCustomerLongPress;
   final void Function(Map<String, dynamic>)? onFinanceTap;
+  final void Function(Map<String, dynamic>)? onTransactionsTap;
 
   // Labels
   final String emptyTitle;
@@ -32,6 +33,7 @@ class CustomerListWidget extends StatelessWidget {
     required this.onCustomerTap,
     this.onCustomerLongPress,
     this.onFinanceTap,
+    this.onTransactionsTap,
     this.emptyTitle = 'No customers yet',
     this.emptySubtitle = 'Add your first customer to get started',
     this.noResultsTitle = 'No results found',
@@ -133,6 +135,9 @@ class CustomerListWidget extends StatelessWidget {
               onFinanceTap: onFinanceTap != null
                   ? () => onFinanceTap!(filtered[index])
                   : null,
+              onTransactionsTap: onTransactionsTap != null
+                  ? () => onTransactionsTap!(filtered[index])
+                  : null,
             ),
           );
         },
@@ -210,12 +215,14 @@ class _CustomerCard extends StatelessWidget {
   final VoidCallback onTap;
   final VoidCallback? onLongPress;
   final VoidCallback? onFinanceTap;
+  final VoidCallback? onTransactionsTap;
 
   const _CustomerCard({
     required this.customer,
     required this.onTap,
     this.onLongPress,
     this.onFinanceTap,
+    this.onTransactionsTap,
   });
 
   @override
@@ -437,12 +444,35 @@ class _CustomerCard extends StatelessWidget {
                   ),
                 ),
               ],
-              // Action icons row (Finance + Communication)
-              if (contact.isNotEmpty || onFinanceTap != null) ...[
+              // Action icons row (Transactions + Finance + Communication)
+              if (contact.isNotEmpty ||
+                  onFinanceTap != null ||
+                  onTransactionsTap != null) ...[
                 const SizedBox(height: 10),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
+                    // Transactions button
+                    if (onTransactionsTap != null)
+                      GestureDetector(
+                        onTap: onTransactionsTap,
+                        child: Container(
+                          width: 34,
+                          height: 34,
+                          decoration: BoxDecoration(
+                            color: Colors.orange.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(
+                            Icons.swap_horiz_rounded,
+                            size: 16,
+                            color: Colors.orange,
+                          ),
+                        ),
+                      ),
+                    if (onTransactionsTap != null &&
+                        (onFinanceTap != null || contact.isNotEmpty))
+                      const SizedBox(width: 8),
                     // Finance/History button
                     if (onFinanceTap != null)
                       GestureDetector(

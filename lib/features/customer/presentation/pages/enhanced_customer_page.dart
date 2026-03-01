@@ -15,6 +15,7 @@ import '../widgets/customer_filter_widget.dart';
 import '../widgets/customer_list_widget.dart';
 import 'customer_details_page.dart';
 import 'customer_finance_page.dart';
+import 'customer_transactions_page.dart';
 
 class EnhancedCustomerPage extends StatefulWidget {
   final bool isEmbedded;
@@ -714,6 +715,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
                             onCustomerTap: _showCustomerDetails,
                             onCustomerLongPress: _showCustomerContextMenu,
                             onFinanceTap: _openCustomerFinance,
+                            onTransactionsTap: _openCustomerTransactions,
                             emptyTitle: _localizations.noCustomersYet,
                             emptySubtitle: _localizations.createFirstCustomer,
                             noResultsTitle: _localizations.noResultsFound,
@@ -866,6 +868,61 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
       PageRouteBuilder(
         pageBuilder: (context, animation, secondaryAnimation) =>
             CustomerFinancePage(
+              customerId: customerId,
+              customerLocalId: localId,
+              customerName: fullName.isNotEmpty ? fullName : 'Customer',
+              customerContact: contact,
+              currentPendingAmount: pendingAmount,
+            ),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return SlideTransition(
+            position:
+                Tween<Offset>(
+                  begin: const Offset(1.0, 0.0),
+                  end: Offset.zero,
+                ).animate(
+                  CurvedAnimation(
+                    parent: animation,
+                    curve: Curves.easeOutCubic,
+                  ),
+                ),
+            child: child,
+          );
+        },
+        transitionDuration: const Duration(milliseconds: 300),
+      ),
+    );
+  }
+
+  // ━━━ CUSTOMER TRANSACTIONS PAGE ━━━
+
+  void _openCustomerTransactions(Map<String, dynamic> customer) {
+    // Get the explicit serverId if available
+    final serverId = customer['serverId'] as String?;
+    // Get the local integer Isar ID
+    final localId = customer['localId']?.toString() ?? '';
+
+    // Use serverId if available, otherwise use local ID
+    final customerId = (serverId != null && serverId.isNotEmpty)
+        ? serverId
+        : localId;
+
+    debugPrint(
+      '[CustomerTransactions] Opening transactions page - serverId: $serverId, localId: $localId, using customerId: $customerId',
+    );
+
+    final firstName = customer['firstName'] as String? ?? '';
+    final lastName = customer['lastName'] as String? ?? '';
+    final fullName = '$firstName $lastName'.trim();
+    final contact = customer['contact'] as String? ?? '';
+    final pendingAmount =
+        (customer['currentPendingAmount'] as num?)?.toDouble() ?? 0.0;
+
+    Navigator.push(
+      context,
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            CustomerTransactionsPage(
               customerId: customerId,
               customerLocalId: localId,
               customerName: fullName.isNotEmpty ? fullName : 'Customer',
