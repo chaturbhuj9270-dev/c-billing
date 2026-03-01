@@ -232,7 +232,12 @@ class _EventOrderScreenState extends State<EventOrderScreen>
   void _selectCustomer(CustomerEntity customer) {
     setState(() {
       _selectedCustomer = customer;
-      _selectedCustomerId = customer.id.toString();
+      // Use serverId if available, otherwise use local ID
+      // This ensures consistency with how customers are identified in finance page
+      _selectedCustomerId = customer.serverId ?? customer.id.toString();
+      debugPrint(
+        '[EventOrderScreen] Selected customer - serverId: ${customer.serverId}, localId: ${customer.id}, using: $_selectedCustomerId',
+      );
       _customerNameController.text = customer.name;
       _customerContactController.text = customer.mobile;
       _customerAddressController.text = customer.address ?? '';

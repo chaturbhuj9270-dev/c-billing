@@ -60,16 +60,27 @@ class _CustomerFinancePageState extends State<CustomerFinancePage>
     setState(() => _isLoading = true);
 
     try {
+      debugPrint(
+        '[CustomerFinance] Loading data for customerId: ${widget.customerId}, localId: ${widget.customerLocalId}',
+      );
+
       // Load bills for this customer (try serverId first, then local id)
       List<BillEntity> bills = await BillOfflineController.instance
           .getBillsByCustomerId(widget.customerId);
+      debugPrint(
+        '[CustomerFinance] Bills found with serverId: ${bills.length}',
+      );
 
       // If no bills found with serverId, try local ID
       if (bills.isEmpty &&
           widget.customerLocalId != null &&
-          widget.customerLocalId!.isNotEmpty) {
+          widget.customerLocalId!.isNotEmpty &&
+          widget.customerLocalId != widget.customerId) {
         bills = await BillOfflineController.instance.getBillsByCustomerId(
           widget.customerLocalId!,
+        );
+        debugPrint(
+          '[CustomerFinance] Bills found with localId: ${bills.length}',
         );
       }
 
@@ -77,13 +88,34 @@ class _CustomerFinancePageState extends State<CustomerFinancePage>
       List<EventOrderEntity> eventOrders = await EventOrderOfflineController
           .instance
           .getEventOrdersByCustomerId(widget.customerId);
+      debugPrint(
+        '[CustomerFinance] Events found with serverId: ${eventOrders.length}',
+      );
 
       // If no event orders found with serverId, try local ID
       if (eventOrders.isEmpty &&
           widget.customerLocalId != null &&
-          widget.customerLocalId!.isNotEmpty) {
+          widget.customerLocalId!.isNotEmpty &&
+          widget.customerLocalId != widget.customerId) {
         eventOrders = await EventOrderOfflineController.instance
             .getEventOrdersByCustomerId(widget.customerLocalId!);
+        debugPrint(
+          '[CustomerFinance] Events found with localId: ${eventOrders.length}',
+        );
+      }
+
+      // Debug: Get all event orders to see what customer IDs exist
+      if (eventOrders.isEmpty) {
+        final allOrders = await EventOrderOfflineController.instance
+            .getAllEventOrders();
+        debugPrint(
+          '[CustomerFinance] Total event orders in DB: ${allOrders.length}',
+        );
+        for (final o in allOrders) {
+          debugPrint(
+            '[CustomerFinance] Order customerId: "${o.customerId}" vs looking for: "${widget.customerId}" or "${widget.customerLocalId}"',
+          );
+        }
       }
 
       // Calculate stats

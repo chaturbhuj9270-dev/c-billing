@@ -158,6 +158,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
     return {
       'id': entity.serverId ?? 'local_${entity.id}',
       'localId': entity.id,
+      'serverId': entity.serverId, // Explicit serverId field
       'firstName': firstName,
       'lastName': lastName,
       'contact': entity.mobile,
@@ -839,9 +840,20 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
   // ━━━ CUSTOMER FINANCE/HISTORY PAGE ━━━
 
   void _openCustomerFinance(Map<String, dynamic> customer) {
-    final customerId =
-        customer['serverId'] as String? ?? customer['id']?.toString() ?? '';
-    final customerLocalId = customer['id']?.toString() ?? '';
+    // Get the explicit serverId if available
+    final serverId = customer['serverId'] as String?;
+    // Get the local integer Isar ID
+    final localId = customer['localId']?.toString() ?? '';
+
+    // Use serverId if available, otherwise use local ID
+    final customerId = (serverId != null && serverId.isNotEmpty)
+        ? serverId
+        : localId;
+
+    debugPrint(
+      '[CustomerFinance] Opening finance page - serverId: $serverId, localId: $localId, using customerId: $customerId',
+    );
+
     final firstName = customer['firstName'] as String? ?? '';
     final lastName = customer['lastName'] as String? ?? '';
     final fullName = '$firstName $lastName'.trim();
@@ -855,7 +867,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
         pageBuilder: (context, animation, secondaryAnimation) =>
             CustomerFinancePage(
               customerId: customerId,
-              customerLocalId: customerLocalId,
+              customerLocalId: localId,
               customerName: fullName.isNotEmpty ? fullName : 'Customer',
               customerContact: contact,
               currentPendingAmount: pendingAmount,
