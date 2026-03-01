@@ -84,7 +84,7 @@ class FirebaseBillRepository implements BillRepository {
           bills.sort((a, b) => b.billDate.compareTo(a.billDate));
           return bills;
         }
-        throw e;
+        rethrow;
       }
     } catch (e) {
       throw Exception('Failed to get all bills: $e');
@@ -114,7 +114,7 @@ class FirebaseBillRepository implements BillRepository {
           bills.sort((a, b) => b.billDate.compareTo(a.billDate));
           return bills;
         }
-        throw e;
+        rethrow;
       }
     } catch (e) {
       throw Exception('Failed to get bills by customer: $e');
@@ -155,7 +155,7 @@ class FirebaseBillRepository implements BillRepository {
           bills.sort((a, b) => b.billDate.compareTo(a.billDate));
           return bills;
         }
-        throw e;
+        rethrow;
       }
     } catch (e) {
       throw Exception('Failed to get bills by date range: $e');

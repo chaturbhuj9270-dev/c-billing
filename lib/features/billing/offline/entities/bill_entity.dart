@@ -6,13 +6,13 @@ part 'bill_entity.g.dart';
 enum BillSyncStatus {
   /// Newly created locally, not yet on server
   newRecord,
-  
+
   /// Modified locally after sync
   updated,
-  
+
   /// Marked for deletion, pending server delete
   deleted,
-  
+
   /// Fully synced with server
   synced,
 }
@@ -37,10 +37,13 @@ class BillItemEmbedded {
   String? productName;
   double purchasePrice;
   double sellingPrice;
-  int quantity;
+  double
+  quantity; // Changed to double to support fractional quantities (e.g., 0.5 kg)
   double subtotal;
-  int returnedQuantity;
+  double returnedQuantity; // Changed to double to match quantity type
   String? hsnCode;
+  String? unit; // Base unit (kg, ltr, pcs)
+  String? sellUnit; // Sale unit (gm, ml, kg, ltr, pcs)
 
   BillItemEmbedded({
     this.itemId,
@@ -48,10 +51,12 @@ class BillItemEmbedded {
     this.productName,
     this.purchasePrice = 0.0,
     this.sellingPrice = 0.0,
-    this.quantity = 0,
+    this.quantity = 0.0,
     this.subtotal = 0.0,
-    this.returnedQuantity = 0,
+    this.returnedQuantity = 0.0,
     this.hsnCode,
+    this.unit,
+    this.sellUnit,
   });
 
   Map<String, dynamic> toJson() {
@@ -65,6 +70,8 @@ class BillItemEmbedded {
       'subtotal': subtotal,
       'returnedQuantity': returnedQuantity,
       'hsnCode': hsnCode,
+      'unit': unit,
+      'sellUnit': sellUnit,
     };
   }
 
@@ -75,10 +82,12 @@ class BillItemEmbedded {
       productName: json['productName'] as String? ?? '',
       purchasePrice: (json['purchasePrice'] as num?)?.toDouble() ?? 0.0,
       sellingPrice: (json['sellingPrice'] as num?)?.toDouble() ?? 0.0,
-      quantity: (json['quantity'] as num?)?.toInt() ?? 0,
+      quantity: (json['quantity'] as num?)?.toDouble() ?? 0.0,
       subtotal: (json['subtotal'] as num?)?.toDouble() ?? 0.0,
-      returnedQuantity: (json['returnedQuantity'] as num?)?.toInt() ?? 0,
+      returnedQuantity: (json['returnedQuantity'] as num?)?.toDouble() ?? 0.0,
       hsnCode: json['hsnCode'] as String?,
+      unit: json['unit'] as String?,
+      sellUnit: json['sellUnit'] as String?,
     );
   }
 }
@@ -289,11 +298,13 @@ class BillEntity {
   /// Create from server response (Firestore document)
   factory BillEntity.fromServer(Map<String, dynamic> data) {
     final now = DateTime.now();
-    
+
     List<BillItemEmbedded> billItems = [];
     if (data['items'] != null) {
       billItems = (data['items'] as List)
-          .map((item) => BillItemEmbedded.fromJson(item as Map<String, dynamic>))
+          .map(
+            (item) => BillItemEmbedded.fromJson(item as Map<String, dynamic>),
+          )
           .toList();
     }
 

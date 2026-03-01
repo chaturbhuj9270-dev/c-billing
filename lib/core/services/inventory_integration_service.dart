@@ -33,12 +33,12 @@ class InventoryIntegrationService {
     required StockLedgerOfflineController ledgerController,
     required ProductOfflineController productController,
     required BillOfflineController billController,
-  })  : _fifoService = fifoService,
-        _purchaseController = purchaseController,
-        _batchController = batchController,
-        _ledgerController = ledgerController,
-        _productController = productController,
-        _billController = billController;
+  }) : _fifoService = fifoService,
+       _purchaseController = purchaseController,
+       _batchController = batchController,
+       _ledgerController = ledgerController,
+       _productController = productController,
+       _billController = billController;
 
   /// Get the singleton instance
   static InventoryIntegrationService get instance {
@@ -88,7 +88,9 @@ class InventoryIntegrationService {
     String? notes,
   }) async {
     try {
-      debugPrint('[Integration] Processing purchase: $productName, qty: $quantity');
+      debugPrint(
+        '[Integration] Processing purchase: $productName, qty: $quantity',
+      );
 
       // 1. Create PurchaseEntity (old system - for sync, history, reporting)
       final purchaseEntity = await _purchaseController.addPurchase(
@@ -130,17 +132,22 @@ class InventoryIntegrationService {
       );
 
       if (!fifoResult.success) {
-        debugPrint('[Integration] FIFO purchase failed: ${fifoResult.errorMessage}');
+        debugPrint(
+          '[Integration] FIFO purchase failed: ${fifoResult.errorMessage}',
+        );
         return IntegratedPurchaseResult.failure(
           'FIFO processing failed: ${fifoResult.errorMessage}',
         );
       }
-      debugPrint('[Integration] PurchaseBatch created: ${fifoResult.batch?.id}');
+      debugPrint(
+        '[Integration] PurchaseBatch created: ${fifoResult.batch?.id}',
+      );
 
       // 3. Update ProductEntity stock and prices
       // Only update purchasePrice to latest cost; keep salesPrice from product creation
       // Try by serverId first, then by local ID
-      final isValidServerId = productId.isNotEmpty &&
+      final isValidServerId =
+          productId.isNotEmpty &&
           !productId.startsWith('local_') &&
           productId.length >= 10;
 
@@ -222,23 +229,27 @@ class InventoryIntegrationService {
     double totalTaxAmount = 0.0,
   }) async {
     try {
-      debugPrint('[Integration] Processing bill: ${items.length} items, total: $finalAmount');
+      debugPrint(
+        '[Integration] Processing bill: ${items.length} items, total: $finalAmount',
+      );
 
       // 1. Create BillEntity
       final embeddedItems = items
-          .map((item) => BillItemEmbedded(
-                itemId: item.id.isNotEmpty
-                    ? item.id
-                    : 'item_${DateTime.now().millisecondsSinceEpoch}_${item.productId}',
-                productId: item.productId,
-                productName: item.productName,
-                purchasePrice: item.purchasePrice,
-                sellingPrice: item.sellingPrice,
-                quantity: item.quantity,
-                subtotal: item.subtotal,
-                returnedQuantity: item.returnedQuantity,
-                hsnCode: item.hsnCode,
-              ))
+          .map(
+            (item) => BillItemEmbedded(
+              itemId: item.id.isNotEmpty
+                  ? item.id
+                  : 'item_${DateTime.now().millisecondsSinceEpoch}_${item.productId}',
+              productId: item.productId,
+              productName: item.productName,
+              purchasePrice: item.purchasePrice,
+              sellingPrice: item.sellingPrice,
+              quantity: item.quantity,
+              subtotal: item.subtotal,
+              returnedQuantity: item.returnedQuantity,
+              hsnCode: item.hsnCode,
+            ),
+          )
           .toList();
 
       final billEntity = await _billController.addBill(
@@ -278,10 +289,10 @@ class InventoryIntegrationService {
       double totalProfit = 0.0;
 
       for (final item in items) {
-        // 2a. FIFO deduction from batches + ledger entries
+        // 2a. FIFO deduction from batches + ledger entries (use rounded int for stock operations)
         final saleResult = await _fifoService.processFifoSale(
           productId: item.productId,
-          quantity: item.quantity,
+          quantity: item.quantityInt, // Round for FIFO stock tracking
           sellingPrice: item.sellingPrice,
           billId: billId,
           notes: 'Bill: $billId',
@@ -289,7 +300,8 @@ class InventoryIntegrationService {
 
         if (!saleResult.success) {
           debugPrint(
-              '[Integration] Warning: FIFO sale failed for ${item.productName}: ${saleResult.errorMessage}');
+            '[Integration] Warning: FIFO sale failed for ${item.productName}: ${saleResult.errorMessage}',
+          );
           // Continue even if FIFO fails - the bill is already created
           // The stock inconsistency can be resolved later
         } else {
@@ -299,12 +311,13 @@ class InventoryIntegrationService {
           totalProfit += saleResult.totalProfit;
         }
 
-        // 2b. Update ProductEntity.currentStock
-        await _decrementProductStock(item.productId, item.quantity);
+        // 2b. Update ProductEntity.currentStock (round for stock tracking)
+        await _decrementProductStock(item.productId, item.quantityInt);
       }
 
       debugPrint(
-          '[Integration] Bill processed: COGS=$totalCOGS, Revenue=$totalRevenue, Profit=$totalProfit');
+        '[Integration] Bill processed: COGS=$totalCOGS, Revenue=$totalRevenue, Profit=$totalProfit',
+      );
 
       return IntegratedBillResult.success(
         billEntity: billEntity,
@@ -354,18 +367,25 @@ class InventoryIntegrationService {
           quantity: returnItem.returnQuantity,
           costPrice: returnItem.costPrice,
           sellingPrice: returnItem.sellingPrice,
-          returnReferenceId: 'RETURN_${billId}_${DateTime.now().millisecondsSinceEpoch}',
+          returnReferenceId:
+              'RETURN_${billId}_${DateTime.now().millisecondsSinceEpoch}',
           notes: notes ?? 'Return for bill: $billId',
         );
 
         if (!returned) {
-          debugPrint('[Integration] Warning: FIFO return failed for ${returnItem.productName}');
+          debugPrint(
+            '[Integration] Warning: FIFO return failed for ${returnItem.productName}',
+          );
         }
 
         // 2. Increment ProductEntity.currentStock
-        await _incrementProductStock(returnItem.productId, returnItem.returnQuantity);
+        await _incrementProductStock(
+          returnItem.productId,
+          returnItem.returnQuantity,
+        );
 
-        totalRefundAmount += returnItem.sellingPrice * returnItem.returnQuantity;
+        totalRefundAmount +=
+            returnItem.sellingPrice * returnItem.returnQuantity;
       }
 
       // 3. Update BillEntity with return info
@@ -394,7 +414,8 @@ class InventoryIntegrationService {
               sellingPrice: item.sellingPrice,
               quantity: item.quantity,
               subtotal: item.subtotal,
-              returnedQuantity: item.returnedQuantity + returnItem.returnQuantity,
+              returnedQuantity:
+                  item.returnedQuantity + returnItem.returnQuantity,
             );
           }
           return item;
@@ -415,9 +436,7 @@ class InventoryIntegrationService {
 
       debugPrint('[Integration] Return processed: refund=$totalRefundAmount');
 
-      return IntegratedReturnResult.success(
-        refundAmount: totalRefundAmount,
-      );
+      return IntegratedReturnResult.success(refundAmount: totalRefundAmount);
     } catch (e) {
       debugPrint('[Integration] Return failed: $e');
       return IntegratedReturnResult.failure('Failed to process return: $e');
@@ -434,9 +453,10 @@ class InventoryIntegrationService {
 
   /// Validate stock availability for bill items using FIFO data
   Future<Map<String, String>> validateStockForBill(List<BillItem> items) async {
-    return await _fifoService.validateStockForSale(
-      {for (final item in items) item.productId: item.quantity},
-    );
+    // Use rounded quantities for stock validation since stock is tracked in integers
+    return await _fifoService.validateStockForSale({
+      for (final item in items) item.productId: item.quantityInt,
+    });
   }
 
   /// Check if a product has sufficient stock
@@ -486,8 +506,9 @@ class InventoryIntegrationService {
       'totalCOGS': totalCOGS,
       'totalRevenue': totalRevenue,
       'totalProfit': totalProfit,
-      'profitMargin':
-          totalRevenue > 0 ? (totalProfit / totalRevenue * 100) : 0.0,
+      'profitMargin': totalRevenue > 0
+          ? (totalProfit / totalRevenue * 100)
+          : 0.0,
     };
   }
 
@@ -516,7 +537,8 @@ class InventoryIntegrationService {
 
         if (product.currentStock != fifoStock) {
           debugPrint(
-              '[Integration] Stock mismatch for ${product.name}: Product=${product.currentStock}, FIFO=$fifoStock. Fixing...');
+            '[Integration] Stock mismatch for ${product.name}: Product=${product.currentStock}, FIFO=$fifoStock. Fixing...',
+          );
           await _productController.updateProduct(
             id: product.id,
             currentStock: fifoStock,
@@ -524,7 +546,9 @@ class InventoryIntegrationService {
           fixedCount++;
         }
       }
-      debugPrint('[Integration] Stock sync complete. Fixed: $fixedCount products');
+      debugPrint(
+        '[Integration] Stock sync complete. Fixed: $fixedCount products',
+      );
     } catch (e) {
       debugPrint('[Integration] Stock sync failed: $e');
     }
@@ -535,7 +559,8 @@ class InventoryIntegrationService {
 
   /// Decrement product stock by server ID or local ID
   Future<void> _decrementProductStock(String productId, int quantity) async {
-    final isValidServerId = productId.isNotEmpty &&
+    final isValidServerId =
+        productId.isNotEmpty &&
         !productId.startsWith('local_') &&
         productId.length >= 10;
 
@@ -558,7 +583,8 @@ class InventoryIntegrationService {
 
   /// Increment product stock by server ID or local ID
   Future<void> _incrementProductStock(String productId, int quantity) async {
-    final isValidServerId = productId.isNotEmpty &&
+    final isValidServerId =
+        productId.isNotEmpty &&
         !productId.startsWith('local_') &&
         productId.length >= 10;
 
@@ -675,10 +701,7 @@ class IntegratedReturnResult {
   });
 
   factory IntegratedReturnResult.success({required double refundAmount}) {
-    return IntegratedReturnResult(
-      success: true,
-      refundAmount: refundAmount,
-    );
+    return IntegratedReturnResult(success: true, refundAmount: refundAmount);
   }
 
   factory IntegratedReturnResult.failure(String message) {

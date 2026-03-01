@@ -2518,7 +2518,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                hasValue ? value! : label,
+                hasValue ? value : label,
                 style: TextStyle(
                   fontFamily: 'Literata',
                   color: hasValue ? Colors.black87 : Colors.grey[600],
@@ -2598,7 +2598,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
             ),
             Switch(
               value: fieldValues[column.id] ?? false,
-              activeColor: const Color(0xFF1B4D3E),
+              activeThumbColor: const Color(0xFF1B4D3E),
               onChanged: (value) {
                 setDialogState(() => fieldValues[column.id] = value);
               },
@@ -2608,7 +2608,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
 
       case CustomColumnType.dropdown:
         return DropdownButtonFormField<String>(
-          value: fieldValues[column.id],
+          initialValue: fieldValues[column.id],
           decoration: InputDecoration(
             labelText: column.name,
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),

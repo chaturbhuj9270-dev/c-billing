@@ -27,7 +27,10 @@ class ReportService {
         _repo.getLedgerEntries(filter, type: LedgerTransactionType.PURCHASE),
         _repo.getLedgerEntries(filter, type: LedgerTransactionType.SALE),
         _repo.getLedgerEntries(filter, type: LedgerTransactionType.SALE_RETURN),
-        _repo.getLedgerEntries(filter, type: LedgerTransactionType.PURCHASE_RETURN),
+        _repo.getLedgerEntries(
+          filter,
+          type: LedgerTransactionType.PURCHASE_RETURN,
+        ),
         _repo.getAllActiveBatches(
           productId: filter.productId,
           supplierId: filter.supplierId,
@@ -42,10 +45,18 @@ class ReportService {
 
       // ── 2. Collect all product IDs ──
       final productIds = <String>{};
-      for (final e in purchaseLedgers) productIds.add(e.productId);
-      for (final e in saleLedgers) productIds.add(e.productId);
-      for (final e in saleReturnLedgers) productIds.add(e.productId);
-      for (final e in purchaseReturnLedgers) productIds.add(e.productId);
+      for (final e in purchaseLedgers) {
+        productIds.add(e.productId);
+      }
+      for (final e in saleLedgers) {
+        productIds.add(e.productId);
+      }
+      for (final e in saleReturnLedgers) {
+        productIds.add(e.productId);
+      }
+      for (final e in purchaseReturnLedgers) {
+        productIds.add(e.productId);
+      }
 
       // Include ALL batch products (not just remaining > 0) so that:
       // - Products with zero stock still appear when they had transactions
@@ -94,8 +105,7 @@ class ReportService {
       // Track which products belong to the filtered supplier
       final supplierProductIds = <String>{};
       for (final b in allBatches) {
-        final info = productInfo.putIfAbsent(
-            b.productId, () => _ProductInfo());
+        final info = productInfo.putIfAbsent(b.productId, () => _ProductInfo());
         info.productName = b.productName;
         info.companyName = b.companyName;
         info.supplierName = b.supplierName ?? '';
@@ -117,7 +127,13 @@ class ReportService {
             // Check expiring this week
             final weekEnd = now.add(Duration(days: 7 - now.weekday));
             final endOfWeek = DateTime(
-                weekEnd.year, weekEnd.month, weekEnd.day, 23, 59, 59);
+              weekEnd.year,
+              weekEnd.month,
+              weekEnd.day,
+              23,
+              59,
+              59,
+            );
             if (b.expiryDate!.isBefore(endOfWeek)) {
               info.isExpiringThisWeek = true;
             }
@@ -143,8 +159,12 @@ class ReportService {
 
       // Get returned product IDs for filtering
       final returnedProductIds = <String>{};
-      for (final e in saleReturnLedgers) returnedProductIds.add(e.productId);
-      for (final e in purchaseReturnLedgers) returnedProductIds.add(e.productId);
+      for (final e in saleReturnLedgers) {
+        returnedProductIds.add(e.productId);
+      }
+      for (final e in purchaseReturnLedgers) {
+        returnedProductIds.add(e.productId);
+      }
 
       for (final pid in productIds) {
         final pInfo = productInfo[pid];
@@ -159,8 +179,10 @@ class ReportService {
         final purchaseReturnQty = prAgg?.totalQty ?? 0;
         final returnedQty = saleReturnQty + purchaseReturnQty;
         final currentStock = pInfo?.totalRemaining ?? 0;
-        final purchasePrice = pInfo?.latestPurchasePrice ?? pAgg?.avgCostPrice ?? 0.0;
-        final sellingPrice = pInfo?.latestSellingPrice ?? sAgg?.avgSellingPrice ?? 0.0;
+        final purchasePrice =
+            pInfo?.latestPurchasePrice ?? pAgg?.avgCostPrice ?? 0.0;
+        final sellingPrice =
+            pInfo?.latestSellingPrice ?? sAgg?.avgSellingPrice ?? 0.0;
         final totalPurchaseAmt = pAgg?.totalCost ?? 0.0;
         final totalSalesAmt = sAgg?.totalRevenue ?? 0.0;
         final profit = (sAgg?.totalProfit ?? 0.0) + (srAgg?.totalProfit ?? 0.0);
@@ -169,33 +191,39 @@ class ReportService {
 
         // ── Apply advanced filters ──
         if (filter.expiredOnly && !isExpired) continue;
-        if (filter.expiringThisWeek && !isExpiringThisWeek && !isExpired) continue;
+        if (filter.expiringThisWeek && !isExpiringThisWeek && !isExpired)
+          continue;
         if (filter.returnedOnly && !returnedProductIds.contains(pid)) continue;
-        if (filter.lowStockOnly && currentStock > filter.lowStockThreshold) continue;
-        if (filter.minPrice != null && purchasePrice < filter.minPrice!) continue;
-        if (filter.maxPrice != null && purchasePrice > filter.maxPrice!) continue;
+        if (filter.lowStockOnly && currentStock > filter.lowStockThreshold)
+          continue;
+        if (filter.minPrice != null && purchasePrice < filter.minPrice!)
+          continue;
+        if (filter.maxPrice != null && purchasePrice > filter.maxPrice!)
+          continue;
 
-        rows.add(ReportProductRow(
-          productId: pid,
-          productName: pInfo?.productName ?? pAgg?.productName ?? 'Unknown',
-          companyName: pInfo?.companyName ?? pAgg?.companyName ?? '',
-          supplierName: pInfo?.supplierName ?? '',
-          purchaseQty: purchaseQty,
-          soldQty: soldQty,
-          returnedQty: returnedQty,
-          saleReturnQty: saleReturnQty,
-          purchaseReturnQty: purchaseReturnQty,
-          currentStock: currentStock,
-          purchasePrice: purchasePrice,
-          sellingPrice: sellingPrice,
-          totalPurchaseAmount: totalPurchaseAmt,
-          totalSalesAmount: totalSalesAmt,
-          profitOrLoss: profit,
-          expiryDate: pInfo?.earliestExpiry,
-          isExpired: isExpired,
-          isExpiringThisWeek: isExpiringThisWeek,
-          isLowStock: currentStock <= filter.lowStockThreshold,
-        ));
+        rows.add(
+          ReportProductRow(
+            productId: pid,
+            productName: pInfo?.productName ?? pAgg?.productName ?? 'Unknown',
+            companyName: pInfo?.companyName ?? pAgg?.companyName ?? '',
+            supplierName: pInfo?.supplierName ?? '',
+            purchaseQty: purchaseQty,
+            soldQty: soldQty,
+            returnedQty: returnedQty,
+            saleReturnQty: saleReturnQty,
+            purchaseReturnQty: purchaseReturnQty,
+            currentStock: currentStock,
+            purchasePrice: purchasePrice,
+            sellingPrice: sellingPrice,
+            totalPurchaseAmount: totalPurchaseAmt,
+            totalSalesAmount: totalSalesAmt,
+            profitOrLoss: profit,
+            expiryDate: pInfo?.earliestExpiry,
+            isExpired: isExpired,
+            isExpiringThisWeek: isExpiringThisWeek,
+            isLowStock: currentStock <= filter.lowStockThreshold,
+          ),
+        );
       }
 
       // Sort by product name

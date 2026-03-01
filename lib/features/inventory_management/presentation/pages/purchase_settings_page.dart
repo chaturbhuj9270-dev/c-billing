@@ -462,7 +462,7 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
           child: Switch(
             value: value,
             onChanged: onChanged,
-            activeColor: Colors.white,
+            activeThumbColor: Colors.white,
             activeTrackColor: const Color(0xFF1B4D3E),
             inactiveThumbColor: Colors.white,
             inactiveTrackColor: Colors.grey[300],

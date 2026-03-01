@@ -40,10 +40,30 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
 
   // Menu items with icons and colors
   final List<_MenuItem> _menuItems = [
-    _MenuItem(icon: Icons.person_rounded, label: 'Profile', route: 'Profile', color: const Color(0xFF2E7D32)),
-    _MenuItem(icon: Icons.store_rounded, label: 'Shop Details', route: 'ShopDetails', color: const Color(0xFF1976D2)),
-    _MenuItem(icon: Icons.lock_reset_rounded, label: 'Change Password', route: 'ChangePassword', color: const Color(0xFFE65100)),
-    _MenuItem(icon: Icons.language_rounded, label: 'Language', route: 'Language', color: const Color(0xFFFF6F00)),
+    _MenuItem(
+      icon: Icons.person_rounded,
+      label: 'Profile',
+      route: 'Profile',
+      color: const Color(0xFF2E7D32),
+    ),
+    _MenuItem(
+      icon: Icons.store_rounded,
+      label: 'Shop Details',
+      route: 'ShopDetails',
+      color: const Color(0xFF1976D2),
+    ),
+    _MenuItem(
+      icon: Icons.lock_reset_rounded,
+      label: 'Change Password',
+      route: 'ChangePassword',
+      color: const Color(0xFFE65100),
+    ),
+    _MenuItem(
+      icon: Icons.language_rounded,
+      label: 'Language',
+      route: 'Language',
+      color: const Color(0xFFFF6F00),
+    ),
   ];
 
   int _selectedIndex = 0;
@@ -63,13 +83,10 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
       vsync: this,
     );
 
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(-1, 0),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _slideController,
-      curve: Curves.easeOutCubic,
-    ));
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(-1, 0), end: Offset.zero).animate(
+          CurvedAnimation(parent: _slideController, curve: Curves.easeOutCubic),
+        );
 
     _fadeAnimation = Tween<double>(begin: 0, end: 1).animate(
       CurvedAnimation(
@@ -165,9 +182,11 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
       });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(enabled 
-            ? _localizations.biometricEnabled 
-            : _localizations.biometricDisabled),
+          content: Text(
+            enabled
+                ? _localizations.biometricEnabled
+                : _localizations.biometricDisabled,
+          ),
           backgroundColor: const Color(0xFF2E7D32),
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
@@ -230,19 +249,19 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
           );
           break;
         case 'Profile':
-          Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => const ProfilePage()),
-          );
+          Navigator.of(
+            context,
+          ).push(MaterialPageRoute(builder: (_) => const ProfilePage()));
           break;
         case 'ShopDetails':
-          Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => const ShopDetailsPage()),
-          );
+          Navigator.of(
+            context,
+          ).push(MaterialPageRoute(builder: (_) => const ShopDetailsPage()));
           break;
         case 'ChangePassword':
-          Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => const ChangePasswordPage()),
-          );
+          Navigator.of(
+            context,
+          ).push(MaterialPageRoute(builder: (_) => const ChangePasswordPage()));
           break;
         case 'Language':
           _showLanguageDialog();
@@ -335,10 +354,9 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
                         ),
                       );
                     }),
-                    
+
                     // Biometric Lock Toggle
-                    if (_canUseBiometrics)
-                      _buildBiometricToggle(),
+                    if (_canUseBiometrics) _buildBiometricToggle(),
                   ],
                 ),
               ),
@@ -413,9 +431,7 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
                   ),
                   child: Center(
                     child: Text(
-                      _userName.isNotEmpty
-                          ? _userName[0].toUpperCase()
-                          : 'U',
+                      _userName.isNotEmpty ? _userName[0].toUpperCase() : 'U',
                       style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
@@ -584,8 +600,8 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
-        color: _biometricLockEnabled 
-            ? biometricColor.withOpacity(0.1) 
+        color: _biometricLockEnabled
+            ? biometricColor.withOpacity(0.1)
             : Colors.transparent,
         borderRadius: BorderRadius.circular(14),
         border: _biometricLockEnabled
@@ -604,7 +620,9 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
                       colors: [biometricColor, biometricColor.withOpacity(0.7)],
                     )
                   : null,
-              color: _biometricLockEnabled ? null : biometricColor.withOpacity(0.1),
+              color: _biometricLockEnabled
+                  ? null
+                  : biometricColor.withOpacity(0.1),
               borderRadius: BorderRadius.circular(12),
               boxShadow: _biometricLockEnabled
                   ? [
@@ -627,12 +645,12 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
             child: Text(
               _localizations.biometricLock,
               style: TextStyle(
-                color: _biometricLockEnabled 
-                    ? biometricColor 
+                color: _biometricLockEnabled
+                    ? biometricColor
                     : const Color(0xFF333333),
                 fontSize: 14,
-                fontWeight: _biometricLockEnabled 
-                    ? FontWeight.w600 
+                fontWeight: _biometricLockEnabled
+                    ? FontWeight.w600
                     : FontWeight.w500,
                 fontFamily: 'Literata',
                 decoration: TextDecoration.none,
@@ -648,7 +666,7 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
                 value: _biometricLockEnabled,
                 onChanged: (value) => _toggleBiometricLock(value),
                 activeTrackColor: biometricColor.withOpacity(0.5),
-                activeColor: biometricColor,
+                activeThumbColor: biometricColor,
                 inactiveTrackColor: Colors.grey[300],
                 inactiveThumbColor: Colors.grey[400],
               ),
@@ -804,9 +822,7 @@ class _LanguageDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       title: Row(
         children: [
           Container(
@@ -823,7 +839,9 @@ class _LanguageDialog extends StatelessWidget {
           ),
           const SizedBox(width: 12),
           Text(
-            AppLocalizations(LanguageService.instance.currentLanguage).selectLanguage,
+            AppLocalizations(
+              LanguageService.instance.currentLanguage,
+            ).selectLanguage,
             style: const TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.w600,
@@ -847,19 +865,21 @@ class _LanguageDialog extends StatelessWidget {
           onPressed: () => Navigator.of(context).pop(),
           child: Text(
             AppLocalizations(LanguageService.instance.currentLanguage).cancel,
-            style: const TextStyle(
-              color: Colors.grey,
-              fontFamily: 'Literata',
-            ),
+            style: const TextStyle(color: Colors.grey, fontFamily: 'Literata'),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildLanguageOption(BuildContext context, String language, String flag, String nativeName) {
+  Widget _buildLanguageOption(
+    BuildContext context,
+    String language,
+    String flag,
+    String nativeName,
+  ) {
     final isSelected = currentLanguage == language;
-    
+
     return GestureDetector(
       onTap: () {
         Navigator.of(context).pop();
@@ -868,12 +888,12 @@ class _LanguageDialog extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
-          color: isSelected 
+          color: isSelected
               ? const Color(0xFFFF6F00).withOpacity(0.1)
               : Colors.grey.withOpacity(0.05),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected 
+            color: isSelected
                 ? const Color(0xFFFF6F00)
                 : Colors.grey.withOpacity(0.2),
             width: isSelected ? 2 : 1,
@@ -881,10 +901,7 @@ class _LanguageDialog extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Text(
-              flag,
-              style: const TextStyle(fontSize: 24),
-            ),
+            Text(flag, style: const TextStyle(fontSize: 24)),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -894,9 +911,13 @@ class _LanguageDialog extends StatelessWidget {
                     language,
                     style: TextStyle(
                       fontSize: 16,
-                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                      fontWeight: isSelected
+                          ? FontWeight.w600
+                          : FontWeight.w500,
                       fontFamily: 'Literata',
-                      color: isSelected ? const Color(0xFFFF6F00) : Colors.black87,
+                      color: isSelected
+                          ? const Color(0xFFFF6F00)
+                          : Colors.black87,
                     ),
                   ),
                   Text(
@@ -917,11 +938,7 @@ class _LanguageDialog extends StatelessWidget {
                   color: Color(0xFFFF6F00),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
-                  Icons.check,
-                  color: Colors.white,
-                  size: 16,
-                ),
+                child: const Icon(Icons.check, color: Colors.white, size: 16),
               ),
           ],
         ),
@@ -957,9 +974,7 @@ class _SettingsDialogState extends State<_SettingsDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       title: Row(
         children: [
           Container(
@@ -992,10 +1007,10 @@ class _SettingsDialogState extends State<_SettingsDialog> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: widget.canUseBiometrics 
-                  ? (_biometricEnabled 
-                      ? const Color(0xFF2E7D32).withOpacity(0.1) 
-                      : Colors.grey.withOpacity(0.05))
+              color: widget.canUseBiometrics
+                  ? (_biometricEnabled
+                        ? const Color(0xFF2E7D32).withOpacity(0.1)
+                        : Colors.grey.withOpacity(0.05))
                   : Colors.grey.withOpacity(0.1),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
@@ -1029,21 +1044,27 @@ class _SettingsDialogState extends State<_SettingsDialog> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        AppLocalizations(LanguageService.instance.currentLanguage).biometricLock,
+                        AppLocalizations(
+                          LanguageService.instance.currentLanguage,
+                        ).biometricLock,
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
                           fontFamily: 'Literata',
-                          color: widget.canUseBiometrics 
-                              ? Colors.black87 
+                          color: widget.canUseBiometrics
+                              ? Colors.black87
                               : Colors.grey,
                         ),
                       ),
                       const SizedBox(height: 2),
                       Text(
                         widget.canUseBiometrics
-                            ? AppLocalizations(LanguageService.instance.currentLanguage).unlockWithBiometric
-                            : AppLocalizations(LanguageService.instance.currentLanguage).biometricsNotAvailable,
+                            ? AppLocalizations(
+                                LanguageService.instance.currentLanguage,
+                              ).unlockWithBiometric
+                            : AppLocalizations(
+                                LanguageService.instance.currentLanguage,
+                              ).biometricsNotAvailable,
                         style: TextStyle(
                           fontSize: 12,
                           color: Colors.grey[600],
@@ -1063,7 +1084,7 @@ class _SettingsDialogState extends State<_SettingsDialog> {
                           widget.onBiometricToggle(value);
                         }
                       : null,
-                  activeColor: const Color(0xFF2E7D32),
+                  activeThumbColor: const Color(0xFF2E7D32),
                 ),
               ],
             ),

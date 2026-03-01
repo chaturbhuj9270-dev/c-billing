@@ -31,7 +31,6 @@ import '../widgets/shimmer_widgets.dart';
 import 'flyout_menu.dart';
 import '../../../settings/presentation/pages/logs_viewer_page.dart';
 import '../../../purchase_return/presentation/pages/purchase_return_screen.dart';
-import '../../../reports/presentation/pages/report_page.dart';
 import '../../../../common_widgets/action_menu.dart';
 
 /// High-performance dashboard page with cache-first loading
@@ -72,14 +71,15 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
   late Animation<double> _fadeAnimation;
 
   // Real data for quick insights (using offline repository for consistency)
-  final DashboardOfflineRepository _repository = DashboardOfflineRepository.instance;
+  final DashboardOfflineRepository _repository =
+      DashboardOfflineRepository.instance;
   List<Map<String, dynamic>> _upcomingPayments = [];
   List<Map<String, dynamic>> _topProducts = [];
   List<Map<String, dynamic>> _pendingPayments = [];
   List<Map<String, dynamic>> _lastDues = [];
   List<Map<String, dynamic>> _lowStockItems = [];
   bool _isLoadingExpandableData = false;
-  
+
   // Dashboard refresh subscription
   StreamSubscription<void>? _refreshSubscription;
 
@@ -87,15 +87,18 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
   void initState() {
     super.initState();
     _sessionManager = SessionManager();
-    _localizations = AppLocalizations.of(LanguageService.instance.currentLanguage);
+    _localizations = AppLocalizations.of(
+      LanguageService.instance.currentLanguage,
+    );
 
     // Listen for language changes
     LanguageService.instance.addListener(_onLanguageChanged);
-    
+
     // Listen for dashboard refresh events (when data changes in other pages)
-    _refreshSubscription = DashboardRefreshService.instance.onRefreshNeeded.listen((_) {
-      _onDataChanged();
-    });
+    _refreshSubscription = DashboardRefreshService.instance.onRefreshNeeded
+        .listen((_) {
+          _onDataChanged();
+        });
 
     // Fade animation for content
     _fadeController = AnimationController(
@@ -107,11 +110,11 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
       curve: Curves.easeOut,
     );
     _fadeController.forward();
-    
+
     // Load expandable section data
     _loadExpandableSectionData();
   }
-  
+
   /// Called when data changes in other pages (customers, suppliers, etc.)
   void _onDataChanged() {
     if (mounted) {
@@ -125,17 +128,19 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
   void _onLanguageChanged() {
     if (mounted) {
       setState(() {
-        _localizations = AppLocalizations.of(LanguageService.instance.currentLanguage);
+        _localizations = AppLocalizations.of(
+          LanguageService.instance.currentLanguage,
+        );
       });
     }
   }
-  
+
   /// Load data for all expandable sections in parallel
   Future<void> _loadExpandableSectionData() async {
     if (_isLoadingExpandableData) return;
-    
+
     setState(() => _isLoadingExpandableData = true);
-    
+
     try {
       final results = await Future.wait([
         _repository.getUpcomingPaymentDues(limit: 5),
@@ -144,7 +149,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
         _repository.getRecentPendingBills(limit: 5),
         _repository.getLowStockProducts(limit: 5),
       ]);
-      
+
       if (mounted) {
         setState(() {
           _upcomingPayments = results[0];
@@ -238,7 +243,9 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                         child: RefreshIndicator(
                           onRefresh: () async {
                             // Refresh both main stats and Quick Insights
-                            await context.read<OptimizedDashboardCubit>().refresh();
+                            await context
+                                .read<OptimizedDashboardCubit>()
+                                .refresh();
                             await _loadExpandableSectionData();
                           },
                           color: const Color(0xFF1B4D3E),
@@ -367,7 +374,9 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.2),
+                    ),
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(10),
@@ -376,7 +385,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                       width: 28,
                       height: 28,
                       fit: BoxFit.contain,
-                      errorBuilder: (_, __, ___) => const Icon(
+                      errorBuilder: (_, _, _) => const Icon(
                         Icons.business,
                         color: Colors.white,
                         size: 20,
@@ -433,34 +442,41 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                           await Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const PurchaseSettingsPage(),
+                              builder: (context) =>
+                                  const PurchaseSettingsPage(),
                             ),
                           );
                           if (mounted) setState(() {});
                         }
                       }
                     : null,
-                onReportSettingsTap: (_selectedIndex == 2 || _selectedIndex == 3 || _selectedIndex == 4)
+                onReportSettingsTap:
+                    (_selectedIndex == 2 ||
+                        _selectedIndex == 3 ||
+                        _selectedIndex == 4)
                     ? () async {
                         if (_selectedIndex == 2) {
                           await Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const BillReportSettingsPage(),
+                              builder: (context) =>
+                                  const BillReportSettingsPage(),
                             ),
                           );
                         } else if (_selectedIndex == 3) {
                           await Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const StockReportSettingsPage(),
+                              builder: (context) =>
+                                  const StockReportSettingsPage(),
                             ),
                           );
                         } else {
                           await Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const PurchaseReportSettingsPage(),
+                              builder: (context) =>
+                                  const PurchaseReportSettingsPage(),
                             ),
                           );
                         }
@@ -504,15 +520,9 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: Colors.white.withValues(alpha: 0.2),
-              ),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
             ),
-            child: Icon(
-              icon,
-              color: Colors.white,
-              size: 22,
-            ),
+            child: Icon(icon, color: Colors.white, size: 22),
           ),
         ),
       ),
@@ -564,7 +574,12 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
     );
   }
 
-  Widget _buildLanguageOption(String language, String flag, String nativeName, String currentLanguage) {
+  Widget _buildLanguageOption(
+    String language,
+    String flag,
+    String nativeName,
+    String currentLanguage,
+  ) {
     final isSelected = language == currentLanguage;
     return InkWell(
       onTap: () async {
@@ -588,12 +603,12 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
-          color: isSelected 
+          color: isSelected
               ? const Color(0xFFFF6F00).withOpacity(0.1)
               : Colors.grey.withOpacity(0.05),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected 
+            color: isSelected
                 ? const Color(0xFFFF6F00)
                 : Colors.grey.withOpacity(0.2),
             width: isSelected ? 2 : 1,
@@ -611,9 +626,13 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                     language,
                     style: TextStyle(
                       fontSize: 16,
-                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                      fontWeight: isSelected
+                          ? FontWeight.w600
+                          : FontWeight.w500,
                       fontFamily: 'Literata',
-                      color: isSelected ? const Color(0xFFFF6F00) : Colors.black87,
+                      color: isSelected
+                          ? const Color(0xFFFF6F00)
+                          : Colors.black87,
                     ),
                   ),
                   Text(
@@ -692,7 +711,11 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
             count: _upcomingPayments.length,
             icon: Icons.schedule_rounded,
             gradientColors: const [Color(0xFF4A90E2), Color(0xFF7B68EE)],
-            onTap: () => _showQuickInsightDetail(_localizations.upcomingPayments, _upcomingPayments, 'upcoming'),
+            onTap: () => _showQuickInsightDetail(
+              _localizations.upcomingPayments,
+              _upcomingPayments,
+              'upcoming',
+            ),
           ),
           const SizedBox(height: 10),
           _buildGlassyStatRow(
@@ -700,7 +723,11 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
             count: _topProducts.length,
             icon: Icons.star_rounded,
             gradientColors: const [Color(0xFFFFB74D), Color(0xFFFF9800)],
-            onTap: () => _showQuickInsightDetail(_localizations.topProducts, _topProducts, 'products'),
+            onTap: () => _showQuickInsightDetail(
+              _localizations.topProducts,
+              _topProducts,
+              'products',
+            ),
           ),
           const SizedBox(height: 10),
           _buildGlassyStatRow(
@@ -708,7 +735,11 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
             count: _pendingPayments.length,
             icon: Icons.pending_actions_rounded,
             gradientColors: const [Color(0xFFEF5350), Color(0xFFE53935)],
-            onTap: () => _showQuickInsightDetail(_localizations.pendingPayments, _pendingPayments, 'pending'),
+            onTap: () => _showQuickInsightDetail(
+              _localizations.pendingPayments,
+              _pendingPayments,
+              'pending',
+            ),
           ),
           const SizedBox(height: 10),
           _buildGlassyStatRow(
@@ -716,7 +747,11 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
             count: _lastDues.length,
             icon: Icons.receipt_long_rounded,
             gradientColors: const [Color(0xFF9575CD), Color(0xFF7E57C2)],
-            onTap: () => _showQuickInsightDetail(_localizations.lastDues, _lastDues, 'dues'),
+            onTap: () => _showQuickInsightDetail(
+              _localizations.lastDues,
+              _lastDues,
+              'dues',
+            ),
           ),
           const SizedBox(height: 10),
           _buildGlassyStatRow(
@@ -724,7 +759,11 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
             count: _lowStockItems.length,
             icon: Icons.shopping_cart_rounded,
             gradientColors: const [Color(0xFF26A69A), Color(0xFF00897B)],
-            onTap: () => _showQuickInsightDetail(_localizations.lowStockItems, _lowStockItems, 'lowstock'),
+            onTap: () => _showQuickInsightDetail(
+              _localizations.lowStockItems,
+              _lowStockItems,
+              'lowstock',
+            ),
           ),
           const SizedBox(height: 24),
           if (state is DashboardErrorState) _buildErrorBanner(state),
@@ -820,7 +859,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
       barrierColor: Colors.black54,
       barrierLabel: 'Flyout Menu',
       transitionDuration: const Duration(milliseconds: 300),
-      pageBuilder: (_, __, ___) => const SizedBox.expand(child: FlyoutMenu()),
+      pageBuilder: (_, _, _) => const SizedBox.expand(child: FlyoutMenu()),
       transitionBuilder: (context, animation, _, child) {
         return SlideTransition(
           position: Tween<Offset>(begin: const Offset(-1, 0), end: Offset.zero)
@@ -913,8 +952,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
             isLoading: isLoading,
             onTap: () => Navigator.push(
               context,
-              MaterialPageRoute(
-                  builder: (_) => const PurchaseReturnScreen()),
+              MaterialPageRoute(builder: (_) => const PurchaseReturnScreen()),
             ).then((_) => _onDataChanged()),
           ),
           const SizedBox(width: 12),
@@ -922,7 +960,9 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
             icon: Icons.trending_up_rounded,
             value: _formatCompactAmount(data.profit),
             label: 'Margin',
-            color: data.profit >= 0 ? const Color(0xFF2E7D32) : const Color(0xFFD32F2F),
+            color: data.profit >= 0
+                ? const Color(0xFF2E7D32)
+                : const Color(0xFFD32F2F),
             isLoading: isLoading,
           ),
         ],
@@ -1474,7 +1514,9 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            isProfitable ? _localizations.netProfit : _localizations.loss,
+                            isProfitable
+                                ? _localizations.netProfit
+                                : _localizations.loss,
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 11,
@@ -1764,11 +1806,28 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              _buildNavItem(0, Icons.dashboard_rounded, _localizations.dashboard),
+              _buildNavItem(
+                0,
+                Icons.dashboard_rounded,
+                _localizations.dashboard,
+              ),
               _buildNavItem(1, Icons.people_rounded, _localizations.customers),
-              _buildNavItem(2, Icons.receipt_long_rounded, _localizations.billing, isPrimary: true),
-              _buildNavItem(3, Icons.event_available_rounded, _localizations.availability),
-              _buildNavItem(4, Icons.shopping_cart_rounded, _localizations.purchase),
+              _buildNavItem(
+                2,
+                Icons.receipt_long_rounded,
+                _localizations.billing,
+                isPrimary: true,
+              ),
+              _buildNavItem(
+                3,
+                Icons.event_available_rounded,
+                _localizations.availability,
+              ),
+              _buildNavItem(
+                4,
+                Icons.shopping_cart_rounded,
+                _localizations.purchase,
+              ),
             ],
           ),
         ),
@@ -1776,9 +1835,14 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
     );
   }
 
-  Widget _buildNavItem(int index, IconData icon, String label, {bool isPrimary = false}) {
+  Widget _buildNavItem(
+    int index,
+    IconData icon,
+    String label, {
+    bool isPrimary = false,
+  }) {
     final isSelected = _selectedIndex == index;
-    
+
     // All tabs now get the same elevated, highlighted design when selected
     return Expanded(
       child: GestureDetector(
@@ -1795,7 +1859,11 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                     end: Alignment.bottomRight,
                   )
                 : null,
-            color: isSelected ? null : (isPrimary ? const Color(0xFF1B4D3E).withOpacity(0.08) : Colors.transparent),
+            color: isSelected
+                ? null
+                : (isPrimary
+                      ? const Color(0xFF1B4D3E).withOpacity(0.08)
+                      : Colors.transparent),
             borderRadius: BorderRadius.circular(12),
             boxShadow: isSelected
                 ? [
@@ -1813,7 +1881,9 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
             children: [
               Icon(
                 icon,
-                color: isSelected ? Colors.white : (isPrimary ? const Color(0xFF1B4D3E) : Colors.grey[600]),
+                color: isSelected
+                    ? Colors.white
+                    : (isPrimary ? const Color(0xFF1B4D3E) : Colors.grey[600]),
                 size: isSelected ? 22 : 20,
               ),
               const SizedBox(height: 3),
@@ -1823,7 +1893,11 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  color: isSelected ? Colors.white : (isPrimary ? const Color(0xFF1B4D3E) : Colors.grey[600]),
+                  color: isSelected
+                      ? Colors.white
+                      : (isPrimary
+                            ? const Color(0xFF1B4D3E)
+                            : Colors.grey[600]),
                   fontSize: isSelected ? 9 : 8,
                   fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                   fontFamily: 'Literata',
@@ -1918,7 +1992,10 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                 ),
                 // Count badge on right
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
@@ -1959,11 +2036,15 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
     );
   }
 
-  void _showQuickInsightDetail(String title, List<Map<String, dynamic>> data, String type) {
+  void _showQuickInsightDetail(
+    String title,
+    List<Map<String, dynamic>> data,
+    String type,
+  ) {
     // Get icon and gradient colors based on type
     IconData icon;
     List<Color> gradientColors;
-    
+
     switch (type) {
       case 'upcoming':
         icon = Icons.schedule_rounded;
@@ -1989,7 +2070,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
         icon = Icons.info_outline;
         gradientColors = [const Color(0xFF667eea), const Color(0xFF764ba2)];
     }
-    
+
     showGeneralDialog(
       context: context,
       barrierDismissible: true,
@@ -2005,7 +2086,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
           curve: Curves.easeOutBack,
           reverseCurve: Curves.easeInBack,
         );
-        
+
         return ScaleTransition(
           scale: Tween<double>(begin: 0.8, end: 1.0).animate(curvedAnimation),
           child: FadeTransition(
@@ -2014,7 +2095,10 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
               child: Material(
                 type: MaterialType.transparency,
                 child: Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 60),
+                  margin: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 60,
+                  ),
                   constraints: BoxConstraints(
                     maxHeight: MediaQuery.of(context).size.height * 0.7,
                     maxWidth: 400,
@@ -2047,144 +2131,163 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                           ],
                         ),
                         child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          // Header with gradient
-                          Container(
-                            padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                                colors: [
-                                  Colors.white.withValues(alpha: 0.08),
-                                  Colors.white.withValues(alpha: 0.03),
-                                ],
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // Header with gradient
+                            Container(
+                              padding: const EdgeInsets.fromLTRB(
+                                20,
+                                20,
+                                20,
+                                16,
                               ),
-                              borderRadius: const BorderRadius.vertical(
-                                top: Radius.circular(28),
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: [
+                                    Colors.white.withValues(alpha: 0.08),
+                                    Colors.white.withValues(alpha: 0.03),
+                                  ],
+                                ),
+                                borderRadius: const BorderRadius.vertical(
+                                  top: Radius.circular(28),
+                                ),
                               ),
-                            ),
-                            child: Row(
-                              children: [
-                                // Icon with gradient background
-                                Container(
-                                  width: 48,
-                                  height: 48,
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                      colors: gradientColors,
-                                    ),
-                                    borderRadius: BorderRadius.circular(14),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: gradientColors[0].withValues(alpha: 0.4),
-                                        blurRadius: 12,
-                                        offset: const Offset(0, 4),
-                                      ),
-                                    ],
-                                  ),
-                                  child: Icon(
-                                    icon,
-                                    color: Colors.white,
-                                    size: 24,
-                                  ),
-                                ),
-                                const SizedBox(width: 14),
-                                // Title and count
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        title,
-                                        style: const TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.w700,
-                                          color: Colors.white,
-                                          fontFamily: 'Literata',
-                                          letterSpacing: -0.3,
-                                          decoration: TextDecoration.none,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 2),
-                                      Text(
-                                        '${data.length} ${data.length == 1 ? 'item' : 'items'}',
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w500,
-                                          color: Colors.white.withValues(alpha: 0.7),
-                                          fontFamily: 'Literata',
-                                          decoration: TextDecoration.none,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                // Close button
-                                InkWell(
-                                  onTap: () => Navigator.of(context).pop(),
-                                  borderRadius: BorderRadius.circular(12),
-                                  child: Container(
-                                    width: 36,
-                                    height: 36,
+                              child: Row(
+                                children: [
+                                  // Icon with gradient background
+                                  Container(
+                                    width: 48,
+                                    height: 48,
                                     decoration: BoxDecoration(
-                                      color: Colors.white.withValues(alpha: 0.1),
-                                      borderRadius: BorderRadius.circular(12),
+                                      gradient: LinearGradient(
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                        colors: gradientColors,
+                                      ),
+                                      borderRadius: BorderRadius.circular(14),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: gradientColors[0].withValues(
+                                            alpha: 0.4,
+                                          ),
+                                          blurRadius: 12,
+                                          offset: const Offset(0, 4),
+                                        ),
+                                      ],
                                     ),
-                                    child: const Icon(
-                                      Icons.close_rounded,
+                                    child: Icon(
+                                      icon,
                                       color: Colors.white,
-                                      size: 20,
+                                      size: 24,
                                     ),
                                   ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          // Divider
-                          Container(
-                            height: 1,
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  Colors.transparent,
-                                  Colors.white.withValues(alpha: 0.2),
-                                  Colors.transparent,
+                                  const SizedBox(width: 14),
+                                  // Title and count
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          title,
+                                          style: const TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.w700,
+                                            color: Colors.white,
+                                            fontFamily: 'Literata',
+                                            letterSpacing: -0.3,
+                                            decoration: TextDecoration.none,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          '${data.length} ${data.length == 1 ? 'item' : 'items'}',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w500,
+                                            color: Colors.white.withValues(
+                                              alpha: 0.7,
+                                            ),
+                                            fontFamily: 'Literata',
+                                            decoration: TextDecoration.none,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  // Close button
+                                  InkWell(
+                                    onTap: () => Navigator.of(context).pop(),
+                                    borderRadius: BorderRadius.circular(12),
+                                    child: Container(
+                                      width: 36,
+                                      height: 36,
+                                      decoration: BoxDecoration(
+                                        color: Colors.white.withValues(
+                                          alpha: 0.1,
+                                        ),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: const Icon(
+                                        Icons.close_rounded,
+                                        color: Colors.white,
+                                        size: 20,
+                                      ),
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),
-                          ),
-                          // Content
-                          Flexible(
-                            child: data.isEmpty
-                                ? _buildGlassyEmptyState(gradientColors)
-                                : ListView.builder(
-                                    shrinkWrap: true,
-                                    padding: const EdgeInsets.symmetric(vertical: 8),
-                                    itemCount: data.length,
-                                    itemBuilder: (context, index) {
-                                      final item = data[index];
-                                      return _buildGlassyListItem(item, type, index, gradientColors);
-                                    },
-                                  ),
-                          ),
-                        ],
+                            // Divider
+                            Container(
+                              height: 1,
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    Colors.transparent,
+                                    Colors.white.withValues(alpha: 0.2),
+                                    Colors.transparent,
+                                  ],
+                                ),
+                              ),
+                            ),
+                            // Content
+                            Flexible(
+                              child: data.isEmpty
+                                  ? _buildGlassyEmptyState(gradientColors)
+                                  : ListView.builder(
+                                      shrinkWrap: true,
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 8,
+                                      ),
+                                      itemCount: data.length,
+                                      itemBuilder: (context, index) {
+                                        final item = data[index];
+                                        return _buildGlassyListItem(
+                                          item,
+                                          type,
+                                          index,
+                                          gradientColors,
+                                        );
+                                      },
+                                    ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
                 ),
               ),
             ),
-            ),
           ),
         );
       },
     );
   }
-  
+
   Widget _buildGlassyEmptyState(List<Color> colors) {
     return Container(
       padding: const EdgeInsets.all(40),
@@ -2198,7 +2301,10 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [colors[0].withValues(alpha: 0.3), colors[1].withValues(alpha: 0.2)],
+                colors: [
+                  colors[0].withValues(alpha: 0.3),
+                  colors[1].withValues(alpha: 0.2),
+                ],
               ),
               borderRadius: BorderRadius.circular(20),
             ),
@@ -2223,8 +2329,13 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
       ),
     );
   }
-  
-  Widget _buildGlassyListItem(Map<String, dynamic> item, String type, int index, List<Color> colors) {
+
+  Widget _buildGlassyListItem(
+    Map<String, dynamic> item,
+    String type,
+    int index,
+    List<Color> colors,
+  ) {
     switch (type) {
       case 'upcoming':
         final daysPending = (item['daysPending'] ?? 0) as int;
@@ -2254,7 +2365,8 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
           rank: index + 1,
           name: item['productName'] ?? item['name'] ?? 'Unknown',
           quantity: (item['totalQty'] ?? item['quantity'] ?? 0) as int,
-          revenue: ((item['totalAmount'] ?? item['revenue'] ?? 0) as num).toDouble(),
+          revenue: ((item['totalAmount'] ?? item['revenue'] ?? 0) as num)
+              .toDouble(),
           colors: colors,
         );
       case 'lowstock':
@@ -2268,7 +2380,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
         return const SizedBox.shrink();
     }
   }
-  
+
   Widget _buildGlassyUpcomingItem({
     required String customerName,
     required double amount,
@@ -2280,12 +2392,12 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: isOverdue 
+        color: isOverdue
             ? Colors.red.withValues(alpha: 0.15)
             : Colors.white.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: isOverdue 
+          color: isOverdue
               ? Colors.red.withValues(alpha: 0.3)
               : Colors.white.withValues(alpha: 0.12),
         ),
@@ -2297,7 +2409,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
             height: 40,
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: isOverdue 
+                colors: isOverdue
                     ? [Colors.red.shade400, Colors.red.shade600]
                     : colors,
               ),
@@ -2330,11 +2442,13 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                   daysPending == 0
                       ? 'Due today'
                       : daysPending == 1
-                          ? '1 day overdue'
-                          : '$daysPending days overdue',
+                      ? '1 day overdue'
+                      : '$daysPending days overdue',
                   style: TextStyle(
                     fontSize: 11,
-                    color: isOverdue ? Colors.red[300] : Colors.white.withValues(alpha: 0.6),
+                    color: isOverdue
+                        ? Colors.red[300]
+                        : Colors.white.withValues(alpha: 0.6),
                     fontWeight: FontWeight.w500,
                     fontFamily: 'Literata',
                     decoration: TextDecoration.none,
@@ -2347,7 +2461,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: isOverdue 
+                colors: isOverdue
                     ? [Colors.red.shade400, Colors.red.shade600]
                     : colors,
               ),
@@ -2368,7 +2482,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
       ),
     );
   }
-  
+
   Widget _buildGlassyPaymentItem({
     required String customerName,
     required double amount,
@@ -2433,7 +2547,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
       ),
     );
   }
-  
+
   Widget _buildGlassyDuesItem({
     required String customerName,
     required double amount,
@@ -2515,7 +2629,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
       ),
     );
   }
-  
+
   Widget _buildGlassyProductItem({
     required int rank,
     required String name,
@@ -2573,7 +2687,11 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                 ),
                 Row(
                   children: [
-                    Icon(Icons.shopping_bag_outlined, size: 12, color: Colors.white.withValues(alpha: 0.6)),
+                    Icon(
+                      Icons.shopping_bag_outlined,
+                      size: 12,
+                      color: Colors.white.withValues(alpha: 0.6),
+                    ),
                     const SizedBox(width: 4),
                     Text(
                       '$quantity sold',
@@ -2611,7 +2729,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
       ),
     );
   }
-  
+
   Widget _buildGlassyLowStockItem({
     required String name,
     required int currentStock,
@@ -2619,18 +2737,20 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
     required List<Color> colors,
   }) {
     final isOutOfStock = currentStock == 0;
-    final stockPercent = minStock > 0 ? (currentStock / minStock * 100).clamp(0, 100) : 0;
-    
+    final stockPercent = minStock > 0
+        ? (currentStock / minStock * 100).clamp(0, 100)
+        : 0;
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: isOutOfStock 
+        color: isOutOfStock
             ? Colors.red.withValues(alpha: 0.15)
             : Colors.white.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: isOutOfStock 
+          color: isOutOfStock
               ? Colors.red.withValues(alpha: 0.3)
               : Colors.white.withValues(alpha: 0.12),
         ),
@@ -2642,7 +2762,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
             height: 40,
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: isOutOfStock 
+                colors: isOutOfStock
                     ? [Colors.red.shade400, Colors.red.shade600]
                     : colors,
               ),
@@ -2692,7 +2812,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: isOutOfStock 
+                colors: isOutOfStock
                     ? [Colors.red.shade400, Colors.red.shade600]
                     : colors,
               ),

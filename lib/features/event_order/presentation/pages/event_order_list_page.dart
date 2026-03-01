@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
@@ -46,7 +45,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
   OrderStatus? _selectedStatus;
   OrderType? _selectedType;
   String? _processingOrderId;
-  
+
   // Date filter
   DateFilter _selectedDateFilter = DateFilter.thisWeek;
   DateTime? _customStartDate;
@@ -72,14 +71,16 @@ class _EventOrderListPageState extends State<EventOrderListPage>
   void _initSyncService() {
     // Initialize sync service
     EventOrderSyncService.instance.initialize();
-    
+
     // Load initial unsynced count
     _loadUnsyncedCount();
-    
+
     // Listen for offline controller changes
     _offlineControllerListener = () => _loadUnsyncedCount();
-    EventOrderOfflineController.instance.addListener(_offlineControllerListener!);
-    
+    EventOrderOfflineController.instance.addListener(
+      _offlineControllerListener!,
+    );
+
     // Also listen for sync service changes
     EventOrderSyncService.instance.addListener(_loadUnsyncedCount);
   }
@@ -95,7 +96,9 @@ class _EventOrderListPageState extends State<EventOrderListPage>
   void dispose() {
     _searchController.dispose();
     if (_offlineControllerListener != null) {
-      EventOrderOfflineController.instance.removeListener(_offlineControllerListener!);
+      EventOrderOfflineController.instance.removeListener(
+        _offlineControllerListener!,
+      );
     }
     EventOrderSyncService.instance.removeListener(_loadUnsyncedCount);
     super.dispose();
@@ -104,7 +107,8 @@ class _EventOrderListPageState extends State<EventOrderListPage>
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => EventOrderCubit()..loadEventOrders(filterType: _selectedType),
+      create: (_) =>
+          EventOrderCubit()..loadEventOrders(filterType: _selectedType),
       child: Builder(
         builder: (context) => Scaffold(
           backgroundColor: const Color(0xFFF8F9FC),
@@ -138,8 +142,9 @@ class _EventOrderListPageState extends State<EventOrderListPage>
             color: _primaryColor.withOpacity(0.1),
             borderRadius: BorderRadius.circular(10),
           ),
-          child: const Icon(Icons.arrow_back_ios_new, 
-            color: _primaryColor, 
+          child: const Icon(
+            Icons.arrow_back_ios_new,
+            color: _primaryColor,
             size: 18,
           ),
         ),
@@ -165,7 +170,10 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                           ),
                         ),
                         SizedBox(width: 12),
-                        Text('Syncing...', style: TextStyle(fontFamily: 'Literata')),
+                        Text(
+                          'Syncing...',
+                          style: TextStyle(fontFamily: 'Literata'),
+                        ),
                       ],
                     ),
                     backgroundColor: _primaryColor,
@@ -206,7 +214,8 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                   color: _primaryColor.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Icon(Icons.summarize_rounded, 
+                child: Icon(
+                  Icons.summarize_rounded,
                   color: state is EventOrderLoaded && state.orders.isNotEmpty
                       ? _primaryColor
                       : Colors.grey,
@@ -230,8 +239,9 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                   color: _primaryColor.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(Icons.refresh_rounded, 
-                  color: _primaryColor, 
+                child: const Icon(
+                  Icons.refresh_rounded,
+                  color: _primaryColor,
                   size: 20,
                 ),
               ),
@@ -247,8 +257,9 @@ class _EventOrderListPageState extends State<EventOrderListPage>
               color: _primaryColor.withOpacity(0.1),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: const Icon(Icons.settings_rounded, 
-              color: _primaryColor, 
+            child: const Icon(
+              Icons.settings_rounded,
+              color: _primaryColor,
               size: 20,
             ),
           ),
@@ -283,17 +294,19 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                             colors: _selectedType == OrderType.salesOrder
                                 ? [_salesColor, _salesColor.withOpacity(0.7)]
                                 : _selectedType == OrderType.event
-                                    ? [_eventColor, _eventColor.withOpacity(0.7)]
-                                    : [_primaryColor, _primaryDark],
+                                ? [_eventColor, _eventColor.withOpacity(0.7)]
+                                : [_primaryColor, _primaryDark],
                           ),
                           borderRadius: BorderRadius.circular(12),
                           boxShadow: [
                             BoxShadow(
-                              color: (_selectedType == OrderType.salesOrder 
-                                  ? _salesColor 
-                                  : _selectedType == OrderType.event 
-                                      ? _eventColor 
-                                      : _primaryColor).withOpacity(0.3),
+                              color:
+                                  (_selectedType == OrderType.salesOrder
+                                          ? _salesColor
+                                          : _selectedType == OrderType.event
+                                          ? _eventColor
+                                          : _primaryColor)
+                                      .withOpacity(0.3),
                               blurRadius: 8,
                               offset: const Offset(0, 4),
                             ),
@@ -316,8 +329,8 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                               _selectedType == OrderType.event
                                   ? 'Events'
                                   : _selectedType == OrderType.salesOrder
-                                      ? 'Sales Orders'
-                                      : 'Events & Orders',
+                                  ? 'Sales Orders'
+                                  : 'Events & Orders',
                               style: const TextStyle(
                                 fontFamily: 'Literata',
                                 fontSize: 22,
@@ -330,8 +343,8 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                               _selectedType == OrderType.event
                                   ? 'Manage your events'
                                   : _selectedType == OrderType.salesOrder
-                                      ? 'Manage your sales orders'
-                                      : 'Manage your events and sales orders',
+                                  ? 'Manage your sales orders'
+                                  : 'Manage your events and sales orders',
                               style: TextStyle(
                                 fontFamily: 'Literata',
                                 fontSize: 12,
@@ -364,10 +377,18 @@ class _EventOrderListPageState extends State<EventOrderListPage>
         if (state is EventOrderLoaded) {
           final orders = state.orders;
           totalOrders = orders.length;
-          eventCount = orders.where((o) => o.orderType == OrderType.event).length;
-          salesCount = orders.where((o) => o.orderType == OrderType.salesOrder).length;
-          pendingCount = orders.where((o) => o.status == OrderStatus.pending).length;
-          confirmedCount = orders.where((o) => o.status == OrderStatus.confirmed).length;
+          eventCount = orders
+              .where((o) => o.orderType == OrderType.event)
+              .length;
+          salesCount = orders
+              .where((o) => o.orderType == OrderType.salesOrder)
+              .length;
+          pendingCount = orders
+              .where((o) => o.status == OrderStatus.pending)
+              .length;
+          confirmedCount = orders
+              .where((o) => o.status == OrderStatus.confirmed)
+              .length;
         }
 
         return Container(
@@ -412,7 +433,8 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                   icon: Icons.shopping_bag_rounded,
                   gradient: [_salesColor, const Color(0xFF64B5F6)],
                   isActive: _selectedType == OrderType.salesOrder,
-                  onTap: () => _onTypeFilterChanged(context, OrderType.salesOrder),
+                  onTap: () =>
+                      _onTypeFilterChanged(context, OrderType.salesOrder),
                 ),
                 const SizedBox(width: 10),
                 _buildStatCard(
@@ -421,7 +443,8 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                   icon: Icons.schedule_rounded,
                   gradient: [Colors.orange, Colors.orangeAccent],
                   isActive: _selectedStatus == OrderStatus.pending,
-                  onTap: () => _onStatusFilterChanged(context, OrderStatus.pending),
+                  onTap: () =>
+                      _onStatusFilterChanged(context, OrderStatus.pending),
                 ),
                 const SizedBox(width: 10),
                 _buildStatCard(
@@ -430,7 +453,8 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                   icon: Icons.check_circle_rounded,
                   gradient: [Colors.green, Colors.lightGreen],
                   isActive: _selectedStatus == OrderStatus.confirmed,
-                  onTap: () => _onStatusFilterChanged(context, OrderStatus.confirmed),
+                  onTap: () =>
+                      _onStatusFilterChanged(context, OrderStatus.confirmed),
                 ),
               ],
             ),
@@ -480,11 +504,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
         ),
         child: Column(
           children: [
-            Icon(
-              icon,
-              color: isActive ? Colors.white : gradient[0],
-              size: 20,
-            ),
+            Icon(icon, color: isActive ? Colors.white : gradient[0], size: 20),
             const SizedBox(height: 8),
             Text(
               value.toString(),
@@ -500,7 +520,9 @@ class _EventOrderListPageState extends State<EventOrderListPage>
               title,
               style: TextStyle(
                 fontSize: 9,
-                color: isActive ? Colors.white.withOpacity(0.85) : Colors.grey[600],
+                color: isActive
+                    ? Colors.white.withOpacity(0.85)
+                    : Colors.grey[600],
                 fontFamily: 'Literata',
                 fontWeight: FontWeight.w600,
               ),
@@ -568,7 +590,11 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                                 color: Colors.grey[200],
                                 shape: BoxShape.circle,
                               ),
-                              child: const Icon(Icons.close, size: 16, color: Colors.grey),
+                              child: const Icon(
+                                Icons.close,
+                                size: 16,
+                                color: Colors.grey,
+                              ),
                             ),
                             onPressed: () {
                               _searchController.clear();
@@ -615,13 +641,18 @@ class _EventOrderListPageState extends State<EventOrderListPage>
           // Active filters row
           BlocBuilder<EventOrderCubit, EventOrderState>(
             builder: (context, state) {
-              final allOrders = state is EventOrderLoaded ? state.orders : <EventOrder>[];
+              final allOrders = state is EventOrderLoaded
+                  ? state.orders
+                  : <EventOrder>[];
               final filteredOrders = _filterOrdersByDate(allOrders);
               final itemCount = filteredOrders.length;
               return Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: _primaryColor.withOpacity(0.08),
                       borderRadius: BorderRadius.circular(20),
@@ -652,7 +683,10 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                     GestureDetector(
                       onTap: () => _onStatusFilterChanged(context, null),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.grey[100],
                           borderRadius: BorderRadius.circular(20),
@@ -702,9 +736,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
         }
 
         if (state is EventOrderError) {
-          return SliverFillRemaining(
-            child: _buildErrorState(context),
-          );
+          return SliverFillRemaining(child: _buildErrorState(context));
         }
 
         if (state is EventOrderLoaded) {
@@ -746,8 +778,8 @@ class _EventOrderListPageState extends State<EventOrderListPage>
               _selectedType == OrderType.event
                   ? Icons.celebration_rounded
                   : _selectedType == OrderType.salesOrder
-                      ? Icons.shopping_bag_rounded
-                      : Icons.event_note_rounded,
+                  ? Icons.shopping_bag_rounded
+                  : Icons.event_note_rounded,
               size: 64,
               color: _primaryColor.withOpacity(0.5),
             ),
@@ -757,8 +789,8 @@ class _EventOrderListPageState extends State<EventOrderListPage>
             _selectedType == OrderType.event
                 ? 'No events found'
                 : _selectedType == OrderType.salesOrder
-                    ? 'No sales orders found'
-                    : 'No orders found',
+                ? 'No sales orders found'
+                : 'No orders found',
             style: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w700,
@@ -883,10 +915,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                         gradient: LinearGradient(
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
-                          colors: [
-                            typeColor,
-                            typeColor.withOpacity(0.7),
-                          ],
+                          colors: [typeColor, typeColor.withOpacity(0.7)],
                         ),
                         borderRadius: BorderRadius.circular(14),
                         boxShadow: [
@@ -898,7 +927,9 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                         ],
                       ),
                       child: Icon(
-                        isEvent ? Icons.celebration_rounded : Icons.shopping_bag_rounded,
+                        isEvent
+                            ? Icons.celebration_rounded
+                            : Icons.shopping_bag_rounded,
                         color: Colors.white,
                         size: 24,
                       ),
@@ -948,7 +979,10 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                     ),
                     // Status badge
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
                         color: statusInfo['color'].withOpacity(0.12),
                         borderRadius: BorderRadius.circular(20),
@@ -984,12 +1018,19 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                   children: [
                     // Sync status badge
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
-                        color: order.isSynced ? Colors.green[50] : Colors.orange[50],
+                        color: order.isSynced
+                            ? Colors.green[50]
+                            : Colors.orange[50],
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: order.isSynced ? Colors.green[200]! : Colors.orange[200]!,
+                          color: order.isSynced
+                              ? Colors.green[200]!
+                              : Colors.orange[200]!,
                           width: 0.5,
                         ),
                       ),
@@ -997,9 +1038,13 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(
-                            order.isSynced ? Icons.cloud_done_rounded : Icons.cloud_upload_rounded,
+                            order.isSynced
+                                ? Icons.cloud_done_rounded
+                                : Icons.cloud_upload_rounded,
                             size: 14,
-                            color: order.isSynced ? Colors.green[700] : Colors.orange[700],
+                            color: order.isSynced
+                                ? Colors.green[700]
+                                : Colors.orange[700],
                           ),
                           const SizedBox(width: 4),
                           Text(
@@ -1008,7 +1053,9 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                               fontSize: 11,
                               fontWeight: FontWeight.w500,
                               fontFamily: 'Literata',
-                              color: order.isSynced ? Colors.green[700] : Colors.orange[700],
+                              color: order.isSynced
+                                  ? Colors.green[700]
+                                  : Colors.orange[700],
                             ),
                           ),
                         ],
@@ -1084,7 +1131,9 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                         child: _buildAmountColumn(
                           'Due',
                           order.remainingAmount,
-                          order.remainingAmount > 0 ? Colors.orange : Colors.green,
+                          order.remainingAmount > 0
+                              ? Colors.orange
+                              : Colors.green,
                         ),
                       ),
                     ],
@@ -1263,35 +1312,17 @@ class _EventOrderListPageState extends State<EventOrderListPage>
   Map<String, dynamic> _getStatusInfo(OrderStatus status) {
     switch (status) {
       case OrderStatus.pending:
-        return {
-          'color': Colors.orange,
-          'icon': Icons.schedule_rounded,
-        };
+        return {'color': Colors.orange, 'icon': Icons.schedule_rounded};
       case OrderStatus.confirmed:
-        return {
-          'color': Colors.blue,
-          'icon': Icons.check_circle_rounded,
-        };
+        return {'color': Colors.blue, 'icon': Icons.check_circle_rounded};
       case OrderStatus.inProgress:
-        return {
-          'color': _primaryColor,
-          'icon': Icons.sync_rounded,
-        };
+        return {'color': _primaryColor, 'icon': Icons.sync_rounded};
       case OrderStatus.delivered:
-        return {
-          'color': Colors.green,
-          'icon': Icons.task_alt_rounded,
-        };
+        return {'color': Colors.green, 'icon': Icons.task_alt_rounded};
       case OrderStatus.cancelled:
-        return {
-          'color': Colors.red,
-          'icon': Icons.cancel_rounded,
-        };
+        return {'color': Colors.red, 'icon': Icons.cancel_rounded};
       case OrderStatus.convertedToBill:
-        return {
-          'color': Colors.teal,
-          'icon': Icons.receipt_long_rounded,
-        };
+        return {'color': Colors.teal, 'icon': Icons.receipt_long_rounded};
     }
   }
 
@@ -1347,7 +1378,9 @@ class _EventOrderListPageState extends State<EventOrderListPage>
           ),
           const SizedBox(width: 8),
           _buildDateFilterChip(
-            label: _selectedDateFilter == DateFilter.custom && _customStartDate != null
+            label:
+                _selectedDateFilter == DateFilter.custom &&
+                    _customStartDate != null
                 ? '${DateFormat('dd/MM').format(_customStartDate!)} - ${DateFormat('dd/MM').format(_customEndDate ?? _customStartDate!)}'
                 : 'Custom',
             filter: DateFilter.custom,
@@ -1442,7 +1475,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
               surface: Colors.white,
               onSurface: Color(0xFF1A1A2E),
             ),
-            dialogBackgroundColor: Colors.white,
+            dialogTheme: DialogThemeData(backgroundColor: Colors.white),
           ),
           child: child!,
         );
@@ -1491,9 +1524,17 @@ class _EventOrderListPageState extends State<EventOrderListPage>
         return (yearStart, yearEnd);
       case DateFilter.custom:
         if (_customStartDate != null) {
-          final start = DateTime(_customStartDate!.year, _customStartDate!.month, _customStartDate!.day);
+          final start = DateTime(
+            _customStartDate!.year,
+            _customStartDate!.month,
+            _customStartDate!.day,
+          );
           final end = _customEndDate != null
-              ? DateTime(_customEndDate!.year, _customEndDate!.month, _customEndDate!.day).add(const Duration(days: 1))
+              ? DateTime(
+                  _customEndDate!.year,
+                  _customEndDate!.month,
+                  _customEndDate!.day,
+                ).add(const Duration(days: 1))
               : start.add(const Duration(days: 1));
           return (start, end);
         }
@@ -1508,8 +1549,13 @@ class _EventOrderListPageState extends State<EventOrderListPage>
   List<EventOrder> _filterOrdersByDate(List<EventOrder> orders) {
     final (start, end) = _getDateRange();
     return orders.where((order) {
-      final orderDate = DateTime(order.eventDate.year, order.eventDate.month, order.eventDate.day);
-      return orderDate.isAfter(start.subtract(const Duration(days: 1))) && orderDate.isBefore(end);
+      final orderDate = DateTime(
+        order.eventDate.year,
+        order.eventDate.month,
+        order.eventDate.day,
+      );
+      return orderDate.isAfter(start.subtract(const Duration(days: 1))) &&
+          orderDate.isBefore(end);
     }).toList();
   }
 
@@ -1597,24 +1643,31 @@ class _EventOrderListPageState extends State<EventOrderListPage>
   }
 
   /// Show invoice preview with share/print options
-  Future<void> _showInvoicePreview(BuildContext context, EventOrder order) async {
+  Future<void> _showInvoicePreview(
+    BuildContext context,
+    EventOrder order,
+  ) async {
     if (_processingOrderId != null) {
-      debugPrint('[EventOrderList] Already processing order: $_processingOrderId, resetting...');
+      debugPrint(
+        '[EventOrderList] Already processing order: $_processingOrderId, resetting...',
+      );
       // Reset stale state and allow retry
       setState(() => _processingOrderId = null);
       _pdfService.resetGeneratingState();
     }
-    
+
     setState(() => _processingOrderId = order.id);
-    
+
     // Clear any existing snackbars first
     ScaffoldMessenger.of(context).clearSnackBars();
-    
-    debugPrint('[EventOrderList] Starting invoice preview for: ${order.orderName}');
-    
+
+    debugPrint(
+      '[EventOrderList] Starting invoice preview for: ${order.orderName}',
+    );
+
     // Track if dialog is shown to ensure proper cleanup
     bool dialogShown = false;
-    
+
     // Helper to safely close dialog
     void closeDialog() {
       if (dialogShown && mounted) {
@@ -1626,7 +1679,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
         }
       }
     }
-    
+
     // Show loading dialog instead of snackbar for better UX
     showDialog(
       context: context,
@@ -1650,10 +1703,10 @@ class _EventOrderListPageState extends State<EventOrderListPage>
       ),
     );
     dialogShown = true;
-    
+
     // Allow dialog to render
     await Future.delayed(const Duration(milliseconds: 50));
-    
+
     try {
       if (!mounted) {
         closeDialog();
@@ -1666,35 +1719,40 @@ class _EventOrderListPageState extends State<EventOrderListPage>
         shop = await ShopRepository().getShopDetails().timeout(
           const Duration(seconds: 5),
           onTimeout: () {
-            debugPrint('[EventOrderList] Shop details timeout, using empty shop');
+            debugPrint(
+              '[EventOrderList] Shop details timeout, using empty shop',
+            );
             return Shop.empty;
           },
         );
         debugPrint('[EventOrderList] Got shop: ${shop.shopName}');
       } catch (shopError) {
-        debugPrint('[EventOrderList] Shop fetch error: $shopError, using empty shop');
+        debugPrint(
+          '[EventOrderList] Shop fetch error: $shopError, using empty shop',
+        );
         shop = Shop.empty;
       }
-      
+
       if (!mounted) {
         closeDialog();
         return;
       }
-      
+
       debugPrint('[EventOrderList] Generating PDF...');
-      debugPrint('[EventOrderList] Order details - name: ${order.orderName}, type: ${order.orderType}, items: ${order.items.length}, subEvents: ${order.subEvents.length}');
-      
-      // Generate PDF document with timeout to prevent hanging
-      final pdf = await _pdfService.generateEventOrderPdf(
-        order: order,
-        shopDetails: shop,
-      ).timeout(
-        const Duration(seconds: 30),
-        onTimeout: () {
-          throw Exception('PDF generation timed out. Please try again.');
-        },
+      debugPrint(
+        '[EventOrderList] Order details - name: ${order.orderName}, type: ${order.orderType}, items: ${order.items.length}, subEvents: ${order.subEvents.length}',
       );
-      
+
+      // Generate PDF document with timeout to prevent hanging
+      final pdf = await _pdfService
+          .generateEventOrderPdf(order: order, shopDetails: shop)
+          .timeout(
+            const Duration(seconds: 30),
+            onTimeout: () {
+              throw Exception('PDF generation timed out. Please try again.');
+            },
+          );
+
       debugPrint('[EventOrderList] PDF document generated, saving bytes...');
       final pdfBytes = await pdf.save().timeout(
         const Duration(seconds: 15),
@@ -1703,7 +1761,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
         },
       );
       debugPrint('[EventOrderList] PDF bytes: ${pdfBytes.length}');
-      
+
       if (pdfBytes.isEmpty) {
         throw Exception('PDF generation failed - empty result');
       }
@@ -1715,13 +1773,13 @@ class _EventOrderListPageState extends State<EventOrderListPage>
         debugPrint('[EventOrderList] Widget not mounted, returning');
         return;
       }
-      
+
       // Reset processing state before preview
       setState(() => _processingOrderId = null);
 
       final isEvent = order.orderType == OrderType.event;
       final title = isEvent ? 'Event Invoice' : 'Order Invoice';
-      
+
       // Use Printing.layoutPdf for direct preview (more reliable)
       debugPrint('[EventOrderList] Opening PDF preview...');
       await Printing.layoutPdf(
@@ -1732,13 +1790,13 @@ class _EventOrderListPageState extends State<EventOrderListPage>
     } catch (e, stack) {
       debugPrint('[EventOrderList] ERROR generating invoice: $e');
       debugPrint('[EventOrderList] Stack trace: $stack');
-      
+
       // Close loading dialog
       closeDialog();
-      
+
       // Reset PDF service state on error
       _pdfService.resetGeneratingState();
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -1764,9 +1822,9 @@ class _EventOrderListPageState extends State<EventOrderListPage>
       setState(() => _processingOrderId = null);
       _pdfService.resetGeneratingState();
     }
-    
+
     setState(() => _processingOrderId = order.id);
-    
+
     // Show loading indicator
     ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(
@@ -1782,24 +1840,29 @@ class _EventOrderListPageState extends State<EventOrderListPage>
               ),
             ),
             SizedBox(width: 12),
-            Text('Preparing to share...', style: TextStyle(fontFamily: 'Literata')),
+            Text(
+              'Preparing to share...',
+              style: TextStyle(fontFamily: 'Literata'),
+            ),
           ],
         ),
         duration: Duration(seconds: 30),
         backgroundColor: _primaryColor,
       ),
     );
-    
+
     try {
       final shop = await ShopRepository().getShopDetails().timeout(
         const Duration(seconds: 5),
         onTimeout: () => Shop.empty,
       );
-      await _pdfService.shareOrderAsPdf(order: order, shopDetails: shop).timeout(
-        const Duration(seconds: 30),
-        onTimeout: () => throw Exception('Share timed out'),
-      );
-      
+      await _pdfService
+          .shareOrderAsPdf(order: order, shopDetails: shop)
+          .timeout(
+            const Duration(seconds: 30),
+            onTimeout: () => throw Exception('Share timed out'),
+          );
+
       // Clear loading snackbar on success
       if (mounted) {
         ScaffoldMessenger.of(context).clearSnackBars();
@@ -1829,9 +1892,9 @@ class _EventOrderListPageState extends State<EventOrderListPage>
       setState(() => _processingOrderId = null);
       _pdfService.resetGeneratingState();
     }
-    
+
     setState(() => _processingOrderId = order.id);
-    
+
     // Show loading indicator
     ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(
@@ -1847,24 +1910,29 @@ class _EventOrderListPageState extends State<EventOrderListPage>
               ),
             ),
             SizedBox(width: 12),
-            Text('Preparing to print...', style: TextStyle(fontFamily: 'Literata')),
+            Text(
+              'Preparing to print...',
+              style: TextStyle(fontFamily: 'Literata'),
+            ),
           ],
         ),
         duration: Duration(seconds: 30),
         backgroundColor: _primaryColor,
       ),
     );
-    
+
     try {
       final shop = await ShopRepository().getShopDetails().timeout(
         const Duration(seconds: 5),
         onTimeout: () => Shop.empty,
       );
-      await _pdfService.printOrder(order: order, shopDetails: shop).timeout(
-        const Duration(seconds: 30),
-        onTimeout: () => throw Exception('Print timed out'),
-      );
-      
+      await _pdfService
+          .printOrder(order: order, shopDetails: shop)
+          .timeout(
+            const Duration(seconds: 30),
+            onTimeout: () => throw Exception('Print timed out'),
+          );
+
       // Clear loading snackbar on success
       if (mounted) {
         ScaffoldMessenger.of(context).clearSnackBars();
@@ -1904,20 +1972,14 @@ class _EventOrderListPageState extends State<EventOrderListPage>
         ),
         content: Text(
           'Are you sure you want to delete "${order.orderName}"? This action cannot be undone.',
-          style: TextStyle(
-            fontFamily: 'Literata',
-            color: Colors.grey[700],
-          ),
+          style: TextStyle(fontFamily: 'Literata', color: Colors.grey[700]),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
             child: Text(
               'Cancel',
-              style: TextStyle(
-                fontFamily: 'Literata',
-                color: Colors.grey[600],
-              ),
+              style: TextStyle(fontFamily: 'Literata', color: Colors.grey[600]),
             ),
           ),
           ElevatedButton(
@@ -1952,9 +2014,12 @@ class _EventOrderListPageState extends State<EventOrderListPage>
   }
 
   /// Show report generation bottom sheet
-  void _showReportBottomSheet(BuildContext context, List<EventOrder> allOrders) {
+  void _showReportBottomSheet(
+    BuildContext context,
+    List<EventOrder> allOrders,
+  ) {
     final filteredOrders = _filterOrdersByDate(allOrders);
-    
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -2006,8 +2071,8 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                           _selectedType == OrderType.event
                               ? 'Generate Event Report'
                               : _selectedType == OrderType.salesOrder
-                                  ? 'Generate Order Report'
-                                  : 'Generate Report',
+                              ? 'Generate Order Report'
+                              : 'Generate Report',
                           style: const TextStyle(
                             fontFamily: 'Literata',
                             fontSize: 18,
@@ -2037,17 +2102,11 @@ class _EventOrderListPageState extends State<EventOrderListPage>
               decoration: BoxDecoration(
                 color: _primaryColor.withOpacity(0.08),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: _primaryColor.withOpacity(0.2),
-                ),
+                border: Border.all(color: _primaryColor.withOpacity(0.2)),
               ),
               child: Row(
                 children: [
-                  Icon(
-                    _getDateFilterIcon(),
-                    color: _primaryColor,
-                    size: 22,
-                  ),
+                  Icon(_getDateFilterIcon(), color: _primaryColor, size: 22),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
@@ -2063,7 +2122,11 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                           ),
                         ),
                         Text(
-                          '${filteredOrders.length} ${_selectedType == OrderType.event ? 'events' : _selectedType == OrderType.salesOrder ? 'orders' : 'items'} will be included',
+                          '${filteredOrders.length} ${_selectedType == OrderType.event
+                              ? 'events'
+                              : _selectedType == OrderType.salesOrder
+                              ? 'orders'
+                              : 'items'} will be included',
                           style: TextStyle(
                             fontFamily: 'Literata',
                             fontSize: 12,
@@ -2092,21 +2155,13 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                     'Rs. ${_formatAmount(filteredOrders.fold(0.0, (sum, o) => sum + o.totalAmount))}',
                     Colors.green,
                   ),
-                  Container(
-                    height: 30,
-                    width: 1,
-                    color: Colors.grey[300],
-                  ),
+                  Container(height: 30, width: 1, color: Colors.grey[300]),
                   _buildReportSummaryItem(
                     'Advance',
                     'Rs. ${_formatAmount(filteredOrders.fold(0.0, (sum, o) => sum + o.advanceAmount))}',
                     Colors.blue,
                   ),
-                  Container(
-                    height: 30,
-                    width: 1,
-                    color: Colors.grey[300],
-                  ),
+                  Container(height: 30, width: 1, color: Colors.grey[300]),
                   _buildReportSummaryItem(
                     'Due',
                     'Rs. ${_formatAmount(filteredOrders.fold(0.0, (sum, o) => sum + o.remainingAmount))}',
@@ -2225,7 +2280,9 @@ class _EventOrderListPageState extends State<EventOrderListPage>
       case DateFilter.custom:
         if (_customStartDate != null) {
           final start = DateFormat('dd/MM').format(_customStartDate!);
-          final end = DateFormat('dd/MM').format(_customEndDate ?? _customStartDate!);
+          final end = DateFormat(
+            'dd/MM',
+          ).format(_customEndDate ?? _customStartDate!);
           return '$start - $end';
         }
         return 'Custom';
@@ -2264,31 +2321,35 @@ class _EventOrderListPageState extends State<EventOrderListPage>
       final filterDesc = _getDateFilterLabel();
 
       // Generate PDF bytes with timeout
-      final pdfBytes = await EventOrderReportPdfGenerator.generate(
-        orders: orders,
-        filterDescription: filterDesc,
-        isEventReport: isEvent,
-      ).timeout(
-        const Duration(seconds: 45),
-        onTimeout: () {
-          throw Exception('Report generation timed out. Please try again with fewer orders.');
-        },
-      );
-      
+      final pdfBytes =
+          await EventOrderReportPdfGenerator.generate(
+            orders: orders,
+            filterDescription: filterDesc,
+            isEventReport: isEvent,
+          ).timeout(
+            const Duration(seconds: 45),
+            onTimeout: () {
+              throw Exception(
+                'Report generation timed out. Please try again with fewer orders.',
+              );
+            },
+          );
+
       if (pdfBytes.isEmpty) {
         throw Exception('Report generation failed - empty result');
       }
 
       // Save to file with timeout
-      final file = await EventOrderReportPdfGenerator.saveToFile(
-        pdfBytes,
-        isEvent: isEvent,
-      ).timeout(
-        const Duration(seconds: 15),
-        onTimeout: () {
-          throw Exception('Failed to save report file');
-        },
-      );
+      final file =
+          await EventOrderReportPdfGenerator.saveToFile(
+            pdfBytes,
+            isEvent: isEvent,
+          ).timeout(
+            const Duration(seconds: 15),
+            onTimeout: () {
+              throw Exception('Failed to save report file');
+            },
+          );
 
       // Clear snackbar
       if (mounted) {

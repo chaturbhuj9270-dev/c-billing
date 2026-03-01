@@ -51,10 +51,12 @@ class _ReturnBillPageState extends State<ReturnBillPage>
   bool _isProcessing = false;
   String? _errorMessage;
   String? _successMessage;
-  bool _hasReturnProcessed = false; // Track if any return was successfully processed
+  bool _hasReturnProcessed =
+      false; // Track if any return was successfully processed
 
   // Track return quantities for each item (itemId -> quantity to return)
-  Map<String, int> _returnQuantities = {};
+  // Changed to double to support fractional quantities (e.g., 0.5 kg)
+  Map<String, double> _returnQuantities = {};
   late AppLocalizations _localizations;
 
   @override
@@ -96,7 +98,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
     _returnQuantities = {};
     for (final item in bill.items) {
       // Default to 0 - user selects what to return
-      _returnQuantities[item.id] = 0;
+      _returnQuantities[item.id] = 0.0;
     }
   }
 
@@ -108,8 +110,8 @@ class _ReturnBillPageState extends State<ReturnBillPage>
   }
 
   /// Get total quantity selected for return
-  int get _totalReturnQuantity {
-    return _returnQuantities.values.fold(0, (sum, qty) => sum + qty);
+  double get _totalReturnQuantity {
+    return _returnQuantities.values.fold(0.0, (sum, qty) => sum + qty);
   }
 
   /// Get total refund amount based on selected quantities
@@ -117,14 +119,15 @@ class _ReturnBillPageState extends State<ReturnBillPage>
     if (_currentBill == null) return 0.0;
     double total = 0.0;
     for (final item in _currentBill!.items) {
-      final returnQty = _returnQuantities[item.id] ?? 0;
+      final returnQty = _returnQuantities[item.id] ?? 0.0;
       total += item.sellingPrice * returnQty;
     }
     return total;
   }
 
   /// Check if any items are selected for return
-  bool get _hasItemsToReturn => _totalReturnQuantity > 0;
+  bool get _hasItemsToReturn =>
+      _totalReturnQuantity > 0.001; // Small tolerance for floats
 
   Future<void> _searchBill() async {
     if (!_formKey.currentState!.validate()) return;
@@ -139,10 +142,10 @@ class _ReturnBillPageState extends State<ReturnBillPage>
 
     try {
       final query = _searchController.text.trim();
-      
+
       // Use offline controller for searching
       final results = await BillOfflineController.instance.searchBills(query);
-      
+
       if (mounted) {
         setState(() {
           _isSearching = false;
@@ -166,29 +169,33 @@ class _ReturnBillPageState extends State<ReturnBillPage>
     }
   }
 
-  void _updateReturnQuantity(String itemId, int quantity) {
+  void _updateReturnQuantity(String itemId, double quantity) {
     if (_currentBill == null) return;
-    
+
     // Find the item to validate quantity
     final item = _currentBill!.items.firstWhere(
       (i) => i.id == itemId,
       orElse: () => _currentBill!.items.first,
     );
-    
+
     // Validate: quantity cannot be negative
     if (quantity < 0) {
-      quantity = 0;
+      quantity = 0.0;
     }
-    
+
     // Validate: quantity cannot exceed remaining (sold - already returned)
     final maxReturnableQty = item.remainingQuantity;
-    if (quantity > maxReturnableQty) {
+    if (quantity > maxReturnableQty + 0.001) {
+      // Small tolerance for floats
       quantity = maxReturnableQty;
       // Show a message if user tries to exceed
+      final displayMax = maxReturnableQty == maxReturnableQty.roundToDouble()
+          ? maxReturnableQty.toInt().toString()
+          : maxReturnableQty.toStringAsFixed(2);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Cannot return more than $maxReturnableQty units (sold qty: ${item.quantity}, already returned: ${item.returnedQuantity})',
+            'Cannot return more than $displayMax units (sold qty: ${item.quantity.toStringAsFixed(item.quantity == item.quantity.roundToDouble() ? 0 : 2)}, already returned: ${item.returnedQuantity.toStringAsFixed(item.returnedQuantity == item.returnedQuantity.roundToDouble() ? 0 : 2)})',
           ),
           backgroundColor: Colors.orange,
           duration: const Duration(seconds: 2),
@@ -196,7 +203,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
         ),
       );
     }
-    
+
     setState(() {
       _returnQuantities[itemId] = quantity;
     });
@@ -215,7 +222,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
     if (_currentBill == null) return;
     setState(() {
       for (final item in _currentBill!.items) {
-        _returnQuantities[item.id] = 0;
+        _returnQuantities[item.id] = 0.0;
       }
     });
   }
@@ -239,18 +246,22 @@ class _ReturnBillPageState extends State<ReturnBillPage>
 
   Future<void> _processReturn() async {
     if (_currentBill == null || !_hasItemsToReturn) {
-      debugPrint('[ReturnBill] Cannot process: currentBill=${_currentBill != null}, hasItems=$_hasItemsToReturn');
+      debugPrint(
+        '[ReturnBill] Cannot process: currentBill=${_currentBill != null}, hasItems=$_hasItemsToReturn',
+      );
       return;
     }
 
     // Validate all return quantities before processing
     for (final item in _currentBill!.items) {
-      final returnQty = _returnQuantities[item.id] ?? 0;
-      if (returnQty > item.remainingQuantity) {
+      final returnQty = _returnQuantities[item.id] ?? 0.0;
+      if (returnQty > item.remainingQuantity + 0.001) {
+        // Small tolerance for floats
         setState(() {
-          _errorMessage = 'Cannot return more than sold quantity for "${item.productName}". '
-              'Sold: ${item.quantity}, Already returned: ${item.returnedQuantity}, '
-              'Max returnable: ${item.remainingQuantity}';
+          _errorMessage =
+              'Cannot return more than sold quantity for "${item.productName}". '
+              'Sold: ${item.quantity.toStringAsFixed(item.quantity == item.quantity.roundToDouble() ? 0 : 2)}, Already returned: ${item.returnedQuantity.toStringAsFixed(item.returnedQuantity == item.returnedQuantity.roundToDouble() ? 0 : 2)}, '
+              'Max returnable: ${item.remainingQuantity.toStringAsFixed(item.remainingQuantity == item.remainingQuantity.roundToDouble() ? 0 : 2)}';
         });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -263,13 +274,16 @@ class _ReturnBillPageState extends State<ReturnBillPage>
       }
       if (returnQty < 0) {
         setState(() {
-          _errorMessage = 'Return quantity cannot be negative for "${item.productName}"';
+          _errorMessage =
+              'Return quantity cannot be negative for "${item.productName}"';
         });
         return;
       }
     }
 
-    debugPrint('[ReturnBill] Starting return process for bill: ${_currentBill!.id}');
+    debugPrint(
+      '[ReturnBill] Starting return process for bill: ${_currentBill!.id}',
+    );
     debugPrint('[ReturnBill] Return quantities: $_returnQuantities');
 
     setState(() {
@@ -284,39 +298,46 @@ class _ReturnBillPageState extends State<ReturnBillPage>
         billId: _currentBill!.id,
         returnItems: _returnQuantities,
       );
-      debugPrint('[ReturnBill] BillingService result: success=${result.success}, error=${result.errorMessage}');
+      debugPrint(
+        '[ReturnBill] BillingService result: success=${result.success}, error=${result.errorMessage}',
+      );
 
       // Also process via FIFO Integration (restore batches + ledger entries + local stock)
       if (result.success) {
         try {
           final returnItemDetails = <ReturnItemDetail>[];
           for (final item in _currentBill!.items) {
-            final returnQty = _returnQuantities[item.id] ?? 0;
-            if (returnQty > 0) {
-              returnItemDetails.add(ReturnItemDetail(
-                productId: item.productId,
-                productName: item.productName,
-                returnQuantity: returnQty,
-                costPrice: item.purchasePrice,
-                sellingPrice: item.sellingPrice,
-                batchId: 'BILL_${_currentBill!.id}_${item.productId}',
-              ));
+            final returnQty = _returnQuantities[item.id] ?? 0.0;
+            if (returnQty > 0.001) {
+              // Small tolerance for floats
+              returnItemDetails.add(
+                ReturnItemDetail(
+                  productId: item.productId,
+                  productName: item.productName,
+                  returnQuantity: returnQty.round(), // Stock operations use int
+                  costPrice: item.purchasePrice,
+                  sellingPrice: item.sellingPrice,
+                  batchId: 'BILL_${_currentBill!.id}_${item.productId}',
+                ),
+              );
             }
           }
 
           if (returnItemDetails.isNotEmpty) {
             // Find the local bill ID for updating the local entity
-            final localBills = await BillOfflineController.instance.getAllBills();
+            final localBills = await BillOfflineController.instance
+                .getAllBills();
             BillEntity? localBill;
-            
+
             // First try to find by serverId
             for (final b in localBills) {
-              if (b.serverId == _currentBill!.id || b.serverId == _currentBill!.billNumber) {
+              if (b.serverId == _currentBill!.id ||
+                  b.serverId == _currentBill!.billNumber) {
                 localBill = b;
                 break;
               }
             }
-            
+
             // If not found by serverId, try matching by local ID (for offline bills)
             if (localBill == null) {
               for (final b in localBills) {
@@ -327,7 +348,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
                 }
               }
             }
-            
+
             if (localBill != null) {
               await InventoryIntegrationService.instance.processReturn(
                 billId: _currentBill!.id,
@@ -335,13 +356,19 @@ class _ReturnBillPageState extends State<ReturnBillPage>
                 returnItems: returnItemDetails,
                 notes: 'Return for bill: ${_currentBill!.billNumber}',
               );
-              debugPrint('[ReturnBill] FIFO return processed successfully for local bill ID: ${localBill.id}');
+              debugPrint(
+                '[ReturnBill] FIFO return processed successfully for local bill ID: ${localBill.id}',
+              );
             } else {
-              debugPrint('[ReturnBill] Warning: Could not find local bill for FIFO return - Firebase return still succeeded');
+              debugPrint(
+                '[ReturnBill] Warning: Could not find local bill for FIFO return - Firebase return still succeeded',
+              );
             }
           }
         } catch (e) {
-          debugPrint('[ReturnBill] FIFO return processing failed (Firebase return succeeded): $e');
+          debugPrint(
+            '[ReturnBill] FIFO return processing failed (Firebase return succeeded): $e',
+          );
           // Don't fail the whole return - Firebase already processed it
         }
       }
@@ -351,13 +378,14 @@ class _ReturnBillPageState extends State<ReturnBillPage>
           final refundAmount = result.refundAmount ?? _totalRefundAmount;
           setState(() {
             _isProcessing = false;
-            _hasReturnProcessed = true; // Mark that a return was successfully processed
+            _hasReturnProcessed =
+                true; // Mark that a return was successfully processed
             _successMessage =
                 'Return processed successfully! Refund: ₹${refundAmount.toStringAsFixed(2)}';
 
             // Update local bill state
             final updatedItems = _currentBill!.items.map((item) {
-              final returnQty = _returnQuantities[item.id] ?? 0;
+              final returnQty = _returnQuantities[item.id] ?? 0.0;
               return item.copyWith(
                 returnedQuantity: item.returnedQuantity + returnQty,
               );
@@ -381,7 +409,9 @@ class _ReturnBillPageState extends State<ReturnBillPage>
                   const Icon(Icons.check_circle, color: Colors.white),
                   const SizedBox(width: 8),
                   const Expanded(
-                    child: Text('Return processed! Print or share the receipt before leaving.'),
+                    child: Text(
+                      'Return processed! Print or share the receipt before leaving.',
+                    ),
                   ),
                 ],
               ),
@@ -396,7 +426,8 @@ class _ReturnBillPageState extends State<ReturnBillPage>
         } else {
           setState(() {
             _isProcessing = false;
-            _errorMessage = result.errorMessage ?? _localizations.failedToProcessReturn;
+            _errorMessage =
+                result.errorMessage ?? _localizations.failedToProcessReturn;
           });
         }
       }
@@ -486,7 +517,9 @@ class _ReturnBillPageState extends State<ReturnBillPage>
               children: [
                 const Icon(Icons.error_outline, color: Colors.white),
                 const SizedBox(width: 8),
-                Expanded(child: Text('${_localizations.errorPrintingBill}: $e')),
+                Expanded(
+                  child: Text('${_localizations.errorPrintingBill}: $e'),
+                ),
               ],
             ),
             backgroundColor: Colors.red,
@@ -519,9 +552,15 @@ class _ReturnBillPageState extends State<ReturnBillPage>
       final billType = prefs.getString('bill_type') ?? 'pos';
       final pw.Document pdf;
       if (billType == 'normal') {
-        pdf = await _pdfService.generateNormalBillPdf(billData: printData, shopDetails: shop);
+        pdf = await _pdfService.generateNormalBillPdf(
+          billData: printData,
+          shopDetails: shop,
+        );
       } else {
-        pdf = await _pdfService.generateBillPdf(billData: printData, shopDetails: shop);
+        pdf = await _pdfService.generateBillPdf(
+          billData: printData,
+          shopDetails: shop,
+        );
       }
 
       final bytes = await pdf.save();
@@ -530,7 +569,8 @@ class _ReturnBillPageState extends State<ReturnBillPage>
       // 4. Share via native share sheet
       await printing_pkg.Printing.sharePdf(
         bytes: bytes,
-        filename: 'return_bill_${_currentBill!.billNumber.replaceAll(RegExp(r'[^a-zA-Z0-9\-_]'), '_')}.pdf',
+        filename:
+            'return_bill_${_currentBill!.billNumber.replaceAll(RegExp(r'[^a-zA-Z0-9\-_]'), '_')}.pdf',
       );
     } catch (e) {
       // Close loading indicator only if still showing
@@ -990,7 +1030,9 @@ class _ReturnBillPageState extends State<ReturnBillPage>
                   ),
                 ),
                 child: Text(
-                  bill.returnStatus ? _localizations.returnedLabel : _localizations.active,
+                  bill.returnStatus
+                      ? _localizations.returnedLabel
+                      : _localizations.active,
                   style: TextStyle(
                     fontFamily: 'Literata',
                     fontSize: 11,
@@ -1024,7 +1066,11 @@ class _ReturnBillPageState extends State<ReturnBillPage>
             ),
             if (bill.customerContact != null) ...[
               const SizedBox(height: 12),
-              _buildDetailRow(Icons.phone, _localizations.contact, bill.customerContact!),
+              _buildDetailRow(
+                Icons.phone,
+                _localizations.contact,
+                bill.customerContact!,
+              ),
             ],
           ],
 
@@ -1348,8 +1394,8 @@ class _ReturnBillPageState extends State<ReturnBillPage>
   }
 
   Widget _buildItemRowWithQuantitySelector(item) {
-    final int remainingQty = item.remainingQuantity;
-    final int returnQty = _returnQuantities[item.id] ?? 0;
+    final double remainingQty = item.remainingQuantity;
+    final double returnQty = _returnQuantities[item.id] ?? 0.0;
     final bool isFullyReturned = item.isFullyReturned;
     final bool isPartiallyReturned = item.isPartiallyReturned;
 
@@ -1358,11 +1404,12 @@ class _ReturnBillPageState extends State<ReturnBillPage>
       decoration: BoxDecoration(
         color: isFullyReturned
             ? Colors.grey[200]
-            : returnQty > 0
+            : returnQty >
+                  0.001 // Tolerance for floats
             ? Colors.orange[50]
             : const Color(0xFFF5F6F8),
         borderRadius: BorderRadius.circular(10),
-        border: returnQty > 0
+        border: returnQty > 0.001
             ? Border.all(color: Colors.orange[300]!, width: 1.5)
             : null,
       ),
@@ -1479,7 +1526,9 @@ class _ReturnBillPageState extends State<ReturnBillPage>
                             fontFamily: 'Literata',
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
-                            color: remainingQty > 0 ? const Color(0xFF1B4D3E) : Colors.grey[500],
+                            color: remainingQty > 0
+                                ? const Color(0xFF1B4D3E)
+                                : Colors.grey[500],
                           ),
                         ),
                       ],
@@ -1734,7 +1783,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
 /// Confirmation Dialog for Return Bill
 class _ReturnConfirmationDialog extends StatelessWidget {
   final Bill bill;
-  final Map<String, int> returnQuantities;
+  final Map<String, double> returnQuantities; // Changed to double
   final double totalRefundAmount;
 
   const _ReturnConfirmationDialog({
@@ -1743,21 +1792,22 @@ class _ReturnConfirmationDialog extends StatelessWidget {
     required this.totalRefundAmount,
   });
 
-  AppLocalizations get _localizations => AppLocalizations(LanguageService.instance.currentLanguage);
+  AppLocalizations get _localizations =>
+      AppLocalizations(LanguageService.instance.currentLanguage);
 
-  int get _totalReturnQuantity {
-    return returnQuantities.values.fold(0, (sum, qty) => sum + qty);
+  double get _totalReturnQuantity {
+    return returnQuantities.values.fold(0.0, (sum, qty) => sum + qty);
   }
 
-  List<MapEntry<String, int>> get _itemsToReturn {
-    return returnQuantities.entries.where((e) => e.value > 0).toList();
+  List<MapEntry<String, double>> get _itemsToReturn {
+    return returnQuantities.entries.where((e) => e.value > 0.001).toList();
   }
 
   @override
   Widget build(BuildContext context) {
     final itemsToReturnList = bill.items.where((item) {
-      final qty = returnQuantities[item.id] ?? 0;
-      return qty > 0;
+      final qty = returnQuantities[item.id] ?? 0.0;
+      return qty > 0.001;
     }).toList();
 
     return AlertDialog(
@@ -1850,7 +1900,7 @@ class _ReturnConfirmationDialog extends StatelessWidget {
                     const SizedBox(height: 8),
                     // List of items being returned
                     ...itemsToReturnList.map((item) {
-                      final qty = returnQuantities[item.id] ?? 0;
+                      final qty = returnQuantities[item.id] ?? 0.0;
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 6),
                         child: Row(

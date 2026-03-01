@@ -7,7 +7,7 @@ import '../entities/purchase_batch_entity.dart';
 /// Implements FIFO inventory management
 class PurchaseBatchOfflineController extends ChangeNotifier {
   static PurchaseBatchOfflineController? _instance;
-  
+
   final Isar _isar;
 
   PurchaseBatchOfflineController._(this._isar);
@@ -73,7 +73,9 @@ class PurchaseBatchOfflineController extends ChangeNotifier {
       await _isar.purchaseBatchEntitys.put(batch);
     });
 
-    debugPrint('[BatchOffline] Batch added: ${batch.id}, product: ${batch.productName}, qty: ${batch.quantityPurchased}, status: NEW');
+    debugPrint(
+      '[BatchOffline] Batch added: ${batch.id}, product: ${batch.productName}, qty: ${batch.quantityPurchased}, status: NEW',
+    );
     notifyListeners();
     return batch;
   }
@@ -81,7 +83,9 @@ class PurchaseBatchOfflineController extends ChangeNotifier {
   // ==================== READ ====================
 
   /// Get all batches (excluding deleted)
-  Future<List<PurchaseBatchEntity>> getAllBatches({bool includeConsumed = false}) async {
+  Future<List<PurchaseBatchEntity>> getAllBatches({
+    bool includeConsumed = false,
+  }) async {
     if (includeConsumed) {
       return await _isar.purchaseBatchEntitys
           .filter()
@@ -100,7 +104,9 @@ class PurchaseBatchOfflineController extends ChangeNotifier {
   }
 
   /// Watch all batches for real-time updates
-  Stream<List<PurchaseBatchEntity>> watchAllBatches({bool includeConsumed = false}) {
+  Stream<List<PurchaseBatchEntity>> watchAllBatches({
+    bool includeConsumed = false,
+  }) {
     if (includeConsumed) {
       return _isar.purchaseBatchEntitys
           .filter()
@@ -182,7 +188,9 @@ class PurchaseBatchOfflineController extends ChangeNotifier {
 
   /// Get available batches for FIFO consumption
   /// Returns batches with stock, sorted by purchase date (oldest first)
-  Future<List<PurchaseBatchEntity>> getAvailableBatchesForProduct(String productId) async {
+  Future<List<PurchaseBatchEntity>> getAvailableBatchesForProduct(
+    String productId,
+  ) async {
     return await _isar.purchaseBatchEntitys
         .filter()
         .productIdEqualTo(productId)
@@ -194,7 +202,9 @@ class PurchaseBatchOfflineController extends ChangeNotifier {
   }
 
   /// Get batches by supplier
-  Future<List<PurchaseBatchEntity>> getBatchesBySupplierId(String supplierId) async {
+  Future<List<PurchaseBatchEntity>> getBatchesBySupplierId(
+    String supplierId,
+  ) async {
     return await _isar.purchaseBatchEntitys
         .filter()
         .supplierIdEqualTo(supplierId)
@@ -219,10 +229,12 @@ class PurchaseBatchOfflineController extends ChangeNotifier {
   }
 
   /// Get batches expiring soon
-  Future<List<PurchaseBatchEntity>> getBatchesExpiringSoon({int withinDays = 30}) async {
+  Future<List<PurchaseBatchEntity>> getBatchesExpiringSoon({
+    int withinDays = 30,
+  }) async {
     final now = DateTime.now();
     final deadline = now.add(Duration(days: withinDays));
-    
+
     return await _isar.purchaseBatchEntitys
         .filter()
         .expiryDateIsNotNull()
@@ -237,7 +249,7 @@ class PurchaseBatchOfflineController extends ChangeNotifier {
   /// Get expired batches
   Future<List<PurchaseBatchEntity>> getExpiredBatches() async {
     final now = DateTime.now();
-    
+
     return await _isar.purchaseBatchEntitys
         .filter()
         .expiryDateIsNotNull()
@@ -304,7 +316,8 @@ class PurchaseBatchOfflineController extends ChangeNotifier {
       expiryDate: expiryDate,
       productionDate: productionDate,
       warrantyMonths: warrantyMonths,
-      isConsumed: isConsumed ?? (quantityRemaining != null && quantityRemaining <= 0),
+      isConsumed:
+          isConsumed ?? (quantityRemaining != null && quantityRemaining <= 0),
       syncStatus: newSyncStatus,
     );
 
@@ -312,7 +325,9 @@ class PurchaseBatchOfflineController extends ChangeNotifier {
       await _isar.purchaseBatchEntitys.put(updated);
     });
 
-    debugPrint('[BatchOffline] Batch updated: $id, remaining: ${updated.quantityRemaining}, status: ${updated.syncStatus}');
+    debugPrint(
+      '[BatchOffline] Batch updated: $id, remaining: ${updated.quantityRemaining}, status: ${updated.syncStatus}',
+    );
     notifyListeners();
     return updated;
   }
@@ -328,12 +343,12 @@ class PurchaseBatchOfflineController extends ChangeNotifier {
 
     if (existing.quantityRemaining < quantity) {
       throw Exception(
-        'Insufficient stock in batch. Available: ${existing.quantityRemaining}, Requested: $quantity'
+        'Insufficient stock in batch. Available: ${existing.quantityRemaining}, Requested: $quantity',
       );
     }
 
     final newRemaining = existing.quantityRemaining - quantity;
-    
+
     return await updateBatch(
       id: id,
       quantityRemaining: newRemaining,
@@ -351,7 +366,7 @@ class PurchaseBatchOfflineController extends ChangeNotifier {
     }
 
     final newRemaining = existing.quantityRemaining + quantity;
-    
+
     return await updateBatch(
       id: id,
       quantityRemaining: newRemaining,
@@ -405,24 +420,36 @@ class PurchaseBatchOfflineController extends ChangeNotifier {
 
   /// Get total available stock by product unique key
   Future<int> getTotalStockByProductUniqueKey(String productUniqueKey) async {
-    final batches = await getBatchesByProductUniqueKey(productUniqueKey, onlyWithStock: true);
+    final batches = await getBatchesByProductUniqueKey(
+      productUniqueKey,
+      onlyWithStock: true,
+    );
     return batches.fold<int>(0, (sum, batch) => sum + batch.quantityRemaining);
   }
 
   /// Get total stock value for a product
   Future<double> getTotalStockValueByProductId(String productId) async {
     final batches = await getBatchesByProductId(productId, onlyWithStock: true);
-    return batches.fold<double>(0.0, (sum, batch) => sum + (batch.quantityRemaining * batch.purchasePrice));
+    return batches.fold<double>(
+      0.0,
+      (sum, batch) => sum + (batch.quantityRemaining * batch.purchasePrice),
+    );
   }
 
   /// Get weighted average cost for a product
   Future<double> getWeightedAverageCost(String productId) async {
     final batches = await getBatchesByProductId(productId, onlyWithStock: true);
     if (batches.isEmpty) return 0.0;
-    
-    final totalValue = batches.fold<double>(0.0, (sum, b) => sum + (b.quantityRemaining * b.purchasePrice));
-    final totalQty = batches.fold<int>(0, (sum, b) => sum + b.quantityRemaining);
-    
+
+    final totalValue = batches.fold<double>(
+      0.0,
+      (sum, b) => sum + (b.quantityRemaining * b.purchasePrice),
+    );
+    final totalQty = batches.fold<int>(
+      0,
+      (sum, b) => sum + b.quantityRemaining,
+    );
+
     return totalQty > 0 ? totalValue / totalQty : 0.0;
   }
 
@@ -430,18 +457,21 @@ class PurchaseBatchOfflineController extends ChangeNotifier {
   Future<Map<String, int>> getAllProductsWithStock() async {
     final batches = await getAllBatches(includeConsumed: false);
     final stockMap = <String, int>{};
-    
+
     for (final batch in batches) {
       final current = stockMap[batch.productId] ?? 0;
       stockMap[batch.productId] = current + batch.quantityRemaining;
     }
-    
+
     return stockMap;
   }
 
   /// Get batch count for a product
   Future<int> getBatchCountByProductId(String productId) async {
-    final batches = await getBatchesByProductId(productId, onlyWithStock: false);
+    final batches = await getBatchesByProductId(
+      productId,
+      onlyWithStock: false,
+    );
     return batches.length;
   }
 
@@ -469,7 +499,7 @@ class PurchaseBatchOfflineController extends ChangeNotifier {
     await _isar.writeTxn(() async {
       await _isar.purchaseBatchEntitys.put(updated);
     });
-    
+
     debugPrint('[BatchOffline] Batch marked as synced: $id -> $serverId');
     notifyListeners();
   }
@@ -488,15 +518,17 @@ class PurchaseBatchOfflineController extends ChangeNotifier {
   }
 
   /// Import batches from server
-  Future<void> importFromServer(List<Map<String, dynamic>> serverBatches) async {
+  Future<void> importFromServer(
+    List<Map<String, dynamic>> serverBatches,
+  ) async {
     int imported = 0;
     int skipped = 0;
     int updated = 0;
-    
+
     await _isar.writeTxn(() async {
       for (final data in serverBatches) {
         final entity = PurchaseBatchEntity.fromServer(data);
-        
+
         // 1. Check if batch already exists by serverId
         PurchaseBatchEntity? existing;
         if (entity.serverId != null && entity.serverId!.isNotEmpty) {
@@ -505,30 +537,29 @@ class PurchaseBatchOfflineController extends ChangeNotifier {
               .serverIdEqualTo(entity.serverId)
               .findFirst();
         }
-        
+
         // 2. If not found by serverId, check by business key to prevent duplicates
         //    (same product, same purchase date, same quantity, same price)
-        if (existing == null) {
-          existing = await _isar.purchaseBatchEntitys
-              .filter()
-              .productIdEqualTo(entity.productId)
-              .quantityPurchasedEqualTo(entity.quantityPurchased)
-              .purchasePriceEqualTo(entity.purchasePrice)
-              .group((q) => q
-                .purchaseDateEqualTo(entity.purchaseDate)
-                .or()
-                // Allow 2-second tolerance for date matching
-                .purchaseDateBetween(
-                  entity.purchaseDate.subtract(const Duration(seconds: 2)),
-                  entity.purchaseDate.add(const Duration(seconds: 2)),
-                )
-              )
-              .findFirst();
-        }
-        
+        existing ??= await _isar.purchaseBatchEntitys
+            .filter()
+            .productIdEqualTo(entity.productId)
+            .quantityPurchasedEqualTo(entity.quantityPurchased)
+            .purchasePriceEqualTo(entity.purchasePrice)
+            .group(
+              (q) => q
+                  .purchaseDateEqualTo(entity.purchaseDate)
+                  .or()
+                  // Allow 2-second tolerance for date matching
+                  .purchaseDateBetween(
+                    entity.purchaseDate.subtract(const Duration(seconds: 2)),
+                    entity.purchaseDate.add(const Duration(seconds: 2)),
+                  ),
+            )
+            .findFirst();
+
         if (existing != null) {
           // Update existing if server version is newer
-          if (entity.updatedAt.isAfter(existing.updatedAt) || 
+          if (entity.updatedAt.isAfter(existing.updatedAt) ||
               existing.serverId == null) {
             entity.id = existing.id;
             // Preserve server ID from incoming data
@@ -554,8 +585,10 @@ class PurchaseBatchOfflineController extends ChangeNotifier {
         }
       }
     });
-    
-    debugPrint('[BatchOffline] Import complete: $imported new, $updated updated, $skipped skipped (total ${serverBatches.length})');
+
+    debugPrint(
+      '[BatchOffline] Import complete: $imported new, $updated updated, $skipped skipped (total ${serverBatches.length})',
+    );
     notifyListeners();
   }
 
@@ -563,13 +596,13 @@ class PurchaseBatchOfflineController extends ChangeNotifier {
   /// Keeps the one with serverId (synced) or the newest one
   Future<int> deduplicateBatches() async {
     int removedCount = 0;
-    
+
     await _isar.writeTxn(() async {
       final allBatches = await _isar.purchaseBatchEntitys.where().findAll();
-      
+
       // Group batches by business key: productId + purchasePrice + quantityPurchased + purchaseDate (rounded to minute)
       final Map<String, List<PurchaseBatchEntity>> groups = {};
-      
+
       for (final batch in allBatches) {
         // Round purchase date to nearest minute to group near-identical timestamps
         final roundedDate = DateTime(
@@ -579,16 +612,17 @@ class PurchaseBatchOfflineController extends ChangeNotifier {
           batch.purchaseDate.hour,
           batch.purchaseDate.minute,
         );
-        final key = '${batch.productId}_${batch.purchasePrice}_${batch.quantityPurchased}_${roundedDate.toIso8601String()}';
-        
+        final key =
+            '${batch.productId}_${batch.purchasePrice}_${batch.quantityPurchased}_${roundedDate.toIso8601String()}';
+
         groups.putIfAbsent(key, () => []);
         groups[key]!.add(batch);
       }
-      
+
       // For each group with more than one batch, keep the best one and remove others
       for (final entry in groups.entries) {
         if (entry.value.length <= 1) continue;
-        
+
         // Sort: prefer synced (with serverId), then newest updatedAt
         entry.value.sort((a, b) {
           // Prefer one with serverId
@@ -597,7 +631,7 @@ class PurchaseBatchOfflineController extends ChangeNotifier {
           // Then prefer newest
           return b.updatedAt.compareTo(a.updatedAt);
         });
-        
+
         // Keep first (best), remove rest
         for (int i = 1; i < entry.value.length; i++) {
           await _isar.purchaseBatchEntitys.delete(entry.value[i].id);
@@ -605,12 +639,14 @@ class PurchaseBatchOfflineController extends ChangeNotifier {
         }
       }
     });
-    
+
     if (removedCount > 0) {
-      debugPrint('[BatchOffline] Deduplication removed $removedCount duplicate batches');
+      debugPrint(
+        '[BatchOffline] Deduplication removed $removedCount duplicate batches',
+      );
       notifyListeners();
     }
-    
+
     return removedCount;
   }
 

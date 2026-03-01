@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'dart:ui';
 import 'package:c_billing/core/services/inventory_service.dart';
 import 'package:c_billing/core/services/language_service.dart';
 import 'package:c_billing/core/services/dashboard_refresh_service.dart';
@@ -90,7 +89,7 @@ class _PurchasePageState extends State<PurchasePage>
   List<Map<String, dynamic>> _filteredSuppliers = [];
   List<Map<String, dynamic>> _companies = [];
   List<Map<String, dynamic>> _filteredCompanies = [];
-  
+
   // Scroll tracking for bottom button
   final ScrollController _scrollController = ScrollController();
   bool _hasScrolledToBottom = false;
@@ -143,11 +142,11 @@ class _PurchasePageState extends State<PurchasePage>
     _setupProductStream();
     _setupSupplierStream();
     _setupCompanyStream();
-    
+
     // Setup scroll listener to track when user scrolls to bottom
     _scrollController.addListener(_onScroll);
   }
-  
+
   void _onScroll() {
     if (_scrollController.hasClients) {
       final maxScroll = _scrollController.position.maxScrollExtent;
@@ -730,7 +729,10 @@ class _PurchasePageState extends State<PurchasePage>
               content: Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(8),
@@ -1064,7 +1066,7 @@ class _PurchasePageState extends State<PurchasePage>
               ),
               Switch(
                 value: currentValue,
-                activeColor: primaryColor,
+                activeThumbColor: primaryColor,
                 onChanged: (value) {
                   setDialogState(() {
                     fieldValues[column.id] = value;
@@ -1491,7 +1493,7 @@ class _PurchasePageState extends State<PurchasePage>
                           vertical: 12,
                         ),
                         itemCount: _filteredProducts.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: 8),
+                        separatorBuilder: (_, _) => const SizedBox(height: 8),
                         itemBuilder: (context, index) {
                           final product = _filteredProducts[index];
                           final isSelected = _selectedProduct?.id == product.id;
@@ -1861,7 +1863,7 @@ class _PurchasePageState extends State<PurchasePage>
                           vertical: 12,
                         ),
                         itemCount: _filteredSuppliers.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: 8),
+                        separatorBuilder: (_, _) => const SizedBox(height: 8),
                         itemBuilder: (context, index) {
                           final supplier = _filteredSuppliers[index];
                           final isSelected =
@@ -2113,7 +2115,7 @@ class _PurchasePageState extends State<PurchasePage>
                           vertical: 12,
                         ),
                         itemCount: _filteredCompanies.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: 8),
+                        separatorBuilder: (_, _) => const SizedBox(height: 8),
                         itemBuilder: (context, index) {
                           final company = _filteredCompanies[index];
                           final isSelected =
@@ -3199,7 +3201,7 @@ class _PurchasePageState extends State<PurchasePage>
       ),
     );
   }
-  
+
   /// Sticky bottom submit button
   Widget _buildStickyBottomButton() {
     return Container(

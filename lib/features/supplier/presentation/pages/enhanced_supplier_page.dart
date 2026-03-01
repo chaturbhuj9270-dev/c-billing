@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -79,20 +78,14 @@ class _EnhancedSupplierPageState extends State<EnhancedSupplierPage>
       vsync: this,
       duration: const Duration(milliseconds: 600),
     );
-    _offsetAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.05),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _animController,
-      curve: Curves.easeOutCubic,
-    ));
+    _offsetAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.05), end: Offset.zero).animate(
+          CurvedAnimation(parent: _animController, curve: Curves.easeOutCubic),
+        );
     _opacityAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _animController,
-      curve: Curves.easeOut,
-    ));
+    ).animate(CurvedAnimation(parent: _animController, curve: Curves.easeOut));
 
     _checkUserAuthentication();
     _setupIsarStream();
@@ -149,7 +142,9 @@ class _EnhancedSupplierPageState extends State<EnhancedSupplierPage>
           _suppliers = mapped;
           _isLoading = false;
         });
-        debugPrint('[EnhancedSupplier] Isar stream: ${mapped.length} suppliers');
+        debugPrint(
+          '[EnhancedSupplier] Isar stream: ${mapped.length} suppliers',
+        );
       },
       onError: (e) {
         debugPrint('[EnhancedSupplier] Isar stream error: $e');
@@ -221,20 +216,22 @@ class _EnhancedSupplierPageState extends State<EnhancedSupplierPage>
         .orderBy('createdAt', descending: true)
         .snapshots()
         .listen(
-      (snapshot) async {
-        if (!mounted || _isNavigatingAway) return;
+          (snapshot) async {
+            if (!mounted || _isNavigatingAway) return;
 
-        final freshSuppliers = snapshot.docs
-            .map((doc) => {'id': doc.id, ...doc.data()})
-            .toList();
+            final freshSuppliers = snapshot.docs
+                .map((doc) => {'id': doc.id, ...doc.data()})
+                .toList();
 
-        await SupplierOfflineController.instance.importFromServer(freshSuppliers);
-        _cacheDataSource.saveSuppliers(freshSuppliers);
-      },
-      onError: (e) {
-        debugPrint('[EnhancedSupplier] Firestore stream error: $e');
-      },
-    );
+            await SupplierOfflineController.instance.importFromServer(
+              freshSuppliers,
+            );
+            _cacheDataSource.saveSuppliers(freshSuppliers);
+          },
+          onError: (e) {
+            debugPrint('[EnhancedSupplier] Firestore stream error: $e');
+          },
+        );
   }
 
   // ━━━ CRUD: Add/Edit/Delete ━━━
@@ -594,7 +591,9 @@ class _EnhancedSupplierPageState extends State<EnhancedSupplierPage>
       if (_isEditing) {
         int? localId = _editingSupplierLocalId;
         if (localId == null && _editingSupplierId != null) {
-          final existing = await offlineCtrl.getSupplierByServerId(_editingSupplierId!);
+          final existing = await offlineCtrl.getSupplierByServerId(
+            _editingSupplierId!,
+          );
           localId = existing?.id;
         }
 
@@ -611,7 +610,9 @@ class _EnhancedSupplierPageState extends State<EnhancedSupplierPage>
         } else {
           throw Exception('Supplier not found');
         }
-        DashboardRefreshService.instance.notifyDataChanged(DataChangeType.supplier);
+        DashboardRefreshService.instance.notifyDataChanged(
+          DataChangeType.supplier,
+        );
       } else {
         await offlineCtrl.addSupplier(
           firstName: _firstNameController.text,
@@ -621,7 +622,9 @@ class _EnhancedSupplierPageState extends State<EnhancedSupplierPage>
           contact: _contactController.text,
           address: _addressController.text,
         );
-        DashboardRefreshService.instance.notifyDataChanged(DataChangeType.supplier);
+        DashboardRefreshService.instance.notifyDataChanged(
+          DataChangeType.supplier,
+        );
       }
 
       SupplierSyncService.instance.syncNow();
@@ -686,7 +689,9 @@ class _EnhancedSupplierPageState extends State<EnhancedSupplierPage>
       int? localId = _editingSupplierLocalId;
 
       if (localId == null && _editingSupplierId != null) {
-        final existing = await offlineCtrl.getSupplierByServerId(_editingSupplierId!);
+        final existing = await offlineCtrl.getSupplierByServerId(
+          _editingSupplierId!,
+        );
         localId = existing?.id;
       }
 
@@ -697,7 +702,9 @@ class _EnhancedSupplierPageState extends State<EnhancedSupplierPage>
       }
 
       SupplierSyncService.instance.syncNow();
-      DashboardRefreshService.instance.notifyDataChanged(DataChangeType.supplier);
+      DashboardRefreshService.instance.notifyDataChanged(
+        DataChangeType.supplier,
+      );
 
       if (mounted && ctx.mounted) {
         Navigator.pop(ctx);

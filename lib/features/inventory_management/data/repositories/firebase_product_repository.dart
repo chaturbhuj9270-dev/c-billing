@@ -11,8 +11,8 @@ class FirebaseProductRepository implements ProductRepository {
   FirebaseProductRepository({
     required FirebaseFirestore firestore,
     FirebaseAuth? auth,
-  })  : _firestore = firestore,
-        _auth = auth ?? FirebaseAuth.instance;
+  }) : _firestore = firestore,
+       _auth = auth ?? FirebaseAuth.instance;
 
   String get _userId {
     final user = _auth.currentUser;
@@ -23,19 +23,16 @@ class FirebaseProductRepository implements ProductRepository {
   }
 
   CollectionReference get _productsCollection {
-    return _firestore
-        .collection('users')
-        .doc(_userId)
-        .collection(_collection);
+    return _firestore.collection('users').doc(_userId).collection(_collection);
   }
 
   @override
   Future<String> addProduct(Product product) async {
     try {
       final docRef = await _productsCollection.add(
-            product.copyWith(id: '').toJson(),
-          );
-      
+        product.copyWith(id: '').toJson(),
+      );
+
       // Update document with its ID
       await docRef.update({'id': docRef.id});
       return docRef.id;
@@ -70,17 +67,22 @@ class FirebaseProductRepository implements ProductRepository {
             .toList();
       } catch (e) {
         // If ordering fails (e.g., missing index), get without ordering
-        if (e.toString().contains('index') || e.toString().contains('FAILED_PRECONDITION')) {
-          print('[DEBUG] Composite index not found, getting products without ordering');
+        if (e.toString().contains('index') ||
+            e.toString().contains('FAILED_PRECONDITION')) {
+          print(
+            '[DEBUG] Composite index not found, getting products without ordering',
+          );
           final snapshot = await _productsCollection.get();
           final products = snapshot.docs
-              .map((doc) => Product.fromJson(doc.data() as Map<String, dynamic>))
+              .map(
+                (doc) => Product.fromJson(doc.data() as Map<String, dynamic>),
+              )
               .toList();
           // Sort client-side by createdAt descending
           products.sort((a, b) => b.createdAt.compareTo(a.createdAt));
           return products;
         } else {
-          throw e;
+          rethrow;
         }
       }
     } catch (e) {
@@ -101,18 +103,23 @@ class FirebaseProductRepository implements ProductRepository {
             .toList();
       } catch (e) {
         // Fallback if index not available
-        if (e.toString().contains('index') || e.toString().contains('FAILED_PRECONDITION')) {
-          print('[DEBUG] Composite index not found, getting products without ordering');
+        if (e.toString().contains('index') ||
+            e.toString().contains('FAILED_PRECONDITION')) {
+          print(
+            '[DEBUG] Composite index not found, getting products without ordering',
+          );
           final snapshot = await _productsCollection
               .where('category', isEqualTo: category)
               .get();
           final products = snapshot.docs
-              .map((doc) => Product.fromJson(doc.data() as Map<String, dynamic>))
+              .map(
+                (doc) => Product.fromJson(doc.data() as Map<String, dynamic>),
+              )
               .toList();
           products.sort((a, b) => a.name.compareTo(b.name));
           return products;
         } else {
-          throw e;
+          rethrow;
         }
       }
     } catch (e) {
@@ -123,9 +130,7 @@ class FirebaseProductRepository implements ProductRepository {
   @override
   Future<void> updateProduct(Product product) async {
     try {
-      await _productsCollection
-          .doc(product.id)
-          .update(product.toJson());
+      await _productsCollection.doc(product.id).update(product.toJson());
     } catch (e) {
       throw Exception('Failed to update product: $e');
     }
@@ -134,9 +139,7 @@ class FirebaseProductRepository implements ProductRepository {
   @override
   Future<void> updateProductStock(String productId, int newStock) async {
     try {
-      await _productsCollection
-          .doc(productId)
-          .update({
+      await _productsCollection.doc(productId).update({
         'currentStock': newStock,
         'updatedAt': DateTime.now().toIso8601String(),
       });
@@ -167,18 +170,23 @@ class FirebaseProductRepository implements ProductRepository {
             .toList();
       } catch (e) {
         // Fallback if index not available
-        if (e.toString().contains('index') || e.toString().contains('FAILED_PRECONDITION')) {
-          print('[DEBUG] Composite index not found, getting low stock products without ordering');
+        if (e.toString().contains('index') ||
+            e.toString().contains('FAILED_PRECONDITION')) {
+          print(
+            '[DEBUG] Composite index not found, getting low stock products without ordering',
+          );
           final snapshot = await _productsCollection
               .where('currentStock', isLessThanOrEqualTo: threshold)
               .get();
           final products = snapshot.docs
-              .map((doc) => Product.fromJson(doc.data() as Map<String, dynamic>))
+              .map(
+                (doc) => Product.fromJson(doc.data() as Map<String, dynamic>),
+              )
               .toList();
           products.sort((a, b) => a.currentStock.compareTo(b.currentStock));
           return products;
         } else {
-          throw e;
+          rethrow;
         }
       }
     } catch (e) {
@@ -192,7 +200,8 @@ class FirebaseProductRepository implements ProductRepository {
       final snapshot = await _productsCollection.get();
       final categories = <String>{};
       for (var doc in snapshot.docs) {
-        final category = (doc.data() as Map<String, dynamic>)['category'] as String?;
+        final category =
+            (doc.data() as Map<String, dynamic>)['category'] as String?;
         if (category != null && category.isNotEmpty) {
           categories.add(category);
         }

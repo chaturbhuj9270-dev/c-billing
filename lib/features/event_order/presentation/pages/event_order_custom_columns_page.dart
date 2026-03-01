@@ -7,19 +7,21 @@ class EventOrderCustomColumnsPage extends StatefulWidget {
   const EventOrderCustomColumnsPage({super.key});
 
   @override
-  State<EventOrderCustomColumnsPage> createState() => _EventOrderCustomColumnsPageState();
+  State<EventOrderCustomColumnsPage> createState() =>
+      _EventOrderCustomColumnsPageState();
 }
 
-class _EventOrderCustomColumnsPageState extends State<EventOrderCustomColumnsPage>
+class _EventOrderCustomColumnsPageState
+    extends State<EventOrderCustomColumnsPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  
+
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
   }
-  
+
   @override
   void dispose() {
     _tabController.dispose();
@@ -113,7 +115,7 @@ class _EventOrderCustomColumnsPageState extends State<EventOrderCustomColumnsPag
       ),
     );
   }
-  
+
   Widget _buildTabBar() {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -182,11 +184,11 @@ class _EventOrderCustomColumnsPageState extends State<EventOrderCustomColumnsPag
         final columns = target == EventColumnTarget.event
             ? EventOrderSettingsService.instance.eventColumns
             : EventOrderSettingsService.instance.subEventColumns;
-        
+
         if (columns.isEmpty) {
           return _buildEmptyState(target);
         }
-        
+
         return ReorderableListView.builder(
           padding: const EdgeInsets.all(16),
           itemCount: columns.length,
@@ -200,7 +202,10 @@ class _EventOrderCustomColumnsPageState extends State<EventOrderCustomColumnsPag
             if (newIndex == columns.length) {
               newActual = allColumns.indexOf(columns.last) + 1;
             }
-            EventOrderSettingsService.instance.reorderColumns(oldActual, newActual);
+            EventOrderSettingsService.instance.reorderColumns(
+              oldActual,
+              newActual,
+            );
           },
           itemBuilder: (context, index) {
             final column = columns[index];
@@ -279,7 +284,7 @@ class _EventOrderCustomColumnsPageState extends State<EventOrderCustomColumnsPag
   Widget _buildColumnCard(EventCustomColumn column, int index) {
     final typeIcon = _getTypeIcon(column.type);
     final typeColor = _getTypeColor(column.type);
-    
+
     return Card(
       key: ValueKey(column.id),
       margin: const EdgeInsets.only(bottom: 12),
@@ -287,7 +292,7 @@ class _EventOrderCustomColumnsPageState extends State<EventOrderCustomColumnsPag
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
         side: BorderSide(
-          color: column.isActive 
+          color: column.isActive
               ? const Color(0xFF1B4D3E).withOpacity(0.2)
               : Colors.grey.withOpacity(0.2),
           width: 1,
@@ -348,7 +353,10 @@ class _EventOrderCustomColumnsPageState extends State<EventOrderCustomColumnsPag
                         if (column.isRequired) ...[
                           const SizedBox(width: 6),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
                             decoration: BoxDecoration(
                               color: Colors.red.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(4),
@@ -376,7 +384,7 @@ class _EventOrderCustomColumnsPageState extends State<EventOrderCustomColumnsPag
                         color: Colors.grey[600],
                       ),
                     ),
-                    if (column.type == EventCustomColumnType.dropdown && 
+                    if (column.type == EventCustomColumnType.dropdown &&
                         column.dropdownOptions != null &&
                         column.dropdownOptions!.isNotEmpty) ...[
                       const SizedBox(height: 4),
@@ -407,7 +415,11 @@ class _EventOrderCustomColumnsPageState extends State<EventOrderCustomColumnsPag
                     value: 'edit',
                     child: Row(
                       children: [
-                        Icon(Icons.edit_rounded, size: 20, color: Colors.grey[700]),
+                        Icon(
+                          Icons.edit_rounded,
+                          size: 20,
+                          color: Colors.grey[700],
+                        ),
                         const SizedBox(width: 12),
                         const Text('Edit'),
                       ],
@@ -418,7 +430,9 @@ class _EventOrderCustomColumnsPageState extends State<EventOrderCustomColumnsPag
                     child: Row(
                       children: [
                         Icon(
-                          column.isActive ? Icons.visibility_off_rounded : Icons.visibility_rounded,
+                          column.isActive
+                              ? Icons.visibility_off_rounded
+                              : Icons.visibility_rounded,
                           size: 20,
                           color: Colors.grey[700],
                         ),
@@ -432,9 +446,16 @@ class _EventOrderCustomColumnsPageState extends State<EventOrderCustomColumnsPag
                     value: 'delete',
                     child: Row(
                       children: [
-                        const Icon(Icons.delete_rounded, size: 20, color: Colors.red),
+                        const Icon(
+                          Icons.delete_rounded,
+                          size: 20,
+                          color: Colors.red,
+                        ),
                         const SizedBox(width: 12),
-                        const Text('Delete', style: TextStyle(color: Colors.red)),
+                        const Text(
+                          'Delete',
+                          style: TextStyle(color: Colors.red),
+                        ),
                       ],
                     ),
                   ),
@@ -517,10 +538,7 @@ class _EventOrderCustomColumnsPageState extends State<EventOrderCustomColumnsPag
             onPressed: () => Navigator.pop(context),
             child: Text(
               'Cancel',
-              style: TextStyle(
-                fontFamily: 'Literata',
-                color: Colors.grey[600],
-              ),
+              style: TextStyle(fontFamily: 'Literata', color: Colors.grey[600]),
             ),
           ),
           ElevatedButton(
@@ -542,10 +560,7 @@ class _EventOrderCustomColumnsPageState extends State<EventOrderCustomColumnsPag
             ),
             child: const Text(
               'Delete',
-              style: TextStyle(
-                fontFamily: 'Literata',
-                color: Colors.white,
-              ),
+              style: TextStyle(fontFamily: 'Literata', color: Colors.white),
             ),
           ),
         ],
@@ -553,19 +568,33 @@ class _EventOrderCustomColumnsPageState extends State<EventOrderCustomColumnsPag
     );
   }
 
-  void _showAddColumnDialog({EventCustomColumn? existingColumn, EventColumnTarget? preselectedTarget}) {
-    final nameController = TextEditingController(text: existingColumn?.name ?? '');
-    final placeholderController = TextEditingController(text: existingColumn?.placeholder ?? '');
-    final defaultValueController = TextEditingController(text: existingColumn?.defaultValue ?? '');
+  void _showAddColumnDialog({
+    EventCustomColumn? existingColumn,
+    EventColumnTarget? preselectedTarget,
+  }) {
+    final nameController = TextEditingController(
+      text: existingColumn?.name ?? '',
+    );
+    final placeholderController = TextEditingController(
+      text: existingColumn?.placeholder ?? '',
+    );
+    final defaultValueController = TextEditingController(
+      text: existingColumn?.defaultValue ?? '',
+    );
     final dropdownOptionsController = TextEditingController(
       text: existingColumn?.dropdownOptions?.join(', ') ?? '',
     );
-    
-    EventCustomColumnType selectedType = existingColumn?.type ?? EventCustomColumnType.text;
-    EventColumnTarget selectedTarget = existingColumn?.target ?? preselectedTarget ?? 
-        ((_tabController.index == 0) ? EventColumnTarget.event : EventColumnTarget.subEvent);
+
+    EventCustomColumnType selectedType =
+        existingColumn?.type ?? EventCustomColumnType.text;
+    EventColumnTarget selectedTarget =
+        existingColumn?.target ??
+        preselectedTarget ??
+        ((_tabController.index == 0)
+            ? EventColumnTarget.event
+            : EventColumnTarget.subEvent);
     bool isRequired = existingColumn?.isRequired ?? false;
-    
+
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
@@ -608,7 +637,7 @@ class _EventOrderCustomColumnsPageState extends State<EventOrderCustomColumnsPag
                     ),
                   ),
                   const SizedBox(height: 16),
-                  
+
                   // Target Type Dropdown (only for new columns)
                   if (existingColumn == null) ...[
                     const Text(
@@ -645,8 +674,12 @@ class _EventOrderCustomColumnsPageState extends State<EventOrderCustomColumnsPag
                                   ),
                                   const SizedBox(width: 12),
                                   Text(
-                                    EventCustomColumn.getTargetDisplayName(target),
-                                    style: const TextStyle(fontFamily: 'Literata'),
+                                    EventCustomColumn.getTargetDisplayName(
+                                      target,
+                                    ),
+                                    style: const TextStyle(
+                                      fontFamily: 'Literata',
+                                    ),
                                   ),
                                 ],
                               ),
@@ -662,7 +695,7 @@ class _EventOrderCustomColumnsPageState extends State<EventOrderCustomColumnsPag
                     ),
                     const SizedBox(height: 16),
                   ],
-                  
+
                   // Data Type Dropdown
                   const Text(
                     'Data Type',
@@ -689,11 +722,17 @@ class _EventOrderCustomColumnsPageState extends State<EventOrderCustomColumnsPag
                             value: type,
                             child: Row(
                               children: [
-                                Icon(_getTypeIcon(type), size: 20, color: _getTypeColor(type)),
+                                Icon(
+                                  _getTypeIcon(type),
+                                  size: 20,
+                                  color: _getTypeColor(type),
+                                ),
                                 const SizedBox(width: 12),
                                 Text(
                                   EventCustomColumn.getTypeDisplayName(type),
-                                  style: const TextStyle(fontFamily: 'Literata'),
+                                  style: const TextStyle(
+                                    fontFamily: 'Literata',
+                                  ),
                                 ),
                               ],
                             ),
@@ -708,7 +747,7 @@ class _EventOrderCustomColumnsPageState extends State<EventOrderCustomColumnsPag
                     ),
                   ),
                   const SizedBox(height: 16),
-                  
+
                   // Dropdown Options (only for dropdown type)
                   if (selectedType == EventCustomColumnType.dropdown) ...[
                     TextField(
@@ -731,7 +770,7 @@ class _EventOrderCustomColumnsPageState extends State<EventOrderCustomColumnsPag
                     ),
                     const SizedBox(height: 16),
                   ],
-                  
+
                   // Placeholder
                   TextField(
                     controller: placeholderController,
@@ -751,13 +790,14 @@ class _EventOrderCustomColumnsPageState extends State<EventOrderCustomColumnsPag
                     ),
                   ),
                   const SizedBox(height: 16),
-                  
+
                   // Default Value (not for boolean)
                   if (selectedType != EventCustomColumnType.boolean) ...[
                     TextField(
                       controller: defaultValueController,
-                      keyboardType: selectedType == EventCustomColumnType.number || 
-                                   selectedType == EventCustomColumnType.decimal
+                      keyboardType:
+                          selectedType == EventCustomColumnType.number ||
+                              selectedType == EventCustomColumnType.decimal
                           ? TextInputType.number
                           : TextInputType.text,
                       decoration: InputDecoration(
@@ -776,11 +816,12 @@ class _EventOrderCustomColumnsPageState extends State<EventOrderCustomColumnsPag
                     ),
                     const SizedBox(height: 16),
                   ],
-                  
+
                   // Required toggle
                   SwitchListTile(
                     value: isRequired,
-                    onChanged: (value) => setDialogState(() => isRequired = value),
+                    onChanged: (value) =>
+                        setDialogState(() => isRequired = value),
                     title: const Text(
                       'Required Field',
                       style: TextStyle(
@@ -797,7 +838,7 @@ class _EventOrderCustomColumnsPageState extends State<EventOrderCustomColumnsPag
                         color: Colors.grey[600],
                       ),
                     ),
-                    activeColor: const Color(0xFF1B4D3E),
+                    activeThumbColor: const Color(0xFF1B4D3E),
                     contentPadding: EdgeInsets.zero,
                   ),
                 ],
@@ -826,7 +867,7 @@ class _EventOrderCustomColumnsPageState extends State<EventOrderCustomColumnsPag
                     );
                     return;
                   }
-                  
+
                   // Parse dropdown options
                   List<String>? dropdownOptions;
                   if (selectedType == EventCustomColumnType.dropdown) {
@@ -846,33 +887,42 @@ class _EventOrderCustomColumnsPageState extends State<EventOrderCustomColumnsPag
                         .where((e) => e.isNotEmpty)
                         .toList();
                   }
-                  
+
                   final column = EventCustomColumn(
-                    id: existingColumn?.id ?? EventOrderSettingsService.instance.generateColumnId(),
+                    id:
+                        existingColumn?.id ??
+                        EventOrderSettingsService.instance.generateColumnId(),
                     name: name,
                     type: selectedType,
                     target: existingColumn?.target ?? selectedTarget,
                     isRequired: isRequired,
-                    defaultValue: defaultValueController.text.trim().isNotEmpty 
-                        ? defaultValueController.text.trim() 
+                    defaultValue: defaultValueController.text.trim().isNotEmpty
+                        ? defaultValueController.text.trim()
                         : null,
                     dropdownOptions: dropdownOptions,
-                    placeholder: placeholderController.text.trim().isNotEmpty 
-                        ? placeholderController.text.trim() 
+                    placeholder: placeholderController.text.trim().isNotEmpty
+                        ? placeholderController.text.trim()
                         : null,
                     isActive: existingColumn?.isActive ?? true,
                   );
-                  
+
                   if (existingColumn != null) {
-                    EventOrderSettingsService.instance.updateColumn(existingColumn.id, column);
+                    EventOrderSettingsService.instance.updateColumn(
+                      existingColumn.id,
+                      column,
+                    );
                   } else {
                     EventOrderSettingsService.instance.addColumn(column);
                   }
-                  
+
                   Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text(existingColumn != null ? 'Column updated' : 'Column added'),
+                      content: Text(
+                        existingColumn != null
+                            ? 'Column updated'
+                            : 'Column added',
+                      ),
                       backgroundColor: const Color(0xFF1B4D3E),
                     ),
                   );

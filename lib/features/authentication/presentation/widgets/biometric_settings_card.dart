@@ -37,10 +37,12 @@ class _BiometricSettingsCardState extends State<BiometricSettingsCard> {
   Future<void> _loadBiometricSettings() async {
     try {
       final biometricService = BiometricService.instance;
-      final isEnabled =
-          await biometricService.isBiometricAuthEnabled(widget.userId);
-      final preferredType =
-          await biometricService.getPreferredBiometricType(widget.userId);
+      final isEnabled = await biometricService.isBiometricAuthEnabled(
+        widget.userId,
+      );
+      final preferredType = await biometricService.getPreferredBiometricType(
+        widget.userId,
+      );
 
       if (mounted) {
         setState(() {
@@ -84,7 +86,8 @@ class _BiometricSettingsCardState extends State<BiometricSettingsCard> {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: const Text(
-                    'Biometric authentication is not available on this device'),
+                  'Biometric authentication is not available on this device',
+                ),
                 backgroundColor: Colors.red,
                 duration: const Duration(seconds: 2),
               ),
@@ -208,9 +211,10 @@ class _BiometricSettingsCardState extends State<BiometricSettingsCard> {
                     Switch(
                       value: _isBiometricEnabled,
                       onChanged: _toggleBiometric,
-                      activeColor: const Color(0xFF1B4D3E),
-                      activeTrackColor:
-                          const Color(0xFF1B4D3E).withOpacity(0.3),
+                      activeThumbColor: const Color(0xFF1B4D3E),
+                      activeTrackColor: const Color(
+                        0xFF1B4D3E,
+                      ).withOpacity(0.3),
                     ),
                   ],
                 ),

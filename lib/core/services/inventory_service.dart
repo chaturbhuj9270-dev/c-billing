@@ -283,8 +283,9 @@ class InventoryService {
     try {
       // Validate inputs
       if (name.isEmpty) throw Exception('Product name cannot be empty');
-      if (purchasePrice < 0)
+      if (purchasePrice < 0) {
         throw Exception('Purchase price cannot be negative');
+      }
       if (salesPrice < 0) throw Exception('Sales price cannot be negative');
       if (initialStock < 0) throw Exception('Initial stock cannot be negative');
 

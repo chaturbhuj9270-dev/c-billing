@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
@@ -96,7 +94,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
     } else {
       _orderType = widget.initialMode ?? OrderType.event;
       _tabController.index = _orderType.index;
-      
+
       // Pre-select customer if provided
       if (widget.preSelectedCustomerId != null) {
         _selectedCustomerId = widget.preSelectedCustomerId;
@@ -120,7 +118,8 @@ class _EventOrderScreenState extends State<EventOrderScreen>
       } else if (column.type == EventCustomColumnType.boolean) {
         _customFieldValues[column.id] = column.defaultValue == 'true';
       } else if (column.type == EventCustomColumnType.dropdown) {
-        _customFieldValues[column.id] = column.defaultValue ??
+        _customFieldValues[column.id] =
+            column.defaultValue ??
             ((column.dropdownOptions?.isNotEmpty ?? false)
                 ? column.dropdownOptions!.first
                 : '');
@@ -147,7 +146,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
     _advanceController.text = order.advanceAmount.toStringAsFixed(0);
     _eventChargesController.text = order.eventCharges.toStringAsFixed(0);
     _notesController.text = order.notes ?? '';
-    
+
     // Load custom field values from existing order
     final customData = order.customData;
     for (final entry in customData.entries) {
@@ -289,7 +288,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
   Map<String, dynamic> _collectCustomData() {
     final customData = <String, dynamic>{};
     final eventColumns = EventOrderSettingsService.instance.activeEventColumns;
-    
+
     for (final column in eventColumns) {
       if (_customTextControllers.containsKey(column.id)) {
         final value = _customTextControllers[column.id]!.text.trim();
@@ -309,7 +308,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
         }
       }
     }
-    
+
     return customData;
   }
 
@@ -317,7 +316,9 @@ class _EventOrderScreenState extends State<EventOrderScreen>
     if (!_formKey.currentState!.validate()) return;
 
     // Validate mode-specific data
-    if (_orderType == OrderType.event && _subEvents.isEmpty && _orderItems.isEmpty) {
+    if (_orderType == OrderType.event &&
+        _subEvents.isEmpty &&
+        _orderItems.isEmpty) {
       _showErrorSnackBar('Please add at least one sub-event or product');
       return;
     }
@@ -457,9 +458,11 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                         _buildSalesOrderSection(),
                       const SizedBox(height: 16),
                       // Show grand total breakdown for events with both items
-                      if (_orderType == OrderType.event && (_subEvents.isNotEmpty || _orderItems.isNotEmpty))
+                      if (_orderType == OrderType.event &&
+                          (_subEvents.isNotEmpty || _orderItems.isNotEmpty))
                         _buildGrandTotalSection(),
-                      if (_orderType == OrderType.event && (_subEvents.isNotEmpty || _orderItems.isNotEmpty))
+                      if (_orderType == OrderType.event &&
+                          (_subEvents.isNotEmpty || _orderItems.isNotEmpty))
                         const SizedBox(height: 16),
                       // Event charges field for event orders only
                       if (_orderType == OrderType.event) ...[
@@ -499,8 +502,9 @@ class _EventOrderScreenState extends State<EventOrderScreen>
             color: const Color(0xFF1B4D3E).withOpacity(0.1),
             borderRadius: BorderRadius.circular(10),
           ),
-          child: const Icon(Icons.arrow_back_ios_new, 
-            color: Color(0xFF1B4D3E), 
+          child: const Icon(
+            Icons.arrow_back_ios_new,
+            color: Color(0xFF1B4D3E),
             size: 18,
           ),
         ),
@@ -535,8 +539,9 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                         color: Color(0xFF1B4D3E),
                       ),
                     )
-                  : const Icon(Icons.share_rounded, 
-                      color: Color(0xFF1B4D3E), 
+                  : const Icon(
+                      Icons.share_rounded,
+                      color: Color(0xFF1B4D3E),
                       size: 18,
                     ),
             ),
@@ -549,8 +554,9 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                 color: Colors.orange.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(Icons.print_rounded, 
-                color: Colors.orange, 
+              child: const Icon(
+                Icons.print_rounded,
+                color: Colors.orange,
                 size: 18,
               ),
             ),
@@ -605,8 +611,14 @@ class _EventOrderScreenState extends State<EventOrderScreen>
         indicatorPadding: EdgeInsets.zero,
         labelColor: Colors.white,
         unselectedLabelColor: Colors.grey[600],
-        labelStyle: const TextStyle(fontWeight: FontWeight.w600, fontFamily: 'Literata'),
-        unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontFamily: 'Literata'),
+        labelStyle: const TextStyle(
+          fontWeight: FontWeight.w600,
+          fontFamily: 'Literata',
+        ),
+        unselectedLabelStyle: const TextStyle(
+          fontWeight: FontWeight.w500,
+          fontFamily: 'Literata',
+        ),
         dividerColor: Colors.transparent,
         tabs: const [
           Tab(
@@ -640,7 +652,11 @@ class _EventOrderScreenState extends State<EventOrderScreen>
       icon: Icons.person_outline,
       trailing: TextButton.icon(
         onPressed: _showCustomerPickerSheet,
-        icon: const Icon(Icons.person_search, size: 18, color: Color(0xFF1B4D3E)),
+        icon: const Icon(
+          Icons.person_search,
+          size: 18,
+          color: Color(0xFF1B4D3E),
+        ),
         label: const Text(
           'Select',
           style: TextStyle(
@@ -653,9 +669,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
         style: TextButton.styleFrom(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           backgroundColor: const Color(0xFF1B4D3E).withOpacity(0.1),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
       ),
       child: Column(
@@ -709,9 +723,13 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                           dense: true,
                           leading: CircleAvatar(
                             radius: 16,
-                            backgroundColor: const Color(0xFF1B4D3E).withOpacity(0.15),
+                            backgroundColor: const Color(
+                              0xFF1B4D3E,
+                            ).withOpacity(0.15),
                             child: Text(
-                              customer.name.isNotEmpty ? customer.name[0].toUpperCase() : '?',
+                              customer.name.isNotEmpty
+                                  ? customer.name[0].toUpperCase()
+                                  : '?',
                               style: const TextStyle(
                                 fontFamily: 'Literata',
                                 color: Color(0xFF1B4D3E),
@@ -781,9 +799,9 @@ class _EventOrderScreenState extends State<EventOrderScreen>
     // Load all customers
     final controller = CustomerOfflineController.instance;
     final allCustomers = await controller.getAllCustomers();
-    
+
     if (!mounted) return;
-    
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -854,7 +872,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                   surface: Colors.white,
                   onSurface: Color(0xFF1A1A2E),
                 ),
-                dialogBackgroundColor: Colors.white,
+                dialogTheme: DialogThemeData(backgroundColor: Colors.white),
               ),
               child: child!,
             );
@@ -1030,7 +1048,9 @@ class _EventOrderScreenState extends State<EventOrderScreen>
               icon: Icon(Icons.more_vert, color: Colors.grey[500]),
               color: Colors.white,
               elevation: 8,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
               onSelected: (value) {
                 if (value == 'edit') {
                   _showEditSubEventDialog(subEvent, index);
@@ -1045,7 +1065,13 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                     children: [
                       Icon(Icons.edit, color: Colors.grey[700], size: 18),
                       const SizedBox(width: 8),
-                      Text('Edit', style: TextStyle(fontFamily: 'Literata', color: Colors.grey[800])),
+                      Text(
+                        'Edit',
+                        style: TextStyle(
+                          fontFamily: 'Literata',
+                          color: Colors.grey[800],
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -1055,7 +1081,13 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                     children: [
                       Icon(Icons.delete, color: Colors.red, size: 18),
                       SizedBox(width: 8),
-                      Text('Delete', style: TextStyle(fontFamily: 'Literata', color: Colors.red)),
+                      Text(
+                        'Delete',
+                        style: TextStyle(
+                          fontFamily: 'Literata',
+                          color: Colors.red,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -1122,10 +1154,10 @@ class _EventOrderScreenState extends State<EventOrderScreen>
   Widget _buildGrandTotalSection() {
     final hasSubEvents = _subEvents.isNotEmpty;
     final hasProducts = _orderItems.isNotEmpty;
-    
+
     // Only show breakdown if there are items to display
     if (!hasSubEvents && !hasProducts) return const SizedBox.shrink();
-    
+
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -1151,7 +1183,11 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                   color: const Color(0xFF1B4D3E).withOpacity(0.15),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(Icons.receipt_long, color: Color(0xFF1B4D3E), size: 20),
+                child: const Icon(
+                  Icons.receipt_long,
+                  color: Color(0xFF1B4D3E),
+                  size: 20,
+                ),
               ),
               const SizedBox(width: 12),
               const Text(
@@ -1208,7 +1244,10 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFF4CAF50).withOpacity(0.15),
                   borderRadius: BorderRadius.circular(8),
@@ -1230,7 +1269,12 @@ class _EventOrderScreenState extends State<EventOrderScreen>
     );
   }
 
-  Widget _buildTotalRow(String label, double amount, IconData icon, Color color) {
+  Widget _buildTotalRow(
+    String label,
+    double amount,
+    IconData icon,
+    Color color,
+  ) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -1318,7 +1362,11 @@ class _EventOrderScreenState extends State<EventOrderScreen>
               ),
               child: Row(
                 children: [
-                  Icon(Icons.info_outline, color: Colors.blue.shade600, size: 16),
+                  Icon(
+                    Icons.info_outline,
+                    color: Colors.blue.shade600,
+                    size: 16,
+                  ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -1402,7 +1450,9 @@ class _EventOrderScreenState extends State<EventOrderScreen>
               icon: Icon(Icons.more_vert, color: Colors.grey[500]),
               color: Colors.white,
               elevation: 8,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
               onSelected: (value) {
                 if (value == 'edit') {
                   _showEditProductDialog(item, index);
@@ -1417,7 +1467,13 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                     children: [
                       Icon(Icons.edit, color: Colors.grey[700], size: 18),
                       const SizedBox(width: 8),
-                      Text('Edit', style: TextStyle(fontFamily: 'Literata', color: Colors.grey[800])),
+                      Text(
+                        'Edit',
+                        style: TextStyle(
+                          fontFamily: 'Literata',
+                          color: Colors.grey[800],
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -1427,7 +1483,13 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                     children: [
                       Icon(Icons.delete, color: Colors.red, size: 18),
                       SizedBox(width: 8),
-                      Text('Delete', style: TextStyle(fontFamily: 'Literata', color: Colors.red)),
+                      Text(
+                        'Delete',
+                        style: TextStyle(
+                          fontFamily: 'Literata',
+                          color: Colors.red,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -1488,7 +1550,9 @@ class _EventOrderScreenState extends State<EventOrderScreen>
       title: 'Custom Fields',
       icon: Icons.edit_attributes,
       child: Column(
-        children: eventColumns.map((column) => _buildCustomFieldWidget(column)).toList(),
+        children: eventColumns
+            .map((column) => _buildCustomFieldWidget(column))
+            .toList(),
       ),
     );
   }
@@ -1564,7 +1628,9 @@ class _EventOrderScreenState extends State<EventOrderScreen>
         );
         if (picked != null) {
           setState(() {
-            _customFieldValues[column.id] = picked.toIso8601String().split('T')[0];
+            _customFieldValues[column.id] = picked.toIso8601String().split(
+              'T',
+            )[0];
           });
         }
       },
@@ -1591,7 +1657,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
     final options = column.dropdownOptions ?? [];
 
     return DropdownButtonFormField<String>(
-      value: options.contains(currentValue) ? currentValue : null,
+      initialValue: options.contains(currentValue) ? currentValue : null,
       decoration: InputDecoration(
         labelText: column.name,
         prefixIcon: const Icon(Icons.list),
@@ -1615,17 +1681,14 @@ class _EventOrderScreenState extends State<EventOrderScreen>
     final value = _customFieldValues[column.id] as bool? ?? false;
 
     return SwitchListTile(
-      title: Text(
-        column.name,
-        style: const TextStyle(fontFamily: 'Literata'),
-      ),
+      title: Text(column.name, style: const TextStyle(fontFamily: 'Literata')),
       value: value,
       onChanged: (newValue) {
         setState(() {
           _customFieldValues[column.id] = newValue;
         });
       },
-      activeColor: const Color(0xFF1B4D3E),
+      activeThumbColor: const Color(0xFF1B4D3E),
       contentPadding: EdgeInsets.zero,
     );
   }
@@ -1656,8 +1719,11 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                     children: [
                       _buildSummaryItem('Total', _totalAmount),
                       const SizedBox(width: 16),
-                      _buildSummaryItem('Advance', _advanceAmount,
-                          color: const Color(0xFF4CAF50)),
+                      _buildSummaryItem(
+                        'Advance',
+                        _advanceAmount,
+                        color: const Color(0xFF4CAF50),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 4),
@@ -1690,13 +1756,18 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                   : const Icon(Icons.save),
               label: Text(
                 _isEditing ? 'Update' : 'Save',
-                style: const TextStyle(fontFamily: 'Literata', fontWeight: FontWeight.w600),
+                style: const TextStyle(
+                  fontFamily: 'Literata',
+                  fontWeight: FontWeight.w600,
+                ),
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF1B4D3E),
                 foregroundColor: Colors.white,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -1777,10 +1848,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                     fontWeight: FontWeight.w700,
                   ),
                 ),
-                if (trailing != null) ...[
-                  const Spacer(),
-                  trailing,
-                ],
+                if (trailing != null) ...[const Spacer(), trailing],
               ],
             ),
           ),
@@ -1813,9 +1881,11 @@ class _EventOrderScreenState extends State<EventOrderScreen>
         controller: controller,
         keyboardType: keyboardType,
         maxLines: maxLines,
-        validator: validator ?? (required
-            ? (value) => value == null || value.isEmpty ? 'Required' : null
-            : null),
+        validator:
+            validator ??
+            (required
+                ? (value) => value == null || value.isEmpty ? 'Required' : null
+                : null),
         onChanged: onChanged,
         style: const TextStyle(
           fontFamily: 'Literata',
@@ -1849,16 +1919,18 @@ class _EventOrderScreenState extends State<EventOrderScreen>
 
   void _showSubEventDialog({SubEvent? subEvent, int? editIndex}) {
     final nameController = TextEditingController(text: subEvent?.name ?? '');
-    final chargesController =
-        TextEditingController(text: subEvent?.charges.toStringAsFixed(0) ?? '');
+    final chargesController = TextEditingController(
+      text: subEvent?.charges.toStringAsFixed(0) ?? '',
+    );
     final notesController = TextEditingController(text: subEvent?.notes ?? '');
     DateTime selectedDate = subEvent?.date ?? _eventDate;
-    
+
     // Initialize custom field controllers for sub-event
-    final subEventColumns = EventOrderSettingsService.instance.activeSubEventColumns;
+    final subEventColumns =
+        EventOrderSettingsService.instance.activeSubEventColumns;
     final dialogCustomTextControllers = <String, TextEditingController>{};
     final dialogCustomFieldValues = <String, dynamic>{};
-    
+
     for (final column in subEventColumns) {
       final existingValue = subEvent?.customData[column.id];
       if (column.type == EventCustomColumnType.text ||
@@ -1868,14 +1940,18 @@ class _EventOrderScreenState extends State<EventOrderScreen>
           text: existingValue?.toString() ?? column.defaultValue ?? '',
         );
       } else if (column.type == EventCustomColumnType.boolean) {
-        dialogCustomFieldValues[column.id] = existingValue ?? (column.defaultValue == 'true');
+        dialogCustomFieldValues[column.id] =
+            existingValue ?? (column.defaultValue == 'true');
       } else if (column.type == EventCustomColumnType.dropdown) {
-        dialogCustomFieldValues[column.id] = existingValue ?? column.defaultValue ??
+        dialogCustomFieldValues[column.id] =
+            existingValue ??
+            column.defaultValue ??
             ((column.dropdownOptions?.isNotEmpty ?? false)
                 ? column.dropdownOptions!.first
                 : '');
       } else if (column.type == EventCustomColumnType.date) {
-        dialogCustomFieldValues[column.id] = existingValue ?? column.defaultValue;
+        dialogCustomFieldValues[column.id] =
+            existingValue ?? column.defaultValue;
       }
     }
 
@@ -1885,8 +1961,9 @@ class _EventOrderScreenState extends State<EventOrderScreen>
         builder: (context, setDialogState) {
           return AlertDialog(
             backgroundColor: Colors.white,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
             title: Text(
               editIndex != null ? 'Edit Sub-Event' : 'Add Sub-Event',
               style: const TextStyle(
@@ -1966,7 +2043,9 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                               surface: Colors.white,
                               onSurface: Color(0xFF1A1A2E),
                             ),
-                            dialogBackgroundColor: Colors.white,
+                            dialogTheme: DialogThemeData(
+                              backgroundColor: Colors.white,
+                            ),
                           ),
                           child: child!,
                         ),
@@ -1983,8 +2062,11 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                       ),
                       child: Row(
                         children: [
-                          Icon(Icons.calendar_today,
-                              color: Colors.grey[600], size: 18),
+                          Icon(
+                            Icons.calendar_today,
+                            color: Colors.grey[600],
+                            size: 18,
+                          ),
                           const SizedBox(width: 12),
                           Text(
                             DateFormat('dd MMM yyyy').format(selectedDate),
@@ -2034,15 +2116,17 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                         ),
                       ),
                     ),
-                    ...subEventColumns.map((column) => Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: _buildDialogCustomField(
-                        column: column,
-                        textControllers: dialogCustomTextControllers,
-                        fieldValues: dialogCustomFieldValues,
-                        setDialogState: setDialogState,
+                    ...subEventColumns.map(
+                      (column) => Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: _buildDialogCustomField(
+                          column: column,
+                          textControllers: dialogCustomTextControllers,
+                          fieldValues: dialogCustomFieldValues,
+                          setDialogState: setDialogState,
+                        ),
                       ),
-                    )),
+                    ),
                   ],
                 ],
               ),
@@ -2056,11 +2140,13 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                   }
                   Navigator.pop(context);
                 },
-                child: Text('Cancel',
-                    style: TextStyle(
-                      fontFamily: 'Literata',
-                      color: Colors.grey[600],
-                    )),
+                child: Text(
+                  'Cancel',
+                  style: TextStyle(
+                    fontFamily: 'Literata',
+                    color: Colors.grey[600],
+                  ),
+                ),
               ),
               ElevatedButton(
                 onPressed: () {
@@ -2079,11 +2165,13 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                   final customData = <String, dynamic>{};
                   for (final column in subEventColumns) {
                     if (dialogCustomTextControllers.containsKey(column.id)) {
-                      final value = dialogCustomTextControllers[column.id]!.text.trim();
+                      final value = dialogCustomTextControllers[column.id]!.text
+                          .trim();
                       if (value.isNotEmpty) {
                         if (column.type == EventCustomColumnType.number) {
                           customData[column.id] = int.tryParse(value) ?? 0;
-                        } else if (column.type == EventCustomColumnType.decimal) {
+                        } else if (column.type ==
+                            EventCustomColumnType.decimal) {
                           customData[column.id] = double.tryParse(value) ?? 0.0;
                         } else {
                           customData[column.id] = value;
@@ -2115,7 +2203,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                       _subEvents.add(newSubEvent);
                     }
                   });
-                  
+
                   // Dispose text controllers
                   for (final controller in dialogCustomTextControllers.values) {
                     controller.dispose();
@@ -2132,7 +2220,10 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                 ),
                 child: Text(
                   editIndex != null ? 'Update' : 'Add',
-                  style: const TextStyle(fontFamily: 'Literata', fontWeight: FontWeight.w600),
+                  style: const TextStyle(
+                    fontFamily: 'Literata',
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ],
@@ -2153,10 +2244,16 @@ class _EventOrderScreenState extends State<EventOrderScreen>
       case EventCustomColumnType.text:
         return TextField(
           controller: textControllers[column.id],
-          style: const TextStyle(fontFamily: 'Literata', color: Color(0xFF1A1A2E)),
+          style: const TextStyle(
+            fontFamily: 'Literata',
+            color: Color(0xFF1A1A2E),
+          ),
           decoration: InputDecoration(
             labelText: column.isRequired ? '${column.name} *' : column.name,
-            labelStyle: TextStyle(fontFamily: 'Literata', color: Colors.grey[600]),
+            labelStyle: TextStyle(
+              fontFamily: 'Literata',
+              color: Colors.grey[600],
+            ),
             filled: true,
             fillColor: const Color(0xFFF8F9FC),
             border: OutlineInputBorder(
@@ -2169,10 +2266,16 @@ class _EventOrderScreenState extends State<EventOrderScreen>
         return TextField(
           controller: textControllers[column.id],
           keyboardType: TextInputType.number,
-          style: const TextStyle(fontFamily: 'Literata', color: Color(0xFF1A1A2E)),
+          style: const TextStyle(
+            fontFamily: 'Literata',
+            color: Color(0xFF1A1A2E),
+          ),
           decoration: InputDecoration(
             labelText: column.isRequired ? '${column.name} *' : column.name,
-            labelStyle: TextStyle(fontFamily: 'Literata', color: Colors.grey[600]),
+            labelStyle: TextStyle(
+              fontFamily: 'Literata',
+              color: Colors.grey[600],
+            ),
             filled: true,
             fillColor: const Color(0xFFF8F9FC),
             border: OutlineInputBorder(
@@ -2185,10 +2288,16 @@ class _EventOrderScreenState extends State<EventOrderScreen>
         return TextField(
           controller: textControllers[column.id],
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          style: const TextStyle(fontFamily: 'Literata', color: Color(0xFF1A1A2E)),
+          style: const TextStyle(
+            fontFamily: 'Literata',
+            color: Color(0xFF1A1A2E),
+          ),
           decoration: InputDecoration(
             labelText: column.isRequired ? '${column.name} *' : column.name,
-            labelStyle: TextStyle(fontFamily: 'Literata', color: Colors.grey[600]),
+            labelStyle: TextStyle(
+              fontFamily: 'Literata',
+              color: Colors.grey[600],
+            ),
             filled: true,
             fillColor: const Color(0xFFF8F9FC),
             border: OutlineInputBorder(
@@ -2235,7 +2344,9 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                       : column.name,
                   style: TextStyle(
                     fontFamily: 'Literata',
-                    color: selectedDate != null ? const Color(0xFF1A1A2E) : Colors.grey[600],
+                    color: selectedDate != null
+                        ? const Color(0xFF1A1A2E)
+                        : Colors.grey[600],
                   ),
                 ),
               ],
@@ -2246,10 +2357,13 @@ class _EventOrderScreenState extends State<EventOrderScreen>
         final options = column.dropdownOptions ?? [];
         final currentValue = fieldValues[column.id] as String?;
         return DropdownButtonFormField<String>(
-          value: options.contains(currentValue) ? currentValue : null,
+          initialValue: options.contains(currentValue) ? currentValue : null,
           decoration: InputDecoration(
             labelText: column.name,
-            labelStyle: TextStyle(fontFamily: 'Literata', color: Colors.grey[600]),
+            labelStyle: TextStyle(
+              fontFamily: 'Literata',
+              color: Colors.grey[600],
+            ),
             filled: true,
             fillColor: const Color(0xFFF8F9FC),
             border: OutlineInputBorder(
@@ -2257,10 +2371,17 @@ class _EventOrderScreenState extends State<EventOrderScreen>
               borderSide: BorderSide.none,
             ),
           ),
-          items: options.map((option) => DropdownMenuItem(
-            value: option,
-            child: Text(option, style: const TextStyle(fontFamily: 'Literata')),
-          )).toList(),
+          items: options
+              .map(
+                (option) => DropdownMenuItem(
+                  value: option,
+                  child: Text(
+                    option,
+                    style: const TextStyle(fontFamily: 'Literata'),
+                  ),
+                ),
+              )
+              .toList(),
           onChanged: (value) {
             setDialogState(() {
               fieldValues[column.id] = value;
@@ -2270,14 +2391,17 @@ class _EventOrderScreenState extends State<EventOrderScreen>
       case EventCustomColumnType.boolean:
         final value = fieldValues[column.id] as bool? ?? false;
         return SwitchListTile(
-          title: Text(column.name, style: const TextStyle(fontFamily: 'Literata')),
+          title: Text(
+            column.name,
+            style: const TextStyle(fontFamily: 'Literata'),
+          ),
           value: value,
           onChanged: (newValue) {
             setDialogState(() {
               fieldValues[column.id] = newValue;
             });
           },
-          activeColor: const Color(0xFF1B4D3E),
+          activeThumbColor: const Color(0xFF1B4D3E),
           contentPadding: EdgeInsets.zero,
         );
     }
@@ -2289,26 +2413,25 @@ class _EventOrderScreenState extends State<EventOrderScreen>
       builder: (context) => AlertDialog(
         backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Delete Sub-Event?',
-            style: TextStyle(
-              fontFamily: 'Literata',
-              color: Color(0xFF1A1A2E),
-              fontWeight: FontWeight.bold,
-            )),
-        content: Text(
-          'Are you sure you want to delete "${_subEvents[index].name}"?',
+        title: const Text(
+          'Delete Sub-Event?',
           style: TextStyle(
             fontFamily: 'Literata',
-            color: Colors.grey[700],
+            color: Color(0xFF1A1A2E),
+            fontWeight: FontWeight.bold,
           ),
+        ),
+        content: Text(
+          'Are you sure you want to delete "${_subEvents[index].name}"?',
+          style: TextStyle(fontFamily: 'Literata', color: Colors.grey[700]),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Cancel', style: TextStyle(
-              fontFamily: 'Literata',
-              color: Colors.grey[600],
-            )),
+            child: Text(
+              'Cancel',
+              style: TextStyle(fontFamily: 'Literata', color: Colors.grey[600]),
+            ),
           ),
           ElevatedButton(
             onPressed: () {
@@ -2323,7 +2446,13 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                 borderRadius: BorderRadius.circular(12),
               ),
             ),
-            child: const Text('Delete', style: TextStyle(fontFamily: 'Literata', fontWeight: FontWeight.w600)),
+            child: const Text(
+              'Delete',
+              style: TextStyle(
+                fontFamily: 'Literata',
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
         ],
       ),
@@ -2340,19 +2469,21 @@ class _EventOrderScreenState extends State<EventOrderScreen>
 
   void _showProductDialog({OrderItem? item, int? editIndex}) {
     ProductEntity? selectedProduct;
-    final quantityController =
-        TextEditingController(text: item?.quantity.toString() ?? '1');
-    final rateController =
-        TextEditingController(text: item?.rate.toStringAsFixed(0) ?? '');
-    final discountController =
-        TextEditingController(text: item?.discountPercent.toString() ?? '0');
+    final quantityController = TextEditingController(
+      text: item?.quantity.toString() ?? '1',
+    );
+    final rateController = TextEditingController(
+      text: item?.rate.toStringAsFixed(0) ?? '',
+    );
+    final discountController = TextEditingController(
+      text: item?.discountPercent.toString() ?? '0',
+    );
     String searchQuery = '';
 
     // If editing, find the product
     if (item != null) {
       for (final p in _products) {
-        if (p.serverId == item.productId ||
-            p.id.toString() == item.productId) {
+        if (p.serverId == item.productId || p.id.toString() == item.productId) {
           selectedProduct = p;
           break;
         }
@@ -2366,15 +2497,20 @@ class _EventOrderScreenState extends State<EventOrderScreen>
           final filteredProducts = searchQuery.isEmpty
               ? _products
               : _products
-                  .where((p) =>
-                      p.name.toLowerCase().contains(searchQuery.toLowerCase()) ||
-                      p.indexNo.toString().contains(searchQuery))
-                  .toList();
+                    .where(
+                      (p) =>
+                          p.name.toLowerCase().contains(
+                            searchQuery.toLowerCase(),
+                          ) ||
+                          p.indexNo.toString().contains(searchQuery),
+                    )
+                    .toList();
 
           return AlertDialog(
             backgroundColor: Colors.white,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
             title: Text(
               editIndex != null ? 'Edit Product' : 'Add Product',
               style: const TextStyle(
@@ -2405,8 +2541,10 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                             fontFamily: 'Literata',
                             color: Colors.grey[600],
                           ),
-                          prefixIcon:
-                              Icon(Icons.search, color: Colors.grey[600]),
+                          prefixIcon: Icon(
+                            Icons.search,
+                            color: Colors.grey[600],
+                          ),
                           filled: true,
                           fillColor: const Color(0xFFF8F9FC),
                           border: OutlineInputBorder(
@@ -2433,8 +2571,9 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                             return ListTile(
                               dense: true,
                               selected: isSelected,
-                              selectedTileColor:
-                                  const Color(0xFF1B4D3E).withOpacity(0.1),
+                              selectedTileColor: const Color(
+                                0xFF1B4D3E,
+                              ).withOpacity(0.1),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8),
                               ),
@@ -2445,7 +2584,9 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                                   color: isSelected
                                       ? const Color(0xFF1B4D3E)
                                       : const Color(0xFF1A1A2E),
-                                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                                  fontWeight: isSelected
+                                      ? FontWeight.w600
+                                      : FontWeight.normal,
                                 ),
                               ),
                               subtitle: Text(
@@ -2459,8 +2600,8 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                               onTap: () {
                                 setDialogState(() {
                                   selectedProduct = product;
-                                  rateController.text =
-                                      product.salesPrice.toStringAsFixed(0);
+                                  rateController.text = product.salesPrice
+                                      .toStringAsFixed(0);
                                 });
                               },
                             );
@@ -2479,8 +2620,10 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.inventory,
-                                color: Color(0xFF1B4D3E)),
+                            const Icon(
+                              Icons.inventory,
+                              color: Color(0xFF1B4D3E),
+                            ),
                             const SizedBox(width: 12),
                             Expanded(
                               child: Text(
@@ -2581,11 +2724,13 @@ class _EventOrderScreenState extends State<EventOrderScreen>
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: Text('Cancel',
-                    style: TextStyle(
-                      fontFamily: 'Literata',
-                      color: Colors.grey[600],
-                    )),
+                child: Text(
+                  'Cancel',
+                  style: TextStyle(
+                    fontFamily: 'Literata',
+                    color: Colors.grey[600],
+                  ),
+                ),
               ),
               ElevatedButton(
                 onPressed: () {
@@ -2596,10 +2741,8 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                     return;
                   }
 
-                  final quantity =
-                      int.tryParse(quantityController.text) ?? 1;
-                  final rate =
-                      double.tryParse(rateController.text) ?? 0.0;
+                  final quantity = int.tryParse(quantityController.text) ?? 1;
+                  final rate = double.tryParse(rateController.text) ?? 0.0;
                   final discount =
                       double.tryParse(discountController.text) ?? 0.0;
 
@@ -2647,7 +2790,10 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                 ),
                 child: Text(
                   editIndex != null ? 'Update' : 'Add',
-                  style: const TextStyle(fontFamily: 'Literata', fontWeight: FontWeight.w600),
+                  style: const TextStyle(
+                    fontFamily: 'Literata',
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ],
@@ -2663,27 +2809,25 @@ class _EventOrderScreenState extends State<EventOrderScreen>
       builder: (context) => AlertDialog(
         backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title:
-            const Text('Delete Product?', style: TextStyle(
-              fontFamily: 'Literata',
-              color: Color(0xFF1A1A2E),
-              fontWeight: FontWeight.bold,
-            )),
-        content: Text(
-          'Are you sure you want to remove "${_orderItems[index].productName}"?',
+        title: const Text(
+          'Delete Product?',
           style: TextStyle(
             fontFamily: 'Literata',
-            color: Colors.grey[700],
+            color: Color(0xFF1A1A2E),
+            fontWeight: FontWeight.bold,
           ),
+        ),
+        content: Text(
+          'Are you sure you want to remove "${_orderItems[index].productName}"?',
+          style: TextStyle(fontFamily: 'Literata', color: Colors.grey[700]),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child:
-                Text('Cancel', style: TextStyle(
-                  fontFamily: 'Literata',
-                  color: Colors.grey[600],
-                )),
+            child: Text(
+              'Cancel',
+              style: TextStyle(fontFamily: 'Literata', color: Colors.grey[600]),
+            ),
           ),
           ElevatedButton(
             onPressed: () {
@@ -2698,7 +2842,13 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                 borderRadius: BorderRadius.circular(12),
               ),
             ),
-            child: const Text('Delete', style: TextStyle(fontFamily: 'Literata', fontWeight: FontWeight.w600)),
+            child: const Text(
+              'Delete',
+              style: TextStyle(
+                fontFamily: 'Literata',
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
         ],
       ),
@@ -2707,7 +2857,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
 
   Future<void> _shareOrder() async {
     if (widget.existingOrder == null) return;
-    
+
     setState(() => _isPdfLoading = true);
     try {
       final shop = await ShopRepository().getShopDetails();
@@ -2733,7 +2883,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
 
   Future<void> _printOrder() async {
     if (widget.existingOrder == null) return;
-    
+
     setState(() => _isPdfLoading = true);
     try {
       final shop = await ShopRepository().getShopDetails();
@@ -2795,10 +2945,12 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
       } else {
         final lowerQuery = query.toLowerCase();
         _filteredCustomers = widget.customers
-            .where((c) =>
-                c.name.toLowerCase().contains(lowerQuery) ||
-                c.mobile.toLowerCase().contains(lowerQuery) ||
-                (c.address?.toLowerCase().contains(lowerQuery) ?? false))
+            .where(
+              (c) =>
+                  c.name.toLowerCase().contains(lowerQuery) ||
+                  c.mobile.toLowerCase().contains(lowerQuery) ||
+                  (c.address?.toLowerCase().contains(lowerQuery) ?? false),
+            )
             .toList();
       }
     });
@@ -2882,7 +3034,10 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
                 decoration: InputDecoration(
                   hintText: 'Search by name, phone or address',
                   hintStyle: TextStyle(color: Colors.grey[500]),
-                  prefixIcon: const Icon(Icons.search, color: Color(0xFF1B4D3E)),
+                  prefixIcon: const Icon(
+                    Icons.search,
+                    color: Color(0xFF1B4D3E),
+                  ),
                   suffixIcon: _searchController.text.isNotEmpty
                       ? IconButton(
                           icon: const Icon(Icons.clear, size: 20),
@@ -2970,7 +3125,8 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
                                     const SizedBox(width: 12),
                                     Expanded(
                                       child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
                                           Text(
                                             customer.name,
@@ -2986,10 +3142,16 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
                                           const SizedBox(height: 2),
                                           Row(
                                             children: [
-                                              Icon(Icons.phone, size: 12, color: Colors.grey[500]),
+                                              Icon(
+                                                Icons.phone,
+                                                size: 12,
+                                                color: Colors.grey[500],
+                                              ),
                                               const SizedBox(width: 4),
                                               Text(
-                                                customer.mobile.isNotEmpty ? customer.mobile : '—',
+                                                customer.mobile.isNotEmpty
+                                                    ? customer.mobile
+                                                    : '—',
                                                 style: TextStyle(
                                                   fontFamily: 'Literata',
                                                   color: Colors.grey[600],
@@ -2998,11 +3160,16 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
                                               ),
                                             ],
                                           ),
-                                          if (customer.address?.isNotEmpty == true) ...[
+                                          if (customer.address?.isNotEmpty ==
+                                              true) ...[
                                             const SizedBox(height: 2),
                                             Row(
                                               children: [
-                                                Icon(Icons.location_on, size: 12, color: Colors.grey[500]),
+                                                Icon(
+                                                  Icons.location_on,
+                                                  size: 12,
+                                                  color: Colors.grey[500],
+                                                ),
                                                 const SizedBox(width: 4),
                                                 Expanded(
                                                   child: Text(
@@ -3013,7 +3180,8 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
                                                       fontSize: 11,
                                                     ),
                                                     maxLines: 1,
-                                                    overflow: TextOverflow.ellipsis,
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
                                                   ),
                                                 ),
                                               ],

@@ -2,16 +2,10 @@ import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
 import '../../offline/controllers/product_offline_controller.dart';
-import '../../offline/entities/product_entity.dart';
 import 'product_api_service.dart';
 
 /// Sync status for tracking sync state
-enum ProductSyncStatus {
-  idle,
-  syncing,
-  success,
-  failed,
-}
+enum ProductSyncStatus { idle, syncing, success, failed }
 
 /// Result of a sync operation
 class ProductSyncResult {
@@ -48,7 +42,7 @@ class ProductSyncResult {
 
 /// Service for background synchronization of Product data
 /// Implements delta sync - only syncs NEW, UPDATED, or DELETED products
-/// 
+///
 /// Features:
 /// - Connectivity monitoring with auto-sync on reconnect
 /// - Periodic background sync
@@ -67,7 +61,7 @@ class ProductSyncService extends ChangeNotifier {
   StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
   Timer? _periodicSyncTimer;
   Timer? _connectivityDebounceTimer;
-  
+
   /// Mutex to prevent concurrent sync operations
   bool _isSyncing = false;
 
@@ -75,9 +69,10 @@ class ProductSyncService extends ChangeNotifier {
     ProductOfflineController? offlineController,
     ProductApiService? apiService,
     Connectivity? connectivity,
-  })  : _offlineController = offlineController ?? ProductOfflineController.instance,
-        _apiService = apiService ?? ProductApiService.instance,
-        _connectivity = connectivity ?? Connectivity();
+  }) : _offlineController =
+           offlineController ?? ProductOfflineController.instance,
+       _apiService = apiService ?? ProductApiService.instance,
+       _connectivity = connectivity ?? Connectivity();
 
   /// Get the singleton instance
   static ProductSyncService get instance {
@@ -101,13 +96,15 @@ class ProductSyncService extends ChangeNotifier {
   /// Call this after Isar is initialized
   void initialize() {
     debugPrint('[ProductSync] Initializing...');
-    
+
     // Listen for connectivity changes with debouncing
-    _connectivitySubscription = _connectivity.onConnectivityChanged.listen((results) {
+    _connectivitySubscription = _connectivity.onConnectivityChanged.listen((
+      results,
+    ) {
       if (_isConnected(results)) {
         // Cancel any pending debounce timer
         _connectivityDebounceTimer?.cancel();
-        
+
         // Debounce to prevent multiple syncs when connectivity changes rapidly
         _connectivityDebounceTimer = Timer(const Duration(seconds: 3), () {
           if (!_isSyncing) {
@@ -122,10 +119,10 @@ class ProductSyncService extends ChangeNotifier {
     _periodicSyncTimer = Timer.periodic(const Duration(minutes: 3), (_) {
       _checkAndSync();
     });
-    
+
     // Initial sync
     _checkAndSync();
-    
+
     debugPrint('[ProductSync] Initialized');
   }
 
@@ -214,9 +211,11 @@ class ProductSyncService extends ChangeNotifier {
       _status = ProductSyncStatus.success;
       _lastSyncTime = DateTime.now();
       _lastError = null;
-      
-      debugPrint('[ProductSync] Sync completed: created=$createdCount, updated=$updatedCount, deleted=$deletedCount, downloaded=$downloadedCount');
-      
+
+      debugPrint(
+        '[ProductSync] Sync completed: created=$createdCount, updated=$updatedCount, deleted=$deletedCount, downloaded=$downloadedCount',
+      );
+
       notifyListeners();
 
       return ProductSyncResult(
@@ -260,10 +259,12 @@ class ProductSyncService extends ChangeNotifier {
     // Get NEW products → POST to server
     final newProducts = await _offlineController.getNewProducts();
     debugPrint('[ProductSync] NEW products to sync: ${newProducts.length}');
-    
+
     for (final product in newProducts) {
       try {
-        final response = await _apiService.createProduct(product.toSyncPayload());
+        final response = await _apiService.createProduct(
+          product.toSyncPayload(),
+        );
         await _offlineController.updateWithServerResponse(product.id, response);
         created++;
       } catch (e) {
@@ -274,18 +275,28 @@ class ProductSyncService extends ChangeNotifier {
 
     // Get UPDATED products → PUT to server
     final updatedProducts = await _offlineController.getUpdatedProducts();
-    debugPrint('[ProductSync] UPDATED products to sync: ${updatedProducts.length}');
-    
+    debugPrint(
+      '[ProductSync] UPDATED products to sync: ${updatedProducts.length}',
+    );
+
     for (final product in updatedProducts) {
       try {
         if (product.serverId != null) {
-          await _apiService.updateProduct(product.serverId!, product.toSyncPayload());
+          await _apiService.updateProduct(
+            product.serverId!,
+            product.toSyncPayload(),
+          );
           await _offlineController.markAsSynced(product.id);
           updated++;
         } else {
           // No server ID means it was never synced - treat as new
-          final response = await _apiService.createProduct(product.toSyncPayload());
-          await _offlineController.updateWithServerResponse(product.id, response);
+          final response = await _apiService.createProduct(
+            product.toSyncPayload(),
+          );
+          await _offlineController.updateWithServerResponse(
+            product.id,
+            response,
+          );
           created++;
         }
       } catch (e) {
@@ -296,8 +307,10 @@ class ProductSyncService extends ChangeNotifier {
 
     // Get DELETED products → DELETE from server
     final deletedProducts = await _offlineController.getDeletedProducts();
-    debugPrint('[ProductSync] DELETED products to sync: ${deletedProducts.length}');
-    
+    debugPrint(
+      '[ProductSync] DELETED products to sync: ${deletedProducts.length}',
+    );
+
     for (final product in deletedProducts) {
       try {
         if (product.serverId != null) {
@@ -326,13 +339,15 @@ class ProductSyncService extends ChangeNotifier {
     try {
       // Get last sync time for incremental sync
       final lastSync = _lastSyncTime;
-      
+
       // Fetch products from server (with optional since parameter)
       final serverProducts = await _apiService.getProducts(
         updatedSince: lastSync,
       );
 
-      debugPrint('[ProductSync] Received ${serverProducts.length} products from server');
+      debugPrint(
+        '[ProductSync] Received ${serverProducts.length} products from server',
+      );
 
       if (serverProducts.isNotEmpty) {
         return await _offlineController.importFromServer(serverProducts);
@@ -365,7 +380,7 @@ class ProductSyncService extends ChangeNotifier {
     try {
       // Get all products from server
       final serverProducts = await _apiService.getProducts();
-      
+
       // Import all
       final count = await _offlineController.importFromServer(serverProducts);
 

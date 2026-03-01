@@ -43,7 +43,6 @@ import 'package:c_billing/features/supplier/presentation/pages/enhanced_supplier
 import 'package:c_billing/features/company/presentation/pages/enhanced_company_page.dart';
 import 'package:c_billing/features/purchase_return/presentation/pages/purchase_return_screen.dart';
 import 'package:c_billing/features/event_order/presentation/pages/event_order_list_page.dart';
-import 'package:c_billing/features/reports/presentation/pages/report_page.dart';
 import 'package:c_billing/features/dashboard/data/models/dashboard_data.dart';
 import 'package:c_billing/common_widgets/file_preview_page.dart';
 import 'package:c_billing/features/inventory_management/presentation/pages/barcode_generator_page.dart';
@@ -83,7 +82,7 @@ class _BillingPageState extends State<BillingPage> {
   final _discountController = TextEditingController();
   final _receivedAmountController = TextEditingController();
 
-  List<BillItem> _billItems = [];
+  final List<BillItem> _billItems = [];
   List<Product> _products = [];
   bool _isLoading = false;
   bool _isSavingBill = false;
@@ -854,6 +853,8 @@ class _BillingPageState extends State<BillingPage> {
               cgstPercent,
               sgstPercent,
               hsnCode,
+              unit,
+              sellUnit,
             ) {
               // Use a unique key: productId + batchLocalId (or just productId if no batch)
               final uniqueKey = batchLocalId != null
@@ -874,6 +875,8 @@ class _BillingPageState extends State<BillingPage> {
                     cgstPercent: cgstPercent,
                     sgstPercent: sgstPercent,
                     hsnCode: hsnCode,
+                    unit: unit,
+                    sellUnit: sellUnit,
                   );
                 } else {
                   _billItems.add(
@@ -887,6 +890,8 @@ class _BillingPageState extends State<BillingPage> {
                       cgstPercent: cgstPercent,
                       sgstPercent: sgstPercent,
                       hsnCode: hsnCode,
+                      unit: unit,
+                      sellUnit: sellUnit,
                     ),
                   );
                 }
@@ -936,6 +941,7 @@ class _BillingPageState extends State<BillingPage> {
     final cgst = (productData['cgst'] as num?)?.toDouble() ?? 0.0;
     final sgst = (productData['sgst'] as num?)?.toDouble() ?? 0.0;
     final hsnCode = productData['hsnCode'] as String?;
+    final unit = productData['unit'] as String? ?? 'pcs';
 
     // Create unique key with batch
     final uniqueKey = batchId != null
@@ -948,19 +954,25 @@ class _BillingPageState extends State<BillingPage> {
       );
 
       if (existingIndex != -1) {
-        // Update existing item
+        // Update existing item - preserve existing unit/sellUnit
         final existing = _billItems[existingIndex];
-        if (existing.quantity < availableStock) {
+        // Determine step based on current sellUnit
+        final step = (existing.sellUnit == 'gm' || existing.sellUnit == 'ml')
+            ? 0.1
+            : 1.0;
+        if (existing.quantity + step <= availableStock) {
           _billItems[existingIndex] = BillItem.create(
             productId: uniqueKey,
             productName: productName,
             companyName: companyName,
             sellingPrice: existing.sellingPrice,
             purchasePrice: purchasePrice,
-            quantity: existing.quantity + 1,
+            quantity: existing.quantity + step,
             cgstPercent: cgst,
             sgstPercent: sgst,
             hsnCode: hsnCode,
+            unit: existing.unit ?? unit,
+            sellUnit: existing.sellUnit ?? unit,
           );
         } else {
           _showSnackbar(
@@ -970,7 +982,7 @@ class _BillingPageState extends State<BillingPage> {
           return;
         }
       } else {
-        // Add new item
+        // Add new item with base unit
         _billItems.add(
           BillItem.create(
             productId: uniqueKey,
@@ -982,6 +994,8 @@ class _BillingPageState extends State<BillingPage> {
             cgstPercent: cgst,
             sgstPercent: sgst,
             hsnCode: hsnCode,
+            unit: unit,
+            sellUnit: unit,
           ),
         );
       }
@@ -991,8 +1005,8 @@ class _BillingPageState extends State<BillingPage> {
   double get _totalAmount =>
       _billItems.fold(0.0, (sum, item) => sum + item.subtotal);
 
-  int get _totalQuantity =>
-      _billItems.fold(0, (sum, item) => sum + item.quantity);
+  double get _totalQuantity =>
+      _billItems.fold(0.0, (sum, item) => sum + item.quantity);
 
   double get _discountAmount {
     if (_isPercentageDiscount) {
@@ -1101,7 +1115,7 @@ class _BillingPageState extends State<BillingPage> {
                 ? _customerContactController.text.trim()
                 : _selectedCustomer?['contact'],
             items: processableItems,
-            totalQuantity: _totalQuantity,
+            totalQuantity: _totalQuantity.round(),
             totalAmount: _totalAmount,
             discountAmount: _discountAmount,
             discountPercent: _discountPercent,
@@ -1210,7 +1224,7 @@ class _BillingPageState extends State<BillingPage> {
         final index = _products.indexWhere((p) => p.id == realProductId);
         if (index != -1) {
           final p = _products[index];
-          final newStock = p.currentStock - item.quantity;
+          final newStock = (p.currentStock - item.quantity).round();
           if (newStock > 0) {
             _products[index] = p.copyWith(currentStock: newStock);
           } else {
@@ -1332,7 +1346,7 @@ class _BillingPageState extends State<BillingPage> {
       }
 
       debugPrint('[BillingPage] PDF saved to: ${file.path}');
-      debugPrint('[BillingPage] File size: ${fileSize} bytes');
+      debugPrint('[BillingPage] File size: $fileSize bytes');
 
       // Hide loading snackbar
       if (mounted) {
@@ -1597,7 +1611,10 @@ class _BillingPageState extends State<BillingPage> {
                       _showAddCustomerDialog(phone);
                     },
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFF1B4D3E).withOpacity(0.08),
                         borderRadius: BorderRadius.circular(8),
@@ -1628,39 +1645,44 @@ class _BillingPageState extends State<BillingPage> {
                     ),
                   ),
                 // Stats button - beside Add Customer
-                if (!_isLoadingCustomers) ...
-                  [
-                    const SizedBox(width: 8),
-                    GestureDetector(
-                      onTap: _toggleQuickStats,
-                      child: Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          gradient: _showQuickStats
-                              ? null
-                              : const LinearGradient(
-                                  colors: [Color(0xFF1B4D3E), Color(0xFF2D6A4F)],
+                if (!_isLoadingCustomers) ...[
+                  const SizedBox(width: 8),
+                  GestureDetector(
+                    onTap: _toggleQuickStats,
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        gradient: _showQuickStats
+                            ? null
+                            : const LinearGradient(
+                                colors: [Color(0xFF1B4D3E), Color(0xFF2D6A4F)],
+                              ),
+                        color: _showQuickStats ? Colors.grey[200] : null,
+                        borderRadius: BorderRadius.circular(8),
+                        boxShadow: _showQuickStats
+                            ? null
+                            : [
+                                BoxShadow(
+                                  color: const Color(
+                                    0xFF1B4D3E,
+                                  ).withOpacity(0.2),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 2),
                                 ),
-                          color: _showQuickStats ? Colors.grey[200] : null,
-                          borderRadius: BorderRadius.circular(8),
-                          boxShadow: _showQuickStats
-                              ? null
-                              : [
-                                  BoxShadow(
-                                    color: const Color(0xFF1B4D3E).withOpacity(0.2),
-                                    blurRadius: 4,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ],
-                        ),
-                        child: Icon(
-                          _showQuickStats ? Icons.close_rounded : Icons.insights_rounded,
-                          color: _showQuickStats ? Colors.grey[600] : Colors.white,
-                          size: 16,
-                        ),
+                              ],
+                      ),
+                      child: Icon(
+                        _showQuickStats
+                            ? Icons.close_rounded
+                            : Icons.insights_rounded,
+                        color: _showQuickStats
+                            ? Colors.grey[600]
+                            : Colors.white,
+                        size: 16,
                       ),
                     ),
-                  ],
+                  ),
+                ],
                 // Loading indicator for customer list
                 if (_isLoadingCustomers)
                   Container(
@@ -2274,7 +2296,8 @@ class _BillingPageState extends State<BillingPage> {
           cgstPercent: product.cgstPercent,
           sgstPercent: product.sgstPercent,
           hsnCode: product.hsnCode,
-          onBatchSelected: (batch, quantity) {
+          unit: product.unit,
+          onBatchSelected: (batch, quantity, sellUnit) {
             final uniqueKey = '${product.id}_batch_${batch.id}';
             final existingIndex = _billItems.indexWhere(
               (item) => item.productId == uniqueKey,
@@ -2291,6 +2314,8 @@ class _BillingPageState extends State<BillingPage> {
                   purchasePrice: batch.purchasePrice,
                   quantity: quantity,
                   hsnCode: product.hsnCode,
+                  unit: product.unit,
+                  sellUnit: sellUnit,
                 );
               } else {
                 _billItems.add(
@@ -2304,6 +2329,8 @@ class _BillingPageState extends State<BillingPage> {
                     purchasePrice: batch.purchasePrice,
                     quantity: quantity,
                     hsnCode: product.hsnCode,
+                    unit: product.unit,
+                    sellUnit: sellUnit,
                   ),
                 );
               }
@@ -2337,7 +2364,11 @@ class _BillingPageState extends State<BillingPage> {
     setState(() {
       if (existingIndex != -1) {
         final existing = _billItems[existingIndex];
-        if (existing.quantity < effectiveStock) {
+        // Determine step based on current sellUnit
+        final step = (existing.sellUnit == 'gm' || existing.sellUnit == 'ml')
+            ? 0.1
+            : 1.0;
+        if (existing.quantity + step <= effectiveStock) {
           _billItems[existingIndex] = BillItem.create(
             productId: uniqueKey,
             productName: product.name,
@@ -2346,8 +2377,10 @@ class _BillingPageState extends State<BillingPage> {
                 : null,
             sellingPrice: existing.sellingPrice,
             purchasePrice: fifoPurchasePrice,
-            quantity: existing.quantity + 1,
+            quantity: existing.quantity + step,
             hsnCode: product.hsnCode,
+            unit: existing.unit ?? product.unit,
+            sellUnit: existing.sellUnit ?? product.unit,
           );
         } else {
           _showSnackbar(
@@ -2369,6 +2402,8 @@ class _BillingPageState extends State<BillingPage> {
             purchasePrice: fifoPurchasePrice,
             quantity: 1,
             hsnCode: product.hsnCode,
+            unit: product.unit,
+            sellUnit: product.unit,
           ),
         );
       }
@@ -2483,7 +2518,10 @@ class _BillingPageState extends State<BillingPage> {
               children: [
                 // Combined: Product code input + Search + Barcode scan
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 8,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.grey[50],
                     borderRadius: BorderRadius.circular(10),
@@ -2642,7 +2680,10 @@ class _BillingPageState extends State<BillingPage> {
                 ),
                 const Spacer(),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFF1B4D3E),
                     borderRadius: BorderRadius.circular(12),
@@ -2666,7 +2707,7 @@ class _BillingPageState extends State<BillingPage> {
             physics: const NeverScrollableScrollPhysics(),
             padding: const EdgeInsets.symmetric(vertical: 6),
             itemCount: _billItems.length,
-            separatorBuilder: (_, __) => Divider(
+            separatorBuilder: (_, _) => Divider(
               height: 1,
               thickness: 0.5,
               indent: 12,
@@ -2694,7 +2735,9 @@ class _BillingPageState extends State<BillingPage> {
 
               int maxStock;
               final parts = item.productId.split('_batch_');
-              final batchLocalId = parts.length > 1 ? int.tryParse(parts.last) : null;
+              final batchLocalId = parts.length > 1
+                  ? int.tryParse(parts.last)
+                  : null;
               if (batchLocalId != null) {
                 final batch = _availableBatches
                     .cast<PurchaseBatchEntity?>()
@@ -2705,7 +2748,11 @@ class _BillingPageState extends State<BillingPage> {
                 maxStock = batch?.quantityRemaining ?? 0;
               } else {
                 final batchStock = _availableBatches
-                    .where((b) => b.productId == realProductId && b.quantityRemaining > 0)
+                    .where(
+                      (b) =>
+                          b.productId == realProductId &&
+                          b.quantityRemaining > 0,
+                    )
                     .fold<int>(0, (s, b) => s + b.quantityRemaining);
                 maxStock = batchStock > 0 ? batchStock : product.currentStock;
               }
@@ -2717,11 +2764,18 @@ class _BillingPageState extends State<BillingPage> {
                   alignment: Alignment.centerRight,
                   padding: const EdgeInsets.only(right: 16),
                   color: Colors.red[400],
-                  child: const Icon(Icons.delete_outline_rounded, color: Colors.white, size: 20),
+                  child: const Icon(
+                    Icons.delete_outline_rounded,
+                    color: Colors.white,
+                    size: 20,
+                  ),
                 ),
                 onDismissed: (_) => setState(() => _billItems.removeAt(index)),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 8,
+                  ),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
@@ -2767,7 +2821,10 @@ class _BillingPageState extends State<BillingPage> {
                             const SizedBox(height: 2),
                             // Price row - tappable
                             GestureDetector(
-                              onTap: () => _showEditSellPriceDialog(index: index, item: item),
+                              onTap: () => _showEditSellPriceDialog(
+                                index: index,
+                                item: item,
+                              ),
                               child: Row(
                                 children: [
                                   Text(
@@ -2776,7 +2833,9 @@ class _BillingPageState extends State<BillingPage> {
                                       fontFamily: 'Literata',
                                       fontSize: 11,
                                       fontWeight: FontWeight.w600,
-                                      color: const Color(0xFF1B4D3E).withValues(alpha: 0.8),
+                                      color: const Color(
+                                        0xFF1B4D3E,
+                                      ).withValues(alpha: 0.8),
                                     ),
                                   ),
                                   const SizedBox(width: 3),
@@ -2785,10 +2844,14 @@ class _BillingPageState extends State<BillingPage> {
                                     size: 10,
                                     color: Colors.grey[400],
                                   ),
-                                  if (item.cgstPercent > 0 || item.sgstPercent > 0) ...[
+                                  if (item.cgstPercent > 0 ||
+                                      item.sgstPercent > 0) ...[
                                     const SizedBox(width: 6),
                                     Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 4,
+                                        vertical: 1,
+                                      ),
                                       decoration: BoxDecoration(
                                         color: Colors.orange[50],
                                         borderRadius: BorderRadius.circular(3),
@@ -2817,7 +2880,9 @@ class _BillingPageState extends State<BillingPage> {
                         decoration: BoxDecoration(
                           color: Colors.grey[50],
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: Colors.grey.withValues(alpha: 0.15)),
+                          border: Border.all(
+                            color: Colors.grey.withValues(alpha: 0.15),
+                          ),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
@@ -2825,7 +2890,13 @@ class _BillingPageState extends State<BillingPage> {
                             // Minus
                             GestureDetector(
                               onTap: () {
-                                if (item.quantity > 1) {
+                                // Determine step based on sellUnit (100 gm/ml = 0.1 kg/ltr)
+                                final step =
+                                    (item.sellUnit == 'gm' ||
+                                        item.sellUnit == 'ml')
+                                    ? 0.1
+                                    : 1.0;
+                                if (item.quantity > step) {
                                   setState(() {
                                     _billItems[index] = BillItem.create(
                                       productId: item.productId,
@@ -2833,10 +2904,12 @@ class _BillingPageState extends State<BillingPage> {
                                       companyName: item.companyName,
                                       sellingPrice: item.sellingPrice,
                                       purchasePrice: item.purchasePrice,
-                                      quantity: item.quantity - 1,
+                                      quantity: item.quantity - step,
                                       cgstPercent: item.cgstPercent,
                                       sgstPercent: item.sgstPercent,
                                       hsnCode: item.hsnCode,
+                                      unit: item.unit,
+                                      sellUnit: item.sellUnit,
                                     );
                                   });
                                 } else {
@@ -2847,13 +2920,19 @@ class _BillingPageState extends State<BillingPage> {
                                 width: 28,
                                 height: 30,
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF1B4D3E).withValues(alpha: 0.08),
+                                  color: const Color(
+                                    0xFF1B4D3E,
+                                  ).withValues(alpha: 0.08),
                                   borderRadius: const BorderRadius.only(
                                     topLeft: Radius.circular(7),
                                     bottomLeft: Radius.circular(7),
                                   ),
                                 ),
-                                child: const Icon(Icons.remove, size: 14, color: Color(0xFF1B4D3E)),
+                                child: const Icon(
+                                  Icons.remove,
+                                  size: 14,
+                                  color: Color(0xFF1B4D3E),
+                                ),
                               ),
                             ),
                             // Quantity display - tappable for manual entry
@@ -2864,14 +2943,17 @@ class _BillingPageState extends State<BillingPage> {
                                 maxStock: maxStock,
                               ),
                               child: Container(
-                                width: 36,
+                                constraints: const BoxConstraints(minWidth: 36),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 4,
+                                ),
                                 alignment: Alignment.center,
                                 child: Text(
-                                  '${item.quantity}',
+                                  item.displayQuantity,
                                   style: const TextStyle(
                                     fontFamily: 'Literata',
                                     fontWeight: FontWeight.w700,
-                                    fontSize: 13,
+                                    fontSize: 11,
                                     color: Color(0xFF1B4D3E),
                                   ),
                                 ),
@@ -2880,7 +2962,13 @@ class _BillingPageState extends State<BillingPage> {
                             // Plus
                             GestureDetector(
                               onTap: () {
-                                if (item.quantity < maxStock) {
+                                // Determine increment based on sellUnit
+                                final step =
+                                    (item.sellUnit == 'gm' ||
+                                        item.sellUnit == 'ml')
+                                    ? 0.1
+                                    : 1.0;
+                                if (item.quantity + step <= maxStock) {
                                   setState(() {
                                     _billItems[index] = BillItem.create(
                                       productId: item.productId,
@@ -2888,14 +2976,19 @@ class _BillingPageState extends State<BillingPage> {
                                       companyName: item.companyName,
                                       sellingPrice: item.sellingPrice,
                                       purchasePrice: item.purchasePrice,
-                                      quantity: item.quantity + 1,
+                                      quantity: item.quantity + step,
                                       cgstPercent: item.cgstPercent,
                                       sgstPercent: item.sgstPercent,
                                       hsnCode: item.hsnCode,
+                                      unit: item.unit,
+                                      sellUnit: item.sellUnit,
                                     );
                                   });
                                 } else {
-                                  _showSnackbar('${_localizations.maxStock}: $maxStock', isError: true);
+                                  _showSnackbar(
+                                    '${_localizations.maxStock}: $maxStock',
+                                    isError: true,
+                                  );
                                 }
                               },
                               child: Container(
@@ -2903,7 +2996,9 @@ class _BillingPageState extends State<BillingPage> {
                                 height: 30,
                                 decoration: BoxDecoration(
                                   color: item.quantity < maxStock
-                                      ? const Color(0xFF1B4D3E).withValues(alpha: 0.08)
+                                      ? const Color(
+                                          0xFF1B4D3E,
+                                        ).withValues(alpha: 0.08)
                                       : Colors.grey[100],
                                   borderRadius: const BorderRadius.only(
                                     topRight: Radius.circular(7),
@@ -2913,7 +3008,9 @@ class _BillingPageState extends State<BillingPage> {
                                 child: Icon(
                                   Icons.add,
                                   size: 14,
-                                  color: item.quantity < maxStock ? const Color(0xFF1B4D3E) : Colors.grey[400],
+                                  color: item.quantity < maxStock
+                                      ? const Color(0xFF1B4D3E)
+                                      : Colors.grey[400],
                                 ),
                               ),
                             ),
@@ -2954,7 +3051,7 @@ class _BillingPageState extends State<BillingPage> {
             child: Row(
               children: [
                 Text(
-                  '${_totalQuantity} ${_localizations.items.toLowerCase()}',
+                  '$_totalQuantity ${_localizations.items.toLowerCase()}',
                   style: TextStyle(
                     fontFamily: 'Literata',
                     fontSize: 11,
@@ -2996,20 +3093,93 @@ class _BillingPageState extends State<BillingPage> {
     required BillItem item,
     required int maxStock,
   }) {
-    final qtyController = TextEditingController(text: item.quantity.toString());
+    // Determine if this product supports sub-units (kg->gm, ltr->ml)
+    final unit = item.unit?.toLowerCase();
+    final supportsSubUnit = unit == 'kg' || unit == 'ltr';
+    final subUnit = unit == 'kg' ? 'gm' : (unit == 'ltr' ? 'ml' : null);
+
+    // Initialize sell unit from item or default to base unit
+    String selectedSellUnit = item.sellUnit ?? unit ?? 'pcs';
+
+    // Calculate display quantity based on current sell unit
+    double getDisplayQty() {
+      if (selectedSellUnit == 'gm' && unit == 'kg') {
+        return item.quantity * 1000;
+      } else if (selectedSellUnit == 'ml' && unit == 'ltr') {
+        return item.quantity * 1000;
+      }
+      return item.quantity;
+    }
+
+    final qtyController = TextEditingController(
+      text: getDisplayQty() == getDisplayQty().roundToDouble()
+          ? getDisplayQty().toInt().toString()
+          : getDisplayQty().toStringAsFixed(2),
+    );
     String? errorText;
 
     showDialog(
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setDialogState) {
-          void validateQty() {
-            final qty = int.tryParse(qtyController.text) ?? 0;
+          // Get max stock in display unit
+          double getMaxStockInDisplayUnit() {
+            if (selectedSellUnit == 'gm' && unit == 'kg') {
+              return maxStock * 1000.0;
+            } else if (selectedSellUnit == 'ml' && unit == 'ltr') {
+              return maxStock * 1000.0;
+            }
+            return maxStock.toDouble();
+          }
+
+          // Convert display quantity to base unit
+          double getBaseUnitQty([double? displayQtyParam]) {
+            final displayQty =
+                displayQtyParam ?? (double.tryParse(qtyController.text) ?? 0);
+            if (selectedSellUnit == 'gm' && unit == 'kg') {
+              return displayQty / 1000;
+            } else if (selectedSellUnit == 'ml' && unit == 'ltr') {
+              return displayQty / 1000;
+            }
+            return displayQty;
+          }
+
+          // Toggle unit and convert quantity
+          void toggleUnit(String newUnit) {
+            if (selectedSellUnit == newUnit) return;
+            final currentDisplayQty = double.tryParse(qtyController.text) ?? 0;
+            double newDisplayQty;
+
+            if (newUnit == 'gm' && selectedSellUnit == 'kg') {
+              newDisplayQty = currentDisplayQty * 1000;
+            } else if (newUnit == 'kg' && selectedSellUnit == 'gm') {
+              newDisplayQty = currentDisplayQty / 1000;
+            } else if (newUnit == 'ml' && selectedSellUnit == 'ltr') {
+              newDisplayQty = currentDisplayQty * 1000;
+            } else if (newUnit == 'ltr' && selectedSellUnit == 'ml') {
+              newDisplayQty = currentDisplayQty / 1000;
+            } else {
+              newDisplayQty = currentDisplayQty;
+            }
+
             setDialogState(() {
-              if (qty <= 0) {
+              selectedSellUnit = newUnit;
+              qtyController.text =
+                  newDisplayQty == newDisplayQty.roundToDouble()
+                  ? newDisplayQty.toInt().toString()
+                  : newDisplayQty.toStringAsFixed(2);
+            });
+          }
+
+          void validateQty() {
+            final displayQty = double.tryParse(qtyController.text) ?? 0;
+            final maxDisplayStock = getMaxStockInDisplayUnit();
+            setDialogState(() {
+              if (displayQty <= 0) {
                 errorText = _localizations.pleaseEnterValidNumber;
-              } else if (qty > maxStock) {
-                errorText = '${_localizations.maxStock}: $maxStock';
+              } else if (displayQty > maxDisplayStock) {
+                errorText =
+                    '${_localizations.maxStock}: ${maxDisplayStock.toStringAsFixed(maxDisplayStock == maxDisplayStock.roundToDouble() ? 0 : 1)} $selectedSellUnit';
               } else {
                 errorText = null;
               }
@@ -3124,7 +3294,7 @@ class _BillingPageState extends State<BillingPage> {
                             ),
                           ),
                           Text(
-                            '$maxStock',
+                            '${getMaxStockInDisplayUnit().toStringAsFixed(getMaxStockInDisplayUnit() == getMaxStockInDisplayUnit().roundToDouble() ? 0 : 1)} $selectedSellUnit',
                             style: TextStyle(
                               fontFamily: 'Literata',
                               fontWeight: FontWeight.w700,
@@ -3137,6 +3307,75 @@ class _BillingPageState extends State<BillingPage> {
                     ],
                   ),
                 ),
+                // Unit toggle for kg/ltr products
+                if (supportsSubUnit && subUnit != null) ...[
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[100],
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () => toggleUnit(unit ?? 'pcs'),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              decoration: BoxDecoration(
+                                color: selectedSellUnit == unit
+                                    ? const Color(0xFF1B4D3E)
+                                    : Colors.transparent,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  (unit ?? 'PCS').toUpperCase(),
+                                  style: TextStyle(
+                                    fontFamily: 'Literata',
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 13,
+                                    color: selectedSellUnit == unit
+                                        ? Colors.white
+                                        : Colors.grey[600],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () => toggleUnit(subUnit),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              decoration: BoxDecoration(
+                                color: selectedSellUnit == subUnit
+                                    ? const Color(0xFF1B4D3E)
+                                    : Colors.transparent,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  subUnit.toUpperCase(),
+                                  style: TextStyle(
+                                    fontFamily: 'Literata',
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 13,
+                                    color: selectedSellUnit == subUnit
+                                        ? Colors.white
+                                        : Colors.grey[600],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 20),
                 // Quantity input with +/- buttons
                 Row(
@@ -3147,9 +3386,19 @@ class _BillingPageState extends State<BillingPage> {
                       child: InkWell(
                         borderRadius: BorderRadius.circular(12),
                         onTap: () {
-                          final current = int.tryParse(qtyController.text) ?? 0;
-                          if (current > 1) {
-                            qtyController.text = (current - 1).toString();
+                          final current =
+                              double.tryParse(qtyController.text) ?? 0;
+                          final step =
+                              (selectedSellUnit == 'gm' ||
+                                  selectedSellUnit == 'ml')
+                              ? 100.0
+                              : 1.0;
+                          if (current > step) {
+                            final newVal = current - step;
+                            qtyController.text =
+                                newVal == newVal.roundToDouble()
+                                ? newVal.toInt().toString()
+                                : newVal.toStringAsFixed(2);
                             validateQty();
                           }
                         },
@@ -3218,9 +3467,23 @@ class _BillingPageState extends State<BillingPage> {
                       child: InkWell(
                         borderRadius: BorderRadius.circular(12),
                         onTap: () {
-                          final current = int.tryParse(qtyController.text) ?? 0;
-                          if (current < maxStock) {
-                            qtyController.text = (current + 1).toString();
+                          final current =
+                              double.tryParse(qtyController.text) ?? 0;
+                          final step =
+                              (selectedSellUnit == 'gm' ||
+                                  selectedSellUnit == 'ml')
+                              ? 100.0
+                              : 1.0;
+                          final maxInUnit = getMaxStockInDisplayUnit();
+                          if (current < maxInUnit) {
+                            final newVal = (current + step).clamp(
+                              0.0,
+                              maxInUnit,
+                            );
+                            qtyController.text =
+                                newVal == newVal.roundToDouble()
+                                ? newVal.toInt().toString()
+                                : newVal.toStringAsFixed(2);
                             validateQty();
                           }
                         },
@@ -3245,47 +3508,56 @@ class _BillingPageState extends State<BillingPage> {
                 ),
                 const SizedBox(height: 16),
                 // Quick quantity buttons
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  alignment: WrapAlignment.center,
-                  children: [1, 5, 10, 25, 50, 100]
-                      .where((q) => q <= maxStock)
-                      .map(
-                        (qty) => Material(
-                          color: Colors.transparent,
-                          child: InkWell(
-                            borderRadius: BorderRadius.circular(8),
-                            onTap: () {
-                              qtyController.text = qty.toString();
-                              validateQty();
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                                vertical: 8,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.grey[100],
+                Builder(
+                  builder: (context) {
+                    final maxInUnit = getMaxStockInDisplayUnit();
+                    final quickVals =
+                        (selectedSellUnit == 'gm' || selectedSellUnit == 'ml')
+                        ? [50, 100, 250, 500, 750, 1000]
+                        : [1, 5, 10, 25, 50, 100];
+                    return Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      alignment: WrapAlignment.center,
+                      children: quickVals
+                          .where((q) => q <= maxInUnit)
+                          .map(
+                            (qty) => Material(
+                              color: Colors.transparent,
+                              child: InkWell(
                                 borderRadius: BorderRadius.circular(8),
-                                border: Border.all(
-                                  color: Colors.grey.withValues(alpha: 0.2),
-                                ),
-                              ),
-                              child: Text(
-                                '$qty',
-                                style: TextStyle(
-                                  fontFamily: 'Literata',
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.grey[700],
+                                onTap: () {
+                                  qtyController.text = qty.toString();
+                                  validateQty();
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                    vertical: 8,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey[100],
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                      color: Colors.grey.withValues(alpha: 0.2),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    '$qty',
+                                    style: TextStyle(
+                                      fontFamily: 'Literata',
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.grey[700],
+                                    ),
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
-                        ),
-                      )
-                      .toList(),
+                          )
+                          .toList(),
+                    );
+                  },
                 ),
               ],
             ),
@@ -3332,8 +3604,11 @@ class _BillingPageState extends State<BillingPage> {
               ElevatedButton(
                 onPressed: errorText == null
                     ? () {
-                        final qty = int.tryParse(qtyController.text) ?? 0;
-                        if (qty > 0 && qty <= maxStock) {
+                        final displayQty =
+                            double.tryParse(qtyController.text) ?? 0;
+                        final baseQty = getBaseUnitQty(displayQty);
+                        final maxInUnit = getMaxStockInDisplayUnit();
+                        if (displayQty > 0 && displayQty <= maxInUnit) {
                           setState(() {
                             _billItems[index] = BillItem.create(
                               productId: item.productId,
@@ -3341,10 +3616,12 @@ class _BillingPageState extends State<BillingPage> {
                               companyName: item.companyName,
                               sellingPrice: item.sellingPrice,
                               purchasePrice: item.purchasePrice,
-                              quantity: qty,
+                              quantity: baseQty,
                               cgstPercent: item.cgstPercent,
                               sgstPercent: item.sgstPercent,
                               hsnCode: item.hsnCode,
+                              unit: unit,
+                              sellUnit: selectedSellUnit,
                             );
                           });
                           Navigator.pop(ctx);
@@ -3379,10 +3656,7 @@ class _BillingPageState extends State<BillingPage> {
   }
 
   /// Show dialog to edit sell price for a bill item
-  void _showEditSellPriceDialog({
-    required int index,
-    required BillItem item,
-  }) {
+  void _showEditSellPriceDialog({required int index, required BillItem item}) {
     final priceController = TextEditingController(
       text: item.sellingPrice.toStringAsFixed(2),
     );
@@ -3437,7 +3711,7 @@ class _BillingPageState extends State<BillingPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        _localizations.edit + ' ' + _localizations.price,
+                        '${_localizations.edit} ${_localizations.price}',
                         style: const TextStyle(
                           fontFamily: 'Literata',
                           fontSize: 16,
@@ -3528,7 +3802,9 @@ class _BillingPageState extends State<BillingPage> {
                 // Price input field
                 TextField(
                   controller: priceController,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
                   textAlign: TextAlign.center,
                   autofocus: true,
                   onChanged: (_) => validatePrice(),
@@ -3629,7 +3905,8 @@ class _BillingPageState extends State<BillingPage> {
               ElevatedButton(
                 onPressed: errorText == null
                     ? () {
-                        final price = double.tryParse(priceController.text) ?? 0;
+                        final price =
+                            double.tryParse(priceController.text) ?? 0;
                         if (price > 0) {
                           setState(() {
                             _billItems[index] = BillItem.create(
@@ -5610,23 +5887,6 @@ class _BillingPageState extends State<BillingPage> {
     );
   }
 
-  Widget _buildQtyButton({
-    required IconData icon,
-    required VoidCallback onPressed,
-  }) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(6),
-        onTap: onPressed,
-        child: Container(
-          padding: const EdgeInsets.all(6),
-          child: Icon(icon, size: 18, color: const Color(0xFF1B4D3E)),
-        ),
-      ),
-    );
-  }
-
   void _showCustomerPicker() {
     // Refresh customers before showing picker
     _loadCustomers();
@@ -5672,11 +5932,13 @@ class _AddItemsBottomSheet extends StatefulWidget {
     int? batchLocalId,
     double sellingPrice,
     double purchasePrice,
-    int quantity,
+    double quantity, // Changed to double to support decimal quantities
     int maxStock,
     double cgstPercent,
     double sgstPercent,
     String? hsnCode,
+    String? unit, // Base unit (kg, ltr, pcs)
+    String? sellUnit, // Unit used for sale (kg, gm, ltr, ml, pcs)
   )
   onBatchItemAdded;
   final Function(String uniqueKey) onItemRemoved;
@@ -5735,6 +5997,7 @@ class _AddItemsBottomSheetState extends State<_AddItemsBottomSheet> {
           cgstPercent: product?.cgstPercent ?? 0.0,
           sgstPercent: product?.sgstPercent ?? 0.0,
           hsnCode: product?.hsnCode,
+          unit: batch.unit.isNotEmpty ? batch.unit : product?.unit,
         );
       }
     }
@@ -5754,6 +6017,7 @@ class _AddItemsBottomSheetState extends State<_AddItemsBottomSheet> {
             cgstPercent: product.cgstPercent,
             sgstPercent: product.sgstPercent,
             hsnCode: product.hsnCode,
+            unit: product.unit,
           );
         }
       }
@@ -5799,11 +6063,11 @@ class _AddItemsBottomSheetState extends State<_AddItemsBottomSheet> {
 
   /// Count total items added to bill
   int get _totalItems {
-    int count = 0;
+    double count = 0;
     for (final item in widget.billItems) {
       count += item.quantity;
     }
-    return count;
+    return count.round();
   }
 
   /// Check if any batch from this product group is already in the bill
@@ -5814,19 +6078,20 @@ class _AddItemsBottomSheetState extends State<_AddItemsBottomSheet> {
       for (final batch in group.batches) {
         final uniqueKey = '${batch.productId}_batch_${batch.id}';
         if (billItem.productId == uniqueKey) {
-          total += billItem.quantity;
+          total += billItem.quantityInt;
         }
       }
       // Also check fallback product
       if (group.fallbackProduct != null &&
           billItem.productId == group.fallbackProduct!.id) {
-        total += billItem.quantity;
+        total += billItem.quantityInt;
       }
     }
     return total;
   }
 
   /// Show dialog to adjust quantity or remove a product
+  /// Supports unit selection for kg/ltr products (can sell in gm/ml)
   void _showProductQuantityDialog({
     required String productId,
     required String productName,
@@ -5834,30 +6099,108 @@ class _AddItemsBottomSheetState extends State<_AddItemsBottomSheet> {
     required int? batchLocalId,
     required double sellingPrice,
     required double purchasePrice,
-    required int currentQty,
+    required double currentQty,
     required int maxStock,
     required double cgstPercent,
     required double sgstPercent,
     required String? hsnCode,
+    String? unit,
+    String? currentSellUnit,
   }) {
-    final qtyController = TextEditingController(text: currentQty.toString());
+    // Determine if this product supports sub-unit selling
+    final lowerUnit = unit?.toLowerCase();
+    final supportsSubUnit = lowerUnit == 'kg' || lowerUnit == 'ltr';
+    final subUnit = lowerUnit == 'kg'
+        ? 'gm'
+        : (lowerUnit == 'ltr' ? 'ml' : null);
+
+    // Initialize sell unit (default to base unit)
+    String selectedSellUnit = currentSellUnit ?? unit ?? 'pcs';
+
+    // Convert current quantity to display value based on sell unit
+    double displayQty = currentQty;
+    if (selectedSellUnit == 'gm' && lowerUnit == 'kg') {
+      displayQty = currentQty * 1000;
+    } else if (selectedSellUnit == 'ml' && lowerUnit == 'ltr') {
+      displayQty = currentQty * 1000;
+    }
+
+    final qtyController = TextEditingController(
+      text: displayQty == displayQty.roundToDouble()
+          ? displayQty.toInt().toString()
+          : displayQty.toStringAsFixed(2),
+    );
     String? errorText;
 
     showDialog(
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setDialogState) {
+          // Get max stock in current display unit
+          double getMaxStockInDisplayUnit() {
+            if (selectedSellUnit == 'gm' && lowerUnit == 'kg') {
+              return maxStock * 1000.0;
+            } else if (selectedSellUnit == 'ml' && lowerUnit == 'ltr') {
+              return maxStock * 1000.0;
+            }
+            return maxStock.toDouble();
+          }
+
+          // Validate quantity based on selected unit
           void validateQty() {
-            final qty = int.tryParse(qtyController.text) ?? 0;
+            final qty = double.tryParse(qtyController.text) ?? 0;
+            final maxInDisplayUnit = getMaxStockInDisplayUnit();
             setDialogState(() {
               if (qty < 0) {
                 errorText = widget.localizations.pleaseEnterValidNumber;
-              } else if (qty > maxStock) {
-                errorText = '${widget.localizations.maxStock}: $maxStock';
+              } else if (qty > maxInDisplayUnit) {
+                errorText =
+                    '${widget.localizations.maxStock}: ${maxInDisplayUnit.toStringAsFixed(maxInDisplayUnit == maxInDisplayUnit.roundToDouble() ? 0 : 1)} $selectedSellUnit';
               } else {
                 errorText = null;
               }
             });
+          }
+
+          // Convert display quantity to base unit quantity
+          double getBaseUnitQuantity() {
+            final displayQty = double.tryParse(qtyController.text) ?? 0;
+            if (selectedSellUnit == 'gm' && lowerUnit == 'kg') {
+              return displayQty / 1000;
+            } else if (selectedSellUnit == 'ml' && lowerUnit == 'ltr') {
+              return displayQty / 1000;
+            }
+            return displayQty;
+          }
+
+          // Handle unit toggle
+          void toggleUnit(String newUnit) {
+            final currentDisplayQty = double.tryParse(qtyController.text) ?? 0;
+            double newDisplayQty;
+
+            if (selectedSellUnit == newUnit) return; // No change
+
+            // Convert between units
+            if (newUnit == 'gm' && selectedSellUnit == 'kg') {
+              newDisplayQty = currentDisplayQty * 1000;
+            } else if (newUnit == 'kg' && selectedSellUnit == 'gm') {
+              newDisplayQty = currentDisplayQty / 1000;
+            } else if (newUnit == 'ml' && selectedSellUnit == 'ltr') {
+              newDisplayQty = currentDisplayQty * 1000;
+            } else if (newUnit == 'ltr' && selectedSellUnit == 'ml') {
+              newDisplayQty = currentDisplayQty / 1000;
+            } else {
+              newDisplayQty = currentDisplayQty;
+            }
+
+            setDialogState(() {
+              selectedSellUnit = newUnit;
+              qtyController.text =
+                  newDisplayQty == newDisplayQty.roundToDouble()
+                  ? newDisplayQty.toInt().toString()
+                  : newDisplayQty.toStringAsFixed(2);
+            });
+            validateQty();
           }
 
           return AlertDialog(
@@ -5923,7 +6266,7 @@ class _AddItemsBottomSheetState extends State<_AddItemsBottomSheet> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'Price: ₹${sellingPrice.toStringAsFixed(0)}',
+                        'Price: ₹${sellingPrice.toStringAsFixed(0)}${unit != null ? '/$unit' : ''}',
                         style: const TextStyle(
                           fontFamily: 'Literata',
                           fontWeight: FontWeight.w600,
@@ -5931,7 +6274,7 @@ class _AddItemsBottomSheetState extends State<_AddItemsBottomSheet> {
                         ),
                       ),
                       Text(
-                        '${widget.localizations.stock}: $maxStock',
+                        '${widget.localizations.stock}: $maxStock ${unit ?? ''}',
                         style: TextStyle(
                           fontFamily: 'Literata',
                           fontSize: 13,
@@ -5941,6 +6284,73 @@ class _AddItemsBottomSheetState extends State<_AddItemsBottomSheet> {
                     ],
                   ),
                 ),
+                // Unit toggle for kg/ltr products
+                if (supportsSubUnit && subUnit != null) ...[
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[100],
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () => toggleUnit(unit ?? 'pcs'),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              decoration: BoxDecoration(
+                                color: selectedSellUnit == unit
+                                    ? const Color(0xFF1B4D3E)
+                                    : Colors.transparent,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  (unit ?? 'PCS').toUpperCase(),
+                                  style: TextStyle(
+                                    fontFamily: 'Literata',
+                                    fontWeight: FontWeight.w600,
+                                    color: selectedSellUnit == unit
+                                        ? Colors.white
+                                        : Colors.grey[600],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () => toggleUnit(subUnit),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              decoration: BoxDecoration(
+                                color: selectedSellUnit == subUnit
+                                    ? const Color(0xFF1B4D3E)
+                                    : Colors.transparent,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  subUnit.toUpperCase(),
+                                  style: TextStyle(
+                                    fontFamily: 'Literata',
+                                    fontWeight: FontWeight.w600,
+                                    color: selectedSellUnit == subUnit
+                                        ? Colors.white
+                                        : Colors.grey[600],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 16),
                 // Quantity input with +/- buttons
                 Row(
@@ -5948,9 +6358,22 @@ class _AddItemsBottomSheetState extends State<_AddItemsBottomSheet> {
                     // Minus button
                     IconButton(
                       onPressed: () {
-                        final current = int.tryParse(qtyController.text) ?? 0;
+                        final current =
+                            double.tryParse(qtyController.text) ?? 0;
+                        // Decrement by 1 for base unit, 100 for sub-unit
+                        final step =
+                            (selectedSellUnit == 'gm' ||
+                                selectedSellUnit == 'ml')
+                            ? 100.0
+                            : 1.0;
                         if (current > 0) {
-                          qtyController.text = (current - 1).toString();
+                          final newVal = (current - step).clamp(
+                            0.0,
+                            getMaxStockInDisplayUnit(),
+                          );
+                          qtyController.text = newVal == newVal.roundToDouble()
+                              ? newVal.toInt().toString()
+                              : newVal.toStringAsFixed(2);
                           validateQty();
                         }
                       },
@@ -5971,7 +6394,9 @@ class _AddItemsBottomSheetState extends State<_AddItemsBottomSheet> {
                     Expanded(
                       child: TextField(
                         controller: qtyController,
-                        keyboardType: TextInputType.number,
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
                         textAlign: TextAlign.center,
                         onChanged: (_) => validateQty(),
                         style: const TextStyle(
@@ -5980,6 +6405,7 @@ class _AddItemsBottomSheetState extends State<_AddItemsBottomSheet> {
                           fontWeight: FontWeight.w700,
                         ),
                         decoration: InputDecoration(
+                          suffixText: selectedSellUnit,
                           errorText: errorText,
                           errorStyle: const TextStyle(fontSize: 11),
                           contentPadding: const EdgeInsets.symmetric(
@@ -6003,9 +6429,23 @@ class _AddItemsBottomSheetState extends State<_AddItemsBottomSheet> {
                     // Plus button
                     IconButton(
                       onPressed: () {
-                        final current = int.tryParse(qtyController.text) ?? 0;
-                        if (current < maxStock) {
-                          qtyController.text = (current + 1).toString();
+                        final current =
+                            double.tryParse(qtyController.text) ?? 0;
+                        final maxInDisplayUnit = getMaxStockInDisplayUnit();
+                        // Increment by 1 for base unit, 100 for sub-unit
+                        final step =
+                            (selectedSellUnit == 'gm' ||
+                                selectedSellUnit == 'ml')
+                            ? 100.0
+                            : 1.0;
+                        if (current < maxInDisplayUnit) {
+                          final newVal = (current + step).clamp(
+                            0.0,
+                            maxInDisplayUnit,
+                          );
+                          qtyController.text = newVal == newVal.roundToDouble()
+                              ? newVal.toInt().toString()
+                              : newVal.toStringAsFixed(2);
                           validateQty();
                         }
                       },
@@ -6070,9 +6510,9 @@ class _AddItemsBottomSheetState extends State<_AddItemsBottomSheet> {
               ElevatedButton(
                 onPressed: errorText == null
                     ? () {
-                        final qty = int.tryParse(qtyController.text) ?? 0;
-                        if (qty == 0) {
-                          // Remove item
+                        final baseQty = getBaseUnitQuantity();
+                        if (baseQty <= 0.001) {
+                          // Remove item (very small or zero quantity)
                           final uniqueKey = batchLocalId != null
                               ? '${productId}_batch_$batchLocalId'
                               : productId;
@@ -6084,7 +6524,7 @@ class _AddItemsBottomSheetState extends State<_AddItemsBottomSheet> {
                             isError: false,
                           );
                         } else {
-                          // Update quantity
+                          // Update quantity with unit info
                           widget.onBatchItemAdded(
                             productId,
                             productName,
@@ -6092,11 +6532,13 @@ class _AddItemsBottomSheetState extends State<_AddItemsBottomSheet> {
                             batchLocalId,
                             sellingPrice,
                             purchasePrice,
-                            qty,
+                            baseQty,
                             maxStock,
                             cgstPercent,
                             sgstPercent,
                             hsnCode,
+                            unit,
+                            selectedSellUnit,
                           );
                           setState(() {});
                           Navigator.pop(ctx);
@@ -6134,9 +6576,12 @@ class _AddItemsBottomSheetState extends State<_AddItemsBottomSheet> {
     // Fallback product with no batches — toggle add/remove
     if (group.batches.isEmpty && group.fallbackProduct != null) {
       final product = group.fallbackProduct!;
-      final existingQty = widget.billItems
-          .where((item) => item.productId == product.id)
-          .fold<int>(0, (s, item) => s + item.quantity);
+      final existingItem = widget.billItems.cast<BillItem?>().firstWhere(
+        (item) => item!.productId == product.id,
+        orElse: () => null,
+      );
+      final existingQty = existingItem?.quantity ?? 0.0;
+      final existingSellUnit = existingItem?.sellUnit;
 
       // If already in bill, show quantity adjustment dialog
       if (existingQty > 0) {
@@ -6152,11 +6597,37 @@ class _AddItemsBottomSheetState extends State<_AddItemsBottomSheet> {
           cgstPercent: group.cgstPercent,
           sgstPercent: group.sgstPercent,
           hsnCode: group.hsnCode,
+          unit: group.unit,
+          currentSellUnit: existingSellUnit,
         );
         return;
       }
 
-      // Not in bill — add with quantity 1
+      // Check if product supports sub-unit (kg->gm, ltr->ml)
+      final lowerUnit = group.unit?.toLowerCase();
+      final supportsSubUnit = lowerUnit == 'kg' || lowerUnit == 'ltr';
+
+      // For kg/ltr products, show quantity dialog to allow unit selection
+      if (supportsSubUnit && product.currentStock > 0) {
+        _showProductQuantityDialog(
+          productId: product.id,
+          productName: product.name,
+          companyName: product.companyName,
+          batchLocalId: null,
+          sellingPrice: product.salesPrice,
+          purchasePrice: product.purchasePrice,
+          currentQty: 0, // New item, start from 0
+          maxStock: product.currentStock,
+          cgstPercent: group.cgstPercent,
+          sgstPercent: group.sgstPercent,
+          hsnCode: group.hsnCode,
+          unit: group.unit,
+          currentSellUnit: null,
+        );
+        return;
+      }
+
+      // Not in bill — add with quantity 1 (for non kg/ltr products)
       if (existingQty < product.currentStock) {
         widget.onBatchItemAdded(
           product.id,
@@ -6165,11 +6636,13 @@ class _AddItemsBottomSheetState extends State<_AddItemsBottomSheet> {
           null,
           product.salesPrice,
           product.purchasePrice,
-          1,
+          1.0,
           product.currentStock,
           group.cgstPercent,
           group.sgstPercent,
           group.hsnCode,
+          group.unit,
+          group.unit, // Default sellUnit same as base unit
         );
         setState(() {});
         widget.showSnackbar(
@@ -6199,7 +6672,8 @@ class _AddItemsBottomSheetState extends State<_AddItemsBottomSheet> {
         cgstPercent: group.cgstPercent,
         sgstPercent: group.sgstPercent,
         hsnCode: group.hsnCode,
-        onBatchSelected: (batch, quantity) {
+        unit: group.unit,
+        onBatchSelected: (batch, quantity, sellUnit) {
           widget.onBatchItemAdded(
             batch.productId,
             batch.productName,
@@ -6212,6 +6686,8 @@ class _AddItemsBottomSheetState extends State<_AddItemsBottomSheet> {
             group.cgstPercent,
             group.sgstPercent,
             group.hsnCode,
+            group.unit,
+            sellUnit,
           );
           setState(() {});
           Navigator.pop(ctx);
@@ -7029,6 +7505,7 @@ class _GroupedBillingProduct {
   final double cgstPercent;
   final double sgstPercent;
   final String? hsnCode;
+  final String? unit; // Base unit (kg, ltr, pcs, etc.)
 
   _GroupedBillingProduct({
     required this.productName,
@@ -7039,9 +7516,22 @@ class _GroupedBillingProduct {
     this.cgstPercent = 0.0,
     this.sgstPercent = 0.0,
     this.hsnCode,
+    this.unit,
   }) {
     // Sort batches FIFO (oldest first)
     batches.sort((a, b) => a.purchaseDate.compareTo(b.purchaseDate));
+  }
+
+  /// Check if this product supports sub-unit selling (kg -> gm, ltr -> ml)
+  bool get supportsSubUnit =>
+      unit?.toLowerCase() == 'kg' || unit?.toLowerCase() == 'ltr';
+
+  /// Get the sub-unit for this product (gm for kg, ml for ltr)
+  String? get subUnit {
+    final lowerUnit = unit?.toLowerCase();
+    if (lowerUnit == 'kg') return 'gm';
+    if (lowerUnit == 'ltr') return 'ml';
+    return null;
   }
 
   /// Total stock across all batches
@@ -7089,11 +7579,13 @@ class _BatchSelectionSheet extends StatefulWidget {
   final List<PurchaseBatchEntity> batches;
   final AppLocalizations localizations;
   final List<BillItem> existingBillItems;
-  final Function(PurchaseBatchEntity batch, int quantity) onBatchSelected;
+  final Function(PurchaseBatchEntity batch, double quantity, String sellUnit)
+  onBatchSelected;
   final Function(String uniqueKey) onItemRemoved;
   final double cgstPercent;
   final double sgstPercent;
   final String? hsnCode;
+  final String? unit; // Base unit (kg, ltr, pcs)
 
   const _BatchSelectionSheet({
     required this.productName,
@@ -7106,7 +7598,20 @@ class _BatchSelectionSheet extends StatefulWidget {
     this.cgstPercent = 0.0,
     this.sgstPercent = 0.0,
     this.hsnCode,
+    this.unit,
   });
+
+  /// Check if this product supports sub-unit selling (kg -> gm, ltr -> ml)
+  bool get supportsSubUnit =>
+      unit?.toLowerCase() == 'kg' || unit?.toLowerCase() == 'ltr';
+
+  /// Get the sub-unit for this product (gm for kg, ml for ltr)
+  String? get subUnit {
+    final lowerUnit = unit?.toLowerCase();
+    if (lowerUnit == 'kg') return 'gm';
+    if (lowerUnit == 'ltr') return 'ml';
+    return null;
+  }
 
   @override
   State<_BatchSelectionSheet> createState() => _BatchSelectionSheetState();
@@ -7118,11 +7623,13 @@ class _BatchSelectionSheetState extends State<_BatchSelectionSheet> {
   final _batchSearchController = TextEditingController();
   String? _qtyError;
   late List<PurchaseBatchEntity> _filteredBatches;
+  late String _selectedSellUnit; // Current sell unit selection
 
   @override
   void initState() {
     super.initState();
     _filteredBatches = widget.batches;
+    _selectedSellUnit = widget.unit ?? 'pcs'; // Default to base unit
   }
 
   @override
@@ -7152,26 +7659,38 @@ class _BatchSelectionSheetState extends State<_BatchSelectionSheet> {
     });
   }
 
-  int _getExistingQtyForBatch(PurchaseBatchEntity batch) {
+  double _getExistingQtyForBatch(PurchaseBatchEntity batch) {
     final uniqueKey = '${batch.productId}_batch_${batch.id}';
     return widget.existingBillItems
         .where((item) => item.productId == uniqueKey)
-        .fold<int>(0, (s, item) => s + item.quantity);
+        .fold<double>(0, (s, item) => s + item.quantity);
+  }
+
+  /// Get max stock in display unit
+  double _getMaxStockInDisplayUnit(int maxStock) {
+    if (_selectedSellUnit == 'gm' && widget.unit?.toLowerCase() == 'kg') {
+      return maxStock * 1000.0;
+    } else if (_selectedSellUnit == 'ml' &&
+        widget.unit?.toLowerCase() == 'ltr') {
+      return maxStock * 1000.0;
+    }
+    return maxStock.toDouble();
   }
 
   void _validateQuantity() {
     if (_selectedBatchIndex == null) return;
-    final batch = widget.batches[_selectedBatchIndex!];
+    final batch = _filteredBatches[_selectedBatchIndex!];
     final existingQty = _getExistingQtyForBatch(batch);
-    final maxAvailable = batch.quantityRemaining - existingQty;
-    final qty = int.tryParse(_qtyController.text) ?? 0;
+    final maxAvailable = batch.quantityRemaining - existingQty.round();
+    final maxInDisplayUnit = _getMaxStockInDisplayUnit(maxAvailable);
+    final qty = double.tryParse(_qtyController.text) ?? 0;
 
     setState(() {
       if (qty <= 0) {
         _qtyError = widget.localizations.pleaseEnterValidNumber;
-      } else if (qty > maxAvailable) {
+      } else if (qty > maxInDisplayUnit) {
         _qtyError =
-            '${widget.localizations.quantityExceedsStock} ($maxAvailable)';
+            '${widget.localizations.quantityExceedsStock} (${maxInDisplayUnit.toStringAsFixed(maxInDisplayUnit == maxInDisplayUnit.roundToDouble() ? 0 : 1)} $_selectedSellUnit)';
       } else {
         _qtyError = null;
       }
@@ -7181,18 +7700,23 @@ class _BatchSelectionSheetState extends State<_BatchSelectionSheet> {
   /// Show dialog to adjust quantity or remove a batch item
   void _showBatchQuantityDialog({
     required PurchaseBatchEntity batch,
-    required int existingQty,
+    required double existingQty,
   }) {
-    final qtyController = TextEditingController(text: existingQty.toString());
+    final qtyController = TextEditingController(
+      text: existingQty == existingQty.roundToDouble()
+          ? existingQty.toInt().toString()
+          : existingQty.toStringAsFixed(2),
+    );
     final maxStock = batch.quantityRemaining;
     String? errorText;
+    String localSellUnit = _selectedSellUnit;
 
     showDialog(
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setDialogState) {
           void validateQty() {
-            final qty = int.tryParse(qtyController.text) ?? 0;
+            final qty = double.tryParse(qtyController.text) ?? 0;
             setDialogState(() {
               if (qty < 0) {
                 errorText = widget.localizations.pleaseEnterValidNumber;
@@ -7418,8 +7942,8 @@ class _BatchSelectionSheetState extends State<_BatchSelectionSheet> {
               ElevatedButton(
                 onPressed: errorText == null
                     ? () {
-                        final qty = int.tryParse(qtyController.text) ?? 0;
-                        if (qty == 0) {
+                        final qty = double.tryParse(qtyController.text) ?? 0;
+                        if (qty <= 0.001) {
                           // Remove item
                           final uniqueKey =
                               '${batch.productId}_batch_${batch.id}';
@@ -7438,7 +7962,7 @@ class _BatchSelectionSheetState extends State<_BatchSelectionSheet> {
                           );
                         } else {
                           // Update quantity
-                          widget.onBatchSelected(batch, qty);
+                          widget.onBatchSelected(batch, qty, localSellUnit);
                           setState(() {});
                           Navigator.pop(ctx);
                         }
@@ -7573,6 +8097,86 @@ class _BatchSelectionSheetState extends State<_BatchSelectionSheet> {
                 ],
               ),
             ),
+            // Unit toggle for kg/ltr products
+            if (widget.supportsSubUnit && widget.subUnit != null)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[100],
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              _selectedSellUnit = widget.unit!;
+                              _validateQuantity();
+                            });
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                            decoration: BoxDecoration(
+                              color: _selectedSellUnit == widget.unit
+                                  ? const Color(0xFF1B4D3E)
+                                  : Colors.transparent,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Center(
+                              child: Text(
+                                (widget.unit ?? 'PCS').toUpperCase(),
+                                style: TextStyle(
+                                  fontFamily: 'Literata',
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 13,
+                                  color: _selectedSellUnit == widget.unit
+                                      ? Colors.white
+                                      : Colors.grey[600],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              _selectedSellUnit = widget.subUnit!;
+                              _validateQuantity();
+                            });
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                            decoration: BoxDecoration(
+                              color: _selectedSellUnit == widget.subUnit
+                                  ? const Color(0xFF1B4D3E)
+                                  : Colors.transparent,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Center(
+                              child: Text(
+                                widget.subUnit!.toUpperCase(),
+                                style: TextStyle(
+                                  fontFamily: 'Literata',
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 13,
+                                  color: _selectedSellUnit == widget.subUnit
+                                      ? Colors.white
+                                      : Colors.grey[600],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             // Search bar for batches
             if (widget.batches.length > 1)
               Padding(
@@ -7726,13 +8330,22 @@ class _BatchSelectionSheetState extends State<_BatchSelectionSheet> {
                                   );
                                   return;
                                 }
-                                // Add item directly with quantity 1
+                                // Determine quantity to add based on selected unit
+                                // For gm/ml: add 0.1 kg/ltr (100 gm/ml)
+                                // For kg/ltr/pcs: add 1
+                                final addQty =
+                                    (_selectedSellUnit == 'gm' ||
+                                        _selectedSellUnit == 'ml')
+                                    ? 0.1
+                                    : 1.0;
                                 final maxAvailable =
-                                    batch.quantityRemaining - existingQty;
-                                if (maxAvailable > 0) {
+                                    batch.quantityRemaining -
+                                    existingQty.round();
+                                if (addQty <= maxAvailable) {
                                   widget.onBatchSelected(
                                     batch,
-                                    existingQty + 1,
+                                    existingQty + addQty,
+                                    _selectedSellUnit,
                                   );
                                 } else {
                                   ScaffoldMessenger.of(context).showSnackBar(
@@ -7992,22 +8605,23 @@ class _BatchSelectionSheetState extends State<_BatchSelectionSheet> {
                                                           _qtyController
                                                               .text
                                                               .isNotEmpty &&
-                                                          (int.tryParse(
+                                                          (double.tryParse(
                                                                     _qtyController
                                                                         .text,
                                                                   ) ??
                                                                   0) >
                                                               0
                                                       ? () {
-                                                          final qty = int.parse(
-                                                            _qtyController.text,
-                                                          );
-                                                          widget
-                                                              .onBatchSelected(
-                                                                batch,
-                                                                existingQty +
-                                                                    qty,
+                                                          final qty =
+                                                              double.parse(
+                                                                _qtyController
+                                                                    .text,
                                                               );
+                                                          widget.onBatchSelected(
+                                                            batch,
+                                                            existingQty + qty,
+                                                            _selectedSellUnit,
+                                                          );
                                                         }
                                                       : null,
                                                   icon: const Icon(

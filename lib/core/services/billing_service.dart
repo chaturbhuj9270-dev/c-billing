@@ -87,7 +87,8 @@ class ReturnBillResult {
 class ReturnItem {
   final String productId;
   final String itemId;
-  final int returnQuantity;
+  final double
+  returnQuantity; // Changed to double to support fractional returns
 
   ReturnItem({
     required this.productId,
@@ -114,13 +115,13 @@ class BillingService {
        _customerTransactionService = customerTransactionService;
 
   /// Calculate subtotal for a bill item
-  double calculateSubtotal(double sellingPrice, int quantity) {
+  double calculateSubtotal(double sellingPrice, double quantity) {
     return sellingPrice * quantity;
   }
 
-  /// Calculate total quantity from bill items
+  /// Calculate total quantity from bill items (rounded for display)
   int calculateTotalQuantity(List<BillItem> items) {
-    return items.fold(0, (sum, item) => sum + item.quantity);
+    return items.fold(0, (total, item) => total + item.quantityInt);
   }
 
   /// Calculate total amount from bill items
@@ -165,7 +166,7 @@ class BillingService {
   /// Create a bill item from a product
   BillItem createBillItem({
     required Product product,
-    required int quantity,
+    required double quantity,
     double? customPrice,
   }) {
     final sellingPrice = customPrice ?? product.salesPrice;
@@ -313,11 +314,14 @@ class BillingService {
 
         // Step 3: Update stock for each product and create stock entries
         // Track new balances for products that might appear multiple times in the bill
+        // Note: Stock is tracked in whole units, so we round fractional quantities
         final productNewBalances = Map<String, int>.from(productStocks);
 
         for (final item in items) {
           final currentBalance = productNewBalances[item.productId]!;
-          final newStock = currentBalance - item.quantity;
+          // Round quantity for stock deduction (supports fractional selling like grams)
+          final stockQty = item.quantityInt;
+          final newStock = currentBalance - stockQty;
           productNewBalances[item.productId] = newStock;
 
           // Update product stock with the final accumulated new balance
@@ -348,7 +352,7 @@ class BillingService {
             id: stockRef.id,
             productId: item.productId,
             quantityIn: 0,
-            quantityOut: item.quantity,
+            quantityOut: item.quantityInt, // Round for stock tracking
             balanceQuantity:
                 productNewBalances[item
                     .productId]!, // Note: this is the overall balance after all items
@@ -556,10 +560,10 @@ class BillingService {
   /// Process a partial or full bill return with atomic transaction
   /// This method ensures inventory is updated and item return quantities are updated atomically
   /// @param billId - The ID of the bill to process return for
-  /// @param returnItems - Map of itemId to quantity to return. If null, returns all remaining quantities.
+  /// @param returnItems - Map of itemId to quantity to return (in base units). If null, returns all remaining quantities.
   Future<ReturnBillResult> processReturn({
     required String billId,
-    Map<String, int>? returnItems,
+    Map<String, double>? returnItems,
   }) async {
     try {
       final firestore = _billRepository.firestore;
@@ -590,15 +594,15 @@ class BillingService {
         }
 
         // Step 2: Determine what quantities to return for each item
-        final itemsToReturn = <BillItem, int>{};
+        final itemsToReturn = <BillItem, double>{};
         double totalRefundAmount = 0.0;
 
         for (final item in bill.items) {
-          int quantityToReturn;
+          double quantityToReturn;
 
           if (returnItems != null) {
             // Partial return - use specified quantities
-            quantityToReturn = returnItems[item.id] ?? 0;
+            quantityToReturn = returnItems[item.id] ?? 0.0;
           } else {
             // Full return - return all remaining quantities
             quantityToReturn = item.remainingQuantity;
@@ -610,13 +614,15 @@ class BillingService {
               'Return quantity cannot be negative for ${item.productName}',
             );
           }
-          if (quantityToReturn > item.remainingQuantity) {
+          if (quantityToReturn > item.remainingQuantity + 0.001) {
+            // Small tolerance for floating point
             throw Exception(
-              '${item.productName}: Cannot return $quantityToReturn units. Only ${item.remainingQuantity} available for return.',
+              '${item.productName}: Cannot return ${quantityToReturn.toStringAsFixed(2)} units. Only ${item.remainingQuantity.toStringAsFixed(2)} available for return.',
             );
           }
 
-          if (quantityToReturn > 0) {
+          if (quantityToReturn > 0.001) {
+            // Small tolerance for floating point
             itemsToReturn[item] = quantityToReturn;
             totalRefundAmount += item.sellingPrice * quantityToReturn;
           }
@@ -662,10 +668,11 @@ class BillingService {
         }
 
         // Step 4: Calculate new stock quantities (add back returned quantities)
+        // Note: Stock is tracked in whole units, so we round fractional returns
         final productNewBalances = Map<String, int>.from(productStocks);
         for (final entry in itemsToReturn.entries) {
           final productId = entry.key.productId;
-          final returnQty = entry.value;
+          final returnQty = entry.value.round(); // Round for stock tracking
           productNewBalances[productId] =
               (productNewBalances[productId] ?? 0) + returnQty;
         }
@@ -698,7 +705,7 @@ class BillingService {
           final stockEntry = Stock(
             id: stockRef.id,
             productId: item.productId,
-            quantityIn: returnQty, // Return adds stock back
+            quantityIn: returnQty.round(), // Round for stock tracking
             quantityOut: 0,
             balanceQuantity: productNewBalances[item.productId]!,
             referenceType: ReferenceType.RETURN,
@@ -711,7 +718,7 @@ class BillingService {
 
         // Step 7: Update bill items with new returned quantities
         final updatedItems = bill.items.map((item) {
-          final returnQty = itemsToReturn[item] ?? 0;
+          final returnQty = itemsToReturn[item] ?? 0.0;
           if (returnQty > 0) {
             return item
                 .copyWith(returnedQuantity: item.returnedQuantity + returnQty)
@@ -722,8 +729,9 @@ class BillingService {
 
         // Check if all items will be fully returned after this operation
         final willBeFullyReturned = bill.items.every((item) {
-          final returnQty = itemsToReturn[item] ?? 0;
-          return (item.returnedQuantity + returnQty) >= item.quantity;
+          final returnQty = itemsToReturn[item] ?? 0.0;
+          return (item.returnedQuantity + returnQty) >=
+              item.quantity - 0.001; // Tolerance for floats
         });
 
         // Step 8: Update the bill

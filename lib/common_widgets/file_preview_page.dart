@@ -29,6 +29,7 @@ class FilePreviewPage extends StatefulWidget {
   final FilePreviewType fileType;
   final String? subtitle;
   final VoidCallback? onClose;
+
   /// Optional customer phone number for direct WhatsApp sharing
   final String? customerPhone;
 
@@ -54,21 +55,22 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
   List<List<String>>? _csvData;
   String? _errorMessage;
   Uint8List? _pdfBytes; // Pre-loaded PDF bytes
-  
+
   // PDF page rendering state
   List<Uint8List?> _renderedPages = [];
   int _totalPages = 0;
   int _pagesRendered = 0;
   bool _isRenderingPdf = false;
   String _renderingStatus = '';
-  
+
   // Zoom controls for CSV
   double _zoomLevel = 1.0;
   static const double _minZoom = 0.5;
   static const double _maxZoom = 3.0;
   static const double _zoomStep = 0.25;
-  final TransformationController _transformationController = TransformationController();
-  
+  final TransformationController _transformationController =
+      TransformationController();
+
   // Scroll controller for PDF
   final ScrollController _pdfScrollController = ScrollController();
 
@@ -118,19 +120,19 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
     try {
       debugPrint('[FilePreviewPage] Loading file: ${widget.file.path}');
       debugPrint('[FilePreviewPage] File type: ${widget.fileType}');
-      
+
       // Check if file exists
       if (!widget.file.existsSync()) {
         throw Exception('File does not exist: ${widget.file.path}');
       }
-      
+
       final fileSize = widget.file.lengthSync();
       debugPrint('[FilePreviewPage] File size: $fileSize bytes');
-      
+
       if (fileSize == 0) {
         throw Exception('File is empty');
       }
-      
+
       if (widget.fileType == FilePreviewType.csv) {
         final content = await widget.file.readAsString();
         final lines = const LineSplitter().convert(content);
@@ -145,40 +147,44 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
               const Duration(seconds: 30),
               onTimeout: () => throw Exception('PDF file reading timed out'),
             );
-            
+
             if (_pdfBytes == null || _pdfBytes!.isEmpty) {
               throw Exception('PDF file is empty after reading');
             }
-            
-            debugPrint('[FilePreviewPage] PDF bytes loaded: ${_pdfBytes!.length}');
-            
+
+            debugPrint(
+              '[FilePreviewPage] PDF bytes loaded: ${_pdfBytes!.length}',
+            );
+
             // Basic PDF validation - check magic bytes
-            if (_pdfBytes!.length < 4 || 
+            if (_pdfBytes!.length < 4 ||
                 String.fromCharCodes(_pdfBytes!.take(4)) != '%PDF') {
               throw Exception('Invalid PDF file format');
             }
-            
+
             debugPrint('[FilePreviewPage] PDF file validated successfully');
             break;
           } catch (e) {
             retries--;
             if (retries == 0) rethrow;
-            debugPrint('[FilePreviewPage] PDF loading failed, retrying... ($retries attempts left): $e');
+            debugPrint(
+              '[FilePreviewPage] PDF loading failed, retrying... ($retries attempts left): $e',
+            );
             await Future.delayed(const Duration(milliseconds: 500));
           }
         }
-        
+
         // Start rendering PDF pages
         setState(() {
           _isLoading = false;
           _isRenderingPdf = true;
           _renderingStatus = 'Preparing document...';
         });
-        
+
         // Render PDF pages as images (more reliable than PdfPreview)
         await _renderPdfPages();
       }
-      
+
       debugPrint('[FilePreviewPage] File loaded successfully');
     } catch (e, stack) {
       debugPrint('[FilePreviewPage] Error loading file: $e');
@@ -200,22 +206,24 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
       });
       return;
     }
-    
+
     try {
       debugPrint('[FilePreviewPage] Starting PDF page rendering...');
-      
+
       // Get screen width for optimal DPI calculation
       final screenWidth = MediaQuery.of(context).size.width;
-      final dpi = (screenWidth * 1.5).clamp(150, 300).toDouble(); // Adaptive DPI
-      
+      final dpi = (screenWidth * 1.5)
+          .clamp(150, 300)
+          .toDouble(); // Adaptive DPI
+
       // Collect all pages first to know total count
       final pages = <Uint8List>[];
       int pageCount = 0;
-      
+
       setState(() {
         _renderingStatus = 'Rendering pages...';
       });
-      
+
       // Use Printing.raster to convert PDF pages to images
       await for (final page in Printing.raster(
         _pdfBytes!,
@@ -226,9 +234,9 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
         final pngBytes = await page.toPng();
         pages.add(pngBytes);
         pageCount++;
-        
+
         debugPrint('[FilePreviewPage] Rendered page $pageCount');
-        
+
         if (mounted) {
           setState(() {
             _totalPages = pageCount;
@@ -238,13 +246,13 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
           });
         }
       }
-      
+
       if (pages.isEmpty) {
         throw Exception('No pages were rendered from PDF');
       }
-      
+
       debugPrint('[FilePreviewPage] PDF rendering complete: $pageCount pages');
-      
+
       if (mounted) {
         setState(() {
           _isRenderingPdf = false;
@@ -255,7 +263,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
     } catch (e, stack) {
       debugPrint('[FilePreviewPage] Error rendering PDF pages: $e');
       debugPrint('[FilePreviewPage] Stack: $stack');
-      
+
       if (mounted) {
         setState(() {
           _isRenderingPdf = false;
@@ -292,13 +300,12 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
 
   Future<void> _handleShare() async {
     if (_isSharing) return;
-    
+
     setState(() => _isSharing = true);
     try {
-      await Share.shareXFiles(
-        [XFile(widget.file.path)],
-        subject: widget.fileName,
-      );
+      await Share.shareXFiles([
+        XFile(widget.file.path),
+      ], subject: widget.fileName);
     } catch (e) {
       if (mounted) {
         _showSnackBar('Error sharing file: $e', isError: true);
@@ -313,23 +320,23 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
   /// Share via WhatsApp - opens WhatsApp with customer number if available
   Future<void> _handleWhatsAppShare() async {
     if (_isSharingWhatsApp) return;
-    
+
     setState(() => _isSharingWhatsApp = true);
     try {
       final customerPhone = widget.customerPhone;
-      
+
       if (customerPhone != null && customerPhone.isNotEmpty) {
         // If customer phone is available, open WhatsApp chat with that number
         // Then share the file - user can attach in the opened chat
         final message = 'Please find attached: ${widget.fileName}';
-        
+
         // First share the file using system share sheet
         await Share.shareXFiles(
           [XFile(widget.file.path)],
           subject: widget.fileName,
           text: message,
         );
-        
+
         // After sharing, optionally open WhatsApp chat with the customer
         // This gives them the option to send to the specific customer
         if (mounted) {
@@ -400,10 +407,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
             onPressed: () => Navigator.pop(context),
             child: Text(
               'Cancel',
-              style: TextStyle(
-                fontFamily: 'Literata',
-                color: Colors.grey[600],
-              ),
+              style: TextStyle(fontFamily: 'Literata', color: Colors.grey[600]),
             ),
           ),
           ElevatedButton.icon(
@@ -435,7 +439,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
 
   Future<void> _handlePrint() async {
     if (_isPrinting) return;
-    
+
     setState(() => _isPrinting = true);
     try {
       if (widget.fileType == FilePreviewType.pdf) {
@@ -476,7 +480,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
 
   String _generateHtmlFromCsv() {
     if (_csvData == null || _csvData!.isEmpty) return '<p>No data</p>';
-    
+
     final buffer = StringBuffer();
     buffer.writeln('''
 <!DOCTYPE html>
@@ -574,10 +578,10 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
               child: _isLoading
                   ? _buildLoadingState()
                   : _errorMessage != null
-                      ? _buildErrorState()
-                      : widget.fileType == FilePreviewType.pdf
-                          ? _buildPdfPreview()
-                          : _buildCsvPreview(),
+                  ? _buildErrorState()
+                  : widget.fileType == FilePreviewType.pdf
+                  ? _buildPdfPreview()
+                  : _buildCsvPreview(),
             ),
             _buildBottomBar(),
           ],
@@ -591,9 +595,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
         color: Colors.white,
-        border: Border(
-          bottom: BorderSide(color: Colors.grey.shade200),
-        ),
+        border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -655,7 +657,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
               ),
             ),
             style: TextButton.styleFrom(
-              foregroundColor: _zoomLevel != 1.0 
+              foregroundColor: _zoomLevel != 1.0
                   ? const Color(0xFF1B4D3E)
                   : Colors.grey,
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
@@ -679,7 +681,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
         child: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: isEnabled 
+            color: isEnabled
                 ? const Color(0xFF1B4D3E).withOpacity(0.1)
                 : Colors.grey.withOpacity(0.1),
             borderRadius: BorderRadius.circular(8),
@@ -767,7 +769,9 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
-                          widget.fileType == FilePreviewType.pdf ? 'PDF' : 'CSV',
+                          widget.fileType == FilePreviewType.pdf
+                              ? 'PDF'
+                              : 'CSV',
                           style: TextStyle(
                             fontFamily: 'Literata',
                             fontSize: 10,
@@ -901,7 +905,10 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF1B4D3E),
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
@@ -918,7 +925,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
     if (_isRenderingPdf) {
       return _buildPdfRenderingProgress();
     }
-    
+
     // If no pages rendered, show error
     if (_renderedPages.isEmpty) {
       return Center(
@@ -971,7 +978,10 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF1B4D3E),
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
@@ -981,7 +991,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
         ),
       );
     }
-    
+
     // Show rendered PDF pages in a scrollable list
     return Column(
       children: [
@@ -990,15 +1000,16 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
             color: Colors.white,
-            border: Border(
-              bottom: BorderSide(color: Colors.grey.shade200),
-            ),
+            border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFF1B4D3E).withOpacity(0.1),
                   borderRadius: BorderRadius.circular(16),
@@ -1048,10 +1059,10 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
       ],
     );
   }
-  
+
   Widget _buildPdfRenderingProgress() {
     final progress = _totalPages > 0 ? _pagesRendered / _totalPages : 0.0;
-    
+
     return Center(
       child: Container(
         margin: const EdgeInsets.all(32),
@@ -1109,7 +1120,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    _totalPages > 0 
+                    _totalPages > 0
                         ? 'Page $_pagesRendered of $_totalPages'
                         : _renderingStatus,
                     style: TextStyle(
@@ -1136,7 +1147,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
       ),
     );
   }
-  
+
   Widget _buildPdfPage(Uint8List pageBytes, int pageNumber) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -1192,9 +1203,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
               padding: const EdgeInsets.symmetric(vertical: 6),
               decoration: BoxDecoration(
                 color: Colors.grey[50],
-                border: Border(
-                  top: BorderSide(color: Colors.grey.shade200),
-                ),
+                border: Border(top: BorderSide(color: Colors.grey.shade200)),
               ),
               child: Center(
                 child: Text(
@@ -1213,7 +1222,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
       ),
     );
   }
-  
+
   Widget _buildPagePlaceholder(int pageNumber) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -1267,7 +1276,9 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
     }
 
     final headers = _csvData!.isNotEmpty ? _csvData![0] : <String>[];
-    final dataRows = _csvData!.length > 1 ? _csvData!.sublist(1) : <List<String>>[];
+    final dataRows = _csvData!.length > 1
+        ? _csvData!.sublist(1)
+        : <List<String>>[];
     final columnCount = headers.length;
 
     return Container(
@@ -1293,9 +1304,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
               decoration: BoxDecoration(
                 color: const Color(0xFF217346), // Excel green
                 border: Border(
-                  bottom: BorderSide(
-                    color: const Color(0xFF185C37),
-                  ),
+                  bottom: BorderSide(color: const Color(0xFF185C37)),
                 ),
               ),
               child: Row(
@@ -1329,7 +1338,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
                           overflow: TextOverflow.ellipsis,
                         ),
                         Text(
-                          '${dataRows.length} rows × ${columnCount} columns',
+                          '${dataRows.length} rows × $columnCount columns',
                           style: TextStyle(
                             fontFamily: 'Literata',
                             fontSize: 11,
@@ -1341,7 +1350,10 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
                   ),
                   // Sheet indicator
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(4),
@@ -1349,7 +1361,11 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.table_rows_outlined, size: 14, color: const Color(0xFF217346)),
+                        Icon(
+                          Icons.table_rows_outlined,
+                          size: 14,
+                          color: const Color(0xFF217346),
+                        ),
                         const SizedBox(width: 4),
                         Text(
                           'Sheet1',
@@ -1367,16 +1383,18 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
               ),
             ),
             // Excel-style spreadsheet
-            Expanded(
-              child: _buildExcelGrid(headers, dataRows, columnCount),
-            ),
+            Expanded(child: _buildExcelGrid(headers, dataRows, columnCount)),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildExcelGrid(List<String> headers, List<List<String>> dataRows, int columnCount) {
+  Widget _buildExcelGrid(
+    List<String> headers,
+    List<List<String>> dataRows,
+    int columnCount,
+  ) {
     final double rowNumberWidth = 50.0 * _zoomLevel;
     final double cellWidth = 120.0 * _zoomLevel;
     final double cellHeight = 32.0 * _zoomLevel;
@@ -1493,7 +1511,9 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
                       child: NotificationListener<ScrollNotification>(
                         onNotification: (notification) {
                           if (notification is ScrollUpdateNotification) {
-                            scrollControllerV.jumpTo(notification.metrics.pixels);
+                            scrollControllerV.jumpTo(
+                              notification.metrics.pixels,
+                            );
                           }
                           return false;
                         },
@@ -1501,14 +1521,20 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
                           itemCount: dataRows.length + 1, // +1 for header row
                           itemBuilder: (context, rowIndex) {
                             final isHeader = rowIndex == 0;
-                            final rowData = isHeader ? headers : dataRows[rowIndex - 1];
+                            final rowData = isHeader
+                                ? headers
+                                : dataRows[rowIndex - 1];
                             final isEvenRow = rowIndex % 2 == 0;
 
                             return SizedBox(
                               height: cellHeight,
                               child: Row(
-                                children: List.generate(columnCount, (colIndex) {
-                                  final cellData = colIndex < rowData.length ? rowData[colIndex] : '';
+                                children: List.generate(columnCount, (
+                                  colIndex,
+                                ) {
+                                  final cellData = colIndex < rowData.length
+                                      ? rowData[colIndex]
+                                      : '';
                                   return Container(
                                     width: cellWidth,
                                     height: cellHeight,
@@ -1516,22 +1542,32 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
                                       color: isHeader
                                           ? const Color(0xFFF3F3F3)
                                           : isEvenRow
-                                              ? Colors.white
-                                              : const Color(0xFFFAFAFA),
+                                          ? Colors.white
+                                          : const Color(0xFFFAFAFA),
                                       border: Border(
-                                        right: BorderSide(color: const Color(0xFFE0E0E0)),
-                                        bottom: BorderSide(color: const Color(0xFFE0E0E0)),
+                                        right: BorderSide(
+                                          color: const Color(0xFFE0E0E0),
+                                        ),
+                                        bottom: BorderSide(
+                                          color: const Color(0xFFE0E0E0),
+                                        ),
                                       ),
                                     ),
-                                    padding: EdgeInsets.symmetric(horizontal: padding),
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: padding,
+                                    ),
                                     alignment: Alignment.centerLeft,
                                     child: Text(
                                       cellData,
                                       style: TextStyle(
                                         fontFamily: 'Literata',
                                         fontSize: fontSize,
-                                        fontWeight: isHeader ? FontWeight.w600 : FontWeight.normal,
-                                        color: isHeader ? const Color(0xFF1B4D3E) : const Color(0xFF333333),
+                                        fontWeight: isHeader
+                                            ? FontWeight.w600
+                                            : FontWeight.normal,
+                                        color: isHeader
+                                            ? const Color(0xFF1B4D3E)
+                                            : const Color(0xFF333333),
                                       ),
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
@@ -1555,13 +1591,15 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
             color: const Color(0xFFF3F3F3),
-            border: Border(
-              top: BorderSide(color: const Color(0xFFD4D4D4)),
-            ),
+            border: Border(top: BorderSide(color: const Color(0xFFD4D4D4))),
           ),
           child: Row(
             children: [
-              Icon(Icons.check_circle_outline, size: 14, color: Colors.green[700]),
+              Icon(
+                Icons.check_circle_outline,
+                size: 14,
+                color: Colors.green[700],
+              ),
               const SizedBox(width: 6),
               Text(
                 'Ready',
@@ -1629,9 +1667,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
           ),
           const SizedBox(width: 10),
           // WhatsApp button
-          Expanded(
-            child: _buildWhatsAppButton(),
-          ),
+          Expanded(child: _buildWhatsAppButton()),
           const SizedBox(width: 10),
           // Print button
           Expanded(
@@ -1649,8 +1685,9 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
   }
 
   Widget _buildWhatsAppButton() {
-    final hasCustomerPhone = widget.customerPhone != null && widget.customerPhone!.isNotEmpty;
-    
+    final hasCustomerPhone =
+        widget.customerPhone != null && widget.customerPhone!.isNotEmpty;
+
     return ElevatedButton(
       onPressed: _isSharingWhatsApp ? null : _handleWhatsAppShare,
       style: ElevatedButton.styleFrom(
@@ -1658,9 +1695,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
         foregroundColor: Colors.white,
         elevation: 2,
         padding: const EdgeInsets.symmetric(vertical: 16),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
       child: _isSharingWhatsApp
           ? const SizedBox(
@@ -1742,7 +1777,4 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
 }
 
 /// File type for preview
-enum FilePreviewType {
-  pdf,
-  csv,
-}
+enum FilePreviewType { pdf, csv }

@@ -14,7 +14,7 @@ class ProductListWidget extends StatelessWidget {
   final Future<void> Function() onRefresh;
   final void Function(ProductEntity) onProductTap;
   final void Function(ProductEntity)? onProductLongPress;
-  
+
   // Labels
   final String emptyTitle;
   final String emptySubtitle;
@@ -43,9 +43,11 @@ class ProductListWidget extends StatelessWidget {
 
     // Apply category filter
     if (selectedCategory != null && selectedCategory!.isNotEmpty) {
-      filtered = filtered.where((p) => 
-        p.category.toLowerCase() == selectedCategory!.toLowerCase()
-      ).toList();
+      filtered = filtered
+          .where(
+            (p) => p.category.toLowerCase() == selectedCategory!.toLowerCase(),
+          )
+          .toList();
     }
 
     // Apply search filter
@@ -228,8 +230,8 @@ class _ProductCard extends StatelessWidget {
       Color(0xFF1A5E52),
     ];
     final accentColor = accentColors[product.name.hashCode.abs() % 4];
-    final initials = product.name.isNotEmpty 
-        ? product.name[0].toUpperCase() 
+    final initials = product.name.isNotEmpty
+        ? product.name[0].toUpperCase()
         : 'P';
 
     return GestureDetector(
@@ -276,30 +278,32 @@ class _ProductCard extends StatelessWidget {
                             colors: isOutOfStock
                                 ? [Colors.red[400]!, Colors.red[300]!]
                                 : isLowStock
-                                    ? [Colors.orange[400]!, Colors.orange[300]!]
-                                    : [accentColor, accentColor.withOpacity(0.7)],
+                                ? [Colors.orange[400]!, Colors.orange[300]!]
+                                : [accentColor, accentColor.withOpacity(0.7)],
                           ),
                           boxShadow: [
                             BoxShadow(
                               color: isOutOfStock
                                   ? Colors.red.withOpacity(0.3)
                                   : isLowStock
-                                      ? Colors.orange.withOpacity(0.3)
-                                      : accentColor.withOpacity(0.3),
+                                  ? Colors.orange.withOpacity(0.3)
+                                  : accentColor.withOpacity(0.3),
                               blurRadius: 12,
                               offset: const Offset(0, 4),
                             ),
                           ],
                         ),
                         child: Center(
-                          child: product.imageUrl != null && product.imageUrl!.isNotEmpty
+                          child:
+                              product.imageUrl != null &&
+                                  product.imageUrl!.isNotEmpty
                               ? ClipOval(
                                   child: Image.network(
                                     product.imageUrl!,
                                     width: 52,
                                     height: 52,
                                     fit: BoxFit.cover,
-                                    errorBuilder: (_, __, ___) => Text(
+                                    errorBuilder: (_, _, _) => Text(
                                       initials,
                                       style: const TextStyle(
                                         color: Colors.white,
@@ -364,7 +368,10 @@ class _ProductCard extends StatelessWidget {
                               margin: const EdgeInsets.only(right: 8),
                               decoration: BoxDecoration(
                                 gradient: LinearGradient(
-                                  colors: [accentColor, accentColor.withOpacity(0.8)],
+                                  colors: [
+                                    accentColor,
+                                    accentColor.withOpacity(0.8),
+                                  ],
                                 ),
                                 borderRadius: BorderRadius.circular(6),
                                 boxShadow: [
@@ -406,9 +413,7 @@ class _ProductCard extends StatelessWidget {
                                     ? Icons.cloud_done_rounded
                                     : Icons.cloud_upload_rounded,
                                 size: 16,
-                                color: isSynced
-                                    ? Colors.green
-                                    : Colors.orange,
+                                color: isSynced ? Colors.green : Colors.orange,
                               ),
                             ),
                           ],
@@ -488,11 +493,7 @@ class _ProductCard extends StatelessWidget {
                       value: '₹${product.purchasePrice.toStringAsFixed(0)}',
                       color: Colors.grey[700]!,
                     ),
-                    Container(
-                      width: 1,
-                      height: 28,
-                      color: Colors.grey[300],
-                    ),
+                    Container(width: 1, height: 28, color: Colors.grey[300]),
                     // Sales price
                     _buildPriceItem(
                       icon: Icons.sell_outlined,
@@ -500,11 +501,7 @@ class _ProductCard extends StatelessWidget {
                       value: '₹${product.salesPrice.toStringAsFixed(0)}',
                       color: Colors.green[700]!,
                     ),
-                    Container(
-                      width: 1,
-                      height: 28,
-                      color: Colors.grey[300],
-                    ),
+                    Container(width: 1, height: 28, color: Colors.grey[300]),
                     // Stock
                     _buildPriceItem(
                       icon: Icons.inventory_rounded,
@@ -513,8 +510,8 @@ class _ProductCard extends StatelessWidget {
                       color: isOutOfStock
                           ? Colors.red[700]!
                           : isLowStock
-                              ? Colors.orange[700]!
-                              : const Color(0xFF1B4D3E),
+                          ? Colors.orange[700]!
+                          : const Color(0xFF1B4D3E),
                     ),
                   ],
                 ),
@@ -529,26 +526,16 @@ class _ProductCard extends StatelessWidget {
   Widget _buildStockBadge(bool isOutOfStock, bool isLowStock) {
     if (isOutOfStock) {
       return Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 10,
-          vertical: 6,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
           color: Colors.red[50],
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: Colors.red[100]!,
-            width: 1,
-          ),
+          border: Border.all(color: Colors.red[100]!, width: 1),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.warning_rounded,
-              size: 16,
-              color: Colors.red[700],
-            ),
+            Icon(Icons.warning_rounded, size: 16, color: Colors.red[700]),
             const SizedBox(height: 2),
             Text(
               'Out',
@@ -564,17 +551,11 @@ class _ProductCard extends StatelessWidget {
       );
     } else if (isLowStock) {
       return Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 10,
-          vertical: 6,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
           color: Colors.orange[50],
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: Colors.orange[100]!,
-            width: 1,
-          ),
+          border: Border.all(color: Colors.orange[100]!, width: 1),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -669,9 +650,10 @@ class _ShimmerCardState extends State<_ShimmerCard>
       vsync: this,
     )..repeat();
 
-    _animation = Tween<double>(begin: -1.0, end: 2.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
+    _animation = Tween<double>(
+      begin: -1.0,
+      end: 2.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
   }
 
   @override
@@ -740,11 +722,7 @@ class _ShimmerCardState extends State<_ShimmerCard>
         gradient: LinearGradient(
           begin: Alignment(_animation.value - 1, 0),
           end: Alignment(_animation.value, 0),
-          colors: [
-            Colors.grey[200]!,
-            Colors.grey[100]!,
-            Colors.grey[200]!,
-          ],
+          colors: [Colors.grey[200]!, Colors.grey[100]!, Colors.grey[200]!],
         ),
       ),
     );
@@ -759,11 +737,7 @@ class _ShimmerCardState extends State<_ShimmerCard>
         gradient: LinearGradient(
           begin: Alignment(_animation.value - 1, 0),
           end: Alignment(_animation.value, 0),
-          colors: [
-            Colors.grey[200]!,
-            Colors.grey[100]!,
-            Colors.grey[200]!,
-          ],
+          colors: [Colors.grey[200]!, Colors.grey[100]!, Colors.grey[200]!],
         ),
       ),
     );

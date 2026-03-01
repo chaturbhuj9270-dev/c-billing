@@ -190,18 +190,24 @@ class Bill {
   /// Factory constructor to create from BillEntity (for offline-first)
   factory Bill.fromBillEntity(BillEntity entity) {
     // Convert embedded bill items to domain BillItem
-    final billItems = entity.items.map((item) => BillItem(
-      id: item.itemId ?? '',
-      billId: entity.serverId ?? entity.id.toString(),
-      productId: item.productId ?? '',
-      productName: item.productName ?? '',
-      purchasePrice: item.purchasePrice,
-      sellingPrice: item.sellingPrice,
-      quantity: item.quantity,
-      subtotal: item.subtotal,
-      returnedQuantity: item.returnedQuantity,
-      hsnCode: item.hsnCode,
-    )).toList();
+    final billItems = entity.items
+        .map(
+          (item) => BillItem(
+            id: item.itemId ?? '',
+            billId: entity.serverId ?? entity.id.toString(),
+            productId: item.productId ?? '',
+            productName: item.productName ?? '',
+            purchasePrice: item.purchasePrice,
+            sellingPrice: item.sellingPrice,
+            quantity: item.quantity,
+            subtotal: item.subtotal,
+            returnedQuantity: item.returnedQuantity,
+            hsnCode: item.hsnCode,
+            unit: item.unit,
+            sellUnit: item.sellUnit,
+          ),
+        )
+        .toList();
 
     // Convert BillPaymentStatus to PaymentStatus
     PaymentStatus paymentStatus;
@@ -382,15 +388,18 @@ class Bill {
   bool get isFullyReturned => items.every((item) => item.isFullyReturned);
 
   /// Check if any item has been partially or fully returned
-  bool get hasAnyReturns => items.any((item) => item.returnedQuantity > 0);
+  bool get hasAnyReturns => items.any((item) => item.returnedQuantity > 0.001);
 
   /// Check if there are any items that can still be returned
   bool get hasReturnableItems =>
-      items.any((item) => item.remainingQuantity > 0);
+      items.any((item) => item.remainingQuantity > 0.001);
 
   /// Get total returned quantity across all items
-  int get totalReturnedQuantity =>
-      items.fold(0, (sum, item) => sum + item.returnedQuantity);
+  double get totalReturnedQuantity =>
+      items.fold(0.0, (sum, item) => sum + item.returnedQuantity);
+
+  /// Get total returned quantity as int (for display)
+  int get totalReturnedQuantityInt => totalReturnedQuantity.round();
 
   /// Get total refund amount based on returned quantities
   double get totalReturnedAmount => items.fold(

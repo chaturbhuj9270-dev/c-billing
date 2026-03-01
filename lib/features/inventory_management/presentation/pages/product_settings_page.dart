@@ -13,11 +13,13 @@ class ProductSettingsPage extends StatefulWidget {
 
 class _ProductSettingsPageState extends State<ProductSettingsPage> {
   late AppLocalizations _localizations;
-  
+
   @override
   void initState() {
     super.initState();
-    _localizations = AppLocalizations.of(LanguageService.instance.currentLanguage);
+    _localizations = AppLocalizations.of(
+      LanguageService.instance.currentLanguage,
+    );
   }
 
   @override
@@ -33,16 +35,19 @@ class _ProductSettingsPageState extends State<ProductSettingsPage> {
                 listenable: ProductSettingsService.instance,
                 builder: (context, _) {
                   final columns = ProductSettingsService.instance.customColumns;
-                  
+
                   if (columns.isEmpty) {
                     return _buildEmptyState();
                   }
-                  
+
                   return ReorderableListView.builder(
                     padding: const EdgeInsets.all(16),
                     itemCount: columns.length,
                     onReorder: (oldIndex, newIndex) {
-                      ProductSettingsService.instance.reorderColumns(oldIndex, newIndex);
+                      ProductSettingsService.instance.reorderColumns(
+                        oldIndex,
+                        newIndex,
+                      );
                     },
                     itemBuilder: (context, index) {
                       final column = columns[index];
@@ -189,7 +194,7 @@ class _ProductSettingsPageState extends State<ProductSettingsPage> {
   Widget _buildColumnCard(CustomColumn column, int index) {
     final typeIcon = _getTypeIcon(column.type);
     final typeColor = _getTypeColor(column.type);
-    
+
     return Card(
       key: ValueKey(column.id),
       margin: const EdgeInsets.only(bottom: 12),
@@ -197,7 +202,7 @@ class _ProductSettingsPageState extends State<ProductSettingsPage> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
         side: BorderSide(
-          color: column.isActive 
+          color: column.isActive
               ? const Color(0xFF1B4D3E).withOpacity(0.2)
               : Colors.grey.withOpacity(0.2),
           width: 1,
@@ -255,7 +260,10 @@ class _ProductSettingsPageState extends State<ProductSettingsPage> {
                         if (column.isRequired) ...[
                           const SizedBox(width: 6),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
                             decoration: BoxDecoration(
                               color: Colors.red.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(4),
@@ -283,7 +291,7 @@ class _ProductSettingsPageState extends State<ProductSettingsPage> {
                         color: Colors.grey[600],
                       ),
                     ),
-                    if (column.type == CustomColumnType.dropdown && 
+                    if (column.type == CustomColumnType.dropdown &&
                         column.dropdownOptions != null &&
                         column.dropdownOptions!.isNotEmpty) ...[
                       const SizedBox(height: 4),
@@ -314,7 +322,11 @@ class _ProductSettingsPageState extends State<ProductSettingsPage> {
                     value: 'edit',
                     child: Row(
                       children: [
-                        Icon(Icons.edit_rounded, size: 20, color: Colors.grey[700]),
+                        Icon(
+                          Icons.edit_rounded,
+                          size: 20,
+                          color: Colors.grey[700],
+                        ),
                         const SizedBox(width: 12),
                         const Text('Edit'),
                       ],
@@ -325,7 +337,9 @@ class _ProductSettingsPageState extends State<ProductSettingsPage> {
                     child: Row(
                       children: [
                         Icon(
-                          column.isActive ? Icons.visibility_off_rounded : Icons.visibility_rounded,
+                          column.isActive
+                              ? Icons.visibility_off_rounded
+                              : Icons.visibility_rounded,
                           size: 20,
                           color: Colors.grey[700],
                         ),
@@ -339,9 +353,16 @@ class _ProductSettingsPageState extends State<ProductSettingsPage> {
                     value: 'delete',
                     child: Row(
                       children: [
-                        const Icon(Icons.delete_rounded, size: 20, color: Colors.red),
+                        const Icon(
+                          Icons.delete_rounded,
+                          size: 20,
+                          color: Colors.red,
+                        ),
                         const SizedBox(width: 12),
-                        const Text('Delete', style: TextStyle(color: Colors.red)),
+                        const Text(
+                          'Delete',
+                          style: TextStyle(color: Colors.red),
+                        ),
                       ],
                     ),
                   ),
@@ -424,10 +445,7 @@ class _ProductSettingsPageState extends State<ProductSettingsPage> {
             onPressed: () => Navigator.pop(context),
             child: Text(
               'Cancel',
-              style: TextStyle(
-                fontFamily: 'Literata',
-                color: Colors.grey[600],
-              ),
+              style: TextStyle(fontFamily: 'Literata', color: Colors.grey[600]),
             ),
           ),
           ElevatedButton(
@@ -449,10 +467,7 @@ class _ProductSettingsPageState extends State<ProductSettingsPage> {
             ),
             child: const Text(
               'Delete',
-              style: TextStyle(
-                fontFamily: 'Literata',
-                color: Colors.white,
-              ),
+              style: TextStyle(fontFamily: 'Literata', color: Colors.white),
             ),
           ),
         ],
@@ -461,16 +476,23 @@ class _ProductSettingsPageState extends State<ProductSettingsPage> {
   }
 
   void _showAddColumnDialog({CustomColumn? existingColumn}) {
-    final nameController = TextEditingController(text: existingColumn?.name ?? '');
-    final placeholderController = TextEditingController(text: existingColumn?.placeholder ?? '');
-    final defaultValueController = TextEditingController(text: existingColumn?.defaultValue ?? '');
+    final nameController = TextEditingController(
+      text: existingColumn?.name ?? '',
+    );
+    final placeholderController = TextEditingController(
+      text: existingColumn?.placeholder ?? '',
+    );
+    final defaultValueController = TextEditingController(
+      text: existingColumn?.defaultValue ?? '',
+    );
     final dropdownOptionsController = TextEditingController(
       text: existingColumn?.dropdownOptions?.join(', ') ?? '',
     );
-    
-    CustomColumnType selectedType = existingColumn?.type ?? CustomColumnType.text;
+
+    CustomColumnType selectedType =
+        existingColumn?.type ?? CustomColumnType.text;
     bool isRequired = existingColumn?.isRequired ?? false;
-    
+
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
@@ -513,7 +535,7 @@ class _ProductSettingsPageState extends State<ProductSettingsPage> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  
+
                   // Data Type Dropdown
                   const Text(
                     'Data Type',
@@ -540,11 +562,17 @@ class _ProductSettingsPageState extends State<ProductSettingsPage> {
                             value: type,
                             child: Row(
                               children: [
-                                Icon(_getTypeIcon(type), size: 20, color: _getTypeColor(type)),
+                                Icon(
+                                  _getTypeIcon(type),
+                                  size: 20,
+                                  color: _getTypeColor(type),
+                                ),
                                 const SizedBox(width: 12),
                                 Text(
                                   CustomColumn.getTypeDisplayName(type),
-                                  style: const TextStyle(fontFamily: 'Literata'),
+                                  style: const TextStyle(
+                                    fontFamily: 'Literata',
+                                  ),
                                 ),
                               ],
                             ),
@@ -559,7 +587,7 @@ class _ProductSettingsPageState extends State<ProductSettingsPage> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  
+
                   // Dropdown Options (only for dropdown type)
                   if (selectedType == CustomColumnType.dropdown) ...[
                     TextField(
@@ -582,7 +610,7 @@ class _ProductSettingsPageState extends State<ProductSettingsPage> {
                     ),
                     const SizedBox(height: 16),
                   ],
-                  
+
                   // Placeholder
                   TextField(
                     controller: placeholderController,
@@ -602,13 +630,14 @@ class _ProductSettingsPageState extends State<ProductSettingsPage> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  
+
                   // Default Value (not for boolean)
                   if (selectedType != CustomColumnType.boolean) ...[
                     TextField(
                       controller: defaultValueController,
-                      keyboardType: selectedType == CustomColumnType.number || 
-                                   selectedType == CustomColumnType.decimal
+                      keyboardType:
+                          selectedType == CustomColumnType.number ||
+                              selectedType == CustomColumnType.decimal
                           ? TextInputType.number
                           : TextInputType.text,
                       decoration: InputDecoration(
@@ -627,11 +656,12 @@ class _ProductSettingsPageState extends State<ProductSettingsPage> {
                     ),
                     const SizedBox(height: 16),
                   ],
-                  
+
                   // Required toggle
                   SwitchListTile(
                     value: isRequired,
-                    onChanged: (value) => setDialogState(() => isRequired = value),
+                    onChanged: (value) =>
+                        setDialogState(() => isRequired = value),
                     title: const Text(
                       'Required Field',
                       style: TextStyle(
@@ -648,7 +678,7 @@ class _ProductSettingsPageState extends State<ProductSettingsPage> {
                         color: Colors.grey[600],
                       ),
                     ),
-                    activeColor: const Color(0xFF1B4D3E),
+                    activeThumbColor: const Color(0xFF1B4D3E),
                     contentPadding: EdgeInsets.zero,
                   ),
                 ],
@@ -677,7 +707,7 @@ class _ProductSettingsPageState extends State<ProductSettingsPage> {
                     );
                     return;
                   }
-                  
+
                   // Parse dropdown options
                   List<String>? dropdownOptions;
                   if (selectedType == CustomColumnType.dropdown) {
@@ -697,32 +727,41 @@ class _ProductSettingsPageState extends State<ProductSettingsPage> {
                         .where((e) => e.isNotEmpty)
                         .toList();
                   }
-                  
+
                   final column = CustomColumn(
-                    id: existingColumn?.id ?? ProductSettingsService.instance.generateColumnId(),
+                    id:
+                        existingColumn?.id ??
+                        ProductSettingsService.instance.generateColumnId(),
                     name: name,
                     type: selectedType,
                     isRequired: isRequired,
-                    defaultValue: defaultValueController.text.trim().isNotEmpty 
-                        ? defaultValueController.text.trim() 
+                    defaultValue: defaultValueController.text.trim().isNotEmpty
+                        ? defaultValueController.text.trim()
                         : null,
                     dropdownOptions: dropdownOptions,
-                    placeholder: placeholderController.text.trim().isNotEmpty 
-                        ? placeholderController.text.trim() 
+                    placeholder: placeholderController.text.trim().isNotEmpty
+                        ? placeholderController.text.trim()
                         : null,
                     isActive: existingColumn?.isActive ?? true,
                   );
-                  
+
                   if (existingColumn != null) {
-                    ProductSettingsService.instance.updateColumn(existingColumn.id, column);
+                    ProductSettingsService.instance.updateColumn(
+                      existingColumn.id,
+                      column,
+                    );
                   } else {
                     ProductSettingsService.instance.addColumn(column);
                   }
-                  
+
                   Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text(existingColumn != null ? 'Column updated' : 'Column added'),
+                      content: Text(
+                        existingColumn != null
+                            ? 'Column updated'
+                            : 'Column added',
+                      ),
                       backgroundColor: const Color(0xFF1B4D3E),
                     ),
                   );

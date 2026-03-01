@@ -215,12 +215,14 @@ class _BillSettingsPageState extends State<BillSettingsPage>
                                   icon: Icons.view_column_rounded,
                                   iconColor: const Color(0xFF2196F3),
                                   title: 'Print Column Settings',
-                                  subtitle: 'Choose columns to show on printed bills',
+                                  subtitle:
+                                      'Choose columns to show on printed bills',
                                   onTap: () async {
                                     await Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                        builder: (context) => const BillReportSettingsPage(),
+                                        builder: (context) =>
+                                            const BillReportSettingsPage(),
                                       ),
                                     );
                                   },
@@ -736,7 +738,7 @@ class _BillSettingsPageState extends State<BillSettingsPage>
           child: Switch(
             value: value,
             onChanged: onChanged,
-            activeColor: Colors.white,
+            activeThumbColor: Colors.white,
             activeTrackColor: const Color(0xFF1B4D3E),
             inactiveThumbColor: Colors.white,
             inactiveTrackColor: Colors.grey[300],
@@ -814,7 +816,6 @@ class _BillSettingsPageState extends State<BillSettingsPage>
       ),
     );
   }
-
 
   Widget _buildBillTypeSelector() {
     return Column(

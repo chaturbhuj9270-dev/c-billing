@@ -1,11 +1,13 @@
 /// Dashboard Feature Exports
-/// 
+///
 /// This file provides a clean public API for the dashboard feature
 /// following clean architecture principles.
+library;
 
 // Domain Layer
 export 'domain/entities/dashboard_summary.dart';
-export 'domain/repositories/dashboard_repository_interface.dart' hide DashboardFilter;
+export 'domain/repositories/dashboard_repository_interface.dart'
+    hide DashboardFilter;
 
 // Data Layer
 export 'data/datasources/dashboard_cache_datasource.dart';

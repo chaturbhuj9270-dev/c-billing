@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:c_billing/core/services/stock_report_settings_service.dart';
 
@@ -7,7 +6,8 @@ class StockReportSettingsPage extends StatefulWidget {
   const StockReportSettingsPage({super.key});
 
   @override
-  State<StockReportSettingsPage> createState() => _StockReportSettingsPageState();
+  State<StockReportSettingsPage> createState() =>
+      _StockReportSettingsPageState();
 }
 
 class _StockReportSettingsPageState extends State<StockReportSettingsPage> {
@@ -30,7 +30,10 @@ class _StockReportSettingsPageState extends State<StockReportSettingsPage> {
   }
 
   Future<void> _toggleColumn(String columnId, bool isVisible) async {
-    await StockReportSettingsService.instance.setColumnVisibility(columnId, isVisible);
+    await StockReportSettingsService.instance.setColumnVisibility(
+      columnId,
+      isVisible,
+    );
     setState(() {
       final index = _columns.indexWhere((c) => c.id == columnId);
       if (index != -1) {
@@ -167,9 +170,7 @@ class _StockReportSettingsPageState extends State<StockReportSettingsPage> {
             onPressed: _resetToDefaults,
             icon: const Icon(Icons.restart_alt_rounded, size: 18),
             label: const Text('Reset'),
-            style: TextButton.styleFrom(
-              foregroundColor: Colors.grey[700],
-            ),
+            style: TextButton.styleFrom(foregroundColor: Colors.grey[700]),
           ),
         ],
       ),
@@ -180,7 +181,7 @@ class _StockReportSettingsPageState extends State<StockReportSettingsPage> {
     // Separate default and custom columns
     final defaultColumns = _columns.where((c) => c.isDefault).toList();
     final customColumns = _columns.where((c) => !c.isDefault).toList();
-    
+
     // Count visible columns
     final visibleCount = _columns.where((c) => c.isVisible).length;
 
@@ -320,7 +321,7 @@ class _StockReportSettingsPageState extends State<StockReportSettingsPage> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: column.isVisible 
+          color: column.isVisible
               ? const Color(0xFF1B4D3E).withOpacity(0.3)
               : Colors.grey[200]!,
           width: column.isVisible ? 1.5 : 1,
@@ -348,7 +349,9 @@ class _StockReportSettingsPageState extends State<StockReportSettingsPage> {
           ),
           child: Icon(
             _getColumnIcon(column.id),
-            color: column.isVisible ? const Color(0xFF1B4D3E) : Colors.grey[400],
+            color: column.isVisible
+                ? const Color(0xFF1B4D3E)
+                : Colors.grey[400],
             size: 20,
           ),
         ),
@@ -372,7 +375,7 @@ class _StockReportSettingsPageState extends State<StockReportSettingsPage> {
         trailing: Switch(
           value: column.isVisible,
           onChanged: (value) => _toggleColumn(column.id, value),
-          activeColor: const Color(0xFF1B4D3E),
+          activeThumbColor: const Color(0xFF1B4D3E),
           activeTrackColor: const Color(0xFF1B4D3E).withOpacity(0.3),
         ),
       ),

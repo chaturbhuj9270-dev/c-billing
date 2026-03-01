@@ -26,20 +26,20 @@ class _InvoiceScannerPageState extends State<InvoiceScannerPage> {
   final InvoiceScannerService _scannerService = InvoiceScannerService.instance;
   // ignore: unused_field
   late AppLocalizations _localizations;
-  
+
   bool _isScanning = false;
   bool _isSaving = false;
   File? _selectedImage;
   ScannedInvoiceData? _scannedData;
   String? _errorMessage;
-  
+
   // Supplier and Company selection
   SupplierEntity? _selectedSupplier;
   CompanyEntity? _selectedCompany;
   List<SupplierEntity> _suppliers = [];
   List<CompanyEntity> _companies = [];
   List<ProductEntity> _products = [];
-  
+
   // API Key input
   final _apiKeyController = TextEditingController();
   bool _showApiKeyInput = false;
@@ -47,7 +47,9 @@ class _InvoiceScannerPageState extends State<InvoiceScannerPage> {
   @override
   void initState() {
     super.initState();
-    _localizations = AppLocalizations.of(LanguageService.instance.currentLanguage);
+    _localizations = AppLocalizations.of(
+      LanguageService.instance.currentLanguage,
+    );
     _initializeService();
     _loadData();
   }
@@ -63,10 +65,11 @@ class _InvoiceScannerPageState extends State<InvoiceScannerPage> {
   }
 
   Future<void> _loadData() async {
-    final suppliers = await SupplierOfflineController.instance.getAllSuppliers();
+    final suppliers = await SupplierOfflineController.instance
+        .getAllSuppliers();
     final companies = await CompanyOfflineController.instance.getAllCompanies();
     final products = await ProductOfflineController.instance.getAllProducts();
-    
+
     if (mounted) {
       setState(() {
         _suppliers = suppliers.where((s) => s.isActive).toList();
@@ -102,7 +105,7 @@ class _InvoiceScannerPageState extends State<InvoiceScannerPage> {
 
   Future<void> _scanImage() async {
     if (_selectedImage == null) return;
-    
+
     if (!_scannerService.isConfigured) {
       setState(() {
         _showApiKeyInput = true;
@@ -118,7 +121,7 @@ class _InvoiceScannerPageState extends State<InvoiceScannerPage> {
 
     try {
       final result = await _scannerService.scanInvoice(_selectedImage!);
-      
+
       if (mounted) {
         setState(() {
           _isScanning = false;
@@ -146,12 +149,13 @@ class _InvoiceScannerPageState extends State<InvoiceScannerPage> {
 
   void _matchProductsWithScannedItems() {
     if (_scannedData == null) return;
-    
+
     for (var item in _scannedData!.items) {
       // Try to find matching product by name
       final matchedProduct = _products.firstWhere(
-        (p) => p.name.toLowerCase().contains(item.productName.toLowerCase()) ||
-               item.productName.toLowerCase().contains(p.name.toLowerCase()),
+        (p) =>
+            p.name.toLowerCase().contains(item.productName.toLowerCase()) ||
+            item.productName.toLowerCase().contains(p.name.toLowerCase()),
         orElse: () => ProductEntity(
           name: '',
           purchasePrice: 0,
@@ -160,9 +164,10 @@ class _InvoiceScannerPageState extends State<InvoiceScannerPage> {
           createdAt: DateTime.now(),
         ),
       );
-      
+
       if (matchedProduct.name.isNotEmpty) {
-        item.matchedProductId = matchedProduct.serverId ?? matchedProduct.id.toString();
+        item.matchedProductId =
+            matchedProduct.serverId ?? matchedProduct.id.toString();
         // Use existing prices if not detected
         if (item.salesPrice == null || item.salesPrice == 0) {
           item.salesPrice = matchedProduct.salesPrice;
@@ -173,8 +178,9 @@ class _InvoiceScannerPageState extends State<InvoiceScannerPage> {
 
   void _matchSupplier(String supplierName) {
     final matched = _suppliers.firstWhere(
-      (s) => s.fullName.toLowerCase().contains(supplierName.toLowerCase()) ||
-             supplierName.toLowerCase().contains(s.fullName.toLowerCase()),
+      (s) =>
+          s.fullName.toLowerCase().contains(supplierName.toLowerCase()) ||
+          supplierName.toLowerCase().contains(s.fullName.toLowerCase()),
       orElse: () => SupplierEntity(
         firstName: '',
         contact: '',
@@ -182,7 +188,7 @@ class _InvoiceScannerPageState extends State<InvoiceScannerPage> {
         createdAt: DateTime.now(),
       ),
     );
-    
+
     if (matched.firstName.isNotEmpty) {
       setState(() {
         _selectedSupplier = matched;
@@ -203,11 +209,11 @@ class _InvoiceScannerPageState extends State<InvoiceScannerPage> {
     setState(() {
       _showApiKeyInput = false;
     });
-    
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('API key saved successfully')),
-    );
-    
+
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('API key saved successfully')));
+
     // If we have an image, try scanning again
     if (_selectedImage != null) {
       await _scanImage();
@@ -216,24 +222,26 @@ class _InvoiceScannerPageState extends State<InvoiceScannerPage> {
 
   Future<void> _saveTourchaseRecords() async {
     if (_scannedData == null || _scannedData!.items.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No items to save')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('No items to save')));
       return;
     }
 
     if (_selectedSupplier == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a supplier')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Please select a supplier')));
       return;
     }
 
-    final selectedItems = _scannedData!.items.where((item) => item.isSelected).toList();
+    final selectedItems = _scannedData!.items
+        .where((item) => item.isSelected)
+        .toList();
     if (selectedItems.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No items selected')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('No items selected')));
       return;
     }
 
@@ -250,7 +258,7 @@ class _InvoiceScannerPageState extends State<InvoiceScannerPage> {
           // If no matched product, create new or skip
           String productId = item.matchedProductId ?? '';
           String productName = item.productName;
-          
+
           // Find matched product for additional details
           ProductEntity? matchedProduct;
           if (item.matchedProductId != null) {
@@ -273,31 +281,39 @@ class _InvoiceScannerPageState extends State<InvoiceScannerPage> {
           String finalProductId = productId;
           if (finalProductId.isEmpty && matchedProduct == null) {
             // Create new product
-            final newProduct = await ProductOfflineController.instance.addProduct(
-              name: productName,
-              companyName: item.companyName ?? '',
-              purchasePrice: item.purchasePrice,
-              salesPrice: item.salesPrice ?? item.purchasePrice * 1.2,
-              unit: item.unit ?? 'pcs',
-            );
+            final newProduct = await ProductOfflineController.instance
+                .addProduct(
+                  name: productName,
+                  companyName: item.companyName ?? '',
+                  purchasePrice: item.purchasePrice,
+                  salesPrice: item.salesPrice ?? item.purchasePrice * 1.2,
+                  unit: item.unit ?? 'pcs',
+                );
             finalProductId = newProduct.serverId ?? newProduct.id.toString();
           }
 
           await InventoryIntegrationService.instance.processPurchase(
             productId: finalProductId,
             productName: productName,
-            supplierId: _selectedSupplier!.serverId ?? _selectedSupplier!.id.toString(),
+            supplierId:
+                _selectedSupplier!.serverId ?? _selectedSupplier!.id.toString(),
             supplierName: _selectedSupplier!.fullName,
-            companyId: _selectedCompany?.serverId ?? _selectedCompany?.id.toString(),
-            companyName: item.companyName ?? _selectedCompany?.companyName ?? '',
+            companyId:
+                _selectedCompany?.serverId ?? _selectedCompany?.id.toString(),
+            companyName:
+                item.companyName ?? _selectedCompany?.companyName ?? '',
             quantity: item.quantity,
             unit: item.unit ?? matchedProduct?.unit ?? 'pcs',
             purchasePrice: item.purchasePrice,
-            salesPrice: item.salesPrice ?? matchedProduct?.salesPrice ?? item.purchasePrice * 1.2,
+            salesPrice:
+                item.salesPrice ??
+                matchedProduct?.salesPrice ??
+                item.purchasePrice * 1.2,
             productionDate: item.productionDate,
             expiryDate: item.expiryDate,
             warrantyMonths: null,
-            notes: 'Scanned from invoice${_scannedData!.invoiceNumber != null ? ' #${_scannedData!.invoiceNumber}' : ''}',
+            notes:
+                'Scanned from invoice${_scannedData!.invoiceNumber != null ? ' #${_scannedData!.invoiceNumber}' : ''}',
           );
           successCount++;
         } catch (e) {
@@ -370,7 +386,8 @@ class _InvoiceScannerPageState extends State<InvoiceScannerPage> {
 
   void _toggleItemSelection(int index) {
     setState(() {
-      _scannedData!.items[index].isSelected = !_scannedData!.items[index].isSelected;
+      _scannedData!.items[index].isSelected =
+          !_scannedData!.items[index].isSelected;
     });
   }
 
@@ -378,7 +395,7 @@ class _InvoiceScannerPageState extends State<InvoiceScannerPage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Scan Invoice'),
@@ -393,7 +410,8 @@ class _InvoiceScannerPageState extends State<InvoiceScannerPage> {
       body: _showApiKeyInput && !_scannerService.isConfigured
           ? _buildApiKeySetup(theme, colorScheme)
           : _buildMainContent(theme, colorScheme),
-      floatingActionButton: _scannedData != null && _scannedData!.items.isNotEmpty
+      floatingActionButton:
+          _scannedData != null && _scannedData!.items.isNotEmpty
           ? FloatingActionButton.extended(
               onPressed: _isSaving ? null : _saveTourchaseRecords,
               icon: _isSaving
@@ -421,11 +439,7 @@ class _InvoiceScannerPageState extends State<InvoiceScannerPage> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(
-                  Icons.key,
-                  size: 64,
-                  color: colorScheme.primary,
-                ),
+                Icon(Icons.key, size: 64, color: colorScheme.primary),
                 const SizedBox(height: 16),
                 Text(
                   'Configure Gemini API Key',
@@ -480,7 +494,7 @@ class _InvoiceScannerPageState extends State<InvoiceScannerPage> {
           // Image capture section
           _buildImageSection(theme, colorScheme),
           const SizedBox(height: 16),
-          
+
           // Error message
           if (_errorMessage != null)
             Card(
@@ -501,7 +515,7 @@ class _InvoiceScannerPageState extends State<InvoiceScannerPage> {
                 ),
               ),
             ),
-          
+
           // Scanning indicator
           if (_isScanning)
             Card(
@@ -526,7 +540,7 @@ class _InvoiceScannerPageState extends State<InvoiceScannerPage> {
                 ),
               ),
             ),
-          
+
           // Scanned data section
           if (_scannedData != null && !_isScanning) ...[
             const SizedBox(height: 16),
@@ -553,10 +567,7 @@ class _InvoiceScannerPageState extends State<InvoiceScannerPage> {
               children: [
                 Icon(Icons.document_scanner, color: colorScheme.primary),
                 const SizedBox(width: 8),
-                Text(
-                  'Invoice Image',
-                  style: theme.textTheme.titleMedium,
-                ),
+                Text('Invoice Image', style: theme.textTheme.titleMedium),
               ],
             ),
             const SizedBox(height: 16),
@@ -606,7 +617,9 @@ class _InvoiceScannerPageState extends State<InvoiceScannerPage> {
               children: [
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed: _isScanning ? null : () => _pickImage(ImageSource.camera),
+                    onPressed: _isScanning
+                        ? null
+                        : () => _pickImage(ImageSource.camera),
                     icon: const Icon(Icons.camera_alt),
                     label: const Text('Camera'),
                   ),
@@ -614,7 +627,9 @@ class _InvoiceScannerPageState extends State<InvoiceScannerPage> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed: _isScanning ? null : () => _pickImage(ImageSource.gallery),
+                    onPressed: _isScanning
+                        ? null
+                        : () => _pickImage(ImageSource.gallery),
                     icon: const Icon(Icons.photo_library),
                     label: const Text('Gallery'),
                   ),
@@ -649,10 +664,7 @@ class _InvoiceScannerPageState extends State<InvoiceScannerPage> {
               children: [
                 Icon(Icons.receipt_long, color: colorScheme.primary),
                 const SizedBox(width: 8),
-                Text(
-                  'Invoice Details',
-                  style: theme.textTheme.titleMedium,
-                ),
+                Text('Invoice Details', style: theme.textTheme.titleMedium),
               ],
             ),
             const SizedBox(height: 12),
@@ -661,13 +673,29 @@ class _InvoiceScannerPageState extends State<InvoiceScannerPage> {
               runSpacing: 8,
               children: [
                 if (_scannedData!.invoiceNumber != null)
-                  _buildInfoChip('Invoice #', _scannedData!.invoiceNumber!, colorScheme),
+                  _buildInfoChip(
+                    'Invoice #',
+                    _scannedData!.invoiceNumber!,
+                    colorScheme,
+                  ),
                 if (_scannedData!.invoiceDate != null)
-                  _buildInfoChip('Date', DateFormat('dd/MM/yyyy').format(_scannedData!.invoiceDate!), colorScheme),
+                  _buildInfoChip(
+                    'Date',
+                    DateFormat('dd/MM/yyyy').format(_scannedData!.invoiceDate!),
+                    colorScheme,
+                  ),
                 if (_scannedData!.totalAmount != null)
-                  _buildInfoChip('Total', '₹${_scannedData!.totalAmount!.toStringAsFixed(2)}', colorScheme),
+                  _buildInfoChip(
+                    'Total',
+                    '₹${_scannedData!.totalAmount!.toStringAsFixed(2)}',
+                    colorScheme,
+                  ),
                 if (_scannedData!.taxAmount != null)
-                  _buildInfoChip('Tax', '₹${_scannedData!.taxAmount!.toStringAsFixed(2)}', colorScheme),
+                  _buildInfoChip(
+                    'Tax',
+                    '₹${_scannedData!.taxAmount!.toStringAsFixed(2)}',
+                    colorScheme,
+                  ),
               ],
             ),
           ],
@@ -717,10 +745,7 @@ class _InvoiceScannerPageState extends State<InvoiceScannerPage> {
               children: [
                 Icon(Icons.business, color: colorScheme.primary),
                 const SizedBox(width: 8),
-                Text(
-                  'Supplier',
-                  style: theme.textTheme.titleMedium,
-                ),
+                Text('Supplier', style: theme.textTheme.titleMedium),
                 if (_scannedData!.supplierName != null) ...[
                   const Spacer(),
                   Text(
@@ -734,7 +759,7 @@ class _InvoiceScannerPageState extends State<InvoiceScannerPage> {
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<SupplierEntity>(
-              value: _selectedSupplier,
+              initialValue: _selectedSupplier,
               decoration: const InputDecoration(
                 labelText: 'Select Supplier',
                 border: OutlineInputBorder(),
@@ -754,7 +779,7 @@ class _InvoiceScannerPageState extends State<InvoiceScannerPage> {
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<CompanyEntity>(
-              value: _selectedCompany,
+              initialValue: _selectedCompany,
               decoration: const InputDecoration(
                 labelText: 'Select Company (Optional)',
                 border: OutlineInputBorder(),
@@ -781,7 +806,7 @@ class _InvoiceScannerPageState extends State<InvoiceScannerPage> {
   Widget _buildScannedItemsSection(ThemeData theme, ColorScheme colorScheme) {
     final items = _scannedData!.items;
     final selectedCount = items.where((i) => i.isSelected).length;
-    
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -792,10 +817,7 @@ class _InvoiceScannerPageState extends State<InvoiceScannerPage> {
               children: [
                 Icon(Icons.inventory_2, color: colorScheme.primary),
                 const SizedBox(width: 8),
-                Text(
-                  'Scanned Items',
-                  style: theme.textTheme.titleMedium,
-                ),
+                Text('Scanned Items', style: theme.textTheme.titleMedium),
                 const Spacer(),
                 Text(
                   '$selectedCount/${items.length} selected',
@@ -844,7 +866,7 @@ class _InvoiceScannerPageState extends State<InvoiceScannerPage> {
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               itemCount: items.length,
-              separatorBuilder: (_, __) => const Divider(height: 1),
+              separatorBuilder: (_, _) => const Divider(height: 1),
               itemBuilder: (context, index) {
                 final item = items[index];
                 return _buildItemCard(item, index, theme, colorScheme);
@@ -856,9 +878,14 @@ class _InvoiceScannerPageState extends State<InvoiceScannerPage> {
     );
   }
 
-  Widget _buildItemCard(ScannedInvoiceItem item, int index, ThemeData theme, ColorScheme colorScheme) {
+  Widget _buildItemCard(
+    ScannedInvoiceItem item,
+    int index,
+    ThemeData theme,
+    ColorScheme colorScheme,
+  ) {
     final hasMatch = item.matchedProductId != null;
-    
+
     return InkWell(
       onTap: () => _toggleItemSelection(index),
       child: Padding(
@@ -881,23 +908,36 @@ class _InvoiceScannerPageState extends State<InvoiceScannerPage> {
                           item.productName,
                           style: theme.textTheme.titleSmall?.copyWith(
                             fontWeight: FontWeight.bold,
-                            decoration: item.isSelected ? null : TextDecoration.lineThrough,
-                            color: item.isSelected ? null : colorScheme.onSurfaceVariant,
+                            decoration: item.isSelected
+                                ? null
+                                : TextDecoration.lineThrough,
+                            color: item.isSelected
+                                ? null
+                                : colorScheme.onSurfaceVariant,
                           ),
                         ),
                       ),
                       if (hasMatch)
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.green.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(4),
-                            border: Border.all(color: Colors.green.withOpacity(0.3)),
+                            border: Border.all(
+                              color: Colors.green.withOpacity(0.3),
+                            ),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.check_circle, size: 12, color: Colors.green[700]),
+                              Icon(
+                                Icons.check_circle,
+                                size: 12,
+                                color: Colors.green[700],
+                              ),
                               const SizedBox(width: 4),
                               Text(
                                 'Matched',
@@ -927,10 +967,22 @@ class _InvoiceScannerPageState extends State<InvoiceScannerPage> {
                     spacing: 12,
                     runSpacing: 4,
                     children: [
-                      _buildItemDetail(Icons.numbers, 'Qty: ${item.quantity} ${item.unit ?? ''}', colorScheme),
-                      _buildItemDetail(Icons.payments, '₹${item.purchasePrice.toStringAsFixed(2)}', colorScheme),
+                      _buildItemDetail(
+                        Icons.numbers,
+                        'Qty: ${item.quantity} ${item.unit ?? ''}',
+                        colorScheme,
+                      ),
+                      _buildItemDetail(
+                        Icons.payments,
+                        '₹${item.purchasePrice.toStringAsFixed(2)}',
+                        colorScheme,
+                      ),
                       if (item.salesPrice != null)
-                        _buildItemDetail(Icons.sell, 'MRP: ₹${item.salesPrice!.toStringAsFixed(2)}', colorScheme),
+                        _buildItemDetail(
+                          Icons.sell,
+                          'MRP: ₹${item.salesPrice!.toStringAsFixed(2)}',
+                          colorScheme,
+                        ),
                       if (item.expiryDate != null)
                         _buildItemDetail(
                           Icons.event,
@@ -938,7 +990,11 @@ class _InvoiceScannerPageState extends State<InvoiceScannerPage> {
                           colorScheme,
                         ),
                       if (item.batchNumber != null)
-                        _buildItemDetail(Icons.tag, 'Batch: ${item.batchNumber}', colorScheme),
+                        _buildItemDetail(
+                          Icons.tag,
+                          'Batch: ${item.batchNumber}',
+                          colorScheme,
+                        ),
                     ],
                   ),
                 ],
@@ -990,10 +1046,7 @@ class _InvoiceScannerPageState extends State<InvoiceScannerPage> {
         const SizedBox(width: 4),
         Text(
           text,
-          style: TextStyle(
-            fontSize: 12,
-            color: colorScheme.onSurfaceVariant,
-          ),
+          style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
         ),
       ],
     );
@@ -1032,7 +1085,10 @@ class _InvoiceScannerPageState extends State<InvoiceScannerPage> {
                   _showApiKeyInput = true;
                 });
               },
-              child: const Text('Clear Key', style: TextStyle(color: Colors.red)),
+              child: const Text(
+                'Clear Key',
+                style: TextStyle(color: Colors.red),
+              ),
             ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
@@ -1112,7 +1168,7 @@ class _EditItemDialogState extends State<_EditItemDialog> {
   late TextEditingController _salesPriceController;
   late TextEditingController _unitController;
   late TextEditingController _batchController;
-  
+
   String? _selectedCompanyName;
   String? _selectedProductId;
   DateTime? _expiryDate;
@@ -1122,11 +1178,19 @@ class _EditItemDialogState extends State<_EditItemDialog> {
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.item.productName);
-    _quantityController = TextEditingController(text: widget.item.quantity.toString());
-    _purchasePriceController = TextEditingController(text: widget.item.purchasePrice.toStringAsFixed(2));
-    _salesPriceController = TextEditingController(text: widget.item.salesPrice?.toStringAsFixed(2) ?? '');
+    _quantityController = TextEditingController(
+      text: widget.item.quantity.toString(),
+    );
+    _purchasePriceController = TextEditingController(
+      text: widget.item.purchasePrice.toStringAsFixed(2),
+    );
+    _salesPriceController = TextEditingController(
+      text: widget.item.salesPrice?.toStringAsFixed(2) ?? '',
+    );
     _unitController = TextEditingController(text: widget.item.unit ?? '');
-    _batchController = TextEditingController(text: widget.item.batchNumber ?? '');
+    _batchController = TextEditingController(
+      text: widget.item.batchNumber ?? '',
+    );
     _selectedCompanyName = widget.item.companyName;
     _selectedProductId = widget.item.matchedProductId;
     _expiryDate = widget.item.expiryDate;
@@ -1154,7 +1218,7 @@ class _EditItemDialogState extends State<_EditItemDialog> {
           children: [
             // Product matching dropdown
             DropdownButtonFormField<String?>(
-              value: _selectedProductId,
+              initialValue: _selectedProductId,
               decoration: const InputDecoration(
                 labelText: 'Match Product',
                 border: OutlineInputBorder(),
@@ -1180,7 +1244,8 @@ class _EditItemDialogState extends State<_EditItemDialog> {
                       (p) => (p.serverId ?? p.id.toString()) == value,
                     );
                     _nameController.text = product.name;
-                    _salesPriceController.text = product.salesPrice.toStringAsFixed(2);
+                    _salesPriceController.text = product.salesPrice
+                        .toStringAsFixed(2);
                     _unitController.text = product.unit ?? '';
                   }
                 });
@@ -1230,7 +1295,9 @@ class _EditItemDialogState extends State<_EditItemDialog> {
                       border: OutlineInputBorder(),
                       prefixText: '₹ ',
                     ),
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -1242,7 +1309,9 @@ class _EditItemDialogState extends State<_EditItemDialog> {
                       border: OutlineInputBorder(),
                       prefixText: '₹ ',
                     ),
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
                   ),
                 ),
               ],
@@ -1250,16 +1319,13 @@ class _EditItemDialogState extends State<_EditItemDialog> {
             const SizedBox(height: 12),
             // Company dropdown
             DropdownButtonFormField<String?>(
-              value: _selectedCompanyName,
+              initialValue: _selectedCompanyName,
               decoration: const InputDecoration(
                 labelText: 'Company',
                 border: OutlineInputBorder(),
               ),
               items: [
-                const DropdownMenuItem(
-                  value: null,
-                  child: Text('-- None --'),
-                ),
+                const DropdownMenuItem(value: null, child: Text('-- None --')),
                 ...widget.companies.map((company) {
                   return DropdownMenuItem(
                     value: company.companyName,
@@ -1267,7 +1333,9 @@ class _EditItemDialogState extends State<_EditItemDialog> {
                   );
                 }),
                 if (_selectedCompanyName != null &&
-                    !widget.companies.any((c) => c.companyName == _selectedCompanyName))
+                    !widget.companies.any(
+                      (c) => c.companyName == _selectedCompanyName,
+                    ))
                   DropdownMenuItem(
                     value: _selectedCompanyName,
                     child: Text('${_selectedCompanyName!} (scanned)'),
@@ -1324,9 +1392,13 @@ class _EditItemDialogState extends State<_EditItemDialog> {
                     onTap: () async {
                       final date = await showDatePicker(
                         context: context,
-                        initialDate: _expiryDate ?? DateTime.now().add(const Duration(days: 365)),
+                        initialDate:
+                            _expiryDate ??
+                            DateTime.now().add(const Duration(days: 365)),
                         firstDate: DateTime.now(),
-                        lastDate: DateTime.now().add(const Duration(days: 3650)),
+                        lastDate: DateTime.now().add(
+                          const Duration(days: 3650),
+                        ),
                       );
                       if (date != null) {
                         setState(() => _expiryDate = date);
@@ -1360,12 +1432,20 @@ class _EditItemDialogState extends State<_EditItemDialog> {
           onPressed: () {
             final updatedItem = widget.item.copyWith(
               productName: _nameController.text,
-              quantity: int.tryParse(_quantityController.text) ?? widget.item.quantity,
-              purchasePrice: double.tryParse(_purchasePriceController.text) ?? widget.item.purchasePrice,
+              quantity:
+                  int.tryParse(_quantityController.text) ??
+                  widget.item.quantity,
+              purchasePrice:
+                  double.tryParse(_purchasePriceController.text) ??
+                  widget.item.purchasePrice,
               salesPrice: double.tryParse(_salesPriceController.text),
-              unit: _unitController.text.isNotEmpty ? _unitController.text : null,
+              unit: _unitController.text.isNotEmpty
+                  ? _unitController.text
+                  : null,
               companyName: _selectedCompanyName,
-              batchNumber: _batchController.text.isNotEmpty ? _batchController.text : null,
+              batchNumber: _batchController.text.isNotEmpty
+                  ? _batchController.text
+                  : null,
               matchedProductId: _selectedProductId,
               productionDate: _productionDate,
               expiryDate: _expiryDate,

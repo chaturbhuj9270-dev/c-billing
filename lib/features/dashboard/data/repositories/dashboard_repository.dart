@@ -116,22 +116,24 @@ class DashboardRepository {
         final billTotal = (data['totalAmount'] as num?)?.toDouble() ?? 0;
         totalSalesAmount += finalAmt ?? billTotal;
         totalPendingAmt += (data['pendingAmount'] as num?)?.toDouble() ?? 0;
-        
+
         final discountAmt = (data['discountAmount'] as num?)?.toDouble() ?? 0;
         final discountRatio = billTotal > 0 ? discountAmt / billTotal : 0.0;
-        
+
         final items = data['items'] as List<dynamic>? ?? [];
         for (var item in items) {
           final qty = (item['quantity'] as num?)?.toInt() ?? 0;
           final returnedQty = (item['returnedQuantity'] as num?)?.toInt() ?? 0;
           final netSoldQty = qty - returnedQty;
           final sellingPrice = (item['sellingPrice'] as num?)?.toDouble() ?? 0;
-          final purchasePrice = (item['purchasePrice'] as num?)?.toDouble() ?? 0;
-          
+          final purchasePrice =
+              (item['purchasePrice'] as num?)?.toDouble() ?? 0;
+
           totalItemsSold += qty;
           totalReturnedItemsCount += returnedQty;
-          totalReturnsAmount += returnedQty * sellingPrice * (1 - discountRatio);
-          
+          totalReturnsAmount +=
+              returnedQty * sellingPrice * (1 - discountRatio);
+
           final netRevenue = netSoldQty * sellingPrice * (1 - discountRatio);
           final netCost = netSoldQty * purchasePrice;
           totalProfitAmount += (netRevenue - netCost);
@@ -270,18 +272,18 @@ class DashboardRepository {
           .get();
 
       final customers = snapshot.docs.map((doc) {
-        final data = doc.data() as Map<String, dynamic>;
+        final data = doc.data();
         data['id'] = doc.id;
         return data;
       }).toList();
-      
+
       // Sort in memory to avoid composite index requirement
       customers.sort((a, b) {
         final aAmount = (a['currentPendingAmount'] ?? 0) as num;
         final bAmount = (b['currentPendingAmount'] ?? 0) as num;
         return bAmount.compareTo(aAmount);
       });
-      
+
       // Apply limit after sorting
       return customers.take(limit).toList();
     } catch (e) {
@@ -306,7 +308,7 @@ class DashboardRepository {
           .get();
 
       return snapshot.docs.map((doc) {
-        final data = doc.data() as Map<String, dynamic>;
+        final data = doc.data();
         data['id'] = doc.id;
         return data;
       }).toList();
@@ -321,7 +323,7 @@ class DashboardRepository {
 
         final bills = snapshot.docs
             .map((doc) {
-              final data = doc.data() as Map<String, dynamic>;
+              final data = doc.data();
               data['id'] = doc.id;
               return data;
             })
@@ -359,7 +361,7 @@ class DashboardRepository {
       final productSales = <String, Map<String, dynamic>>{};
 
       for (var doc in snapshot.docs) {
-        final data = doc.data() as Map<String, dynamic>;
+        final data = doc.data();
         final items = data['items'] as List<dynamic>? ?? [];
 
         for (var item in items) {
@@ -418,7 +420,7 @@ class DashboardRepository {
           .get();
 
       return snapshot.docs.map((doc) {
-        final data = doc.data() as Map<String, dynamic>;
+        final data = doc.data();
         data['id'] = doc.id;
         return data;
       }).toList();
@@ -428,7 +430,7 @@ class DashboardRepository {
         final snapshot = await userRef.collection('products').get();
         final products = snapshot.docs
             .map((doc) {
-              final data = doc.data() as Map<String, dynamic>;
+              final data = doc.data();
               data['id'] = doc.id;
               return data;
             })
@@ -470,7 +472,7 @@ class DashboardRepository {
           .get();
 
       return snapshot.docs.map((doc) {
-        final data = doc.data() as Map<String, dynamic>;
+        final data = doc.data();
         data['id'] = doc.id;
         return data;
       }).toList();
@@ -485,7 +487,7 @@ class DashboardRepository {
 
         final pendingBills = snapshot.docs
             .map((doc) {
-              final data = doc.data() as Map<String, dynamic>;
+              final data = doc.data();
               data['id'] = doc.id;
               return data;
             })

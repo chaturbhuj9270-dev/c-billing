@@ -44,7 +44,7 @@ class DashboardIsarDataSource {
 
   /// Debounce timer for reactive updates
   Timer? _debounceTimer;
-  
+
   /// Active stream subscriptions for Isar watchers
   final List<StreamSubscription> _watchSubscriptions = [];
 
@@ -94,7 +94,7 @@ class DashboardIsarDataSource {
 
     // Extract pending amount
     final totalPendingAmount = results[9] as double;
-    
+
     // Extract event/order data
     final eventOrderData = results[10] as _EventOrderResult;
 
@@ -189,31 +189,43 @@ class DashboardIsarDataSource {
           _isar.billEntitys.watchLazy().listen((_) => onCollectionChanged()),
         );
         _watchSubscriptions.add(
-          _isar.purchaseEntitys.watchLazy().listen((_) => onCollectionChanged()),
+          _isar.purchaseEntitys.watchLazy().listen(
+            (_) => onCollectionChanged(),
+          ),
         );
         _watchSubscriptions.add(
-          _isar.purchaseBatchEntitys.watchLazy().listen((_) => onCollectionChanged()),
+          _isar.purchaseBatchEntitys.watchLazy().listen(
+            (_) => onCollectionChanged(),
+          ),
         );
         // Customers, products, suppliers, companies for count stats
         _watchSubscriptions.add(
-          _isar.customerEntitys.watchLazy().listen((_) => onCollectionChanged()),
+          _isar.customerEntitys.watchLazy().listen(
+            (_) => onCollectionChanged(),
+          ),
         );
         _watchSubscriptions.add(
           _isar.productEntitys.watchLazy().listen((_) => onCollectionChanged()),
         );
         _watchSubscriptions.add(
-          _isar.supplierEntitys.watchLazy().listen((_) => onCollectionChanged()),
+          _isar.supplierEntitys.watchLazy().listen(
+            (_) => onCollectionChanged(),
+          ),
         );
         _watchSubscriptions.add(
           _isar.companyEntitys.watchLazy().listen((_) => onCollectionChanged()),
         );
         // Event orders for real-time event/order updates
         _watchSubscriptions.add(
-          _isar.eventOrderEntitys.watchLazy().listen((_) => onCollectionChanged()),
+          _isar.eventOrderEntitys.watchLazy().listen(
+            (_) => onCollectionChanged(),
+          ),
         );
         // Also listen to DashboardRefreshService for external refresh requests
         _watchSubscriptions.add(
-          DashboardRefreshService.instance.onRefreshNeeded.listen((_) => onCollectionChanged()),
+          DashboardRefreshService.instance.onRefreshNeeded.listen(
+            (_) => onCollectionChanged(),
+          ),
         );
       },
       onCancel: () {
@@ -268,8 +280,9 @@ class DashboardIsarDataSource {
         final sellingPrice = item.sellingPrice;
         final purchasePrice = item.purchasePrice;
 
-        totalItemsSold += qty;
-        totalReturnedItems += returnedQty;
+        totalItemsSold += qty.round(); // Round for dashboard display
+        totalReturnedItems += returnedQty
+            .round(); // Round for dashboard display
 
         // Return amount = returnedQty × sellingPrice × (1 - discountRatio)
         // This accounts for the proportional discount that was applied at sale
@@ -307,9 +320,9 @@ class DashboardIsarDataSource {
     // Use PurchaseBatchEntity for real-time accuracy since edits update batches
     final batches = await PurchaseBatchOfflineController.instance
         .getBatchesByDateRange(
-      startDate ?? DateTime(2000),
-      endDate ?? DateTime.now().add(const Duration(days: 1)),
-    );
+          startDate ?? DateTime(2000),
+          endDate ?? DateTime.now().add(const Duration(days: 1)),
+        );
 
     double totalAmount = 0;
     int totalQty = 0;
@@ -362,10 +375,7 @@ class DashboardIsarDataSource {
       }
     }
 
-    return _StockResult(
-      stockValue: stockValue,
-      lowStockCount: lowStockCount,
-    );
+    return _StockResult(stockValue: stockValue, lowStockCount: lowStockCount);
   }
 
   // ==================== PENDING AMOUNTS ====================
@@ -376,10 +386,12 @@ class DashboardIsarDataSource {
         .filter()
         .not()
         .syncStatusEqualTo(BillSyncStatus.deleted)
-        .group((q) => q
-            .paymentStatusEqualTo(BillPaymentStatus.pending)
-            .or()
-            .paymentStatusEqualTo(BillPaymentStatus.partiallyPaid))
+        .group(
+          (q) => q
+              .paymentStatusEqualTo(BillPaymentStatus.pending)
+              .or()
+              .paymentStatusEqualTo(BillPaymentStatus.partiallyPaid),
+        )
         .findAll();
 
     double total = 0;
@@ -415,7 +427,7 @@ class DashboardIsarDataSource {
       totalPending += order.remainingAmount;
 
       // Count upcoming events (event date in future, type = event)
-      if (order.orderType == OrderType.event.index && 
+      if (order.orderType == OrderType.event.index &&
           order.eventDate.isAfter(now)) {
         upcomingEvents++;
       }
@@ -482,10 +494,7 @@ class _StockResult {
   final double stockValue;
   final int lowStockCount;
 
-  const _StockResult({
-    required this.stockValue,
-    required this.lowStockCount,
-  });
+  const _StockResult({required this.stockValue, required this.lowStockCount});
 }
 
 class _EventOrderResult {

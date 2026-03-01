@@ -39,7 +39,7 @@ class PrintBillButton extends StatefulWidget {
 class _PrintBillButtonState extends State<PrintBillButton> {
   final PosPrinterService _printerService = PosPrinterService();
   final ShopRepository _shopRepository = ShopRepository();
-  
+
   bool _isPrinting = false;
   Shop? _shop;
 
@@ -67,9 +67,7 @@ class _PrintBillButtonState extends State<PrintBillButton> {
     }
 
     // Ensure shop details are loaded
-    if (_shop == null) {
-      _shop = await _shopRepository.getShopDetails();
-    }
+    _shop ??= await _shopRepository.getShopDetails();
 
     setState(() => _isPrinting = true);
 
@@ -150,7 +148,8 @@ class _PrintBillButtonState extends State<PrintBillButton> {
           child: ElevatedButton(
             onPressed: _isPrinting ? null : _handlePrint,
             style: ElevatedButton.styleFrom(
-              backgroundColor: widget.backgroundColor ?? const Color(0xFF1B4D3E),
+              backgroundColor:
+                  widget.backgroundColor ?? const Color(0xFF1B4D3E),
               foregroundColor: widget.foregroundColor ?? Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
@@ -169,8 +168,9 @@ class _PrintBillButtonState extends State<PrintBillButton> {
                         width: 20,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          valueColor:
-                              AlwaysStoppedAnimation<Color>(Colors.white),
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Colors.white,
+                          ),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -272,7 +272,7 @@ class PrintActionWidget extends StatefulWidget {
 class _PrintActionWidgetState extends State<PrintActionWidget> {
   final PosPrinterService _printerService = PosPrinterService();
   final ShopRepository _shopRepository = ShopRepository();
-  
+
   bool _isPrinting = false;
 
   Future<void> _handlePrint() async {
@@ -306,8 +306,12 @@ class _PrintActionWidgetState extends State<PrintActionWidget> {
                 ),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: Text(result.message ?? 
-                    (result.success ? 'Printed successfully' : 'Print failed')),
+                  child: Text(
+                    result.message ??
+                        (result.success
+                            ? 'Printed successfully'
+                            : 'Print failed'),
+                  ),
                 ),
               ],
             ),
@@ -323,10 +327,7 @@ class _PrintActionWidgetState extends State<PrintActionWidget> {
       if (mounted) {
         setState(() => _isPrinting = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: $e'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
         );
       }
     }

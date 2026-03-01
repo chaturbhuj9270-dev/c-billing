@@ -74,7 +74,9 @@ class _ReportPageState extends State<ReportPage>
     _reportService = ReportService.instance;
     _repo = ReportRepository.instance;
     _fadeCtrl = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 400));
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    );
     _fadeAnim = CurvedAnimation(parent: _fadeCtrl, curve: Curves.easeOut);
     _loadDropdowns();
   }
@@ -166,12 +168,14 @@ class _ReportPageState extends State<ReportPage>
       context: context,
       firstDate: DateTime(2020),
       lastDate: DateTime.now(),
-      initialDateRange:
-          DateTimeRange(start: _filter.startDate, end: _filter.endDate),
+      initialDateRange: DateTimeRange(
+        start: _filter.startDate,
+        end: _filter.endDate,
+      ),
       builder: (ctx, child) => Theme(
-        data: Theme.of(ctx).copyWith(
-          colorScheme: const ColorScheme.light(primary: _kGreen),
-        ),
+        data: Theme.of(
+          ctx,
+        ).copyWith(colorScheme: const ColorScheme.light(primary: _kGreen)),
         child: child!,
       ),
     );
@@ -180,7 +184,13 @@ class _ReportPageState extends State<ReportPage>
         _filter = _filter.copyWith(
           startDate: picked.start,
           endDate: DateTime(
-              picked.end.year, picked.end.month, picked.end.day, 23, 59, 59),
+            picked.end.year,
+            picked.end.month,
+            picked.end.day,
+            23,
+            59,
+            59,
+          ),
           presetLabel:
               '${DateFormat('dd/MM').format(picked.start)} – ${DateFormat('dd/MM').format(picked.end)}',
         );
@@ -311,13 +321,15 @@ class _ReportPageState extends State<ReportPage>
 
   void _showSnackbar(String msg, bool isError) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(msg, style: const TextStyle(fontFamily: 'Literata')),
-      backgroundColor: isError ? Colors.red : _kGreen,
-      behavior: SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      margin: const EdgeInsets.all(16),
-    ));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(msg, style: const TextStyle(fontFamily: 'Literata')),
+        backgroundColor: isError ? Colors.red : _kGreen,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        margin: const EdgeInsets.all(16),
+      ),
+    );
   }
 
   // ━━━━━━━━━━━━ BUILD ━━━━━━━━━━━━
@@ -454,8 +466,11 @@ class _ReportPageState extends State<ReportPage>
                   color: _kGreen.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Icon(Icons.event_note_rounded,
-                    color: _kGreen, size: 18),
+                child: const Icon(
+                  Icons.event_note_rounded,
+                  color: _kGreen,
+                  size: 18,
+                ),
               ),
               const SizedBox(width: 10),
               const Text(
@@ -482,7 +497,9 @@ class _ReportPageState extends State<ReportPage>
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 200),
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 8),
+                        horizontal: 14,
+                        vertical: 8,
+                      ),
                       decoration: BoxDecoration(
                         color: selected ? _kGreen : Colors.grey[100],
                         borderRadius: BorderRadius.circular(20),
@@ -493,11 +510,11 @@ class _ReportPageState extends State<ReportPage>
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(icons[i],
-                              size: 14,
-                              color: selected
-                                  ? Colors.white
-                                  : Colors.grey[600]),
+                          Icon(
+                            icons[i],
+                            size: 14,
+                            color: selected ? Colors.white : Colors.grey[600],
+                          ),
                           const SizedBox(width: 5),
                           Text(
                             labels[i],
@@ -505,9 +522,7 @@ class _ReportPageState extends State<ReportPage>
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
                               fontFamily: 'Literata',
-                              color: selected
-                                  ? Colors.white
-                                  : Colors.grey[700],
+                              color: selected ? Colors.white : Colors.grey[700],
                             ),
                           ),
                         ],
@@ -520,8 +535,7 @@ class _ReportPageState extends State<ReportPage>
           ),
           const SizedBox(height: 10),
           Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
               color: _kGreen.withOpacity(0.06),
               borderRadius: BorderRadius.circular(8),
@@ -553,28 +567,46 @@ class _ReportPageState extends State<ReportPage>
   Widget _buildActiveFiltersBar() {
     final chips = <Widget>[];
     if (_filter.productName != null) {
-      chips.add(_buildActiveChip(
-          'Product: ${_filter.productName}', Icons.inventory_2_outlined));
+      chips.add(
+        _buildActiveChip(
+          'Product: ${_filter.productName}',
+          Icons.inventory_2_outlined,
+        ),
+      );
     }
     if (_filter.supplierName != null) {
-      chips.add(_buildActiveChip(
-          'Supplier: ${_filter.supplierName}', Icons.local_shipping_outlined));
+      chips.add(
+        _buildActiveChip(
+          'Supplier: ${_filter.supplierName}',
+          Icons.local_shipping_outlined,
+        ),
+      );
     }
     if (_filter.expiredOnly) {
-      chips.add(_buildActiveChip('Expired', Icons.warning_amber_rounded,
-          color: Colors.red));
+      chips.add(
+        _buildActiveChip(
+          'Expired',
+          Icons.warning_amber_rounded,
+          color: Colors.red,
+        ),
+      );
     }
     if (_filter.expiringThisWeek) {
-      chips.add(_buildActiveChip(
-          'Expiring Soon', Icons.schedule, color: Colors.orange));
+      chips.add(
+        _buildActiveChip('Expiring Soon', Icons.schedule, color: Colors.orange),
+      );
     }
     if (_filter.returnedOnly) {
-      chips.add(
-          _buildActiveChip('Returned', Icons.keyboard_return_rounded));
+      chips.add(_buildActiveChip('Returned', Icons.keyboard_return_rounded));
     }
     if (_filter.lowStockOnly) {
-      chips.add(_buildActiveChip('Low Stock', Icons.trending_down,
-          color: Colors.orange));
+      chips.add(
+        _buildActiveChip(
+          'Low Stock',
+          Icons.trending_down,
+          color: Colors.orange,
+        ),
+      );
     }
     if (_filter.minPrice != null || _filter.maxPrice != null) {
       final range =
@@ -586,8 +618,11 @@ class _ReportPageState extends State<ReportPage>
     return Wrap(spacing: 8, runSpacing: 6, children: chips);
   }
 
-  Widget _buildActiveChip(String label, IconData icon,
-      {Color color = _kGreen}) {
+  Widget _buildActiveChip(
+    String label,
+    IconData icon, {
+    Color color = _kGreen,
+  }) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
@@ -633,8 +668,11 @@ class _ReportPageState extends State<ReportPage>
                       color: _kGreen.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Icon(Icons.filter_alt_outlined,
-                        color: _kGreen, size: 18),
+                    child: const Icon(
+                      Icons.filter_alt_outlined,
+                      color: _kGreen,
+                      size: 18,
+                    ),
                   ),
                   const SizedBox(width: 10),
                   const Expanded(
@@ -651,7 +689,9 @@ class _ReportPageState extends State<ReportPage>
                   if (_filter.hasAdvancedFilters)
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 2),
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
                       decoration: BoxDecoration(
                         color: _kGreen,
                         borderRadius: BorderRadius.circular(10),
@@ -735,7 +775,8 @@ class _ReportPageState extends State<ReportPage>
                 Icons.schedule,
                 _filter.expiringThisWeek,
                 (v) => setState(
-                    () => _filter = _filter.copyWith(expiringThisWeek: v)),
+                  () => _filter = _filter.copyWith(expiringThisWeek: v),
+                ),
               ),
               _buildToggleChip(
                 'Returned',
@@ -761,8 +802,10 @@ class _ReportPageState extends State<ReportPage>
               Expanded(child: _buildPriceField(_minPriceCtrl, 'Min Price')),
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 8),
-                child: Text('—',
-                    style: TextStyle(color: Colors.grey, fontFamily: 'Literata')),
+                child: Text(
+                  '—',
+                  style: TextStyle(color: Colors.grey, fontFamily: 'Literata'),
+                ),
               ),
               Expanded(child: _buildPriceField(_maxPriceCtrl, 'Max Price')),
             ],
@@ -774,14 +817,19 @@ class _ReportPageState extends State<ReportPage>
                 child: OutlinedButton.icon(
                   onPressed: _resetAdvancedFilters,
                   icon: const Icon(Icons.refresh, size: 16),
-                  label: const Text('Reset',
-                      style: TextStyle(
-                          fontFamily: 'Literata', fontWeight: FontWeight.w600)),
+                  label: const Text(
+                    'Reset',
+                    style: TextStyle(
+                      fontFamily: 'Literata',
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: _kGreen,
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10)),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
                 ),
               ),
@@ -790,15 +838,20 @@ class _ReportPageState extends State<ReportPage>
                 child: ElevatedButton.icon(
                   onPressed: _applyAdvancedFilters,
                   icon: const Icon(Icons.check, size: 16),
-                  label: const Text('Apply',
-                      style: TextStyle(
-                          fontFamily: 'Literata', fontWeight: FontWeight.w700)),
+                  label: const Text(
+                    'Apply',
+                    style: TextStyle(
+                      fontFamily: 'Literata',
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: _kGreen,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10)),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                     elevation: 0,
                   ),
                 ),
@@ -831,8 +884,9 @@ class _ReportPageState extends State<ReportPage>
           backgroundColor: _kGreen,
           foregroundColor: Colors.white,
           disabledBackgroundColor: Colors.grey[300],
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
           elevation: 0,
         ),
       ),
@@ -852,8 +906,9 @@ class _ReportPageState extends State<ReportPage>
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
             decoration: BoxDecoration(
               color: _kGreen.withOpacity(0.06),
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(16)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(16),
+              ),
             ),
             child: Row(
               children: [
@@ -863,8 +918,11 @@ class _ReportPageState extends State<ReportPage>
                     color: _kGreen.withOpacity(0.12),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(Icons.analytics_outlined,
-                      color: _kGreen, size: 20),
+                  child: const Icon(
+                    Icons.analytics_outlined,
+                    color: _kGreen,
+                    size: 20,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -893,8 +951,10 @@ class _ReportPageState extends State<ReportPage>
                 ),
                 if (_savedFilePath != null)
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.green.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(8),
@@ -902,8 +962,7 @@ class _ReportPageState extends State<ReportPage>
                     child: const Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.check_circle,
-                            size: 12, color: Colors.green),
+                        Icon(Icons.check_circle, size: 12, color: Colors.green),
                         SizedBox(width: 3),
                         Text(
                           'Saved',
@@ -1065,8 +1124,11 @@ class _ReportPageState extends State<ReportPage>
                   color: _kGreen.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Icon(Icons.picture_as_pdf_rounded,
-                    color: _kGreen, size: 18),
+                child: const Icon(
+                  Icons.picture_as_pdf_rounded,
+                  color: _kGreen,
+                  size: 18,
+                ),
               ),
               const SizedBox(width: 10),
               const Expanded(
@@ -1153,9 +1215,10 @@ class _ReportPageState extends State<ReportPage>
               label: Text(
                 label,
                 style: const TextStyle(
-                    fontFamily: 'Literata',
-                    fontWeight: FontWeight.w700,
-                    fontSize: 13),
+                  fontFamily: 'Literata',
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13,
+                ),
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: color,
@@ -1163,7 +1226,8 @@ class _ReportPageState extends State<ReportPage>
                 disabledBackgroundColor: color.withOpacity(0.5),
                 disabledForegroundColor: Colors.white70,
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
+                  borderRadius: BorderRadius.circular(12),
+                ),
                 elevation: 0,
               ),
             )
@@ -1173,15 +1237,17 @@ class _ReportPageState extends State<ReportPage>
               label: Text(
                 label,
                 style: const TextStyle(
-                    fontFamily: 'Literata',
-                    fontWeight: FontWeight.w600,
-                    fontSize: 13),
+                  fontFamily: 'Literata',
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                ),
               ),
               style: OutlinedButton.styleFrom(
                 foregroundColor: color,
                 side: BorderSide(color: color.withOpacity(0.4)),
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
             ),
     );
@@ -1305,7 +1371,11 @@ class _ReportPageState extends State<ReportPage>
   }
 
   Widget _buildToggleChip(
-      String label, IconData icon, bool active, ValueChanged<bool> onChanged) {
+    String label,
+    IconData icon,
+    bool active,
+    ValueChanged<bool> onChanged,
+  ) {
     return GestureDetector(
       onTap: () => onChanged(!active),
       child: AnimatedContainer(
@@ -1321,8 +1391,7 @@ class _ReportPageState extends State<ReportPage>
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon,
-                size: 14, color: active ? _kGreen : Colors.grey[600]),
+            Icon(icon, size: 14, color: active ? _kGreen : Colors.grey[600]),
             const SizedBox(width: 6),
             Text(
               label,
@@ -1351,7 +1420,10 @@ class _ReportPageState extends State<ReportPage>
           hintStyle: TextStyle(color: Colors.grey[400], fontSize: 12),
           prefixText: '₹ ',
           prefixStyle: TextStyle(
-              fontFamily: 'Literata', fontSize: 13, color: Colors.grey[600]),
+            fontFamily: 'Literata',
+            fontSize: 13,
+            color: Colors.grey[600],
+          ),
           filled: true,
           fillColor: Colors.grey[50],
           border: OutlineInputBorder(
@@ -1366,8 +1438,10 @@ class _ReportPageState extends State<ReportPage>
             borderRadius: BorderRadius.circular(10),
             borderSide: const BorderSide(color: _kGreen, width: 2),
           ),
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 10,
+            vertical: 0,
+          ),
           isDense: true,
         ),
       ),
@@ -1399,145 +1473,173 @@ class _ReportPageState extends State<ReportPage>
   }
 
   Widget _buildProductPickerSheet() {
-    return StatefulBuilder(builder: (ctx, setSheetState) {
-      final q = _productSearchCtrl.text.toLowerCase().trim();
-      final filtered = q.isEmpty
-          ? _products
-          : _products
-              .where((p) =>
-                  p.name.toLowerCase().contains(q) ||
-                  p.companyName.toLowerCase().contains(q))
-              .toList();
+    return StatefulBuilder(
+      builder: (ctx, setSheetState) {
+        final q = _productSearchCtrl.text.toLowerCase().trim();
+        final filtered = q.isEmpty
+            ? _products
+            : _products
+                  .where(
+                    (p) =>
+                        p.name.toLowerCase().contains(q) ||
+                        p.companyName.toLowerCase().contains(q),
+                  )
+                  .toList();
 
-      return Container(
-        height: MediaQuery.of(context).size.height * 0.65,
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: Column(
-          children: [
-            _buildSheetHandle(),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      const Expanded(
-                        child: Text('Select Product',
-                            style: TextStyle(
-                                fontSize: 17,
-                                fontWeight: FontWeight.w700,
-                                fontFamily: 'Literata',
-                                color: _kGreen)),
-                      ),
-                      if (_selectedProduct != null)
-                        GestureDetector(
-                          onTap: () {
-                            setState(() => _selectedProduct = null);
-                            Navigator.pop(context);
-                          },
-                          child: const Text('Clear',
-                              style: TextStyle(
-                                  fontSize: 13,
-                                  color: Colors.red,
-                                  fontFamily: 'Literata',
-                                  fontWeight: FontWeight.w600)),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  _buildSearchField(_productSearchCtrl, 'Search product...',
-                      () {
-                    _searchDebounce?.cancel();
-                    _searchDebounce =
-                        Timer(const Duration(milliseconds: 300), () {
-                      _searchProducts(_productSearchCtrl.text).then((_) {
-                        if (ctx.mounted) setSheetState(() {});
-                      });
-                    });
-                    setSheetState(() {});
-                  }),
-                ],
-              ),
-            ),
-            const Divider(height: 1),
-            Expanded(
-              child: filtered.isEmpty
-                  ? Center(
-                      child: Column(
-                      mainAxisSize: MainAxisSize.min,
+        return Container(
+          height: MediaQuery.of(context).size.height * 0.65,
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            children: [
+              _buildSheetHandle(),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
                       children: [
-                        Icon(Icons.inventory_2_outlined,
-                            size: 40, color: Colors.grey[300]),
-                        const SizedBox(height: 8),
-                        Text('No products found',
+                        const Expanded(
+                          child: Text(
+                            'Select Product',
                             style: TextStyle(
-                                color: Colors.grey[500],
-                                fontFamily: 'Literata')),
-                      ],
-                    ))
-                  : ListView.separated(
-                      itemCount: filtered.length,
-                      separatorBuilder: (_, __) =>
-                          Divider(height: 1, color: Colors.grey[100]),
-                      itemBuilder: (_, i) {
-                        final p = filtered[i];
-                        final selected = _selectedProduct?.id == p.id;
-                        return ListTile(
-                          contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 2),
-                          leading: CircleAvatar(
-                            backgroundColor: selected
-                                ? _kGreen
-                                : Colors.grey[200],
-                            radius: 18,
-                            child: Text(
-                              p.name.isNotEmpty
-                                  ? p.name[0].toUpperCase()
-                                  : 'P',
+                              fontSize: 17,
+                              fontWeight: FontWeight.w700,
+                              fontFamily: 'Literata',
+                              color: _kGreen,
+                            ),
+                          ),
+                        ),
+                        if (_selectedProduct != null)
+                          GestureDetector(
+                            onTap: () {
+                              setState(() => _selectedProduct = null);
+                              Navigator.pop(context);
+                            },
+                            child: const Text(
+                              'Clear',
                               style: TextStyle(
-                                color: selected
-                                    ? Colors.white
-                                    : Colors.grey[700],
-                                fontWeight: FontWeight.w700,
+                                fontSize: 13,
+                                color: Colors.red,
                                 fontFamily: 'Literata',
-                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
                           ),
-                          title: Text(p.name,
-                              style: TextStyle(
-                                  fontFamily: 'Literata',
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 14,
-                                  color: selected
-                                      ? _kGreen
-                                      : Colors.black87)),
-                          subtitle: p.companyName.isNotEmpty
-                              ? Text(p.companyName,
-                                  style: TextStyle(
-                                      fontSize: 12,
-                                      fontFamily: 'Literata',
-                                      color: Colors.grey[600]))
-                              : null,
-                          trailing: selected
-                              ? const Icon(Icons.check_circle, color: _kGreen)
-                              : null,
-                          onTap: () {
-                            setState(() => _selectedProduct = p);
-                            Navigator.pop(context);
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    _buildSearchField(
+                      _productSearchCtrl,
+                      'Search product...',
+                      () {
+                        _searchDebounce?.cancel();
+                        _searchDebounce = Timer(
+                          const Duration(milliseconds: 300),
+                          () {
+                            _searchProducts(_productSearchCtrl.text).then((_) {
+                              if (ctx.mounted) setSheetState(() {});
+                            });
                           },
                         );
+                        setSheetState(() {});
                       },
                     ),
-            ),
-          ],
-        ),
-      );
-    });
+                  ],
+                ),
+              ),
+              const Divider(height: 1),
+              Expanded(
+                child: filtered.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.inventory_2_outlined,
+                              size: 40,
+                              color: Colors.grey[300],
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'No products found',
+                              style: TextStyle(
+                                color: Colors.grey[500],
+                                fontFamily: 'Literata',
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    : ListView.separated(
+                        itemCount: filtered.length,
+                        separatorBuilder: (_, _) =>
+                            Divider(height: 1, color: Colors.grey[100]),
+                        itemBuilder: (_, i) {
+                          final p = filtered[i];
+                          final selected = _selectedProduct?.id == p.id;
+                          return ListTile(
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 2,
+                            ),
+                            leading: CircleAvatar(
+                              backgroundColor: selected
+                                  ? _kGreen
+                                  : Colors.grey[200],
+                              radius: 18,
+                              child: Text(
+                                p.name.isNotEmpty
+                                    ? p.name[0].toUpperCase()
+                                    : 'P',
+                                style: TextStyle(
+                                  color: selected
+                                      ? Colors.white
+                                      : Colors.grey[700],
+                                  fontWeight: FontWeight.w700,
+                                  fontFamily: 'Literata',
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ),
+                            title: Text(
+                              p.name,
+                              style: TextStyle(
+                                fontFamily: 'Literata',
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
+                                color: selected ? _kGreen : Colors.black87,
+                              ),
+                            ),
+                            subtitle: p.companyName.isNotEmpty
+                                ? Text(
+                                    p.companyName,
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontFamily: 'Literata',
+                                      color: Colors.grey[600],
+                                    ),
+                                  )
+                                : null,
+                            trailing: selected
+                                ? const Icon(Icons.check_circle, color: _kGreen)
+                                : null,
+                            onTap: () {
+                              setState(() => _selectedProduct = p);
+                              Navigator.pop(context);
+                            },
+                          );
+                        },
+                      ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   // ─── SUPPLIER PICKER ───
@@ -1552,121 +1654,142 @@ class _ReportPageState extends State<ReportPage>
   }
 
   Widget _buildSupplierPickerSheet() {
-    return StatefulBuilder(builder: (ctx, setSheetState) {
-      return Container(
-        height: MediaQuery.of(context).size.height * 0.55,
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: Column(
-          children: [
-            _buildSheetHandle(),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-              child: Row(
-                children: [
-                  const Expanded(
-                    child: Text('Select Supplier',
+    return StatefulBuilder(
+      builder: (ctx, setSheetState) {
+        return Container(
+          height: MediaQuery.of(context).size.height * 0.55,
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            children: [
+              _buildSheetHandle(),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+                child: Row(
+                  children: [
+                    const Expanded(
+                      child: Text(
+                        'Select Supplier',
                         style: TextStyle(
-                            fontSize: 17,
-                            fontWeight: FontWeight.w700,
-                            fontFamily: 'Literata',
-                            color: _kGreen)),
-                  ),
-                  if (_selectedSupplier != null)
-                    GestureDetector(
-                      onTap: () {
-                        setState(() => _selectedSupplier = null);
-                        Navigator.pop(context);
-                      },
-                      child: const Text('Clear',
-                          style: TextStyle(
-                              fontSize: 13,
-                              color: Colors.red,
-                              fontFamily: 'Literata',
-                              fontWeight: FontWeight.w600)),
+                          fontSize: 17,
+                          fontWeight: FontWeight.w700,
+                          fontFamily: 'Literata',
+                          color: _kGreen,
+                        ),
+                      ),
                     ),
-                ],
+                    if (_selectedSupplier != null)
+                      GestureDetector(
+                        onTap: () {
+                          setState(() => _selectedSupplier = null);
+                          Navigator.pop(context);
+                        },
+                        child: const Text(
+                          'Clear',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.red,
+                            fontFamily: 'Literata',
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
               ),
-            ),
-            const Divider(height: 1),
-            Expanded(
-              child: _isLoadingDropdowns
-                  ? const Center(
-                      child: CircularProgressIndicator(color: _kGreen))
-                  : _suppliers.isEmpty
-                      ? Center(
-                          child: Column(
+              const Divider(height: 1),
+              Expanded(
+                child: _isLoadingDropdowns
+                    ? const Center(
+                        child: CircularProgressIndicator(color: _kGreen),
+                      )
+                    : _suppliers.isEmpty
+                    ? Center(
+                        child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.local_shipping_outlined,
-                                size: 40, color: Colors.grey[300]),
+                            Icon(
+                              Icons.local_shipping_outlined,
+                              size: 40,
+                              color: Colors.grey[300],
+                            ),
                             const SizedBox(height: 8),
-                            Text('No suppliers found',
-                                style: TextStyle(
-                                    color: Colors.grey[500],
-                                    fontFamily: 'Literata')),
+                            Text(
+                              'No suppliers found',
+                              style: TextStyle(
+                                color: Colors.grey[500],
+                                fontFamily: 'Literata',
+                              ),
+                            ),
                           ],
-                        ))
-                      : ListView.separated(
-                          itemCount: _suppliers.length,
-                          separatorBuilder: (_, __) =>
-                              Divider(height: 1, color: Colors.grey[100]),
-                          itemBuilder: (_, i) {
-                            final s = _suppliers[i];
-                            final selected =
-                                _selectedSupplier?.id == s.id;
-                            return ListTile(
-                              contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 16, vertical: 2),
-                              leading: CircleAvatar(
-                                backgroundColor:
-                                    selected ? _kGreen : Colors.grey[200],
-                                radius: 18,
-                                child: Text(
-                                  s.firstName.isNotEmpty
-                                      ? s.firstName[0].toUpperCase()
-                                      : 'S',
-                                  style: TextStyle(
-                                    color: selected
-                                        ? Colors.white
-                                        : Colors.grey[700],
-                                    fontWeight: FontWeight.w700,
-                                    fontFamily: 'Literata',
-                                    fontSize: 14,
-                                  ),
+                        ),
+                      )
+                    : ListView.separated(
+                        itemCount: _suppliers.length,
+                        separatorBuilder: (_, _) =>
+                            Divider(height: 1, color: Colors.grey[100]),
+                        itemBuilder: (_, i) {
+                          final s = _suppliers[i];
+                          final selected = _selectedSupplier?.id == s.id;
+                          return ListTile(
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 2,
+                            ),
+                            leading: CircleAvatar(
+                              backgroundColor: selected
+                                  ? _kGreen
+                                  : Colors.grey[200],
+                              radius: 18,
+                              child: Text(
+                                s.firstName.isNotEmpty
+                                    ? s.firstName[0].toUpperCase()
+                                    : 'S',
+                                style: TextStyle(
+                                  color: selected
+                                      ? Colors.white
+                                      : Colors.grey[700],
+                                  fontWeight: FontWeight.w700,
+                                  fontFamily: 'Literata',
+                                  fontSize: 14,
                                 ),
                               ),
-                              title: Text(s.fullName,
-                                  style: TextStyle(
-                                      fontFamily: 'Literata',
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 14,
-                                      color: selected
-                                          ? _kGreen
-                                          : Colors.black87)),
-                              subtitle: Text(s.contact,
-                                  style: TextStyle(
-                                      fontSize: 12,
-                                      fontFamily: 'Literata',
-                                      color: Colors.grey[600])),
-                              trailing: selected
-                                  ? const Icon(Icons.check_circle,
-                                      color: _kGreen)
-                                  : null,
-                              onTap: () {
-                                setState(() => _selectedSupplier = s);
-                                Navigator.pop(context);
-                              },
-                            );
-                          },
-                        ),
-            ),
-          ],
-        ),
-      );
-    });
+                            ),
+                            title: Text(
+                              s.fullName,
+                              style: TextStyle(
+                                fontFamily: 'Literata',
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
+                                color: selected ? _kGreen : Colors.black87,
+                              ),
+                            ),
+                            subtitle: Text(
+                              s.contact,
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontFamily: 'Literata',
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                            trailing: selected
+                                ? const Icon(Icons.check_circle, color: _kGreen)
+                                : null,
+                            onTap: () {
+                              setState(() => _selectedSupplier = s);
+                              Navigator.pop(context);
+                            },
+                          );
+                        },
+                      ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   // ─── SHARED WIDGETS ───
@@ -1686,7 +1809,10 @@ class _ReportPageState extends State<ReportPage>
   }
 
   Widget _buildSearchField(
-      TextEditingController ctrl, String hint, VoidCallback onChanged) {
+    TextEditingController ctrl,
+    String hint,
+    VoidCallback onChanged,
+  ) {
     return Container(
       height: 42,
       decoration: BoxDecoration(

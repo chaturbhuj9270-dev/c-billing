@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../../domain/repositories/customer_repository.dart';
 
@@ -28,9 +27,15 @@ class _CustomerAddEditPageState extends State<CustomerAddEditPage> {
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.customer?.name ?? '');
-    _mobileController = TextEditingController(text: widget.customer?.mobile ?? '');
-    _addressController = TextEditingController(text: widget.customer?.address ?? '');
-    _emailController = TextEditingController(text: widget.customer?.email ?? '');
+    _mobileController = TextEditingController(
+      text: widget.customer?.mobile ?? '',
+    );
+    _addressController = TextEditingController(
+      text: widget.customer?.address ?? '',
+    );
+    _emailController = TextEditingController(
+      text: widget.customer?.email ?? '',
+    );
   }
 
   @override
@@ -54,19 +59,21 @@ class _CustomerAddEditPageState extends State<CustomerAddEditPage> {
     try {
       final mobile = _mobileController.text.trim();
       debugPrint('[CustomerAddEdit] Checking mobile: $mobile');
-      
+
       // Check for duplicate mobile
       final mobileExists = await _repository.mobileExists(
         mobile,
         excludeId: widget.customer?.localId,
       );
-      
+
       if (mobileExists) {
         debugPrint('[CustomerAddEdit] Mobile already exists');
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: const Text('A customer with this mobile number already exists'),
+              content: const Text(
+                'A customer with this mobile number already exists',
+              ),
               backgroundColor: Colors.red.shade600,
               behavior: SnackBarBehavior.floating,
             ),
@@ -77,17 +84,19 @@ class _CustomerAddEditPageState extends State<CustomerAddEditPage> {
       }
 
       if (_isEditing) {
-        debugPrint('[CustomerAddEdit] Updating customer ID: ${widget.customer!.localId}');
+        debugPrint(
+          '[CustomerAddEdit] Updating customer ID: ${widget.customer!.localId}',
+        );
         // Update existing customer
         await _repository.updateCustomer(
           id: widget.customer!.localId!,
           name: _nameController.text.trim(),
           mobile: mobile,
-          address: _addressController.text.trim().isEmpty 
-              ? null 
+          address: _addressController.text.trim().isEmpty
+              ? null
               : _addressController.text.trim(),
-          email: _emailController.text.trim().isEmpty 
-              ? null 
+          email: _emailController.text.trim().isEmpty
+              ? null
               : _emailController.text.trim(),
         );
         debugPrint('[CustomerAddEdit] Customer updated successfully');
@@ -97,21 +106,25 @@ class _CustomerAddEditPageState extends State<CustomerAddEditPage> {
         final newCustomer = await _repository.createCustomer(
           name: _nameController.text.trim(),
           mobile: mobile,
-          address: _addressController.text.trim().isEmpty 
-              ? null 
+          address: _addressController.text.trim().isEmpty
+              ? null
               : _addressController.text.trim(),
-          email: _emailController.text.trim().isEmpty 
-              ? null 
+          email: _emailController.text.trim().isEmpty
+              ? null
               : _emailController.text.trim(),
         );
-        debugPrint('[CustomerAddEdit] Customer created with ID: ${newCustomer.localId}');
+        debugPrint(
+          '[CustomerAddEdit] Customer created with ID: ${newCustomer.localId}',
+        );
       }
 
       if (mounted) {
         debugPrint('[CustomerAddEdit] Navigating back...');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(_isEditing ? 'Customer updated' : 'Customer saved offline'),
+            content: Text(
+              _isEditing ? 'Customer updated' : 'Customer saved offline',
+            ),
             backgroundColor: Colors.green.shade600,
             behavior: SnackBarBehavior.floating,
             duration: const Duration(seconds: 2),
@@ -237,9 +250,7 @@ class _CustomerAddEditPageState extends State<CustomerAddEditPage> {
               decoration: BoxDecoration(
                 color: Colors.blue.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: Colors.blue.withValues(alpha: 0.2),
-                ),
+                border: Border.all(color: Colors.blue.withValues(alpha: 0.2)),
               ),
               child: Row(
                 children: [
@@ -279,9 +290,7 @@ class _CustomerAddEditPageState extends State<CustomerAddEditPage> {
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.1),
-        ),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
       ),
       child: TextFormField(
         controller: controller,
@@ -291,18 +300,11 @@ class _CustomerAddEditPageState extends State<CustomerAddEditPage> {
         style: const TextStyle(color: Colors.white),
         decoration: InputDecoration(
           labelText: label,
-          labelStyle: TextStyle(
-            color: Colors.white.withValues(alpha: 0.5),
-          ),
-          prefixIcon: Icon(
-            icon,
-            color: Colors.white.withValues(alpha: 0.5),
-          ),
+          labelStyle: TextStyle(color: Colors.white.withValues(alpha: 0.5)),
+          prefixIcon: Icon(icon, color: Colors.white.withValues(alpha: 0.5)),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.all(16),
-          errorStyle: TextStyle(
-            color: Colors.red.shade300,
-          ),
+          errorStyle: TextStyle(color: Colors.red.shade300),
         ),
       ),
     );

@@ -11,8 +11,8 @@ class FirebaseStockRepository implements StockRepository {
   FirebaseStockRepository({
     required FirebaseFirestore firestore,
     FirebaseAuth? auth,
-  })  : _firestore = firestore,
-        _auth = auth ?? FirebaseAuth.instance;
+  }) : _firestore = firestore,
+       _auth = auth ?? FirebaseAuth.instance;
 
   String get _userId {
     final user = _auth.currentUser;
@@ -23,19 +23,16 @@ class FirebaseStockRepository implements StockRepository {
   }
 
   CollectionReference get _stockCollection {
-    return _firestore
-        .collection('users')
-        .doc(_userId)
-        .collection(_collection);
+    return _firestore.collection('users').doc(_userId).collection(_collection);
   }
 
   @override
   Future<String> createStockEntry(Stock stock) async {
     try {
       final docRef = await _stockCollection.add(
-            stock.copyWith(id: '').toJson(),
-          );
-      
+        stock.copyWith(id: '').toJson(),
+      );
+
       // Update document with its ID
       await docRef.update({'id': docRef.id});
       return docRef.id;
@@ -69,7 +66,8 @@ class FirebaseStockRepository implements StockRepository {
             .map((doc) => Stock.fromJson(doc.data() as Map<String, dynamic>))
             .toList();
       } catch (e) {
-        if (e.toString().contains('index') || e.toString().contains('FAILED_PRECONDITION')) {
+        if (e.toString().contains('index') ||
+            e.toString().contains('FAILED_PRECONDITION')) {
           final snapshot = await _stockCollection
               .where('productId', isEqualTo: productId)
               .get();
@@ -79,7 +77,7 @@ class FirebaseStockRepository implements StockRepository {
           stocks.sort((a, b) => b.createdAt.compareTo(a.createdAt));
           return stocks;
         }
-        throw e;
+        rethrow;
       }
     } catch (e) {
       throw Exception('Failed to get stock by product id: $e');
@@ -97,7 +95,8 @@ class FirebaseStockRepository implements StockRepository {
             .map((doc) => Stock.fromJson(doc.data() as Map<String, dynamic>))
             .toList();
       } catch (e) {
-        if (e.toString().contains('index') || e.toString().contains('FAILED_PRECONDITION')) {
+        if (e.toString().contains('index') ||
+            e.toString().contains('FAILED_PRECONDITION')) {
           final snapshot = await _stockCollection.get();
           final stocks = snapshot.docs
               .map((doc) => Stock.fromJson(doc.data() as Map<String, dynamic>))
@@ -105,7 +104,7 @@ class FirebaseStockRepository implements StockRepository {
           stocks.sort((a, b) => b.createdAt.compareTo(a.createdAt));
           return stocks;
         }
-        throw e;
+        rethrow;
       }
     } catch (e) {
       throw Exception('Failed to get all stock entries: $e');
@@ -121,30 +120,33 @@ class FirebaseStockRepository implements StockRepository {
             .orderBy('createdAt', descending: true)
             .limit(1)
             .get();
-        
+
         if (snapshot.docs.isEmpty) {
           return 0;
         }
-        
-        final latestStock = Stock.fromJson(snapshot.docs.first.data() as Map<String, dynamic>);
+
+        final latestStock = Stock.fromJson(
+          snapshot.docs.first.data() as Map<String, dynamic>,
+        );
         return latestStock.balanceQuantity;
       } catch (e) {
-        if (e.toString().contains('index') || e.toString().contains('FAILED_PRECONDITION')) {
+        if (e.toString().contains('index') ||
+            e.toString().contains('FAILED_PRECONDITION')) {
           final snapshot = await _stockCollection
               .where('productId', isEqualTo: productId)
               .get();
-          
+
           if (snapshot.docs.isEmpty) {
             return 0;
           }
-          
+
           final stocks = snapshot.docs
               .map((doc) => Stock.fromJson(doc.data() as Map<String, dynamic>))
               .toList();
           stocks.sort((a, b) => b.createdAt.compareTo(a.createdAt));
           return stocks.first.balanceQuantity;
         }
-        throw e;
+        rethrow;
       }
     } catch (e) {
       throw Exception('Failed to get current balance: $e');
@@ -159,8 +161,10 @@ class FirebaseStockRepository implements StockRepository {
     try {
       try {
         final snapshot = await _stockCollection
-            .where('createdAt',
-                isGreaterThanOrEqualTo: startDate.toIso8601String())
+            .where(
+              'createdAt',
+              isGreaterThanOrEqualTo: startDate.toIso8601String(),
+            )
             .where('createdAt', isLessThanOrEqualTo: endDate.toIso8601String())
             .orderBy('createdAt', descending: true)
             .get();
@@ -168,11 +172,17 @@ class FirebaseStockRepository implements StockRepository {
             .map((doc) => Stock.fromJson(doc.data() as Map<String, dynamic>))
             .toList();
       } catch (e) {
-        if (e.toString().contains('index') || e.toString().contains('FAILED_PRECONDITION')) {
+        if (e.toString().contains('index') ||
+            e.toString().contains('FAILED_PRECONDITION')) {
           final snapshot = await _stockCollection
-              .where('createdAt',
-                  isGreaterThanOrEqualTo: startDate.toIso8601String())
-              .where('createdAt', isLessThanOrEqualTo: endDate.toIso8601String())
+              .where(
+                'createdAt',
+                isGreaterThanOrEqualTo: startDate.toIso8601String(),
+              )
+              .where(
+                'createdAt',
+                isLessThanOrEqualTo: endDate.toIso8601String(),
+              )
               .get();
           final stocks = snapshot.docs
               .map((doc) => Stock.fromJson(doc.data() as Map<String, dynamic>))
@@ -180,7 +190,7 @@ class FirebaseStockRepository implements StockRepository {
           stocks.sort((a, b) => b.createdAt.compareTo(a.createdAt));
           return stocks;
         }
-        throw e;
+        rethrow;
       }
     } catch (e) {
       throw Exception('Failed to get stock by date range: $e');
@@ -199,7 +209,8 @@ class FirebaseStockRepository implements StockRepository {
             .map((doc) => Stock.fromJson(doc.data() as Map<String, dynamic>))
             .toList();
       } catch (e) {
-        if (e.toString().contains('index') || e.toString().contains('FAILED_PRECONDITION')) {
+        if (e.toString().contains('index') ||
+            e.toString().contains('FAILED_PRECONDITION')) {
           final snapshot = await _stockCollection
               .where('referenceType', isEqualTo: referenceType)
               .get();
@@ -209,7 +220,7 @@ class FirebaseStockRepository implements StockRepository {
           stocks.sort((a, b) => b.createdAt.compareTo(a.createdAt));
           return stocks;
         }
-        throw e;
+        rethrow;
       }
     } catch (e) {
       throw Exception('Failed to get stock by reference type: $e');

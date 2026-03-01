@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:c_billing/features/inventory_management/domain/entities/report_item.dart';
@@ -24,7 +26,7 @@ class ReportPreviewScreen extends StatefulWidget {
   State<ReportPreviewScreen> createState() => _ReportPreviewScreenState();
 }
 
-class _ReportPreviewScreenState extends State<ReportPreviewScreen> 
+class _ReportPreviewScreenState extends State<ReportPreviewScreen>
     with SingleTickerProviderStateMixin {
   late List<ReportItem> _editableItems;
   bool _isGenerating = false;
@@ -34,7 +36,7 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
   // Controllers for order quantity text fields
   final Map<String, TextEditingController> _controllers = {};
   final Map<String, FocusNode> _focusNodes = {};
-  
+
   // Visible columns cache
   List<String> _visibleColumnIds = [];
 
@@ -46,7 +48,7 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
       duration: const Duration(milliseconds: 300),
     );
     _animationController.forward();
-    
+
     // All items are selected by default, order qty is null (shown as "-")
     _editableItems = widget.reportItems
         .map(
@@ -61,19 +63,34 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
       _controllers[key] = TextEditingController();
       _focusNodes[key] = FocusNode();
     }
-    
+
     // Cache visible columns
     _loadVisibleColumns();
   }
-  
+
   void _loadVisibleColumns() {
     final settings = StockReportSettingsService.instance;
-    final columnOrder = ['sr_no', 'product_name', 'category', 'company', 'hsn_code', 
-                         'purchase_price', 'selling_price', 'stock', 'stock_value', 
-                         'status', 'order_qty', 'supplier', 'cgst', 'sgst'];
-    
-    _visibleColumnIds = columnOrder.where((id) => settings.isColumnVisible(id)).toList();
-    
+    final columnOrder = [
+      'sr_no',
+      'product_name',
+      'category',
+      'company',
+      'hsn_code',
+      'purchase_price',
+      'selling_price',
+      'stock',
+      'stock_value',
+      'status',
+      'order_qty',
+      'supplier',
+      'cgst',
+      'sgst',
+    ];
+
+    _visibleColumnIds = columnOrder
+        .where((id) => settings.isColumnVisible(id))
+        .toList();
+
     // Fallback
     if (_visibleColumnIds.isEmpty) {
       _visibleColumnIds = ['product_name', 'stock', 'order_qty'];
@@ -138,13 +155,17 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
             children: [
               Icon(Icons.warning_amber_rounded, color: Colors.white, size: 20),
               SizedBox(width: 12),
-              Text('Please select at least one item', 
-                style: TextStyle(fontFamily: 'Literata')),
+              Text(
+                'Please select at least one item',
+                style: TextStyle(fontFamily: 'Literata'),
+              ),
             ],
           ),
           backgroundColor: Colors.orange[700],
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
           margin: const EdgeInsets.all(16),
         ),
       );
@@ -157,7 +178,7 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
       final products = selected.map((e) => e.product).toList();
       final orderQuantities = selected.map((e) => e.orderQuantity).toList();
 
-      late final file;
+      late final File file;
       if (widget.selectedFormat == ReportFormat.pdf) {
         file = await _reportService.generatePdfReportWithOrderQty(
           products: products,
@@ -185,7 +206,8 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
               fileType: widget.selectedFormat == ReportFormat.pdf
                   ? FilePreviewType.pdf
                   : FilePreviewType.csv,
-              subtitle: '${selected.length} products • ${DateFormat('dd MMM yyyy').format(DateTime.now())}',
+              subtitle:
+                  '${selected.length} products • ${DateFormat('dd MMM yyyy').format(DateTime.now())}',
               onClose: () {
                 // Pop back to availability page when preview is closed
                 if (mounted) Navigator.of(context).pop();
@@ -202,13 +224,19 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
               children: [
                 const Icon(Icons.error_outline, color: Colors.white, size: 20),
                 const SizedBox(width: 12),
-                Expanded(child: Text('Error: $e',
-                  style: const TextStyle(fontFamily: 'Literata'))),
+                Expanded(
+                  child: Text(
+                    'Error: $e',
+                    style: const TextStyle(fontFamily: 'Literata'),
+                  ),
+                ),
               ],
             ),
             backgroundColor: Colors.red[700],
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
             margin: const EdgeInsets.all(16),
           ),
         );
@@ -233,10 +261,10 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
           children: [
             // Custom Header
             _buildHeader(),
-            
+
             // Selection Summary Bar
             _buildSelectionBar(),
-            
+
             // Product List
             Expanded(
               child: _editableItems.isEmpty
@@ -251,11 +279,11 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
       ),
     );
   }
-  
+
   // ---------------------------------------------------------------------------
   // Header
   // ---------------------------------------------------------------------------
-  
+
   Widget _buildHeader() {
     return Container(
       padding: const EdgeInsets.fromLTRB(8, 12, 16, 12),
@@ -306,8 +334,8 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
                 Row(
                   children: [
                     Icon(
-                      widget.selectedFormat == ReportFormat.pdf 
-                          ? Icons.picture_as_pdf_rounded 
+                      widget.selectedFormat == ReportFormat.pdf
+                          ? Icons.picture_as_pdf_rounded
                           : Icons.table_chart_rounded,
                       size: 14,
                       color: const Color(0xFF1B4D3E).withOpacity(0.6),
@@ -342,9 +370,11 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: (widget.selectedFormat == ReportFormat.pdf
-                      ? Colors.red
-                      : Colors.green).withOpacity(0.3),
+                  color:
+                      (widget.selectedFormat == ReportFormat.pdf
+                              ? Colors.red
+                              : Colors.green)
+                          .withOpacity(0.3),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
@@ -364,11 +394,11 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
       ),
     );
   }
-  
+
   // ---------------------------------------------------------------------------
   // Selection Bar
   // ---------------------------------------------------------------------------
-  
+
   Widget _buildSelectionBar() {
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
@@ -381,9 +411,7 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
           ],
         ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: const Color(0xFF1B4D3E).withOpacity(0.15),
-        ),
+        border: Border.all(color: const Color(0xFF1B4D3E).withOpacity(0.15)),
       ),
       child: Row(
         children: [
@@ -394,12 +422,10 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
               width: 24,
               height: 24,
               decoration: BoxDecoration(
-                color: _allSelected 
-                    ? const Color(0xFF1B4D3E) 
-                    : Colors.white,
+                color: _allSelected ? const Color(0xFF1B4D3E) : Colors.white,
                 borderRadius: BorderRadius.circular(6),
                 border: Border.all(
-                  color: _allSelected 
+                  color: _allSelected
                       ? const Color(0xFF1B4D3E)
                       : const Color(0xFF1B4D3E).withOpacity(0.3),
                   width: 2,
@@ -408,14 +434,14 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
               child: _allSelected
                   ? const Icon(Icons.check, color: Colors.white, size: 16)
                   : _noneSelected
-                      ? null
-                      : Container(
-                          margin: const EdgeInsets.all(4),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF1B4D3E),
-                            borderRadius: BorderRadius.circular(2),
-                          ),
-                        ),
+                  ? null
+                  : Container(
+                      margin: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1B4D3E),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
             ),
           ),
           const SizedBox(width: 12),
@@ -465,11 +491,11 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
       ),
     );
   }
-  
+
   // ---------------------------------------------------------------------------
   // Empty State
   // ---------------------------------------------------------------------------
-  
+
   Widget _buildEmptyState() {
     return Center(
       child: Column(
@@ -510,28 +536,28 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
       ),
     );
   }
-  
+
   // ---------------------------------------------------------------------------
   // Product List
   // ---------------------------------------------------------------------------
-  
+
   Widget _buildProductList() {
     return ListView.builder(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
       itemCount: _editableItems.length,
       itemBuilder: (context, index) {
         return SlideTransition(
-          position: Tween<Offset>(
-            begin: const Offset(0.3, 0),
-            end: Offset.zero,
-          ).animate(CurvedAnimation(
-            parent: _animationController,
-            curve: Interval(
-              (index / _editableItems.length) * 0.5,
-              0.5 + (index / _editableItems.length) * 0.5,
-              curve: Curves.easeOutCubic,
-            ),
-          )),
+          position: Tween<Offset>(begin: const Offset(0.3, 0), end: Offset.zero)
+              .animate(
+                CurvedAnimation(
+                  parent: _animationController,
+                  curve: Interval(
+                    (index / _editableItems.length) * 0.5,
+                    0.5 + (index / _editableItems.length) * 0.5,
+                    curve: Curves.easeOutCubic,
+                  ),
+                ),
+              ),
           child: FadeTransition(
             opacity: CurvedAnimation(
               parent: _animationController,
@@ -547,11 +573,11 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
       },
     );
   }
-  
+
   // ---------------------------------------------------------------------------
   // Product Card
   // ---------------------------------------------------------------------------
-  
+
   Widget _buildProductCard(int index) {
     final item = _editableItems[index];
     final product = item.product;
@@ -560,7 +586,7 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
     final focusNode = _focusNodes[key]!;
     final isSelected = item.isSelected;
     final numberFormat = NumberFormat('#,##0.00');
-    
+
     return GestureDetector(
       onTap: () => _toggleItem(index),
       child: AnimatedContainer(
@@ -570,7 +596,7 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isSelected 
+            color: isSelected
                 ? const Color(0xFF1B4D3E).withOpacity(0.4)
                 : Colors.grey.withOpacity(0.15),
             width: isSelected ? 2 : 1,
@@ -597,7 +623,9 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
                   color: isSelected
                       ? const Color(0xFF1B4D3E).withOpacity(0.04)
                       : Colors.grey.withOpacity(0.02),
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(15),
+                  ),
                 ),
                 child: Row(
                   children: [
@@ -606,27 +634,33 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
                       width: 28,
                       height: 28,
                       decoration: BoxDecoration(
-                        color: isSelected 
-                            ? const Color(0xFF1B4D3E) 
+                        color: isSelected
+                            ? const Color(0xFF1B4D3E)
                             : Colors.transparent,
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
-                          color: isSelected 
+                          color: isSelected
                               ? const Color(0xFF1B4D3E)
                               : Colors.grey.withOpacity(0.3),
                           width: 2,
                         ),
                       ),
                       child: isSelected
-                          ? const Icon(Icons.check_rounded, 
-                              color: Colors.white, size: 18)
+                          ? const Icon(
+                              Icons.check_rounded,
+                              color: Colors.white,
+                              size: 18,
+                            )
                           : null,
                     ),
                     const SizedBox(width: 12),
                     // Serial number
                     if (_visibleColumnIds.contains('sr_no'))
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: const Color(0xFF1B4D3E).withOpacity(0.1),
                           borderRadius: BorderRadius.circular(8),
@@ -660,7 +694,7 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
-                          if (_visibleColumnIds.contains('company') && 
+                          if (_visibleColumnIds.contains('company') &&
                               product.companyName.isNotEmpty)
                             Text(
                               product.companyName,
@@ -678,12 +712,19 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
                     // Stock badge
                     if (_visibleColumnIds.contains('stock'))
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
                         decoration: BoxDecoration(
-                          color: _getStockColor(item.availableQuantity).withOpacity(0.12),
+                          color: _getStockColor(
+                            item.availableQuantity,
+                          ).withOpacity(0.12),
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
-                            color: _getStockColor(item.availableQuantity).withOpacity(0.3),
+                            color: _getStockColor(
+                              item.availableQuantity,
+                            ).withOpacity(0.3),
                           ),
                         ),
                         child: Row(
@@ -710,7 +751,7 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
                   ],
                 ),
               ),
-              
+
               // Card Body - Dynamic Fields
               Padding(
                 padding: const EdgeInsets.fromLTRB(14, 8, 14, 14),
@@ -720,22 +761,24 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
                     _buildInfoRow([
                       if (_visibleColumnIds.contains('category'))
                         _buildInfoChip(
-                          Icons.category_rounded, 
-                          'Category', 
-                          product.category.isEmpty ? '-' : product.category
+                          Icons.category_rounded,
+                          'Category',
+                          product.category.isEmpty ? '-' : product.category,
                         ),
                       if (_visibleColumnIds.contains('hsn_code'))
                         _buildInfoChip(
-                          Icons.tag_rounded, 
-                          'HSN', 
-                          product.hsnCode?.isNotEmpty == true ? product.hsnCode! : '-'
+                          Icons.tag_rounded,
+                          'HSN',
+                          product.hsnCode?.isNotEmpty == true
+                              ? product.hsnCode!
+                              : '-',
                         ),
                       if (_visibleColumnIds.contains('status'))
                         _buildStatusChip(item.availableQuantity),
                     ]),
-                    
+
                     // Row 2: Prices
-                    if (_visibleColumnIds.contains('purchase_price') || 
+                    if (_visibleColumnIds.contains('purchase_price') ||
                         _visibleColumnIds.contains('selling_price') ||
                         _visibleColumnIds.contains('stock_value'))
                       Padding(
@@ -743,27 +786,27 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
                         child: _buildInfoRow([
                           if (_visibleColumnIds.contains('purchase_price'))
                             _buildPriceChip(
-                              'Purchase', 
+                              'Purchase',
                               '₹${numberFormat.format(product.purchasePrice)}',
                               Colors.orange,
                             ),
                           if (_visibleColumnIds.contains('selling_price'))
                             _buildPriceChip(
-                              'Selling', 
+                              'Selling',
                               '₹${numberFormat.format(product.salesPrice)}',
                               Colors.blue,
                             ),
                           if (_visibleColumnIds.contains('stock_value'))
                             _buildPriceChip(
-                              'Value', 
+                              'Value',
                               '₹${numberFormat.format(product.getStockValue())}',
                               const Color(0xFF1B4D3E),
                             ),
                         ]),
                       ),
-                    
+
                     // Row 3: Tax & Supplier
-                    if (_visibleColumnIds.contains('cgst') || 
+                    if (_visibleColumnIds.contains('cgst') ||
                         _visibleColumnIds.contains('sgst') ||
                         _visibleColumnIds.contains('supplier'))
                       Padding(
@@ -771,36 +814,36 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
                         child: _buildInfoRow([
                           if (_visibleColumnIds.contains('cgst'))
                             _buildInfoChip(
-                              Icons.percent_rounded, 
-                              'CGST', 
-                              '${product.cgstPercent}%'
+                              Icons.percent_rounded,
+                              'CGST',
+                              '${product.cgstPercent}%',
                             ),
                           if (_visibleColumnIds.contains('sgst'))
                             _buildInfoChip(
-                              Icons.percent_rounded, 
-                              'SGST', 
-                              '${product.sgstPercent}%'
+                              Icons.percent_rounded,
+                              'SGST',
+                              '${product.sgstPercent}%',
                             ),
                           if (_visibleColumnIds.contains('supplier'))
                             _buildInfoChip(
-                              Icons.local_shipping_rounded, 
-                              'Supplier', 
-                              product.defaultSupplierName?.isNotEmpty == true 
-                                  ? product.defaultSupplierName! 
-                                  : '-'
+                              Icons.local_shipping_rounded,
+                              'Supplier',
+                              product.defaultSupplierName?.isNotEmpty == true
+                                  ? product.defaultSupplierName!
+                                  : '-',
                             ),
                         ]),
                       ),
-                    
+
                     // Order Quantity Input
                     if (_visibleColumnIds.contains('order_qty'))
                       Padding(
                         padding: const EdgeInsets.only(top: 12),
                         child: _buildOrderQuantityInput(
-                          controller, 
-                          focusNode, 
-                          isSelected, 
-                          index
+                          controller,
+                          focusNode,
+                          isSelected,
+                          index,
                         ),
                       ),
                   ],
@@ -812,18 +855,16 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
       ),
     );
   }
-  
+
   Widget _buildInfoRow(List<Widget> children) {
-    final validChildren = children.where((w) => w is! SizedBox || (w).width != 0).toList();
+    final validChildren = children
+        .where((w) => w is! SizedBox || (w).width != 0)
+        .toList();
     if (validChildren.isEmpty) return const SizedBox.shrink();
-    
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: validChildren,
-    );
+
+    return Wrap(spacing: 8, runSpacing: 8, children: validChildren);
   }
-  
+
   Widget _buildInfoChip(IconData icon, String label, String value) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -857,11 +898,11 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
       ),
     );
   }
-  
+
   Widget _buildStatusChip(int stock) {
     final status = _getStockStatus(stock);
     final color = _getStockColor(stock);
-    
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
@@ -875,10 +916,7 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
           Container(
             width: 8,
             height: 8,
-            decoration: BoxDecoration(
-              color: color,
-              shape: BoxShape.circle,
-            ),
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
           ),
           const SizedBox(width: 6),
           Text(
@@ -894,7 +932,7 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
       ),
     );
   }
-  
+
   Widget _buildPriceChip(String label, String value, Color color) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -926,21 +964,19 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
       ),
     );
   }
-  
+
   Widget _buildOrderQuantityInput(
-    TextEditingController controller, 
-    FocusNode focusNode, 
-    bool isSelected, 
-    int index
+    TextEditingController controller,
+    FocusNode focusNode,
+    bool isSelected,
+    int index,
   ) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: const Color(0xFF1B4D3E).withOpacity(0.04),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: const Color(0xFF1B4D3E).withOpacity(0.15),
-        ),
+        border: Border.all(color: const Color(0xFF1B4D3E).withOpacity(0.15)),
       ),
       child: Row(
         children: [
@@ -1067,7 +1103,9 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
               child: Material(
                 color: Colors.transparent,
                 child: InkWell(
-                  onTap: _isGenerating ? null : () => Navigator.of(context).pop(),
+                  onTap: _isGenerating
+                      ? null
+                      : () => Navigator.of(context).pop(),
                   borderRadius: BorderRadius.circular(14),
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 16),
@@ -1080,8 +1118,11 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
                     child: const Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.close_rounded, 
-                          color: Color(0xFF1B4D3E), size: 20),
+                        Icon(
+                          Icons.close_rounded,
+                          color: Color(0xFF1B4D3E),
+                          size: 20,
+                        ),
                         SizedBox(width: 8),
                         Text(
                           'Cancel',
@@ -1105,7 +1146,9 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
               child: Material(
                 color: Colors.transparent,
                 child: InkWell(
-                  onTap: _isGenerating || _noneSelected ? null : _generateReport,
+                  onTap: _isGenerating || _noneSelected
+                      ? null
+                      : _generateReport,
                   borderRadius: BorderRadius.circular(14),
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
@@ -1153,7 +1196,7 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
                         Text(
                           _isGenerating
                               ? 'Generating...'
-                              : 'Generate (${_selectedCount})',
+                              : 'Generate ($_selectedCount)',
                           style: const TextStyle(
                             fontFamily: 'Literata',
                             fontWeight: FontWeight.w700,
@@ -1176,7 +1219,7 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
   // ---------------------------------------------------------------------------
   // Helpers
   // ---------------------------------------------------------------------------
-  
+
   String _getStockStatus(int stock) {
     if (stock == 0) return 'Out of Stock';
     if (stock <= 10) return 'Low Stock';

@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:image_picker/image_picker.dart';
@@ -45,14 +44,28 @@ class ScannedInvoiceItem {
       productName: json['productName'] ?? json['name'] ?? 'Unknown',
       companyName: json['companyName'] ?? json['company'] ?? json['brand'],
       quantity: _parseIntSafe(json['quantity'] ?? json['qty']),
-      purchasePrice: _parseDoubleSafe(json['purchasePrice'] ?? json['price'] ?? json['rate'] ?? json['unitPrice']),
-      salesPrice: json['salesPrice'] != null || json['mrp'] != null || json['sellingPrice'] != null
-          ? _parseDoubleSafe(json['salesPrice'] ?? json['mrp'] ?? json['sellingPrice'])
+      purchasePrice: _parseDoubleSafe(
+        json['purchasePrice'] ??
+            json['price'] ??
+            json['rate'] ??
+            json['unitPrice'],
+      ),
+      salesPrice:
+          json['salesPrice'] != null ||
+              json['mrp'] != null ||
+              json['sellingPrice'] != null
+          ? _parseDoubleSafe(
+              json['salesPrice'] ?? json['mrp'] ?? json['sellingPrice'],
+            )
           : null,
       unit: json['unit'] ?? json['uom'],
       hsnCode: json['hsnCode'] ?? json['hsn'],
-      productionDate: _parseDateSafe(json['productionDate'] ?? json['mfgDate'] ?? json['manufacturingDate']),
-      expiryDate: _parseDateSafe(json['expiryDate'] ?? json['expDate'] ?? json['expiry']),
+      productionDate: _parseDateSafe(
+        json['productionDate'] ?? json['mfgDate'] ?? json['manufacturingDate'],
+      ),
+      expiryDate: _parseDateSafe(
+        json['expiryDate'] ?? json['expDate'] ?? json['expiry'],
+      ),
       cgstPercent: json['cgstPercent'] != null || json['cgst'] != null
           ? _parseDoubleSafe(json['cgstPercent'] ?? json['cgst'])
           : null,
@@ -110,7 +123,7 @@ class ScannedInvoiceItem {
         // Try ISO format first
         final parsed = DateTime.tryParse(value);
         if (parsed != null) return parsed;
-        
+
         // Try common date formats
         final formats = [
           RegExp(r'(\d{2})/(\d{2})/(\d{4})'), // DD/MM/YYYY
@@ -118,7 +131,7 @@ class ScannedInvoiceItem {
           RegExp(r'(\d{4})/(\d{2})/(\d{2})'), // YYYY/MM/DD
           RegExp(r'(\d{4})-(\d{2})-(\d{2})'), // YYYY-MM-DD
         ];
-        
+
         for (final format in formats) {
           final match = format.firstMatch(value);
           if (match != null) {
@@ -207,21 +220,41 @@ class ScannedInvoiceData {
   factory ScannedInvoiceData.fromJson(Map<String, dynamic> json) {
     final itemsList = json['items'] as List<dynamic>? ?? [];
     return ScannedInvoiceData(
-      invoiceNumber: json['invoiceNumber'] ?? json['billNumber'] ?? json['receiptNumber'],
-      invoiceDate: ScannedInvoiceItem._parseDateSafe(json['invoiceDate'] ?? json['date'] ?? json['billDate']),
+      invoiceNumber:
+          json['invoiceNumber'] ?? json['billNumber'] ?? json['receiptNumber'],
+      invoiceDate: ScannedInvoiceItem._parseDateSafe(
+        json['invoiceDate'] ?? json['date'] ?? json['billDate'],
+      ),
       supplierName: json['supplierName'] ?? json['vendor'] ?? json['seller'],
-      supplierContact: json['supplierContact'] ?? json['contact'] ?? json['phone'],
+      supplierContact:
+          json['supplierContact'] ?? json['contact'] ?? json['phone'],
       supplierAddress: json['supplierAddress'] ?? json['address'],
-      totalAmount: json['totalAmount'] != null || json['total'] != null || json['grandTotal'] != null
-          ? ScannedInvoiceItem._parseDoubleSafe(json['totalAmount'] ?? json['total'] ?? json['grandTotal'])
+      totalAmount:
+          json['totalAmount'] != null ||
+              json['total'] != null ||
+              json['grandTotal'] != null
+          ? ScannedInvoiceItem._parseDoubleSafe(
+              json['totalAmount'] ?? json['total'] ?? json['grandTotal'],
+            )
           : null,
-      taxAmount: json['taxAmount'] != null || json['tax'] != null || json['gst'] != null
-          ? ScannedInvoiceItem._parseDoubleSafe(json['taxAmount'] ?? json['tax'] ?? json['gst'])
+      taxAmount:
+          json['taxAmount'] != null ||
+              json['tax'] != null ||
+              json['gst'] != null
+          ? ScannedInvoiceItem._parseDoubleSafe(
+              json['taxAmount'] ?? json['tax'] ?? json['gst'],
+            )
           : null,
       discountAmount: json['discountAmount'] != null || json['discount'] != null
-          ? ScannedInvoiceItem._parseDoubleSafe(json['discountAmount'] ?? json['discount'])
+          ? ScannedInvoiceItem._parseDoubleSafe(
+              json['discountAmount'] ?? json['discount'],
+            )
           : null,
-      items: itemsList.map((item) => ScannedInvoiceItem.fromJson(item as Map<String, dynamic>)).toList(),
+      items: itemsList
+          .map(
+            (item) => ScannedInvoiceItem.fromJson(item as Map<String, dynamic>),
+          )
+          .toList(),
     );
   }
 }
@@ -244,23 +277,32 @@ class InvoiceScanResult {
     return InvoiceScanResult(success: false, errorMessage: message);
   }
 
-  factory InvoiceScanResult.success(ScannedInvoiceData data, {String? rawResponse}) {
-    return InvoiceScanResult(success: true, data: data, rawResponse: rawResponse);
+  factory InvoiceScanResult.success(
+    ScannedInvoiceData data, {
+    String? rawResponse,
+  }) {
+    return InvoiceScanResult(
+      success: true,
+      data: data,
+      rawResponse: rawResponse,
+    );
   }
 }
 
 /// Service for scanning invoices using Google Gemini AI
 class InvoiceScannerService {
   static const String _apiKeyPrefKey = 'gemini_api_key';
-  static final InvoiceScannerService _instance = InvoiceScannerService._internal();
-  
+  static final InvoiceScannerService _instance =
+      InvoiceScannerService._internal();
+
   factory InvoiceScannerService() => _instance;
   static InvoiceScannerService get instance => _instance;
-  
+
   InvoiceScannerService._internal();
 
   // Default API key for invoice scanning
-  static const String _defaultApiKey = 'AIzaSyBvOITAj5_Rm5Jx8UDIPiCNQpCuwEEZ1fI';
+  static const String _defaultApiKey =
+      'AIzaSyBvOITAj5_Rm5Jx8UDIPiCNQpCuwEEZ1fI';
 
   GenerativeModel? _model;
   String? _apiKey;
@@ -277,7 +319,7 @@ class InvoiceScannerService {
         _apiKey = _defaultApiKey;
       }
     }
-    
+
     if (_apiKey != null && _apiKey!.isNotEmpty) {
       _initializeModel();
     }
@@ -285,7 +327,7 @@ class InvoiceScannerService {
 
   void _initializeModel() {
     if (_apiKey == null || _apiKey!.isEmpty) return;
-    
+
     _model = GenerativeModel(
       model: 'gemini-2.0-flash',
       apiKey: _apiKey!,
@@ -340,7 +382,7 @@ class InvoiceScannerService {
       maxHeight: 2048,
       imageQuality: 85,
     );
-    
+
     if (pickedFile != null) {
       return File(pickedFile.path);
     }
@@ -350,7 +392,9 @@ class InvoiceScannerService {
   /// Scan invoice image and extract data using Gemini AI
   Future<InvoiceScanResult> scanInvoice(File imageFile) async {
     if (!isConfigured) {
-      return InvoiceScanResult.error('Gemini API key not configured. Please set up your API key in settings.');
+      return InvoiceScanResult.error(
+        'Gemini API key not configured. Please set up your API key in settings.',
+      );
     }
 
     if (_model == null) {
@@ -362,7 +406,7 @@ class InvoiceScannerService {
 
     try {
       final imageBytes = await imageFile.readAsBytes();
-      
+
       final prompt = '''
 Analyze this supplier invoice/purchase receipt image and extract all product/item details.
 
@@ -406,17 +450,16 @@ Important rules:
 ''';
 
       final content = [
-        Content.multi([
-          TextPart(prompt),
-          DataPart('image/jpeg', imageBytes),
-        ])
+        Content.multi([TextPart(prompt), DataPart('image/jpeg', imageBytes)]),
       ];
 
       final response = await _model!.generateContent(content);
       final responseText = response.text;
 
       if (responseText == null || responseText.isEmpty) {
-        return InvoiceScanResult.error('No response from Gemini AI. Please try again.');
+        return InvoiceScanResult.error(
+          'No response from Gemini AI. Please try again.',
+        );
       }
 
       debugPrint('[InvoiceScanner] Raw response: $responseText');
@@ -430,7 +473,10 @@ Important rules:
         cleanedResponse = cleanedResponse.substring(3);
       }
       if (cleanedResponse.endsWith('```')) {
-        cleanedResponse = cleanedResponse.substring(0, cleanedResponse.length - 3);
+        cleanedResponse = cleanedResponse.substring(
+          0,
+          cleanedResponse.length - 3,
+        );
       }
       cleanedResponse = cleanedResponse.trim();
 
@@ -440,21 +486,29 @@ Important rules:
       invoiceData.imageBytes = imageBytes;
 
       if (invoiceData.items.isEmpty) {
-        return InvoiceScanResult.error('No items found in the invoice. Please ensure the image is clear and contains product details.');
+        return InvoiceScanResult.error(
+          'No items found in the invoice. Please ensure the image is clear and contains product details.',
+        );
       }
 
       return InvoiceScanResult.success(invoiceData, rawResponse: responseText);
-
     } on FormatException catch (e) {
       debugPrint('[InvoiceScanner] JSON parse error: $e');
-      return InvoiceScanResult.error('Failed to parse invoice data. Please try with a clearer image.');
+      return InvoiceScanResult.error(
+        'Failed to parse invoice data. Please try with a clearer image.',
+      );
     } catch (e) {
       debugPrint('[InvoiceScanner] Error: $e');
       if (e.toString().contains('API key')) {
-        return InvoiceScanResult.error('Invalid API key. Please check your Gemini API key in settings.');
+        return InvoiceScanResult.error(
+          'Invalid API key. Please check your Gemini API key in settings.',
+        );
       }
-      if (e.toString().contains('quota') || e.toString().contains('rate limit')) {
-        return InvoiceScanResult.error('API quota exceeded. Please try again later.');
+      if (e.toString().contains('quota') ||
+          e.toString().contains('rate limit')) {
+        return InvoiceScanResult.error(
+          'API quota exceeded. Please try again later.',
+        );
       }
       return InvoiceScanResult.error('Error scanning invoice: ${e.toString()}');
     }
@@ -463,7 +517,9 @@ Important rules:
   /// Scan invoice from bytes (for web or pre-loaded images)
   Future<InvoiceScanResult> scanInvoiceFromBytes(Uint8List imageBytes) async {
     if (!isConfigured) {
-      return InvoiceScanResult.error('Gemini API key not configured. Please set up your API key in settings.');
+      return InvoiceScanResult.error(
+        'Gemini API key not configured. Please set up your API key in settings.',
+      );
     }
 
     if (_model == null) {
@@ -517,17 +573,16 @@ Important rules:
 ''';
 
       final content = [
-        Content.multi([
-          TextPart(prompt),
-          DataPart('image/jpeg', imageBytes),
-        ])
+        Content.multi([TextPart(prompt), DataPart('image/jpeg', imageBytes)]),
       ];
 
       final response = await _model!.generateContent(content);
       final responseText = response.text;
 
       if (responseText == null || responseText.isEmpty) {
-        return InvoiceScanResult.error('No response from Gemini AI. Please try again.');
+        return InvoiceScanResult.error(
+          'No response from Gemini AI. Please try again.',
+        );
       }
 
       // Clean the response
@@ -539,7 +594,10 @@ Important rules:
         cleanedResponse = cleanedResponse.substring(3);
       }
       if (cleanedResponse.endsWith('```')) {
-        cleanedResponse = cleanedResponse.substring(0, cleanedResponse.length - 3);
+        cleanedResponse = cleanedResponse.substring(
+          0,
+          cleanedResponse.length - 3,
+        );
       }
       cleanedResponse = cleanedResponse.trim();
 
@@ -552,7 +610,6 @@ Important rules:
       }
 
       return InvoiceScanResult.success(invoiceData, rawResponse: responseText);
-
     } on FormatException catch (e) {
       debugPrint('[InvoiceScanner] JSON parse error: $e');
       return InvoiceScanResult.error('Failed to parse invoice data.');

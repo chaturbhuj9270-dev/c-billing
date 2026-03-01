@@ -5,12 +5,7 @@ import '../../offline/controllers/customer_offline_controller.dart';
 import 'customer_api_service.dart';
 
 /// Sync status for tracking sync state
-enum SyncStatus {
-  idle,
-  syncing,
-  success,
-  failed,
-}
+enum SyncStatus { idle, syncing, success, failed }
 
 /// Result of a sync operation
 class SyncResult {
@@ -53,7 +48,7 @@ class CustomerSyncService extends ChangeNotifier {
   String? _lastError;
   StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
   Timer? _periodicSyncTimer;
-  
+
   /// Mutex to prevent concurrent sync operations
   bool _isSyncing = false;
 
@@ -61,9 +56,10 @@ class CustomerSyncService extends ChangeNotifier {
     CustomerOfflineController? offlineController,
     CustomerApiService? apiService,
     Connectivity? connectivity,
-  })  : _offlineController = offlineController ?? CustomerOfflineController.instance,
-        _apiService = apiService ?? CustomerApiService.instance,
-        _connectivity = connectivity ?? Connectivity();
+  }) : _offlineController =
+           offlineController ?? CustomerOfflineController.instance,
+       _apiService = apiService ?? CustomerApiService.instance,
+       _connectivity = connectivity ?? Connectivity();
 
   /// Get the singleton instance
   static CustomerSyncService get instance {
@@ -87,9 +83,11 @@ class CustomerSyncService extends ChangeNotifier {
   /// Call this after Isar is initialized
   void initialize() {
     debugPrint('[CustomerSync] Initializing...');
-    
+
     // Listen for connectivity changes
-    _connectivitySubscription = _connectivity.onConnectivityChanged.listen((result) {
+    _connectivitySubscription = _connectivity.onConnectivityChanged.listen((
+      result,
+    ) {
       if (_isConnected(result)) {
         // Back online - trigger sync with delay
         Future.delayed(const Duration(seconds: 2), () {
@@ -105,14 +103,15 @@ class CustomerSyncService extends ChangeNotifier {
     _periodicSyncTimer = Timer.periodic(const Duration(minutes: 3), (_) {
       _checkAndSync();
     });
-    
+
     // Initial sync
     _checkAndSync();
-    
+
     debugPrint('[CustomerSync] Initialized');
   }
 
   /// Dispose resources
+  @override
   void dispose() {
     _connectivitySubscription?.cancel();
     _periodicSyncTimer?.cancel();
@@ -220,7 +219,8 @@ class CustomerSyncService extends ChangeNotifier {
     int uploaded = 0;
     int failed = 0;
 
-    final customersNeedingPush = await _offlineController.getCustomersNeedingPush();
+    final customersNeedingPush = await _offlineController
+        .getCustomersNeedingPush();
 
     for (final customer in customersNeedingPush) {
       try {
@@ -232,11 +232,19 @@ class CustomerSyncService extends ChangeNotifier {
           await _offlineController.permanentlyDelete(customer.id);
         } else if (customer.serverId == null) {
           // Create on server
-          final response = await _apiService.createCustomer(customer.toSyncPayload());
-          await _offlineController.updateWithServerResponse(customer.id, response);
+          final response = await _apiService.createCustomer(
+            customer.toSyncPayload(),
+          );
+          await _offlineController.updateWithServerResponse(
+            customer.id,
+            response,
+          );
         } else {
           // Update on server
-          await _apiService.updateCustomer(customer.serverId!, customer.toSyncPayload());
+          await _apiService.updateCustomer(
+            customer.serverId!,
+            customer.toSyncPayload(),
+          );
           await _offlineController.markAsSynced(customer.id);
         }
         uploaded++;
@@ -254,7 +262,7 @@ class CustomerSyncService extends ChangeNotifier {
     try {
       // Get last sync time for incremental sync
       final lastSync = _lastSyncTime;
-      
+
       // Fetch customers from server (with optional since parameter)
       final serverCustomers = await _apiService.getCustomers(
         updatedSince: lastSync,
@@ -290,7 +298,7 @@ class CustomerSyncService extends ChangeNotifier {
     try {
       // Get all customers from server
       final serverCustomers = await _apiService.getCustomers();
-      
+
       // Import all
       await _offlineController.importFromServer(serverCustomers);
 

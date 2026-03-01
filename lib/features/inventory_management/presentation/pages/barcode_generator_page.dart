@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:pdf/pdf.dart';
@@ -2613,7 +2612,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
             child: Switch(
               value: value,
               onChanged: onChanged,
-              activeColor: _primaryColor,
+              activeThumbColor: _primaryColor,
               activeTrackColor: _primaryColor.withOpacity(0.3),
             ),
           ),

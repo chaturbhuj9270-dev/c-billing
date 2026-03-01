@@ -11,8 +11,8 @@ class FirebasePurchaseRepository implements PurchaseRepository {
   FirebasePurchaseRepository({
     required FirebaseFirestore firestore,
     FirebaseAuth? auth,
-  })  : _firestore = firestore,
-        _auth = auth ?? FirebaseAuth.instance;
+  }) : _firestore = firestore,
+       _auth = auth ?? FirebaseAuth.instance;
 
   String get _userId {
     final user = _auth.currentUser;
@@ -23,19 +23,16 @@ class FirebasePurchaseRepository implements PurchaseRepository {
   }
 
   CollectionReference get _purchasesCollection {
-    return _firestore
-        .collection('users')
-        .doc(_userId)
-        .collection(_collection);
+    return _firestore.collection('users').doc(_userId).collection(_collection);
   }
 
   @override
   Future<String> addPurchase(Purchase purchase) async {
     try {
       final docRef = await _purchasesCollection.add(
-            purchase.copyWith(id: '').toJson(),
-          );
-      
+        purchase.copyWith(id: '').toJson(),
+      );
+
       // Update document with its ID
       await docRef.update({'id': docRef.id});
       return docRef.id;
@@ -68,15 +65,18 @@ class FirebasePurchaseRepository implements PurchaseRepository {
             .map((doc) => Purchase.fromJson(doc.data() as Map<String, dynamic>))
             .toList();
       } catch (e) {
-        if (e.toString().contains('index') || e.toString().contains('FAILED_PRECONDITION')) {
+        if (e.toString().contains('index') ||
+            e.toString().contains('FAILED_PRECONDITION')) {
           final snapshot = await _purchasesCollection.get();
           final purchases = snapshot.docs
-              .map((doc) => Purchase.fromJson(doc.data() as Map<String, dynamic>))
+              .map(
+                (doc) => Purchase.fromJson(doc.data() as Map<String, dynamic>),
+              )
               .toList();
           purchases.sort((a, b) => b.createdAt.compareTo(a.createdAt));
           return purchases;
         }
-        throw e;
+        rethrow;
       }
     } catch (e) {
       throw Exception('Failed to get all purchases: $e');
@@ -95,17 +95,20 @@ class FirebasePurchaseRepository implements PurchaseRepository {
             .map((doc) => Purchase.fromJson(doc.data() as Map<String, dynamic>))
             .toList();
       } catch (e) {
-        if (e.toString().contains('index') || e.toString().contains('FAILED_PRECONDITION')) {
+        if (e.toString().contains('index') ||
+            e.toString().contains('FAILED_PRECONDITION')) {
           final snapshot = await _purchasesCollection
               .where('productId', isEqualTo: productId)
               .get();
           final purchases = snapshot.docs
-              .map((doc) => Purchase.fromJson(doc.data() as Map<String, dynamic>))
+              .map(
+                (doc) => Purchase.fromJson(doc.data() as Map<String, dynamic>),
+              )
               .toList();
           purchases.sort((a, b) => b.createdAt.compareTo(a.createdAt));
           return purchases;
         }
-        throw e;
+        rethrow;
       }
     } catch (e) {
       throw Exception('Failed to get purchases by product id: $e');
@@ -120,8 +123,10 @@ class FirebasePurchaseRepository implements PurchaseRepository {
     try {
       try {
         final snapshot = await _purchasesCollection
-            .where('createdAt',
-                isGreaterThanOrEqualTo: startDate.toIso8601String())
+            .where(
+              'createdAt',
+              isGreaterThanOrEqualTo: startDate.toIso8601String(),
+            )
             .where('createdAt', isLessThanOrEqualTo: endDate.toIso8601String())
             .orderBy('createdAt', descending: true)
             .get();
@@ -129,19 +134,27 @@ class FirebasePurchaseRepository implements PurchaseRepository {
             .map((doc) => Purchase.fromJson(doc.data() as Map<String, dynamic>))
             .toList();
       } catch (e) {
-        if (e.toString().contains('index') || e.toString().contains('FAILED_PRECONDITION')) {
+        if (e.toString().contains('index') ||
+            e.toString().contains('FAILED_PRECONDITION')) {
           final snapshot = await _purchasesCollection
-              .where('createdAt',
-                  isGreaterThanOrEqualTo: startDate.toIso8601String())
-              .where('createdAt', isLessThanOrEqualTo: endDate.toIso8601String())
+              .where(
+                'createdAt',
+                isGreaterThanOrEqualTo: startDate.toIso8601String(),
+              )
+              .where(
+                'createdAt',
+                isLessThanOrEqualTo: endDate.toIso8601String(),
+              )
               .get();
           final purchases = snapshot.docs
-              .map((doc) => Purchase.fromJson(doc.data() as Map<String, dynamic>))
+              .map(
+                (doc) => Purchase.fromJson(doc.data() as Map<String, dynamic>),
+              )
               .toList();
           purchases.sort((a, b) => b.createdAt.compareTo(a.createdAt));
           return purchases;
         }
-        throw e;
+        rethrow;
       }
     } catch (e) {
       throw Exception('Failed to get purchases by date range: $e');
@@ -157,13 +170,17 @@ class FirebasePurchaseRepository implements PurchaseRepository {
       Query query = _purchasesCollection;
 
       if (startDate != null) {
-        query = query.where('createdAt',
-            isGreaterThanOrEqualTo: startDate.toIso8601String());
+        query = query.where(
+          'createdAt',
+          isGreaterThanOrEqualTo: startDate.toIso8601String(),
+        );
       }
 
       if (endDate != null) {
-        query = query.where('createdAt',
-            isLessThanOrEqualTo: endDate.toIso8601String());
+        query = query.where(
+          'createdAt',
+          isLessThanOrEqualTo: endDate.toIso8601String(),
+        );
       }
 
       final snapshot = await query.get();
@@ -187,13 +204,17 @@ class FirebasePurchaseRepository implements PurchaseRepository {
       Query query = _purchasesCollection;
 
       if (startDate != null) {
-        query = query.where('createdAt',
-            isGreaterThanOrEqualTo: startDate.toIso8601String());
+        query = query.where(
+          'createdAt',
+          isGreaterThanOrEqualTo: startDate.toIso8601String(),
+        );
       }
 
       if (endDate != null) {
-        query = query.where('createdAt',
-            isLessThanOrEqualTo: endDate.toIso8601String());
+        query = query.where(
+          'createdAt',
+          isLessThanOrEqualTo: endDate.toIso8601String(),
+        );
       }
 
       final snapshot = await query.get();

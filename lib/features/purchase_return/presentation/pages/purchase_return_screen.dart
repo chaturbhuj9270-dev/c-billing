@@ -114,9 +114,11 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
         final firstName = (data['firstName'] ?? '').toString().trim();
         final middleName = (data['middleName'] ?? '').toString().trim();
         final lastName = (data['lastName'] ?? '').toString().trim();
-        final fullName = [firstName, middleName, lastName]
-            .where((s) => s.isNotEmpty)
-            .join(' ');
+        final fullName = [
+          firstName,
+          middleName,
+          lastName,
+        ].where((s) => s.isNotEmpty).join(' ');
         return <String, dynamic>{
           'id': d.id,
           'name': fullName.isNotEmpty
@@ -127,8 +129,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
           'companyName': data['companyName'] ?? '',
         };
       }).toList();
-      list.sort((a, b) =>
-          (a['name'] as String).compareTo(b['name'] as String));
+      list.sort((a, b) => (a['name'] as String).compareTo(b['name'] as String));
       if (mounted) {
         setState(() {
           _suppliers = list;
@@ -144,8 +145,9 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
   Future<void> _loadProductsForSupplier(String supplierId) async {
     setState(() => _isLoadingProducts = true);
     try {
-      final products =
-          await _service.getReturnableProductsForSupplier(supplierId);
+      final products = await _service.getReturnableProductsForSupplier(
+        supplierId,
+      );
       // Clear old controllers
       for (final c in _qtyControllers.values) {
         c.dispose();
@@ -235,9 +237,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
 
   bool get _hasErrors => _qtyErrors.values.any((v) => v);
   bool get _canProcess =>
-      _selectedSupplier != null &&
-      _totalItemsWithQty > 0 &&
-      !_hasErrors;
+      _selectedSupplier != null && _totalItemsWithQty > 0 && !_hasErrors;
 
   // ━━━━━━━━━━━━ PROCESS ━━━━━━━━━━━━
 
@@ -252,18 +252,20 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
     for (final p in _products) {
       final qty = _returnQuantities[p.productId] ?? 0;
       if (qty <= 0) continue;
-      items.add(PurchaseReturnItem(
-        id: '',
-        productId: p.productId,
-        productName: p.productName,
-        companyName: p.companyName,
-        modelName: p.modelName,
-        batchId: p.batchId,
-        localBatchId: p.localBatchId,
-        quantity: qty,
-        rate: p.purchasePrice,
-        amount: p.purchasePrice * qty,
-      ));
+      items.add(
+        PurchaseReturnItem(
+          id: '',
+          productId: p.productId,
+          productName: p.productName,
+          companyName: p.companyName,
+          modelName: p.modelName,
+          batchId: p.batchId,
+          localBatchId: p.localBatchId,
+          quantity: qty,
+          rate: p.purchasePrice,
+          amount: p.purchasePrice * qty,
+        ),
+      );
     }
 
     // Get impact preview
@@ -296,7 +298,9 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
         _showSnackbar('Purchase return processed successfully!', false);
         _resetForm();
         // Notify dashboard to refresh data
-        DashboardRefreshService.instance.notifyDataChanged(DataChangeType.purchaseReturn);
+        DashboardRefreshService.instance.notifyDataChanged(
+          DataChangeType.purchaseReturn,
+        );
         // Refresh history
         _loadReturnHistory();
       } else {
@@ -337,13 +341,15 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
 
   void _showSnackbar(String msg, bool isError) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(msg, style: const TextStyle(fontFamily: 'Literata')),
-      backgroundColor: isError ? Colors.red : const Color(0xFF1B4D3E),
-      behavior: SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      margin: const EdgeInsets.all(16),
-    ));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(msg, style: const TextStyle(fontFamily: 'Literata')),
+        backgroundColor: isError ? Colors.red : const Color(0xFF1B4D3E),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        margin: const EdgeInsets.all(16),
+      ),
+    );
   }
 
   // ━━━━━━━━━━━━ BUILD ━━━━━━━━━━━━
@@ -356,10 +362,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
       appBar: _buildAppBar(),
       body: TabBarView(
         controller: _tabController,
-        children: [
-          _buildNewReturnTab(),
-          _buildHistoryTab(),
-        ],
+        children: [_buildNewReturnTab(), _buildHistoryTab()],
       ),
     );
   }
@@ -388,14 +391,19 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
             children: [
               // Title row
               Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 child: Row(
                   children: [
                     GestureDetector(
                       onTap: () => Navigator.pop(context),
-                      child: const Icon(Icons.arrow_back_rounded,
-                          color: Colors.white, size: 24),
+                      child: const Icon(
+                        Icons.arrow_back_rounded,
+                        color: Colors.white,
+                        size: 24,
+                      ),
                     ),
                     const SizedBox(width: 12),
                     const Expanded(
@@ -425,7 +433,9 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
                     // Return mode toggle
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 4),
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.white.withOpacity(0.15),
                         borderRadius: BorderRadius.circular(20),
@@ -442,8 +452,9 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
                           ),
                           const SizedBox(width: 6),
                           GestureDetector(
-                            onTap: () =>
-                                setState(() => _isPartialMode = !_isPartialMode),
+                            onTap: () => setState(
+                              () => _isPartialMode = !_isPartialMode,
+                            ),
                             child: Text(
                               _isPartialMode ? 'Partial' : 'Full Batch',
                               style: const TextStyle(
@@ -510,12 +521,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
         ),
         // Sticky bottom button
         if (_selectedSupplier != null)
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: _buildStickyButton(),
-          ),
+          Positioned(bottom: 0, left: 0, right: 0, child: _buildStickyButton()),
       ],
     );
   }
@@ -553,8 +559,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
           GestureDetector(
             onTap: _showSupplierPicker,
             child: Container(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 14, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               decoration: BoxDecoration(
                 color: Colors.grey[50],
                 borderRadius: BorderRadius.circular(12),
@@ -562,8 +567,11 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
               ),
               child: Row(
                 children: [
-                  Icon(Icons.local_shipping_outlined,
-                      color: Colors.grey[600], size: 20),
+                  Icon(
+                    Icons.local_shipping_outlined,
+                    color: Colors.grey[600],
+                    size: 20,
+                  ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
@@ -582,8 +590,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
                       ),
                     ),
                   ),
-                  Icon(Icons.keyboard_arrow_down,
-                      color: Colors.grey[600]),
+                  Icon(Icons.keyboard_arrow_down, color: Colors.grey[600]),
                 ],
               ),
             ),
@@ -593,8 +600,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
           GestureDetector(
             onTap: _pickDate,
             child: Container(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 14, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               decoration: BoxDecoration(
                 color: Colors.grey[50],
                 borderRadius: BorderRadius.circular(12),
@@ -602,8 +608,11 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
               ),
               child: Row(
                 children: [
-                  Icon(Icons.calendar_today_outlined,
-                      color: Colors.grey[600], size: 18),
+                  Icon(
+                    Icons.calendar_today_outlined,
+                    color: Colors.grey[600],
+                    size: 18,
+                  ),
                   const SizedBox(width: 10),
                   Text(
                     DateFormat('dd MMM yyyy').format(_returnDate),
@@ -658,10 +667,12 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
         final filtered = q.isEmpty
             ? _suppliers
             : _suppliers
-                .where((s) =>
-                    (s['name'] as String).toLowerCase().contains(q) ||
-                    (s['contact'] as String).toLowerCase().contains(q))
-                .toList();
+                  .where(
+                    (s) =>
+                        (s['name'] as String).toLowerCase().contains(q) ||
+                        (s['contact'] as String).toLowerCase().contains(q),
+                  )
+                  .toList();
 
         return Container(
           height: MediaQuery.of(context).size.height * 0.7,
@@ -709,15 +720,21 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
                       child: TextField(
                         controller: _supplierSearchCtrl,
                         style: const TextStyle(
-                            fontFamily: 'Literata', fontSize: 14),
+                          fontFamily: 'Literata',
+                          fontSize: 14,
+                        ),
                         decoration: InputDecoration(
                           hintText: 'Search supplier...',
                           hintStyle: TextStyle(color: Colors.grey[400]),
-                          prefixIcon: Icon(Icons.search,
-                              color: Colors.grey[600], size: 20),
+                          prefixIcon: Icon(
+                            Icons.search,
+                            color: Colors.grey[600],
+                            size: 20,
+                          ),
                           border: InputBorder.none,
-                          contentPadding:
-                              const EdgeInsets.symmetric(vertical: 12),
+                          contentPadding: const EdgeInsets.symmetric(
+                            vertical: 12,
+                          ),
                         ),
                         onChanged: (_) => setSheetState(() {}),
                       ),
@@ -730,68 +747,77 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
                 child: _isLoadingSuppliers
                     ? const Center(
                         child: CircularProgressIndicator(
-                            color: Color(0xFF1B4D3E)))
+                          color: Color(0xFF1B4D3E),
+                        ),
+                      )
                     : filtered.isEmpty
-                        ? Center(
-                            child: Text('No suppliers found',
-                                style: TextStyle(
-                                    color: Colors.grey[500],
-                                    fontFamily: 'Literata')))
-                        : ListView.separated(
-                            itemCount: filtered.length,
-                            separatorBuilder: (_, __) =>
-                                Divider(height: 1, color: Colors.grey[200]),
-                            itemBuilder: (_, i) {
-                              final s = filtered[i];
-                              final isSelected =
-                                  _selectedSupplier?['id'] == s['id'];
-                              return ListTile(
-                                contentPadding: const EdgeInsets.symmetric(
-                                    horizontal: 16, vertical: 4),
-                                leading: CircleAvatar(
-                                  backgroundColor: isSelected
-                                      ? const Color(0xFF1B4D3E)
-                                      : Colors.grey[200],
-                                  child: Text(
-                                    (s['name'] as String).isNotEmpty
-                                        ? (s['name'] as String)[0]
-                                            .toUpperCase()
-                                        : 'S',
-                                    style: TextStyle(
-                                      color: isSelected
-                                          ? Colors.white
-                                          : Colors.grey[700],
-                                      fontWeight: FontWeight.w700,
-                                      fontFamily: 'Literata',
-                                    ),
-                                  ),
-                                ),
-                                title: Text(
-                                  s['name'] as String,
-                                  style: TextStyle(
-                                    fontFamily: 'Literata',
-                                    fontWeight: FontWeight.w600,
-                                    color: isSelected
-                                        ? const Color(0xFF1B4D3E)
-                                        : Colors.black87,
-                                  ),
-                                ),
-                                subtitle: Text(
-                                  s['contact'] as String,
-                                  style: TextStyle(
-                                    fontFamily: 'Literata',
-                                    fontSize: 12,
-                                    color: Colors.grey[600],
-                                  ),
-                                ),
-                                trailing: isSelected
-                                    ? const Icon(Icons.check_circle,
-                                        color: Color(0xFF1B4D3E))
-                                    : null,
-                                onTap: () => _onSupplierSelected(s),
-                              );
-                            },
+                    ? Center(
+                        child: Text(
+                          'No suppliers found',
+                          style: TextStyle(
+                            color: Colors.grey[500],
+                            fontFamily: 'Literata',
                           ),
+                        ),
+                      )
+                    : ListView.separated(
+                        itemCount: filtered.length,
+                        separatorBuilder: (_, _) =>
+                            Divider(height: 1, color: Colors.grey[200]),
+                        itemBuilder: (_, i) {
+                          final s = filtered[i];
+                          final isSelected =
+                              _selectedSupplier?['id'] == s['id'];
+                          return ListTile(
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 4,
+                            ),
+                            leading: CircleAvatar(
+                              backgroundColor: isSelected
+                                  ? const Color(0xFF1B4D3E)
+                                  : Colors.grey[200],
+                              child: Text(
+                                (s['name'] as String).isNotEmpty
+                                    ? (s['name'] as String)[0].toUpperCase()
+                                    : 'S',
+                                style: TextStyle(
+                                  color: isSelected
+                                      ? Colors.white
+                                      : Colors.grey[700],
+                                  fontWeight: FontWeight.w700,
+                                  fontFamily: 'Literata',
+                                ),
+                              ),
+                            ),
+                            title: Text(
+                              s['name'] as String,
+                              style: TextStyle(
+                                fontFamily: 'Literata',
+                                fontWeight: FontWeight.w600,
+                                color: isSelected
+                                    ? const Color(0xFF1B4D3E)
+                                    : Colors.black87,
+                              ),
+                            ),
+                            subtitle: Text(
+                              s['contact'] as String,
+                              style: TextStyle(
+                                fontFamily: 'Literata',
+                                fontSize: 12,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                            trailing: isSelected
+                                ? const Icon(
+                                    Icons.check_circle,
+                                    color: Color(0xFF1B4D3E),
+                                  )
+                                : null,
+                            onTap: () => _onSupplierSelected(s),
+                          );
+                        },
+                      ),
               ),
             ],
           ),
@@ -823,16 +849,14 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
         decoration: InputDecoration(
           hintText: 'Search products...',
           hintStyle: TextStyle(color: Colors.grey[400]),
-          prefixIcon:
-              Icon(Icons.search, color: Colors.grey[600], size: 20),
+          prefixIcon: Icon(Icons.search, color: Colors.grey[600], size: 20),
           suffixIcon: _productSearchCtrl.text.isNotEmpty
               ? GestureDetector(
                   onTap: () {
                     _productSearchCtrl.clear();
                     setState(() {});
                   },
-                  child:
-                      Icon(Icons.close, color: Colors.grey[600], size: 18),
+                  child: Icon(Icons.close, color: Colors.grey[600], size: 18),
                 )
               : null,
           border: InputBorder.none,
@@ -867,8 +891,11 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
         child: Center(
           child: Column(
             children: [
-              Icon(Icons.inventory_2_outlined,
-                  size: 48, color: Colors.grey[300]),
+              Icon(
+                Icons.inventory_2_outlined,
+                size: 48,
+                color: Colors.grey[300],
+              ),
               const SizedBox(height: 12),
               Text(
                 _products.isEmpty
@@ -934,10 +961,9 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             itemCount: filtered.length,
-            separatorBuilder: (_, __) =>
+            separatorBuilder: (_, _) =>
                 Divider(height: 1, color: Colors.grey[100]),
-            itemBuilder: (_, i) =>
-                _buildProductRow(filtered[i]),
+            itemBuilder: (_, i) => _buildProductRow(filtered[i]),
           ),
         ],
       ),
@@ -963,8 +989,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
       child: GestureDetector(
         onTap: () => _showBatchBreakdown(product),
         child: Padding(
-          padding: const EdgeInsets.symmetric(
-              horizontal: 14, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -1007,8 +1032,11 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
                         color: const Color(0xFF1B4D3E).withOpacity(0.08),
                         borderRadius: BorderRadius.circular(6),
                       ),
-                      child: const Icon(Icons.layers_outlined,
-                          size: 16, color: Color(0xFF1B4D3E)),
+                      child: const Icon(
+                        Icons.layers_outlined,
+                        size: 16,
+                        color: Color(0xFF1B4D3E),
+                      ),
                     ),
                   ),
                 ],
@@ -1061,8 +1089,11 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
                   _buildQtyButton(Icons.remove, () {
                     if (qty > 0) {
                       ctrl?.text = (qty - 1).toString();
-                      _onQtyChanged(product.productId, ctrl?.text ?? '0',
-                          product.quantityRemaining);
+                      _onQtyChanged(
+                        product.productId,
+                        ctrl?.text ?? '0',
+                        product.quantityRemaining,
+                      );
                     }
                   }),
                   const SizedBox(width: 6),
@@ -1082,29 +1113,27 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
                       ),
                       decoration: InputDecoration(
                         filled: true,
-                        fillColor:
-                            hasError ? Colors.red[50] : Colors.grey[50],
+                        fillColor: hasError ? Colors.red[50] : Colors.grey[50],
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
                           borderSide: BorderSide(
-                            color: hasError
-                                ? Colors.red
-                                : Colors.grey[300]!,
+                            color: hasError ? Colors.red : Colors.grey[300]!,
                           ),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
                           borderSide: BorderSide(
-                            color: hasError
-                                ? Colors.red
-                                : Colors.grey[300]!,
+                            color: hasError ? Colors.red : Colors.grey[300]!,
                           ),
                         ),
                         contentPadding: EdgeInsets.zero,
                         isDense: true,
                       ),
                       onChanged: (v) => _onQtyChanged(
-                          product.productId, v, product.quantityRemaining),
+                        product.productId,
+                        v,
+                        product.quantityRemaining,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 6),
@@ -1112,8 +1141,11 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
                   _buildQtyButton(Icons.add, () {
                     if (qty < product.quantityRemaining) {
                       ctrl?.text = (qty + 1).toString();
-                      _onQtyChanged(product.productId, ctrl?.text ?? '0',
-                          product.quantityRemaining);
+                      _onQtyChanged(
+                        product.productId,
+                        ctrl?.text ?? '0',
+                        product.quantityRemaining,
+                      );
                     }
                   }),
                   const SizedBox(width: 10),
@@ -1121,10 +1153,14 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
                   if (!_isPartialMode)
                     GestureDetector(
                       onTap: () => _setFullBatchQty(
-                          product.productId, product.quantityRemaining),
+                        product.productId,
+                        product.quantityRemaining,
+                      ),
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 4),
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: const Color(0xFF1B4D3E).withOpacity(0.1),
                           borderRadius: BorderRadius.circular(6),
@@ -1201,7 +1237,9 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
 
   void _showBatchBreakdown(ReturnableBatchInfo product) async {
     final batches = await _service.getBatchBreakdownForProduct(
-        product.productId, _selectedSupplier!['id'] as String);
+      product.productId,
+      _selectedSupplier!['id'] as String,
+    );
 
     if (!mounted) return;
 
@@ -1273,7 +1311,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
                 shrinkWrap: true,
                 padding: const EdgeInsets.all(16),
                 itemCount: batches.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 10),
+                separatorBuilder: (_, _) => const SizedBox(height: 10),
                 itemBuilder: (_, i) {
                   final b = batches[i];
                   // Risk indicator: compare purchase price
@@ -1281,9 +1319,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
                   return Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: priceDiffers
-                          ? Colors.amber[50]
-                          : Colors.grey[50],
+                      color: priceDiffers ? Colors.amber[50] : Colors.grey[50],
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
                         color: priceDiffers
@@ -1307,8 +1343,11 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
                             ),
                             if (priceDiffers) ...[
                               const SizedBox(width: 6),
-                              Icon(Icons.warning_amber_rounded,
-                                  size: 16, color: Colors.amber[700]),
+                              Icon(
+                                Icons.warning_amber_rounded,
+                                size: 16,
+                                color: Colors.amber[700],
+                              ),
                               const SizedBox(width: 4),
                               Text(
                                 'Price differs',
@@ -1322,8 +1361,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
                             ],
                             const Spacer(),
                             Text(
-                              DateFormat('dd MMM yy')
-                                  .format(b.purchaseDate),
+                              DateFormat('dd MMM yy').format(b.purchaseDate),
                               style: TextStyle(
                                 fontSize: 11,
                                 color: Colors.grey[600],
@@ -1414,8 +1452,10 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide:
-                    const BorderSide(color: Color(0xFF1B4D3E), width: 2),
+                borderSide: const BorderSide(
+                  color: Color(0xFF1B4D3E),
+                  width: 2,
+                ),
               ),
             ),
           ),
@@ -1439,8 +1479,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
           ],
         ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-            color: const Color(0xFF1B4D3E).withOpacity(0.15)),
+        border: Border.all(color: const Color(0xFF1B4D3E).withOpacity(0.15)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1458,9 +1497,11 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
           Row(
             children: [
               _buildSummaryStat(
-                  'Items', '$_totalItemsWithQty', Icons.inventory_outlined),
-              _buildSummaryStat(
-                  'Total Qty', '$_totalReturnQty', Icons.numbers),
+                'Items',
+                '$_totalItemsWithQty',
+                Icons.inventory_outlined,
+              ),
+              _buildSummaryStat('Total Qty', '$_totalReturnQty', Icons.numbers),
               _buildSummaryStat(
                 'Amount',
                 '₹${_totalReturnAmount.toStringAsFixed(0)}',
@@ -1522,8 +1563,9 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
           width: double.infinity,
           height: 52,
           child: ElevatedButton(
-            onPressed:
-                _canProcess && !_isProcessing ? _showConfirmationDialog : null,
+            onPressed: _canProcess && !_isProcessing
+                ? _showConfirmationDialog
+                : null,
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF1B4D3E),
               disabledBackgroundColor: Colors.grey[300],
@@ -1544,8 +1586,11 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
                 : const Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.keyboard_return_rounded,
-                          color: Colors.white, size: 20),
+                      Icon(
+                        Icons.keyboard_return_rounded,
+                        color: Colors.white,
+                        size: 20,
+                      ),
                       SizedBox(width: 10),
                       Text(
                         'Process Return',
@@ -1590,8 +1635,11 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
                       color: const Color(0xFF1B4D3E).withOpacity(0.1),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Icon(Icons.fact_check_outlined,
-                        color: Color(0xFF1B4D3E), size: 24),
+                    child: const Icon(
+                      Icons.fact_check_outlined,
+                      color: Color(0xFF1B4D3E),
+                      size: 24,
+                    ),
                   ),
                   const SizedBox(width: 12),
                   const Expanded(
@@ -1609,41 +1657,43 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
               ),
               const SizedBox(height: 16),
               // Items list
-              ...items.map((item) => Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            item.productName,
-                            style: const TextStyle(
-                              fontFamily: 'Literata',
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                        Text(
-                          '${item.quantity} × ₹${item.rate.toStringAsFixed(0)}',
-                          style: TextStyle(
-                            fontFamily: 'Literata',
-                            fontSize: 12,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Text(
-                          '₹${item.amount.toStringAsFixed(0)}',
+              ...items.map(
+                (item) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          item.productName,
                           style: const TextStyle(
                             fontFamily: 'Literata',
                             fontSize: 13,
-                            fontWeight: FontWeight.w700,
-                            color: Color(0xFF1B4D3E),
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
-                      ],
-                    ),
-                  )),
+                      ),
+                      Text(
+                        '${item.quantity} × ₹${item.rate.toStringAsFixed(0)}',
+                        style: TextStyle(
+                          fontFamily: 'Literata',
+                          fontSize: 12,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Text(
+                        '₹${item.amount.toStringAsFixed(0)}',
+                        style: const TextStyle(
+                          fontFamily: 'Literata',
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF1B4D3E),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
               const Divider(),
               // Impact preview
               const Text(
@@ -1673,8 +1723,10 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
                 const SizedBox(height: 6),
                 ...impact.stockAfterReturn.entries.map((e) {
                   final productName = items
-                      .firstWhere((i) => i.productId == e.key,
-                          orElse: () => items.first)
+                      .firstWhere(
+                        (i) => i.productId == e.key,
+                        orElse: () => items.first,
+                      )
                       .productName;
                   return _buildImpactRow(
                     productName,
@@ -1784,9 +1836,11 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
                 color: const Color(0xFF1B4D3E).withOpacity(0.1),
                 borderRadius: BorderRadius.circular(20),
               ),
-              child: Icon(Icons.history,
-                  size: 48,
-                  color: const Color(0xFF1B4D3E).withOpacity(0.3)),
+              child: Icon(
+                Icons.history,
+                size: 48,
+                color: const Color(0xFF1B4D3E).withOpacity(0.3),
+              ),
             ),
             const SizedBox(height: 16),
             Text(
@@ -1849,8 +1903,11 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
                   color: const Color(0xFF1B4D3E).withOpacity(0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(Icons.keyboard_return_rounded,
-                    color: Color(0xFF1B4D3E), size: 18),
+                child: const Icon(
+                  Icons.keyboard_return_rounded,
+                  color: Color(0xFF1B4D3E),
+                  size: 18,
+                ),
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -1908,8 +1965,11 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
               ),
               child: Row(
                 children: [
-                  Icon(Icons.comment_outlined,
-                      size: 14, color: Colors.grey[500]),
+                  Icon(
+                    Icons.comment_outlined,
+                    size: 14,
+                    color: Colors.grey[500],
+                  ),
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
@@ -1930,30 +1990,34 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
           // Items list
           if (ret.items.isNotEmpty) ...[
             const SizedBox(height: 8),
-            ...ret.items.take(3).map((item) => Padding(
-                  padding: const EdgeInsets.only(bottom: 4),
-                  child: Row(
-                    children: [
-                      Text(
-                        '• ${item.productName}',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontFamily: 'Literata',
-                          color: Colors.grey[700],
+            ...ret.items
+                .take(3)
+                .map(
+                  (item) => Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: Row(
+                      children: [
+                        Text(
+                          '• ${item.productName}',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontFamily: 'Literata',
+                            color: Colors.grey[700],
+                          ),
                         ),
-                      ),
-                      const Spacer(),
-                      Text(
-                        '${item.quantity} × ₹${item.rate.toStringAsFixed(0)}',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontFamily: 'Literata',
-                          color: Colors.grey[600],
+                        const Spacer(),
+                        Text(
+                          '${item.quantity} × ₹${item.rate.toStringAsFixed(0)}',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontFamily: 'Literata',
+                            color: Colors.grey[600],
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                )),
+                ),
             if (ret.items.length > 3)
               Text(
                 '+${ret.items.length - 3} more items',

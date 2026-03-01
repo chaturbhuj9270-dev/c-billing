@@ -16,7 +16,6 @@ import 'package:c_billing/features/inventory_management/data/repositories/fireba
 import 'package:c_billing/features/billing/data/datasources/bill_cache_datasource.dart';
 import 'package:c_billing/features/billing/presentation/pages/return_bill_page.dart';
 import 'package:c_billing/core/printing/printing.dart';
-import 'package:c_billing/common_widgets/printer_selection_widget.dart';
 import 'package:c_billing/features/shop/data/repositories/shop_repository.dart';
 import 'package:c_billing/features/shop/domain/entities/shop.dart';
 import 'package:c_billing/features/customer/data/repositories/customer_repository.dart';
@@ -105,7 +104,9 @@ class _BillsListPageState extends State<BillsListPage>
     );
 
     // Subscribe to bills stream for reactive updates
-    _billsSubscription = BillOfflineController.instance.watchAllBills().listen((entities) {
+    _billsSubscription = BillOfflineController.instance.watchAllBills().listen((
+      entities,
+    ) {
       if (mounted) {
         final bills = entities.map((e) => Bill.fromBillEntity(e)).toList();
         setState(() {
@@ -149,31 +150,30 @@ class _BillsListPageState extends State<BillsListPage>
         .orderBy('billDate', descending: true)
         .snapshots()
         .listen(
-      (snapshot) async {
-        if (!mounted) return;
+          (snapshot) async {
+            if (!mounted) return;
 
-        debugPrint('[Bills] Firestore stream: ${snapshot.docs.length} docs (${snapshot.docChanges.length} changes)');
+            debugPrint(
+              '[Bills] Firestore stream: ${snapshot.docs.length} docs (${snapshot.docChanges.length} changes)',
+            );
 
-        final serverBills = snapshot.docs.map((doc) {
-          return <String, dynamic>{
-            'id': doc.id,
-            ...doc.data(),
-          };
-        }).toList();
+            final serverBills = snapshot.docs.map((doc) {
+              return <String, dynamic>{'id': doc.id, ...doc.data()};
+            }).toList();
 
-        // Import to Isar — the Isar stream listener auto-updates the UI
-        await BillOfflineController.instance.importFromServer(serverBills);
-      },
-      onError: (e) {
-        debugPrint('[ERROR] Firestore bills stream error: $e');
-      },
-    );
+            // Import to Isar — the Isar stream listener auto-updates the UI
+            await BillOfflineController.instance.importFromServer(serverBills);
+          },
+          onError: (e) {
+            debugPrint('[ERROR] Firestore bills stream error: $e');
+          },
+        );
   }
 
   Future<void> _setupInitialData() async {
     // Load from Isar (offline-first) - data comes through stream subscription
     // Initial data is already loaded via watchAllBills() in initState
-    
+
     // Trigger background sync to fetch latest from server
     BillSyncService.instance.syncNow();
   }
@@ -196,24 +196,28 @@ class _BillsListPageState extends State<BillsListPage>
 
   /// Create PrintBillData from bill — no network calls, uses bill data directly
   PrintBillData _createPrintBillData(Bill bill) {
-    final double? totalDueAmount = bill.pendingAmount > 0 ? bill.pendingAmount : null;
+    final double? totalDueAmount = bill.pendingAmount > 0
+        ? bill.pendingAmount
+        : null;
     return PrintBillData.fromBill(bill, totalDueAmount: totalDueAmount);
   }
 
   Future<void> _printBill(Bill bill) async {
     // Prevent multiple simultaneous print operations
     if (_printingBillId != null || _isProcessingPdf) return;
-    
+
     // Set the printing bill ID to show loading indicator on that specific card
     setState(() {
       _printingBillId = bill.id;
       _isProcessingPdf = true;
     });
-    
+
     try {
-      debugPrint('[BillsListPage] Starting PDF preview for bill: ${bill.billNumber}');
+      debugPrint(
+        '[BillsListPage] Starting PDF preview for bill: ${bill.billNumber}',
+      );
       final printData = _createPrintBillData(bill);
-      
+
       debugPrint('[BillsListPage] Fetching shop details...');
       final shop = await _shopRepository.getShopDetails().timeout(
         const Duration(seconds: 5),
@@ -223,28 +227,27 @@ class _BillsListPageState extends State<BillsListPage>
         },
       );
       debugPrint('[BillsListPage] Got shop: ${shop.shopName}');
-      
+
       debugPrint('[BillsListPage] Generating PDF file...');
-      final file = await _pdfService.savePdfToFile(
-        billData: printData,
-        shopDetails: shop,
-      ).timeout(
-        const Duration(seconds: 15),
-        onTimeout: () => throw Exception('PDF generation timed out'),
-      );
+      final file = await _pdfService
+          .savePdfToFile(billData: printData, shopDetails: shop)
+          .timeout(
+            const Duration(seconds: 15),
+            onTimeout: () => throw Exception('PDF generation timed out'),
+          );
       debugPrint('[BillsListPage] PDF saved to: ${file.path}');
-      
+
       if (!mounted) {
         debugPrint('[BillsListPage] Widget not mounted, returning');
         return;
       }
-      
+
       // Hide loading before navigation
       setState(() {
         _printingBillId = null;
         _isProcessingPdf = false;
       });
-      
+
       debugPrint('[BillsListPage] Navigating to FilePreviewPage...');
       await Navigator.push(
         context,
@@ -324,22 +327,26 @@ class _BillsListPageState extends State<BillsListPage>
       if (!mounted) return;
 
       // Save to Documents/Bills/ directory
-      final file = await _pdfService.savePdfToFile(billData: printData, shopDetails: shop);
+      final file = await _pdfService.savePdfToFile(
+        billData: printData,
+        shopDetails: shop,
+      );
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('${_localizations.pdfSaved}: ${file.path.split('/').last}'),
+            content: Text(
+              '${_localizations.pdfSaved}: ${file.path.split('/').last}',
+            ),
             backgroundColor: const Color(0xFF1B4D3E),
             duration: const Duration(seconds: 3),
             action: SnackBarAction(
               label: _localizations.share,
               textColor: Colors.white,
               onPressed: () async {
-                await Share.shareXFiles(
-                  [XFile(file.path)],
-                  text: 'Bill ${bill.billNumber}',
-                );
+                await Share.shareXFiles([
+                  XFile(file.path),
+                ], text: 'Bill ${bill.billNumber}');
               },
             ),
           ),
@@ -362,16 +369,18 @@ class _BillsListPageState extends State<BillsListPage>
 
   // ── Generate & show bill report ──
   Future<void> _generateBillReport() async {
-    debugPrint('[BillReport] Button tapped! _isGeneratingReport=$_isGeneratingReport');
-    
+    debugPrint(
+      '[BillReport] Button tapped! _isGeneratingReport=$_isGeneratingReport',
+    );
+
     if (_isGeneratingReport) {
       debugPrint('[BillReport] Already generating, returning');
       return;
     }
-    
+
     final filtered = _filteredBills;
     debugPrint('[BillReport] Filtered bills: ${filtered.length}');
-    
+
     if (filtered.isEmpty) {
       debugPrint('[BillReport] No data - showing snackbar');
       if (mounted) {
@@ -412,20 +421,20 @@ class _BillsListPageState extends State<BillsListPage>
 
     try {
       debugPrint('[BillReport] Generating PDF for ${filtered.length} bills...');
-      
+
       final pdfBytes = await BillReportPdfGenerator.generate(
         bills: filtered,
         filterDescription: _buildFilterDescription(),
       );
-      
+
       debugPrint('[BillReport] PDF generated: ${pdfBytes.length} bytes');
-      
+
       // Save to temporary file for preview
       final tempDir = await getTemporaryDirectory();
       final timestamp = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
       final tempFile = File('${tempDir.path}/bill_report_$timestamp.pdf');
       await tempFile.writeAsBytes(pdfBytes);
-      
+
       // Dismiss loading snackbar
       if (mounted) {
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
@@ -444,11 +453,12 @@ class _BillsListPageState extends State<BillsListPage>
             file: tempFile,
             fileName: 'Bill Report',
             fileType: FilePreviewType.pdf,
-            subtitle: '${filtered.length} bills • ${DateFormat('dd MMM yyyy').format(DateTime.now())}',
+            subtitle:
+                '${filtered.length} bills • ${DateFormat('dd MMM yyyy').format(DateTime.now())}',
           ),
         ),
       );
-      
+
       _isGeneratingReport = false;
     } catch (e, stack) {
       debugPrint('[BillReport] Error: $e');
@@ -471,7 +481,7 @@ class _BillsListPageState extends State<BillsListPage>
   /// Build filter description for report header
   String _buildFilterDescription() {
     final parts = <String>[];
-    
+
     switch (_dateFilter) {
       case _BillDateFilter.today:
         parts.add('Today');
@@ -495,15 +505,15 @@ class _BillsListPageState extends State<BillsListPage>
         parts.add('All Time');
         break;
     }
-    
+
     if (_showReturnedOnly) {
       parts.add('Returned Bills Only');
     }
-    
+
     if (_searchController.text.isNotEmpty) {
       parts.add('Search: "${_searchController.text}"');
     }
-    
+
     return parts.join(' | ');
   }
 
@@ -531,7 +541,7 @@ class _BillsListPageState extends State<BillsListPage>
         _bills = bills;
         _isLoading = false;
       });
-      
+
       // Apply filters and calculate stats
       _filterBills(_searchController.text);
 
@@ -540,9 +550,9 @@ class _BillsListPageState extends State<BillsListPage>
     } catch (e) {
       setState(() => _isLoading = false);
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('${_localizations.errorLoadingBills}: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('${_localizations.errorLoadingBills}: $e')),
+        );
       }
     }
   }
@@ -551,38 +561,66 @@ class _BillsListPageState extends State<BillsListPage>
     setState(() {
       // Start with all bills
       var bills = _bills.toList();
-      
+
       // Apply date filter based on selected filter type
       final now = DateTime.now();
       switch (_dateFilter) {
         case _BillDateFilter.today:
           final todayStart = DateTime(now.year, now.month, now.day);
           final todayEnd = todayStart.add(const Duration(days: 1));
-          bills = bills.where((bill) => 
-              bill.billDate.isAfter(todayStart.subtract(const Duration(seconds: 1))) && 
-              bill.billDate.isBefore(todayEnd)).toList();
+          bills = bills
+              .where(
+                (bill) =>
+                    bill.billDate.isAfter(
+                      todayStart.subtract(const Duration(seconds: 1)),
+                    ) &&
+                    bill.billDate.isBefore(todayEnd),
+              )
+              .toList();
           break;
         case _BillDateFilter.thisWeek:
           final weekStart = now.subtract(Duration(days: now.weekday - 1));
-          final weekStartDate = DateTime(weekStart.year, weekStart.month, weekStart.day);
+          final weekStartDate = DateTime(
+            weekStart.year,
+            weekStart.month,
+            weekStart.day,
+          );
           final weekEnd = weekStartDate.add(const Duration(days: 7));
-          bills = bills.where((bill) => 
-              bill.billDate.isAfter(weekStartDate.subtract(const Duration(seconds: 1))) && 
-              bill.billDate.isBefore(weekEnd)).toList();
+          bills = bills
+              .where(
+                (bill) =>
+                    bill.billDate.isAfter(
+                      weekStartDate.subtract(const Duration(seconds: 1)),
+                    ) &&
+                    bill.billDate.isBefore(weekEnd),
+              )
+              .toList();
           break;
         case _BillDateFilter.thisMonth:
           final monthStart = DateTime(now.year, now.month, 1);
           final monthEnd = DateTime(now.year, now.month + 1, 1);
-          bills = bills.where((bill) => 
-              bill.billDate.isAfter(monthStart.subtract(const Duration(seconds: 1))) && 
-              bill.billDate.isBefore(monthEnd)).toList();
+          bills = bills
+              .where(
+                (bill) =>
+                    bill.billDate.isAfter(
+                      monthStart.subtract(const Duration(seconds: 1)),
+                    ) &&
+                    bill.billDate.isBefore(monthEnd),
+              )
+              .toList();
           break;
         case _BillDateFilter.thisYear:
           final yearStart = DateTime(now.year, 1, 1);
           final yearEnd = DateTime(now.year + 1, 1, 1);
-          bills = bills.where((bill) => 
-              bill.billDate.isAfter(yearStart.subtract(const Duration(seconds: 1))) && 
-              bill.billDate.isBefore(yearEnd)).toList();
+          bills = bills
+              .where(
+                (bill) =>
+                    bill.billDate.isAfter(
+                      yearStart.subtract(const Duration(seconds: 1)),
+                    ) &&
+                    bill.billDate.isBefore(yearEnd),
+              )
+              .toList();
           break;
         case _BillDateFilter.custom:
           // Custom filter uses _startDate and _endDate - handled separately
@@ -591,12 +629,12 @@ class _BillsListPageState extends State<BillsListPage>
           // No date filter - show all
           break;
       }
-      
+
       // Apply return filter
       if (_showReturnedOnly) {
         bills = bills.where((bill) => bill.returnStatus).toList();
       }
-      
+
       // Apply search query
       if (query.isEmpty) {
         _filteredBills = bills;
@@ -615,16 +653,26 @@ class _BillsListPageState extends State<BillsListPage>
         }).toList();
       }
       _applySorting();
-      
+
       // Calculate filtered stats
       _calculateFilteredStats();
     });
   }
 
   void _calculateFilteredStats() {
-    _filteredSales = _filteredBills.fold(0.0, (sum, bill) => sum + bill.finalAmount);
-    _filteredProfit = _filteredBills.where((b) => !b.returnStatus).fold(0.0, (sum, bill) =>
-        sum + bill.items.fold(0.0, (s, item) => s + item.itemProfit) - bill.discountAmount);
+    _filteredSales = _filteredBills.fold(
+      0.0,
+      (sum, bill) => sum + bill.finalAmount,
+    );
+    _filteredProfit = _filteredBills
+        .where((b) => !b.returnStatus)
+        .fold(
+          0.0,
+          (sum, bill) =>
+              sum +
+              bill.items.fold(0.0, (s, item) => s + item.itemProfit) -
+              bill.discountAmount,
+        );
     _filteredBillsCount = _filteredBills.length;
     _filteredReturnedCount = _filteredBills.where((b) => b.returnStatus).length;
   }
@@ -724,7 +772,10 @@ class _BillsListPageState extends State<BillsListPage>
       debugPrint('[BillsListPage] ERROR in _shareBillAsPdfWithData: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${_localizations.errorSharingBillGeneric}: $e'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text('${_localizations.errorSharingBillGeneric}: $e'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     } finally {
@@ -743,22 +794,26 @@ class _BillsListPageState extends State<BillsListPage>
       if (!mounted) return;
 
       // Save to Documents directory
-      final file = await _pdfService.savePdfToFile(billData: printData, shopDetails: shop);
+      final file = await _pdfService.savePdfToFile(
+        billData: printData,
+        shopDetails: shop,
+      );
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('${_localizations.pdfSaved}: ${file.path.split('/').last}'),
+            content: Text(
+              '${_localizations.pdfSaved}: ${file.path.split('/').last}',
+            ),
             backgroundColor: const Color(0xFF1B4D3E),
             duration: const Duration(seconds: 3),
             action: SnackBarAction(
               label: _localizations.share,
               textColor: Colors.white,
               onPressed: () async {
-                await Share.shareXFiles(
-                  [XFile(file.path)],
-                  text: 'Bill ${printData.billNumber}',
-                );
+                await Share.shareXFiles([
+                  XFile(file.path),
+                ], text: 'Bill ${printData.billNumber}');
               },
             ),
           ),
@@ -768,7 +823,10 @@ class _BillsListPageState extends State<BillsListPage>
       debugPrint('[BillsListPage] ERROR in _saveBillAsPdfWithData: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${_localizations.errorSavingPdfGeneric}: $e'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text('${_localizations.errorSavingPdfGeneric}: $e'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     } finally {
@@ -785,12 +843,18 @@ class _BillsListPageState extends State<BillsListPage>
         onTimeout: () => Shop.empty,
       );
       if (!mounted) return;
-      await _pdfService.previewAndPrintPdf(billData: printData, shopDetails: shop);
+      await _pdfService.previewAndPrintPdf(
+        billData: printData,
+        shopDetails: shop,
+      );
     } catch (e) {
       debugPrint('[BillsListPage] ERROR in _printBillWithData: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${_localizations.errorPrintingBill}: $e'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text('${_localizations.errorPrintingBill}: $e'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     } finally {
@@ -928,7 +992,8 @@ class _BillsListPageState extends State<BillsListPage>
                         await Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => const BillReportSettingsPage(),
+                            builder: (context) =>
+                                const BillReportSettingsPage(),
                           ),
                         );
                       }
@@ -938,8 +1003,11 @@ class _BillsListPageState extends State<BillsListPage>
                         value: 'report_settings',
                         child: Row(
                           children: [
-                            Icon(Icons.tune_rounded, 
-                                color: Colors.grey[700], size: 20),
+                            Icon(
+                              Icons.tune_rounded,
+                              color: Colors.grey[700],
+                              size: 20,
+                            ),
                             const SizedBox(width: 12),
                             const Text(
                               'Report Settings',
@@ -985,7 +1053,10 @@ class _BillsListPageState extends State<BillsListPage>
               color: Colors.black.withValues(alpha: 0.3),
               child: Center(
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 32,
+                    vertical: 24,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(16),
@@ -1005,7 +1076,9 @@ class _BillsListPageState extends State<BillsListPage>
                         height: 40,
                         child: CircularProgressIndicator(
                           strokeWidth: 3,
-                          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF1B4D3E)),
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Color(0xFF1B4D3E),
+                          ),
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -1036,7 +1109,9 @@ class _BillsListPageState extends State<BillsListPage>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Filter indicator badge
-          if (_dateFilter != _BillDateFilter.none || _showReturnedOnly || _searchController.text.isNotEmpty)
+          if (_dateFilter != _BillDateFilter.none ||
+              _showReturnedOnly ||
+              _searchController.text.isNotEmpty)
             Container(
               margin: const EdgeInsets.only(bottom: 8),
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -1128,7 +1203,7 @@ class _BillsListPageState extends State<BillsListPage>
 
   String _getFilterDescription() {
     List<String> filters = [];
-    
+
     if (_dateFilter != _BillDateFilter.none) {
       switch (_dateFilter) {
         case _BillDateFilter.today:
@@ -1150,15 +1225,15 @@ class _BillsListPageState extends State<BillsListPage>
           break;
       }
     }
-    
+
     if (_showReturnedOnly) {
       filters.add('Returns Only');
     }
-    
+
     if (_searchController.text.isNotEmpty) {
-      filters.add('Search: \"${_searchController.text}\"');
+      filters.add('Search: "${_searchController.text}"');
     }
-    
+
     return filters.isEmpty ? 'Filtered' : filters.join(' • ');
   }
 
@@ -1386,8 +1461,11 @@ class _BillsListPageState extends State<BillsListPage>
 
   Widget _buildSearchAndFilterSection() {
     final hasDateFilter = _startDate != null;
-    final hasActiveFilters = hasDateFilter || _showReturnedOnly || _dateFilter != _BillDateFilter.none;
-    
+    final hasActiveFilters =
+        hasDateFilter ||
+        _showReturnedOnly ||
+        _dateFilter != _BillDateFilter.none;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
@@ -1489,14 +1567,18 @@ class _BillsListPageState extends State<BillsListPage>
             ),
           ),
           const SizedBox(height: 14),
-          
+
           // Filter section header
           if (hasActiveFilters)
             Padding(
               padding: const EdgeInsets.only(bottom: 8),
               child: Row(
                 children: [
-                  Icon(Icons.filter_list_rounded, size: 14, color: Colors.grey[600]),
+                  Icon(
+                    Icons.filter_list_rounded,
+                    size: 14,
+                    color: Colors.grey[600],
+                  ),
                   const SizedBox(width: 6),
                   Text(
                     'Active Filters',
@@ -1545,7 +1627,9 @@ class _BillsListPageState extends State<BillsListPage>
                   label: _localizations.today,
                   isActive: _dateFilter == _BillDateFilter.today,
                   onTap: () => _setDateFilter(_BillDateFilter.today),
-                  onClear: _dateFilter == _BillDateFilter.today ? () => _setDateFilter(_BillDateFilter.today) : null,
+                  onClear: _dateFilter == _BillDateFilter.today
+                      ? () => _setDateFilter(_BillDateFilter.today)
+                      : null,
                 ),
                 const SizedBox(width: 8),
                 // This Week filter chip
@@ -1554,7 +1638,9 @@ class _BillsListPageState extends State<BillsListPage>
                   label: _localizations.thisWeek,
                   isActive: _dateFilter == _BillDateFilter.thisWeek,
                   onTap: () => _setDateFilter(_BillDateFilter.thisWeek),
-                  onClear: _dateFilter == _BillDateFilter.thisWeek ? () => _setDateFilter(_BillDateFilter.thisWeek) : null,
+                  onClear: _dateFilter == _BillDateFilter.thisWeek
+                      ? () => _setDateFilter(_BillDateFilter.thisWeek)
+                      : null,
                 ),
                 const SizedBox(width: 8),
                 // This Month filter chip
@@ -1563,7 +1649,9 @@ class _BillsListPageState extends State<BillsListPage>
                   label: _localizations.thisMonth,
                   isActive: _dateFilter == _BillDateFilter.thisMonth,
                   onTap: () => _setDateFilter(_BillDateFilter.thisMonth),
-                  onClear: _dateFilter == _BillDateFilter.thisMonth ? () => _setDateFilter(_BillDateFilter.thisMonth) : null,
+                  onClear: _dateFilter == _BillDateFilter.thisMonth
+                      ? () => _setDateFilter(_BillDateFilter.thisMonth)
+                      : null,
                 ),
                 const SizedBox(width: 8),
                 // This Year filter chip
@@ -1572,7 +1660,9 @@ class _BillsListPageState extends State<BillsListPage>
                   label: _localizations.thisYear,
                   isActive: _dateFilter == _BillDateFilter.thisYear,
                   onTap: () => _setDateFilter(_BillDateFilter.thisYear),
-                  onClear: _dateFilter == _BillDateFilter.thisYear ? () => _setDateFilter(_BillDateFilter.thisYear) : null,
+                  onClear: _dateFilter == _BillDateFilter.thisYear
+                      ? () => _setDateFilter(_BillDateFilter.thisYear)
+                      : null,
                 ),
                 const SizedBox(width: 8),
                 // Date range chip
@@ -1596,13 +1686,29 @@ class _BillsListPageState extends State<BillsListPage>
                 ),
                 const SizedBox(width: 8),
                 // Sort chips
-                _buildSortChip('newest', _localizations.newest, Icons.arrow_downward_rounded),
+                _buildSortChip(
+                  'newest',
+                  _localizations.newest,
+                  Icons.arrow_downward_rounded,
+                ),
                 const SizedBox(width: 8),
-                _buildSortChip('oldest', _localizations.oldest, Icons.arrow_upward_rounded),
+                _buildSortChip(
+                  'oldest',
+                  _localizations.oldest,
+                  Icons.arrow_upward_rounded,
+                ),
                 const SizedBox(width: 8),
-                _buildSortChip('highest', _localizations.highest, Icons.trending_up_rounded),
+                _buildSortChip(
+                  'highest',
+                  _localizations.highest,
+                  Icons.trending_up_rounded,
+                ),
                 const SizedBox(width: 8),
-                _buildSortChip('lowest', _localizations.lowest, Icons.trending_down_rounded),
+                _buildSortChip(
+                  'lowest',
+                  _localizations.lowest,
+                  Icons.trending_down_rounded,
+                ),
               ],
             ),
           ),
@@ -1625,7 +1731,7 @@ class _BillsListPageState extends State<BillsListPage>
         duration: const Duration(milliseconds: 250),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          gradient: isActive 
+          gradient: isActive
               ? const LinearGradient(
                   colors: [Color(0xFF1B4D3E), Color(0xFF2E7D5B)],
                 )
@@ -1633,9 +1739,7 @@ class _BillsListPageState extends State<BillsListPage>
           color: isActive ? null : Colors.white,
           borderRadius: BorderRadius.circular(24),
           border: Border.all(
-            color: isActive
-                ? Colors.transparent
-                : Colors.grey[200]!,
+            color: isActive ? Colors.transparent : Colors.grey[200]!,
             width: 1.5,
           ),
           boxShadow: isActive
@@ -1714,9 +1818,7 @@ class _BillsListPageState extends State<BillsListPage>
               : Colors.white,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isActive
-                ? const Color(0xFF1B4D3E)
-                : Colors.grey[300]!,
+            color: isActive ? const Color(0xFF1B4D3E) : Colors.grey[300]!,
             width: isActive ? 1.5 : 1,
           ),
           boxShadow: [
@@ -1733,9 +1835,7 @@ class _BillsListPageState extends State<BillsListPage>
             Icon(
               icon,
               size: 14,
-              color: isActive
-                  ? const Color(0xFF1B4D3E)
-                  : Colors.grey[500],
+              color: isActive ? const Color(0xFF1B4D3E) : Colors.grey[500],
             ),
             const SizedBox(width: 4),
             Text(
@@ -1744,9 +1844,7 @@ class _BillsListPageState extends State<BillsListPage>
                 fontFamily: 'Literata',
                 fontSize: 12,
                 fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
-                color: isActive
-                    ? const Color(0xFF1B4D3E)
-                    : Colors.grey[600],
+                color: isActive ? const Color(0xFF1B4D3E) : Colors.grey[600],
               ),
             ),
           ],
@@ -1819,28 +1917,28 @@ class _BillsListPageState extends State<BillsListPage>
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: isFullyReturned 
+            colors: isFullyReturned
                 ? [Colors.red.withOpacity(0.03), Colors.white]
                 : hasPartialReturn
-                    ? [Colors.orange.withOpacity(0.03), Colors.white]
-                    : [Colors.white, Colors.grey.shade50],
+                ? [Colors.orange.withOpacity(0.03), Colors.white]
+                : [Colors.white, Colors.grey.shade50],
           ),
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
-            color: isFullyReturned 
+            color: isFullyReturned
                 ? Colors.red.withOpacity(0.4)
                 : hasPartialReturn
-                    ? Colors.orange.withOpacity(0.4)
-                    : Colors.grey.withOpacity(0.12),
+                ? Colors.orange.withOpacity(0.4)
+                : Colors.grey.withOpacity(0.12),
             width: 1.5,
           ),
           boxShadow: [
             BoxShadow(
-              color: isFullyReturned 
+              color: isFullyReturned
                   ? Colors.red.withOpacity(0.12)
                   : hasPartialReturn
-                      ? Colors.orange.withOpacity(0.12)
-                      : Colors.black.withOpacity(0.06),
+                  ? Colors.orange.withOpacity(0.12)
+                  : Colors.black.withOpacity(0.06),
               blurRadius: 16,
               offset: const Offset(0, 4),
               spreadRadius: hasAnyReturn ? 2 : 0,
@@ -1862,11 +1960,11 @@ class _BillsListPageState extends State<BillsListPage>
                     gradient: LinearGradient(
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
-                      colors: isFullyReturned 
+                      colors: isFullyReturned
                           ? [Colors.red, Colors.red.shade300]
                           : hasPartialReturn
-                              ? [Colors.orange, Colors.orange.shade300]
-                              : [const Color(0xFF1B4D3E), const Color(0xFF2E7D5B)],
+                          ? [Colors.orange, Colors.orange.shade300]
+                          : [const Color(0xFF1B4D3E), const Color(0xFF2E7D5B)],
                     ),
                   ),
                 ),
@@ -1883,26 +1981,42 @@ class _BillsListPageState extends State<BillsListPage>
                         // Bill number badge
                         Flexible(
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 5,
+                            ),
                             decoration: BoxDecoration(
-                              gradient: isFullyReturned 
+                              gradient: isFullyReturned
                                   ? LinearGradient(
-                                      colors: [Colors.red.withOpacity(0.2), Colors.red.withOpacity(0.1)],
+                                      colors: [
+                                        Colors.red.withOpacity(0.2),
+                                        Colors.red.withOpacity(0.1),
+                                      ],
                                     )
                                   : hasPartialReturn
-                                      ? LinearGradient(
-                                          colors: [Colors.orange.withOpacity(0.2), Colors.orange.withOpacity(0.1)],
-                                        )
-                                      : LinearGradient(
-                                          colors: [const Color(0xFF1B4D3E).withOpacity(0.15), const Color(0xFF1B4D3E).withOpacity(0.08)],
-                                        ),
+                                  ? LinearGradient(
+                                      colors: [
+                                        Colors.orange.withOpacity(0.2),
+                                        Colors.orange.withOpacity(0.1),
+                                      ],
+                                    )
+                                  : LinearGradient(
+                                      colors: [
+                                        const Color(
+                                          0xFF1B4D3E,
+                                        ).withOpacity(0.15),
+                                        const Color(
+                                          0xFF1B4D3E,
+                                        ).withOpacity(0.08),
+                                      ],
+                                    ),
                               borderRadius: BorderRadius.circular(8),
                               border: Border.all(
-                                color: isFullyReturned 
+                                color: isFullyReturned
                                     ? Colors.red.withOpacity(0.3)
                                     : hasPartialReturn
-                                        ? Colors.orange.withOpacity(0.3)
-                                        : const Color(0xFF1B4D3E).withOpacity(0.2),
+                                    ? Colors.orange.withOpacity(0.3)
+                                    : const Color(0xFF1B4D3E).withOpacity(0.2),
                                 width: 1,
                               ),
                             ),
@@ -1912,11 +2026,11 @@ class _BillsListPageState extends State<BillsListPage>
                                 Icon(
                                   Icons.receipt_outlined,
                                   size: 12,
-                                  color: isFullyReturned 
-                                      ? Colors.red[700] 
-                                      : hasPartialReturn 
-                                          ? Colors.orange[700] 
-                                          : const Color(0xFF1B4D3E),
+                                  color: isFullyReturned
+                                      ? Colors.red[700]
+                                      : hasPartialReturn
+                                      ? Colors.orange[700]
+                                      : const Color(0xFF1B4D3E),
                                 ),
                                 const SizedBox(width: 4),
                                 Flexible(
@@ -1926,11 +2040,11 @@ class _BillsListPageState extends State<BillsListPage>
                                       fontFamily: 'Literata',
                                       fontSize: 11,
                                       fontWeight: FontWeight.w700,
-                                      color: isFullyReturned 
-                                          ? Colors.red[800] 
-                                          : hasPartialReturn 
-                                              ? Colors.orange[800] 
-                                              : const Color(0xFF1B4D3E),
+                                      color: isFullyReturned
+                                          ? Colors.red[800]
+                                          : hasPartialReturn
+                                          ? Colors.orange[800]
+                                          : const Color(0xFF1B4D3E),
                                     ),
                                     overflow: TextOverflow.ellipsis,
                                   ),
@@ -1942,7 +2056,10 @@ class _BillsListPageState extends State<BillsListPage>
                         if (hasAnyReturn) ...[
                           const SizedBox(width: 6),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 3,
+                            ),
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
                                 colors: isFullyReturned
@@ -1952,8 +2069,8 @@ class _BillsListPageState extends State<BillsListPage>
                               borderRadius: BorderRadius.circular(6),
                               boxShadow: [
                                 BoxShadow(
-                                  color: isFullyReturned 
-                                      ? Colors.red.withOpacity(0.3) 
+                                  color: isFullyReturned
+                                      ? Colors.red.withOpacity(0.3)
                                       : Colors.orange.withOpacity(0.3),
                                   blurRadius: 6,
                                   offset: const Offset(0, 2),
@@ -1970,8 +2087,8 @@ class _BillsListPageState extends State<BillsListPage>
                                 ),
                                 const SizedBox(width: 3),
                                 Text(
-                                  isFullyReturned 
-                                      ? _localizations.returnedLabel 
+                                  isFullyReturned
+                                      ? _localizations.returnedLabel
                                       : _localizations.partialReturn,
                                   style: const TextStyle(
                                     fontFamily: 'Literata',
@@ -1987,7 +2104,10 @@ class _BillsListPageState extends State<BillsListPage>
                         if (isToday && !hasAnyReturn) ...[
                           const SizedBox(width: 6),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 3,
+                            ),
                             decoration: BoxDecoration(
                               color: const Color(0xFF2196F3).withOpacity(0.15),
                               borderRadius: BorderRadius.circular(4),
@@ -2059,11 +2179,16 @@ class _BillsListPageState extends State<BillsListPage>
                     // Customer info
                     if (bill.hasCustomerInfo) ...[
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 8,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.grey[50],
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: Colors.grey.withOpacity(0.1)),
+                          border: Border.all(
+                            color: Colors.grey.withOpacity(0.1),
+                          ),
                         ),
                         child: Row(
                           children: [
@@ -2122,7 +2247,10 @@ class _BillsListPageState extends State<BillsListPage>
                       children: [
                         // Items info
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.grey[100],
                             borderRadius: BorderRadius.circular(6),
@@ -2130,7 +2258,11 @@ class _BillsListPageState extends State<BillsListPage>
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.shopping_bag_outlined, size: 12, color: Colors.grey[600]),
+                              Icon(
+                                Icons.shopping_bag_outlined,
+                                size: 12,
+                                color: Colors.grey[600],
+                              ),
                               const SizedBox(width: 4),
                               Text(
                                 '${bill.items.length} items',
@@ -2146,7 +2278,10 @@ class _BillsListPageState extends State<BillsListPage>
                         ),
                         const SizedBox(width: 6),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.grey[100],
                             borderRadius: BorderRadius.circular(6),
@@ -2154,7 +2289,11 @@ class _BillsListPageState extends State<BillsListPage>
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.inventory_2_outlined, size: 12, color: Colors.grey[600]),
+                              Icon(
+                                Icons.inventory_2_outlined,
+                                size: 12,
+                                color: Colors.grey[600],
+                              ),
                               const SizedBox(width: 4),
                               Text(
                                 '${bill.totalQuantity} qty',
@@ -2172,13 +2311,21 @@ class _BillsListPageState extends State<BillsListPage>
                         // Discount badge
                         if (bill.discountAmount > 0) ...[
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
-                                colors: [Colors.green.withOpacity(0.15), Colors.green.withOpacity(0.08)],
+                                colors: [
+                                  Colors.green.withOpacity(0.15),
+                                  Colors.green.withOpacity(0.08),
+                                ],
                               ),
                               borderRadius: BorderRadius.circular(6),
-                              border: Border.all(color: Colors.green.withOpacity(0.2)),
+                              border: Border.all(
+                                color: Colors.green.withOpacity(0.2),
+                              ),
                             ),
                             child: Text(
                               '-${bill.discountPercent.toStringAsFixed(0)}%',
@@ -2194,22 +2341,34 @@ class _BillsListPageState extends State<BillsListPage>
                         ],
                         // Total amount
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
-                              colors: isFullyReturned 
-                                  ? [Colors.red.withOpacity(0.15), Colors.red.withOpacity(0.08)]
+                              colors: isFullyReturned
+                                  ? [
+                                      Colors.red.withOpacity(0.15),
+                                      Colors.red.withOpacity(0.08),
+                                    ]
                                   : hasPartialReturn
-                                      ? [Colors.orange.withOpacity(0.15), Colors.orange.withOpacity(0.08)]
-                                      : [const Color(0xFF1B4D3E).withOpacity(0.12), const Color(0xFF1B4D3E).withOpacity(0.06)],
+                                  ? [
+                                      Colors.orange.withOpacity(0.15),
+                                      Colors.orange.withOpacity(0.08),
+                                    ]
+                                  : [
+                                      const Color(0xFF1B4D3E).withOpacity(0.12),
+                                      const Color(0xFF1B4D3E).withOpacity(0.06),
+                                    ],
                             ),
                             borderRadius: BorderRadius.circular(10),
                             border: Border.all(
-                              color: isFullyReturned 
+                              color: isFullyReturned
                                   ? Colors.red.withOpacity(0.2)
                                   : hasPartialReturn
-                                      ? Colors.orange.withOpacity(0.2)
-                                      : const Color(0xFF1B4D3E).withOpacity(0.15),
+                                  ? Colors.orange.withOpacity(0.2)
+                                  : const Color(0xFF1B4D3E).withOpacity(0.15),
                             ),
                           ),
                           child: Text(
@@ -2218,11 +2377,11 @@ class _BillsListPageState extends State<BillsListPage>
                               fontFamily: 'Literata',
                               fontSize: 15,
                               fontWeight: FontWeight.w800,
-                              color: isFullyReturned 
-                                  ? Colors.red[800] 
-                                  : hasPartialReturn 
-                                      ? Colors.orange[800] 
-                                      : const Color(0xFF1B4D3E),
+                              color: isFullyReturned
+                                  ? Colors.red[800]
+                                  : hasPartialReturn
+                                  ? Colors.orange[800]
+                                  : const Color(0xFF1B4D3E),
                             ),
                           ),
                         ),
@@ -2240,7 +2399,9 @@ class _BillsListPageState extends State<BillsListPage>
 
   bool _isToday(DateTime date) {
     final now = DateTime.now();
-    return date.year == now.year && date.month == now.month && date.day == now.day;
+    return date.year == now.year &&
+        date.month == now.month &&
+        date.day == now.day;
   }
 }
 
@@ -2304,7 +2465,9 @@ class _DateRangePickerDialogState extends State<_DateRangePickerDialog> {
       backgroundColor: Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       title: Text(
-        AppLocalizations(LanguageService.instance.currentLanguage).selectDateRange,
+        AppLocalizations(
+          LanguageService.instance.currentLanguage,
+        ).selectDateRange,
         style: const TextStyle(
           fontFamily: 'Literata',
           fontWeight: FontWeight.w700,
@@ -2331,7 +2494,9 @@ class _DateRangePickerDialogState extends State<_DateRangePickerDialog> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          AppLocalizations(LanguageService.instance.currentLanguage).startDate,
+                          AppLocalizations(
+                            LanguageService.instance.currentLanguage,
+                          ).startDate,
                           style: TextStyle(
                             fontFamily: 'Literata',
                             fontSize: 12,
@@ -2370,7 +2535,9 @@ class _DateRangePickerDialogState extends State<_DateRangePickerDialog> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          AppLocalizations(LanguageService.instance.currentLanguage).endDate,
+                          AppLocalizations(
+                            LanguageService.instance.currentLanguage,
+                          ).endDate,
                           style: TextStyle(
                             fontFamily: 'Literata',
                             fontSize: 12,
@@ -2439,15 +2606,13 @@ class _BillDialogResult {
 class _BillDetailsDialog extends StatefulWidget {
   final Bill bill;
 
-  const _BillDetailsDialog({
-    required this.bill,
-  });
+  const _BillDetailsDialog({required this.bill});
 
   @override
   State<_BillDetailsDialog> createState() => _BillDetailsDialogState();
 }
 
-class _BillDetailsDialogState extends State<_BillDetailsDialog> 
+class _BillDetailsDialogState extends State<_BillDetailsDialog>
     with SingleTickerProviderStateMixin {
   late Bill _bill;
   bool _includeReturnsInPrint = true;
@@ -2464,19 +2629,20 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
     super.initState();
     _bill = widget.bill;
     _localizations = AppLocalizations(LanguageService.instance.currentLanguage);
-    
+
     _animController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 400),
     );
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _animController, curve: Curves.easeOut),
-    );
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _animController, curve: Curves.easeOut));
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0, 0.05),
       end: Offset.zero,
     ).animate(CurvedAnimation(parent: _animController, curve: Curves.easeOut));
-    
+
     _animController.forward();
   }
 
@@ -2497,12 +2663,17 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
     if (result == true && mounted) {
       // Don't update local state - let the list page refresh from data source
       // which will correctly reflect partial vs full return status
-      Navigator.pop(context, const _BillDialogResult(action: _BillDialogAction.billReturned));
+      Navigator.pop(
+        context,
+        const _BillDialogResult(action: _BillDialogAction.billReturned),
+      );
     }
   }
 
   PrintBillData _createPrintData() {
-    final double? totalDueAmount = _bill.pendingAmount > 0 ? _bill.pendingAmount : null;
+    final double? totalDueAmount = _bill.pendingAmount > 0
+        ? _bill.pendingAmount
+        : null;
 
     if (_includeReturnsInPrint) {
       // Include return data as-is from stored bill items
@@ -2510,17 +2681,21 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
     } else {
       // Zero out return quantities for printing without returns
       final cleanBill = _bill.copyWith(
-        items: _bill.items.map((item) => BillItem(
-          id: item.id,
-          billId: item.billId,
-          productId: item.productId,
-          productName: item.productName,
-          purchasePrice: item.purchasePrice,
-          sellingPrice: item.sellingPrice,
-          quantity: item.quantity,
-          subtotal: item.subtotal,
-          returnedQuantity: 0,
-        )).toList(),
+        items: _bill.items
+            .map(
+              (item) => BillItem(
+                id: item.id,
+                billId: item.billId,
+                productId: item.productId,
+                productName: item.productName,
+                purchasePrice: item.purchasePrice,
+                sellingPrice: item.sellingPrice,
+                quantity: item.quantity,
+                subtotal: item.subtotal,
+                returnedQuantity: 0,
+              ),
+            )
+            .toList(),
       );
       return PrintBillData.fromBill(cleanBill, totalDueAmount: totalDueAmount);
     }
@@ -2528,7 +2703,8 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
 
   /// Calculated totals for display
   double get _returnDeduction => _bill.totalReturnedAmount;
-  double get _finalPayable => (_bill.finalAmount - _returnDeduction).clamp(0.0, double.infinity);
+  double get _finalPayable =>
+      (_bill.finalAmount - _returnDeduction).clamp(0.0, double.infinity);
   bool get _isFullyReturned => _bill.isFullyReturned;
 
   @override
@@ -2555,8 +2731,11 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
                     color: Colors.white.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(Icons.arrow_back_ios_new_rounded, 
-                    color: Colors.white, size: 20),
+                  child: const Icon(
+                    Icons.arrow_back_ios_new_rounded,
+                    color: Colors.white,
+                    size: 20,
+                  ),
                 ),
               ),
             ),
@@ -2568,8 +2747,11 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
                     color: Colors.white.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(Icons.receipt_long_rounded, 
-                    color: Colors.white, size: 20),
+                  child: const Icon(
+                    Icons.receipt_long_rounded,
+                    color: Colors.white,
+                    size: 20,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -2617,7 +2799,10 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
                       children: [
                         if (_bill.hasAnyReturns)
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 6,
+                            ),
                             decoration: BoxDecoration(
                               color: _isFullyReturned
                                   ? Colors.red.withValues(alpha: 0.2)
@@ -2635,16 +2820,22 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
                                 Icon(
                                   Icons.assignment_return_rounded,
                                   size: 14,
-                                  color: _isFullyReturned ? Colors.red[200] : Colors.orange[200],
+                                  color: _isFullyReturned
+                                      ? Colors.red[200]
+                                      : Colors.orange[200],
                                 ),
                                 const SizedBox(width: 4),
                                 Text(
-                                  _isFullyReturned ? _localizations.fullyReturned : _localizations.partialReturn,
+                                  _isFullyReturned
+                                      ? _localizations.fullyReturned
+                                      : _localizations.partialReturn,
                                   style: TextStyle(
                                     fontFamily: 'Literata',
                                     fontSize: 11,
                                     fontWeight: FontWeight.w600,
-                                    color: _isFullyReturned ? Colors.red[200] : Colors.orange[200],
+                                    color: _isFullyReturned
+                                        ? Colors.red[200]
+                                        : Colors.orange[200],
                                   ),
                                 ),
                               ],
@@ -2657,7 +2848,7 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
               ),
             ),
           ),
-          
+
           // ══════════ Content ══════════
           SliverToBoxAdapter(
             child: FadeTransition(
@@ -2704,7 +2895,10 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
                       const SizedBox(height: 20),
 
                       // ══════════ Items Section ══════════
-                      _buildSectionHeader(_localizations.soldItems, '${_bill.items.length} ${_localizations.items}'),
+                      _buildSectionHeader(
+                        _localizations.soldItems,
+                        '${_bill.items.length} ${_localizations.items}',
+                      ),
                       const SizedBox(height: 12),
                       _buildItemsCard(),
                       const SizedBox(height: 20),
@@ -2861,7 +3055,9 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
               color: const Color(0xFF1B4D3E).withValues(alpha: 0.05),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(16),
+              ),
             ),
             child: Row(
               children: [
@@ -2924,7 +3120,8 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             itemCount: _bill.items.length,
-            separatorBuilder: (_, __) => Divider(height: 1, color: Colors.grey[100]),
+            separatorBuilder: (_, _) =>
+                Divider(height: 1, color: Colors.grey[100]),
             itemBuilder: (context, index) => _buildItemRow(_bill.items[index]),
           ),
         ],
@@ -3042,7 +3239,9 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
                     decoration: BoxDecoration(
                       color: Colors.orange.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.orange.withValues(alpha: 0.2)),
+                      border: Border.all(
+                        color: Colors.orange.withValues(alpha: 0.2),
+                      ),
                     ),
                     child: Column(
                       children: [
@@ -3052,7 +3251,10 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
                           valueColor: Colors.orange,
                         ),
                         const SizedBox(height: 8),
-                        Container(height: 1, color: Colors.orange.withValues(alpha: 0.2)),
+                        Container(
+                          height: 1,
+                          color: Colors.orange.withValues(alpha: 0.2),
+                        ),
                         const SizedBox(height: 8),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -3063,16 +3265,22 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
                                 fontFamily: 'Literata',
                                 fontSize: 14,
                                 fontWeight: FontWeight.w700,
-                                color: _isFullyReturned ? Colors.red : const Color(0xFF2D3436),
+                                color: _isFullyReturned
+                                    ? Colors.red
+                                    : const Color(0xFF2D3436),
                               ),
                             ),
                             Text(
-                              _isFullyReturned ? '₹0.00' : '₹${_finalPayable.toStringAsFixed(2)}',
+                              _isFullyReturned
+                                  ? '₹0.00'
+                                  : '₹${_finalPayable.toStringAsFixed(2)}',
                               style: TextStyle(
                                 fontFamily: 'Literata',
                                 fontSize: 18,
                                 fontWeight: FontWeight.w800,
-                                color: _isFullyReturned ? Colors.red : const Color(0xFF1B4D3E),
+                                color: _isFullyReturned
+                                    ? Colors.red
+                                    : const Color(0xFF1B4D3E),
                               ),
                             ),
                           ],
@@ -3080,7 +3288,10 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
                         if (_isFullyReturned) ...[
                           const SizedBox(height: 8),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
                             decoration: BoxDecoration(
                               color: Colors.red.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(8),
@@ -3089,7 +3300,11 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
                               mainAxisAlignment: MainAxisAlignment.center,
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(Icons.info_outline, size: 14, color: Colors.red[700]),
+                                Icon(
+                                  Icons.info_outline,
+                                  size: 14,
+                                  color: Colors.red[700],
+                                ),
                                 const SizedBox(width: 6),
                                 Text(
                                   _localizations.statusFullyReturned,
@@ -3139,7 +3354,9 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
                 gradient: LinearGradient(
                   colors: [Color(0xFF1B4D3E), Color(0xFF2E7D5B)],
                 ),
-                borderRadius: BorderRadius.vertical(bottom: Radius.circular(16)),
+                borderRadius: BorderRadius.vertical(
+                  bottom: Radius.circular(16),
+                ),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -3170,7 +3387,9 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
     );
   }
 
-  Widget _buildSummaryRow(String label, String value, {
+  Widget _buildSummaryRow(
+    String label,
+    String value, {
     Color? valueColor,
     bool isBold = false,
     double valueSize = 14,
@@ -3223,8 +3442,11 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
               color: Colors.orange.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(Icons.assignment_return_rounded, 
-              color: Colors.orange[700], size: 20),
+            child: Icon(
+              Icons.assignment_return_rounded,
+              color: Colors.orange[700],
+              size: 20,
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -3243,7 +3465,7 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
             child: Switch(
               value: _includeReturnsInPrint,
               onChanged: (v) => setState(() => _includeReturnsInPrint = v),
-              activeColor: Colors.orange,
+              activeThumbColor: Colors.orange,
               activeTrackColor: Colors.orange.withValues(alpha: 0.3),
               inactiveThumbColor: Colors.grey[400],
               inactiveTrackColor: Colors.grey.withValues(alpha: 0.3),
@@ -3255,65 +3477,71 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
   }
 
   static bool _globalPdfGenerationInProgress = false;
-  
+
   Future<void> _showPdfPreview() async {
     // Prevent multiple simultaneous PDF generations globally
     if (_globalPdfGenerationInProgress || _isGeneratingPdf) {
-      debugPrint('[BillDetailsDialog] PDF generation already in progress, ignoring request');
+      debugPrint(
+        '[BillDetailsDialog] PDF generation already in progress, ignoring request',
+      );
       return;
     }
-    
-    debugPrint('[BillDetailsDialog] Starting PDF preview for bill: ${_bill.billNumber}');
+
+    debugPrint(
+      '[BillDetailsDialog] Starting PDF preview for bill: ${_bill.billNumber}',
+    );
     _globalPdfGenerationInProgress = true;
     setState(() => _isGeneratingPdf = true);
-    
+
     try {
       debugPrint('[BillDetailsDialog] Creating print data...');
       final printData = _createPrintData();
-      
+
       debugPrint('[BillDetailsDialog] Fetching shop details...');
       final shop = await _shopRepository.getShopDetails().timeout(
         const Duration(seconds: 10),
         onTimeout: () {
-          debugPrint('[BillDetailsDialog] Shop details timeout, using empty shop');
+          debugPrint(
+            '[BillDetailsDialog] Shop details timeout, using empty shop',
+          );
           return Shop.empty;
         },
       );
       debugPrint('[BillDetailsDialog] Got shop: ${shop.shopName}');
-      
+
       debugPrint('[BillDetailsDialog] Generating PDF file...');
-      final file = await _pdfService.savePdfToFile(
-        billData: printData,
-        shopDetails: shop,
-      ).timeout(
-        const Duration(seconds: 90),
-        onTimeout: () => throw Exception('PDF generation timed out after 90 seconds'),
-      );
-      
+      final file = await _pdfService
+          .savePdfToFile(billData: printData, shopDetails: shop)
+          .timeout(
+            const Duration(seconds: 90),
+            onTimeout: () =>
+                throw Exception('PDF generation timed out after 90 seconds'),
+          );
+
       // Validate file creation
       if (!file.existsSync()) {
         throw Exception('PDF file was not created successfully');
       }
-      
+
       final fileSize = file.lengthSync();
       if (fileSize == 0) {
         throw Exception('PDF file is empty');
       }
-      
+
       debugPrint('[BillDetailsDialog] PDF saved to: ${file.path}');
-      debugPrint('[BillDetailsDialog] File size: ${fileSize} bytes');
-      
+      debugPrint('[BillDetailsDialog] File size: $fileSize bytes');
+
       if (!mounted) {
         debugPrint('[BillDetailsDialog] Widget not mounted, returning');
         return;
       }
-      
+
       // Reset state before navigation
       setState(() => _isGeneratingPdf = false);
-      
+
       // Small delay to ensure state is updated
       await Future.delayed(const Duration(milliseconds: 100));
-      
+
       debugPrint('[BillDetailsDialog] Navigating to FilePreviewPage...');
       await Navigator.push(
         context,
@@ -3328,11 +3556,10 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
         ),
       );
       debugPrint('[BillDetailsDialog] Returned from FilePreviewPage');
-      
     } catch (e, stack) {
       debugPrint('[BillDetailsDialog] ERROR generating PDF: $e');
       debugPrint('[BillDetailsDialog] Stack trace: $stack');
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -3359,7 +3586,9 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
       children: [
         // Preview Bill Button (Primary)
         _buildPremiumButton(
-          icon: _isGeneratingPdf ? Icons.hourglass_empty_rounded : Icons.preview_rounded,
+          icon: _isGeneratingPdf
+              ? Icons.hourglass_empty_rounded
+              : Icons.preview_rounded,
           label: _isGeneratingPdf ? 'Generating...' : 'Preview Bill',
           isPrimary: true,
           onTap: _isGeneratingPdf ? () {} : _showPdfPreview,
@@ -3392,9 +3621,11 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
               : null,
           color: isPrimary ? null : Colors.white,
           borderRadius: BorderRadius.circular(14),
-          border: isPrimary 
-              ? null 
-              : Border.all(color: const Color(0xFF1B4D3E).withValues(alpha: 0.3)),
+          border: isPrimary
+              ? null
+              : Border.all(
+                  color: const Color(0xFF1B4D3E).withValues(alpha: 0.3),
+                ),
           boxShadow: isPrimary
               ? [
                   BoxShadow(
@@ -3441,7 +3672,7 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      color: hasReturn 
+      color: hasReturn
           ? Colors.orange.withValues(alpha: 0.03)
           : Colors.transparent,
       child: Column(
@@ -3461,11 +3692,11 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
                         fontFamily: 'Literata',
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
-                        color: isFullReturn 
-                            ? Colors.grey[400] 
+                        color: isFullReturn
+                            ? Colors.grey[400]
                             : const Color(0xFF2D3436),
-                        decoration: isFullReturn 
-                            ? TextDecoration.lineThrough 
+                        decoration: isFullReturn
+                            ? TextDecoration.lineThrough
                             : null,
                         decorationColor: Colors.orange,
                         decorationThickness: 2,
@@ -3476,8 +3707,11 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
                         padding: const EdgeInsets.only(top: 2),
                         child: Row(
                           children: [
-                            Icon(Icons.assignment_return_rounded, 
-                              size: 11, color: Colors.orange[600]),
+                            Icon(
+                              Icons.assignment_return_rounded,
+                              size: 11,
+                              color: Colors.orange[600],
+                            ),
                             const SizedBox(width: 3),
                             Text(
                               '${item.returnedQuantity} returned',
@@ -3504,8 +3738,8 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
                     color: isFullReturn ? Colors.grey[400] : Colors.grey[700],
-                    decoration: isFullReturn 
-                        ? TextDecoration.lineThrough 
+                    decoration: isFullReturn
+                        ? TextDecoration.lineThrough
                         : null,
                   ),
                 ),
@@ -3531,11 +3765,11 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
                     fontFamily: 'Literata',
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: isFullReturn 
-                        ? Colors.grey[400] 
+                    color: isFullReturn
+                        ? Colors.grey[400]
                         : const Color(0xFF1B4D3E),
-                    decoration: isFullReturn 
-                        ? TextDecoration.lineThrough 
+                    decoration: isFullReturn
+                        ? TextDecoration.lineThrough
                         : null,
                     decorationColor: Colors.orange,
                     decorationThickness: 2,
@@ -3557,7 +3791,10 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: Colors.orange.withValues(alpha: 0.5), width: 1.5),
+          border: Border.all(
+            color: Colors.orange.withValues(alpha: 0.5),
+            width: 1.5,
+          ),
           boxShadow: [
             BoxShadow(
               color: Colors.orange.withValues(alpha: 0.15),
@@ -3575,8 +3812,11 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
                 color: Colors.orange.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(Icons.assignment_return_rounded, 
-                color: Colors.orange[700], size: 20),
+              child: Icon(
+                Icons.assignment_return_rounded,
+                color: Colors.orange[700],
+                size: 20,
+              ),
             ),
             const SizedBox(width: 12),
             Text(
@@ -3589,8 +3829,11 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
               ),
             ),
             const SizedBox(width: 8),
-            Icon(Icons.arrow_forward_ios_rounded, 
-              color: Colors.orange[400], size: 16),
+            Icon(
+              Icons.arrow_forward_ios_rounded,
+              color: Colors.orange[400],
+              size: 16,
+            ),
           ],
         ),
       ),
@@ -3621,8 +3864,11 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
               color: Colors.orange.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(Icons.assignment_return_rounded, 
-              color: Colors.orange[700], size: 22),
+            child: Icon(
+              Icons.assignment_return_rounded,
+              color: Colors.orange[700],
+              size: 22,
+            ),
           ),
           const SizedBox(width: 14),
           Expanded(

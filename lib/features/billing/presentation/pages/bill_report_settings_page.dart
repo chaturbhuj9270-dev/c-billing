@@ -28,7 +28,7 @@ class _BillReportSettingsPageState extends State<BillReportSettingsPage>
       begin: 0.0,
       end: 1.0,
     ).animate(CurvedAnimation(parent: _animController, curve: Curves.easeOut));
-    
+
     _loadColumns();
   }
 
@@ -48,7 +48,10 @@ class _BillReportSettingsPageState extends State<BillReportSettingsPage>
   }
 
   Future<void> _toggleColumn(String columnId, bool isVisible) async {
-    await BillReportSettingsService.instance.setColumnVisibility(columnId, isVisible);
+    await BillReportSettingsService.instance.setColumnVisibility(
+      columnId,
+      isVisible,
+    );
     setState(() {
       final index = _columns.indexWhere((c) => c.id == columnId);
       if (index != -1) {
@@ -86,7 +89,9 @@ class _BillReportSettingsPageState extends State<BillReportSettingsPage>
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF1B4D3E),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
             child: const Text(
               'Reset',
@@ -109,7 +114,9 @@ class _BillReportSettingsPageState extends State<BillReportSettingsPage>
             ),
             backgroundColor: const Color(0xFF1B4D3E),
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
           ),
         );
       }
@@ -136,7 +143,7 @@ class _BillReportSettingsPageState extends State<BillReportSettingsPage>
                     onReset: _resetToDefaults,
                   ),
                 ),
-                
+
                 // Main Content
                 SliverToBoxAdapter(
                   child: FadeTransition(
@@ -149,24 +156,34 @@ class _BillReportSettingsPageState extends State<BillReportSettingsPage>
                           // Summary card
                           _buildSummaryCard(),
                           const SizedBox(height: 24),
-                          
+
                           // Product Info Columns
-                          _buildSectionTitle('Product Information', Icons.inventory_2_rounded),
+                          _buildSectionTitle(
+                            'Product Information',
+                            Icons.inventory_2_rounded,
+                          ),
                           const SizedBox(height: 12),
-                          ..._columns.where((c) => _isProductInfoColumn(c.id)).map((column) => _buildColumnTile(column)),
-                          
+                          ..._columns
+                              .where((c) => _isProductInfoColumn(c.id))
+                              .map((column) => _buildColumnTile(column)),
+
                           const SizedBox(height: 24),
-                          
+
                           // Pricing Columns
-                          _buildSectionTitle('Pricing & Amount', Icons.currency_rupee_rounded),
+                          _buildSectionTitle(
+                            'Pricing & Amount',
+                            Icons.currency_rupee_rounded,
+                          ),
                           const SizedBox(height: 12),
-                          ..._columns.where((c) => _isPricingColumn(c.id)).map((column) => _buildColumnTile(column)),
-                          
+                          ..._columns
+                              .where((c) => _isPricingColumn(c.id))
+                              .map((column) => _buildColumnTile(column)),
+
                           const SizedBox(height: 24),
-                          
+
                           // Info Card
                           _buildInfoCard(),
-                          
+
                           const SizedBox(height: 40),
                         ],
                       ),
@@ -179,7 +196,14 @@ class _BillReportSettingsPageState extends State<BillReportSettingsPage>
   }
 
   bool _isProductInfoColumn(String id) {
-    return ['sr_no', 'product_name', 'hsn_code', 'company', 'quantity', 'unit'].contains(id);
+    return [
+      'sr_no',
+      'product_name',
+      'hsn_code',
+      'company',
+      'quantity',
+      'unit',
+    ].contains(id);
   }
 
   bool _isPricingColumn(String id) {
@@ -188,7 +212,7 @@ class _BillReportSettingsPageState extends State<BillReportSettingsPage>
 
   Widget _buildSummaryCard() {
     final visibleCount = _columns.where((c) => c.isVisible).length;
-    
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -290,7 +314,7 @@ class _BillReportSettingsPageState extends State<BillReportSettingsPage>
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: column.isVisible 
+          color: column.isVisible
               ? const Color(0xFF1B4D3E).withOpacity(0.3)
               : Colors.grey[200]!,
           width: column.isVisible ? 1.5 : 1,
@@ -330,7 +354,9 @@ class _BillReportSettingsPageState extends State<BillReportSettingsPage>
           ),
           child: Icon(
             _getColumnIcon(column.id),
-            color: column.isVisible ? const Color(0xFF1B4D3E) : Colors.grey[400],
+            color: column.isVisible
+                ? const Color(0xFF1B4D3E)
+                : Colors.grey[400],
             size: 22,
           ),
         ),
@@ -356,7 +382,7 @@ class _BillReportSettingsPageState extends State<BillReportSettingsPage>
           child: Switch(
             value: column.isVisible,
             onChanged: (value) => _toggleColumn(column.id, value),
-            activeColor: Colors.white,
+            activeThumbColor: Colors.white,
             activeTrackColor: const Color(0xFF1B4D3E),
             inactiveThumbColor: Colors.white,
             inactiveTrackColor: Colors.grey[300],

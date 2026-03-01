@@ -56,7 +56,7 @@ class FifoBillingResult {
 /// Ensures accurate COGS calculation by tracking which batches are consumed
 class FifoBillingService {
   static FifoBillingService? _instance;
-  
+
   final FifoInventoryService _fifoService;
   final BillOfflineController _billController;
   // ignore: unused_field
@@ -90,16 +90,22 @@ class FifoBillingService {
   /// Returns map of productId -> error message for products with insufficient stock
   Future<Map<String, String>> validateStock(List<BillItem> items) async {
     final errors = <String, String>{};
-    
+
     for (final item in items) {
-      final availableStock = await _fifoService.getAvailableStock(item.productId);
-      
-      if (availableStock < item.quantity) {
-        errors[item.productId] = 
-          '${item.productName}: Insufficient stock. Available: $availableStock, Requested: ${item.quantity}';
+      final availableStock = await _fifoService.getAvailableStock(
+        item.productId,
+      );
+
+      // Use rounded quantity for stock comparison since stock is integer-based
+      if (availableStock < item.quantityInt) {
+        final displayQty = item.quantity == item.quantity.roundToDouble()
+            ? item.quantity.toInt().toString()
+            : item.quantity.toStringAsFixed(2);
+        errors[item.productId] =
+            '${item.productName}: Insufficient stock. Available: $availableStock, Requested: $displayQty';
       }
     }
-    
+
     return errors;
   }
 
@@ -135,10 +141,13 @@ class FifoBillingService {
     }
 
     try {
-      // Calculate totals
-      final totalQuantity = items.fold(0, (sum, item) => sum + item.quantity);
+      // Calculate totals (use rounded quantity for display total)
+      final totalQuantity = items.fold(
+        0,
+        (sum, item) => sum + item.quantityInt,
+      );
       final totalAmount = items.fold(0.0, (sum, item) => sum + item.subtotal);
-      
+
       // Apply discount
       double finalDiscount = discountAmount;
       if (discountPercent > 0 && discountAmount == 0) {
@@ -149,7 +158,7 @@ class FifoBillingService {
       // Determine payment status
       final actualPaidAmount = paidAmount ?? finalAmount;
       final pendingAmount = finalAmount - actualPaidAmount;
-      
+
       BillPaymentStatus paymentStatus;
       if (pendingAmount <= 0) {
         paymentStatus = BillPaymentStatus.paid;
@@ -160,16 +169,23 @@ class FifoBillingService {
       }
 
       // Create bill items with embedded format
-      final billItemsEmbedded = items.map((item) => BillItemEmbedded(
-        itemId: item.id.isEmpty ? 'item_${DateTime.now().millisecondsSinceEpoch}_${item.productId}' : item.id,
-        productId: item.productId,
-        productName: item.productName,
-        purchasePrice: item.purchasePrice, // Will be updated with actual COGS
-        sellingPrice: item.sellingPrice,
-        quantity: item.quantity,
-        subtotal: item.subtotal,
-        returnedQuantity: 0,
-      )).toList();
+      final billItemsEmbedded = items
+          .map(
+            (item) => BillItemEmbedded(
+              itemId: item.id.isEmpty
+                  ? 'item_${DateTime.now().millisecondsSinceEpoch}_${item.productId}'
+                  : item.id,
+              productId: item.productId,
+              productName: item.productName,
+              purchasePrice:
+                  item.purchasePrice, // Will be updated with actual COGS
+              sellingPrice: item.sellingPrice,
+              quantity: item.quantity,
+              subtotal: item.subtotal,
+              returnedQuantity: 0,
+            ),
+          )
+          .toList();
 
       // Create bill locally first
       final bill = await _billController.addBill(
@@ -189,7 +205,7 @@ class FifoBillingService {
       );
 
       final billId = bill.serverId ?? 'local_${bill.id}';
-      
+
       // Process FIFO sales for each item
       final allConsumedBatches = <ConsumedBatchInfo>[];
       double totalCOGS = 0.0;
@@ -199,7 +215,7 @@ class FifoBillingService {
       for (final item in items) {
         final saleResult = await _fifoService.processFifoSale(
           productId: item.productId,
-          quantity: item.quantity,
+          quantity: item.quantityInt, // Round for FIFO stock tracking
           sellingPrice: item.sellingPrice,
           billId: billId,
           notes: 'Bill: $billId',
@@ -207,7 +223,9 @@ class FifoBillingService {
 
         if (!saleResult.success) {
           // This shouldn't happen since we validated stock, but handle it
-          debugPrint('[FifoBilling] Warning: Sale failed for ${item.productName}: ${saleResult.errorMessage}');
+          debugPrint(
+            '[FifoBilling] Warning: Sale failed for ${item.productName}: ${saleResult.errorMessage}',
+          );
           continue;
         }
 
@@ -217,8 +235,10 @@ class FifoBillingService {
         totalProfit += saleResult.totalProfit;
       }
 
-      debugPrint('[FifoBilling] Bill processed: $billId, COGS: $totalCOGS, Revenue: $totalRevenue, Profit: $totalProfit');
-      
+      debugPrint(
+        '[FifoBilling] Bill processed: $billId, COGS: $totalCOGS, Revenue: $totalRevenue, Profit: $totalProfit',
+      );
+
       return FifoBillingResult.success(
         billId: billId,
         totalCOGS: totalCOGS,
@@ -250,11 +270,12 @@ class FifoBillingService {
           quantity: returnItem.quantity,
           costPrice: returnItem.costPrice,
           sellingPrice: returnItem.sellingPrice,
-          returnReferenceId: 'RETURN_${billId}_${DateTime.now().millisecondsSinceEpoch}',
+          returnReferenceId:
+              'RETURN_${billId}_${DateTime.now().millisecondsSinceEpoch}',
           notes: notes,
         );
       }
-      
+
       debugPrint('[FifoBilling] Return processed for bill: $billId');
       return true;
     } catch (e) {
@@ -288,14 +309,16 @@ class FifoBillingService {
       startDate: startDate,
       endDate: endDate,
     );
-    
+
     return {
       'startDate': startDate?.toIso8601String(),
       'endDate': endDate?.toIso8601String(),
       'totalCOGS': totalCOGS,
       'totalRevenue': totalRevenue,
       'totalProfit': totalProfit,
-      'profitMargin': totalRevenue > 0 ? (totalProfit / totalRevenue * 100) : 0.0,
+      'profitMargin': totalRevenue > 0
+          ? (totalProfit / totalRevenue * 100)
+          : 0.0,
     };
   }
 }

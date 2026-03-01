@@ -15,9 +15,9 @@ import '../../../event_order/domain/entities/event_order.dart';
 /// No network calls - all data is from local Isar database
 class DashboardOfflineRepository {
   static DashboardOfflineRepository? _instance;
-  
+
   DashboardOfflineRepository._();
-  
+
   static DashboardOfflineRepository get instance {
     _instance ??= DashboardOfflineRepository._();
     return _instance!;
@@ -34,24 +34,20 @@ class DashboardOfflineRepository {
     // Execute ALL local queries in parallel for maximum speed
     final results = await Future.wait([
       // Counts - instant from Isar
-      CustomerOfflineController.instance.getTotalCount(),       // 0
-      ProductOfflineController.instance.getTotalCount(),        // 1
-      SupplierOfflineController.instance.getTotalCount(),       // 2
-      CompanyOfflineController.instance.getTotalCount(),        // 3
-      BillOfflineController.instance.getTotalCount(),           // 4
-      PurchaseOfflineController.instance.getTotalCount(),       // 5
-      
+      CustomerOfflineController.instance.getTotalCount(), // 0
+      ProductOfflineController.instance.getTotalCount(), // 1
+      SupplierOfflineController.instance.getTotalCount(), // 2
+      CompanyOfflineController.instance.getTotalCount(), // 3
+      BillOfflineController.instance.getTotalCount(), // 4
+      PurchaseOfflineController.instance.getTotalCount(), // 5
       // Sales data for period
-      _getSalesDataForPeriod(startDate, endDate),               // 6
-      
+      _getSalesDataForPeriod(startDate, endDate), // 6
       // Purchase data for period
-      _getPurchaseDataForPeriod(startDate, endDate),            // 7
-      
+      _getPurchaseDataForPeriod(startDate, endDate), // 7
       // Stock data
-      _getStockData(),                                           // 8
-      
+      _getStockData(), // 8
       // Event/Order data for period
-      _getEventOrderDataForPeriod(startDate, endDate),          // 9
+      _getEventOrderDataForPeriod(startDate, endDate), // 9
     ]);
 
     // Extract counts
@@ -156,7 +152,7 @@ class DashboardOfflineRepository {
     for (final bill in bills) {
       // Gross sales = sum of finalAmount (after discounts)
       grossAmount += bill.finalAmount;
-      
+
       // Track pending amounts
       totalPending += bill.pendingAmount;
 
@@ -170,14 +166,15 @@ class DashboardOfflineRepository {
         final qty = item.quantity;
         final returnedQty = item.returnedQuantity;
         final netSoldQty = qty - returnedQty;
-        
-        itemsSold += qty;
-        returnedItems += returnedQty;
-        
+
+        itemsSold += qty.round(); // Round for dashboard display
+        returnedItems += returnedQty.round(); // Round for dashboard display
+
         // Return amount = returnedQty × sellingPrice × (1 - discountRatio)
-        final returnAmount = returnedQty * item.sellingPrice * (1 - discountRatio);
+        final returnAmount =
+            returnedQty * item.sellingPrice * (1 - discountRatio);
         totalReturns += returnAmount;
-        
+
         // Profit from net sold items only
         final netRevenue = netSoldQty * item.sellingPrice * (1 - discountRatio);
         final netCost = netSoldQty * item.purchasePrice;
@@ -201,10 +198,11 @@ class DashboardOfflineRepository {
     DateTime? startDate,
     DateTime? endDate,
   ) async {
-    final purchases = await PurchaseOfflineController.instance.getPurchasesByDateRange(
-      startDate ?? DateTime(2000),
-      endDate ?? DateTime.now().add(const Duration(days: 1)),
-    );
+    final purchases = await PurchaseOfflineController.instance
+        .getPurchasesByDateRange(
+          startDate ?? DateTime(2000),
+          endDate ?? DateTime.now().add(const Duration(days: 1)),
+        );
 
     double totalAmount = 0;
     int totalQty = 0;
@@ -230,7 +228,7 @@ class DashboardOfflineRepository {
 
     for (final product in products) {
       stockValue += product.currentStock * product.purchasePrice;
-      
+
       // Check for low stock (below minimum or below 10 if no minimum set)
       final minStock = product.minStockLevel ?? 10;
       if (product.currentStock > 0 && product.currentStock < minStock) {
@@ -238,10 +236,7 @@ class DashboardOfflineRepository {
       }
     }
 
-    return {
-      'stockValue': stockValue,
-      'lowStockCount': lowStockCount,
-    };
+    return {'stockValue': stockValue, 'lowStockCount': lowStockCount};
   }
 
   /// Get event/order data for the specified period
@@ -250,10 +245,11 @@ class DashboardOfflineRepository {
     DateTime? startDate,
     DateTime? endDate,
   ) async {
-    final orders = await EventOrderOfflineController.instance.getEventOrdersByDateRange(
-      startDate ?? DateTime(2000),
-      endDate ?? DateTime.now().add(const Duration(days: 1)),
-    );
+    final orders = await EventOrderOfflineController.instance
+        .getEventOrdersByDateRange(
+          startDate ?? DateTime(2000),
+          endDate ?? DateTime.now().add(const Duration(days: 1)),
+        );
 
     // Get all products for looking up purchase prices
     final products = await ProductOfflineController.instance.getAllProducts();
@@ -279,17 +275,18 @@ class DashboardOfflineRepository {
     for (final order in orders) {
       // Skip cancelled orders from calculations
       if (order.status == OrderStatus.cancelled.index) continue;
-      
+
       // Skip orders that have been converted to bills (already counted in bill profit)
       if (order.status == OrderStatus.convertedToBill.index) continue;
-      
+
       totalCount++;
       totalAmount += order.totalAmount;
       totalAdvance += order.advanceAmount;
       totalPending += order.remainingAmount;
 
       // Count upcoming events (event date in future)
-      if (order.eventDate.isAfter(now) && order.orderType == OrderType.event.index) {
+      if (order.eventDate.isAfter(now) &&
+          order.orderType == OrderType.event.index) {
         upcomingEvents++;
       }
 
@@ -311,7 +308,7 @@ class DashboardOfflineRepository {
         for (final item in order.items) {
           final productId = item.productId ?? '';
           final purchasePrice = productPriceMap[productId] ?? 0.0;
-          
+
           // Calculate profit: (rate - purchasePrice) * quantity
           // Note: Using subtotal before tax and after discount
           final itemProfit = (item.rate - purchasePrice) * item.quantity;
@@ -332,21 +329,23 @@ class DashboardOfflineRepository {
   }
 
   /// Get top selling products (by net quantity sold - excluding returns)
-  Future<List<Map<String, dynamic>>> getTopSellingProducts({int limit = 5}) async {
+  Future<List<Map<String, dynamic>>> getTopSellingProducts({
+    int limit = 5,
+  }) async {
     final bills = await BillOfflineController.instance.getAllBills();
-    
+
     // Aggregate sales by product (accounting for returns)
     final productSales = <String, Map<String, dynamic>>{};
-    
+
     for (final bill in bills) {
       for (final item in bill.items) {
         final productId = item.productId ?? '';
         if (productId.isEmpty) continue;
-        
+
         // Net sold quantity = quantity - returned quantity
         final netQty = item.quantity - item.returnedQuantity;
         if (netQty <= 0) continue;
-        
+
         if (!productSales.containsKey(productId)) {
           productSales[productId] = {
             'productId': productId,
@@ -356,48 +355,52 @@ class DashboardOfflineRepository {
             'billCount': 0,
           };
         }
-        
-        productSales[productId]!['totalQty'] = 
+
+        productSales[productId]!['totalQty'] =
             (productSales[productId]!['totalQty'] as int) + netQty;
-        productSales[productId]!['totalAmount'] = 
-            (productSales[productId]!['totalAmount'] as double) + 
+        productSales[productId]!['totalAmount'] =
+            (productSales[productId]!['totalAmount'] as double) +
             (netQty * item.sellingPrice);
-        productSales[productId]!['billCount'] = 
+        productSales[productId]!['billCount'] =
             (productSales[productId]!['billCount'] as int) + 1;
       }
     }
-    
+
     // Sort by quantity and take top N
     final sorted = productSales.values.toList()
       ..sort((a, b) => (b['totalQty'] as int).compareTo(a['totalQty'] as int));
-    
+
     return sorted.take(limit).toList();
   }
 
   /// Get low stock products (products below minimum stock level or below 10 if not set)
   /// Uses batch-based stock calculation for accurate real-time stock levels
-  Future<List<Map<String, dynamic>>> getLowStockProducts({int limit = 5}) async {
-    final allProducts = await ProductOfflineController.instance.getAllProducts();
-    final allBatches = await PurchaseBatchOfflineController.instance.getAllBatches(includeConsumed: false);
-    
+  Future<List<Map<String, dynamic>>> getLowStockProducts({
+    int limit = 5,
+  }) async {
+    final allProducts = await ProductOfflineController.instance
+        .getAllProducts();
+    final allBatches = await PurchaseBatchOfflineController.instance
+        .getAllBatches(includeConsumed: false);
+
     // Calculate actual stock from batches for each product
     final Map<String, int> productStockFromBatches = {};
     for (final batch in allBatches) {
       final productId = batch.productId;
-      productStockFromBatches[productId] = 
+      productStockFromBatches[productId] =
           (productStockFromBatches[productId] ?? 0) + batch.quantityRemaining;
     }
-    
+
     // Filter products that are low on stock (using batch-based stock)
     final lowStockProducts = <Map<String, dynamic>>[];
-    
+
     for (final p in allProducts) {
       final productId = p.serverId ?? p.id.toString();
       // Use batch stock if available, otherwise fall back to product's currentStock
       final actualStock = productStockFromBatches[productId] ?? p.currentStock;
-      
+
       if (actualStock <= 0) continue; // Out of stock shown separately
-      
+
       final minStock = p.minStockLevel ?? 10; // Default threshold of 10
       if (actualStock < minStock) {
         lowStockProducts.add({
@@ -409,57 +412,74 @@ class DashboardOfflineRepository {
         });
       }
     }
-    
+
     // Sort by urgency (lowest stock percentage first)
     lowStockProducts.sort((a, b) {
       final aPercent = a['stockPercent'] as double;
       final bPercent = b['stockPercent'] as double;
       return aPercent.compareTo(bPercent);
     });
-    
+
     return lowStockProducts.take(limit).toList();
   }
 
   /// Get customers with pending payments
-  Future<List<Map<String, dynamic>>> getCustomersWithPendingBalance({int limit = 5}) async {
-    final customers = await CustomerOfflineController.instance.getCustomersWithPendingBalance();
-    
-    return customers.take(limit).map((c) => {
-      'id': c.serverId ?? c.id.toString(),
-      'name': c.name,
-      'currentPendingAmount': c.currentPendingAmount,
-      'mobile': c.mobile,
-    }).toList();
+  Future<List<Map<String, dynamic>>> getCustomersWithPendingBalance({
+    int limit = 5,
+  }) async {
+    final customers = await CustomerOfflineController.instance
+        .getCustomersWithPendingBalance();
+
+    return customers
+        .take(limit)
+        .map(
+          (c) => {
+            'id': c.serverId ?? c.id.toString(),
+            'name': c.name,
+            'currentPendingAmount': c.currentPendingAmount,
+            'mobile': c.mobile,
+          },
+        )
+        .toList();
   }
 
   /// Get recent bills with pending amount
-  Future<List<Map<String, dynamic>>> getRecentPendingBills({int limit = 5}) async {
+  Future<List<Map<String, dynamic>>> getRecentPendingBills({
+    int limit = 5,
+  }) async {
     final bills = await BillOfflineController.instance.getPendingBills();
-    
-    return bills.take(limit).map((b) => {
-      'id': b.serverId ?? b.id.toString(),
-      'customerName': b.customerName ?? 'Unknown',
-      'pendingAmount': b.pendingAmount,
-      'billDate': b.billDate.toIso8601String(),
-      'totalAmount': b.finalAmount,
-    }).toList();
+
+    return bills
+        .take(limit)
+        .map(
+          (b) => {
+            'id': b.serverId ?? b.id.toString(),
+            'customerName': b.customerName ?? 'Unknown',
+            'pendingAmount': b.pendingAmount,
+            'billDate': b.billDate.toIso8601String(),
+            'totalAmount': b.finalAmount,
+          },
+        )
+        .toList();
   }
 
   /// Get upcoming payment dues - pending bills that need collection soonest
   /// Returns bills sorted by oldest first (most overdue for collection)
-  Future<List<Map<String, dynamic>>> getUpcomingPaymentDues({int limit = 5}) async {
+  Future<List<Map<String, dynamic>>> getUpcomingPaymentDues({
+    int limit = 5,
+  }) async {
     final pendingBills = await BillOfflineController.instance.getPendingBills();
-    
+
     if (pendingBills.isEmpty) return [];
-    
+
     // Sort by bill date (oldest first - most urgent to collect)
     final sortedBills = List.of(pendingBills)
       ..sort((a, b) => a.billDate.compareTo(b.billDate));
-    
+
     return sortedBills.take(limit).map((b) {
       // Calculate days since bill was created
       final daysSinceBill = DateTime.now().difference(b.billDate).inDays;
-      
+
       return {
         'id': b.serverId ?? b.id.toString(),
         'customerName': b.customerName ?? 'Unknown',
@@ -468,7 +488,8 @@ class DashboardOfflineRepository {
         'totalAmount': b.finalAmount,
         'billDate': b.billDate.toIso8601String(),
         'daysPending': daysSinceBill,
-        'isOverdue': daysSinceBill > 30, // Consider 30 days as overdue threshold
+        'isOverdue':
+            daysSinceBill > 30, // Consider 30 days as overdue threshold
       };
     }).toList();
   }

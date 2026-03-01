@@ -8,12 +8,16 @@ class BillItem {
   final double
   purchasePrice; // Cost price at time of sale for profit calculation
   final double sellingPrice;
-  final int quantity;
+  final double
+  quantity; // Changed to double to support decimal quantities (e.g., 0.5 kg)
   final double subtotal;
-  final int returnedQuantity; // Track how many units have been returned
+  final double
+  returnedQuantity; // Track how many units have been returned (changed to double)
   final double cgstPercent; // Per-product CGST percentage
   final double sgstPercent; // Per-product SGST percentage
   final String? hsnCode; // HSN code for GST compliance
+  final String? unit; // Base unit (kg, ltr, pcs, etc.)
+  final String? sellUnit; // Unit used for sale (kg, gm, ltr, ml, pcs)
 
   BillItem({
     required this.id,
@@ -29,6 +33,8 @@ class BillItem {
     this.cgstPercent = 0.0,
     this.sgstPercent = 0.0,
     this.hsnCode,
+    this.unit,
+    this.sellUnit,
   });
 
   /// CGST amount computed from subtotal
@@ -44,14 +50,38 @@ class BillItem {
   double get itemProfit => (sellingPrice - purchasePrice) * quantity;
 
   /// Get remaining quantity that can still be returned
-  int get remainingQuantity => quantity - returnedQuantity;
+  double get remainingQuantity => quantity - returnedQuantity;
+
+  /// Get quantity as int (for backward compatibility)
+  int get quantityInt => quantity.round();
+
+  /// Get display quantity with appropriate unit conversion
+  /// If sold in gm, shows gm value; if sold in ml, shows ml value
+  String get displayQuantity {
+    if (sellUnit == 'gm' && unit == 'kg') {
+      return '${(quantity * 1000).toStringAsFixed(quantity * 1000 == (quantity * 1000).roundToDouble() ? 0 : 1)} gm';
+    } else if (sellUnit == 'ml' && unit == 'ltr') {
+      return '${(quantity * 1000).toStringAsFixed(quantity * 1000 == (quantity * 1000).roundToDouble() ? 0 : 1)} ml';
+    } else if (unit != null && unit!.isNotEmpty) {
+      return '${quantity == quantity.roundToDouble() ? quantity.toInt() : quantity.toStringAsFixed(2)} ${sellUnit ?? unit}';
+    }
+    return quantity == quantity.roundToDouble()
+        ? quantity.toInt().toString()
+        : quantity.toStringAsFixed(2);
+  }
+
+  /// Get the display unit string
+  String get displayUnit => sellUnit ?? unit ?? '';
 
   /// Check if this item is fully returned
-  bool get isFullyReturned => returnedQuantity >= quantity;
+  bool get isFullyReturned =>
+      returnedQuantity >=
+      quantity - 0.001; // Small tolerance for floating point
 
   /// Check if this item has been partially returned
   bool get isPartiallyReturned =>
-      returnedQuantity > 0 && returnedQuantity < quantity;
+      returnedQuantity > 0.001 &&
+      returnedQuantity < quantity - 0.001; // Small tolerance for floating point
 
   /// Factory constructor to create from JSON (for Firebase)
   factory BillItem.fromJson(Map<String, dynamic> json) {
@@ -64,12 +94,14 @@ class BillItem {
         companyName: json['companyName'] as String?,
         purchasePrice: ((json['purchasePrice'] ?? 0) as num).toDouble(),
         sellingPrice: ((json['sellingPrice'] ?? 0) as num).toDouble(),
-        quantity: (json['quantity'] ?? 0) as int,
+        quantity: ((json['quantity'] ?? 0) as num).toDouble(),
         subtotal: ((json['subtotal'] ?? 0) as num).toDouble(),
-        returnedQuantity: (json['returnedQuantity'] ?? 0) as int,
+        returnedQuantity: ((json['returnedQuantity'] ?? 0) as num).toDouble(),
         cgstPercent: ((json['cgstPercent'] ?? 0) as num).toDouble(),
         sgstPercent: ((json['sgstPercent'] ?? 0) as num).toDouble(),
         hsnCode: json['hsnCode'] as String?,
+        unit: json['unit'] as String?,
+        sellUnit: json['sellUnit'] as String?,
       );
     } catch (e) {
       print('[ERROR] Failed to parse BillItem from JSON: $json');
@@ -105,6 +137,8 @@ class BillItem {
       'cgstPercent': cgstPercent,
       'sgstPercent': sgstPercent,
       'hsnCode': hsnCode,
+      'unit': unit,
+      'sellUnit': sellUnit,
     };
   }
 
@@ -117,12 +151,14 @@ class BillItem {
     String? companyName,
     double? purchasePrice,
     double? sellingPrice,
-    int? quantity,
+    double? quantity,
     double? subtotal,
-    int? returnedQuantity,
+    double? returnedQuantity,
     double? cgstPercent,
     double? sgstPercent,
     String? hsnCode,
+    String? unit,
+    String? sellUnit,
   }) {
     return BillItem(
       id: id ?? this.id,
@@ -138,6 +174,8 @@ class BillItem {
       cgstPercent: cgstPercent ?? this.cgstPercent,
       sgstPercent: sgstPercent ?? this.sgstPercent,
       hsnCode: hsnCode ?? this.hsnCode,
+      unit: unit ?? this.unit,
+      sellUnit: sellUnit ?? this.sellUnit,
     );
   }
 
@@ -150,11 +188,13 @@ class BillItem {
     String? companyName,
     double purchasePrice = 0.0,
     required double sellingPrice,
-    required int quantity,
-    int returnedQuantity = 0,
+    required double quantity,
+    double returnedQuantity = 0,
     double cgstPercent = 0.0,
     double sgstPercent = 0.0,
     String? hsnCode,
+    String? unit,
+    String? sellUnit,
   }) {
     return BillItem(
       id: id,
@@ -170,6 +210,8 @@ class BillItem {
       cgstPercent: cgstPercent,
       sgstPercent: sgstPercent,
       hsnCode: hsnCode,
+      unit: unit,
+      sellUnit: sellUnit,
     );
   }
 

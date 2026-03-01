@@ -15,8 +15,8 @@ class PdfBillService {
   static final PdfBillService _instance = PdfBillService._internal();
   factory PdfBillService() => _instance;
   PdfBillService._internal();
-  
-  static bool _isGenerating = false;
+
+  static final bool _isGenerating = false;
   static final Set<String> _generatingBills = <String>{};
 
   /// Generate a PDF document from bill data (POS receipt format)
@@ -66,11 +66,7 @@ class PdfBillService {
         margin: const pw.EdgeInsets.all(20),
         build: (context) => pw.Align(
           alignment: pw.Alignment.topCenter,
-          child: _buildNormalBillContent(
-            billData,
-            shopDetails,
-            showCustomer,
-          ),
+          child: _buildNormalBillContent(billData, shopDetails, showCustomer),
         ),
       ),
     );
@@ -99,10 +95,11 @@ class PdfBillService {
           // ═══════════════════════════════════════════
           pw.Container(
             width: double.infinity,
-            padding: const pw.EdgeInsets.symmetric(vertical: 10, horizontal: 12),
-            decoration: pw.BoxDecoration(
-              border: pw.Border(bottom: borderSide),
+            padding: const pw.EdgeInsets.symmetric(
+              vertical: 10,
+              horizontal: 12,
             ),
+            decoration: pw.BoxDecoration(border: pw.Border(bottom: borderSide)),
             child: pw.Column(
               children: [
                 pw.Text(
@@ -125,7 +122,8 @@ class PdfBillService {
                   ),
                 ],
                 // Owner name - right aligned
-                if (shopDetails.ownerName != null && shopDetails.ownerName!.isNotEmpty) ...[
+                if (shopDetails.ownerName != null &&
+                    shopDetails.ownerName!.isNotEmpty) ...[
                   pw.SizedBox(height: 2),
                   pw.Align(
                     alignment: pw.Alignment.centerRight,
@@ -148,7 +146,8 @@ class PdfBillService {
                           'Mo. No: ${shopDetails.phone}',
                           style: const pw.TextStyle(fontSize: 9),
                         ),
-                      if (shopDetails.email != null && shopDetails.email!.isNotEmpty)
+                      if (shopDetails.email != null &&
+                          shopDetails.email!.isNotEmpty)
                         pw.Text(
                           shopDetails.email!,
                           style: const pw.TextStyle(fontSize: 9),
@@ -175,9 +174,7 @@ class PdfBillService {
           // CUSTOMER INFO + INVOICE INFO (side by side)
           // ═══════════════════════════════════════════
           pw.Container(
-            decoration: pw.BoxDecoration(
-              border: pw.Border(bottom: borderSide),
-            ),
+            decoration: pw.BoxDecoration(border: pw.Border(bottom: borderSide)),
             child: pw.Row(
               children: [
                 // Left: Customer Details
@@ -202,7 +199,10 @@ class PdfBillService {
                         if (billData.customerPhone != null &&
                             billData.customerPhone!.isNotEmpty) ...[
                           pw.SizedBox(height: 3),
-                          _buildCompactInfoRow('Contact', billData.customerPhone!),
+                          _buildCompactInfoRow(
+                            'Contact',
+                            billData.customerPhone!,
+                          ),
                         ],
                         if ((!showCustomer ||
                                 billData.customerName == null ||
@@ -366,7 +366,10 @@ class PdfBillService {
                       ),
                       if (billData.isTaxInclusive)
                         pw.Container(
-                          padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          padding: const pw.EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
                           child: pw.Text(
                             '* Prices inclusive of GST',
                             style: pw.TextStyle(
@@ -386,7 +389,10 @@ class PdfBillService {
                     ),
                     // Grand Total
                     pw.Container(
-                      padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                      padding: const pw.EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 5,
+                      ),
                       decoration: pw.BoxDecoration(
                         color: PdfColors.grey200,
                         border: pw.Border(bottom: thinBorder),
@@ -441,7 +447,10 @@ class PdfBillService {
           if (billData.totalDueAmount != null && billData.totalDueAmount! > 0)
             pw.Container(
               width: double.infinity,
-              padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              padding: const pw.EdgeInsets.symmetric(
+                horizontal: 10,
+                vertical: 6,
+              ),
               decoration: pw.BoxDecoration(
                 color: PdfColors.orange50,
                 border: pw.Border(top: borderSide),
@@ -474,9 +483,7 @@ class PdfBillService {
           // ═══════════════════════════════════════════
           pw.Container(
             padding: const pw.EdgeInsets.fromLTRB(12, 8, 12, 10),
-            decoration: pw.BoxDecoration(
-              border: pw.Border(top: thinBorder),
-            ),
+            decoration: pw.BoxDecoration(border: pw.Border(top: thinBorder)),
             child: pw.Row(
               mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
               crossAxisAlignment: pw.CrossAxisAlignment.end,
@@ -490,7 +497,10 @@ class PdfBillService {
                       width: 100,
                       decoration: const pw.BoxDecoration(
                         border: pw.Border(
-                          bottom: pw.BorderSide(color: PdfColors.grey500, width: 0.5),
+                          bottom: pw.BorderSide(
+                            color: PdfColors.grey500,
+                            width: 0.5,
+                          ),
                         ),
                       ),
                     ),
@@ -532,16 +542,17 @@ class PdfBillService {
   // ═══════════════════════════════════════════
 
   /// Compact info row (label: value) for customer/invoice section
-  pw.Widget _buildCompactInfoRow(String label, String value, {bool bold = false}) {
+  pw.Widget _buildCompactInfoRow(
+    String label,
+    String value, {
+    bool bold = false,
+  }) {
     return pw.Row(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
         pw.Text(
           '$label: ',
-          style: pw.TextStyle(
-            fontSize: 8,
-            fontWeight: pw.FontWeight.bold,
-          ),
+          style: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold),
         ),
         pw.Expanded(
           child: pw.Text(
@@ -557,22 +568,25 @@ class PdfBillService {
   }
 
   /// Compact table header cell
-  pw.Widget _buildCompactHeaderCell(String text, {pw.TextAlign align = pw.TextAlign.center}) {
+  pw.Widget _buildCompactHeaderCell(
+    String text, {
+    pw.TextAlign align = pw.TextAlign.center,
+  }) {
     return pw.Container(
       padding: const pw.EdgeInsets.symmetric(horizontal: 4, vertical: 4),
       child: pw.Text(
         text,
-        style: pw.TextStyle(
-          fontSize: 8,
-          fontWeight: pw.FontWeight.bold,
-        ),
+        style: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold),
         textAlign: align,
       ),
     );
   }
 
   /// Compact table data cell
-  pw.Widget _buildCompactCell(String text, {pw.TextAlign align = pw.TextAlign.left}) {
+  pw.Widget _buildCompactCell(
+    String text, {
+    pw.TextAlign align = pw.TextAlign.left,
+  }) {
     return pw.Container(
       padding: const pw.EdgeInsets.symmetric(horizontal: 4, vertical: 3),
       child: pw.Text(
@@ -590,32 +604,89 @@ class PdfBillService {
     pw.BorderSide borderSide,
   ) {
     final settings = BillReportSettingsService.instance;
-    
+
     // Define column configurations
     final allColumns = <String, _ColumnConfig>{
-      'sr_no': _ColumnConfig('Sr.', const pw.FixedColumnWidth(28), pw.TextAlign.center),
-      'product_name': _ColumnConfig('Particulars', const pw.FlexColumnWidth(3.5), pw.TextAlign.left),
-      'hsn_code': _ColumnConfig('HSN', const pw.FixedColumnWidth(55), pw.TextAlign.center),
-      'company': _ColumnConfig('Company', const pw.FixedColumnWidth(70), pw.TextAlign.left),
-      'quantity': _ColumnConfig('Qty', const pw.FixedColumnWidth(35), pw.TextAlign.center),
-      'unit': _ColumnConfig('Unit', const pw.FixedColumnWidth(35), pw.TextAlign.center),
-      'rate': _ColumnConfig('Rate', const pw.FixedColumnWidth(55), pw.TextAlign.right),
-      'discount': _ColumnConfig('Disc', const pw.FixedColumnWidth(45), pw.TextAlign.right),
-      'tax': _ColumnConfig('Tax', const pw.FixedColumnWidth(45), pw.TextAlign.right),
-      'amount': _ColumnConfig('Amount', const pw.FixedColumnWidth(65), pw.TextAlign.right),
+      'sr_no': _ColumnConfig(
+        'Sr.',
+        const pw.FixedColumnWidth(28),
+        pw.TextAlign.center,
+      ),
+      'product_name': _ColumnConfig(
+        'Particulars',
+        const pw.FlexColumnWidth(3.5),
+        pw.TextAlign.left,
+      ),
+      'hsn_code': _ColumnConfig(
+        'HSN',
+        const pw.FixedColumnWidth(55),
+        pw.TextAlign.center,
+      ),
+      'company': _ColumnConfig(
+        'Company',
+        const pw.FixedColumnWidth(70),
+        pw.TextAlign.left,
+      ),
+      'quantity': _ColumnConfig(
+        'Qty',
+        const pw.FixedColumnWidth(35),
+        pw.TextAlign.center,
+      ),
+      'unit': _ColumnConfig(
+        'Unit',
+        const pw.FixedColumnWidth(35),
+        pw.TextAlign.center,
+      ),
+      'rate': _ColumnConfig(
+        'Rate',
+        const pw.FixedColumnWidth(55),
+        pw.TextAlign.right,
+      ),
+      'discount': _ColumnConfig(
+        'Disc',
+        const pw.FixedColumnWidth(45),
+        pw.TextAlign.right,
+      ),
+      'tax': _ColumnConfig(
+        'Tax',
+        const pw.FixedColumnWidth(45),
+        pw.TextAlign.right,
+      ),
+      'amount': _ColumnConfig(
+        'Amount',
+        const pw.FixedColumnWidth(65),
+        pw.TextAlign.right,
+      ),
     };
 
     // Get visible columns in order - ensure at least basic columns are shown
     final visibleColumnIds = <String>[];
-    for (final colId in ['sr_no', 'product_name', 'hsn_code', 'company', 'quantity', 'unit', 'rate', 'discount', 'tax', 'amount']) {
+    for (final colId in [
+      'sr_no',
+      'product_name',
+      'hsn_code',
+      'company',
+      'quantity',
+      'unit',
+      'rate',
+      'discount',
+      'tax',
+      'amount',
+    ]) {
       if (settings.isColumnVisible(colId)) {
         visibleColumnIds.add(colId);
       }
     }
-    
+
     // Fallback: if no columns are visible, show default columns
     if (visibleColumnIds.isEmpty) {
-      visibleColumnIds.addAll(['sr_no', 'product_name', 'quantity', 'rate', 'amount']);
+      visibleColumnIds.addAll([
+        'sr_no',
+        'product_name',
+        'quantity',
+        'rate',
+        'amount',
+      ]);
     }
 
     // Build column widths map
@@ -634,11 +705,14 @@ class PdfBillService {
     final itemRows = <pw.TableRow>[];
     for (int index = 0; index < billData.items.length; index++) {
       final item = billData.items[index];
-      
+
       final cells = visibleColumnIds.map((colId) {
         switch (colId) {
           case 'sr_no':
-            return _buildCompactCell('${index + 1}', align: pw.TextAlign.center);
+            return _buildCompactCell(
+              '${index + 1}',
+              align: pw.TextAlign.center,
+            );
           case 'product_name':
             return pw.Padding(
               padding: const pw.EdgeInsets.all(4),
@@ -649,27 +723,49 @@ class PdfBillService {
             );
           case 'hsn_code':
             return _buildCompactCell(
-              (item.hsnCode != null && item.hsnCode!.isNotEmpty) ? item.hsnCode! : '-', 
-              align: pw.TextAlign.center
+              (item.hsnCode != null && item.hsnCode!.isNotEmpty)
+                  ? item.hsnCode!
+                  : '-',
+              align: pw.TextAlign.center,
             );
           case 'company':
             return _buildCompactCell(
-              (item.companyName != null && item.companyName!.isNotEmpty) ? item.companyName! : '-', 
-              align: pw.TextAlign.left
+              (item.companyName != null && item.companyName!.isNotEmpty)
+                  ? item.companyName!
+                  : '-',
+              align: pw.TextAlign.left,
             );
           case 'quantity':
-            return _buildCompactCell('${item.quantity}', align: pw.TextAlign.center);
+            return _buildCompactCell(
+              '${item.quantity}',
+              align: pw.TextAlign.center,
+            );
           case 'unit':
-            return _buildCompactCell('-', align: pw.TextAlign.center); // Unit not available in PrintBillItem
+            return _buildCompactCell(
+              '-',
+              align: pw.TextAlign.center,
+            ); // Unit not available in PrintBillItem
           case 'rate':
-            return _buildCompactCell(item.rate > 0 ? item.rate.toStringAsFixed(2) : '-', align: pw.TextAlign.right);
+            return _buildCompactCell(
+              item.rate > 0 ? item.rate.toStringAsFixed(2) : '-',
+              align: pw.TextAlign.right,
+            );
           case 'discount':
-            return _buildCompactCell('-', align: pw.TextAlign.right); // Discount per item not available
+            return _buildCompactCell(
+              '-',
+              align: pw.TextAlign.right,
+            ); // Discount per item not available
           case 'tax':
             final taxAmt = item.cgstAmount + item.sgstAmount;
-            return _buildCompactCell(taxAmt > 0 ? taxAmt.toStringAsFixed(2) : '-', align: pw.TextAlign.right);
+            return _buildCompactCell(
+              taxAmt > 0 ? taxAmt.toStringAsFixed(2) : '-',
+              align: pw.TextAlign.right,
+            );
           case 'amount':
-            return _buildCompactCell(item.amount > 0 ? item.amount.toStringAsFixed(2) : '-', align: pw.TextAlign.right);
+            return _buildCompactCell(
+              item.amount > 0 ? item.amount.toStringAsFixed(2) : '-',
+              align: pw.TextAlign.right,
+            );
           default:
             return _buildCompactCell('-');
         }
@@ -682,20 +778,37 @@ class PdfBillService {
         final gstCells = visibleColumnIds.map((colId) {
           if (colId == 'product_name') {
             return pw.Padding(
-              padding: const pw.EdgeInsets.only(left: 8, top: 0, bottom: 2, right: 4),
+              padding: const pw.EdgeInsets.only(
+                left: 8,
+                top: 0,
+                bottom: 2,
+                right: 4,
+              ),
               child: pw.Row(
                 children: [
                   if (item.cgstPercent > 0)
                     pw.Text(
                       'CGST(${item.cgstPercent.toStringAsFixed(1)}%): ${item.cgstAmount.toStringAsFixed(2)}',
-                      style: pw.TextStyle(fontSize: 7, color: PdfColors.orange800),
+                      style: pw.TextStyle(
+                        fontSize: 7,
+                        color: PdfColors.orange800,
+                      ),
                     ),
                   if (item.cgstPercent > 0 && item.sgstPercent > 0)
-                    pw.Text('  |  ', style: pw.TextStyle(fontSize: 7, color: PdfColors.grey600)),
+                    pw.Text(
+                      '  |  ',
+                      style: pw.TextStyle(
+                        fontSize: 7,
+                        color: PdfColors.grey600,
+                      ),
+                    ),
                   if (item.sgstPercent > 0)
                     pw.Text(
                       'SGST(${item.sgstPercent.toStringAsFixed(1)}%): ${item.sgstAmount.toStringAsFixed(2)}',
-                      style: pw.TextStyle(fontSize: 7, color: PdfColors.orange800),
+                      style: pw.TextStyle(
+                        fontSize: 7,
+                        color: PdfColors.orange800,
+                      ),
                     ),
                 ],
               ),
@@ -708,10 +821,7 @@ class PdfBillService {
     }
 
     return pw.Table(
-      border: pw.TableBorder(
-        horizontalInside: thinBorder,
-        bottom: borderSide,
-      ),
+      border: pw.TableBorder(horizontalInside: thinBorder, bottom: borderSide),
       columnWidths: columnWidths,
       children: [
         pw.TableRow(
@@ -813,7 +923,8 @@ class PdfBillService {
               // Dotted line between address and owner details
               pw.SizedBox(height: 4),
               // Owner name and contact - right aligned
-              if (shopDetails.ownerName != null && shopDetails.ownerName!.isNotEmpty) ...[
+              if (shopDetails.ownerName != null &&
+                  shopDetails.ownerName!.isNotEmpty) ...[
                 pw.SizedBox(height: 3),
                 pw.Align(
                   alignment: pw.Alignment.centerRight,
@@ -969,7 +1080,8 @@ class PdfBillService {
                           item.name,
                           style: const pw.TextStyle(fontSize: 8),
                         ),
-                        if (item.companyName != null && item.companyName!.isNotEmpty)
+                        if (item.companyName != null &&
+                            item.companyName!.isNotEmpty)
                           pw.Text(
                             item.companyName!,
                             style: pw.TextStyle(
@@ -1057,7 +1169,13 @@ class PdfBillService {
                         ),
                       ),
                     if (item.cgstPercent > 0 && item.sgstPercent > 0)
-                      pw.Text('  |  ', style: pw.TextStyle(fontSize: 7, color: PdfColors.grey600)),
+                      pw.Text(
+                        '  |  ',
+                        style: pw.TextStyle(
+                          fontSize: 7,
+                          color: PdfColors.grey600,
+                        ),
+                      ),
                     if (item.sgstPercent > 0)
                       pw.Text(
                         'SGST(${item.sgstPercent.toStringAsFixed(1)}%): ${item.sgstAmount.toStringAsFixed(2)}',
@@ -1328,24 +1446,26 @@ class PdfBillService {
     required Shop shopDetails,
   }) async {
     final billId = billData.billNumber;
-    
+
     // Prevent concurrent PDF generation for the same bill
     if (_generatingBills.contains(billId)) {
-      debugPrint('[PdfBillService] PDF generation already in progress for bill: $billId');
+      debugPrint(
+        '[PdfBillService] PDF generation already in progress for bill: $billId',
+      );
       throw Exception('PDF generation already in progress for this bill');
     }
-    
+
     _generatingBills.add(billId);
-    
+
     try {
       debugPrint('[PdfBillService] savePdfToFile started for bill: $billId');
-      
+
       // Check bill type setting
       debugPrint('[PdfBillService] Getting SharedPreferences...');
       final prefs = await SharedPreferences.getInstance();
       final billType = prefs.getString('bill_type') ?? 'pos';
       debugPrint('[PdfBillService] Bill type: $billType');
-      
+
       debugPrint('[PdfBillService] Generating PDF document...');
       final pw.Document pdf;
       if (billType == 'normal') {
@@ -1364,39 +1484,44 @@ class PdfBillService {
       debugPrint('[PdfBillService] Saving PDF bytes...');
       final bytes = await pdf.save();
       debugPrint('[PdfBillService] PDF bytes saved: ${bytes.length} bytes');
-      
+
       if (bytes.isEmpty) {
         throw Exception('PDF generation failed: empty bytes');
       }
-      
+
       debugPrint('[PdfBillService] Getting application documents directory...');
       final dir = await getApplicationDocumentsDirectory();
       debugPrint('[PdfBillService] Directory: ${dir.path}');
-      
+
       // Create a unique filename to avoid conflicts
       final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final fileName = 'bill_${billData.billNumber.replaceAll('/', '_')}_$timestamp.pdf';
+      final fileName =
+          'bill_${billData.billNumber.replaceAll('/', '_')}_$timestamp.pdf';
       final file = File('${dir.path}/$fileName');
-      
+
       debugPrint('[PdfBillService] Writing file to: ${file.path}');
       await file.writeAsBytes(bytes, flush: true);
-      
+
       // Verify file was written successfully
       if (!file.existsSync()) {
         throw Exception('Failed to write PDF file to storage');
       }
-      
+
       final actualSize = file.lengthSync();
       if (actualSize == 0) {
         throw Exception('PDF file was written but is empty');
       }
-      
+
       if (actualSize != bytes.length) {
-        debugPrint('[PdfBillService] WARNING: File size mismatch. Expected: ${bytes.length}, Actual: $actualSize');
+        debugPrint(
+          '[PdfBillService] WARNING: File size mismatch. Expected: ${bytes.length}, Actual: $actualSize',
+        );
       }
-      
-      debugPrint('[PdfBillService] File written successfully: $actualSize bytes');
-      
+
+      debugPrint(
+        '[PdfBillService] File written successfully: $actualSize bytes',
+      );
+
       return file;
     } catch (e, stack) {
       debugPrint('[PdfBillService] ERROR in savePdfToFile: $e');
@@ -1413,13 +1538,15 @@ class PdfBillService {
     required Shop shopDetails,
   }) async {
     try {
-      debugPrint('[PdfBillService] Starting shareBillAsPdf for bill: ${billData.billNumber}');
-      
+      debugPrint(
+        '[PdfBillService] Starting shareBillAsPdf for bill: ${billData.billNumber}',
+      );
+
       // Check bill type setting
       final prefs = await SharedPreferences.getInstance();
       final billType = prefs.getString('bill_type') ?? 'pos';
       debugPrint('[PdfBillService] Bill type: $billType');
-      
+
       final pw.Document pdf;
       if (billType == 'normal') {
         pdf = await generateNormalBillPdf(
@@ -1467,7 +1594,7 @@ class PdfBillService {
     // Check bill type setting
     final prefs = await SharedPreferences.getInstance();
     final billType = prefs.getString('bill_type') ?? 'pos';
-    
+
     final pw.Document pdf;
     if (billType == 'normal') {
       pdf = await generateNormalBillPdf(
@@ -1475,10 +1602,7 @@ class PdfBillService {
         shopDetails: shopDetails,
       );
     } else {
-      pdf = await generateBillPdf(
-        billData: billData,
-        shopDetails: shopDetails,
-      );
+      pdf = await generateBillPdf(billData: billData, shopDetails: shopDetails);
     }
 
     await Printing.layoutPdf(
@@ -1495,7 +1619,7 @@ class PdfBillService {
     // Check bill type setting
     final prefs = await SharedPreferences.getInstance();
     final billType = prefs.getString('bill_type') ?? 'pos';
-    
+
     final pw.Document pdf;
     if (billType == 'normal') {
       pdf = await generateNormalBillPdf(
@@ -1503,10 +1627,7 @@ class PdfBillService {
         shopDetails: shopDetails,
       );
     } else {
-      pdf = await generateBillPdf(
-        billData: billData,
-        shopDetails: shopDetails,
-      );
+      pdf = await generateBillPdf(billData: billData, shopDetails: shopDetails);
     }
 
     await Printing.sharePdf(
