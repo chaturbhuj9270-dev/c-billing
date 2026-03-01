@@ -2389,7 +2389,8 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
         return _buildGlassyProductItem(
           rank: index + 1,
           name: item['productName'] ?? item['name'] ?? 'Unknown',
-          quantity: (item['totalQty'] ?? item['quantity'] ?? 0) as int,
+          quantity: ((item['totalQty'] ?? item['quantity'] ?? 0) as num)
+              .toDouble(),
           revenue: ((item['totalAmount'] ?? item['revenue'] ?? 0) as num)
               .toDouble(),
           colors: colors,
@@ -2666,7 +2667,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
   Widget _buildGlassyProductItem({
     required int rank,
     required String name,
-    required int quantity,
+    required double quantity,
     required double revenue,
     required List<Color> colors,
   }) {
@@ -2727,7 +2728,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      '$quantity sold',
+                      '${quantity == quantity.truncate() ? quantity.toInt() : quantity.toStringAsFixed(1)} sold',
                       style: TextStyle(
                         fontSize: 11,
                         color: Colors.white.withValues(alpha: 0.6),

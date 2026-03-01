@@ -350,14 +350,14 @@ class DashboardOfflineRepository {
           productSales[productId] = {
             'productId': productId,
             'productName': item.productName ?? 'Unknown',
-            'totalQty': 0,
+            'totalQty': 0.0,
             'totalAmount': 0.0,
             'billCount': 0,
           };
         }
 
         productSales[productId]!['totalQty'] =
-            (productSales[productId]!['totalQty'] as int) + netQty;
+            (productSales[productId]!['totalQty'] as double) + netQty;
         productSales[productId]!['totalAmount'] =
             (productSales[productId]!['totalAmount'] as double) +
             (netQty * item.sellingPrice);
@@ -368,7 +368,9 @@ class DashboardOfflineRepository {
 
     // Sort by quantity and take top N
     final sorted = productSales.values.toList()
-      ..sort((a, b) => (b['totalQty'] as int).compareTo(a['totalQty'] as int));
+      ..sort(
+        (a, b) => (b['totalQty'] as double).compareTo(a['totalQty'] as double),
+      );
 
     return sorted.take(limit).toList();
   }
