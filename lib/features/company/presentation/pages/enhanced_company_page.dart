@@ -76,20 +76,14 @@ class _EnhancedCompanyPageState extends State<EnhancedCompanyPage>
       vsync: this,
       duration: const Duration(milliseconds: 600),
     );
-    _offsetAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.05),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _animController,
-      curve: Curves.easeOutCubic,
-    ));
+    _offsetAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.05), end: Offset.zero).animate(
+          CurvedAnimation(parent: _animController, curve: Curves.easeOutCubic),
+        );
     _opacityAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _animController,
-      curve: Curves.easeOut,
-    ));
+    ).animate(CurvedAnimation(parent: _animController, curve: Curves.easeOut));
 
     _checkUserAuthentication();
     _setupIsarStream();
@@ -214,20 +208,22 @@ class _EnhancedCompanyPageState extends State<EnhancedCompanyPage>
         .orderBy('createdAt', descending: true)
         .snapshots()
         .listen(
-      (snapshot) async {
-        if (!mounted || _isNavigatingAway) return;
+          (snapshot) async {
+            if (!mounted || _isNavigatingAway) return;
 
-        final freshCompanies = snapshot.docs
-            .map((doc) => {'id': doc.id, ...doc.data()})
-            .toList();
+            final freshCompanies = snapshot.docs
+                .map((doc) => {'id': doc.id, ...doc.data()})
+                .toList();
 
-        await CompanyOfflineController.instance.importFromServer(freshCompanies);
-        _cacheDataSource.saveCompanies(freshCompanies);
-      },
-      onError: (e) {
-        debugPrint('[EnhancedCompany] Firestore stream error: $e');
-      },
-    );
+            await CompanyOfflineController.instance.importFromServer(
+              freshCompanies,
+            );
+            _cacheDataSource.saveCompanies(freshCompanies);
+          },
+          onError: (e) {
+            debugPrint('[EnhancedCompany] Firestore stream error: $e');
+          },
+        );
   }
 
   // ━━━ CRUD: Add/Edit/Delete ━━━
@@ -364,14 +360,16 @@ class _EnhancedCompanyPageState extends State<EnhancedCompanyPage>
                       isRequired: true,
                     ),
                     const SizedBox(height: 16),
-                    _buildInputField(
-                      label: _localizations.companyCode,
-                      controller: _companyCodeController,
-                      icon: Icons.qr_code_rounded,
-                      isRequired: true,
-                      isReadOnly: !_isEditing,
-                    ),
-                    const SizedBox(height: 16),
+                    // Only show code field when editing
+                    if (_isEditing) ...[
+                      _buildInputField(
+                        label: _localizations.companyCode,
+                        controller: _companyCodeController,
+                        icon: Icons.qr_code_rounded,
+                        isRequired: true,
+                      ),
+                      const SizedBox(height: 16),
+                    ],
                     _buildInputField(
                       label: _localizations.contactNumber,
                       controller: _contactController,
@@ -558,7 +556,9 @@ class _EnhancedCompanyPageState extends State<EnhancedCompanyPage>
       if (_isEditing) {
         int? localId = _editingCompanyLocalId;
         if (localId == null && _editingCompanyId != null) {
-          final existing = await offlineCtrl.getCompanyByServerId(_editingCompanyId!);
+          final existing = await offlineCtrl.getCompanyByServerId(
+            _editingCompanyId!,
+          );
           localId = existing?.id;
         }
 
@@ -573,7 +573,9 @@ class _EnhancedCompanyPageState extends State<EnhancedCompanyPage>
         } else {
           throw Exception('Company not found');
         }
-        DashboardRefreshService.instance.notifyDataChanged(DataChangeType.company);
+        DashboardRefreshService.instance.notifyDataChanged(
+          DataChangeType.company,
+        );
       } else {
         await offlineCtrl.addCompany(
           companyName: _companyNameController.text.trim(),
@@ -581,7 +583,9 @@ class _EnhancedCompanyPageState extends State<EnhancedCompanyPage>
           contact: _contactController.text.trim(),
           address: _addressController.text.trim(),
         );
-        DashboardRefreshService.instance.notifyDataChanged(DataChangeType.company);
+        DashboardRefreshService.instance.notifyDataChanged(
+          DataChangeType.company,
+        );
       }
 
       CompanySyncService.instance.syncNow();
@@ -646,7 +650,9 @@ class _EnhancedCompanyPageState extends State<EnhancedCompanyPage>
       int? localId = _editingCompanyLocalId;
 
       if (localId == null && _editingCompanyId != null) {
-        final existing = await offlineCtrl.getCompanyByServerId(_editingCompanyId!);
+        final existing = await offlineCtrl.getCompanyByServerId(
+          _editingCompanyId!,
+        );
         localId = existing?.id;
       }
 
@@ -657,7 +663,9 @@ class _EnhancedCompanyPageState extends State<EnhancedCompanyPage>
       }
 
       CompanySyncService.instance.syncNow();
-      DashboardRefreshService.instance.notifyDataChanged(DataChangeType.company);
+      DashboardRefreshService.instance.notifyDataChanged(
+        DataChangeType.company,
+      );
 
       if (mounted && ctx.mounted) {
         Navigator.pop(ctx);

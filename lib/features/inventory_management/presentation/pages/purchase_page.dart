@@ -73,12 +73,10 @@ class _PurchasePageState extends State<PurchasePage>
   // For adding new supplier/company
   final _newSupplierFirstNameController = TextEditingController();
   final _newSupplierLastNameController = TextEditingController();
-  final _newSupplierCodeController = TextEditingController();
   final _newSupplierContactController = TextEditingController();
   final _newSupplierAddressController = TextEditingController();
 
   final _newCompanyNameController = TextEditingController();
-  final _newCompanyCodeController = TextEditingController();
   final _newCompanyContactController = TextEditingController();
   final _newCompanyAddressController = TextEditingController();
 
@@ -2398,11 +2396,9 @@ class _PurchasePageState extends State<PurchasePage>
     _companySearchController.dispose();
     _newSupplierFirstNameController.dispose();
     _newSupplierLastNameController.dispose();
-    _newSupplierCodeController.dispose();
     _newSupplierContactController.dispose();
     _newSupplierAddressController.dispose();
     _newCompanyNameController.dispose();
-    _newCompanyCodeController.dispose();
     _newCompanyContactController.dispose();
     _newCompanyAddressController.dispose();
     _productionDateController.dispose();
@@ -2514,7 +2510,6 @@ class _PurchasePageState extends State<PurchasePage>
   void _showAddSupplierDialog() {
     _newSupplierFirstNameController.clear();
     _newSupplierLastNameController.clear();
-    _newSupplierCodeController.clear();
     _newSupplierContactController.clear();
     _newSupplierAddressController.clear();
 
@@ -2639,15 +2634,6 @@ class _PurchasePageState extends State<PurchasePage>
                   ),
                   const SizedBox(height: 16),
                   _buildBottomSheetTextField(
-                    controller: _newSupplierCodeController,
-                    label: _localizations.supplierCode,
-                    hint: 'Enter supplier code',
-                    icon: Icons.qr_code_rounded,
-                    isRequired: true,
-                    onChanged: (_) => setSheetState(() {}),
-                  ),
-                  const SizedBox(height: 16),
-                  _buildBottomSheetTextField(
                     controller: _newSupplierContactController,
                     label: _localizations.contactNumber,
                     hint: 'Enter 10-digit number',
@@ -2698,9 +2684,6 @@ class _PurchasePageState extends State<PurchasePage>
                                       .trim()
                                       .isEmpty ||
                                   _newSupplierLastNameController.text
-                                      .trim()
-                                      .isEmpty ||
-                                  _newSupplierCodeController.text
                                       .trim()
                                       .isEmpty)
                               ? null
@@ -2827,11 +2810,24 @@ class _PurchasePageState extends State<PurchasePage>
     }
 
     try {
+      // Auto-generate supplier code
+      int maxCode = 0;
+      for (var supplier in _suppliers) {
+        final code = supplier['supplierCode'] as String?;
+        if (code != null && code.isNotEmpty) {
+          final numericCode = int.tryParse(code);
+          if (numericCode != null && numericCode > maxCode) {
+            maxCode = numericCode;
+          }
+        }
+      }
+      final supplierCode = '${maxCode + 1}';
+
       // Use offline controller — saves to Isar (stream auto-updates UI) + syncs to Firestore in background
       await SupplierOfflineController.instance.addSupplier(
         firstName: firstName,
         lastName: lastName,
-        supplierCode: _newSupplierCodeController.text.trim(),
+        supplierCode: supplierCode,
         contact: contact,
         address: _newSupplierAddressController.text.trim(),
       );
@@ -2864,7 +2860,6 @@ class _PurchasePageState extends State<PurchasePage>
 
   void _showAddCompanyDialog() {
     _newCompanyNameController.clear();
-    _newCompanyCodeController.clear();
     _newCompanyContactController.clear();
     _newCompanyAddressController.clear();
 
@@ -2980,15 +2975,6 @@ class _PurchasePageState extends State<PurchasePage>
                   ),
                   const SizedBox(height: 16),
                   _buildBottomSheetTextField(
-                    controller: _newCompanyCodeController,
-                    label: _localizations.companyCode,
-                    hint: 'Enter company code',
-                    icon: Icons.qr_code_rounded,
-                    isRequired: true,
-                    onChanged: (_) => setSheetState(() {}),
-                  ),
-                  const SizedBox(height: 16),
-                  _buildBottomSheetTextField(
                     controller: _newCompanyContactController,
                     label: _localizations.contactNumber,
                     hint: 'Enter 10-digit number',
@@ -3035,8 +3021,7 @@ class _PurchasePageState extends State<PurchasePage>
                         flex: 2,
                         child: ElevatedButton(
                           onPressed:
-                              (_newCompanyNameController.text.trim().isEmpty ||
-                                  _newCompanyCodeController.text.trim().isEmpty)
+                              _newCompanyNameController.text.trim().isEmpty
                               ? null
                               : () => _saveNewCompany(context),
                           style: ElevatedButton.styleFrom(
@@ -3089,10 +3074,23 @@ class _PurchasePageState extends State<PurchasePage>
     }
 
     try {
+      // Auto-generate company code
+      int maxCode = 0;
+      for (var company in _companies) {
+        final code = company['companyCode'] as String?;
+        if (code != null && code.isNotEmpty) {
+          final numericCode = int.tryParse(code);
+          if (numericCode != null && numericCode > maxCode) {
+            maxCode = numericCode;
+          }
+        }
+      }
+      final companyCode = '${maxCode + 1}';
+
       // Use offline controller — saves to Isar (stream auto-updates UI) + syncs to Firestore in background
       await CompanyOfflineController.instance.addCompany(
         companyName: companyName,
-        companyCode: _newCompanyCodeController.text.trim(),
+        companyCode: companyCode,
         contact: _newCompanyContactController.text.trim(),
         address: _newCompanyAddressController.text.trim(),
       );

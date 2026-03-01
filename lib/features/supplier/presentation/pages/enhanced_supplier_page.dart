@@ -385,14 +385,16 @@ class _EnhancedSupplierPageState extends State<EnhancedSupplierPage>
                       isRequired: true,
                     ),
                     const SizedBox(height: 16),
-                    _buildInputField(
-                      label: _localizations.supplierCode,
-                      controller: _supplierCodeController,
-                      icon: Icons.qr_code_rounded,
-                      isRequired: true,
-                      isReadOnly: !_isEditing,
-                    ),
-                    const SizedBox(height: 16),
+                    // Only show code field when editing
+                    if (_isEditing) ...[
+                      _buildInputField(
+                        label: _localizations.supplierCode,
+                        controller: _supplierCodeController,
+                        icon: Icons.qr_code_rounded,
+                        isRequired: true,
+                      ),
+                      const SizedBox(height: 16),
+                    ],
                     _buildInputField(
                       label: _localizations.contactNumber,
                       controller: _contactController,
