@@ -2226,12 +2226,7 @@ class _PurchasePageState extends State<PurchasePage>
       return;
     }
 
-    if (_selectedCompany == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_localizations.pleaseSelectCompany)),
-      );
-      return;
-    }
+    // Company is optional - no validation required
 
     // Validate expiry date is after production date only if both are provided
     if (_productionDate != null &&
@@ -2281,8 +2276,8 @@ class _PurchasePageState extends State<PurchasePage>
             productName: _selectedProduct!.name,
             supplierId: _selectedSupplier!['id'],
             supplierName: _selectedSupplier!['fullName'],
-            companyId: _selectedCompany!['id'],
-            companyName: _selectedCompany!['companyName'],
+            companyId: _selectedCompany?['id'],
+            companyName: _selectedCompany?['companyName'],
             quantity: quantity,
             unit: _selectedUnit ?? PurchaseSettingsService.instance.defaultUnit,
             purchasePrice: price,
