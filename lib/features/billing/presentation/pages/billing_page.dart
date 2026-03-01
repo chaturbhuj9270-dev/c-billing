@@ -49,6 +49,7 @@ import 'package:c_billing/features/inventory_management/presentation/pages/barco
 import 'package:c_billing/features/customer/presentation/pages/enhanced_customer_page.dart';
 import 'package:c_billing/features/billing/presentation/widgets/barcode_scanner_sheet.dart';
 import 'package:c_billing/features/customer/offline/controllers/customer_transaction_offline_controller.dart';
+import 'package:c_billing/features/customer/domain/entities/customer_transaction.dart';
 
 class BillingPage extends StatefulWidget {
   final bool isEmbedded;
@@ -1159,53 +1160,85 @@ class _BillingPageState extends State<BillingPage> {
       if (_selectedCustomer != null) {
         try {
           final customerId = _selectedCustomer!['id'] as String;
-          final customerName = _selectedCustomer!['fullName'] as String? ?? 
-              '${_selectedCustomer!['firstName'] ?? ''} ${_selectedCustomer!['lastName'] ?? ''}'.trim();
+          final customerName =
+              _selectedCustomer!['fullName'] as String? ??
+              '${_selectedCustomer!['firstName'] ?? ''} ${_selectedCustomer!['lastName'] ?? ''}'
+                  .trim();
           final billId =
               integrationResult.billEntity?.serverId ??
               'local_${integrationResult.billEntity?.id}';
 
-          // 3a. Record bill creation transaction (adds to pending amount)
-          await CustomerTransactionOfflineController.instance.addBillTransaction(
-            customerId: customerId,
-            customerName: customerName,
-            amount: _finalAmount,
-            billId: billId,
-            description: 'Bill #$billId',
+          // 3a. Record bill creation transaction (adds to pending amount) - Offline
+          await CustomerTransactionOfflineController.instance
+              .addBillTransaction(
+                customerId: customerId,
+                customerName: customerName,
+                amount: _finalAmount,
+                billId: billId,
+                description: 'Bill #$billId',
+              );
+          debugPrint(
+            '[Billing] Bill transaction recorded offline: $_finalAmount',
           );
-          debugPrint('[Billing] Bill transaction recorded: $_finalAmount');
 
-          // 3b. Record payment received during billing (if any)
+          // 3b. Record payment received during billing (if any) - Offline
           if (actualPaidAmount > 0) {
-            await CustomerTransactionOfflineController.instance.addPaymentTransaction(
-              customerId: customerId,
-              customerName: customerName,
-              amount: actualPaidAmount,
-              paymentMethod: _isFullPayment ? 'Full Payment' : 'Partial Payment',
-              description: 'Payment for Bill #$billId',
+            await CustomerTransactionOfflineController.instance
+                .addPaymentTransaction(
+                  customerId: customerId,
+                  customerName: customerName,
+                  amount: actualPaidAmount,
+                  paymentMethod: _isFullPayment
+                      ? 'Full Payment'
+                      : 'Partial Payment',
+                  description: 'Payment for Bill #$billId',
+                );
+            debugPrint(
+              '[Billing] Payment transaction recorded offline: $actualPaidAmount',
             );
-            debugPrint('[Billing] Payment transaction recorded: $actualPaidAmount');
           }
 
-          // 3c. Also create Firebase ledger entry for backward compatibility
-          if (calculatedPendingAmount > 0) {
-            final transactionResult = await _customerTransactionService
-                .recordBillGenerated(
-                  customerId: customerId,
-                  billId: billId,
-                  billNumber: billId,
-                  billAmount: calculatedPendingAmount,
-                );
+          // 3c. Sync to Firebase - Record full bill amount first
+          final billRecordResult = await _customerTransactionService
+              .recordBillGenerated(
+                customerId: customerId,
+                billId: billId,
+                billNumber: billId,
+                billAmount: _finalAmount,
+              );
 
-            if (transactionResult.success) {
-              debugPrint(
-                '[Billing] Firebase ledger entry created for pending amount: $calculatedPendingAmount',
-              );
-            } else {
-              debugPrint(
-                '[Billing] Firebase ledger entry failed: ${transactionResult.errorMessage}',
-              );
+          if (billRecordResult.success) {
+            debugPrint(
+              '[Billing] Firebase: Bill recorded with amount: $_finalAmount',
+            );
+
+            // 3d. Then record payment received to Firebase (if any)
+            if (actualPaidAmount > 0) {
+              final paymentResult = await _customerTransactionService
+                  .receivePayment(
+                    customerId: customerId,
+                    amount: actualPaidAmount,
+                    paymentMode: PaymentMode.cash, // Default to cash
+                    billId: billId,
+                    billNumber: billId,
+                    notes:
+                        'Payment during billing - ${_isFullPayment ? 'Full' : 'Partial'}',
+                  );
+
+              if (paymentResult.success) {
+                debugPrint(
+                  '[Billing] Firebase: Payment recorded: $actualPaidAmount',
+                );
+              } else {
+                debugPrint(
+                  '[Billing] Firebase: Payment failed: ${paymentResult.errorMessage}',
+                );
+              }
             }
+          } else {
+            debugPrint(
+              '[Billing] Firebase: Bill record failed: ${billRecordResult.errorMessage}',
+            );
           }
         } catch (e) {
           debugPrint('[Billing] Transaction entry error (non-blocking): $e');

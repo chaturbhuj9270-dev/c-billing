@@ -1,6 +1,11 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../../../core/services/customer_transaction_service.dart';
+import '../../data/repositories/customer_repository.dart';
+import '../../data/repositories/customer_transaction_repository.dart';
+import '../../domain/entities/customer_transaction.dart' show PaymentMode;
 import '../../offline/controllers/customer_transaction_offline_controller.dart';
 import '../../offline/entities/customer_transaction_entity.dart';
 
@@ -33,6 +38,7 @@ class CustomerTransactionsPage extends StatefulWidget {
 class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
     with SingleTickerProviderStateMixin {
   late AnimationController _animController;
+  late CustomerTransactionService _transactionService;
 
   List<CustomerTransactionEntity> _transactions = [];
   bool _isLoading = true;
@@ -52,7 +58,19 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
       duration: const Duration(milliseconds: 300),
     );
     _currentPending = widget.currentPendingAmount;
+    _initTransactionService();
     _loadTransactions();
+  }
+
+  void _initTransactionService() {
+    final firestore = FirebaseFirestore.instance;
+    _transactionService = CustomerTransactionService(
+      firestore: firestore,
+      customerRepository: FirebaseCustomerRepository(firestore: firestore),
+      transactionRepository: FirebaseCustomerTransactionRepository(
+        firestore: firestore,
+      ),
+    );
   }
 
   @override
@@ -565,15 +583,39 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
       final description = result['description'] as String?;
       final paymentMethod = result['paymentMethod'] as String?;
 
+      final customerId = widget.customerId.isNotEmpty
+          ? widget.customerId
+          : widget.customerLocalId;
+
+      // Save offline first
       await CustomerTransactionOfflineController.instance.addPaymentTransaction(
-        customerId: widget.customerId.isNotEmpty
-            ? widget.customerId
-            : widget.customerLocalId,
+        customerId: customerId,
         customerName: widget.customerName,
         amount: amount,
         description: description,
         paymentMethod: paymentMethod,
       );
+
+      // Sync to Firebase (online)
+      try {
+        final paymentMode = _mapPaymentMethod(paymentMethod);
+        final firebaseResult = await _transactionService.receivePayment(
+          customerId: customerId,
+          amount: amount,
+          paymentMode: paymentMode,
+          notes: description ?? 'Payment received',
+        );
+
+        if (firebaseResult.success) {
+          debugPrint('[Transactions] Payment synced to Firebase: $amount');
+        } else {
+          debugPrint(
+            '[Transactions] Firebase sync failed: ${firebaseResult.errorMessage}',
+          );
+        }
+      } catch (e) {
+        debugPrint('[Transactions] Firebase sync error (non-blocking): $e');
+      }
 
       _loadTransactions();
 
@@ -586,6 +628,25 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
           ),
         );
       }
+    }
+  }
+
+  /// Map payment method string to PaymentMode enum
+  PaymentMode _mapPaymentMethod(String? method) {
+    switch (method?.toLowerCase()) {
+      case 'upi':
+        return PaymentMode.upi;
+      case 'bank transfer':
+        return PaymentMode.online;
+      case 'card':
+        return PaymentMode.card;
+      case 'cheque':
+        return PaymentMode.cheque;
+      case 'other':
+        return PaymentMode.other;
+      case 'cash':
+      default:
+        return PaymentMode.cash;
     }
   }
 
