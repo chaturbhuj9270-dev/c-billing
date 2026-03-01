@@ -78,6 +78,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
   List<Map<String, dynamic>> _pendingPayments = [];
   List<Map<String, dynamic>> _lastDues = [];
   List<Map<String, dynamic>> _lowStockItems = [];
+  List<Map<String, dynamic>> _upcomingEvents = [];
   bool _isLoadingExpandableData = false;
 
   // Dashboard refresh subscription
@@ -148,7 +149,17 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
         _repository.getCustomersWithPendingBalance(limit: 5),
         _repository.getRecentPendingBills(limit: 5),
         _repository.getLowStockProducts(limit: 5),
+        _repository.getUpcomingEvents(limit: 5),
       ]);
+
+      // Debug logging for Quick Insights data
+      print('[Dashboard] Quick Insights Data Loaded:');
+      print('  - Upcoming Payments: ${results[0].length}');
+      print('  - Top Products: ${results[1].length}');
+      print('  - Pending Payments: ${results[2].length}');
+      print('  - Last Dues: ${results[3].length}');
+      print('  - Low Stock Items: ${results[4].length}');
+      print('  - Upcoming Events: ${results[5].length}');
 
       if (mounted) {
         setState(() {
@@ -157,11 +168,13 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
           _pendingPayments = results[2];
           _lastDues = results[3];
           _lowStockItems = results[4];
+          _upcomingEvents = results[5];
           _isLoadingExpandableData = false;
         });
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
       print('[OptimizedDashboardPage] Error loading expandable data: $e');
+      print('[OptimizedDashboardPage] Stack trace: $stackTrace');
       if (mounted) {
         setState(() => _isLoadingExpandableData = false);
       }
@@ -763,6 +776,18 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
               _localizations.lowStockItems,
               _lowStockItems,
               'lowstock',
+            ),
+          ),
+          const SizedBox(height: 10),
+          _buildGlassyStatRow(
+            title: 'Upcoming Events',
+            count: _upcomingEvents.length,
+            icon: Icons.event_rounded,
+            gradientColors: const [Color(0xFF00BCD4), Color(0xFF0097A7)],
+            onTap: () => _showQuickInsightDetail(
+              'Upcoming Events',
+              _upcomingEvents,
+              'events',
             ),
           ),
           const SizedBox(height: 24),
@@ -2376,6 +2401,14 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
           minStock: (item['minStockLevel'] ?? 10) as int,
           colors: colors,
         );
+      case 'events':
+        return _buildGlassyEventItem(
+          eventName: item['orderName'] ?? 'Unknown Event',
+          customerName: item['customerName'] ?? 'Unknown',
+          eventDate: _parseDate(item['eventDate']),
+          daysUntil: (item['daysUntil'] ?? 0) as int,
+          colors: colors,
+        );
       default:
         return const SizedBox.shrink();
     }
@@ -2828,6 +2861,127 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                 decoration: TextDecoration.none,
               ),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGlassyEventItem({
+    required String eventName,
+    required String customerName,
+    required DateTime? eventDate,
+    required int daysUntil,
+    required List<Color> colors,
+  }) {
+    final isToday = daysUntil == 0;
+    final isTomorrow = daysUntil == 1;
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: isToday
+            ? Colors.cyan.withValues(alpha: 0.15)
+            : Colors.white.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: isToday
+              ? Colors.cyan.withValues(alpha: 0.3)
+              : Colors.white.withValues(alpha: 0.12),
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: isToday
+                    ? [Colors.cyan.shade400, Colors.cyan.shade600]
+                    : colors,
+              ),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(
+              isToday ? Icons.celebration_rounded : Icons.event_rounded,
+              color: Colors.white,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  customerName,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                    fontFamily: 'Literata',
+                    decoration: TextDecoration.none,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                Text(
+                  eventName,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Colors.white.withValues(alpha: 0.7),
+                    fontFamily: 'Literata',
+                    decoration: TextDecoration.none,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: isToday
+                        ? [Colors.cyan.shade400, Colors.cyan.shade600]
+                        : colors,
+                  ),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  isToday
+                      ? 'Today'
+                      : isTomorrow
+                      ? 'Tomorrow'
+                      : '$daysUntil days',
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                    fontFamily: 'Literata',
+                    decoration: TextDecoration.none,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 4),
+              if (eventDate != null)
+                Text(
+                  _formatDate(eventDate),
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: Colors.white.withValues(alpha: 0.6),
+                    fontFamily: 'Literata',
+                    decoration: TextDecoration.none,
+                  ),
+                ),
+            ],
           ),
         ],
       ),

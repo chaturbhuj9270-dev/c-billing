@@ -493,4 +493,35 @@ class DashboardOfflineRepository {
       };
     }).toList();
   }
+
+  /// Get upcoming events with customer name and event date
+  Future<List<Map<String, dynamic>>> getUpcomingEvents({int limit = 5}) async {
+    final upcomingEvents = await EventOrderOfflineController.instance
+        .getUpcomingEvents();
+
+    if (upcomingEvents.isEmpty) return [];
+
+    // Sort by event date (nearest first)
+    final sortedEvents = List.of(upcomingEvents)
+      ..sort((a, b) => a.eventDate.compareTo(b.eventDate));
+
+    return sortedEvents.take(limit).map((e) {
+      // Calculate days until event
+      final daysUntilEvent = e.eventDate.difference(DateTime.now()).inDays;
+
+      return {
+        'id': e.serverId ?? e.id.toString(),
+        'orderName': e.orderName.isNotEmpty ? e.orderName : 'Event',
+        'customerName': e.customerName.isNotEmpty ? e.customerName : 'Unknown',
+        'customerContact': e.customerContact,
+        'eventDate': e.eventDate.toIso8601String(),
+        'eventLocation': e.eventLocation ?? '',
+        'totalAmount': e.totalAmount,
+        'advanceAmount': e.advanceAmount,
+        'remainingAmount': e.remainingAmount,
+        'daysUntil': daysUntilEvent,
+        'status': e.status,
+      };
+    }).toList();
+  }
 }
