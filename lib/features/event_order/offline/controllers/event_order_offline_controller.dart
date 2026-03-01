@@ -218,13 +218,39 @@ class EventOrderOfflineController extends ChangeNotifier {
     final now = DateTime.now();
     final startOfToday = DateTime(now.year, now.month, now.day);
 
-    return await _isar.eventOrderEntitys
+    final allEvents = await _isar.eventOrderEntitys
         .filter()
-        .eventDateGreaterThan(startOfToday, include: true)
         .not()
         .syncStatusEqualTo(EventOrderSyncStatus.deleted)
-        .sortByEventDate()
         .findAll();
+
+    print('[EventOrderController] Total events in DB: ${allEvents.length}');
+    print('[EventOrderController] Today: $startOfToday');
+    for (var e in allEvents) {
+      final eventDateOnly = DateTime(
+        e.eventDate.year,
+        e.eventDate.month,
+        e.eventDate.day,
+      );
+      print(
+        '[EventOrderController] Event: ${e.orderName}, date: ${e.eventDate}, dateOnly: $eventDateOnly, isUpcoming: ${!eventDateOnly.isBefore(startOfToday)}',
+      );
+    }
+
+    // Filter for events with date >= today (compare date parts only)
+    final upcomingEvents = allEvents.where((e) {
+      final eventDateOnly = DateTime(
+        e.eventDate.year,
+        e.eventDate.month,
+        e.eventDate.day,
+      );
+      return !eventDateOnly.isBefore(startOfToday);
+    }).toList()..sort((a, b) => a.eventDate.compareTo(b.eventDate));
+
+    print(
+      '[EventOrderController] Upcoming events filtered: ${upcomingEvents.length}',
+    );
+    return upcomingEvents;
   }
 
   /// Search event orders by name or customer

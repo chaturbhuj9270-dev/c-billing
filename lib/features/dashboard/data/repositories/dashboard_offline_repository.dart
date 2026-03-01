@@ -501,15 +501,32 @@ class DashboardOfflineRepository {
     final upcomingEvents = await EventOrderOfflineController.instance
         .getUpcomingEvents();
 
+    print(
+      '[Dashboard] Raw upcoming events from controller: ${upcomingEvents.length}',
+    );
+    for (var e in upcomingEvents) {
+      print(
+        '  - ${e.orderName}: ${e.customerName}, date: ${e.eventDate}, status: ${e.status}',
+      );
+    }
+
     if (upcomingEvents.isEmpty) return [];
 
     // Sort by event date (nearest first)
     final sortedEvents = List.of(upcomingEvents)
       ..sort((a, b) => a.eventDate.compareTo(b.eventDate));
 
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
     return sortedEvents.take(limit).map((e) {
-      // Calculate days until event
-      final daysUntilEvent = e.eventDate.difference(DateTime.now()).inDays;
+      // Calculate days until event (normalize to date only)
+      final eventDateOnly = DateTime(
+        e.eventDate.year,
+        e.eventDate.month,
+        e.eventDate.day,
+      );
+      final daysUntilEvent = eventDateOnly.difference(today).inDays;
 
       return {
         'id': e.serverId ?? e.id.toString(),

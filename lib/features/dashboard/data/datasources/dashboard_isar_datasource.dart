@@ -414,6 +414,7 @@ class DashboardIsarDataSource {
         .findAll();
 
     final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
     int totalCount = allOrders.length;
     int upcomingEvents = 0;
     int pendingOrders = 0;
@@ -426,9 +427,13 @@ class DashboardIsarDataSource {
       totalAdvance += order.advanceAmount;
       totalPending += order.remainingAmount;
 
-      // Count upcoming events (event date in future, type = event)
-      if (order.orderType == OrderType.event.index &&
-          order.eventDate.isAfter(now)) {
+      // Count upcoming events (event date today or in future)
+      final eventDateOnly = DateTime(
+        order.eventDate.year,
+        order.eventDate.month,
+        order.eventDate.day,
+      );
+      if (!eventDateOnly.isBefore(today)) {
         upcomingEvents++;
       }
 
