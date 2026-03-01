@@ -278,7 +278,7 @@ class PdfBillService {
                           ),
                           pw.SizedBox(width: 16),
                           pw.Text(
-                            'Total Qty: ${billData.totalQuantity}',
+                            'Total Qty: ${billData.totalQuantity == billData.totalQuantity.roundToDouble() ? billData.totalQuantity.toInt() : billData.totalQuantity.toStringAsFixed(2)}',
                             style: pw.TextStyle(
                               fontSize: 9,
                               fontWeight: pw.FontWeight.bold,
@@ -290,7 +290,7 @@ class PdfBillService {
                       // Returns info
                       if (billData.hasAnyReturns) ...[
                         pw.Text(
-                          'Returned: ${billData.totalReturnedQuantity} qty  (-Rs.${billData.totalReturnedAmount.toStringAsFixed(2)})',
+                          'Returned: ${billData.totalReturnedQuantity == billData.totalReturnedQuantity.roundToDouble() ? billData.totalReturnedQuantity.toInt() : billData.totalReturnedQuantity.toStringAsFixed(2)} qty  (-Rs.${billData.totalReturnedAmount.toStringAsFixed(2)})',
                           style: pw.TextStyle(
                             fontSize: 8,
                             fontWeight: pw.FontWeight.bold,
@@ -737,7 +737,7 @@ class PdfBillService {
             );
           case 'quantity':
             return _buildCompactCell(
-              '${item.quantity}',
+              item.displayQuantity,
               align: pw.TextAlign.center,
             );
           case 'unit':
@@ -1104,7 +1104,7 @@ class PdfBillService {
                   pw.SizedBox(
                     width: 35,
                     child: pw.Text(
-                      '${item.quantity}',
+                      item.displayQuantity,
                       style: const pw.TextStyle(fontSize: 8),
                       textAlign: pw.TextAlign.center,
                     ),

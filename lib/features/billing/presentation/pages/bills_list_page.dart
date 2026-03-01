@@ -3731,7 +3731,7 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
               SizedBox(
                 width: 40,
                 child: Text(
-                  '${item.quantity}',
+                  item.displayQuantity,
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontFamily: 'Literata',

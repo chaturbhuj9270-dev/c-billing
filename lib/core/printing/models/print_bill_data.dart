@@ -2,13 +2,15 @@
 class PrintBillItem {
   final String name;
   final String? companyName; // Product company/brand name
-  final int quantity;
+  final double quantity; // Changed to double to support decimal quantities
   final double rate;
   final double amount;
-  final int returnedQuantity;
+  final double returnedQuantity; // Changed to double to match quantity
   final double cgstPercent;
   final double sgstPercent;
   final String? hsnCode;
+  final String? unit; // Base unit (kg, ltr, pcs)
+  final String? sellUnit; // Unit used for sale (gm, ml, kg, ltr, pcs)
 
   const PrintBillItem({
     required this.name,
@@ -20,6 +22,8 @@ class PrintBillItem {
     this.cgstPercent = 0.0,
     this.sgstPercent = 0.0,
     this.hsnCode,
+    this.unit,
+    this.sellUnit,
   });
 
   /// CGST amount computed from amount
@@ -35,23 +39,40 @@ class PrintBillItem {
   bool get hasReturns => returnedQuantity > 0;
 
   /// Quantity still held by the customer
-  int get effectiveQuantity => quantity - returnedQuantity;
+  double get effectiveQuantity => quantity - returnedQuantity;
 
   /// Refund amount for the returned units
   double get returnedAmount => rate * returnedQuantity;
+
+  /// Get display quantity with unit conversion (for printing)
+  String get displayQuantity {
+    if (sellUnit == 'gm' && unit == 'kg') {
+      final gmQty = quantity * 1000;
+      return '${gmQty == gmQty.roundToDouble() ? gmQty.toInt() : gmQty.toStringAsFixed(1)} gm';
+    } else if (sellUnit == 'ml' && unit == 'ltr') {
+      final mlQty = quantity * 1000;
+      return '${mlQty == mlQty.roundToDouble() ? mlQty.toInt() : mlQty.toStringAsFixed(1)} ml';
+    } else if (quantity == quantity.roundToDouble()) {
+      return '${quantity.toInt()}';
+    } else {
+      return quantity.toStringAsFixed(2);
+    }
+  }
 
   /// Create from BillItem entity
   factory PrintBillItem.fromBillItem(dynamic billItem) {
     return PrintBillItem(
       name: billItem.productName as String,
       companyName: billItem.companyName as String?,
-      quantity: billItem.quantity as int,
+      quantity: (billItem.quantity as num).toDouble(),
       rate: billItem.sellingPrice as double,
       amount: billItem.subtotal as double,
-      returnedQuantity: (billItem.returnedQuantity as int?) ?? 0,
+      returnedQuantity: ((billItem.returnedQuantity as num?) ?? 0).toDouble(),
       cgstPercent: (billItem.cgstPercent as double?) ?? 0.0,
       sgstPercent: (billItem.sgstPercent as double?) ?? 0.0,
       hsnCode: billItem.hsnCode as String?,
+      unit: billItem.unit as String?,
+      sellUnit: billItem.sellUnit as String?,
     );
   }
 
@@ -66,6 +87,8 @@ class PrintBillItem {
       'cgstPercent': cgstPercent,
       'sgstPercent': sgstPercent,
       'hsnCode': hsnCode,
+      'unit': unit,
+      'sellUnit': sellUnit,
     };
   }
 }
@@ -201,12 +224,19 @@ class PrintBillData {
     );
   }
 
-  /// Get total quantity of items
-  int get totalQuantity => items.fold(0, (sum, item) => sum + item.quantity);
+  /// Get total quantity of items (as double to support decimal quantities)
+  double get totalQuantity =>
+      items.fold(0.0, (sum, item) => sum + item.quantity);
 
-  /// Total returned quantity across all items
-  int get totalReturnedQuantity =>
-      items.fold(0, (sum, item) => sum + item.returnedQuantity);
+  /// Get total quantity as int (for backward compatibility)
+  int get totalQuantityInt => totalQuantity.round();
+
+  /// Total returned quantity across all items (as double)
+  double get totalReturnedQuantity =>
+      items.fold(0.0, (sum, item) => sum + item.returnedQuantity);
+
+  /// Total returned quantity as int (for backward compatibility)
+  int get totalReturnedQuantityInt => totalReturnedQuantity.round();
 
   /// Total refund amount for all returned items
   double get totalReturnedAmount =>

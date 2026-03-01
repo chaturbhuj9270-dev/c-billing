@@ -1027,12 +1027,16 @@ class _BillingPageState extends State<BillingPage> {
 
   double get _finalAmount {
     final subtotalAfterDiscount = _totalAmount - _discountAmount;
+    double amount;
     // For exclusive GST, tax is added on top
     if (_gstMode == GstMode.excludeGst && _taxBreakdown != null) {
-      return subtotalAfterDiscount + _taxBreakdown!.totalTaxAmount;
+      amount = subtotalAfterDiscount + _taxBreakdown!.totalTaxAmount;
+    } else {
+      // For inclusive GST or no GST, price already contains tax or no tax
+      amount = subtotalAfterDiscount;
     }
-    // For inclusive GST or no GST, price already contains tax or no tax
-    return subtotalAfterDiscount;
+    // Round up to nearest rupee
+    return amount.ceilToDouble();
   }
 
   // Computed pending amount based on received amount

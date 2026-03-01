@@ -354,7 +354,7 @@ class EscPosBillFormatter {
       b.addAll(
         _dynamicItemRow(
           itemName,
-          effectiveShowQty ? '${item.quantity}' : null,
+          effectiveShowQty ? item.displayQuantity : null,
           effectiveShowRate ? _fmt(item.rate) : null,
           effectiveShowAmount ? _fmt(item.amount) : null,
         ),
@@ -370,11 +370,11 @@ class EscPosBillFormatter {
 
       // Per-item return note
       if (item.hasReturns) {
-        b.addAll(
-          _left(
-            '  Ret: ${item.returnedQuantity} qty  -${_fmt(item.returnedAmount)}',
-          ),
-        );
+        final retQty =
+            item.returnedQuantity == item.returnedQuantity.roundToDouble()
+            ? item.returnedQuantity.toInt().toString()
+            : item.returnedQuantity.toStringAsFixed(2);
+        b.addAll(_left('  Ret: $retQty qty  -${_fmt(item.returnedAmount)}'));
       }
 
       // Per-item GST breakdown (only if tax column is enabled)
@@ -457,7 +457,10 @@ class EscPosBillFormatter {
     final b = <int>[];
 
     // Item count
-    b.addAll(_kv('Total Items', '${d.totalQuantity} qty'));
+    final totalQtyDisplay = d.totalQuantity == d.totalQuantity.roundToDouble()
+        ? d.totalQuantity.toInt().toString()
+        : d.totalQuantity.toStringAsFixed(2);
+    b.addAll(_kv('Total Items', '$totalQtyDisplay qty'));
 
     // Subtotal
     b.addAll(_kv('Subtotal', 'Rs.${_fmt(d.subtotal)}'));
