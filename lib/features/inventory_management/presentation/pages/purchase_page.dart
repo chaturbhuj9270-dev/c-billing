@@ -267,11 +267,28 @@ class _PurchasePageState extends State<PurchasePage>
     final nameController = TextEditingController();
     final purchasePriceController = TextEditingController();
     final salesPriceController = TextEditingController();
-    final cgstController = TextEditingController(text: '0');
-    final sgstController = TextEditingController(text: '0');
+    final cgstController = TextEditingController();
+    final sgstController = TextEditingController();
     final hsnController = TextEditingController();
     Map<String, dynamic>? sheetSelectedCompany;
     Map<String, dynamic>? sheetSelectedSupplier;
+
+    // Sync CGST and SGST values
+    bool isSyncingGst = false;
+    cgstController.addListener(() {
+      if (!isSyncingGst && cgstController.text != sgstController.text) {
+        isSyncingGst = true;
+        sgstController.text = cgstController.text;
+        isSyncingGst = false;
+      }
+    });
+    sgstController.addListener(() {
+      if (!isSyncingGst && sgstController.text != cgstController.text) {
+        isSyncingGst = true;
+        cgstController.text = sgstController.text;
+        isSyncingGst = false;
+      }
+    });
 
     // Custom fields controllers and values
     final customColumns = ProductSettingsService.instance.activeCustomColumns;

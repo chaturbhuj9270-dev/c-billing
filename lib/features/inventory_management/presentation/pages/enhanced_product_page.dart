@@ -1513,9 +1513,26 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
     final purchasePriceController = TextEditingController();
     final salesPriceController = TextEditingController();
     final initialStockController = TextEditingController(text: '0');
-    final cgstController = TextEditingController(text: '0');
-    final sgstController = TextEditingController(text: '0');
+    final cgstController = TextEditingController();
+    final sgstController = TextEditingController();
     final hsnController = TextEditingController();
+
+    // Sync CGST and SGST values
+    bool isSyncingGst = false;
+    cgstController.addListener(() {
+      if (!isSyncingGst && cgstController.text != sgstController.text) {
+        isSyncingGst = true;
+        sgstController.text = cgstController.text;
+        isSyncingGst = false;
+      }
+    });
+    sgstController.addListener(() {
+      if (!isSyncingGst && sgstController.text != cgstController.text) {
+        isSyncingGst = true;
+        cgstController.text = sgstController.text;
+        isSyncingGst = false;
+      }
+    });
 
     // Company and supplier state
     Map<String, dynamic>? dialogSelectedCompany;
@@ -2017,6 +2034,23 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
       text: product.sgstPercent.toString(),
     );
     final hsnController = TextEditingController(text: product.hsnCode ?? '');
+
+    // Sync CGST and SGST values
+    bool isSyncingGst = false;
+    cgstController.addListener(() {
+      if (!isSyncingGst && cgstController.text != sgstController.text) {
+        isSyncingGst = true;
+        sgstController.text = cgstController.text;
+        isSyncingGst = false;
+      }
+    });
+    sgstController.addListener(() {
+      if (!isSyncingGst && sgstController.text != cgstController.text) {
+        isSyncingGst = true;
+        cgstController.text = sgstController.text;
+        isSyncingGst = false;
+      }
+    });
 
     // Custom fields
     final customColumns = ProductSettingsService.instance.activeCustomColumns;
