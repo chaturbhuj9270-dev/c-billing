@@ -1,17 +1,13 @@
 import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
+import '../../../../core/services/dashboard_refresh_service.dart';
 import '../../offline/controllers/bill_offline_controller.dart';
 import '../../offline/entities/bill_entity.dart';
 import 'bill_api_service.dart';
 
 /// Sync status for tracking sync state
-enum BillSyncServiceStatus {
-  idle,
-  syncing,
-  success,
-  failed,
-}
+enum BillSyncServiceStatus { idle, syncing, success, failed }
 
 /// Result of a sync operation
 class BillSyncResult {
@@ -60,7 +56,7 @@ class BillSyncService extends ChangeNotifier {
   String? _lastError;
   StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
   Timer? _periodicSyncTimer;
-  
+
   /// Mutex to prevent concurrent sync operations
   bool _isSyncing = false;
 
@@ -68,9 +64,9 @@ class BillSyncService extends ChangeNotifier {
     BillOfflineController? offlineController,
     BillApiService? apiService,
     Connectivity? connectivity,
-  })  : _offlineController = offlineController ?? BillOfflineController.instance,
-        _apiService = apiService ?? BillApiService.instance,
-        _connectivity = connectivity ?? Connectivity();
+  }) : _offlineController = offlineController ?? BillOfflineController.instance,
+       _apiService = apiService ?? BillApiService.instance,
+       _connectivity = connectivity ?? Connectivity();
 
   /// Get the singleton instance
   static BillSyncService get instance {
@@ -93,9 +89,11 @@ class BillSyncService extends ChangeNotifier {
   /// Initialize the sync service
   void initialize() {
     debugPrint('[BillSync] Initializing...');
-    
+
     // Listen for connectivity changes
-    _connectivitySubscription = _connectivity.onConnectivityChanged.listen((results) {
+    _connectivitySubscription = _connectivity.onConnectivityChanged.listen((
+      results,
+    ) {
       if (_isConnected(results)) {
         debugPrint('[BillSync] Network available - triggering sync');
         syncNow();
@@ -121,10 +119,11 @@ class BillSyncService extends ChangeNotifier {
 
   /// Check if connected to network
   bool _isConnected(List<ConnectivityResult> results) {
-    return results.any((r) => 
-      r == ConnectivityResult.wifi || 
-      r == ConnectivityResult.mobile ||
-      r == ConnectivityResult.ethernet
+    return results.any(
+      (r) =>
+          r == ConnectivityResult.wifi ||
+          r == ConnectivityResult.mobile ||
+          r == ConnectivityResult.ethernet,
     );
   }
 
@@ -178,7 +177,9 @@ class BillSyncService extends ChangeNotifier {
           switch (bill.syncStatus) {
             case BillSyncStatus.newRecord:
               // Create on server
-              final serverId = await _apiService.createBill(bill.toSyncPayload());
+              final serverId = await _apiService.createBill(
+                bill.toSyncPayload(),
+              );
               await _offlineController.markAsSynced(bill.id, serverId);
               created++;
               break;
@@ -186,7 +187,10 @@ class BillSyncService extends ChangeNotifier {
             case BillSyncStatus.updated:
               // Update on server
               if (bill.serverId != null) {
-                await _apiService.updateBill(bill.serverId!, bill.toSyncPayload());
+                await _apiService.updateBill(
+                  bill.serverId!,
+                  bill.toSyncPayload(),
+                );
                 await _offlineController.markAsSynced(bill.id, bill.serverId!);
                 updated++;
               }
@@ -218,6 +222,11 @@ class BillSyncService extends ChangeNotifier {
       _lastSyncTime = DateTime.now();
       notifyListeners();
 
+      // Notify dashboard to refresh if any data was synced
+      if (created > 0 || updated > 0 || deleted > 0 || downloaded > 0) {
+        DashboardRefreshService.instance.notifyDataChanged(DataChangeType.bill);
+      }
+
       final result = BillSyncResult(
         success: true,
         createdCount: created,
@@ -230,7 +239,6 @@ class BillSyncService extends ChangeNotifier {
 
       debugPrint('[BillSync] $result');
       return result;
-
     } catch (e) {
       _status = BillSyncServiceStatus.failed;
       _lastError = e.toString();
@@ -257,11 +265,9 @@ class BillSyncService extends ChangeNotifier {
     try {
       // Get last sync time for incremental sync
       final lastSync = _lastSyncTime;
-      
+
       // Fetch bills from server (with optional since parameter)
-      final serverBills = await _apiService.getBills(
-        updatedSince: lastSync,
-      );
+      final serverBills = await _apiService.getBills(updatedSince: lastSync);
 
       debugPrint('[BillSync] Received ${serverBills.length} bills from server');
 
@@ -296,13 +302,18 @@ class BillSyncService extends ChangeNotifier {
     try {
       // Get all bills from server
       final serverBills = await _apiService.getBills();
-      
+
       // Import all
       await _offlineController.importFromServer(serverBills);
 
       _status = BillSyncServiceStatus.success;
       _lastSyncTime = DateTime.now();
       notifyListeners();
+
+      // Notify dashboard to refresh after full sync
+      if (serverBills.isNotEmpty) {
+        DashboardRefreshService.instance.notifyDataChanged(DataChangeType.bill);
+      }
 
       return BillSyncResult(
         success: true,

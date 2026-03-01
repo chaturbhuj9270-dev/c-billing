@@ -1,17 +1,13 @@
 import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
+import '../../../../core/services/dashboard_refresh_service.dart';
 import '../../offline/controllers/purchase_offline_controller.dart';
 import '../../offline/entities/purchase_entity.dart';
 import 'purchase_api_service.dart';
 
 /// Sync status for tracking sync state
-enum PurchaseSyncServiceStatus {
-  idle,
-  syncing,
-  success,
-  failed,
-}
+enum PurchaseSyncServiceStatus { idle, syncing, success, failed }
 
 /// Result of a sync operation
 class PurchaseSyncResult {
@@ -61,7 +57,7 @@ class PurchaseSyncService extends ChangeNotifier {
   StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
   Timer? _periodicSyncTimer;
   Timer? _connectivityDebounceTimer;
-  
+
   /// Mutex to prevent concurrent sync operations
   bool _isSyncing = false;
 
@@ -69,9 +65,10 @@ class PurchaseSyncService extends ChangeNotifier {
     PurchaseOfflineController? offlineController,
     PurchaseApiService? apiService,
     Connectivity? connectivity,
-  })  : _offlineController = offlineController ?? PurchaseOfflineController.instance,
-        _apiService = apiService ?? PurchaseApiService.instance,
-        _connectivity = connectivity ?? Connectivity();
+  }) : _offlineController =
+           offlineController ?? PurchaseOfflineController.instance,
+       _apiService = apiService ?? PurchaseApiService.instance,
+       _connectivity = connectivity ?? Connectivity();
 
   /// Get the singleton instance
   static PurchaseSyncService get instance {
@@ -94,13 +91,15 @@ class PurchaseSyncService extends ChangeNotifier {
   /// Initialize the sync service
   void initialize() {
     debugPrint('[PurchaseSync] Initializing...');
-    
+
     // Listen for connectivity changes with debouncing
-    _connectivitySubscription = _connectivity.onConnectivityChanged.listen((results) {
+    _connectivitySubscription = _connectivity.onConnectivityChanged.listen((
+      results,
+    ) {
       if (_isConnected(results)) {
         // Cancel any pending debounce timer
         _connectivityDebounceTimer?.cancel();
-        
+
         // Debounce to prevent multiple syncs when connectivity changes rapidly
         _connectivityDebounceTimer = Timer(const Duration(seconds: 3), () {
           if (!_isSyncing) {
@@ -115,7 +114,7 @@ class PurchaseSyncService extends ChangeNotifier {
     _periodicSyncTimer = Timer.periodic(const Duration(minutes: 3), (_) {
       _checkAndSync();
     });
-    
+
     debugPrint('[PurchaseSync] Initialized');
   }
 
@@ -128,10 +127,11 @@ class PurchaseSyncService extends ChangeNotifier {
   }
 
   bool _isConnected(List<ConnectivityResult> results) {
-    return results.any((r) => 
-      r == ConnectivityResult.wifi || 
-      r == ConnectivityResult.mobile ||
-      r == ConnectivityResult.ethernet
+    return results.any(
+      (r) =>
+          r == ConnectivityResult.wifi ||
+          r == ConnectivityResult.mobile ||
+          r == ConnectivityResult.ethernet,
     );
   }
 
@@ -185,30 +185,45 @@ class PurchaseSyncService extends ChangeNotifier {
       debugPrint('[PurchaseSync] Starting delta sync...');
 
       // Get all purchases that need syncing
-      final pendingPurchases = await _offlineController.getPurchasesNeedingSync();
-      debugPrint('[PurchaseSync] Found ${pendingPurchases.length} purchases to sync');
+      final pendingPurchases = await _offlineController
+          .getPurchasesNeedingSync();
+      debugPrint(
+        '[PurchaseSync] Found ${pendingPurchases.length} purchases to sync',
+      );
 
       for (final purchase in pendingPurchases) {
         try {
           switch (purchase.syncStatus) {
             case PurchaseSyncStatus.newRecord:
               // Create on server
-              final serverId = await _apiService.createPurchase(purchase.toSyncPayload());
+              final serverId = await _apiService.createPurchase(
+                purchase.toSyncPayload(),
+              );
               await _offlineController.markAsSynced(purchase.id, serverId);
               createdCount++;
-              debugPrint('[PurchaseSync] Created: ${purchase.productName} -> $serverId');
+              debugPrint(
+                '[PurchaseSync] Created: ${purchase.productName} -> $serverId',
+              );
               break;
 
             case PurchaseSyncStatus.updated:
               // Update on server (needs serverId)
               if (purchase.serverId != null) {
-                await _apiService.updatePurchase(purchase.serverId!, purchase.toSyncPayload());
-                await _offlineController.markAsSynced(purchase.id, purchase.serverId!);
+                await _apiService.updatePurchase(
+                  purchase.serverId!,
+                  purchase.toSyncPayload(),
+                );
+                await _offlineController.markAsSynced(
+                  purchase.id,
+                  purchase.serverId!,
+                );
                 updatedCount++;
                 debugPrint('[PurchaseSync] Updated: ${purchase.productName}');
               } else {
                 // No serverId, treat as new
-                final serverId = await _apiService.createPurchase(purchase.toSyncPayload());
+                final serverId = await _apiService.createPurchase(
+                  purchase.toSyncPayload(),
+                );
                 await _offlineController.markAsSynced(purchase.id, serverId);
                 createdCount++;
               }
@@ -230,7 +245,9 @@ class PurchaseSyncService extends ChangeNotifier {
               break;
           }
         } catch (e) {
-          debugPrint('[PurchaseSync] Failed to sync ${purchase.productName}: $e');
+          debugPrint(
+            '[PurchaseSync] Failed to sync ${purchase.productName}: $e',
+          );
           failedCount++;
         }
       }
@@ -239,6 +256,13 @@ class PurchaseSyncService extends ChangeNotifier {
       _lastSyncTime = DateTime.now();
       _status = PurchaseSyncServiceStatus.success;
       notifyListeners();
+
+      // Notify dashboard to refresh if any data was synced
+      if (createdCount > 0 || updatedCount > 0 || deletedCount > 0) {
+        DashboardRefreshService.instance.notifyDataChanged(
+          DataChangeType.purchase,
+        );
+      }
 
       final result = PurchaseSyncResult(
         success: true,
@@ -251,7 +275,6 @@ class PurchaseSyncService extends ChangeNotifier {
 
       debugPrint('[PurchaseSync] $result');
       return result;
-
     } catch (e) {
       stopwatch.stop();
       _lastError = e.toString();
@@ -274,11 +297,18 @@ class PurchaseSyncService extends ChangeNotifier {
   Future<PurchaseSyncResult> forceFullSync() async {
     // First upload any local changes
     await syncNow();
-    
+
     // Then download all from server
     final serverPurchases = await _apiService.getPurchases();
     await _offlineController.importFromServer(serverPurchases);
-    
+
+    // Notify dashboard to refresh after full sync
+    if (serverPurchases.isNotEmpty) {
+      DashboardRefreshService.instance.notifyDataChanged(
+        DataChangeType.purchase,
+      );
+    }
+
     return PurchaseSyncResult(
       success: true,
       downloadedCount: serverPurchases.length,

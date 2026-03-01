@@ -1,17 +1,13 @@
 import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
+import '../../../../core/services/dashboard_refresh_service.dart';
 import '../../offline/controllers/purchase_batch_offline_controller.dart';
 import '../../offline/entities/purchase_batch_entity.dart';
 import 'purchase_batch_api_service.dart';
 
 /// Sync status for tracking sync state
-enum PurchaseBatchSyncServiceStatus {
-  idle,
-  syncing,
-  success,
-  failed,
-}
+enum PurchaseBatchSyncServiceStatus { idle, syncing, success, failed }
 
 /// Result of a sync operation
 class PurchaseBatchSyncResult {
@@ -61,10 +57,10 @@ class PurchaseBatchSyncService extends ChangeNotifier {
   StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
   Timer? _periodicSyncTimer;
   Timer? _connectivityDebounceTimer;
-  
+
   /// Mutex to prevent concurrent sync operations
   bool _isSyncing = false;
-  
+
   /// Mutex to prevent concurrent full sync operations
   bool _isFullSyncing = false;
 
@@ -72,9 +68,10 @@ class PurchaseBatchSyncService extends ChangeNotifier {
     PurchaseBatchOfflineController? offlineController,
     PurchaseBatchApiService? apiService,
     Connectivity? connectivity,
-  })  : _offlineController = offlineController ?? PurchaseBatchOfflineController.instance,
-        _apiService = apiService ?? PurchaseBatchApiService.instance,
-        _connectivity = connectivity ?? Connectivity();
+  }) : _offlineController =
+           offlineController ?? PurchaseBatchOfflineController.instance,
+       _apiService = apiService ?? PurchaseBatchApiService.instance,
+       _connectivity = connectivity ?? Connectivity();
 
   /// Get the singleton instance
   static PurchaseBatchSyncService get instance {
@@ -97,17 +94,21 @@ class PurchaseBatchSyncService extends ChangeNotifier {
   /// Initialize the sync service
   void initialize() {
     debugPrint('[PurchaseBatchSync] Initializing...');
-    
+
     // Listen for connectivity changes with debouncing
-    _connectivitySubscription = _connectivity.onConnectivityChanged.listen((results) {
+    _connectivitySubscription = _connectivity.onConnectivityChanged.listen((
+      results,
+    ) {
       if (_isConnected(results)) {
         // Cancel any pending debounce timer
         _connectivityDebounceTimer?.cancel();
-        
+
         // Debounce to prevent multiple syncs when connectivity changes rapidly
         _connectivityDebounceTimer = Timer(const Duration(seconds: 3), () {
           if (!_isSyncing) {
-            debugPrint('[PurchaseBatchSync] Network available - triggering sync');
+            debugPrint(
+              '[PurchaseBatchSync] Network available - triggering sync',
+            );
             syncNow();
           }
         });
@@ -118,33 +119,41 @@ class PurchaseBatchSyncService extends ChangeNotifier {
     _periodicSyncTimer = Timer.periodic(const Duration(minutes: 3), (_) {
       _checkAndSync();
     });
-    
+
     // Initial sync
     _initialSync();
-    
+
     debugPrint('[PurchaseBatchSync] Initialized');
   }
 
   /// Perform initial sync - download all batches if local database is empty
   Future<void> _initialSync() async {
     try {
-      final localBatches = await _offlineController.getAllBatches(includeConsumed: true);
-      debugPrint('[PurchaseBatchSync] Initial sync check: ${localBatches.length} local batches');
-      
+      final localBatches = await _offlineController.getAllBatches(
+        includeConsumed: true,
+      );
+      debugPrint(
+        '[PurchaseBatchSync] Initial sync check: ${localBatches.length} local batches',
+      );
+
       // First, deduplicate any existing local data
       if (localBatches.length > 1) {
         final removedDupes = await _offlineController.deduplicateBatches();
         if (removedDupes > 0) {
-          debugPrint('[PurchaseBatchSync] Initial dedup removed $removedDupes duplicates');
+          debugPrint(
+            '[PurchaseBatchSync] Initial dedup removed $removedDupes duplicates',
+          );
         }
       }
-      
+
       // Sync any pending local changes
       await syncNow();
-      
+
       // Then check if we need to download from server
       if (localBatches.isEmpty) {
-        debugPrint('[PurchaseBatchSync] No local batches, downloading from server...');
+        debugPrint(
+          '[PurchaseBatchSync] No local batches, downloading from server...',
+        );
         final results = await _connectivity.checkConnectivity();
         if (_isConnected(results) && _apiService.isAuthenticated) {
           await forceFullSync();
@@ -164,10 +173,11 @@ class PurchaseBatchSyncService extends ChangeNotifier {
   }
 
   bool _isConnected(List<ConnectivityResult> results) {
-    return results.any((r) => 
-      r == ConnectivityResult.wifi || 
-      r == ConnectivityResult.mobile ||
-      r == ConnectivityResult.ethernet
+    return results.any(
+      (r) =>
+          r == ConnectivityResult.wifi ||
+          r == ConnectivityResult.mobile ||
+          r == ConnectivityResult.ethernet,
     );
   }
 
@@ -222,29 +232,43 @@ class PurchaseBatchSyncService extends ChangeNotifier {
 
       // Get all batches that need syncing
       final pendingBatches = await _offlineController.getBatchesNeedingSync();
-      debugPrint('[PurchaseBatchSync] Found ${pendingBatches.length} batches to sync');
+      debugPrint(
+        '[PurchaseBatchSync] Found ${pendingBatches.length} batches to sync',
+      );
 
       for (final batch in pendingBatches) {
         try {
           switch (batch.syncStatus) {
             case BatchSyncStatus.newRecord:
               // Create on server
-              final serverId = await _apiService.createBatch(batch.toSyncPayload());
+              final serverId = await _apiService.createBatch(
+                batch.toSyncPayload(),
+              );
               await _offlineController.markAsSynced(batch.id, serverId);
               createdCount++;
-              debugPrint('[PurchaseBatchSync] Created: ${batch.productName} -> $serverId');
+              debugPrint(
+                '[PurchaseBatchSync] Created: ${batch.productName} -> $serverId',
+              );
               break;
 
             case BatchSyncStatus.updated:
               // Update on server (needs serverId)
               if (batch.serverId != null) {
-                await _apiService.updateBatch(batch.serverId!, batch.toSyncPayload());
-                await _offlineController.markAsSynced(batch.id, batch.serverId!);
+                await _apiService.updateBatch(
+                  batch.serverId!,
+                  batch.toSyncPayload(),
+                );
+                await _offlineController.markAsSynced(
+                  batch.id,
+                  batch.serverId!,
+                );
                 updatedCount++;
                 debugPrint('[PurchaseBatchSync] Updated: ${batch.productName}');
               } else {
                 // No serverId, treat as new
-                final serverId = await _apiService.createBatch(batch.toSyncPayload());
+                final serverId = await _apiService.createBatch(
+                  batch.toSyncPayload(),
+                );
                 await _offlineController.markAsSynced(batch.id, serverId);
                 createdCount++;
               }
@@ -266,7 +290,9 @@ class PurchaseBatchSyncService extends ChangeNotifier {
               break;
           }
         } catch (e) {
-          debugPrint('[PurchaseBatchSync] Failed to sync ${batch.productName}: $e');
+          debugPrint(
+            '[PurchaseBatchSync] Failed to sync ${batch.productName}: $e',
+          );
           failedCount++;
         }
       }
@@ -275,6 +301,13 @@ class PurchaseBatchSyncService extends ChangeNotifier {
       _lastSyncTime = DateTime.now();
       _status = PurchaseBatchSyncServiceStatus.success;
       notifyListeners();
+
+      // Notify dashboard to refresh if any data was synced (affects low stock calculation)
+      if (createdCount > 0 || updatedCount > 0 || deletedCount > 0) {
+        DashboardRefreshService.instance.notifyDataChanged(
+          DataChangeType.purchase,
+        );
+      }
 
       final result = PurchaseBatchSyncResult(
         success: true,
@@ -287,7 +320,6 @@ class PurchaseBatchSyncService extends ChangeNotifier {
 
       debugPrint('[PurchaseBatchSync] $result');
       return result;
-
     } catch (e) {
       stopwatch.stop();
       _lastError = e.toString();
@@ -310,14 +342,16 @@ class PurchaseBatchSyncService extends ChangeNotifier {
   Future<PurchaseBatchSyncResult> forceFullSync() async {
     // Prevent concurrent full syncs
     if (_isFullSyncing) {
-      debugPrint('[PurchaseBatchSync] Full sync already in progress, skipping...');
+      debugPrint(
+        '[PurchaseBatchSync] Full sync already in progress, skipping...',
+      );
       return PurchaseBatchSyncResult(
         success: false,
         errorMessage: 'Full sync already in progress',
         duration: Duration.zero,
       );
     }
-    
+
     if (!_apiService.isAuthenticated) {
       return PurchaseBatchSyncResult(
         success: false,
@@ -325,23 +359,32 @@ class PurchaseBatchSyncService extends ChangeNotifier {
         duration: Duration.zero,
       );
     }
-    
+
     _isFullSyncing = true;
-    
+
     try {
       // First upload any local changes
       await syncNow();
-      
+
       // Then download all from server
       final serverBatches = await _apiService.getBatches();
       await _offlineController.importFromServer(serverBatches);
-      
+
       // Run deduplication to clean up any existing duplicates
       final removedDupes = await _offlineController.deduplicateBatches();
       if (removedDupes > 0) {
-        debugPrint('[PurchaseBatchSync] Removed $removedDupes duplicates during full sync');
+        debugPrint(
+          '[PurchaseBatchSync] Removed $removedDupes duplicates during full sync',
+        );
       }
-      
+
+      // Notify dashboard to refresh after full sync (affects low stock calculation)
+      if (serverBatches.isNotEmpty) {
+        DashboardRefreshService.instance.notifyDataChanged(
+          DataChangeType.purchase,
+        );
+      }
+
       return PurchaseBatchSyncResult(
         success: true,
         downloadedCount: serverBatches.length,

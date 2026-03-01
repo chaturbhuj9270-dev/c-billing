@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
+import '../../../../core/services/dashboard_refresh_service.dart';
 import '../../offline/controllers/product_offline_controller.dart';
 import 'product_api_service.dart';
 
@@ -218,6 +219,16 @@ class ProductSyncService extends ChangeNotifier {
 
       notifyListeners();
 
+      // Notify dashboard to refresh if any data was synced
+      if (createdCount > 0 ||
+          updatedCount > 0 ||
+          deletedCount > 0 ||
+          downloadedCount > 0) {
+        DashboardRefreshService.instance.notifyDataChanged(
+          DataChangeType.product,
+        );
+      }
+
       return ProductSyncResult(
         success: true,
         createdCount: createdCount,
@@ -387,6 +398,13 @@ class ProductSyncService extends ChangeNotifier {
       _status = ProductSyncStatus.success;
       _lastSyncTime = DateTime.now();
       notifyListeners();
+
+      // Notify dashboard to refresh after full sync
+      if (count > 0) {
+        DashboardRefreshService.instance.notifyDataChanged(
+          DataChangeType.product,
+        );
+      }
 
       return ProductSyncResult(
         success: true,

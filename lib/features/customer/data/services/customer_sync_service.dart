@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
+import '../../../../core/services/dashboard_refresh_service.dart';
 import '../../offline/controllers/customer_offline_controller.dart';
 import 'customer_api_service.dart';
 
@@ -189,6 +190,13 @@ class CustomerSyncService extends ChangeNotifier {
       _lastError = null;
       notifyListeners();
 
+      // Notify dashboard to refresh if any data was synced
+      if (uploadedCount > 0 || downloadedCount > 0) {
+        DashboardRefreshService.instance.notifyDataChanged(
+          DataChangeType.customer,
+        );
+      }
+
       return SyncResult(
         success: true,
         uploadedCount: uploadedCount,
@@ -305,6 +313,13 @@ class CustomerSyncService extends ChangeNotifier {
       _status = SyncStatus.success;
       _lastSyncTime = DateTime.now();
       notifyListeners();
+
+      // Notify dashboard to refresh after full sync
+      if (serverCustomers.isNotEmpty) {
+        DashboardRefreshService.instance.notifyDataChanged(
+          DataChangeType.customer,
+        );
+      }
 
       return SyncResult(
         success: true,
