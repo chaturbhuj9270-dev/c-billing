@@ -48,6 +48,7 @@ import 'package:c_billing/common_widgets/file_preview_page.dart';
 import 'package:c_billing/features/inventory_management/presentation/pages/barcode_generator_page.dart';
 import 'package:c_billing/features/customer/presentation/pages/enhanced_customer_page.dart';
 import 'package:c_billing/features/billing/presentation/widgets/barcode_scanner_sheet.dart';
+import 'package:c_billing/features/customer/offline/controllers/customer_transaction_offline_controller.dart';
 
 class BillingPage extends StatefulWidget {
   final bool isEmbedded;
@@ -1154,34 +1155,60 @@ class _BillingPageState extends State<BillingPage> {
         '[Billing] Bill processed with FIFO: COGS=${integrationResult.totalCOGS}, Profit=${integrationResult.totalProfit}',
       );
 
-      // 3. Create ledger/transaction entry for partial payments
-      if (calculatedPendingAmount > 0 && _selectedCustomer != null) {
+      // 3. Create ledger/transaction entries for customer transactions
+      if (_selectedCustomer != null) {
         try {
           final customerId = _selectedCustomer!['id'] as String;
+          final customerName = _selectedCustomer!['fullName'] as String? ?? 
+              '${_selectedCustomer!['firstName'] ?? ''} ${_selectedCustomer!['lastName'] ?? ''}'.trim();
           final billId =
               integrationResult.billEntity?.serverId ??
               'local_${integrationResult.billEntity?.id}';
 
-          // Create ledger entry via CustomerTransactionService
-          final transactionResult = await _customerTransactionService
-              .recordBillGenerated(
-                customerId: customerId,
-                billId: billId,
-                billNumber: billId,
-                billAmount: calculatedPendingAmount,
-              );
+          // 3a. Record bill creation transaction (adds to pending amount)
+          await CustomerTransactionOfflineController.instance.addBillTransaction(
+            customerId: customerId,
+            customerName: customerName,
+            amount: _finalAmount,
+            billId: billId,
+            description: 'Bill #$billId',
+          );
+          debugPrint('[Billing] Bill transaction recorded: $_finalAmount');
 
-          if (transactionResult.success) {
-            debugPrint(
-              '[Billing] Ledger entry created for pending amount: $calculatedPendingAmount',
+          // 3b. Record payment received during billing (if any)
+          if (actualPaidAmount > 0) {
+            await CustomerTransactionOfflineController.instance.addPaymentTransaction(
+              customerId: customerId,
+              customerName: customerName,
+              amount: actualPaidAmount,
+              paymentMethod: _isFullPayment ? 'Full Payment' : 'Partial Payment',
+              description: 'Payment for Bill #$billId',
             );
-          } else {
-            debugPrint(
-              '[Billing] Ledger entry failed: ${transactionResult.errorMessage}',
-            );
+            debugPrint('[Billing] Payment transaction recorded: $actualPaidAmount');
+          }
+
+          // 3c. Also create Firebase ledger entry for backward compatibility
+          if (calculatedPendingAmount > 0) {
+            final transactionResult = await _customerTransactionService
+                .recordBillGenerated(
+                  customerId: customerId,
+                  billId: billId,
+                  billNumber: billId,
+                  billAmount: calculatedPendingAmount,
+                );
+
+            if (transactionResult.success) {
+              debugPrint(
+                '[Billing] Firebase ledger entry created for pending amount: $calculatedPendingAmount',
+              );
+            } else {
+              debugPrint(
+                '[Billing] Firebase ledger entry failed: ${transactionResult.errorMessage}',
+              );
+            }
           }
         } catch (e) {
-          debugPrint('[Billing] Ledger entry error (non-blocking): $e');
+          debugPrint('[Billing] Transaction entry error (non-blocking): $e');
         }
       }
 
