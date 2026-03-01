@@ -14,6 +14,7 @@ import '../widgets/customer_summary_widget.dart';
 import '../widgets/customer_filter_widget.dart';
 import '../widgets/customer_list_widget.dart';
 import 'customer_details_page.dart';
+import 'customer_finance_page.dart';
 
 class EnhancedCustomerPage extends StatefulWidget {
   final bool isEmbedded;
@@ -75,20 +76,14 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
       vsync: this,
       duration: const Duration(milliseconds: 600),
     );
-    _offsetAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.05),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _animController,
-      curve: Curves.easeOutCubic,
-    ));
+    _offsetAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.05), end: Offset.zero).animate(
+          CurvedAnimation(parent: _animController, curve: Curves.easeOutCubic),
+        );
     _opacityAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _animController,
-      curve: Curves.easeOut,
-    ));
+    ).animate(CurvedAnimation(parent: _animController, curve: Curves.easeOut));
 
     _checkUserAuthentication();
     _setupIsarStream();
@@ -144,7 +139,9 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
           _customers = mapped;
           _isLoading = false;
         });
-        debugPrint('[EnhancedCustomer] Isar stream: ${mapped.length} customers');
+        debugPrint(
+          '[EnhancedCustomer] Isar stream: ${mapped.length} customers',
+        );
       },
       onError: (e) {
         debugPrint('[EnhancedCustomer] Isar stream error: $e');
@@ -189,36 +186,41 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
 
       debugPrint('[EnhancedCustomer] Firebase: ${snapshot.docs.length} docs');
 
-      final serverList = snapshot.docs.where((doc) {
-        final data = doc.data();
-        return data['isActive'] != false;
-      }).map((doc) {
-        final data = doc.data();
-        final firstName = (data['firstName'] ?? '').toString();
-        final middleName = (data['middleName'] ?? '').toString();
-        final lastName = (data['lastName'] ?? '').toString();
-        final fullName = [firstName, middleName, lastName]
-            .where((s) => s.isNotEmpty)
-            .join(' ');
+      final serverList = snapshot.docs
+          .where((doc) {
+            final data = doc.data();
+            return data['isActive'] != false;
+          })
+          .map((doc) {
+            final data = doc.data();
+            final firstName = (data['firstName'] ?? '').toString();
+            final middleName = (data['middleName'] ?? '').toString();
+            final lastName = (data['lastName'] ?? '').toString();
+            final fullName = [
+              firstName,
+              middleName,
+              lastName,
+            ].where((s) => s.isNotEmpty).join(' ');
 
-        return <String, dynamic>{
-          'id': doc.id,
-          'name': fullName,
-          'mobile': data['contact'] ?? '',
-          'address': data['address'] ?? '',
-          'email': data['email'] ?? '',
-          'currentPendingAmount':
-              data['currentPendingAmount'] ?? data['pendingBalance'] ?? 0,
-          'totalPurchases':
-              data['totalPurchaseAmount'] ?? data['totalPurchases'] ?? 0,
-          'updatedAt': data['updatedAt'] is Timestamp
-              ? (data['updatedAt'] as Timestamp).toDate().toIso8601String()
-              : data['updatedAt']?.toString() ?? '',
-          'createdAt': data['createdAt'] is Timestamp
-              ? (data['createdAt'] as Timestamp).toDate().toIso8601String()
-              : data['createdAt']?.toString() ?? '',
-        };
-      }).toList();
+            return <String, dynamic>{
+              'id': doc.id,
+              'name': fullName,
+              'mobile': data['contact'] ?? '',
+              'address': data['address'] ?? '',
+              'email': data['email'] ?? '',
+              'currentPendingAmount':
+                  data['currentPendingAmount'] ?? data['pendingBalance'] ?? 0,
+              'totalPurchases':
+                  data['totalPurchaseAmount'] ?? data['totalPurchases'] ?? 0,
+              'updatedAt': data['updatedAt'] is Timestamp
+                  ? (data['updatedAt'] as Timestamp).toDate().toIso8601String()
+                  : data['updatedAt']?.toString() ?? '',
+              'createdAt': data['createdAt'] is Timestamp
+                  ? (data['createdAt'] as Timestamp).toDate().toIso8601String()
+                  : data['createdAt']?.toString() ?? '',
+            };
+          })
+          .toList();
 
       // Import into Isar — the stream listener auto-updates the UI
       await CustomerOfflineController.instance.importFromServer(serverList);
@@ -256,55 +258,71 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
         .collection('customers')
         .snapshots()
         .listen(
-      (snapshot) async {
-        if (!mounted || _isNavigatingAway) return;
+          (snapshot) async {
+            if (!mounted || _isNavigatingAway) return;
 
-        debugPrint(
-            '[EnhancedCustomer] Firestore stream: ${snapshot.docs.length} docs (${snapshot.docChanges.length} changes)');
+            debugPrint(
+              '[EnhancedCustomer] Firestore stream: ${snapshot.docs.length} docs (${snapshot.docChanges.length} changes)',
+            );
 
-        final serverList = snapshot.docs.where((doc) {
-          final data = doc.data();
-          return data['isActive'] != false;
-        }).map((doc) {
-          final data = doc.data();
-          final firstName = (data['firstName'] ?? '').toString();
-          final middleName = (data['middleName'] ?? '').toString();
-          final lastName = (data['lastName'] ?? '').toString();
-          final fullName = [firstName, middleName, lastName]
-              .where((s) => s.isNotEmpty)
-              .join(' ');
+            final serverList = snapshot.docs
+                .where((doc) {
+                  final data = doc.data();
+                  return data['isActive'] != false;
+                })
+                .map((doc) {
+                  final data = doc.data();
+                  final firstName = (data['firstName'] ?? '').toString();
+                  final middleName = (data['middleName'] ?? '').toString();
+                  final lastName = (data['lastName'] ?? '').toString();
+                  final fullName = [
+                    firstName,
+                    middleName,
+                    lastName,
+                  ].where((s) => s.isNotEmpty).join(' ');
 
-          return <String, dynamic>{
-            'id': doc.id,
-            'name': fullName,
-            'mobile': data['contact'] ?? '',
-            'address': data['address'] ?? '',
-            'email': data['email'] ?? '',
-            'currentPendingAmount':
-                data['currentPendingAmount'] ?? data['pendingBalance'] ?? 0,
-            'totalPurchases':
-                data['totalPurchaseAmount'] ?? data['totalPurchases'] ?? 0,
-            'updatedAt': data['updatedAt'] is Timestamp
-                ? (data['updatedAt'] as Timestamp).toDate().toIso8601String()
-                : data['updatedAt']?.toString() ?? '',
-            'createdAt': data['createdAt'] is Timestamp
-                ? (data['createdAt'] as Timestamp).toDate().toIso8601String()
-                : data['createdAt']?.toString() ?? '',
-          };
-        }).toList();
+                  return <String, dynamic>{
+                    'id': doc.id,
+                    'name': fullName,
+                    'mobile': data['contact'] ?? '',
+                    'address': data['address'] ?? '',
+                    'email': data['email'] ?? '',
+                    'currentPendingAmount':
+                        data['currentPendingAmount'] ??
+                        data['pendingBalance'] ??
+                        0,
+                    'totalPurchases':
+                        data['totalPurchaseAmount'] ??
+                        data['totalPurchases'] ??
+                        0,
+                    'updatedAt': data['updatedAt'] is Timestamp
+                        ? (data['updatedAt'] as Timestamp)
+                              .toDate()
+                              .toIso8601String()
+                        : data['updatedAt']?.toString() ?? '',
+                    'createdAt': data['createdAt'] is Timestamp
+                        ? (data['createdAt'] as Timestamp)
+                              .toDate()
+                              .toIso8601String()
+                        : data['createdAt']?.toString() ?? '',
+                  };
+                })
+                .toList();
 
-        // Import into Isar — the stream listener auto-updates the UI
-        await CustomerOfflineController.instance.importFromServer(serverList);
+            // Import into Isar — the stream listener auto-updates the UI
+            await CustomerOfflineController.instance.importFromServer(
+              serverList,
+            );
 
-        // Cache for next time
-        if (_customers.isNotEmpty && mounted) {
-          _cacheDataSource.saveCustomers(_customers);
-        }
-      },
-      onError: (e) {
-        debugPrint('[ERROR] Firestore customer stream error: $e');
-      },
-    );
+            // Cache for next time
+            if (_customers.isNotEmpty && mounted) {
+              _cacheDataSource.saveCustomers(_customers);
+            }
+          },
+          onError: (e) {
+            debugPrint('[ERROR] Firestore customer stream error: $e');
+          },
+        );
   }
 
   // ━━━ FORM HELPERS ━━━
@@ -339,17 +357,20 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
       final firstName = _firstNameController.text.trim();
       final middleName = _middleNameController.text.trim();
       final lastName = _lastNameController.text.trim();
-      final fullName = [firstName, middleName, lastName]
-          .where((s) => s.isNotEmpty)
-          .join(' ');
+      final fullName = [
+        firstName,
+        middleName,
+        lastName,
+      ].where((s) => s.isNotEmpty).join(' ');
       final contact = _contactController.text.trim();
       final address = _addressController.text.trim();
       final offlineCtrl = CustomerOfflineController.instance;
 
       if (_isEditing && _editingCustomerId != null) {
         // Update existing customer
-        final existing =
-            await offlineCtrl.getCustomerByServerId(_editingCustomerId!);
+        final existing = await offlineCtrl.getCustomerByServerId(
+          _editingCustomerId!,
+        );
         if (existing != null) {
           await offlineCtrl.updateCustomer(
             id: existing.id,
@@ -367,18 +388,19 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
                 .collection('customers')
                 .doc(_editingCustomerId)
                 .update({
-              'firstName': firstName,
-              'middleName': middleName,
-              'lastName': lastName,
-              'contact': contact,
-              'address': address,
-              'updatedAt': FieldValue.serverTimestamp(),
-            });
+                  'firstName': firstName,
+                  'middleName': middleName,
+                  'lastName': lastName,
+                  'contact': contact,
+                  'address': address,
+                  'updatedAt': FieldValue.serverTimestamp(),
+                });
             _fetchFromFirebase();
           }
         }
-        DashboardRefreshService.instance
-            .notifyDataChanged(DataChangeType.customer);
+        DashboardRefreshService.instance.notifyDataChanged(
+          DataChangeType.customer,
+        );
 
         // Trigger background sync for the update
         CustomerSyncService.instance.syncNow();
@@ -395,8 +417,9 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
           mobile: contact,
           address: address,
         );
-        DashboardRefreshService.instance
-            .notifyDataChanged(DataChangeType.customer);
+        DashboardRefreshService.instance.notifyDataChanged(
+          DataChangeType.customer,
+        );
         CustomerSyncService.instance.syncNow();
 
         _clearForm();
@@ -424,8 +447,9 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
         filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
         child: AlertDialog(
           backgroundColor: Colors.white.withOpacity(0.95),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
           title: Text(
             _localizations.deleteCustomer,
             style: const TextStyle(
@@ -524,8 +548,10 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
               onPressed: () => Navigator.pop(ctx, false),
               child: Text(
                 _localizations.cancel,
-                style:
-                    const TextStyle(fontFamily: 'Literata', color: Colors.grey),
+                style: const TextStyle(
+                  fontFamily: 'Literata',
+                  color: Colors.grey,
+                ),
               ),
             ),
             ElevatedButton(
@@ -538,8 +564,10 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
               ),
               child: Text(
                 _localizations.delete,
-                style:
-                    const TextStyle(fontFamily: 'Literata', color: Colors.white),
+                style: const TextStyle(
+                  fontFamily: 'Literata',
+                  color: Colors.white,
+                ),
               ),
             ),
           ],
@@ -575,8 +603,9 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
       }
 
       CustomerSyncService.instance.syncNow();
-      DashboardRefreshService.instance
-          .notifyDataChanged(DataChangeType.customer);
+      DashboardRefreshService.instance.notifyDataChanged(
+        DataChangeType.customer,
+      );
 
       if (mounted && context.mounted) {
         _showSnackbar('Customer deleted successfully', false);
@@ -609,10 +638,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
   void _showSnackbar(String message, bool isError) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(
-          message,
-          style: const TextStyle(fontFamily: 'Literata'),
-        ),
+        content: Text(message, style: const TextStyle(fontFamily: 'Literata')),
         backgroundColor: isError ? Colors.red : const Color(0xFF1B4D3E),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -686,10 +712,12 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
                             onRefresh: _fetchFromFirebase,
                             onCustomerTap: _showCustomerDetails,
                             onCustomerLongPress: _showCustomerContextMenu,
+                            onFinanceTap: _openCustomerFinance,
                             emptyTitle: _localizations.noCustomersYet,
                             emptySubtitle: _localizations.createFirstCustomer,
                             noResultsTitle: _localizations.noResultsFound,
-                            noResultsSubtitle: _localizations.tryDifferentSearch,
+                            noResultsSubtitle:
+                                _localizations.tryDifferentSearch,
                           ),
                         ),
                       ],
@@ -808,6 +836,50 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
     );
   }
 
+  // ━━━ CUSTOMER FINANCE/HISTORY PAGE ━━━
+
+  void _openCustomerFinance(Map<String, dynamic> customer) {
+    final customerId =
+        customer['serverId'] as String? ?? customer['id']?.toString() ?? '';
+    final customerLocalId = customer['id']?.toString() ?? '';
+    final firstName = customer['firstName'] as String? ?? '';
+    final lastName = customer['lastName'] as String? ?? '';
+    final fullName = '$firstName $lastName'.trim();
+    final contact = customer['contact'] as String? ?? '';
+    final pendingAmount =
+        (customer['currentPendingAmount'] as num?)?.toDouble() ?? 0.0;
+
+    Navigator.push(
+      context,
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            CustomerFinancePage(
+              customerId: customerId,
+              customerLocalId: customerLocalId,
+              customerName: fullName.isNotEmpty ? fullName : 'Customer',
+              customerContact: contact,
+              currentPendingAmount: pendingAmount,
+            ),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return SlideTransition(
+            position:
+                Tween<Offset>(
+                  begin: const Offset(1.0, 0.0),
+                  end: Offset.zero,
+                ).animate(
+                  CurvedAnimation(
+                    parent: animation,
+                    curve: Curves.easeOutCubic,
+                  ),
+                ),
+            child: child,
+          );
+        },
+        transitionDuration: const Duration(milliseconds: 300),
+      ),
+    );
+  }
+
   // ━━━ CUSTOMER DETAILS BOTTOM SHEET ━━━
 
   void _showCustomerDetails(Map<String, dynamic> customer) {
@@ -847,8 +919,9 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
           child: Container(
             decoration: BoxDecoration(
               color: Colors.white.withOpacity(0.95),
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(20)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(20),
+              ),
             ),
             child: SafeArea(
               child: Column(
@@ -1089,8 +1162,9 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
                                 width: 20,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
-                                  valueColor:
-                                      AlwaysStoppedAnimation(Colors.white),
+                                  valueColor: AlwaysStoppedAnimation(
+                                    Colors.white,
+                                  ),
                                 ),
                               )
                             : Text(
@@ -1177,8 +1251,10 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
         ),
         filled: true,
         fillColor: Colors.grey[50],
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: 12,
+        ),
       ),
       validator: isRequired
           ? (value) {
@@ -1274,7 +1350,7 @@ class _CustomerDetailsSheet extends StatelessWidget {
                               end: Alignment.bottomRight,
                               colors: [
                                 accentColor,
-                                accentColor.withOpacity(0.7)
+                                accentColor.withOpacity(0.7),
                               ],
                             ),
                             boxShadow: [
@@ -1509,11 +1585,7 @@ class _CustomerDetailsSheet extends StatelessWidget {
               color: const Color(0xFF1B4D3E).withOpacity(0.1),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Icon(
-              icon,
-              size: 18,
-              color: const Color(0xFF1B4D3E),
-            ),
+            child: Icon(icon, size: 18, color: const Color(0xFF1B4D3E)),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -1561,12 +1633,10 @@ class _CustomerDetailsSheet extends StatelessWidget {
           color: isPrimary
               ? const Color(0xFF1B4D3E)
               : isDestructive
-                  ? Colors.red[50]
-                  : Colors.grey[100],
+              ? Colors.red[50]
+              : Colors.grey[100],
           borderRadius: BorderRadius.circular(12),
-          border: isDestructive
-              ? Border.all(color: Colors.red[200]!)
-              : null,
+          border: isDestructive ? Border.all(color: Colors.red[200]!) : null,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -1577,8 +1647,8 @@ class _CustomerDetailsSheet extends StatelessWidget {
               color: isPrimary
                   ? Colors.white
                   : isDestructive
-                      ? Colors.red[700]
-                      : Colors.grey[700],
+                  ? Colors.red[700]
+                  : Colors.grey[700],
             ),
             const SizedBox(height: 4),
             Text(
@@ -1590,8 +1660,8 @@ class _CustomerDetailsSheet extends StatelessWidget {
                 color: isPrimary
                     ? Colors.white
                     : isDestructive
-                        ? Colors.red[700]
-                        : Colors.grey[700],
+                    ? Colors.red[700]
+                    : Colors.grey[700],
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,

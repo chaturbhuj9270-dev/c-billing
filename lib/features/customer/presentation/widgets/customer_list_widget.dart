@@ -13,7 +13,8 @@ class CustomerListWidget extends StatelessWidget {
   final Future<void> Function() onRefresh;
   final void Function(Map<String, dynamic>) onCustomerTap;
   final void Function(Map<String, dynamic>)? onCustomerLongPress;
-  
+  final void Function(Map<String, dynamic>)? onFinanceTap;
+
   // Labels
   final String emptyTitle;
   final String emptySubtitle;
@@ -30,6 +31,7 @@ class CustomerListWidget extends StatelessWidget {
     required this.onRefresh,
     required this.onCustomerTap,
     this.onCustomerLongPress,
+    this.onFinanceTap,
     this.emptyTitle = 'No customers yet',
     this.emptySubtitle = 'Add your first customer to get started',
     this.noResultsTitle = 'No results found',
@@ -59,10 +61,10 @@ class CustomerListWidget extends StatelessWidget {
       int result;
       switch (sortField) {
         case CustomerSortField.name:
-          final aName =
-              '${a['firstName'] ?? ''} ${a['lastName'] ?? ''}'.toLowerCase();
-          final bName =
-              '${b['firstName'] ?? ''} ${b['lastName'] ?? ''}'.toLowerCase();
+          final aName = '${a['firstName'] ?? ''} ${a['lastName'] ?? ''}'
+              .toLowerCase();
+          final bName = '${b['firstName'] ?? ''} ${b['lastName'] ?? ''}'
+              .toLowerCase();
           result = aName.compareTo(bName);
           break;
         case CustomerSortField.createdDate:
@@ -127,6 +129,9 @@ class CustomerListWidget extends StatelessWidget {
               onTap: () => onCustomerTap(filtered[index]),
               onLongPress: onCustomerLongPress != null
                   ? () => onCustomerLongPress!(filtered[index])
+                  : null,
+              onFinanceTap: onFinanceTap != null
+                  ? () => onFinanceTap!(filtered[index])
                   : null,
             ),
           );
@@ -204,11 +209,13 @@ class _CustomerCard extends StatelessWidget {
   final Map<String, dynamic> customer;
   final VoidCallback onTap;
   final VoidCallback? onLongPress;
+  final VoidCallback? onFinanceTap;
 
   const _CustomerCard({
     required this.customer,
     required this.onTap,
     this.onLongPress,
+    this.onFinanceTap,
   });
 
   @override
@@ -322,9 +329,7 @@ class _CustomerCard extends StatelessWidget {
                                     ? Icons.cloud_done_rounded
                                     : Icons.cloud_upload_rounded,
                                 size: 16,
-                                color: isSynced
-                                    ? Colors.green
-                                    : Colors.orange,
+                                color: isSynced ? Colors.green : Colors.orange,
                               ),
                             ),
                           ],
@@ -363,10 +368,7 @@ class _CustomerCard extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: Colors.red[50],
                         borderRadius: BorderRadius.circular(10),
-                        border: Border.all(
-                          color: Colors.red[100]!,
-                          width: 1,
-                        ),
+                        border: Border.all(color: Colors.red[100]!, width: 1),
                       ),
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
@@ -435,18 +437,39 @@ class _CustomerCard extends StatelessWidget {
                   ),
                 ),
               ],
-              // Communication action icons (Call, SMS, WhatsApp)
-              if (contact.isNotEmpty) ...[
+              // Action icons row (Finance + Communication)
+              if (contact.isNotEmpty || onFinanceTap != null) ...[
                 const SizedBox(height: 10),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    CommunicationActionIcons(
-                      phoneNumber: contact,
-                      iconSize: 16,
-                      containerSize: 34,
-                      spacing: 8,
-                    ),
+                    // Finance/History button
+                    if (onFinanceTap != null)
+                      GestureDetector(
+                        onTap: onFinanceTap,
+                        child: Container(
+                          width: 34,
+                          height: 34,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(
+                            Icons.account_balance_wallet_rounded,
+                            size: 16,
+                            color: Color(0xFF1B4D3E),
+                          ),
+                        ),
+                      ),
+                    if (onFinanceTap != null && contact.isNotEmpty)
+                      const SizedBox(width: 8),
+                    if (contact.isNotEmpty)
+                      CommunicationActionIcons(
+                        phoneNumber: contact,
+                        iconSize: 16,
+                        containerSize: 34,
+                        spacing: 8,
+                      ),
                   ],
                 ),
               ],
@@ -478,9 +501,10 @@ class _ShimmerCardState extends State<_ShimmerCard>
       vsync: this,
       duration: const Duration(milliseconds: 1500),
     )..repeat();
-    _animation = Tween<double>(begin: -1.0, end: 2.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
+    _animation = Tween<double>(
+      begin: -1.0,
+      end: 2.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
   }
 
   @override
@@ -562,11 +586,7 @@ class _ShimmerCardState extends State<_ShimmerCard>
           gradient: LinearGradient(
             begin: Alignment.centerLeft,
             end: Alignment.centerRight,
-            colors: [
-              Colors.grey[200]!,
-              Colors.grey[100]!,
-              Colors.grey[200]!,
-            ],
+            colors: [Colors.grey[200]!, Colors.grey[100]!, Colors.grey[200]!],
             stops: [
               (_animation.value - 0.3).clamp(0.0, 1.0),
               _animation.value.clamp(0.0, 1.0),
