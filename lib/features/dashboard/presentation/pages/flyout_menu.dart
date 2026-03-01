@@ -13,6 +13,7 @@ import '../../../company/presentation/pages/enhanced_company_page.dart';
 import '../../../inventory_management/presentation/pages/enhanced_purchase_screen.dart';
 import '../../../inventory_management/presentation/pages/enhanced_product_page.dart';
 import '../../../shop/presentation/pages/shop_details_page.dart';
+import '../../../expense/presentation/pages/expenses_page.dart';
 
 class FlyoutMenu extends StatefulWidget {
   const FlyoutMenu({super.key});
@@ -51,6 +52,12 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
       label: 'Shop Details',
       route: 'ShopDetails',
       color: const Color(0xFF1976D2),
+    ),
+    _MenuItem(
+      icon: Icons.account_balance_wallet_rounded,
+      label: 'Expenses',
+      route: 'Expenses',
+      color: const Color(0xFFD32F2F),
     ),
     _MenuItem(
       icon: Icons.lock_reset_rounded,
@@ -257,6 +264,11 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
           Navigator.of(
             context,
           ).push(MaterialPageRoute(builder: (_) => const ShopDetailsPage()));
+          break;
+        case 'Expenses':
+          Navigator.of(
+            context,
+          ).push(MaterialPageRoute(builder: (_) => const ExpensesPage()));
           break;
         case 'ChangePassword':
           Navigator.of(
