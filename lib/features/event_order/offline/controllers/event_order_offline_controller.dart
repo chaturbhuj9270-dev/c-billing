@@ -11,7 +11,7 @@ import '../../domain/entities/order_item.dart';
 /// All operations go to local Isar first, then sync in background
 class EventOrderOfflineController extends ChangeNotifier {
   static EventOrderOfflineController? _instance;
-  
+
   final Isar _isar;
 
   EventOrderOfflineController._(this._isar);
@@ -55,11 +55,12 @@ class EventOrderOfflineController extends ChangeNotifier {
     // Calculate total based on type
     double totalAmount = 0.0;
     if (orderType == OrderType.event) {
-      totalAmount = subEvents.fold(0.0, (sum, e) => sum + e.charges) + eventCharges;
+      totalAmount =
+          subEvents.fold(0.0, (sum, e) => sum + e.charges) + eventCharges;
     } else {
       totalAmount = items.fold(0.0, (sum, e) => sum + e.total);
     }
-    
+
     final remainingAmount = totalAmount - advanceAmount;
     final now = DateTime.now();
 
@@ -81,7 +82,9 @@ class EventOrderOfflineController extends ChangeNotifier {
       remainingAmount: remainingAmount,
       notes: notes,
       status: OrderStatus.pending.index,
-      customDataJson: customData != null && customData.isNotEmpty ? jsonEncode(customData) : null,
+      customDataJson: customData != null && customData.isNotEmpty
+          ? jsonEncode(customData)
+          : null,
       createdAt: now,
       updatedAt: now,
       syncStatus: EventOrderSyncStatus.newRecord,
@@ -91,7 +94,9 @@ class EventOrderOfflineController extends ChangeNotifier {
       await _isar.eventOrderEntitys.put(entity);
     });
 
-    debugPrint('[EventOrderOffline] Order added: ${entity.id}, type: ${orderType.name}, status: NEW');
+    debugPrint(
+      '[EventOrderOffline] Order added: ${entity.id}, type: ${orderType.name}, status: NEW',
+    );
     notifyListeners();
     return entity;
   }
@@ -143,7 +148,9 @@ class EventOrderOfflineController extends ChangeNotifier {
   }
 
   /// Get event orders by customer ID
-  Future<List<EventOrderEntity>> getEventOrdersByCustomerId(String customerId) async {
+  Future<List<EventOrderEntity>> getEventOrdersByCustomerId(
+    String customerId,
+  ) async {
     return await _isar.eventOrderEntitys
         .filter()
         .customerIdEqualTo(customerId)
@@ -154,7 +161,9 @@ class EventOrderOfflineController extends ChangeNotifier {
   }
 
   /// Get event orders by status
-  Future<List<EventOrderEntity>> getEventOrdersByStatus(OrderStatus status) async {
+  Future<List<EventOrderEntity>> getEventOrdersByStatus(
+    OrderStatus status,
+  ) async {
     return await _isar.eventOrderEntitys
         .filter()
         .statusEqualTo(status.index)
@@ -194,7 +203,7 @@ class EventOrderOfflineController extends ChangeNotifier {
     final now = DateTime.now();
     final startOfDay = DateTime(now.year, now.month, now.day);
     final endOfDay = startOfDay.add(const Duration(days: 1));
-    
+
     return await _isar.eventOrderEntitys
         .filter()
         .eventDateBetween(startOfDay, endOfDay)
@@ -204,14 +213,14 @@ class EventOrderOfflineController extends ChangeNotifier {
         .findAll();
   }
 
-  /// Get upcoming events (event date in future)
+  /// Get upcoming events (event date today or in future)
   Future<List<EventOrderEntity>> getUpcomingEvents() async {
     final now = DateTime.now();
-    
+    final startOfToday = DateTime(now.year, now.month, now.day);
+
     return await _isar.eventOrderEntitys
         .filter()
-        .eventDateGreaterThan(now)
-        .orderTypeEqualTo(OrderType.event.index)
+        .eventDateGreaterThan(startOfToday, include: true)
         .not()
         .syncStatusEqualTo(EventOrderSyncStatus.deleted)
         .sortByEventDate()
@@ -221,17 +230,19 @@ class EventOrderOfflineController extends ChangeNotifier {
   /// Search event orders by name or customer
   Future<List<EventOrderEntity>> searchEventOrders(String query) async {
     if (query.isEmpty) return getAllEventOrders();
-    
+
     return await _isar.eventOrderEntitys
         .filter()
         .not()
         .syncStatusEqualTo(EventOrderSyncStatus.deleted)
-        .group((q) => q
-            .orderNameContains(query, caseSensitive: false)
-            .or()
-            .customerNameContains(query, caseSensitive: false)
-            .or()
-            .customerContactContains(query))
+        .group(
+          (q) => q
+              .orderNameContains(query, caseSensitive: false)
+              .or()
+              .customerNameContains(query, caseSensitive: false)
+              .or()
+              .customerContactContains(query),
+        )
         .sortByEventDateDesc()
         .findAll();
   }
@@ -276,10 +287,14 @@ class EventOrderOfflineController extends ChangeNotifier {
     if (eventDate != null) existing.eventDate = eventDate;
     if (eventLocation != null) existing.eventLocation = eventLocation;
     if (subEvents != null) {
-      existing.subEvents = subEvents.map((e) => SubEventEmbedded.fromDomain(e)).toList();
+      existing.subEvents = subEvents
+          .map((e) => SubEventEmbedded.fromDomain(e))
+          .toList();
     }
     if (items != null) {
-      existing.items = items.map((e) => OrderItemEmbedded.fromDomain(e)).toList();
+      existing.items = items
+          .map((e) => OrderItemEmbedded.fromDomain(e))
+          .toList();
     }
     if (eventCharges != null) existing.eventCharges = eventCharges;
     if (advanceAmount != null) existing.advanceAmount = advanceAmount;
@@ -287,14 +302,21 @@ class EventOrderOfflineController extends ChangeNotifier {
     if (status != null) existing.status = status.index;
     if (convertedBillId != null) existing.convertedBillId = convertedBillId;
     if (customData != null) {
-      existing.customDataJson = customData.isNotEmpty ? jsonEncode(customData) : null;
+      existing.customDataJson = customData.isNotEmpty
+          ? jsonEncode(customData)
+          : null;
     }
 
     // Recalculate totals
     if (existing.orderType == OrderType.event.index) {
-      existing.totalAmount = existing.subEvents.fold(0.0, (sum, e) => sum + e.charges) + existing.eventCharges;
+      existing.totalAmount =
+          existing.subEvents.fold(0.0, (sum, e) => sum + e.charges) +
+          existing.eventCharges;
     } else {
-      existing.totalAmount = existing.items.fold(0.0, (sum, e) => sum + e.total);
+      existing.totalAmount = existing.items.fold(
+        0.0,
+        (sum, e) => sum + e.total,
+      );
     }
     existing.remainingAmount = existing.totalAmount - existing.advanceAmount;
     existing.updatedAt = DateTime.now();
@@ -308,7 +330,9 @@ class EventOrderOfflineController extends ChangeNotifier {
       await _isar.eventOrderEntitys.put(existing);
     });
 
-    debugPrint('[EventOrderOffline] Order updated: $id, syncStatus: ${existing.syncStatus.name}');
+    debugPrint(
+      '[EventOrderOffline] Order updated: $id, syncStatus: ${existing.syncStatus.name}',
+    );
     notifyListeners();
     return existing;
   }
@@ -346,16 +370,18 @@ class EventOrderOfflineController extends ChangeNotifier {
   // ==================== STATISTICS ====================
 
   /// Get total advance amount collected
-  Future<double> getTotalAdvanceAmount({DateTime? startDate, DateTime? endDate}) async {
-    var query = _isar.eventOrderEntitys
-        .filter()
-        .not()
-        .syncStatusEqualTo(EventOrderSyncStatus.deleted);
-    
+  Future<double> getTotalAdvanceAmount({
+    DateTime? startDate,
+    DateTime? endDate,
+  }) async {
+    var query = _isar.eventOrderEntitys.filter().not().syncStatusEqualTo(
+      EventOrderSyncStatus.deleted,
+    );
+
     if (startDate != null && endDate != null) {
       query = query.eventDateBetween(startDate, endDate);
     }
-    
+
     final orders = await query.findAll();
     double total = 0.0;
     for (final order in orders) {
@@ -372,7 +398,7 @@ class EventOrderOfflineController extends ChangeNotifier {
         .not()
         .syncStatusEqualTo(EventOrderSyncStatus.deleted)
         .findAll();
-    
+
     double total = 0.0;
     for (final order in orders) {
       total += order.remainingAmount;
@@ -383,7 +409,7 @@ class EventOrderOfflineController extends ChangeNotifier {
   /// Get order counts by status
   Future<Map<OrderStatus, int>> getOrderCountByStatus() async {
     final result = <OrderStatus, int>{};
-    
+
     for (final status in OrderStatus.values) {
       final count = await _isar.eventOrderEntitys
           .filter()
@@ -393,7 +419,7 @@ class EventOrderOfflineController extends ChangeNotifier {
           .count();
       result[status] = count;
     }
-    
+
     return result;
   }
 
@@ -424,11 +450,11 @@ class EventOrderOfflineController extends ChangeNotifier {
 
     existing.serverId = serverId;
     existing.syncStatus = EventOrderSyncStatus.synced;
-    
+
     await _isar.writeTxn(() async {
       await _isar.eventOrderEntitys.put(existing);
     });
-    
+
     debugPrint('[EventOrderOffline] Marked synced: $id -> $serverId');
   }
 
@@ -438,11 +464,13 @@ class EventOrderOfflineController extends ChangeNotifier {
         .filter()
         .syncStatusEqualTo(EventOrderSyncStatus.deleted)
         .findAll();
-    
+
     if (toDelete.isEmpty) return 0;
 
     await _isar.writeTxn(() async {
-      await _isar.eventOrderEntitys.deleteAll(toDelete.map((e) => e.id).toList());
+      await _isar.eventOrderEntitys.deleteAll(
+        toDelete.map((e) => e.id).toList(),
+      );
     });
 
     debugPrint('[EventOrderOffline] Purged ${toDelete.length} deleted records');
@@ -454,7 +482,9 @@ class EventOrderOfflineController extends ChangeNotifier {
     await _isar.writeTxn(() async {
       await _isar.eventOrderEntitys.put(entity);
     });
-    debugPrint('[EventOrderOffline] Imported order from server: ${entity.serverId}');
+    debugPrint(
+      '[EventOrderOffline] Imported order from server: ${entity.serverId}',
+    );
     notifyListeners();
   }
 
@@ -464,65 +494,92 @@ class EventOrderOfflineController extends ChangeNotifier {
     if (existing == null) return;
 
     // Parse sub-events
-    final subEvents = (data['subEvents'] as List<dynamic>?)
-        ?.map((e) => SubEventEmbedded(
-              id: e['id'] as String?,
-              name: e['name'] as String?,
-              date: DateTime.tryParse(e['date']?.toString() ?? ''),
-              charges: (e['charges'] as num?)?.toDouble() ?? 0.0,
-              notes: e['notes'] as String?,
-              customDataJson: e['customDataJson'] as String?,
-            ))
-        .toList() ?? existing.subEvents;
+    final subEvents =
+        (data['subEvents'] as List<dynamic>?)
+            ?.map(
+              (e) => SubEventEmbedded(
+                id: e['id'] as String?,
+                name: e['name'] as String?,
+                date: DateTime.tryParse(e['date']?.toString() ?? ''),
+                charges: (e['charges'] as num?)?.toDouble() ?? 0.0,
+                notes: e['notes'] as String?,
+                customDataJson: e['customDataJson'] as String?,
+              ),
+            )
+            .toList() ??
+        existing.subEvents;
 
     // Parse items
-    final items = (data['items'] as List<dynamic>?)
-        ?.map((e) => OrderItemEmbedded(
-              id: e['id'] as String?,
-              productId: e['productId'] as String?,
-              productName: e['productName'] as String?,
-              hsnCode: e['hsnCode'] as String?,
-              quantity: (e['quantity'] as num?)?.toInt() ?? 0,
-              rate: (e['rate'] as num?)?.toDouble() ?? 0.0,
-              discountPercent: (e['discountPercent'] as num?)?.toDouble() ?? 0.0,
-              discountAmount: (e['discountAmount'] as num?)?.toDouble() ?? 0.0,
-              cgstPercent: (e['cgstPercent'] as num?)?.toDouble() ?? 0.0,
-              sgstPercent: (e['sgstPercent'] as num?)?.toDouble() ?? 0.0,
-              cgstAmount: (e['cgstAmount'] as num?)?.toDouble() ?? 0.0,
-              sgstAmount: (e['sgstAmount'] as num?)?.toDouble() ?? 0.0,
-              taxAmount: (e['taxAmount'] as num?)?.toDouble() ?? 0.0,
-              subtotal: (e['subtotal'] as num?)?.toDouble() ?? 0.0,
-              total: (e['total'] as num?)?.toDouble() ?? 0.0,
-            ))
-        .toList() ?? existing.items;
+    final items =
+        (data['items'] as List<dynamic>?)
+            ?.map(
+              (e) => OrderItemEmbedded(
+                id: e['id'] as String?,
+                productId: e['productId'] as String?,
+                productName: e['productName'] as String?,
+                hsnCode: e['hsnCode'] as String?,
+                quantity: (e['quantity'] as num?)?.toInt() ?? 0,
+                rate: (e['rate'] as num?)?.toDouble() ?? 0.0,
+                discountPercent:
+                    (e['discountPercent'] as num?)?.toDouble() ?? 0.0,
+                discountAmount:
+                    (e['discountAmount'] as num?)?.toDouble() ?? 0.0,
+                cgstPercent: (e['cgstPercent'] as num?)?.toDouble() ?? 0.0,
+                sgstPercent: (e['sgstPercent'] as num?)?.toDouble() ?? 0.0,
+                cgstAmount: (e['cgstAmount'] as num?)?.toDouble() ?? 0.0,
+                sgstAmount: (e['sgstAmount'] as num?)?.toDouble() ?? 0.0,
+                taxAmount: (e['taxAmount'] as num?)?.toDouble() ?? 0.0,
+                subtotal: (e['subtotal'] as num?)?.toDouble() ?? 0.0,
+                total: (e['total'] as num?)?.toDouble() ?? 0.0,
+              ),
+            )
+            .toList() ??
+        existing.items;
 
     // Update fields
-    existing.orderType = (data['orderType'] as num?)?.toInt() ?? existing.orderType;
+    existing.orderType =
+        (data['orderType'] as num?)?.toInt() ?? existing.orderType;
     existing.customerId = data['customerId'] as String? ?? existing.customerId;
-    existing.customerName = data['customerName'] as String? ?? existing.customerName;
-    existing.customerContact = data['customerContact'] as String? ?? existing.customerContact;
-    existing.customerAddress = data['customerAddress'] as String? ?? existing.customerAddress;
+    existing.customerName =
+        data['customerName'] as String? ?? existing.customerName;
+    existing.customerContact =
+        data['customerContact'] as String? ?? existing.customerContact;
+    existing.customerAddress =
+        data['customerAddress'] as String? ?? existing.customerAddress;
     existing.orderName = data['orderName'] as String? ?? existing.orderName;
-    existing.description = data['description'] as String? ?? existing.description;
-    existing.eventDate = DateTime.tryParse(data['eventDate']?.toString() ?? '') ?? existing.eventDate;
-    existing.eventLocation = data['eventLocation'] as String? ?? existing.eventLocation;
+    existing.description =
+        data['description'] as String? ?? existing.description;
+    existing.eventDate =
+        DateTime.tryParse(data['eventDate']?.toString() ?? '') ??
+        existing.eventDate;
+    existing.eventLocation =
+        data['eventLocation'] as String? ?? existing.eventLocation;
     existing.subEvents = subEvents;
     existing.items = items;
-    existing.eventCharges = (data['eventCharges'] as num?)?.toDouble() ?? existing.eventCharges;
-    existing.totalAmount = (data['totalAmount'] as num?)?.toDouble() ?? existing.totalAmount;
-    existing.advanceAmount = (data['advanceAmount'] as num?)?.toDouble() ?? existing.advanceAmount;
-    existing.remainingAmount = (data['remainingAmount'] as num?)?.toDouble() ?? existing.remainingAmount;
+    existing.eventCharges =
+        (data['eventCharges'] as num?)?.toDouble() ?? existing.eventCharges;
+    existing.totalAmount =
+        (data['totalAmount'] as num?)?.toDouble() ?? existing.totalAmount;
+    existing.advanceAmount =
+        (data['advanceAmount'] as num?)?.toDouble() ?? existing.advanceAmount;
+    existing.remainingAmount =
+        (data['remainingAmount'] as num?)?.toDouble() ??
+        existing.remainingAmount;
     existing.notes = data['notes'] as String? ?? existing.notes;
     existing.status = (data['status'] as num?)?.toInt() ?? existing.status;
-    existing.convertedBillId = data['convertedBillId'] as String? ?? existing.convertedBillId;
-    existing.customDataJson = data['customDataJson'] as String? ?? existing.customDataJson;
-    existing.updatedAt = DateTime.tryParse(data['updatedAt']?.toString() ?? '') ?? DateTime.now();
+    existing.convertedBillId =
+        data['convertedBillId'] as String? ?? existing.convertedBillId;
+    existing.customDataJson =
+        data['customDataJson'] as String? ?? existing.customDataJson;
+    existing.updatedAt =
+        DateTime.tryParse(data['updatedAt']?.toString() ?? '') ??
+        DateTime.now();
     existing.syncStatus = EventOrderSyncStatus.synced;
 
     await _isar.writeTxn(() async {
       await _isar.eventOrderEntitys.put(existing);
     });
-    
+
     debugPrint('[EventOrderOffline] Updated from server: $localId');
     notifyListeners();
   }
