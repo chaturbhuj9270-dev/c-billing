@@ -7,7 +7,7 @@ import '../entities/bill_entity.dart';
 /// All operations go to local Isar first, then sync in background
 class BillOfflineController extends ChangeNotifier {
   static BillOfflineController? _instance;
-  
+
   final Isar _isar;
 
   BillOfflineController._(this._isar);
@@ -89,7 +89,9 @@ class BillOfflineController extends ChangeNotifier {
       await _isar.billEntitys.put(bill);
     });
 
-    debugPrint('[BillOffline] Bill added: ${bill.id}, customer: ${bill.customerName}, status: NEW');
+    debugPrint(
+      '[BillOffline] Bill added: ${bill.id}, customer: ${bill.customerName}, status: NEW',
+    );
     notifyListeners();
     return bill;
   }
@@ -141,7 +143,10 @@ class BillOfflineController extends ChangeNotifier {
   }
 
   /// Get bills by date range
-  Future<List<BillEntity>> getBillsByDateRange(DateTime start, DateTime end) async {
+  Future<List<BillEntity>> getBillsByDateRange(
+    DateTime start,
+    DateTime end,
+  ) async {
     return await _isar.billEntitys
         .filter()
         .billDateBetween(start, end)
@@ -165,10 +170,12 @@ class BillOfflineController extends ChangeNotifier {
         .filter()
         .not()
         .syncStatusEqualTo(BillSyncStatus.deleted)
-        .group((q) => q
-            .paymentStatusEqualTo(BillPaymentStatus.pending)
-            .or()
-            .paymentStatusEqualTo(BillPaymentStatus.partiallyPaid))
+        .group(
+          (q) => q
+              .paymentStatusEqualTo(BillPaymentStatus.pending)
+              .or()
+              .paymentStatusEqualTo(BillPaymentStatus.partiallyPaid),
+        )
         .sortByCreatedAtDesc()
         .findAll();
   }
@@ -176,16 +183,18 @@ class BillOfflineController extends ChangeNotifier {
   /// Search bills by customer name or contact
   Future<List<BillEntity>> searchBills(String query) async {
     if (query.isEmpty) return getAllBills();
-    
+
     final lowerQuery = query.toLowerCase();
     return await _isar.billEntitys
         .filter()
         .not()
         .syncStatusEqualTo(BillSyncStatus.deleted)
-        .group((q) => q
-            .customerNameContains(lowerQuery, caseSensitive: false)
-            .or()
-            .customerContactContains(lowerQuery, caseSensitive: false))
+        .group(
+          (q) => q
+              .customerNameContains(lowerQuery, caseSensitive: false)
+              .or()
+              .customerContactContains(lowerQuery, caseSensitive: false),
+        )
         .sortByCreatedAtDesc()
         .findAll();
   }
@@ -256,7 +265,9 @@ class BillOfflineController extends ChangeNotifier {
       await _isar.billEntitys.put(updated);
     });
 
-    debugPrint('[BillOffline] Bill updated: $id, status: ${newSyncStatus.name}');
+    debugPrint(
+      '[BillOffline] Bill updated: $id, status: ${newSyncStatus.name}',
+    );
     notifyListeners();
     return updated;
   }
@@ -271,7 +282,7 @@ class BillOfflineController extends ChangeNotifier {
     if (existing == null) return null;
 
     final pendingAmount = existing.finalAmount - paidAmount;
-    
+
     return updateBill(
       id: id,
       paidAmount: paidAmount,
@@ -282,11 +293,7 @@ class BillOfflineController extends ChangeNotifier {
 
   /// Mark bill as returned
   Future<BillEntity?> markAsReturned(Id id) async {
-    return updateBill(
-      id: id,
-      returnStatus: true,
-      returnDate: DateTime.now(),
-    );
+    return updateBill(id: id, returnStatus: true, returnDate: DateTime.now());
   }
 
   // ==================== DELETE ====================
@@ -304,12 +311,12 @@ class BillOfflineController extends ChangeNotifier {
       await _isar.writeTxn(() async {
         await _isar.billEntitys.delete(id);
       });
-      debugPrint('[BillOffline] Bill permanently deleted (was never synced): $id');
+      debugPrint(
+        '[BillOffline] Bill permanently deleted (was never synced): $id',
+      );
     } else {
       // Mark for deletion, will be synced then removed
-      final deleted = existing.copyWith(
-        syncStatus: BillSyncStatus.deleted,
-      );
+      final deleted = existing.copyWith(syncStatus: BillSyncStatus.deleted);
       await _isar.writeTxn(() async {
         await _isar.billEntitys.put(deleted);
       });
@@ -385,7 +392,8 @@ class BillOfflineController extends ChangeNotifier {
             final serverUpdatedAt = DateTime.tryParse(
               billData['updatedAt']?.toString() ?? '',
             );
-            if (serverUpdatedAt != null && serverUpdatedAt.isAfter(existing.updatedAt)) {
+            if (serverUpdatedAt != null &&
+                serverUpdatedAt.isAfter(existing.updatedAt)) {
               final updated = BillEntity.fromServer(billData);
               updated.id = existing.id;
               await _isar.billEntitys.put(updated);
@@ -400,7 +408,9 @@ class BillOfflineController extends ChangeNotifier {
     });
 
     notifyListeners();
-    debugPrint('[BillOffline] Imported ${serverBills.length} bills from server');
+    debugPrint(
+      '[BillOffline] Imported ${serverBills.length} bills from server',
+    );
   }
 
   // ==================== STATISTICS ====================
@@ -416,10 +426,9 @@ class BillOfflineController extends ChangeNotifier {
 
   /// Get total sales amount for a date range
   Future<double> getTotalSales({DateTime? startDate, DateTime? endDate}) async {
-    var query = _isar.billEntitys
-        .filter()
-        .not()
-        .syncStatusEqualTo(BillSyncStatus.deleted);
+    var query = _isar.billEntitys.filter().not().syncStatusEqualTo(
+      BillSyncStatus.deleted,
+    );
 
     if (startDate != null) {
       query = query.billDateGreaterThan(startDate);
@@ -438,10 +447,12 @@ class BillOfflineController extends ChangeNotifier {
         .filter()
         .not()
         .syncStatusEqualTo(BillSyncStatus.deleted)
-        .group((q) => q
-            .paymentStatusEqualTo(BillPaymentStatus.pending)
-            .or()
-            .paymentStatusEqualTo(BillPaymentStatus.partiallyPaid))
+        .group(
+          (q) => q
+              .paymentStatusEqualTo(BillPaymentStatus.pending)
+              .or()
+              .paymentStatusEqualTo(BillPaymentStatus.partiallyPaid),
+        )
         .findAll();
 
     return bills.fold<double>(0.0, (sum, b) => sum + b.pendingAmount);
@@ -453,10 +464,7 @@ class BillOfflineController extends ChangeNotifier {
         .filter()
         .not()
         .syncStatusEqualTo(BillSyncStatus.deleted)
-        .group((q) => q
-            .paymentStatusEqualTo(BillPaymentStatus.pending)
-            .or()
-            .paymentStatusEqualTo(BillPaymentStatus.partiallyPaid))
+        .pendingAmountGreaterThan(0)
         .sortByPendingAmountDesc()
         .findAll();
   }
