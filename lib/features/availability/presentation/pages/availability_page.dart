@@ -270,7 +270,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Exporting: ${_getFilterLabel()}',
+                            '${_localizations.exporting} ${_getFilterLabel()}',
                             style: const TextStyle(
                               fontFamily: 'Literata',
                               fontSize: 14,
@@ -279,7 +279,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                             ),
                           ),
                           Text(
-                            '${_filteredGroupedProducts.length} products will be included',
+                            '${_filteredGroupedProducts.length} ${_localizations.productsWillBeIncluded}',
                             style: TextStyle(
                               fontFamily: 'Literata',
                               fontSize: 12,
@@ -369,7 +369,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                         const Icon(Icons.preview, size: 20),
                         const SizedBox(width: 8),
                         Text(
-                          'Preview & Generate',
+                          _localizations.previewAndGenerate,
                           style: const TextStyle(
                             fontFamily: 'Literata',
                             fontSize: 16,
@@ -434,8 +434,8 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
     try {
       if (_filteredGroupedProducts.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('No products found for current filter'),
+          SnackBar(
+            content: Text(_localizations.noProductsForFilter),
             backgroundColor: Colors.orange,
           ),
         );
@@ -501,7 +501,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error opening preview: $e'),
+            content: Text('${_localizations.errorOpeningPreview}: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -518,7 +518,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
       case 'out_of_stock':
         return _localizations.outOfStock;
       case 'expired':
-        return 'Expired Products';
+        return _localizations.expiredProducts;
       default:
         return _localizations.allProducts;
     }
@@ -684,7 +684,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
             ),
             const SizedBox(width: 10),
             _buildModernStatCard(
-              title: 'Expired',
+              title: _localizations.expiredProducts,
               value: expired,
               icon: Icons.event_busy_rounded,
               gradient: const [Color(0xFF9C27B0), Color(0xFFBA68C8)],
@@ -905,7 +905,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          'Clear filter',
+                          _localizations.clearFilter,
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w500,
@@ -958,8 +958,8 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
               const SizedBox(height: 8),
               Text(
                 _searchQuery.isEmpty
-                    ? 'Add products to see inventory'
-                    : 'Try a different search term',
+                    ? _localizations.addProductsToSeeInventory
+                    : _localizations.tryDifferentSearchTerm,
                 style: TextStyle(
                   fontSize: 13,
                   color: Colors.grey[400],
@@ -1061,7 +1061,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                   ),
                 ),
                 Text(
-                  'units',
+                  _localizations.units,
                   style: TextStyle(
                     color: Colors.white.withValues(alpha: 0.8),
                     fontSize: 8,
@@ -1121,14 +1121,14 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                     // Out of stock batch badge
                     if (outBatchCount > 0 && group.totalStock > 0)
                       _buildBadge(
-                        label: '$outBatchCount empty',
+                        label: '$outBatchCount ${_localizations.emptyBatch}',
                         color: Colors.red,
                         icon: Icons.error_outline,
                       ),
                     // Expired batch badge
                     if (expiredBatchCount > 0)
                       _buildBadge(
-                        label: '$expiredBatchCount expired',
+                        label: '$expiredBatchCount ${_localizations.expired.toLowerCase()}',
                         color: const Color(0xFF9C27B0),
                         icon: Icons.event_busy_rounded,
                       ),
@@ -1184,7 +1184,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                   _buildInfoChip(
                     Icons.shopping_cart_outlined,
                     group.purchasePriceRange,
-                    'Purchase',
+                    _localizations.purchase,
                   ),
                   Container(
                     width: 1,
@@ -1194,7 +1194,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                   _buildInfoChip(
                     Icons.sell_outlined,
                     group.salesPriceRange,
-                    'Sell',
+                    _localizations.sell,
                   ),
                   Container(
                     width: 1,
@@ -1261,11 +1261,11 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                       textAlign: TextAlign.center,
                     ),
                   ),
-                  const Expanded(
+                  Expanded(
                     flex: 2,
                     child: Text(
-                      'QTY',
-                      style: TextStyle(
+                      _localizations.qty,
+                      style: const TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w700,
                         fontFamily: 'Literata',
@@ -1344,13 +1344,13 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                                 children: [
                                   if (isExpired)
                                     _buildMicroBadge(
-                                      label: 'EXPIRED',
+                                      label: _localizations.expired,
                                       color: const Color(0xFF9C27B0),
                                       icon: Icons.event_busy_rounded,
                                     ),
                                   if (isExpiringSoon && !isExpired)
                                     _buildMicroBadge(
-                                      label: 'EXPIRING SOON',
+                                      label: _localizations.expiringSoon,
                                       color: const Color(0xFFFF5722),
                                       icon: Icons.schedule,
                                     ),
@@ -1468,7 +1468,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        '${group.expiredBatchCount} batch${group.expiredBatchCount > 1 ? 'es' : ''} expired - remove from inventory',
+                        '${group.expiredBatchCount} ${_localizations.batch}${group.expiredBatchCount > 1 ? 's' : ''} ${_localizations.batchExpiredRemove}',
                         style: const TextStyle(
                           fontSize: 12,
                           color: Color(0xFF7B1FA2),
@@ -1763,7 +1763,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                       ),
                     ),
                     Text(
-                      '${_groupedProducts.length} products • $totalStock units',
+                      '${_groupedProducts.length} ${_localizations.products} • $totalStock ${_localizations.units}',
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.7),
                         fontSize: 12,

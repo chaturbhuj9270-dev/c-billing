@@ -794,4 +794,41 @@ class EnglishLocalization {
   static const String failedToGeneratePdf = 'Failed to generate PDF';
   static const String full = 'Full';
   static const String partial = 'Partial';
+
+  // ═══════════════════════════════════════════════════
+  // Availability Module Extended
+  // ═══════════════════════════════════════════════════
+  static const String exporting = 'Exporting:';
+  static const String productsWillBeIncluded = 'products will be included';
+  static const String previewAndGenerate = 'Preview & Generate';
+  static const String noProductsForFilter =
+      'No products found for current filter';
+  static const String errorOpeningPreview = 'Error opening preview';
+  static const String expiredProducts = 'Expired Products';
+  static const String clearFilter = 'Clear filter';
+  static const String addProductsToSeeInventory =
+      'Add products to see inventory';
+  static const String tryDifferentSearchTerm = 'Try a different search term';
+  static const String sell = 'Sell';
+  static const String expired = 'EXPIRED';
+  static const String expiringSoon = 'EXPIRING SOON';
+  static const String emptyBatch = 'empty';
+  static const String batchExpiredRemove = 'expired - remove from inventory';
+  static const String reportPreview = 'Report Preview';
+  static const String allSelected = 'All Selected';
+  static const String selectAll = 'Select All';
+  static const String tapItemsToIncludeExclude =
+      'Tap items to include/exclude from report';
+  static const String noItemsToDisplay = 'No items to display';
+  static const String addProductsToGenerateReport =
+      'Add products to generate a report';
+  static const String hsn = 'HSN';
+  static const String value = 'Value';
+  static const String orderQuantity = 'Order Quantity';
+  static const String enterQuantityToOrder = 'Enter quantity to order';
+  static const String generating = 'Generating...';
+  static const String generate = 'Generate';
+  static const String pleaseSelectAtLeastOneItem =
+      'Please select at least one item';
+  static const String selling = 'Selling';
 }

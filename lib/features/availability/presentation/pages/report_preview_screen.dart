@@ -5,6 +5,8 @@ import 'package:flutter/services.dart';
 import 'package:c_billing/features/inventory_management/domain/entities/report_item.dart';
 import 'package:c_billing/core/services/inventory_report_service.dart';
 import 'package:c_billing/core/services/stock_report_settings_service.dart';
+import 'package:c_billing/core/localization/app_localizations.dart';
+import 'package:c_billing/core/services/language_service.dart';
 import 'package:c_billing/common_widgets/file_preview_page.dart';
 import 'package:intl/intl.dart';
 
@@ -32,6 +34,7 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
   bool _isGenerating = false;
   final _reportService = InventoryReportService();
   late AnimationController _animationController;
+  late AppLocalizations _localizations;
 
   // Controllers for order quantity text fields
   final Map<String, TextEditingController> _controllers = {};
@@ -43,6 +46,7 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
   @override
   void initState() {
     super.initState();
+    _localizations = AppLocalizations.of(LanguageService.instance.currentLanguage);
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 300),
@@ -151,13 +155,13 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
     if (selected.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Row(
+          content: Row(
             children: [
-              Icon(Icons.warning_amber_rounded, color: Colors.white, size: 20),
-              SizedBox(width: 12),
+              const Icon(Icons.warning_amber_rounded, color: Colors.white, size: 20),
+              const SizedBox(width: 12),
               Text(
-                'Please select at least one item',
-                style: TextStyle(fontFamily: 'Literata'),
+                _localizations.pleaseSelectAtLeastOneItem,
+                style: const TextStyle(fontFamily: 'Literata'),
               ),
             ],
           ),
@@ -321,9 +325,9 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Report Preview',
-                  style: TextStyle(
+                Text(
+                  _localizations.reportPreview,
+                  style: const TextStyle(
                     color: Color(0xFF1B4D3E),
                     fontSize: 20,
                     fontWeight: FontWeight.w800,
@@ -451,7 +455,7 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  _allSelected ? 'All Selected' : 'Select All',
+                  _allSelected ? _localizations.allSelected : _localizations.selectAll,
                   style: const TextStyle(
                     fontFamily: 'Literata',
                     fontWeight: FontWeight.w700,
@@ -460,7 +464,7 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
                   ),
                 ),
                 Text(
-                  'Tap items to include/exclude from report',
+                  _localizations.tapItemsToIncludeExclude,
                   style: TextStyle(
                     fontFamily: 'Literata',
                     fontSize: 11,
@@ -515,7 +519,7 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
           ),
           const SizedBox(height: 16),
           Text(
-            'No items to display',
+            _localizations.noItemsToDisplay,
             style: TextStyle(
               fontSize: 16,
               color: Colors.grey[600],
@@ -525,7 +529,7 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
           ),
           const SizedBox(height: 8),
           Text(
-            'Add products to generate a report',
+            _localizations.addProductsToGenerateReport,
             style: TextStyle(
               fontSize: 13,
               color: Colors.grey[400],
@@ -762,13 +766,13 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
                       if (_visibleColumnIds.contains('category'))
                         _buildInfoChip(
                           Icons.category_rounded,
-                          'Category',
+                          _localizations.category,
                           product.category.isEmpty ? '-' : product.category,
                         ),
                       if (_visibleColumnIds.contains('hsn_code'))
                         _buildInfoChip(
                           Icons.tag_rounded,
-                          'HSN',
+                          _localizations.hsn,
                           product.hsnCode?.isNotEmpty == true
                               ? product.hsnCode!
                               : '-',
@@ -827,7 +831,7 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
                           if (_visibleColumnIds.contains('supplier'))
                             _buildInfoChip(
                               Icons.local_shipping_rounded,
-                              'Supplier',
+                              _localizations.supplier,
                               product.defaultSupplierName?.isNotEmpty == true
                                   ? product.defaultSupplierName!
                                   : '-',
@@ -997,9 +1001,9 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Order Quantity',
-                  style: TextStyle(
+                Text(
+                  _localizations.orderQuantity,
+                  style: const TextStyle(
                     fontFamily: 'Literata',
                     fontSize: 11,
                     fontWeight: FontWeight.w500,
@@ -1008,7 +1012,7 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'Enter quantity to order',
+                  _localizations.enterQuantityToOrder,
                   style: TextStyle(
                     fontFamily: 'Literata',
                     fontSize: 10,
@@ -1115,18 +1119,18 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
                         color: const Color(0xFF1B4D3E).withOpacity(0.3),
                       ),
                     ),
-                    child: const Row(
+                    child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(
+                        const Icon(
                           Icons.close_rounded,
                           color: Color(0xFF1B4D3E),
                           size: 20,
                         ),
-                        SizedBox(width: 8),
+                        const SizedBox(width: 8),
                         Text(
-                          'Cancel',
-                          style: TextStyle(
+                          _localizations.cancel,
+                          style: const TextStyle(
                             fontFamily: 'Literata',
                             fontWeight: FontWeight.w600,
                             fontSize: 15,
@@ -1195,8 +1199,8 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
                         const SizedBox(width: 10),
                         Text(
                           _isGenerating
-                              ? 'Generating...'
-                              : 'Generate ($_selectedCount)',
+                              ? _localizations.generating
+                              : '${_localizations.generate} ($_selectedCount)',
                           style: const TextStyle(
                             fontFamily: 'Literata',
                             fontWeight: FontWeight.w700,
@@ -1221,9 +1225,9 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
   // ---------------------------------------------------------------------------
 
   String _getStockStatus(int stock) {
-    if (stock == 0) return 'Out of Stock';
-    if (stock <= 10) return 'Low Stock';
-    return 'In Stock';
+    if (stock == 0) return _localizations.outOfStock;
+    if (stock <= 10) return _localizations.lowStock;
+    return _localizations.inStock;
   }
 
   Color _getStockColor(int stock) {

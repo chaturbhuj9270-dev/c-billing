@@ -799,4 +799,42 @@ class MarathiLocalization {
   static const String failedToGeneratePdf = 'PDF तयार करण्यात अयशस्वी';
   static const String full = 'पूर्ण';
   static const String partial = 'आंशिक';
+
+  // ═══════════════════════════════════════════════════
+  // Availability Module Extended
+  // ═══════════════════════════════════════════════════
+  static const String exporting = 'निर्यात होत आहे:';
+  static const String productsWillBeIncluded = 'उत्पादने समाविष्ट होतील';
+  static const String previewAndGenerate = 'पूर्वावलोकन आणि तयार करा';
+  static const String noProductsForFilter =
+      'सध्याच्या फिल्टरसाठी कोणतेही उत्पादन सापडले नाही';
+  static const String errorOpeningPreview = 'पूर्वावलोकन उघडण्यात त्रुटी';
+  static const String expiredProducts = 'मुदत संपलेली उत्पादने';
+  static const String clearFilter = 'फिल्टर हटवा';
+  static const String addProductsToSeeInventory =
+      'इन्व्हेंटरी पाहण्यासाठी उत्पादने जोडा';
+  static const String tryDifferentSearchTerm = 'वेगळा शोध शब्द वापरून पहा';
+  static const String sell = 'विक्री';
+  static const String expired = 'मुदत संपली';
+  static const String expiringSoon = 'लवकरच मुदत संपेल';
+  static const String emptyBatch = 'रिकामे';
+  static const String batchExpiredRemove = 'मुदत संपली - इन्व्हेंटरीतून काढा';
+  static const String reportPreview = 'अहवाल पूर्वावलोकन';
+  static const String allSelected = 'सर्व निवडले';
+  static const String selectAll = 'सर्व निवडा';
+  static const String tapItemsToIncludeExclude =
+      'अहवालात समाविष्ट/वगळण्यासाठी आयटम टॅप करा';
+  static const String noItemsToDisplay =
+      'प्रदर्शित करण्यासाठी कोणतेही आयटम नाहीत';
+  static const String addProductsToGenerateReport =
+      'अहवाल तयार करण्यासाठी उत्पादने जोडा';
+  static const String hsn = 'HSN';
+  static const String value = 'मूल्य';
+  static const String orderQuantity = 'ऑर्डर प्रमाण';
+  static const String enterQuantityToOrder =
+      'ऑर्डर करण्यासाठी प्रमाण प्रविष्ट करा';
+  static const String generating = 'तयार होत आहे...';
+  static const String generate = 'तयार करा';
+  static const String pleaseSelectAtLeastOneItem = 'कृपया किमान एक आयटम निवडा';
+  static const String selling = 'विक्री';
 }

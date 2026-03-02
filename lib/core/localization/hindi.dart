@@ -794,4 +794,42 @@ class HindiLocalization {
   static const String failedToGeneratePdf = 'PDF बनाने में विफल';
   static const String full = 'पूर्ण';
   static const String partial = 'आंशिक';
+
+  // ═══════════════════════════════════════════════════
+  // Availability Module Extended
+  // ═══════════════════════════════════════════════════
+  static const String exporting = 'निर्यात हो रहा है:';
+  static const String productsWillBeIncluded = 'उत्पाद शामिल होंगे';
+  static const String previewAndGenerate = 'पूर्वावलोकन और उत्पन्न करें';
+  static const String noProductsForFilter =
+      'वर्तमान फ़िल्टर के लिए कोई उत्पाद नहीं मिला';
+  static const String errorOpeningPreview = 'पूर्वावलोकन खोलने में त्रुटि';
+  static const String expiredProducts = 'समय सीमा समाप्त उत्पाद';
+  static const String clearFilter = 'फ़िल्टर हटाएं';
+  static const String addProductsToSeeInventory =
+      'इन्वेंटरी देखने के लिए उत्पाद जोड़ें';
+  static const String tryDifferentSearchTerm = 'कोई अलग खोज शब्द आज़माएं';
+  static const String sell = 'बेचना';
+  static const String expired = 'समाप्त';
+  static const String expiringSoon = 'जल्द समाप्त होगा';
+  static const String emptyBatch = 'खाली';
+  static const String batchExpiredRemove = 'समाप्त - इन्वेंटरी से हटाएं';
+  static const String reportPreview = 'रिपोर्ट पूर्वावलोकन';
+  static const String allSelected = 'सभी चयनित';
+  static const String selectAll = 'सभी चुनें';
+  static const String tapItemsToIncludeExclude =
+      'रिपोर्ट में शामिल/बाहर करने के लिए आइटम टैप करें';
+  static const String noItemsToDisplay = 'प्रदर्शित करने के लिए कोई आइटम नहीं';
+  static const String addProductsToGenerateReport =
+      'रिपोर्ट बनाने के लिए उत्पाद जोड़ें';
+  static const String hsn = 'HSN';
+  static const String value = 'मूल्य';
+  static const String orderQuantity = 'ऑर्डर मात्रा';
+  static const String enterQuantityToOrder =
+      'ऑर्डर करने के लिए मात्रा दर्ज करें';
+  static const String generating = 'उत्पन्न हो रहा है...';
+  static const String generate = 'उत्पन्न करें';
+  static const String pleaseSelectAtLeastOneItem =
+      'कृपया कम से कम एक आइटम चुनें';
+  static const String selling = 'बिक्री';
 }
