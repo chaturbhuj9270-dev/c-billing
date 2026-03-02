@@ -29,13 +29,14 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
   bool _isLoading = false;
   String _searchQuery = '';
   final _searchController = TextEditingController();
-  
+
   // Data refresh subscription
   StreamSubscription<void>? _productRefreshSubscription;
   StreamSubscription<void>? _purchaseRefreshSubscription;
 
   // Filter states
-  String _stockFilter = 'all'; // all, in_stock, low_stock, out_of_stock, expired
+  String _stockFilter =
+      'all'; // all, in_stock, low_stock, out_of_stock, expired
 
   // Batch-level data for grouped view
   List<PurchaseBatchEntity> _allBatches = [];
@@ -46,27 +47,35 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
   @override
   void initState() {
     super.initState();
-    _localizations = AppLocalizations.of(LanguageService.instance.currentLanguage);
-    
+    _localizations = AppLocalizations.of(
+      LanguageService.instance.currentLanguage,
+    );
+
     // Listen for language changes
     LanguageService.instance.addListener(_onLanguageChanged);
-    
+
     // Listen for product changes from other screens (purchase page, product management, etc.)
-    _productRefreshSubscription = DashboardRefreshService.instance.onProductChanged.listen((_) {
-      if (mounted) _loadProducts();
-    });
-    
+    _productRefreshSubscription = DashboardRefreshService
+        .instance
+        .onProductChanged
+        .listen((_) {
+          if (mounted) _loadProducts();
+        });
+
     // Also listen for purchase changes which affect stock
-    _purchaseRefreshSubscription = DashboardRefreshService.instance.onPurchaseChanged.listen((_) {
-      if (mounted) _loadProducts();
-    });
-    
+    _purchaseRefreshSubscription = DashboardRefreshService
+        .instance
+        .onPurchaseChanged
+        .listen((_) {
+          if (mounted) _loadProducts();
+        });
+
     // Listen for changes from ProductOfflineController
     ProductOfflineController.instance.addListener(_onProductsChanged);
-    
+
     _loadProducts();
     _setupBatchStream();
-    
+
     // Trigger sync in background
     ProductSyncService.instance.syncNow();
   }
@@ -77,25 +86,25 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
     _batchStreamSubscription = batchController
         .watchAllBatches(includeConsumed: false)
         .listen(
-      (batches) {
-        if (mounted) {
-          _allBatches = batches;
-          _rebuildGroupedProducts();
-        }
-      },
-      onError: (e) {
-        print('[ERROR] Batch stream error: $e');
-      },
-    );
+          (batches) {
+            if (mounted) {
+              _allBatches = batches;
+              _rebuildGroupedProducts();
+            }
+          },
+          onError: (e) {
+            print('[ERROR] Batch stream error: $e');
+          },
+        );
   }
 
   /// Rebuild grouped product list from batches + products
   void _rebuildGroupedProducts() {
     // Products with no batches
     final batchProductIds = _allBatches.map((b) => b.productId).toSet();
-    final productsWithoutBatches = _products.where(
-      (p) => !batchProductIds.contains(p.id),
-    ).toList();
+    final productsWithoutBatches = _products
+        .where((p) => !batchProductIds.contains(p.id))
+        .toList();
 
     _groupedProducts = GroupedProduct.buildFromBatches(
       _allBatches,
@@ -147,7 +156,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
       return a.productName.compareTo(b.productName);
     });
   }
-  
+
   void _onProductsChanged() {
     if (mounted) _loadProducts();
   }
@@ -155,7 +164,9 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
   void _onLanguageChanged() {
     if (mounted) {
       setState(() {
-        _localizations = AppLocalizations.of(LanguageService.instance.currentLanguage);
+        _localizations = AppLocalizations.of(
+          LanguageService.instance.currentLanguage,
+        );
       });
     }
   }
@@ -448,19 +459,23 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
         // Use the first sub-entry to create a Product representation
         if (group.subEntries.isNotEmpty) {
           final firstEntry = group.subEntries.first;
-          productsForReport.add(Product(
-            id: firstEntry.productId,
-            indexNo: 0,
-            name: group.productName,
-            companyName: group.companies.isNotEmpty ? group.companies.first : '',
-            category: '',
-            purchasePrice: group.minPurchasePrice,
-            salesPrice: group.minSalesPrice,
-            currentStock: group.totalStock,
-            createdAt: firstEntry.purchaseDate,
-            updatedAt: firstEntry.purchaseDate,
-            defaultSupplierName: firstEntry.supplierName,
-          ));
+          productsForReport.add(
+            Product(
+              id: firstEntry.productId,
+              indexNo: 0,
+              name: group.productName,
+              companyName: group.companies.isNotEmpty
+                  ? group.companies.first
+                  : '',
+              category: '',
+              purchasePrice: group.minPurchasePrice,
+              salesPrice: group.minSalesPrice,
+              currentStock: group.totalStock,
+              createdAt: firstEntry.purchaseDate,
+              updatedAt: firstEntry.purchaseDate,
+              defaultSupplierName: firstEntry.supplierName,
+            ),
+          );
         }
       }
 
@@ -542,15 +557,16 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
   Future<void> _loadProducts() async {
     try {
       setState(() => _isLoading = true);
-      
+
       // Load products from offline-first Isar storage
-      final productEntities = await ProductOfflineController.instance.getAllProducts();
-      
+      final productEntities = await ProductOfflineController.instance
+          .getAllProducts();
+
       // Convert ProductEntity to Product domain model
       final products = productEntities
           .map((entity) => Product.fromProductEntity(entity))
           .toList();
-      
+
       if (mounted) {
         setState(() {
           _products = products;
@@ -722,8 +738,8 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
           color: isActive ? null : Colors.grey[50],
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: isActive 
-                ? Colors.transparent 
+            color: isActive
+                ? Colors.transparent
                 : gradient[0].withValues(alpha: 0.2),
             width: 1.5,
           ),
@@ -739,11 +755,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
         ),
         child: Column(
           children: [
-            Icon(
-              icon,
-              color: isActive ? Colors.white : gradient[0],
-              size: 20,
-            ),
+            Icon(icon, color: isActive ? Colors.white : gradient[0], size: 20),
             const SizedBox(height: 8),
             Text(
               value.toString(),
@@ -759,8 +771,8 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
               title,
               style: TextStyle(
                 fontSize: 9,
-                color: isActive 
-                    ? Colors.white.withValues(alpha: 0.85) 
+                color: isActive
+                    ? Colors.white.withValues(alpha: 0.85)
                     : Colors.grey[600],
                 fontFamily: 'Literata',
                 fontWeight: FontWeight.w600,
@@ -807,8 +819,8 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                   padding: const EdgeInsets.all(12),
                   child: Icon(
                     Icons.search_rounded,
-                    color: _searchQuery.isNotEmpty 
-                        ? const Color(0xFF1B4D3E) 
+                    color: _searchQuery.isNotEmpty
+                        ? const Color(0xFF1B4D3E)
                         : Colors.grey[400],
                   ),
                 ),
@@ -820,7 +832,11 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                             color: Colors.grey[200],
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(Icons.close, size: 16, color: Colors.grey),
+                          child: const Icon(
+                            Icons.close,
+                            size: 16,
+                            color: Colors.grey,
+                          ),
                         ),
                         onPressed: () {
                           _searchController.clear();
@@ -859,7 +875,10 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFF1B4D3E).withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(20),
@@ -890,7 +909,10 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                 GestureDetector(
                   onTap: () => _onStockFilterChanged('all'),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.grey[100],
                       borderRadius: BorderRadius.circular(20),
@@ -975,13 +997,10 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
     return SliverPadding(
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
       sliver: SliverList(
-        delegate: SliverChildBuilderDelegate(
-          (context, index) {
-            final group = _filteredGroupedProducts[index];
-            return _buildGroupedProductCard(group);
-          },
-          childCount: _filteredGroupedProducts.length,
-        ),
+        delegate: SliverChildBuilderDelegate((context, index) {
+          final group = _filteredGroupedProducts[index];
+          return _buildGroupedProductCard(group);
+        }, childCount: _filteredGroupedProducts.length),
       ),
     );
   }
@@ -992,8 +1011,12 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
     final stockLabel = stockLevel['label'] as String;
     final hasMultipleBatches = group.hasMultipleVariants;
     // Count low-stock batches in this group
-    final lowBatchCount = group.subEntries.where((e) => e.stockQuantity > 0 && e.stockQuantity <= 5).length;
-    final outBatchCount = group.subEntries.where((e) => e.stockQuantity == 0).length;
+    final lowBatchCount = group.subEntries
+        .where((e) => e.stockQuantity > 0 && e.stockQuantity <= 5)
+        .length;
+    final outBatchCount = group.subEntries
+        .where((e) => e.stockQuantity == 0)
+        .length;
     final expiredBatchCount = group.expiredBatchCount;
 
     return Container(
@@ -1005,10 +1028,10 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
           color: group.hasExpiredStock
               ? const Color(0xFF9C27B0).withValues(alpha: 0.25)
               : group.totalStock == 0
-                  ? Colors.red.withValues(alpha: 0.2)
-                  : group.totalStock <= 10
-                      ? Colors.orange.withValues(alpha: 0.15)
-                      : Colors.transparent,
+              ? Colors.red.withValues(alpha: 0.2)
+              : group.totalStock <= 10
+              ? Colors.orange.withValues(alpha: 0.15)
+              : Colors.transparent,
           width: 1.5,
         ),
         boxShadow: [
@@ -1025,7 +1048,9 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
           tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           childrenPadding: EdgeInsets.zero,
           shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
-          collapsedShape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+          collapsedShape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.zero,
+          ),
           leading: Container(
             width: 52,
             height: 52,
@@ -1033,10 +1058,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [
-                  stockColor,
-                  stockColor.withValues(alpha: 0.75),
-                ],
+                colors: [stockColor, stockColor.withValues(alpha: 0.75)],
               ),
               borderRadius: BorderRadius.circular(14),
               boxShadow: [
@@ -1098,11 +1120,11 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                     _buildBadge(
                       label: stockLabel,
                       color: stockColor,
-                      icon: group.totalStock == 0 
-                          ? Icons.error_outline 
-                          : group.totalStock <= 10 
-                              ? Icons.warning_outlined 
-                              : Icons.check_circle_outline,
+                      icon: group.totalStock == 0
+                          ? Icons.error_outline
+                          : group.totalStock <= 10
+                          ? Icons.warning_outlined
+                          : Icons.check_circle_outline,
                     ),
                     // Batch count badge
                     if (hasMultipleBatches)
@@ -1128,7 +1150,8 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                     // Expired batch badge
                     if (expiredBatchCount > 0)
                       _buildBadge(
-                        label: '$expiredBatchCount ${_localizations.expired.toLowerCase()}',
+                        label:
+                            '$expiredBatchCount ${_localizations.expired.toLowerCase()}',
                         color: const Color(0xFF9C27B0),
                         icon: Icons.event_busy_rounded,
                       ),
@@ -1214,9 +1237,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               decoration: BoxDecoration(
                 color: Colors.grey[100],
-                border: Border(
-                  bottom: BorderSide(color: Colors.grey[200]!),
-                ),
+                border: Border(bottom: BorderSide(color: Colors.grey[200]!)),
               ),
               child: Row(
                 children: [
@@ -1283,7 +1304,8 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
               final i = mapEntry.key;
               final entry = mapEntry.value;
               final isEven = i % 2 == 0;
-              final isLowBatch = entry.stockQuantity > 0 && entry.stockQuantity <= 5;
+              final isLowBatch =
+                  entry.stockQuantity > 0 && entry.stockQuantity <= 5;
               final isOutBatch = entry.stockQuantity == 0;
               final isExpired = entry.isExpired;
               final isExpiringSoon = entry.isExpiringSoon;
@@ -1303,7 +1325,10 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
               }
 
               return Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 decoration: BoxDecoration(
                   color: rowColor ?? (isEven ? Colors.white : Colors.grey[50]),
                   border: Border(
@@ -1325,7 +1350,9 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            entry.companyName.isNotEmpty ? entry.companyName : '—',
+                            entry.companyName.isNotEmpty
+                                ? entry.companyName
+                                : '—',
                             style: const TextStyle(
                               fontSize: 12,
                               fontFamily: 'Literata',
@@ -1335,7 +1362,10 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                             overflow: TextOverflow.ellipsis,
                           ),
                           // Status badges (can show multiple)
-                          if (isExpired || isExpiringSoon || isLowBatch || isOutBatch)
+                          if (isExpired ||
+                              isExpiringSoon ||
+                              isLowBatch ||
+                              isOutBatch)
                             Padding(
                               padding: const EdgeInsets.only(top: 3),
                               child: Wrap(
@@ -1403,15 +1433,22 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: [
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 4,
+                            ),
                             decoration: BoxDecoration(
                               color: isExpired
-                                  ? const Color(0xFF9C27B0).withValues(alpha: 0.1)
+                                  ? const Color(
+                                      0xFF9C27B0,
+                                    ).withValues(alpha: 0.1)
                                   : isOutBatch
-                                      ? Colors.red.withValues(alpha: 0.1)
-                                      : isLowBatch
-                                          ? Colors.orange.withValues(alpha: 0.1)
-                                          : const Color(0xFF1B4D3E).withValues(alpha: 0.08),
+                                  ? Colors.red.withValues(alpha: 0.1)
+                                  : isLowBatch
+                                  ? Colors.orange.withValues(alpha: 0.1)
+                                  : const Color(
+                                      0xFF1B4D3E,
+                                    ).withValues(alpha: 0.08),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
@@ -1423,10 +1460,10 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                                 color: isExpired
                                     ? const Color(0xFF9C27B0)
                                     : isOutBatch
-                                        ? Colors.red
-                                        : isLowBatch
-                                            ? Colors.orange
-                                            : const Color(0xFF1B4D3E),
+                                    ? Colors.red
+                                    : isLowBatch
+                                    ? Colors.orange
+                                    : const Color(0xFF1B4D3E),
                               ),
                             ),
                           ),
@@ -1440,7 +1477,10 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
             // Alert banner at bottom
             if (group.hasExpiredStock)
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
@@ -1463,7 +1503,11 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                         color: const Color(0xFF9C27B0).withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Icon(Icons.event_busy_rounded, color: Color(0xFF9C27B0), size: 16),
+                      child: const Icon(
+                        Icons.event_busy_rounded,
+                        color: Color(0xFF9C27B0),
+                        size: 16,
+                      ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -1482,7 +1526,10 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
               ),
             if (group.totalStock == 0)
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
@@ -1503,7 +1550,11 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                         color: Colors.red.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Icon(Icons.error_outline, color: Colors.red, size: 16),
+                      child: const Icon(
+                        Icons.error_outline,
+                        color: Colors.red,
+                        size: 16,
+                      ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -1522,7 +1573,10 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
               )
             else if (group.totalStock <= 10 && !group.hasExpiredStock)
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
@@ -1543,7 +1597,11 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                         color: Colors.orange.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 16),
+                      child: const Icon(
+                        Icons.warning_amber_rounded,
+                        color: Colors.orange,
+                        size: 16,
+                      ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -1576,9 +1634,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: color.withValues(alpha: 0.2),
-        ),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -1669,11 +1725,20 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
 
   Map<String, dynamic> _getStockLevel(int stock) {
     if (stock == 0) {
-      return {'label': _localizations.outOfStock.toUpperCase(), 'color': Colors.red};
+      return {
+        'label': _localizations.outOfStock.toUpperCase(),
+        'color': Colors.red,
+      };
     } else if (stock <= 10) {
-      return {'label': _localizations.lowStock.toUpperCase(), 'color': Colors.orange};
+      return {
+        'label': _localizations.lowStock.toUpperCase(),
+        'color': Colors.orange,
+      };
     } else {
-      return {'label': _localizations.inStock.toUpperCase(), 'color': Colors.green};
+      return {
+        'label': _localizations.inStock.toUpperCase(),
+        'color': Colors.green,
+      };
     }
   }
 
@@ -1708,9 +1773,15 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
 
   /// Modern gradient header
   Widget _buildPageHeader() {
-    final totalStock = _groupedProducts.fold<int>(0, (sum, g) => sum + g.totalStock);
-    final totalValue = _groupedProducts.fold<double>(0, (sum, g) => sum + g.totalStockValue);
-    
+    final totalStock = _groupedProducts.fold<int>(
+      0,
+      (sum, g) => sum + g.totalStock,
+    );
+    final totalValue = _groupedProducts.fold<double>(
+      0,
+      (sum, g) => sum + g.totalStockValue,
+    );
+
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
       decoration: BoxDecoration(
@@ -1891,11 +1962,12 @@ class _SearchHeaderDelegate extends SliverPersistentHeaderDelegate {
   _SearchHeaderDelegate({required this.child, required this.height});
 
   @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
-    return Container(
-      color: const Color(0xFFF5F7F6),
-      child: child,
-    );
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
+    return Container(color: const Color(0xFFF5F7F6), child: child);
   }
 
   @override

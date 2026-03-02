@@ -777,7 +777,6 @@ class HindiLocalization {
   static const String quickAddByCodeOrSearch = 'कोड या खोज से जल्दी जोड़ें';
   static const String enterValidAmount = 'वैध राशि दर्ज करें';
   static const String pleaseEnterValidPrice = 'कृपया वैध कीमत दर्ज करें';
-  static const String reset = 'रीसेट';
   static const String applyDiscountToBill = 'इस बिल पर छूट लागू करें';
   static const String selectTaxMethod = 'कर गणना विधि चुनें';
   static const String noGst = 'कोई GST नहीं';
@@ -792,7 +791,6 @@ class HindiLocalization {
   static const String pdfCreationFailed = 'PDF फ़ाइल सफलतापूर्वक नहीं बनी';
   static const String pdfFileEmpty = 'PDF फ़ाइल खाली है';
   static const String failedToGeneratePdf = 'PDF बनाने में विफल';
-  static const String full = 'पूर्ण';
   static const String partial = 'आंशिक';
 
   // ═══════════════════════════════════════════════════
@@ -816,7 +814,6 @@ class HindiLocalization {
   static const String batchExpiredRemove = 'समाप्त - इन्वेंटरी से हटाएं';
   static const String reportPreview = 'रिपोर्ट पूर्वावलोकन';
   static const String allSelected = 'सभी चयनित';
-  static const String selectAll = 'सभी चुनें';
   static const String tapItemsToIncludeExclude =
       'रिपोर्ट में शामिल/बाहर करने के लिए आइटम टैप करें';
   static const String noItemsToDisplay = 'प्रदर्शित करने के लिए कोई आइटम नहीं';

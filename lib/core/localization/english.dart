@@ -776,7 +776,6 @@ class EnglishLocalization {
   static const String quickAddByCodeOrSearch = 'Quick add by code or search';
   static const String enterValidAmount = 'Enter valid amount';
   static const String pleaseEnterValidPrice = 'Please enter a valid price';
-  static const String reset = 'Reset';
   static const String applyDiscountToBill = 'Apply discount to this bill';
   static const String selectTaxMethod = 'Select tax calculation method';
   static const String noGst = 'No GST';
@@ -792,7 +791,6 @@ class EnglishLocalization {
       'PDF file was not created successfully';
   static const String pdfFileEmpty = 'PDF file is empty';
   static const String failedToGeneratePdf = 'Failed to generate PDF';
-  static const String full = 'Full';
   static const String partial = 'Partial';
 
   // ═══════════════════════════════════════════════════
@@ -816,7 +814,6 @@ class EnglishLocalization {
   static const String batchExpiredRemove = 'expired - remove from inventory';
   static const String reportPreview = 'Report Preview';
   static const String allSelected = 'All Selected';
-  static const String selectAll = 'Select All';
   static const String tapItemsToIncludeExclude =
       'Tap items to include/exclude from report';
   static const String noItemsToDisplay = 'No items to display';

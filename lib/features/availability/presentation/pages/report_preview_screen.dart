@@ -46,7 +46,9 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
   @override
   void initState() {
     super.initState();
-    _localizations = AppLocalizations.of(LanguageService.instance.currentLanguage);
+    _localizations = AppLocalizations.of(
+      LanguageService.instance.currentLanguage,
+    );
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 300),
@@ -157,7 +159,11 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
         SnackBar(
           content: Row(
             children: [
-              const Icon(Icons.warning_amber_rounded, color: Colors.white, size: 20),
+              const Icon(
+                Icons.warning_amber_rounded,
+                color: Colors.white,
+                size: 20,
+              ),
               const SizedBox(width: 12),
               Text(
                 _localizations.pleaseSelectAtLeastOneItem,
@@ -455,7 +461,9 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  _allSelected ? _localizations.allSelected : _localizations.selectAll,
+                  _allSelected
+                      ? _localizations.allSelected
+                      : _localizations.selectAll,
                   style: const TextStyle(
                     fontFamily: 'Literata',
                     fontWeight: FontWeight.w700,

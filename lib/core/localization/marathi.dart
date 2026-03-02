@@ -781,7 +781,6 @@ class MarathiLocalization {
   static const String quickAddByCodeOrSearch = 'कोड किंवा शोधाद्वारे जलद जोडा';
   static const String enterValidAmount = 'वैध रक्कम प्रविष्ट करा';
   static const String pleaseEnterValidPrice = 'कृपया वैध किंमत प्रविष्ट करा';
-  static const String reset = 'रीसेट';
   static const String applyDiscountToBill = 'या बिलावर सूट लागू करा';
   static const String selectTaxMethod = 'कर गणना पद्धत निवडा';
   static const String noGst = 'GST नाही';
@@ -797,7 +796,6 @@ class MarathiLocalization {
       'PDF फाइल यशस्वीरित्या तयार झाली नाही';
   static const String pdfFileEmpty = 'PDF फाइल रिकामी आहे';
   static const String failedToGeneratePdf = 'PDF तयार करण्यात अयशस्वी';
-  static const String full = 'पूर्ण';
   static const String partial = 'आंशिक';
 
   // ═══════════════════════════════════════════════════
@@ -821,7 +819,6 @@ class MarathiLocalization {
   static const String batchExpiredRemove = 'मुदत संपली - इन्व्हेंटरीतून काढा';
   static const String reportPreview = 'अहवाल पूर्वावलोकन';
   static const String allSelected = 'सर्व निवडले';
-  static const String selectAll = 'सर्व निवडा';
   static const String tapItemsToIncludeExclude =
       'अहवालात समाविष्ट/वगळण्यासाठी आयटम टॅप करा';
   static const String noItemsToDisplay =
