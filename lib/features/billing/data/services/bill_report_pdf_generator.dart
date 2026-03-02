@@ -25,18 +25,20 @@ class BillReportPdfGenerator {
     String? filterDescription,
   }) async {
     debugPrint('[BillReport] START: ${bills.length} bills');
-    
+
     try {
       final now = DateTime.now();
       final pdf = pw.Document();
-      
+
       debugPrint('[BillReport] Document created');
 
       // Initialize report settings and get visible columns
       await BillReportSettingsService.instance.init();
       final visibleColumns = BillReportSettingsService.instance.visibleColumns;
-      
-      debugPrint('[BillReport] Visible columns: ${visibleColumns.map((c) => c.id).toList()}');
+
+      debugPrint(
+        '[BillReport] Visible columns: ${visibleColumns.map((c) => c.id).toList()}',
+      );
 
       // Calculate totals
       int totalItems = 0;
@@ -45,7 +47,7 @@ class BillReportPdfGenerator {
       double totalDiscount = 0;
       double totalTax = 0;
       double totalFinal = 0;
-      
+
       for (final bill in bills) {
         totalItems += bill.items.length;
         totalQuantity += bill.totalQuantity;
@@ -54,21 +56,17 @@ class BillReportPdfGenerator {
         totalTax += bill.totalTaxAmount;
         totalFinal += bill.finalAmount;
       }
-      
+
       debugPrint('[BillReport] Totals calculated');
 
       // Build dynamic header based on visible columns
       // For bill report, we show bill-level info first, then expand items
-      final headers = <String>[
-        'Sr',
-        'Bill No',
-        'Date',
-        'Customer',
-      ];
-      
+      final headers = <String>['Sr', 'Bill No', 'Date', 'Customer'];
+
       // Add item-level columns
       for (final col in visibleColumns) {
-        if (col.id != 'sr_no') { // Skip sr_no for items
+        if (col.id != 'sr_no') {
+          // Skip sr_no for items
           headers.add(_getColumnHeader(col.id, col.name));
         }
       }
@@ -77,13 +75,13 @@ class BillReportPdfGenerator {
       // Build table data - one row per bill item
       final data = <List<String>>[headers];
       int srNo = 0;
-      
+
       for (final bill in bills) {
         for (int itemIdx = 0; itemIdx < bill.items.length; itemIdx++) {
           srNo++;
           final item = bill.items[itemIdx];
           final row = <String>[];
-          
+
           // Bill-level info (only show on first item of each bill)
           if (itemIdx == 0) {
             row.add('$srNo');
@@ -96,29 +94,34 @@ class BillReportPdfGenerator {
             row.add(''); // Empty date
             row.add(''); // Empty customer
           }
-          
+
           // Item-level columns based on visibility
           for (final col in visibleColumns) {
             if (col.id != 'sr_no') {
               row.add(_getCellValue(col.id, bill, item));
             }
           }
-          
+
           // Bill total (only show on first item)
           if (itemIdx == 0) {
-            row.add('₹${bill.finalAmount.toStringAsFixed(2)}');
+            row.add('Rs.${bill.finalAmount.toStringAsFixed(2)}');
           } else {
             row.add('');
           }
-          
+
           data.add(row);
         }
       }
-      
-      debugPrint('[BillReport] Table data built: ${data.length} rows, ${headers.length} columns');
+
+      debugPrint(
+        '[BillReport] Table data built: ${data.length} rows, ${headers.length} columns',
+      );
 
       // Calculate column widths
-      final columnWidths = _calculateColumnWidths(headers.length, visibleColumns);
+      final columnWidths = _calculateColumnWidths(
+        headers.length,
+        visibleColumns,
+      );
 
       // Add page with table
       pdf.addPage(
@@ -131,19 +134,27 @@ class BillReportPdfGenerator {
               pw.Row(
                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                 children: [
-                  pw.Text('Bill Report',
-                      style: pw.TextStyle(
-                          fontSize: 20, fontWeight: pw.FontWeight.bold)),
-                  pw.Text(_dateTimeFmt.format(now),
-                      style: const pw.TextStyle(fontSize: 10)),
+                  pw.Text(
+                    'Bill Report',
+                    style: pw.TextStyle(
+                      fontSize: 20,
+                      fontWeight: pw.FontWeight.bold,
+                    ),
+                  ),
+                  pw.Text(
+                    _dateTimeFmt.format(now),
+                    style: const pw.TextStyle(fontSize: 10),
+                  ),
                 ],
               ),
               pw.SizedBox(height: 8),
               pw.Divider(thickness: 2),
               pw.SizedBox(height: 4),
               if (filterDescription != null)
-                pw.Text('Filter: $filterDescription',
-                    style: const pw.TextStyle(fontSize: 9)),
+                pw.Text(
+                  'Filter: $filterDescription',
+                  style: const pw.TextStyle(fontSize: 9),
+                ),
               pw.SizedBox(height: 8),
             ],
           ),
@@ -154,41 +165,71 @@ class BillReportPdfGenerator {
               pw.Row(
                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                 children: [
-                  pw.Text('Page ${context.pageNumber} of ${context.pagesCount}',
-                      style: const pw.TextStyle(fontSize: 8)),
+                  pw.Text(
+                    'Page ${context.pageNumber} of ${context.pagesCount}',
+                    style: const pw.TextStyle(fontSize: 8),
+                  ),
                   pw.Row(
                     children: [
-                      pw.Text('Bills: ${bills.length}',
-                          style: pw.TextStyle(
-                              fontSize: 8, fontWeight: pw.FontWeight.bold)),
+                      pw.Text(
+                        'Bills: ${bills.length}',
+                        style: pw.TextStyle(
+                          fontSize: 8,
+                          fontWeight: pw.FontWeight.bold,
+                        ),
+                      ),
                       pw.SizedBox(width: 12),
-                      pw.Text('Items: $totalItems',
-                          style: pw.TextStyle(
-                              fontSize: 8, fontWeight: pw.FontWeight.bold)),
+                      pw.Text(
+                        'Items: $totalItems',
+                        style: pw.TextStyle(
+                          fontSize: 8,
+                          fontWeight: pw.FontWeight.bold,
+                        ),
+                      ),
                       pw.SizedBox(width: 12),
-                      pw.Text('Qty: $totalQuantity',
-                          style: pw.TextStyle(
-                              fontSize: 8, fontWeight: pw.FontWeight.bold)),
+                      pw.Text(
+                        'Qty: $totalQuantity',
+                        style: pw.TextStyle(
+                          fontSize: 8,
+                          fontWeight: pw.FontWeight.bold,
+                        ),
+                      ),
                       pw.SizedBox(width: 12),
-                      pw.Text('Amount: Rs ${totalAmount.toStringAsFixed(2)}',
-                          style: pw.TextStyle(
-                              fontSize: 8, fontWeight: pw.FontWeight.bold)),
+                      pw.Text(
+                        'Amount: Rs ${totalAmount.toStringAsFixed(2)}',
+                        style: pw.TextStyle(
+                          fontSize: 8,
+                          fontWeight: pw.FontWeight.bold,
+                        ),
+                      ),
                       if (totalDiscount > 0) ...[
                         pw.SizedBox(width: 12),
-                        pw.Text('Disc: -Rs ${totalDiscount.toStringAsFixed(2)}',
-                            style: pw.TextStyle(
-                                fontSize: 8, fontWeight: pw.FontWeight.bold)),
+                        pw.Text(
+                          'Disc: -Rs ${totalDiscount.toStringAsFixed(2)}',
+                          style: pw.TextStyle(
+                            fontSize: 8,
+                            fontWeight: pw.FontWeight.bold,
+                          ),
+                        ),
                       ],
                       if (totalTax > 0) ...[
                         pw.SizedBox(width: 12),
-                        pw.Text('Tax: Rs ${totalTax.toStringAsFixed(2)}',
-                            style: pw.TextStyle(
-                                fontSize: 8, fontWeight: pw.FontWeight.bold)),
+                        pw.Text(
+                          'Tax: Rs ${totalTax.toStringAsFixed(2)}',
+                          style: pw.TextStyle(
+                            fontSize: 8,
+                            fontWeight: pw.FontWeight.bold,
+                          ),
+                        ),
                       ],
                       pw.SizedBox(width: 12),
-                      pw.Text('Total: Rs ${totalFinal.toStringAsFixed(2)}',
-                          style: pw.TextStyle(
-                              fontSize: 8, fontWeight: pw.FontWeight.bold)),
+                      pw.Text(
+                        'Total: Rs ${totalFinal.toStringAsFixed(2)}',
+                        style: pw.TextStyle(
+                          fontSize: 8,
+                          fontWeight: pw.FontWeight.bold,
+                        ),
+                      ),
                     ],
                   ),
                 ],
@@ -198,10 +239,13 @@ class BillReportPdfGenerator {
           build: (context) => [
             pw.TableHelper.fromTextArray(
               headerStyle: pw.TextStyle(
-                  fontSize: 8, fontWeight: pw.FontWeight.bold),
+                fontSize: 8,
+                fontWeight: pw.FontWeight.bold,
+              ),
               cellStyle: const pw.TextStyle(fontSize: 7),
               headerDecoration: const pw.BoxDecoration(
-                  color: PdfColors.grey300),
+                color: PdfColors.grey300,
+              ),
               cellHeight: 20,
               columnWidths: columnWidths,
               data: data,
@@ -209,14 +253,13 @@ class BillReportPdfGenerator {
           ],
         ),
       );
-      
+
       debugPrint('[BillReport] Page added, saving...');
-      
+
       final bytes = await pdf.save();
-      
+
       debugPrint('[BillReport] DONE: ${bytes.length} bytes');
       return bytes;
-      
     } catch (e, stack) {
       debugPrint('[BillReport] ERROR in generate: $e');
       debugPrint('[BillReport] Stack: $stack');
@@ -233,27 +276,33 @@ class BillReportPdfGenerator {
   /// Get column header text
   static String _getColumnHeader(String columnId, String defaultName) {
     switch (columnId) {
-      case 'sr_no': return 'Sr';
-      case 'product_name': return 'Product';
-      case 'hsn_code': return 'HSN';
-      case 'company': return 'Company';
-      case 'quantity': return 'Qty';
-      case 'unit': return 'Unit';
-      case 'rate': return 'Rate';
-      case 'discount': return 'Disc%';
-      case 'tax': return 'Tax';
-      case 'amount': return 'Amount';
+      case 'sr_no':
+        return 'Sr';
+      case 'product_name':
+        return 'Product';
+      case 'hsn_code':
+        return 'HSN';
+      case 'company':
+        return 'Company';
+      case 'quantity':
+        return 'Qty';
+      case 'unit':
+        return 'Unit';
+      case 'rate':
+        return 'Rate';
+      case 'discount':
+        return 'Disc%';
+      case 'tax':
+        return 'Tax';
+      case 'amount':
+        return 'Amount';
       default:
         return defaultName;
     }
   }
 
   /// Get cell value for a column
-  static String _getCellValue(
-    String columnId,
-    Bill bill,
-    dynamic item,
-  ) {
+  static String _getCellValue(String columnId, Bill bill, dynamic item) {
     switch (columnId) {
       case 'product_name':
         return _truncate(item.productName ?? '-', 20);
@@ -269,14 +318,12 @@ class BillReportPdfGenerator {
         return '${item.sellingPrice.toStringAsFixed(2)}';
       case 'discount':
         // Item-level discount not directly available, show bill discount
-        return bill.discountPercent > 0 
-            ? '${bill.discountPercent.toStringAsFixed(1)}%' 
+        return bill.discountPercent > 0
+            ? '${bill.discountPercent.toStringAsFixed(1)}%'
             : '-';
       case 'tax':
         final itemTax = item.cgstPercent + item.sgstPercent;
-        return itemTax > 0 
-            ? '${itemTax.toStringAsFixed(1)}%' 
-            : '-';
+        return itemTax > 0 ? '${itemTax.toStringAsFixed(1)}%' : '-';
       case 'amount':
         return '${item.subtotal.toStringAsFixed(2)}';
       default:
@@ -290,13 +337,13 @@ class BillReportPdfGenerator {
     List<BillReportColumn> visibleColumns,
   ) {
     final widths = <int, pw.TableColumnWidth>{};
-    
+
     // Fixed columns (first 4): Sr, Bill No, Date, Customer
-    widths[0] = const pw.FlexColumnWidth(0.5);   // Sr
-    widths[1] = const pw.FlexColumnWidth(1.5);   // Bill No
-    widths[2] = const pw.FlexColumnWidth(1.2);   // Date
-    widths[3] = const pw.FlexColumnWidth(1.3);   // Customer
-    
+    widths[0] = const pw.FlexColumnWidth(0.5); // Sr
+    widths[1] = const pw.FlexColumnWidth(1.5); // Bill No
+    widths[2] = const pw.FlexColumnWidth(1.2); // Date
+    widths[3] = const pw.FlexColumnWidth(1.3); // Customer
+
     // Dynamic columns based on visible settings
     int colIdx = 4;
     for (final col in visibleColumns) {
@@ -305,26 +352,36 @@ class BillReportPdfGenerator {
         colIdx++;
       }
     }
-    
+
     // Last column: Bill Total
     widths[colIdx] = const pw.FlexColumnWidth(1.2);
-    
+
     return widths;
   }
 
   /// Get flex value for column width
   static double _getColumnFlex(String columnId) {
     switch (columnId) {
-      case 'product_name': return 2.0;
-      case 'hsn_code': return 1.0;
-      case 'company': return 1.3;
-      case 'quantity': return 0.6;
-      case 'unit': return 0.6;
-      case 'rate': return 1.0;
-      case 'discount': return 0.7;
-      case 'tax': return 0.7;
-      case 'amount': return 1.0;
-      default: return 1.0;
+      case 'product_name':
+        return 2.0;
+      case 'hsn_code':
+        return 1.0;
+      case 'company':
+        return 1.3;
+      case 'quantity':
+        return 0.6;
+      case 'unit':
+        return 0.6;
+      case 'rate':
+        return 1.0;
+      case 'discount':
+        return 0.7;
+      case 'tax':
+        return 0.7;
+      case 'amount':
+        return 1.0;
+      default:
+        return 1.0;
     }
   }
 
@@ -333,7 +390,8 @@ class BillReportPdfGenerator {
     debugPrint('[BillReport] Printing ${pdfBytes.length} bytes');
     await Printing.layoutPdf(
       onLayout: (_) => pdfBytes,
-      name: 'bill_report_${DateFormat('yyyyMMdd_HHmm').format(DateTime.now())}.pdf',
+      name:
+          'bill_report_${DateFormat('yyyyMMdd_HHmm').format(DateTime.now())}.pdf',
     );
   }
 

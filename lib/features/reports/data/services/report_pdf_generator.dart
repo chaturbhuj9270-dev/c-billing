@@ -49,8 +49,7 @@ class ReportPdfGenerator {
         build: (context) => [
           // ── Filter Summary ──
           pw.Container(
-            padding: const pw.EdgeInsets.symmetric(
-                horizontal: 10, vertical: 6),
+            padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: pw.BoxDecoration(
               color: const PdfColor.fromInt(0xFFF5F5F5),
               borderRadius: pw.BorderRadius.circular(4),
@@ -75,16 +74,16 @@ class ReportPdfGenerator {
               headerHeight: 28,
               cellHeight: 24,
               columnWidths: {
-                0: const pw.FlexColumnWidth(2.2),  // Product
-                1: const pw.FlexColumnWidth(1.5),  // Company
-                2: const pw.FlexColumnWidth(1.5),  // Supplier
-                3: const pw.FlexColumnWidth(0.8),  // Pur Qty
-                4: const pw.FlexColumnWidth(0.8),  // Sold Qty
-                5: const pw.FlexColumnWidth(0.8),  // Ret Qty
-                6: const pw.FlexColumnWidth(0.8),  // Stock
-                7: const pw.FlexColumnWidth(1),    // Pur Price
-                8: const pw.FlexColumnWidth(1),    // Sell Price
-                9: const pw.FlexColumnWidth(1.2),  // Pur Amt
+                0: const pw.FlexColumnWidth(2.2), // Product
+                1: const pw.FlexColumnWidth(1.5), // Company
+                2: const pw.FlexColumnWidth(1.5), // Supplier
+                3: const pw.FlexColumnWidth(0.8), // Pur Qty
+                4: const pw.FlexColumnWidth(0.8), // Sold Qty
+                5: const pw.FlexColumnWidth(0.8), // Ret Qty
+                6: const pw.FlexColumnWidth(0.8), // Stock
+                7: const pw.FlexColumnWidth(1), // Pur Price
+                8: const pw.FlexColumnWidth(1), // Sell Price
+                9: const pw.FlexColumnWidth(1.2), // Pur Amt
                 10: const pw.FlexColumnWidth(1.2), // Sales Amt
                 11: const pw.FlexColumnWidth(1.2), // Profit/Loss
                 12: const pw.FlexColumnWidth(1.2), // Expiry
@@ -130,15 +129,18 @@ class ReportPdfGenerator {
                 final row = report.rows[rowNum];
                 if (row.isExpired) {
                   return const pw.BoxDecoration(
-                      color: PdfColor.fromInt(0xFFFFEBEE));
+                    color: PdfColor.fromInt(0xFFFFEBEE),
+                  );
                 }
                 if (row.isExpiringThisWeek) {
                   return const pw.BoxDecoration(
-                      color: PdfColor.fromInt(0xFFFFF8E1));
+                    color: PdfColor.fromInt(0xFFFFF8E1),
+                  );
                 }
                 if (rowNum % 2 == 0) {
                   return const pw.BoxDecoration(
-                      color: PdfColor.fromInt(0xFFFAFAFA));
+                    color: PdfColor.fromInt(0xFFFAFAFA),
+                  );
                 }
                 return const pw.BoxDecoration();
               },
@@ -149,8 +151,7 @@ class ReportPdfGenerator {
                 padding: const pw.EdgeInsets.all(40),
                 child: pw.Text(
                   'No data available for the selected filters.',
-                  style: pw.TextStyle(
-                      fontSize: 14, color: PdfColors.grey600),
+                  style: pw.TextStyle(fontSize: 14, color: PdfColors.grey600),
                 ),
               ),
             ),
@@ -161,12 +162,16 @@ class ReportPdfGenerator {
 
           // ── Legend ──
           pw.SizedBox(height: 10),
-          pw.Row(children: [
-            _buildLegendDot(const PdfColor.fromInt(0xFFFFEBEE), 'Expired'),
-            pw.SizedBox(width: 16),
-            _buildLegendDot(
-                const PdfColor.fromInt(0xFFFFF8E1), 'Expiring This Week'),
-          ]),
+          pw.Row(
+            children: [
+              _buildLegendDot(const PdfColor.fromInt(0xFFFFEBEE), 'Expired'),
+              pw.SizedBox(width: 16),
+              _buildLegendDot(
+                const PdfColor.fromInt(0xFFFFF8E1),
+                'Expiring This Week',
+              ),
+            ],
+          ),
         ],
       ),
     );
@@ -176,10 +181,13 @@ class ReportPdfGenerator {
 
   /// Share / print / save the PDF.
   static Future<void> shareOrPrint(
-      BuildContext context, Uint8List pdfBytes) async {
+    BuildContext context,
+    Uint8List pdfBytes,
+  ) async {
     await Printing.layoutPdf(
       onLayout: (_) => pdfBytes,
-      name: 'inventory_report_${DateFormat('yyyyMMdd_HHmm').format(DateTime.now())}.pdf',
+      name:
+          'inventory_report_${DateFormat('yyyyMMdd_HHmm').format(DateTime.now())}.pdf',
     );
   }
 
@@ -225,8 +233,7 @@ class ReportPdfGenerator {
   }
 
   // ── HEADER ──
-  static pw.Widget _buildHeader(
-      ReportResultModel report, pw.Context context) {
+  static pw.Widget _buildHeader(ReportResultModel report, pw.Context context) {
     return pw.Container(
       margin: const pw.EdgeInsets.only(bottom: 12),
       child: pw.Row(
@@ -247,8 +254,10 @@ class ReportPdfGenerator {
               pw.SizedBox(height: 2),
               pw.Text(
                 'Generated: ${_dateTimeFormat.format(report.generatedAt)}',
-                style:
-                    const pw.TextStyle(fontSize: 9, color: PdfColors.grey600),
+                style: const pw.TextStyle(
+                  fontSize: 9,
+                  color: PdfColors.grey600,
+                ),
               ),
             ],
           ),
@@ -265,8 +274,10 @@ class ReportPdfGenerator {
               ),
               pw.Text(
                 'Total Products: ${report.totalProducts}',
-                style:
-                    const pw.TextStyle(fontSize: 9, color: PdfColors.grey700),
+                style: const pw.TextStyle(
+                  fontSize: 9,
+                  color: PdfColors.grey700,
+                ),
               ),
             ],
           ),
@@ -307,51 +318,81 @@ class ReportPdfGenerator {
             ),
           ),
           pw.SizedBox(height: 8),
-          pw.Row(children: [
-            _buildSummaryCell(
-                'Total Purchase', _fmtAmt(report.totalPurchaseAmount)),
-            _buildSummaryCell(
-                'Total Sales', _fmtAmt(report.totalSalesAmount)),
-            _buildSummaryCell('Total Profit', _fmtAmt(report.totalProfit),
-                color: PdfColors.green800),
-            _buildSummaryCell('Total Loss', _fmtAmt(report.totalLoss),
-                color: _red),
-          ]),
+          pw.Row(
+            children: [
+              _buildSummaryCell(
+                'Total Purchase',
+                _fmtAmt(report.totalPurchaseAmount),
+              ),
+              _buildSummaryCell(
+                'Total Sales',
+                _fmtAmt(report.totalSalesAmount),
+              ),
+              _buildSummaryCell(
+                'Total Profit',
+                _fmtAmt(report.totalProfit),
+                color: PdfColors.green800,
+              ),
+              _buildSummaryCell(
+                'Total Loss',
+                _fmtAmt(report.totalLoss),
+                color: _red,
+              ),
+            ],
+          ),
           pw.SizedBox(height: 6),
-          pw.Row(children: [
-            _buildSummaryCell(
-                'Expired Stock Value', _fmtAmt(report.expiredStockValue),
-                color: _red),
-            _buildSummaryCell(
-                'Returned Stock Value', _fmtAmt(report.returnedStockValue)),
-            _buildSummaryCell('Expired Items', '${report.expiredCount}',
-                color: _red),
-            _buildSummaryCell(
-                'Low Stock Items', '${report.lowStockCount}',
-                color: _amber),
-          ]),
+          pw.Row(
+            children: [
+              _buildSummaryCell(
+                'Expired Stock Value',
+                _fmtAmt(report.expiredStockValue),
+                color: _red,
+              ),
+              _buildSummaryCell(
+                'Returned Stock Value',
+                _fmtAmt(report.returnedStockValue),
+              ),
+              _buildSummaryCell(
+                'Expired Items',
+                '${report.expiredCount}',
+                color: _red,
+              ),
+              _buildSummaryCell(
+                'Low Stock Items',
+                '${report.lowStockCount}',
+                color: _amber,
+              ),
+            ],
+          ),
         ],
       ),
     );
   }
 
-  static pw.Widget _buildSummaryCell(String label, String value,
-      {PdfColor color = PdfColors.black}) {
+  static pw.Widget _buildSummaryCell(
+    String label,
+    String value, {
+    PdfColor color = PdfColors.black,
+  }) {
     return pw.Expanded(
       child: pw.Padding(
         padding: const pw.EdgeInsets.symmetric(horizontal: 4),
         child: pw.Column(
           crossAxisAlignment: pw.CrossAxisAlignment.start,
           children: [
-            pw.Text(label,
-                style:
-                    const pw.TextStyle(fontSize: 8, color: PdfColors.grey700)),
+            pw.Text(
+              label,
+              style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey700),
+            ),
             pw.SizedBox(height: 2),
-            pw.Text(value,
-                style: pw.TextStyle(
-                    fontSize: 10,
-                    fontWeight: pw.FontWeight.bold,
-                    color: color)),
+            pw.Text(
+              value,
+              style: pw.TextStyle(
+                fontSize: 10,
+                fontWeight: pw.FontWeight.bold,
+                color: color,
+              ),
+            ),
           ],
         ),
       ),
@@ -359,17 +400,21 @@ class ReportPdfGenerator {
   }
 
   static pw.Widget _buildLegendDot(PdfColor color, String label) {
-    return pw.Row(children: [
-      pw.Container(width: 10, height: 10, color: color),
-      pw.SizedBox(width: 4),
-      pw.Text(label,
-          style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey700)),
-    ]);
+    return pw.Row(
+      children: [
+        pw.Container(width: 10, height: 10, color: color),
+        pw.SizedBox(width: 4),
+        pw.Text(
+          label,
+          style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey700),
+        ),
+      ],
+    );
   }
 
   static String _fmtAmt(double val) {
-    if (val == 0) return '₹0';
-    if (val < 0) return '-₹${val.abs().toStringAsFixed(0)}';
-    return '₹${val.toStringAsFixed(0)}';
+    if (val == 0) return 'Rs.0';
+    if (val < 0) return '-Rs.${val.abs().toStringAsFixed(0)}';
+    return 'Rs.${val.toStringAsFixed(0)}';
   }
 }
