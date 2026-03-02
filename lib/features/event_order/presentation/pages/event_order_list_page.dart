@@ -18,12 +18,14 @@ import 'event_order_settings_page.dart';
 
 /// Date filter options for event/order list
 enum DateFilter {
+  all,
   thisWeek,
   nextWeek,
   today,
   thisMonth,
   nextMonth,
   thisYear,
+  passed,
   custom,
 }
 
@@ -1342,6 +1344,12 @@ class _EventOrderListPageState extends State<EventOrderListPage>
       child: Row(
         children: [
           _buildDateFilterChip(
+            label: 'All',
+            filter: DateFilter.all,
+            icon: Icons.all_inclusive_rounded,
+          ),
+          const SizedBox(width: 8),
+          _buildDateFilterChip(
             label: 'This Week',
             filter: DateFilter.thisWeek,
             icon: Icons.view_week_rounded,
@@ -1375,6 +1383,12 @@ class _EventOrderListPageState extends State<EventOrderListPage>
             label: 'This Year',
             filter: DateFilter.thisYear,
             icon: Icons.calendar_today_rounded,
+          ),
+          const SizedBox(width: 8),
+          _buildDateFilterChip(
+            label: 'Passed',
+            filter: DateFilter.passed,
+            icon: Icons.history_rounded,
           ),
           const SizedBox(width: 8),
           _buildDateFilterChip(
@@ -1492,11 +1506,18 @@ class _EventOrderListPageState extends State<EventOrderListPage>
   }
 
   /// Get date range based on selected filter
-  (DateTime start, DateTime end) _getDateRange() {
+  /// Returns null for 'all' and 'passed' filters which need special handling
+  (DateTime start, DateTime end)? _getDateRange() {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
 
     switch (_selectedDateFilter) {
+      case DateFilter.all:
+        // Return null to indicate no date filtering
+        return null;
+      case DateFilter.passed:
+        // Return null - will be handled specially in _filterOrdersByDate
+        return null;
       case DateFilter.today:
         return (today, today.add(const Duration(days: 1)));
       case DateFilter.thisWeek:
@@ -1547,7 +1568,29 @@ class _EventOrderListPageState extends State<EventOrderListPage>
 
   /// Filter orders by date range
   List<EventOrder> _filterOrdersByDate(List<EventOrder> orders) {
-    final (start, end) = _getDateRange();
+    // Handle 'all' filter - return all orders
+    if (_selectedDateFilter == DateFilter.all) {
+      return orders;
+    }
+
+    // Handle 'passed' filter - return orders with event date before today
+    if (_selectedDateFilter == DateFilter.passed) {
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      return orders.where((order) {
+        final orderDate = DateTime(
+          order.eventDate.year,
+          order.eventDate.month,
+          order.eventDate.day,
+        );
+        return orderDate.isBefore(today);
+      }).toList();
+    }
+
+    final dateRange = _getDateRange();
+    if (dateRange == null) return orders;
+
+    final (start, end) = dateRange;
     return orders.where((order) {
       final orderDate = DateTime(
         order.eventDate.year,
@@ -2246,6 +2289,8 @@ class _EventOrderListPageState extends State<EventOrderListPage>
 
   IconData _getDateFilterIcon() {
     switch (_selectedDateFilter) {
+      case DateFilter.all:
+        return Icons.all_inclusive_rounded;
       case DateFilter.today:
         return Icons.today_rounded;
       case DateFilter.thisWeek:
@@ -2258,6 +2303,8 @@ class _EventOrderListPageState extends State<EventOrderListPage>
         return Icons.event_rounded;
       case DateFilter.thisYear:
         return Icons.calendar_today_rounded;
+      case DateFilter.passed:
+        return Icons.history_rounded;
       case DateFilter.custom:
         return Icons.date_range_rounded;
     }
@@ -2265,6 +2312,8 @@ class _EventOrderListPageState extends State<EventOrderListPage>
 
   String _getDateFilterLabel() {
     switch (_selectedDateFilter) {
+      case DateFilter.all:
+        return 'All Events';
       case DateFilter.today:
         return 'Today';
       case DateFilter.thisWeek:
@@ -2277,6 +2326,8 @@ class _EventOrderListPageState extends State<EventOrderListPage>
         return 'Next Month';
       case DateFilter.thisYear:
         return 'This Year';
+      case DateFilter.passed:
+        return 'Passed Events';
       case DateFilter.custom:
         if (_customStartDate != null) {
           final start = DateFormat('dd/MM').format(_customStartDate!);
