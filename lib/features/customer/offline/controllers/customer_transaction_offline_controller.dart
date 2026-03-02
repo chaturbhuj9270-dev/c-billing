@@ -368,4 +368,168 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
         .syncStatusEqualTo(TransactionSyncStatus.synced)
         .count();
   }
+
+  // ==================== SYNC METHODS ====================
+
+  /// Get transactions that need to be pushed to server
+  Future<List<CustomerTransactionEntity>> getTransactionsNeedingPush() async {
+    return await _isar.customerTransactionEntitys
+        .filter()
+        .syncStatusEqualTo(TransactionSyncStatus.newRecord)
+        .or()
+        .syncStatusEqualTo(TransactionSyncStatus.updated)
+        .or()
+        .syncStatusEqualTo(TransactionSyncStatus.deleted)
+        .findAll();
+  }
+
+  /// Import transactions from server
+  /// This will upsert based on serverId
+  Future<void> importFromServer(List<Map<String, dynamic>> serverTransactions) async {
+    if (serverTransactions.isEmpty) return;
+
+    debugPrint('[TransactionOffline] Importing ${serverTransactions.length} transactions from server');
+
+    await _isar.writeTxn(() async {
+      for (final data in serverTransactions) {
+        final serverId = data['id'] as String?;
+        if (serverId == null) continue;
+
+        // Check if we already have this transaction locally
+        final existingTransaction = await _isar.customerTransactionEntitys
+            .filter()
+            .serverIdEqualTo(serverId)
+            .findFirst();
+
+        if (existingTransaction != null) {
+          // If local is modified, don't overwrite (local changes take priority)
+          if (existingTransaction.syncStatus == TransactionSyncStatus.synced) {
+            // Update with server data
+            final updated = _createEntityFromServerData(data, existingTransaction.id);
+            await _isar.customerTransactionEntitys.put(updated);
+          }
+        } else {
+          // New transaction from server
+          final entity = _createEntityFromServerData(data, null);
+          await _isar.customerTransactionEntitys.put(entity);
+        }
+      }
+    });
+
+    debugPrint('[TransactionOffline] Import completed');
+    notifyListeners();
+  }
+
+  /// Create entity from server data
+  CustomerTransactionEntity _createEntityFromServerData(Map<String, dynamic> data, Id? existingId) {
+    // Map server transaction type to local enum
+    TransactionType transactionType;
+    final serverType = (data['transactionType'] as String?)?.toUpperCase() ?? 'RECEIVED';
+    switch (serverType) {
+      case 'RECEIVED':
+        transactionType = TransactionType.payment;
+        break;
+      case 'BILL_GENERATED':
+        transactionType = TransactionType.billCreated;
+        break;
+      case 'REFUND':
+        transactionType = TransactionType.billReturn;
+        break;
+      case 'ADJUSTED':
+        transactionType = TransactionType.adjustment;
+        break;
+      default:
+        transactionType = TransactionType.payment;
+    }
+
+    // Parse dates
+    DateTime createdAt;
+    if (data['createdAt'] != null) {
+      createdAt = data['createdAt'] is DateTime
+          ? data['createdAt'] as DateTime
+          : DateTime.parse(data['createdAt'].toString());
+    } else {
+      createdAt = DateTime.now();
+    }
+
+    final entity = CustomerTransactionEntity(
+      serverId: data['id'] as String?,
+      customerId: (data['customerId'] as String?) ?? '',
+      customerName: (data['customerName'] as String?) ?? '',
+      transactionType: transactionType,
+      amount: ((data['amount'] ?? data['balanceAfterTransaction'] ?? 0) as num).toDouble(),
+      balanceAfter: ((data['balanceAfterTransaction'] ?? 0) as num).toDouble(),
+      referenceId: data['billId'] as String?,
+      referenceType: data['billId'] != null ? 'bill' : null,
+      description: data['notes'] as String?,
+      paymentMethod: data['paymentMode'] as String?,
+      transactionDate: createdAt,
+      syncStatus: TransactionSyncStatus.synced,
+      createdAt: createdAt,
+      updatedAt: createdAt,
+    );
+
+    // Preserve local ID if updating existing record
+    if (existingId != null) {
+      entity.id = existingId;
+    }
+
+    return entity;
+  }
+
+  /// Update local transaction with server response after successful push
+  Future<void> updateWithServerResponse(Id localId, Map<String, dynamic> serverResponse) async {
+    final transaction = await _isar.customerTransactionEntitys.get(localId);
+    if (transaction == null) return;
+
+    transaction.serverId = serverResponse['id'] as String?;
+    transaction.syncStatus = TransactionSyncStatus.synced;
+    transaction.updatedAt = DateTime.now();
+
+    await _isar.writeTxn(() async {
+      await _isar.customerTransactionEntitys.put(transaction);
+    });
+
+    debugPrint('[TransactionOffline] Updated transaction $localId with server ID: ${transaction.serverId}');
+  }
+
+  /// Mark a transaction as synced
+  Future<void> markAsSynced(Id id) async {
+    final transaction = await _isar.customerTransactionEntitys.get(id);
+    if (transaction == null) return;
+
+    transaction.syncStatus = TransactionSyncStatus.synced;
+    transaction.updatedAt = DateTime.now();
+
+    await _isar.writeTxn(() async {
+      await _isar.customerTransactionEntitys.put(transaction);
+    });
+  }
+
+  /// Permanently delete a transaction (after server confirms deletion)
+  Future<void> permanentlyDelete(Id id) async {
+    await _isar.writeTxn(() async {
+      await _isar.customerTransactionEntitys.delete(id);
+    });
+    debugPrint('[TransactionOffline] Permanently deleted transaction: $id');
+  }
+
+  /// Clear all synced deleted records
+  Future<void> clearSyncedDeletedRecords() async {
+    final deletedRecords = await _isar.customerTransactionEntitys
+        .filter()
+        .syncStatusEqualTo(TransactionSyncStatus.deleted)
+        .serverIdIsNotNull()
+        .findAll();
+
+    if (deletedRecords.isEmpty) return;
+
+    await _isar.writeTxn(() async {
+      for (final record in deletedRecords) {
+        await _isar.customerTransactionEntitys.delete(record.id);
+      }
+    });
+
+    debugPrint('[TransactionOffline] Cleared ${deletedRecords.length} synced deleted records');
+  }
 }
