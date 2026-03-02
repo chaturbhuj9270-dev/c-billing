@@ -13,8 +13,8 @@ class CustomerTransactionApiService {
   CustomerTransactionApiService._({
     FirebaseFirestore? firestore,
     FirebaseAuth? auth,
-  })  : _firestore = firestore ?? FirebaseFirestore.instance,
-        _auth = auth ?? FirebaseAuth.instance;
+  }) : _firestore = firestore ?? FirebaseFirestore.instance,
+       _auth = auth ?? FirebaseAuth.instance;
 
   /// Get the singleton instance
   static CustomerTransactionApiService get instance {
@@ -56,19 +56,25 @@ class CustomerTransactionApiService {
     DateTime? updatedSince,
   }) async {
     _ensureAuthenticated();
-    
+
     try {
       Query<Map<String, dynamic>> query = _transactionsRef!;
 
       // Filter by updatedSince for incremental sync
+      // Note: When updatedSince is provided, we need a composite index
       if (updatedSince != null) {
-        query = query.where('createdAt', isGreaterThan: updatedSince.toIso8601String());
+        query = query
+            .where('createdAt', isGreaterThan: updatedSince.toIso8601String())
+            .orderBy('createdAt', descending: true);
       }
-
-      // Order by createdAt for consistent results
-      query = query.orderBy('createdAt', descending: true);
+      // For initial sync (no updatedSince), don't order to avoid index requirements
+      // Just fetch all documents
 
       final snapshot = await query.get();
+
+      debugPrint(
+        '[CustomerTransactionAPI] Fetched ${snapshot.docs.length} transactions from server',
+      );
 
       return snapshot.docs.map((doc) {
         final data = doc.data();
@@ -87,14 +93,19 @@ class CustomerTransactionApiService {
     DateTime? updatedSince,
   }) async {
     _ensureAuthenticated();
-    
+
     try {
-      Query<Map<String, dynamic>> query = _transactionsRef!
-          .where('customerId', isEqualTo: customerId);
+      Query<Map<String, dynamic>> query = _transactionsRef!.where(
+        'customerId',
+        isEqualTo: customerId,
+      );
 
       // Filter by updatedSince for incremental sync
       if (updatedSince != null) {
-        query = query.where('createdAt', isGreaterThan: updatedSince.toIso8601String());
+        query = query.where(
+          'createdAt',
+          isGreaterThan: updatedSince.toIso8601String(),
+        );
       }
 
       // Order by createdAt for consistent results
@@ -108,7 +119,9 @@ class CustomerTransactionApiService {
         return data;
       }).toList();
     } catch (e) {
-      debugPrint('[CustomerTransactionAPI] Error fetching customer transactions: $e');
+      debugPrint(
+        '[CustomerTransactionAPI] Error fetching customer transactions: $e',
+      );
       rethrow;
     }
   }
@@ -116,7 +129,7 @@ class CustomerTransactionApiService {
   /// Get a single transaction by ID
   Future<Map<String, dynamic>?> getTransaction(String id) async {
     _ensureAuthenticated();
-    
+
     try {
       final doc = await _transactionsRef!.doc(id).get();
       if (!doc.exists) return null;
@@ -132,28 +145,32 @@ class CustomerTransactionApiService {
 
   /// Create a new transaction on the server
   /// Returns the server response with the new document ID
-  Future<Map<String, dynamic>> createTransaction(Map<String, dynamic> transactionData) async {
+  Future<Map<String, dynamic>> createTransaction(
+    Map<String, dynamic> transactionData,
+  ) async {
     _ensureAuthenticated();
-    
+
     try {
       // Remove local-only fields
       final payload = Map<String, dynamic>.from(transactionData);
       payload.remove('localId');
       payload.remove('isSynced');
       payload.remove('syncStatus');
-      
+
       // Ensure server timestamps if not present
       payload['createdAt'] ??= FieldValue.serverTimestamp();
 
       final docRef = await _transactionsRef!.add(payload);
-      
-      debugPrint('[CustomerTransactionAPI] Transaction created with ID: ${docRef.id}');
-      
+
+      debugPrint(
+        '[CustomerTransactionAPI] Transaction created with ID: ${docRef.id}',
+      );
+
       // Fetch the created document to return complete data
       final doc = await docRef.get();
       final data = doc.data()!;
       data['id'] = doc.id;
-      
+
       return data;
     } catch (e) {
       debugPrint('[CustomerTransactionAPI] Error creating transaction: $e');
@@ -164,7 +181,7 @@ class CustomerTransactionApiService {
   /// Delete a transaction from the server
   Future<void> deleteTransaction(String id) async {
     _ensureAuthenticated();
-    
+
     try {
       await _transactionsRef!.doc(id).delete();
       debugPrint('[CustomerTransactionAPI] Transaction deleted: $id');

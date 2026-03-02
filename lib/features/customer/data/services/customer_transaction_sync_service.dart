@@ -58,10 +58,10 @@ class CustomerTransactionSyncService extends ChangeNotifier {
     CustomerTransactionOfflineController? offlineController,
     CustomerTransactionApiService? apiService,
     Connectivity? connectivity,
-  })  : _offlineController =
-            offlineController ?? CustomerTransactionOfflineController.instance,
-        _apiService = apiService ?? CustomerTransactionApiService.instance,
-        _connectivity = connectivity ?? Connectivity();
+  }) : _offlineController =
+           offlineController ?? CustomerTransactionOfflineController.instance,
+       _apiService = apiService ?? CustomerTransactionApiService.instance,
+       _connectivity = connectivity ?? Connectivity();
 
   /// Get the singleton instance
   static CustomerTransactionSyncService get instance {
@@ -100,7 +100,8 @@ class CustomerTransactionSyncService extends ChangeNotifier {
         Future.delayed(const Duration(seconds: 3), () {
           if (!_isSyncing) {
             debugPrint(
-                '[CustomerTransactionSync] Network available - triggering sync');
+              '[CustomerTransactionSync] Network available - triggering sync',
+            );
             syncNow();
           }
         });
@@ -158,7 +159,8 @@ class CustomerTransactionSyncService extends ChangeNotifier {
     // Check if user is authenticated
     if (!_apiService.isAuthenticated) {
       debugPrint(
-          '[CustomerTransactionSync] User not authenticated, skipping sync');
+        '[CustomerTransactionSync] User not authenticated, skipping sync',
+      );
       return CustomerTransactionSyncResult(
         success: false,
         errorMessage: 'User not authenticated',
@@ -206,7 +208,8 @@ class CustomerTransactionSyncService extends ChangeNotifier {
       }
 
       debugPrint(
-          '[CustomerTransactionSync] Sync completed: ↑$uploadedCount ↓$downloadedCount');
+        '[CustomerTransactionSync] Sync completed: ↑$uploadedCount ↓$downloadedCount',
+      );
 
       return CustomerTransactionSyncResult(
         success: true,
@@ -240,8 +243,8 @@ class CustomerTransactionSyncService extends ChangeNotifier {
     int uploaded = 0;
     int failed = 0;
 
-    final transactionsNeedingPush =
-        await _offlineController.getTransactionsNeedingPush();
+    final transactionsNeedingPush = await _offlineController
+        .getTransactionsNeedingPush();
 
     for (final transaction in transactionsNeedingPush) {
       try {
@@ -266,7 +269,8 @@ class CustomerTransactionSyncService extends ChangeNotifier {
         uploaded++;
       } catch (e) {
         debugPrint(
-            '[CustomerTransactionSync] Failed to sync transaction ${transaction.id}: $e');
+          '[CustomerTransactionSync] Failed to sync transaction ${transaction.id}: $e',
+        );
         failed++;
       }
     }
@@ -331,7 +335,8 @@ class CustomerTransactionSyncService extends ChangeNotifier {
       }
 
       debugPrint(
-          '[CustomerTransactionSync] Full refresh completed: ${serverTransactions.length} records');
+        '[CustomerTransactionSync] Full refresh completed: ${serverTransactions.length} records',
+      );
 
       return CustomerTransactionSyncResult(
         success: true,
@@ -360,7 +365,8 @@ class CustomerTransactionSyncService extends ChangeNotifier {
 
   /// Convert offline entity to server payload
   Map<String, dynamic> _convertToServerPayload(
-      CustomerTransactionEntity transaction) {
+    CustomerTransactionEntity transaction,
+  ) {
     // Map local transaction type to server format
     String serverTransactionType;
     switch (transaction.transactionType) {

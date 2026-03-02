@@ -26,10 +26,10 @@ import 'firebase_options.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Initialize error logging service early to capture all errors
   ErrorLoggingService.initialize();
-  
+
   // Firebase MUST be initialized before runApp because services
   // like SubscriptionService access FirebaseFirestore.instance at construction time
   try {
@@ -39,7 +39,7 @@ Future<void> main() async {
   } catch (e) {
     debugPrint('Firebase init error: $e');
   }
-  
+
   // Run app — splash screen renders while remaining services init
   runApp(const MyApp());
 }
@@ -53,15 +53,33 @@ Future<void> initializeServices() async {
     _safeInit(() => LanguageService.instance.init(), 'LanguageService'),
     _safeInit(() => IsarService.instance.initialize(), 'Isar'),
   ]);
-  
+
   // These can run in background after basic services are ready
   Future.wait([
-    _safeInit(() => PurchaseSettingsService.instance.init(), 'PurchaseSettingsService'),
-    _safeInit(() => ProductSettingsService.instance.init(), 'ProductSettingsService'),
-    _safeInit(() => EventOrderSettingsService.instance.init(), 'EventOrderSettingsService'),
-    _safeInit(() => PurchaseReportSettingsService.instance.init(), 'PurchaseReportSettingsService'),
-    _safeInit(() => BillReportSettingsService.instance.init(), 'BillReportSettingsService'),
-    _safeInit(() => StockReportSettingsService.instance.init(), 'StockReportSettingsService'),
+    _safeInit(
+      () => PurchaseSettingsService.instance.init(),
+      'PurchaseSettingsService',
+    ),
+    _safeInit(
+      () => ProductSettingsService.instance.init(),
+      'ProductSettingsService',
+    ),
+    _safeInit(
+      () => EventOrderSettingsService.instance.init(),
+      'EventOrderSettingsService',
+    ),
+    _safeInit(
+      () => PurchaseReportSettingsService.instance.init(),
+      'PurchaseReportSettingsService',
+    ),
+    _safeInit(
+      () => BillReportSettingsService.instance.init(),
+      'BillReportSettingsService',
+    ),
+    _safeInit(
+      () => StockReportSettingsService.instance.init(),
+      'StockReportSettingsService',
+    ),
   ]);
 }
 

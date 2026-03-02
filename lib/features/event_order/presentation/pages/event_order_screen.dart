@@ -871,10 +871,14 @@ class _EventOrderScreenState extends State<EventOrderScreen>
   Widget _buildDatePicker() {
     return InkWell(
       onTap: () async {
+        // Allow selecting past dates when editing existing events
+        final firstDate = _eventDate.isBefore(DateTime.now())
+            ? _eventDate
+            : DateTime.now();
         final picked = await showDatePicker(
           context: context,
           initialDate: _eventDate,
-          firstDate: DateTime.now(),
+          firstDate: firstDate,
           lastDate: DateTime.now().add(const Duration(days: 365 * 2)),
           builder: (context, child) {
             return Theme(
@@ -2115,10 +2119,15 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                         flex: 3,
                         child: InkWell(
                           onTap: () async {
+                            // Allow selecting past dates when editing existing sub-events
+                            final firstDate =
+                                selectedDate.isBefore(DateTime.now())
+                                ? selectedDate
+                                : DateTime.now();
                             final picked = await showDatePicker(
                               context: context,
                               initialDate: selectedDate,
-                              firstDate: DateTime.now(),
+                              firstDate: firstDate,
                               lastDate: DateTime.now().add(
                                 const Duration(days: 730),
                               ),

@@ -8,6 +8,7 @@ import '../../data/repositories/customer_transaction_repository.dart';
 import '../../domain/entities/customer_transaction.dart' show PaymentMode;
 import '../../offline/controllers/customer_transaction_offline_controller.dart';
 import '../../offline/entities/customer_transaction_entity.dart';
+import '../../data/services/customer_transaction_sync_service.dart';
 
 /// Date filter options for transactions
 enum TransactionDateFilter { thisMonth, thisYear, lastYear, custom, all }
@@ -59,6 +60,18 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
     );
     _currentPending = widget.currentPendingAmount;
     _initTransactionService();
+    _syncAndLoadTransactions();
+  }
+
+  /// Sync transactions from server, then load from local storage
+  Future<void> _syncAndLoadTransactions() async {
+    // First, trigger a sync to pull any missing transactions from server
+    try {
+      await CustomerTransactionSyncService.instance.syncNow();
+    } catch (e) {
+      debugPrint('[Transactions] Sync failed (will load local data): $e');
+    }
+    // Then load from local storage
     _loadTransactions();
   }
 

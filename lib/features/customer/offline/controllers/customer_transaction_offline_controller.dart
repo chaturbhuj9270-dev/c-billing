@@ -385,10 +385,29 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
 
   /// Import transactions from server
   /// This will upsert based on serverId
-  Future<void> importFromServer(List<Map<String, dynamic>> serverTransactions) async {
+  Future<void> importFromServer(
+    List<Map<String, dynamic>> serverTransactions,
+  ) async {
     if (serverTransactions.isEmpty) return;
 
-    debugPrint('[TransactionOffline] Importing ${serverTransactions.length} transactions from server');
+    debugPrint(
+      '[TransactionOffline] Importing ${serverTransactions.length} transactions from server',
+    );
+
+    // First, build a map of customer IDs to names
+    // This needs to be done outside the write transaction
+    final customerNames = <String, String>{};
+    final uniqueCustomerIds = serverTransactions
+        .map((t) => t['customerId'] as String?)
+        .where((id) => id != null && id.isNotEmpty)
+        .toSet();
+
+    for (final customerId in uniqueCustomerIds) {
+      final customer = await _getCustomerByIdOrServerId(customerId!);
+      if (customer != null) {
+        customerNames[customerId] = customer.name;
+      }
+    }
 
     await _isar.writeTxn(() async {
       for (final data in serverTransactions) {
@@ -401,16 +420,27 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
             .serverIdEqualTo(serverId)
             .findFirst();
 
+        // Get customer name from our lookup map or from the data itself
+        final customerId = data['customerId'] as String? ?? '';
+        final customerName =
+            customerNames[customerId] ??
+            (data['customerName'] as String?) ??
+            'Unknown Customer';
+
         if (existingTransaction != null) {
           // If local is modified, don't overwrite (local changes take priority)
           if (existingTransaction.syncStatus == TransactionSyncStatus.synced) {
             // Update with server data
-            final updated = _createEntityFromServerData(data, existingTransaction.id);
+            final updated = _createEntityFromServerData(
+              data,
+              existingTransaction.id,
+              customerName,
+            );
             await _isar.customerTransactionEntitys.put(updated);
           }
         } else {
           // New transaction from server
-          final entity = _createEntityFromServerData(data, null);
+          final entity = _createEntityFromServerData(data, null, customerName);
           await _isar.customerTransactionEntitys.put(entity);
         }
       }
@@ -421,10 +451,15 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
   }
 
   /// Create entity from server data
-  CustomerTransactionEntity _createEntityFromServerData(Map<String, dynamic> data, Id? existingId) {
+  CustomerTransactionEntity _createEntityFromServerData(
+    Map<String, dynamic> data,
+    Id? existingId,
+    String customerName,
+  ) {
     // Map server transaction type to local enum
     TransactionType transactionType;
-    final serverType = (data['transactionType'] as String?)?.toUpperCase() ?? 'RECEIVED';
+    final serverType =
+        (data['transactionType'] as String?)?.toUpperCase() ?? 'RECEIVED';
     switch (serverType) {
       case 'RECEIVED':
         transactionType = TransactionType.payment;
@@ -455,9 +490,10 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
     final entity = CustomerTransactionEntity(
       serverId: data['id'] as String?,
       customerId: (data['customerId'] as String?) ?? '',
-      customerName: (data['customerName'] as String?) ?? '',
+      customerName: customerName,
       transactionType: transactionType,
-      amount: ((data['amount'] ?? data['balanceAfterTransaction'] ?? 0) as num).toDouble(),
+      amount: ((data['amount'] ?? data['balanceAfterTransaction'] ?? 0) as num)
+          .toDouble(),
       balanceAfter: ((data['balanceAfterTransaction'] ?? 0) as num).toDouble(),
       referenceId: data['billId'] as String?,
       referenceType: data['billId'] != null ? 'bill' : null,
@@ -478,7 +514,10 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
   }
 
   /// Update local transaction with server response after successful push
-  Future<void> updateWithServerResponse(Id localId, Map<String, dynamic> serverResponse) async {
+  Future<void> updateWithServerResponse(
+    Id localId,
+    Map<String, dynamic> serverResponse,
+  ) async {
     final transaction = await _isar.customerTransactionEntitys.get(localId);
     if (transaction == null) return;
 
@@ -490,7 +529,9 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
       await _isar.customerTransactionEntitys.put(transaction);
     });
 
-    debugPrint('[TransactionOffline] Updated transaction $localId with server ID: ${transaction.serverId}');
+    debugPrint(
+      '[TransactionOffline] Updated transaction $localId with server ID: ${transaction.serverId}',
+    );
   }
 
   /// Mark a transaction as synced
@@ -530,6 +571,8 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
       }
     });
 
-    debugPrint('[TransactionOffline] Cleared ${deletedRecords.length} synced deleted records');
+    debugPrint(
+      '[TransactionOffline] Cleared ${deletedRecords.length} synced deleted records',
+    );
   }
 }
