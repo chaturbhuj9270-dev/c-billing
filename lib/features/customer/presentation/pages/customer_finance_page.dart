@@ -118,6 +118,26 @@ class _CustomerFinancePageState extends State<CustomerFinancePage>
         }
       }
 
+      // Sort events: upcoming first (latest on top), then passed events (latest on top)
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+
+      // Separate upcoming and passed events
+      final upcomingEvents = eventOrders
+          .where((e) => !e.eventDate.isBefore(today))
+          .toList();
+      final passedEvents = eventOrders
+          .where((e) => e.eventDate.isBefore(today))
+          .toList();
+
+      // Sort upcoming events by date descending (latest scheduled first)
+      upcomingEvents.sort((a, b) => b.eventDate.compareTo(a.eventDate));
+      // Sort passed events by date descending (most recently passed first)
+      passedEvents.sort((a, b) => b.eventDate.compareTo(a.eventDate));
+
+      // Combine: upcoming first, then passed
+      final sortedEventOrders = [...upcomingEvents, ...passedEvents];
+
       // Calculate stats
       double totalBill = 0;
       double totalPaid = 0;
@@ -131,7 +151,7 @@ class _CustomerFinancePageState extends State<CustomerFinancePage>
 
       setState(() {
         _bills = bills;
-        _eventOrders = eventOrders;
+        _eventOrders = sortedEventOrders;
         _totalBillAmount = totalBill;
         _totalPaidAmount = totalPaid;
         _totalPendingAmount = totalPending;

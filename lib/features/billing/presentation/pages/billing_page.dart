@@ -2840,262 +2840,282 @@ class _BillingPageState extends State<BillingPage> {
                     horizontal: 10,
                     vertical: 8,
                   ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Index number badge
-                      Container(
-                        width: 22,
-                        height: 22,
-                        decoration: BoxDecoration(
-                          color: Colors.grey[100],
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Center(
-                          child: Text(
-                            '${index + 1}',
-                            style: TextStyle(
-                              fontFamily: 'Literata',
-                              fontSize: 10,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.grey[600],
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          // Index number badge
+                          Container(
+                            width: 22,
+                            height: 22,
+                            decoration: BoxDecoration(
+                              color: Colors.grey[100],
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Center(
+                              child: Text(
+                                '${index + 1}',
+                                style: TextStyle(
+                                  fontFamily: 'Literata',
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
                             ),
                           ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      // Product name and price
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              item.productName,
-                              style: const TextStyle(
-                                fontFamily: 'Literata',
-                                fontWeight: FontWeight.w600,
-                                fontSize: 12,
-                                color: Color(0xFF1A1A2E),
-                                height: 1.2,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            const SizedBox(height: 2),
-                            // Price row - tappable
-                            GestureDetector(
-                              onTap: () => _showEditSellPriceDialog(
-                                index: index,
-                                item: item,
-                              ),
-                              child: Row(
-                                children: [
-                                  Text(
-                                    '₹${item.sellingPrice.toStringAsFixed(0)}',
-                                    style: TextStyle(
-                                      fontFamily: 'Literata',
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w600,
-                                      color: const Color(
-                                        0xFF1B4D3E,
-                                      ).withValues(alpha: 0.8),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 3),
-                                  Icon(
-                                    Icons.edit_rounded,
-                                    size: 10,
-                                    color: Colors.grey[400],
-                                  ),
-                                  if (item.cgstPercent > 0 ||
-                                      item.sgstPercent > 0) ...[
-                                    const SizedBox(width: 6),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 4,
-                                        vertical: 1,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: Colors.orange[50],
-                                        borderRadius: BorderRadius.circular(3),
-                                      ),
-                                      child: Text(
-                                        '${(item.cgstPercent + item.sgstPercent).toStringAsFixed(0)}%',
-                                        style: TextStyle(
-                                          fontFamily: 'Literata',
-                                          fontSize: 9,
-                                          color: Colors.orange[700],
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      // Compact Quantity stepper
-                      Container(
-                        height: 30,
-                        decoration: BoxDecoration(
-                          color: Colors.grey[50],
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                            color: Colors.grey.withValues(alpha: 0.15),
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            // Minus
-                            GestureDetector(
-                              onTap: () {
-                                // Determine step based on sellUnit (100 gm/ml = 0.1 kg/ltr)
-                                final step =
-                                    (item.sellUnit == 'gm' ||
-                                        item.sellUnit == 'ml')
-                                    ? 0.1
-                                    : 1.0;
-                                if (item.quantity > step) {
-                                  setState(() {
-                                    _billItems[index] = BillItem.create(
-                                      productId: item.productId,
-                                      productName: item.productName,
-                                      companyName: item.companyName,
-                                      sellingPrice: item.sellingPrice,
-                                      purchasePrice: item.purchasePrice,
-                                      quantity: item.quantity - step,
-                                      cgstPercent: item.cgstPercent,
-                                      sgstPercent: item.sgstPercent,
-                                      hsnCode: item.hsnCode,
-                                      unit: item.unit,
-                                      sellUnit: item.sellUnit,
-                                    );
-                                  });
-                                } else {
-                                  setState(() => _billItems.removeAt(index));
-                                }
-                              },
-                              child: Container(
-                                width: 28,
-                                height: 30,
-                                decoration: BoxDecoration(
-                                  color: const Color(
-                                    0xFF1B4D3E,
-                                  ).withValues(alpha: 0.08),
-                                  borderRadius: const BorderRadius.only(
-                                    topLeft: Radius.circular(7),
-                                    bottomLeft: Radius.circular(7),
-                                  ),
-                                ),
-                                child: const Icon(
-                                  Icons.remove,
-                                  size: 14,
-                                  color: Color(0xFF1B4D3E),
-                                ),
-                              ),
-                            ),
-                            // Quantity display - tappable for manual entry
-                            GestureDetector(
-                              onTap: () => _showBillItemQuantityDialog(
-                                index: index,
-                                item: item,
-                                maxStock: maxStock,
-                              ),
-                              child: Container(
-                                constraints: const BoxConstraints(minWidth: 36),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 4,
-                                ),
-                                alignment: Alignment.center,
-                                child: Text(
-                                  item.displayQuantity,
+                          const SizedBox(width: 8),
+                          // Product name and price
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  item.productName,
                                   style: const TextStyle(
                                     fontFamily: 'Literata',
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 11,
-                                    color: Color(0xFF1B4D3E),
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 12,
+                                    color: Color(0xFF1A1A2E),
+                                    height: 1.2,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: 2),
+                                // Price row - tappable
+                                GestureDetector(
+                                  onTap: () => _showEditSellPriceDialog(
+                                    index: index,
+                                    item: item,
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Text(
+                                        '₹${item.sellingPrice.toStringAsFixed(0)}',
+                                        style: TextStyle(
+                                          fontFamily: 'Literata',
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w600,
+                                          color: const Color(
+                                            0xFF1B4D3E,
+                                          ).withValues(alpha: 0.8),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 3),
+                                      Icon(
+                                        Icons.edit_rounded,
+                                        size: 10,
+                                        color: Colors.grey[400],
+                                      ),
+                                      if (item.cgstPercent > 0 ||
+                                          item.sgstPercent > 0) ...[
+                                        const SizedBox(width: 6),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 4,
+                                            vertical: 1,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: Colors.orange[50],
+                                            borderRadius: BorderRadius.circular(
+                                              3,
+                                            ),
+                                          ),
+                                          child: Text(
+                                            '${(item.cgstPercent + item.sgstPercent).toStringAsFixed(0)}%',
+                                            style: TextStyle(
+                                              fontFamily: 'Literata',
+                                              fontSize: 9,
+                                              color: Colors.orange[700],
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ],
                                   ),
                                 ),
-                              ),
+                              ],
                             ),
-                            // Plus
-                            GestureDetector(
-                              onTap: () {
-                                // Determine increment based on sellUnit
-                                final step =
-                                    (item.sellUnit == 'gm' ||
-                                        item.sellUnit == 'ml')
-                                    ? 0.1
-                                    : 1.0;
-                                if (item.quantity + step <= maxStock) {
-                                  setState(() {
-                                    _billItems[index] = BillItem.create(
-                                      productId: item.productId,
-                                      productName: item.productName,
-                                      companyName: item.companyName,
-                                      sellingPrice: item.sellingPrice,
-                                      purchasePrice: item.purchasePrice,
-                                      quantity: item.quantity + step,
-                                      cgstPercent: item.cgstPercent,
-                                      sgstPercent: item.sgstPercent,
-                                      hsnCode: item.hsnCode,
-                                      unit: item.unit,
-                                      sellUnit: item.sellUnit,
-                                    );
-                                  });
-                                } else {
-                                  _showSnackbar(
-                                    '${_localizations.maxStock}: $maxStock',
-                                    isError: true,
-                                  );
-                                }
-                              },
-                              child: Container(
-                                width: 28,
-                                height: 30,
-                                decoration: BoxDecoration(
-                                  color: item.quantity < maxStock
-                                      ? const Color(
-                                          0xFF1B4D3E,
-                                        ).withValues(alpha: 0.08)
-                                      : Colors.grey[100],
-                                  borderRadius: const BorderRadius.only(
-                                    topRight: Radius.circular(7),
-                                    bottomRight: Radius.circular(7),
-                                  ),
-                                ),
-                                child: Icon(
-                                  Icons.add,
-                                  size: 14,
-                                  color: item.quantity < maxStock
-                                      ? const Color(0xFF1B4D3E)
-                                      : Colors.grey[400],
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      // Subtotal - right aligned
-                      SizedBox(
-                        width: 60,
-                        child: Text(
-                          '₹${item.subtotal.toStringAsFixed(0)}',
-                          textAlign: TextAlign.right,
-                          style: const TextStyle(
-                            fontFamily: 'Literata',
-                            fontWeight: FontWeight.w700,
-                            fontSize: 13,
-                            color: Color(0xFF1B4D3E),
                           ),
-                        ),
+                          const SizedBox(width: 8),
+                          // Compact Quantity stepper
+                          Container(
+                            height: 30,
+                            decoration: BoxDecoration(
+                              color: Colors.grey[50],
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: Colors.grey.withValues(alpha: 0.15),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                // Minus
+                                GestureDetector(
+                                  onTap: () {
+                                    // Determine step based on sellUnit (100 gm/ml = 0.1 kg/ltr)
+                                    final step =
+                                        (item.sellUnit == 'gm' ||
+                                            item.sellUnit == 'ml')
+                                        ? 0.1
+                                        : 1.0;
+                                    if (item.quantity > step) {
+                                      setState(() {
+                                        _billItems[index] = BillItem.create(
+                                          productId: item.productId,
+                                          productName: item.productName,
+                                          companyName: item.companyName,
+                                          sellingPrice: item.sellingPrice,
+                                          purchasePrice: item.purchasePrice,
+                                          quantity: item.quantity - step,
+                                          cgstPercent: item.cgstPercent,
+                                          sgstPercent: item.sgstPercent,
+                                          hsnCode: item.hsnCode,
+                                          unit: item.unit,
+                                          sellUnit: item.sellUnit,
+                                        );
+                                      });
+                                    } else {
+                                      setState(
+                                        () => _billItems.removeAt(index),
+                                      );
+                                    }
+                                  },
+                                  child: Container(
+                                    width: 28,
+                                    height: 30,
+                                    decoration: BoxDecoration(
+                                      color: const Color(
+                                        0xFF1B4D3E,
+                                      ).withValues(alpha: 0.08),
+                                      borderRadius: const BorderRadius.only(
+                                        topLeft: Radius.circular(7),
+                                        bottomLeft: Radius.circular(7),
+                                      ),
+                                    ),
+                                    child: const Icon(
+                                      Icons.remove,
+                                      size: 14,
+                                      color: Color(0xFF1B4D3E),
+                                    ),
+                                  ),
+                                ),
+                                // Quantity display - tappable for manual entry
+                                GestureDetector(
+                                  onTap: () => _showBillItemQuantityDialog(
+                                    index: index,
+                                    item: item,
+                                    maxStock: maxStock,
+                                  ),
+                                  child: Container(
+                                    constraints: const BoxConstraints(
+                                      minWidth: 36,
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 4,
+                                    ),
+                                    alignment: Alignment.center,
+                                    child: Text(
+                                      item.displayQuantity,
+                                      style: const TextStyle(
+                                        fontFamily: 'Literata',
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 11,
+                                        color: Color(0xFF1B4D3E),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                // Plus
+                                GestureDetector(
+                                  onTap: () {
+                                    // Determine increment based on sellUnit
+                                    final step =
+                                        (item.sellUnit == 'gm' ||
+                                            item.sellUnit == 'ml')
+                                        ? 0.1
+                                        : 1.0;
+                                    if (item.quantity + step <= maxStock) {
+                                      setState(() {
+                                        _billItems[index] = BillItem.create(
+                                          productId: item.productId,
+                                          productName: item.productName,
+                                          companyName: item.companyName,
+                                          sellingPrice: item.sellingPrice,
+                                          purchasePrice: item.purchasePrice,
+                                          quantity: item.quantity + step,
+                                          cgstPercent: item.cgstPercent,
+                                          sgstPercent: item.sgstPercent,
+                                          hsnCode: item.hsnCode,
+                                          unit: item.unit,
+                                          sellUnit: item.sellUnit,
+                                        );
+                                      });
+                                    } else {
+                                      _showSnackbar(
+                                        '${_localizations.maxStock}: $maxStock',
+                                        isError: true,
+                                      );
+                                    }
+                                  },
+                                  child: Container(
+                                    width: 28,
+                                    height: 30,
+                                    decoration: BoxDecoration(
+                                      color: item.quantity < maxStock
+                                          ? const Color(
+                                              0xFF1B4D3E,
+                                            ).withValues(alpha: 0.08)
+                                          : Colors.grey[100],
+                                      borderRadius: const BorderRadius.only(
+                                        topRight: Radius.circular(7),
+                                        bottomRight: Radius.circular(7),
+                                      ),
+                                    ),
+                                    child: Icon(
+                                      Icons.add,
+                                      size: 14,
+                                      color: item.quantity < maxStock
+                                          ? const Color(0xFF1B4D3E)
+                                          : Colors.grey[400],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          // Subtotal - right aligned
+                          SizedBox(
+                            width: 60,
+                            child: Text(
+                              '₹${item.subtotal.toStringAsFixed(0)}',
+                              textAlign: TextAlign.right,
+                              style: const TextStyle(
+                                fontFamily: 'Literata',
+                                fontWeight: FontWeight.w700,
+                                fontSize: 13,
+                                color: Color(0xFF1B4D3E),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
+                      // Inline unit selector for kg/ltr products
+                      if (item.unit?.toLowerCase() == 'kg' ||
+                          item.unit?.toLowerCase() == 'ltr')
+                        _buildInlineUnitSelector(
+                          index: index,
+                          item: item,
+                          maxStock: maxStock,
+                        ),
                     ],
                   ),
                 ),
@@ -3147,6 +3167,366 @@ class _BillingPageState extends State<BillingPage> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  /// Build inline unit selector chips for kg/ltr products
+  Widget _buildInlineUnitSelector({
+    required int index,
+    required BillItem item,
+    required int maxStock,
+  }) {
+    final unit = item.unit?.toLowerCase() ?? '';
+    final isKg = unit == 'kg';
+    final subUnit = isKg ? 'gm' : 'ml';
+    final unitLabel = isKg ? 'kg' : 'ltr';
+
+    // Quick options in grams/ml
+    final quickOptions = [250, 500, 750];
+
+    // Current quantity in grams/ml
+    final currentInSubUnit = (item.quantity * 1000).round();
+
+    // Check if current is a custom value (not one of quick options and not whole kg/ltr)
+    final isCustomValue =
+        !quickOptions.contains(currentInSubUnit) &&
+        currentInSubUnit % 1000 != 0;
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 6, left: 30),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            // Quick option chips
+            ...quickOptions.map((grams) {
+              final isSelected = currentInSubUnit == grams;
+              final qtyInBase = grams / 1000.0; // Convert to kg/ltr
+              final isAvailable = qtyInBase <= maxStock;
+
+              return Padding(
+                padding: const EdgeInsets.only(right: 6),
+                child: GestureDetector(
+                  onTap: isAvailable
+                      ? () {
+                          setState(() {
+                            _billItems[index] = BillItem.create(
+                              productId: item.productId,
+                              productName: item.productName,
+                              companyName: item.companyName,
+                              sellingPrice: item.sellingPrice,
+                              purchasePrice: item.purchasePrice,
+                              quantity: qtyInBase,
+                              cgstPercent: item.cgstPercent,
+                              sgstPercent: item.sgstPercent,
+                              hsnCode: item.hsnCode,
+                              unit: item.unit,
+                              sellUnit: subUnit,
+                            );
+                          });
+                        }
+                      : null,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? const Color(0xFF1B4D3E)
+                          : isAvailable
+                          ? const Color(0xFF1B4D3E).withValues(alpha: 0.08)
+                          : Colors.grey[200],
+                      borderRadius: BorderRadius.circular(6),
+                      border: isSelected
+                          ? null
+                          : Border.all(
+                              color: isAvailable
+                                  ? const Color(
+                                      0xFF1B4D3E,
+                                    ).withValues(alpha: 0.2)
+                                  : Colors.grey[300]!,
+                            ),
+                    ),
+                    child: Text(
+                      '$grams$subUnit',
+                      style: TextStyle(
+                        fontFamily: 'Literata',
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                        color: isSelected
+                            ? Colors.white
+                            : isAvailable
+                            ? const Color(0xFF1B4D3E)
+                            : Colors.grey[500],
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }),
+            // 1 kg/ltr option
+            Padding(
+              padding: const EdgeInsets.only(right: 6),
+              child: GestureDetector(
+                onTap: maxStock >= 1
+                    ? () {
+                        setState(() {
+                          _billItems[index] = BillItem.create(
+                            productId: item.productId,
+                            productName: item.productName,
+                            companyName: item.companyName,
+                            sellingPrice: item.sellingPrice,
+                            purchasePrice: item.purchasePrice,
+                            quantity: 1.0,
+                            cgstPercent: item.cgstPercent,
+                            sgstPercent: item.sgstPercent,
+                            hsnCode: item.hsnCode,
+                            unit: item.unit,
+                            sellUnit: unit,
+                          );
+                        });
+                      }
+                    : null,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color:
+                        item.quantity == 1.0 &&
+                            (item.sellUnit == 'kg' || item.sellUnit == 'ltr')
+                        ? const Color(0xFF1B4D3E)
+                        : maxStock >= 1
+                        ? const Color(0xFF1B4D3E).withValues(alpha: 0.08)
+                        : Colors.grey[200],
+                    borderRadius: BorderRadius.circular(6),
+                    border:
+                        item.quantity == 1.0 &&
+                            (item.sellUnit == 'kg' || item.sellUnit == 'ltr')
+                        ? null
+                        : Border.all(
+                            color: maxStock >= 1
+                                ? const Color(0xFF1B4D3E).withValues(alpha: 0.2)
+                                : Colors.grey[300]!,
+                          ),
+                  ),
+                  child: Text(
+                    '1$unitLabel',
+                    style: TextStyle(
+                      fontFamily: 'Literata',
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      color:
+                          item.quantity == 1.0 &&
+                              (item.sellUnit == 'kg' || item.sellUnit == 'ltr')
+                          ? Colors.white
+                          : maxStock >= 1
+                          ? const Color(0xFF1B4D3E)
+                          : Colors.grey[500],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            // Custom entry button
+            GestureDetector(
+              onTap: () => _showCustomUnitDialog(
+                index: index,
+                item: item,
+                maxStock: maxStock,
+              ),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: isCustomValue
+                      ? const Color(0xFF7B68EE)
+                      : Colors.grey[100],
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(
+                    color: isCustomValue
+                        ? const Color(0xFF7B68EE)
+                        : Colors.grey[300]!,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.edit_rounded,
+                      size: 10,
+                      color: isCustomValue ? Colors.white : Colors.grey[600],
+                    ),
+                    const SizedBox(width: 3),
+                    Text(
+                      isCustomValue ? '${currentInSubUnit}$subUnit' : subUnit,
+                      style: TextStyle(
+                        fontFamily: 'Literata',
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                        color: isCustomValue ? Colors.white : Colors.grey[600],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Show custom unit entry dialog
+  void _showCustomUnitDialog({
+    required int index,
+    required BillItem item,
+    required int maxStock,
+  }) {
+    final unit = item.unit?.toLowerCase() ?? '';
+    final isKg = unit == 'kg';
+    final subUnit = isKg ? 'gm' : 'ml';
+
+    // Current quantity in grams/ml
+    final currentInSubUnit = (item.quantity * 1000).round();
+    final controller = TextEditingController(text: currentInSubUnit.toString());
+    String? errorText;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          void validate() {
+            final value = int.tryParse(controller.text) ?? 0;
+            final maxInSubUnit = maxStock * 1000;
+            setDialogState(() {
+              if (value <= 0) {
+                errorText = 'Enter valid amount';
+              } else if (value > maxInSubUnit) {
+                errorText = 'Max: $maxInSubUnit$subUnit';
+              } else {
+                errorText = null;
+              }
+            });
+          }
+
+          return AlertDialog(
+            backgroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            title: Text(
+              'Enter $subUnit',
+              style: const TextStyle(
+                fontFamily: 'Literata',
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF1A1A2E),
+              ),
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: controller,
+                  keyboardType: TextInputType.number,
+                  autofocus: true,
+                  onChanged: (_) => validate(),
+                  style: const TextStyle(
+                    fontFamily: 'Literata',
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF1B4D3E),
+                  ),
+                  decoration: InputDecoration(
+                    errorText: errorText,
+                    suffixText: subUnit,
+                    suffixStyle: TextStyle(
+                      fontFamily: 'Literata',
+                      fontSize: 14,
+                      color: Colors.grey[600],
+                    ),
+                    filled: true,
+                    fillColor: Colors.grey[50],
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(
+                        color: Color(0xFF1B4D3E),
+                        width: 2,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Max: ${maxStock * 1000}$subUnit (${maxStock}${isKg ? 'kg' : 'ltr'})',
+                  style: TextStyle(
+                    fontFamily: 'Literata',
+                    fontSize: 11,
+                    color: Colors.grey[500],
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: Text(
+                  _localizations.cancel,
+                  style: TextStyle(
+                    fontFamily: 'Literata',
+                    color: Colors.grey[600],
+                  ),
+                ),
+              ),
+              ElevatedButton(
+                onPressed: errorText == null
+                    ? () {
+                        final value = int.tryParse(controller.text) ?? 0;
+                        if (value > 0) {
+                          final qtyInBase = value / 1000.0;
+                          setState(() {
+                            _billItems[index] = BillItem.create(
+                              productId: item.productId,
+                              productName: item.productName,
+                              companyName: item.companyName,
+                              sellingPrice: item.sellingPrice,
+                              purchasePrice: item.purchasePrice,
+                              quantity: qtyInBase,
+                              cgstPercent: item.cgstPercent,
+                              sgstPercent: item.sgstPercent,
+                              hsnCode: item.hsnCode,
+                              unit: item.unit,
+                              sellUnit: subUnit,
+                            );
+                          });
+                          Navigator.pop(ctx);
+                        }
+                      }
+                    : null,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF1B4D3E),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                child: Text(
+                  _localizations.done,
+                  style: const TextStyle(
+                    fontFamily: 'Literata',
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
