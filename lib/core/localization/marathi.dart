@@ -200,9 +200,12 @@ class MarathiLocalization {
   static const String companyCode = 'कंपनी कोड';
   static const String supplierCodeRequired = 'पुरवठादार कोड आवश्यक आहे';
   static const String companyCodeRequired = 'कंपनी कोड आवश्यक आहे';
-  static const String supplierCodeAlreadyExists = 'हा पुरवठादार कोड आधीपासून अस्तित्वात आहे';
-  static const String companyCodeAlreadyExists = 'हा कंपनी कोड आधीपासून अस्तित्वात आहे';
-  static const String addYourFirstCompany = 'सुरू करण्यासाठी तुमची पहिली कंपनी जोडा';
+  static const String supplierCodeAlreadyExists =
+      'हा पुरवठादार कोड आधीपासून अस्तित्वात आहे';
+  static const String companyCodeAlreadyExists =
+      'हा कंपनी कोड आधीपासून अस्तित्वात आहे';
+  static const String addYourFirstCompany =
+      'सुरू करण्यासाठी तुमची पहिली कंपनी जोडा';
   static const String addCompanyNow = 'कंपनी जोडा';
   static const String errorAddingSupplier = 'पुरवठादार जोडण्यात त्रुटी';
   static const String errorAddingCompany = 'कंपनी जोडण्यात त्रुटी';
@@ -409,7 +412,8 @@ class MarathiLocalization {
 
   // Billing - Batch Selection
   static const String selectStockEntry = 'स्टॉक एंट्री निवडा';
-  static const String chooseSpecificBatch = 'बिलामध्ये जोडण्यासाठी विशिष्ट बॅच निवडा';
+  static const String chooseSpecificBatch =
+      'बिलामध्ये जोडण्यासाठी विशिष्ट बॅच निवडा';
   static const String availableEntries = 'उपलब्ध एंट्री';
   static const String batch = 'बॅच';
   static const String purchasedOn = 'खरेदी';
@@ -420,7 +424,8 @@ class MarathiLocalization {
   static const String oldestBatch = 'सर्वात जुना बॅच';
   static const String selectThisEntry = 'निवडा';
   static const String enterQuantity = 'प्रमाण टाका';
-  static const String quantityExceedsStock = 'प्रमाण उपलब्ध स्टॉकपेक्षा जास्त आहे';
+  static const String quantityExceedsStock =
+      'प्रमाण उपलब्ध स्टॉकपेक्षा जास्त आहे';
   static const String addToBill = 'बिलामध्ये जोडा';
   static const String variants = 'प्रकार';
   static const String totalAvailable = 'एकूण उपलब्ध';
@@ -443,7 +448,8 @@ class MarathiLocalization {
   static const String fullyReturned = 'पूर्ण परतावा';
   static const String partialReturn = 'आंशिक परतावा';
   static const String statusFullyReturned = 'स्थिती: पूर्ण परतावा';
-  static const String includeReturnedItemsInPrint = 'प्रिंटमध्ये परत केलेल्या वस्तू समाविष्ट करा';
+  static const String includeReturnedItemsInPrint =
+      'प्रिंटमध्ये परत केलेल्या वस्तू समाविष्ट करा';
   static const String returnThisBill = 'हे बिल परत करा';
   static const String billReturned = 'बिल परत केले';
   static const String paidAmount = 'भरलेली रक्कम';
@@ -464,11 +470,13 @@ class MarathiLocalization {
   // Dashboard Page
   // ═══════════════════════════════════════════════════
   static const String exitApp = 'अॅप बंद करा';
-  static const String exitAppConfirm = 'तुम्हाला खात्री आहे की तुम्ही अॅप बंद करू इच्छिता?';
+  static const String exitAppConfirm =
+      'तुम्हाला खात्री आहे की तुम्ही अॅप बंद करू इच्छिता?';
   static const String exit = 'बंद करा';
   static const String selectLanguage = 'भाषा निवडा';
   static const String languageChangedTo = 'भाषा बदलली';
-  static const String unableToRefresh = 'डेटा रिफ्रेश करता आला नाही. कॅश डेटा दाखवत आहे.';
+  static const String unableToRefresh =
+      'डेटा रिफ्रेश करता आला नाही. कॅश डेटा दाखवत आहे.';
   static const String retry = 'पुन्हा प्रयत्न';
   static const String custom = 'कस्टम';
   static const String returns = 'परतावे';
@@ -477,7 +485,8 @@ class MarathiLocalization {
   static const String stockAndPayments = 'स्टॉक आणि पेमेंट';
   static const String paymentStatus = 'पेमेंट स्थिती';
   static const String comingSoon = 'लवकरच येत आहे';
-  static const String paymentTrackingMessage = 'पेमेंट ट्रॅकिंग आणि प्राप्य व्यवस्थापन पुढील अपडेटमध्ये उपलब्ध होईल.';
+  static const String paymentTrackingMessage =
+      'पेमेंट ट्रॅकिंग आणि प्राप्य व्यवस्थापन पुढील अपडेटमध्ये उपलब्ध होईल.';
   static const String loss = 'तोटा';
   static const String billSettings = 'बिल सेटिंग्ज';
   static const String purchaseSettings = 'खरेदी सेटिंग्ज';
@@ -495,10 +504,13 @@ class MarathiLocalization {
   static const String returnBill = 'परतावा बिल';
   static const String processBillReturns = 'बिल परतावा प्रक्रिया';
   static const String searchBill = 'बिल शोधा';
-  static const String enterBillOrMobile = 'बिल क्रमांक किंवा ग्राहक मोबाइल क्रमांक प्रविष्ट करा';
-  static const String billOrMobileHint = 'उदा., BILL-20260205-ABC123 किंवा 9876543210';
+  static const String enterBillOrMobile =
+      'बिल क्रमांक किंवा ग्राहक मोबाइल क्रमांक प्रविष्ट करा';
+  static const String billOrMobileHint =
+      'उदा., BILL-20260205-ABC123 किंवा 9876543210';
   static const String searchAndValidate = 'शोधा आणि सत्यापित करा';
-  static const String pleaseEnterBillOrMobile = 'कृपया बिल क्रमांक किंवा मोबाइल क्रमांक प्रविष्ट करा';
+  static const String pleaseEnterBillOrMobile =
+      'कृपया बिल क्रमांक किंवा मोबाइल क्रमांक प्रविष्ट करा';
   static const String billNotFound = 'बिल सापडले नाही';
   static const String errorSearchingBill = 'बिल शोधताना त्रुटी';
   static const String allItemsReturned = 'सर्व वस्तू परत केल्या आहेत';
@@ -514,12 +526,16 @@ class MarathiLocalization {
   static const String selectAll = 'सर्व निवडा';
   static const String clear = 'साफ करा';
   static const String confirmReturn = 'परतावा पुष्टी करा';
-  static const String confirmReturnMessage = 'तुम्हाला खात्री आहे की तुम्ही निवडलेल्या वस्तू परत करू इच्छिता?';
-  static const String restoreToInventory = 'यामुळे वस्तू इन्व्हेंटरीमध्ये परत जातील.';
+  static const String confirmReturnMessage =
+      'तुम्हाला खात्री आहे की तुम्ही निवडलेल्या वस्तू परत करू इच्छिता?';
+  static const String restoreToInventory =
+      'यामुळे वस्तू इन्व्हेंटरीमध्ये परत जातील.';
   static const String processReturn = 'परतावा प्रक्रिया';
   static const String processingReturn = 'परतावा प्रक्रिया होत आहे...';
-  static const String returnProcessedSuccess = 'परतावा यशस्वीरीत्या प्रक्रिया झाला!';
-  static const String returnProcessedPrint = 'परतावा प्रक्रिया झाली! जाण्यापूर्वी पावती प्रिंट किंवा शेअर करा.';
+  static const String returnProcessedSuccess =
+      'परतावा यशस्वीरीत्या प्रक्रिया झाला!';
+  static const String returnProcessedPrint =
+      'परतावा प्रक्रिया झाली! जाण्यापूर्वी पावती प्रिंट किंवा शेअर करा.';
   static const String failedToProcessReturn = 'परतावा प्रक्रिया अपयशी';
   static const String errorProcessingReturn = 'परतावा प्रक्रियेत त्रुटी';
   static const String returnedOn = 'परत केल्याची तारीख';
@@ -537,7 +553,8 @@ class MarathiLocalization {
   static const String full = 'पूर्ण';
   static const String continuingWithoutCustomer = 'ग्राहकाशिवाय सुरू ठेवत आहे';
   static const String billProcessingFailed = 'बिल प्रक्रिया अपयशी';
-  static const String pleaseEnterValidContact = 'बिल तयार करण्यासाठी कृपया वैध ग्राहक संपर्क क्रमांक प्रविष्ट करा';
+  static const String pleaseEnterValidContact =
+      'बिल तयार करण्यासाठी कृपया वैध ग्राहक संपर्क क्रमांक प्रविष्ट करा';
   static const String clearPhoneNumber = 'फोन क्रमांक साफ करा';
   static const String phoneNumberOptional = 'फोन क्रमांक (ऐच्छिक)';
   static const String printBill = 'बिल प्रिंट करा';
@@ -550,7 +567,8 @@ class MarathiLocalization {
   // ═══════════════════════════════════════════════════
   static const String billingSettings = 'बिलिंग सेटिंग्ज';
   static const String billType = 'बिल प्रकार';
-  static const String selectDefaultBillType = 'प्रिंटिंगसाठी डीफॉल्ट बिल प्रकार निवडा';
+  static const String selectDefaultBillType =
+      'प्रिंटिंगसाठी डीफॉल्ट बिल प्रकार निवडा';
   static const String normalBill = 'सामान्य बिल';
   static const String thermalReceipt = 'थर्मल पावती';
   static const String selected = 'निवडलेले';
@@ -558,10 +576,13 @@ class MarathiLocalization {
   static const String posPrinter = 'POS प्रिंटर';
   static const String pdfFormat = 'PDF स्वरूप';
   static const String showCustomerDetailsOnBill = 'बिलावर ग्राहक तपशील दाखवा';
-  static const String displayCustomerOnBill = 'प्रिंट बिलावर ग्राहकाचे नाव आणि फोन दाखवा';
+  static const String displayCustomerOnBill =
+      'प्रिंट बिलावर ग्राहकाचे नाव आणि फोन दाखवा';
   static const String generateBillViaContact = 'संपर्क क्रमांकाने बिल तयार करा';
-  static const String requireContactNumber = 'बिल तयार करण्यापूर्वी ग्राहक संपर्क क्रमांक आवश्यक करा';
-  static const String contactNumberNote = 'जेव्हा "संपर्क क्रमांकाने बिल तयार करा" सक्षम असते, तेव्हा बिल सेव्ह करण्यापूर्वी वैध फोन क्रमांक आवश्यक आहे.';
+  static const String requireContactNumber =
+      'बिल तयार करण्यापूर्वी ग्राहक संपर्क क्रमांक आवश्यक करा';
+  static const String contactNumberNote =
+      'जेव्हा "संपर्क क्रमांकाने बिल तयार करा" सक्षम असते, तेव्हा बिल सेव्ह करण्यापूर्वी वैध फोन क्रमांक आवश्यक आहे.';
   static const String settingsSaved = 'सेटिंग्ज यशस्वीरीत्या सेव्ह केल्या';
 
   // ═══════════════════════════════════════════════════
@@ -613,11 +634,13 @@ class MarathiLocalization {
   static const String emailAddress = 'ईमेल पत्ता';
   static const String yourEmail = 'तुमचा ईमेल';
   static const String phoneNumber = 'फोन क्रमांक';
-  static const String enterPhoneNumberProfile = 'तुमचा फोन क्रमांक प्रविष्ट करा';
+  static const String enterPhoneNumberProfile =
+      'तुमचा फोन क्रमांक प्रविष्ट करा';
   static const String enterAddress = 'तुमचा पत्ता प्रविष्ट करा';
   static const String saveChanges = 'बदल सेव्ह करा';
   static const String pleaseEnterName = 'कृपया तुमचे नाव प्रविष्ट करा';
-  static const String profileUpdatedSuccessfully = 'प्रोफाइल यशस्वीरीत्या अपडेट केले';
+  static const String profileUpdatedSuccessfully =
+      'प्रोफाइल यशस्वीरीत्या अपडेट केले';
   static const String profileUpdated = 'प्रोफाइल यशस्वीरीत्या अपडेट केली';
   static const String errorSavingProfile = 'प्रोफाइल सेव्ह करताना त्रुटी';
   static const String failedToPickImage = 'प्रतिमा निवडता आली नाही';
@@ -648,27 +671,37 @@ class MarathiLocalization {
   static const String accountCreationFailed = 'खाते तयार करणे अपयशी';
   static const String passwordsDoNotMatch = 'पासवर्ड जुळत नाहीत';
   static const String pleaseFillAllFields = 'कृपया सर्व फील्ड भरा';
-  static const String enterValid10DigitPhone = 'वैध 10-अंकी फोन क्रमांक प्रविष्ट करा';
+  static const String enterValid10DigitPhone =
+      'वैध 10-अंकी फोन क्रमांक प्रविष्ट करा';
   static const String changePasswordTitle = 'पासवर्ड बदला';
   static const String updateYourPassword = 'तुमचा पासवर्ड अपडेट करा';
-  static const String enterOldAndNew = 'तुमचा जुना पासवर्ड प्रविष्ट करा आणि नवीन सेट करा';
+  static const String enterOldAndNew =
+      'तुमचा जुना पासवर्ड प्रविष्ट करा आणि नवीन सेट करा';
   static const String oldPassword = 'जुना पासवर्ड';
   static const String enterOldPassword = 'तुमचा सध्याचा पासवर्ड प्रविष्ट करा';
   static const String newPassword = 'नवीन पासवर्ड';
-  static const String enterNewPassword = 'नवीन पासवर्ड प्रविष्ट करा (किमान 6 अक्षरे)';
+  static const String enterNewPassword =
+      'नवीन पासवर्ड प्रविष्ट करा (किमान 6 अक्षरे)';
   static const String reenterNewPassword = 'नवीन पासवर्ड पुन्हा प्रविष्ट करा';
   static const String updatePassword = 'पासवर्ड अपडेट करा';
-  static const String pleaseEnterOldPassword = 'कृपया तुमचा जुना पासवर्ड प्रविष्ट करा';
-  static const String pleaseEnterNewPassword = 'कृपया नवीन पासवर्ड प्रविष्ट करा';
-  static const String pleaseConfirmNewPassword = 'कृपया तुमचा नवीन पासवर्ड पुष्टी करा';
-  static const String newPasswordDoNotMatch = 'नवीन पासवर्ड आणि पुष्टी पासवर्ड जुळत नाहीत';
-  static const String newPasswordTooWeak = 'नवीन पासवर्ड खूप कमकुवत आहे. किमान 6 अक्षरे वापरा.';
-  static const String newPasswordMustDiffer = 'नवीन पासवर्ड जुन्या पासवर्डपेक्षा वेगळा असावा';
+  static const String pleaseEnterOldPassword =
+      'कृपया तुमचा जुना पासवर्ड प्रविष्ट करा';
+  static const String pleaseEnterNewPassword =
+      'कृपया नवीन पासवर्ड प्रविष्ट करा';
+  static const String pleaseConfirmNewPassword =
+      'कृपया तुमचा नवीन पासवर्ड पुष्टी करा';
+  static const String newPasswordDoNotMatch =
+      'नवीन पासवर्ड आणि पुष्टी पासवर्ड जुळत नाहीत';
+  static const String newPasswordTooWeak =
+      'नवीन पासवर्ड खूप कमकुवत आहे. किमान 6 अक्षरे वापरा.';
+  static const String newPasswordMustDiffer =
+      'नवीन पासवर्ड जुन्या पासवर्डपेक्षा वेगळा असावा';
   static const String oldPasswordIncorrect = 'जुना पासवर्ड चुकीचा आहे';
   static const String passwordUpdated = 'पासवर्ड यशस्वीरीत्या अपडेट झाला!';
   static const String failedToUpdatePassword = 'पासवर्ड अपडेट करण्यात अपयश';
   static const String noUserLoggedIn = 'कोणताही वापरकर्ता लॉग इन नाही';
-  static const String pleaseRelogin = 'कृपया पासवर्ड बदलण्यापूर्वी लॉग आउट करा आणि पुन्हा लॉग इन करा';
+  static const String pleaseRelogin =
+      'कृपया पासवर्ड बदलण्यापूर्वी लॉग आउट करा आणि पुन्हा लॉग इन करा';
   static const String passwordMinLength = 'पासवर्ड किमान 6 अक्षरांचा असावा';
   static const String passwordTips = 'पासवर्ड सूचना';
   static const String useAtLeast6Chars = 'किमान 6 अक्षरे वापरा';
@@ -683,7 +716,8 @@ class MarathiLocalization {
   static const String searchLogs = 'लॉग शोधा...';
   static const String clearLogs = 'लॉग साफ करा';
   static const String clearLogsConfirm = 'लॉग साफ करा?';
-  static const String clearLogsMessage = 'हे सर्व लॉग प्रविष्ट्या हटवेल. ही क्रिया पूर्ववत करता येणार नाही.';
+  static const String clearLogsMessage =
+      'हे सर्व लॉग प्रविष्ट्या हटवेल. ही क्रिया पूर्ववत करता येणार नाही.';
   static const String shareLogs = 'लॉग शेअर करा';
   static const String copyLogs = 'लॉग कॉपी करा';
   static const String logsCopied = 'लॉग क्लिपबोर्डवर कॉपी केले';
@@ -713,7 +747,8 @@ class MarathiLocalization {
   static const String defaultGstMode = 'डीफॉल्ट GST मोड';
   static const String includeGstInTotal = 'एकूणमध्ये GST समाविष्ट करा';
   static const String excludeGstFromTotal = 'एकूणातून GST वेगळा ठेवा';
-  static const String includeGstSubtitle = 'आयटमच्या किमतींमध्ये आधीच GST समाविष्ट आहे';
+  static const String includeGstSubtitle =
+      'आयटमच्या किमतींमध्ये आधीच GST समाविष्ट आहे';
   static const String excludeGstSubtitle = 'उप-एकूणावर GST जोडला';
   static const String billWithoutGst = 'GST शिवाय बिल';
   static const String billWithGst = 'GST सह बिल';
@@ -725,7 +760,8 @@ class MarathiLocalization {
   static const String taxableValue = 'करपात्र मूल्य';
   static const String pricesInclusiveOfGst = 'किमतींमध्ये GST समाविष्ट आहे';
   static const String gstExtra = 'GST अतिरिक्त';
-  static const String enterValidPercentage = 'वैध टक्केवारी प्रविष्ट करा (0-100)';
+  static const String enterValidPercentage =
+      'वैध टक्केवारी प्रविष्ट करा (0-100)';
   static const String taxPercentageInputs = 'कर टक्केवारी इनपुट';
   static const String taxToggles = 'कर टॉगल';
 
@@ -737,4 +773,30 @@ class MarathiLocalization {
   static const String purchaseHistory = 'खरेदी इतिहास';
   static const String noPurchasesFound = 'कोणतीही खरेदी सापडली नाही';
   static const String addNewPurchase = 'नवीन खरेदी जोडा';
+  // ═══════════════════════════════════════════════════
+  // Billing Module Extended
+  // ═══════════════════════════════════════════════════
+  static const String linkCustomerToBill = 'या बिलाशी ग्राहक जोडा';
+  static const String autoLinkByPhone = 'फोनद्वारे ऑटो-लिंक ग्राहक';
+  static const String quickAddByCodeOrSearch = 'कोड किंवा शोधाद्वारे जलद जोडा';
+  static const String enterValidAmount = 'वैध रक्कम प्रविष्ट करा';
+  static const String pleaseEnterValidPrice = 'कृपया वैध किंमत प्रविष्ट करा';
+  static const String reset = 'रीसेट';
+  static const String applyDiscountToBill = 'या बिलावर सूट लागू करा';
+  static const String selectTaxMethod = 'कर गणना पद्धत निवडा';
+  static const String noGst = 'GST नाही';
+  static const String incl = 'समाविष्ट';
+  static const String excl = 'वेगळा';
+  static const String selectPaymentMethod = 'पेमेंट पद्धत निवडा';
+  static const String quickActions = 'जलद क्रिया';
+  static const String events = 'कार्यक्रम';
+  static const String barcode = 'बारकोड';
+  static const String createAndPrintInvoices = 'बिले तयार करा आणि प्रिंट करा';
+  static const String printColumnSettings = 'प्रिंट कॉलम सेटिंग्ज';
+  static const String pdfCreationFailed =
+      'PDF फाइल यशस्वीरित्या तयार झाली नाही';
+  static const String pdfFileEmpty = 'PDF फाइल रिकामी आहे';
+  static const String failedToGeneratePdf = 'PDF तयार करण्यात अयशस्वी';
+  static const String full = 'पूर्ण';
+  static const String partial = 'आंशिक';
 }

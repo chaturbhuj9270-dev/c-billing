@@ -1222,7 +1222,7 @@ class _BillingPageState extends State<BillingPage> {
                     billId: billId,
                     billNumber: billId,
                     notes:
-                        'Payment during billing - ${_isFullPayment ? 'Full' : 'Partial'}',
+                        'Payment during billing - ${_isFullPayment ? _localizations.full : _localizations.partial}',
                   );
 
               if (paymentResult.success) {
@@ -1451,10 +1451,10 @@ class _BillingPageState extends State<BillingPage> {
 
       if (mounted) {
         _showSnackbar(
-          'Failed to generate PDF: ${e.toString()}',
+          '${_localizations.failedToGeneratePdf}: ${e.toString()}',
           isError: true,
           action: SnackBarAction(
-            label: 'Retry',
+            label: _localizations.retry,
             textColor: Colors.white,
             onPressed: () => _showBillPdfPreview(bill),
           ),
@@ -1656,8 +1656,8 @@ class _BillingPageState extends State<BillingPage> {
                       ),
                       Text(
                         _generateBillViaContact
-                            ? 'Auto-link customer by phone'
-                            : 'Link a customer to this bill',
+                            ? _localizations.autoLinkByPhone
+                            : _localizations.linkCustomerToBill,
                         style: TextStyle(
                           fontFamily: 'Literata',
                           fontSize: 11,
@@ -2562,7 +2562,7 @@ class _BillingPageState extends State<BillingPage> {
                         ),
                       ),
                       Text(
-                        'Quick add by code or search',
+                        _localizations.quickAddByCodeOrSearch,
                         style: TextStyle(
                           fontFamily: 'Literata',
                           fontSize: 11,
@@ -3145,7 +3145,7 @@ class _BillingPageState extends State<BillingPage> {
                 ),
                 const Spacer(),
                 Text(
-                  'Subtotal',
+                  _localizations.subtotal,
                   style: TextStyle(
                     fontFamily: 'Literata',
                     fontSize: 12,
@@ -3403,9 +3403,9 @@ class _BillingPageState extends State<BillingPage> {
             final maxInSubUnit = maxStock * 1000;
             setDialogState(() {
               if (value <= 0) {
-                errorText = 'Enter valid amount';
+                errorText = _localizations.enterValidAmount;
               } else if (value > maxInSubUnit) {
-                errorText = 'Max: $maxInSubUnit$subUnit';
+                errorText = '${_localizations.maxStock}: $maxInSubUnit$subUnit';
               } else {
                 errorText = null;
               }
@@ -4114,7 +4114,7 @@ class _BillingPageState extends State<BillingPage> {
             final price = double.tryParse(priceController.text) ?? 0;
             setDialogState(() {
               if (price <= 0) {
-                errorText = 'Please enter a valid price';
+                errorText = _localizations.pleaseEnterValidPrice;
               } else {
                 errorText = null;
               }
@@ -4221,7 +4221,7 @@ class _BillingPageState extends State<BillingPage> {
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
                           Text(
-                            'Subtotal',
+                            _localizations.subtotal,
                             style: TextStyle(
                               fontFamily: 'Literata',
                               fontSize: 11,
@@ -4323,7 +4323,7 @@ class _BillingPageState extends State<BillingPage> {
                   size: 20,
                 ),
                 label: Text(
-                  'Reset',
+                  _localizations.reset,
                   style: TextStyle(
                     fontFamily: 'Literata',
                     color: Colors.orange[700],
@@ -4472,7 +4472,7 @@ class _BillingPageState extends State<BillingPage> {
                         ),
                       ),
                       Text(
-                        'Apply discount to this bill',
+                        _localizations.applyDiscountToBill,
                         style: TextStyle(
                           fontFamily: 'Literata',
                           fontSize: 11,
@@ -4875,7 +4875,7 @@ class _BillingPageState extends State<BillingPage> {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'Select tax calculation method',
+                        _localizations.selectTaxMethod,
                         style: TextStyle(
                           fontFamily: 'Literata',
                           fontSize: 12,
@@ -4898,10 +4898,10 @@ class _BillingPageState extends State<BillingPage> {
                   ),
                   child: Text(
                     _gstMode == GstMode.noGst
-                        ? 'No GST'
+                        ? _localizations.noGst
                         : _gstMode == GstMode.includeGst
-                        ? 'Incl.'
-                        : 'Excl.',
+                        ? _localizations.incl
+                        : _localizations.excl,
                     style: TextStyle(
                       fontFamily: 'Literata',
                       fontSize: 11,
@@ -5086,7 +5086,7 @@ class _BillingPageState extends State<BillingPage> {
                         ),
                       ),
                       Text(
-                        'Select payment method',
+                        _localizations.selectPaymentMethod,
                         style: TextStyle(
                           fontFamily: 'Literata',
                           fontSize: 11,
@@ -5127,7 +5127,9 @@ class _BillingPageState extends State<BillingPage> {
                       ),
                       const SizedBox(width: 3),
                       Text(
-                        _isFullPayment ? 'Full' : 'Partial',
+                        _isFullPayment
+                            ? _localizations.full
+                            : _localizations.partial,
                         style: TextStyle(
                           fontFamily: 'Literata',
                           fontSize: 10,
@@ -5824,10 +5826,10 @@ class _BillingPageState extends State<BillingPage> {
           ),
         ),
         const SizedBox(width: 12),
-        const Expanded(
+        Expanded(
           child: Text(
-            'Quick Actions',
-            style: TextStyle(
+            _localizations.quickActions,
+            style: const TextStyle(
               fontFamily: 'Literata',
               fontWeight: FontWeight.w800,
               fontSize: 16,
@@ -5936,7 +5938,7 @@ class _BillingPageState extends State<BillingPage> {
       _QuickStatItem(
         icon: Icons.celebration_rounded,
         value: '',
-        label: 'Events',
+        label: _localizations.events,
         color: const Color(0xFF6C63FF),
         gradient: [const Color(0xFF6C63FF), const Color(0xFF8B5CF6)],
         onTap: () {
@@ -5950,7 +5952,7 @@ class _BillingPageState extends State<BillingPage> {
       _QuickStatItem(
         icon: Icons.qr_code_2_rounded,
         value: '',
-        label: 'Barcode',
+        label: _localizations.barcode,
         color: const Color(0xFF00897B),
         gradient: [const Color(0xFF00897B), const Color(0xFF004D40)],
         onTap: () {
@@ -5964,7 +5966,7 @@ class _BillingPageState extends State<BillingPage> {
       _QuickStatItem(
         icon: Icons.people_alt_rounded,
         value: '',
-        label: 'Customers',
+        label: _localizations.customers,
         color: const Color(0xFF00ACC1),
         gradient: [const Color(0xFF00ACC1), const Color(0xFF0097A7)],
         onTap: () {
@@ -6187,7 +6189,7 @@ class _BillingPageState extends State<BillingPage> {
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              'Partial',
+                              _localizations.partial,
                               style: TextStyle(
                                 fontFamily: 'Literata',
                                 fontSize: 10,
@@ -9291,7 +9293,7 @@ class _BillingHeaderDelegate extends SliverPersistentHeaderDelegate {
                             if (!isCollapsed) ...[
                               const SizedBox(height: 4),
                               Text(
-                                'Create and print invoices',
+                                localizations.createAndPrintInvoices,
                                 style: TextStyle(
                                   fontSize: 13,
                                   fontFamily: 'Literata',
@@ -9418,9 +9420,9 @@ class _BillingHeaderDelegate extends SliverPersistentHeaderDelegate {
                                   ),
                                 ),
                                 const SizedBox(width: 12),
-                                const Text(
-                                  'Print Column Settings',
-                                  style: TextStyle(
+                                Text(
+                                  localizations.printColumnSettings,
+                                  style: const TextStyle(
                                     fontFamily: 'Literata',
                                     fontWeight: FontWeight.w600,
                                     fontSize: 14,

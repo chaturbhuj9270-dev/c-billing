@@ -3880,225 +3880,309 @@ class AppLocalizations {
 
   String get billDetails {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.billDetails;
-      case 'Marathi': return MarathiLocalization.billDetails;
-      default: return EnglishLocalization.billDetails;
+      case 'Hindi':
+        return HindiLocalization.billDetails;
+      case 'Marathi':
+        return MarathiLocalization.billDetails;
+      default:
+        return EnglishLocalization.billDetails;
     }
   }
 
   String get soldItems {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.soldItems;
-      case 'Marathi': return MarathiLocalization.soldItems;
-      default: return EnglishLocalization.soldItems;
+      case 'Hindi':
+        return HindiLocalization.soldItems;
+      case 'Marathi':
+        return MarathiLocalization.soldItems;
+      default:
+        return EnglishLocalization.soldItems;
     }
   }
 
   String get billNo {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.billNo;
-      case 'Marathi': return MarathiLocalization.billNo;
-      default: return EnglishLocalization.billNo;
+      case 'Hindi':
+        return HindiLocalization.billNo;
+      case 'Marathi':
+        return MarathiLocalization.billNo;
+      default:
+        return EnglishLocalization.billNo;
     }
   }
 
   String get mobile {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.mobile;
-      case 'Marathi': return MarathiLocalization.mobile;
-      default: return EnglishLocalization.mobile;
+      case 'Hindi':
+        return HindiLocalization.mobile;
+      case 'Marathi':
+        return MarathiLocalization.mobile;
+      default:
+        return EnglishLocalization.mobile;
     }
   }
 
   String get totalQuantity {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.totalQuantity;
-      case 'Marathi': return MarathiLocalization.totalQuantity;
-      default: return EnglishLocalization.totalQuantity;
+      case 'Hindi':
+        return HindiLocalization.totalQuantity;
+      case 'Marathi':
+        return MarathiLocalization.totalQuantity;
+      default:
+        return EnglishLocalization.totalQuantity;
     }
   }
 
   String get billTotalLabel {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.billTotalLabel;
-      case 'Marathi': return MarathiLocalization.billTotalLabel;
-      default: return EnglishLocalization.billTotalLabel;
+      case 'Hindi':
+        return HindiLocalization.billTotalLabel;
+      case 'Marathi':
+        return MarathiLocalization.billTotalLabel;
+      default:
+        return EnglishLocalization.billTotalLabel;
     }
   }
 
   String get returnDeduction {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.returnDeduction;
-      case 'Marathi': return MarathiLocalization.returnDeduction;
-      default: return EnglishLocalization.returnDeduction;
+      case 'Hindi':
+        return HindiLocalization.returnDeduction;
+      case 'Marathi':
+        return MarathiLocalization.returnDeduction;
+      default:
+        return EnglishLocalization.returnDeduction;
     }
   }
 
   String get finalPayable {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.finalPayable;
-      case 'Marathi': return MarathiLocalization.finalPayable;
-      default: return EnglishLocalization.finalPayable;
+      case 'Hindi':
+        return HindiLocalization.finalPayable;
+      case 'Marathi':
+        return MarathiLocalization.finalPayable;
+      default:
+        return EnglishLocalization.finalPayable;
     }
   }
 
   String get finalAmount {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.finalAmount;
-      case 'Marathi': return MarathiLocalization.finalAmount;
-      default: return EnglishLocalization.finalAmount;
+      case 'Hindi':
+        return HindiLocalization.finalAmount;
+      case 'Marathi':
+        return MarathiLocalization.finalAmount;
+      default:
+        return EnglishLocalization.finalAmount;
     }
   }
 
   String get fullyReturned {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.fullyReturned;
-      case 'Marathi': return MarathiLocalization.fullyReturned;
-      default: return EnglishLocalization.fullyReturned;
+      case 'Hindi':
+        return HindiLocalization.fullyReturned;
+      case 'Marathi':
+        return MarathiLocalization.fullyReturned;
+      default:
+        return EnglishLocalization.fullyReturned;
     }
   }
 
   String get partialReturn {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.partialReturn;
-      case 'Marathi': return MarathiLocalization.partialReturn;
-      default: return EnglishLocalization.partialReturn;
+      case 'Hindi':
+        return HindiLocalization.partialReturn;
+      case 'Marathi':
+        return MarathiLocalization.partialReturn;
+      default:
+        return EnglishLocalization.partialReturn;
     }
   }
 
   String get statusFullyReturned {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.statusFullyReturned;
-      case 'Marathi': return MarathiLocalization.statusFullyReturned;
-      default: return EnglishLocalization.statusFullyReturned;
+      case 'Hindi':
+        return HindiLocalization.statusFullyReturned;
+      case 'Marathi':
+        return MarathiLocalization.statusFullyReturned;
+      default:
+        return EnglishLocalization.statusFullyReturned;
     }
   }
 
   String get includeReturnedItemsInPrint {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.includeReturnedItemsInPrint;
-      case 'Marathi': return MarathiLocalization.includeReturnedItemsInPrint;
-      default: return EnglishLocalization.includeReturnedItemsInPrint;
+      case 'Hindi':
+        return HindiLocalization.includeReturnedItemsInPrint;
+      case 'Marathi':
+        return MarathiLocalization.includeReturnedItemsInPrint;
+      default:
+        return EnglishLocalization.includeReturnedItemsInPrint;
     }
   }
 
   String get returnThisBill {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.returnThisBill;
-      case 'Marathi': return MarathiLocalization.returnThisBill;
-      default: return EnglishLocalization.returnThisBill;
+      case 'Hindi':
+        return HindiLocalization.returnThisBill;
+      case 'Marathi':
+        return MarathiLocalization.returnThisBill;
+      default:
+        return EnglishLocalization.returnThisBill;
     }
   }
 
   String get billReturned {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.billReturned;
-      case 'Marathi': return MarathiLocalization.billReturned;
-      default: return EnglishLocalization.billReturned;
+      case 'Hindi':
+        return HindiLocalization.billReturned;
+      case 'Marathi':
+        return MarathiLocalization.billReturned;
+      default:
+        return EnglishLocalization.billReturned;
     }
   }
 
   String get paidAmount {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.paidAmount;
-      case 'Marathi': return MarathiLocalization.paidAmount;
-      default: return EnglishLocalization.paidAmount;
+      case 'Hindi':
+        return HindiLocalization.paidAmount;
+      case 'Marathi':
+        return MarathiLocalization.paidAmount;
+      default:
+        return EnglishLocalization.paidAmount;
     }
   }
 
   String get selectDateRange {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.selectDateRange;
-      case 'Marathi': return MarathiLocalization.selectDateRange;
-      default: return EnglishLocalization.selectDateRange;
+      case 'Hindi':
+        return HindiLocalization.selectDateRange;
+      case 'Marathi':
+        return MarathiLocalization.selectDateRange;
+      default:
+        return EnglishLocalization.selectDateRange;
     }
   }
 
   String get startDate {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.startDate;
-      case 'Marathi': return MarathiLocalization.startDate;
-      default: return EnglishLocalization.startDate;
+      case 'Hindi':
+        return HindiLocalization.startDate;
+      case 'Marathi':
+        return MarathiLocalization.startDate;
+      default:
+        return EnglishLocalization.startDate;
     }
   }
 
   String get endDate {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.endDate;
-      case 'Marathi': return MarathiLocalization.endDate;
-      default: return EnglishLocalization.endDate;
+      case 'Hindi':
+        return HindiLocalization.endDate;
+      case 'Marathi':
+        return MarathiLocalization.endDate;
+      default:
+        return EnglishLocalization.endDate;
     }
   }
 
   String get reset {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.reset;
-      case 'Marathi': return MarathiLocalization.reset;
-      default: return EnglishLocalization.reset;
+      case 'Hindi':
+        return HindiLocalization.reset;
+      case 'Marathi':
+        return MarathiLocalization.reset;
+      default:
+        return EnglishLocalization.reset;
     }
   }
 
   String get product {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.product;
-      case 'Marathi': return MarathiLocalization.product;
-      default: return EnglishLocalization.product;
+      case 'Hindi':
+        return HindiLocalization.product;
+      case 'Marathi':
+        return MarathiLocalization.product;
+      default:
+        return EnglishLocalization.product;
     }
   }
 
   String get rate {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.rate;
-      case 'Marathi': return MarathiLocalization.rate;
-      default: return EnglishLocalization.rate;
+      case 'Hindi':
+        return HindiLocalization.rate;
+      case 'Marathi':
+        return MarathiLocalization.rate;
+      default:
+        return EnglishLocalization.rate;
     }
   }
 
   String get returnLabel {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.returnLabel;
-      case 'Marathi': return MarathiLocalization.returnLabel;
-      default: return EnglishLocalization.returnLabel;
+      case 'Hindi':
+        return HindiLocalization.returnLabel;
+      case 'Marathi':
+        return MarathiLocalization.returnLabel;
+      default:
+        return EnglishLocalization.returnLabel;
     }
   }
 
   String get errorLoadingBills {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.errorLoadingBills;
-      case 'Marathi': return MarathiLocalization.errorLoadingBills;
-      default: return EnglishLocalization.errorLoadingBills;
+      case 'Hindi':
+        return HindiLocalization.errorLoadingBills;
+      case 'Marathi':
+        return MarathiLocalization.errorLoadingBills;
+      default:
+        return EnglishLocalization.errorLoadingBills;
     }
   }
 
   String get errorSharingBillGeneric {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.errorSharingBillGeneric;
-      case 'Marathi': return MarathiLocalization.errorSharingBillGeneric;
-      default: return EnglishLocalization.errorSharingBillGeneric;
+      case 'Hindi':
+        return HindiLocalization.errorSharingBillGeneric;
+      case 'Marathi':
+        return MarathiLocalization.errorSharingBillGeneric;
+      default:
+        return EnglishLocalization.errorSharingBillGeneric;
     }
   }
 
   String get errorSavingPdfGeneric {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.errorSavingPdfGeneric;
-      case 'Marathi': return MarathiLocalization.errorSavingPdfGeneric;
-      default: return EnglishLocalization.errorSavingPdfGeneric;
+      case 'Hindi':
+        return HindiLocalization.errorSavingPdfGeneric;
+      case 'Marathi':
+        return MarathiLocalization.errorSavingPdfGeneric;
+      default:
+        return EnglishLocalization.errorSavingPdfGeneric;
     }
   }
 
   String get errorPrintingBill {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.errorPrintingBill;
-      case 'Marathi': return MarathiLocalization.errorPrintingBill;
-      default: return EnglishLocalization.errorPrintingBill;
+      case 'Hindi':
+        return HindiLocalization.errorPrintingBill;
+      case 'Marathi':
+        return MarathiLocalization.errorPrintingBill;
+      default:
+        return EnglishLocalization.errorPrintingBill;
     }
   }
 
   String get totalReturns {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.totalReturns;
-      case 'Marathi': return MarathiLocalization.totalReturns;
-      default: return EnglishLocalization.totalReturns;
+      case 'Hindi':
+        return HindiLocalization.totalReturns;
+      case 'Marathi':
+        return MarathiLocalization.totalReturns;
+      default:
+        return EnglishLocalization.totalReturns;
     }
   }
 
@@ -4108,201 +4192,276 @@ class AppLocalizations {
 
   String get exitApp {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.exitApp;
-      case 'Marathi': return MarathiLocalization.exitApp;
-      default: return EnglishLocalization.exitApp;
+      case 'Hindi':
+        return HindiLocalization.exitApp;
+      case 'Marathi':
+        return MarathiLocalization.exitApp;
+      default:
+        return EnglishLocalization.exitApp;
     }
   }
 
   String get exitAppConfirm {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.exitAppConfirm;
-      case 'Marathi': return MarathiLocalization.exitAppConfirm;
-      default: return EnglishLocalization.exitAppConfirm;
+      case 'Hindi':
+        return HindiLocalization.exitAppConfirm;
+      case 'Marathi':
+        return MarathiLocalization.exitAppConfirm;
+      default:
+        return EnglishLocalization.exitAppConfirm;
     }
   }
 
   String get exit {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.exit;
-      case 'Marathi': return MarathiLocalization.exit;
-      default: return EnglishLocalization.exit;
+      case 'Hindi':
+        return HindiLocalization.exit;
+      case 'Marathi':
+        return MarathiLocalization.exit;
+      default:
+        return EnglishLocalization.exit;
     }
   }
 
   String get selectLanguage {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.selectLanguage;
-      case 'Marathi': return MarathiLocalization.selectLanguage;
-      default: return EnglishLocalization.selectLanguage;
+      case 'Hindi':
+        return HindiLocalization.selectLanguage;
+      case 'Marathi':
+        return MarathiLocalization.selectLanguage;
+      default:
+        return EnglishLocalization.selectLanguage;
     }
   }
 
   String get languageChangedTo {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.languageChangedTo;
-      case 'Marathi': return MarathiLocalization.languageChangedTo;
-      default: return EnglishLocalization.languageChangedTo;
+      case 'Hindi':
+        return HindiLocalization.languageChangedTo;
+      case 'Marathi':
+        return MarathiLocalization.languageChangedTo;
+      default:
+        return EnglishLocalization.languageChangedTo;
     }
   }
 
   String get unableToRefresh {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.unableToRefresh;
-      case 'Marathi': return MarathiLocalization.unableToRefresh;
-      default: return EnglishLocalization.unableToRefresh;
+      case 'Hindi':
+        return HindiLocalization.unableToRefresh;
+      case 'Marathi':
+        return MarathiLocalization.unableToRefresh;
+      default:
+        return EnglishLocalization.unableToRefresh;
     }
   }
 
   String get retry {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.retry;
-      case 'Marathi': return MarathiLocalization.retry;
-      default: return EnglishLocalization.retry;
+      case 'Hindi':
+        return HindiLocalization.retry;
+      case 'Marathi':
+        return MarathiLocalization.retry;
+      default:
+        return EnglishLocalization.retry;
     }
   }
 
   String get custom {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.custom;
-      case 'Marathi': return MarathiLocalization.custom;
-      default: return EnglishLocalization.custom;
+      case 'Hindi':
+        return HindiLocalization.custom;
+      case 'Marathi':
+        return MarathiLocalization.custom;
+      default:
+        return EnglishLocalization.custom;
     }
   }
 
   String get returns {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.returns;
-      case 'Marathi': return MarathiLocalization.returns;
-      default: return EnglishLocalization.returns;
+      case 'Hindi':
+        return HindiLocalization.returns;
+      case 'Marathi':
+        return MarathiLocalization.returns;
+      default:
+        return EnglishLocalization.returns;
     }
   }
 
   String get netSales {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.netSales;
-      case 'Marathi': return MarathiLocalization.netSales;
-      default: return EnglishLocalization.netSales;
+      case 'Hindi':
+        return HindiLocalization.netSales;
+      case 'Marathi':
+        return MarathiLocalization.netSales;
+      default:
+        return EnglishLocalization.netSales;
     }
   }
 
   String get afterReturnsDeducted {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.afterReturnsDeducted;
-      case 'Marathi': return MarathiLocalization.afterReturnsDeducted;
-      default: return EnglishLocalization.afterReturnsDeducted;
+      case 'Hindi':
+        return HindiLocalization.afterReturnsDeducted;
+      case 'Marathi':
+        return MarathiLocalization.afterReturnsDeducted;
+      default:
+        return EnglishLocalization.afterReturnsDeducted;
     }
   }
 
   String get stockAndPayments {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.stockAndPayments;
-      case 'Marathi': return MarathiLocalization.stockAndPayments;
-      default: return EnglishLocalization.stockAndPayments;
+      case 'Hindi':
+        return HindiLocalization.stockAndPayments;
+      case 'Marathi':
+        return MarathiLocalization.stockAndPayments;
+      default:
+        return EnglishLocalization.stockAndPayments;
     }
   }
 
   String get paymentStatus {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.paymentStatus;
-      case 'Marathi': return MarathiLocalization.paymentStatus;
-      default: return EnglishLocalization.paymentStatus;
+      case 'Hindi':
+        return HindiLocalization.paymentStatus;
+      case 'Marathi':
+        return MarathiLocalization.paymentStatus;
+      default:
+        return EnglishLocalization.paymentStatus;
     }
   }
 
   String get comingSoon {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.comingSoon;
-      case 'Marathi': return MarathiLocalization.comingSoon;
-      default: return EnglishLocalization.comingSoon;
+      case 'Hindi':
+        return HindiLocalization.comingSoon;
+      case 'Marathi':
+        return MarathiLocalization.comingSoon;
+      default:
+        return EnglishLocalization.comingSoon;
     }
   }
 
   String get paymentTrackingMessage {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.paymentTrackingMessage;
-      case 'Marathi': return MarathiLocalization.paymentTrackingMessage;
-      default: return EnglishLocalization.paymentTrackingMessage;
+      case 'Hindi':
+        return HindiLocalization.paymentTrackingMessage;
+      case 'Marathi':
+        return MarathiLocalization.paymentTrackingMessage;
+      default:
+        return EnglishLocalization.paymentTrackingMessage;
     }
   }
 
   String get loss {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.loss;
-      case 'Marathi': return MarathiLocalization.loss;
-      default: return EnglishLocalization.loss;
+      case 'Hindi':
+        return HindiLocalization.loss;
+      case 'Marathi':
+        return MarathiLocalization.loss;
+      default:
+        return EnglishLocalization.loss;
     }
   }
 
   String get billSettings {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.billSettings;
-      case 'Marathi': return MarathiLocalization.billSettings;
-      default: return EnglishLocalization.billSettings;
+      case 'Hindi':
+        return HindiLocalization.billSettings;
+      case 'Marathi':
+        return MarathiLocalization.billSettings;
+      default:
+        return EnglishLocalization.billSettings;
     }
   }
 
   String get purchaseSettings {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.purchaseSettings;
-      case 'Marathi': return MarathiLocalization.purchaseSettings;
-      default: return EnglishLocalization.purchaseSettings;
+      case 'Hindi':
+        return HindiLocalization.purchaseSettings;
+      case 'Marathi':
+        return MarathiLocalization.purchaseSettings;
+      default:
+        return EnglishLocalization.purchaseSettings;
     }
   }
 
   String get language {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.language;
-      case 'Marathi': return MarathiLocalization.language;
-      default: return EnglishLocalization.language;
+      case 'Hindi':
+        return HindiLocalization.language;
+      case 'Marathi':
+        return MarathiLocalization.language;
+      default:
+        return EnglishLocalization.language;
     }
   }
 
   String get viewLogs {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.viewLogs;
-      case 'Marathi': return MarathiLocalization.viewLogs;
-      default: return EnglishLocalization.viewLogs;
+      case 'Hindi':
+        return HindiLocalization.viewLogs;
+      case 'Marathi':
+        return MarathiLocalization.viewLogs;
+      default:
+        return EnglishLocalization.viewLogs;
     }
   }
 
   String get onlyLeftInStock {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.onlyLeftInStock;
-      case 'Marathi': return MarathiLocalization.onlyLeftInStock;
-      default: return EnglishLocalization.onlyLeftInStock;
+      case 'Hindi':
+        return HindiLocalization.onlyLeftInStock;
+      case 'Marathi':
+        return MarathiLocalization.onlyLeftInStock;
+      default:
+        return EnglishLocalization.onlyLeftInStock;
     }
   }
 
   String get outOfStockAlert {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.outOfStockAlert;
-      case 'Marathi': return MarathiLocalization.outOfStockAlert;
-      default: return EnglishLocalization.outOfStockAlert;
+      case 'Hindi':
+        return HindiLocalization.outOfStockAlert;
+      case 'Marathi':
+        return MarathiLocalization.outOfStockAlert;
+      default:
+        return EnglishLocalization.outOfStockAlert;
     }
   }
 
   String get order {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.order;
-      case 'Marathi': return MarathiLocalization.order;
-      default: return EnglishLocalization.order;
+      case 'Hindi':
+        return HindiLocalization.order;
+      case 'Marathi':
+        return MarathiLocalization.order;
+      default:
+        return EnglishLocalization.order;
     }
   }
 
   String get noDataAvailableDashboard {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.noDataAvailableDashboard;
-      case 'Marathi': return MarathiLocalization.noDataAvailableDashboard;
-      default: return EnglishLocalization.noDataAvailableDashboard;
+      case 'Hindi':
+        return HindiLocalization.noDataAvailableDashboard;
+      case 'Marathi':
+        return MarathiLocalization.noDataAvailableDashboard;
+      default:
+        return EnglishLocalization.noDataAvailableDashboard;
     }
   }
 
   String get year {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.year;
-      case 'Marathi': return MarathiLocalization.year;
-      default: return EnglishLocalization.year;
+      case 'Hindi':
+        return HindiLocalization.year;
+      case 'Marathi':
+        return MarathiLocalization.year;
+      default:
+        return EnglishLocalization.year;
     }
   }
 
@@ -4312,257 +4471,353 @@ class AppLocalizations {
 
   String get returnBill {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.returnBill;
-      case 'Marathi': return MarathiLocalization.returnBill;
-      default: return EnglishLocalization.returnBill;
+      case 'Hindi':
+        return HindiLocalization.returnBill;
+      case 'Marathi':
+        return MarathiLocalization.returnBill;
+      default:
+        return EnglishLocalization.returnBill;
     }
   }
 
   String get processBillReturns {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.processBillReturns;
-      case 'Marathi': return MarathiLocalization.processBillReturns;
-      default: return EnglishLocalization.processBillReturns;
+      case 'Hindi':
+        return HindiLocalization.processBillReturns;
+      case 'Marathi':
+        return MarathiLocalization.processBillReturns;
+      default:
+        return EnglishLocalization.processBillReturns;
     }
   }
 
   String get searchBill {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.searchBill;
-      case 'Marathi': return MarathiLocalization.searchBill;
-      default: return EnglishLocalization.searchBill;
+      case 'Hindi':
+        return HindiLocalization.searchBill;
+      case 'Marathi':
+        return MarathiLocalization.searchBill;
+      default:
+        return EnglishLocalization.searchBill;
     }
   }
 
   String get enterBillOrMobile {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.enterBillOrMobile;
-      case 'Marathi': return MarathiLocalization.enterBillOrMobile;
-      default: return EnglishLocalization.enterBillOrMobile;
+      case 'Hindi':
+        return HindiLocalization.enterBillOrMobile;
+      case 'Marathi':
+        return MarathiLocalization.enterBillOrMobile;
+      default:
+        return EnglishLocalization.enterBillOrMobile;
     }
   }
 
   String get billOrMobileHint {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.billOrMobileHint;
-      case 'Marathi': return MarathiLocalization.billOrMobileHint;
-      default: return EnglishLocalization.billOrMobileHint;
+      case 'Hindi':
+        return HindiLocalization.billOrMobileHint;
+      case 'Marathi':
+        return MarathiLocalization.billOrMobileHint;
+      default:
+        return EnglishLocalization.billOrMobileHint;
     }
   }
 
   String get searchAndValidate {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.searchAndValidate;
-      case 'Marathi': return MarathiLocalization.searchAndValidate;
-      default: return EnglishLocalization.searchAndValidate;
+      case 'Hindi':
+        return HindiLocalization.searchAndValidate;
+      case 'Marathi':
+        return MarathiLocalization.searchAndValidate;
+      default:
+        return EnglishLocalization.searchAndValidate;
     }
   }
 
   String get pleaseEnterBillOrMobile {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.pleaseEnterBillOrMobile;
-      case 'Marathi': return MarathiLocalization.pleaseEnterBillOrMobile;
-      default: return EnglishLocalization.pleaseEnterBillOrMobile;
+      case 'Hindi':
+        return HindiLocalization.pleaseEnterBillOrMobile;
+      case 'Marathi':
+        return MarathiLocalization.pleaseEnterBillOrMobile;
+      default:
+        return EnglishLocalization.pleaseEnterBillOrMobile;
     }
   }
 
   String get billNotFound {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.billNotFound;
-      case 'Marathi': return MarathiLocalization.billNotFound;
-      default: return EnglishLocalization.billNotFound;
+      case 'Hindi':
+        return HindiLocalization.billNotFound;
+      case 'Marathi':
+        return MarathiLocalization.billNotFound;
+      default:
+        return EnglishLocalization.billNotFound;
     }
   }
 
   String get errorSearchingBill {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.errorSearchingBill;
-      case 'Marathi': return MarathiLocalization.errorSearchingBill;
-      default: return EnglishLocalization.errorSearchingBill;
+      case 'Hindi':
+        return HindiLocalization.errorSearchingBill;
+      case 'Marathi':
+        return MarathiLocalization.errorSearchingBill;
+      default:
+        return EnglishLocalization.errorSearchingBill;
     }
   }
 
   String get allItemsReturned {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.allItemsReturned;
-      case 'Marathi': return MarathiLocalization.allItemsReturned;
-      default: return EnglishLocalization.allItemsReturned;
+      case 'Hindi':
+        return HindiLocalization.allItemsReturned;
+      case 'Marathi':
+        return MarathiLocalization.allItemsReturned;
+      default:
+        return EnglishLocalization.allItemsReturned;
     }
   }
 
   String get billDate {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.billDate;
-      case 'Marathi': return MarathiLocalization.billDate;
-      default: return EnglishLocalization.billDate;
+      case 'Hindi':
+        return HindiLocalization.billDate;
+      case 'Marathi':
+        return MarathiLocalization.billDate;
+      default:
+        return EnglishLocalization.billDate;
     }
   }
 
   String get contact {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.contact;
-      case 'Marathi': return MarathiLocalization.contact;
-      default: return EnglishLocalization.contact;
+      case 'Hindi':
+        return HindiLocalization.contact;
+      case 'Marathi':
+        return MarathiLocalization.contact;
+      default:
+        return EnglishLocalization.contact;
     }
   }
 
   String get active {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.active;
-      case 'Marathi': return MarathiLocalization.active;
-      default: return EnglishLocalization.active;
+      case 'Hindi':
+        return HindiLocalization.active;
+      case 'Marathi':
+        return MarathiLocalization.active;
+      default:
+        return EnglishLocalization.active;
     }
   }
 
   String get returnedLabel {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.returnedLabel;
-      case 'Marathi': return MarathiLocalization.returnedLabel;
-      default: return EnglishLocalization.returnedLabel;
+      case 'Hindi':
+        return HindiLocalization.returnedLabel;
+      case 'Marathi':
+        return MarathiLocalization.returnedLabel;
+      default:
+        return EnglishLocalization.returnedLabel;
     }
   }
 
   String get originalQuantity {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.originalQuantity;
-      case 'Marathi': return MarathiLocalization.originalQuantity;
-      default: return EnglishLocalization.originalQuantity;
+      case 'Hindi':
+        return HindiLocalization.originalQuantity;
+      case 'Marathi':
+        return MarathiLocalization.originalQuantity;
+      default:
+        return EnglishLocalization.originalQuantity;
     }
   }
 
   String get returnQty {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.returnQty;
-      case 'Marathi': return MarathiLocalization.returnQty;
-      default: return EnglishLocalization.returnQty;
+      case 'Hindi':
+        return HindiLocalization.returnQty;
+      case 'Marathi':
+        return MarathiLocalization.returnQty;
+      default:
+        return EnglishLocalization.returnQty;
     }
   }
 
   String get refundAmount {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.refundAmount;
-      case 'Marathi': return MarathiLocalization.refundAmount;
-      default: return EnglishLocalization.refundAmount;
+      case 'Hindi':
+        return HindiLocalization.refundAmount;
+      case 'Marathi':
+        return MarathiLocalization.refundAmount;
+      default:
+        return EnglishLocalization.refundAmount;
     }
   }
 
   String get selectItemsToReturn {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.selectItemsToReturn;
-      case 'Marathi': return MarathiLocalization.selectItemsToReturn;
-      default: return EnglishLocalization.selectItemsToReturn;
+      case 'Hindi':
+        return HindiLocalization.selectItemsToReturn;
+      case 'Marathi':
+        return MarathiLocalization.selectItemsToReturn;
+      default:
+        return EnglishLocalization.selectItemsToReturn;
     }
   }
 
   String get itemsToReturn {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.itemsToReturn;
-      case 'Marathi': return MarathiLocalization.itemsToReturn;
-      default: return EnglishLocalization.itemsToReturn;
+      case 'Hindi':
+        return HindiLocalization.itemsToReturn;
+      case 'Marathi':
+        return MarathiLocalization.itemsToReturn;
+      default:
+        return EnglishLocalization.itemsToReturn;
     }
   }
 
   String get selectAll {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.selectAll;
-      case 'Marathi': return MarathiLocalization.selectAll;
-      default: return EnglishLocalization.selectAll;
+      case 'Hindi':
+        return HindiLocalization.selectAll;
+      case 'Marathi':
+        return MarathiLocalization.selectAll;
+      default:
+        return EnglishLocalization.selectAll;
     }
   }
 
   String get clear {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.clear;
-      case 'Marathi': return MarathiLocalization.clear;
-      default: return EnglishLocalization.clear;
+      case 'Hindi':
+        return HindiLocalization.clear;
+      case 'Marathi':
+        return MarathiLocalization.clear;
+      default:
+        return EnglishLocalization.clear;
     }
   }
 
   String get confirmReturn {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.confirmReturn;
-      case 'Marathi': return MarathiLocalization.confirmReturn;
-      default: return EnglishLocalization.confirmReturn;
+      case 'Hindi':
+        return HindiLocalization.confirmReturn;
+      case 'Marathi':
+        return MarathiLocalization.confirmReturn;
+      default:
+        return EnglishLocalization.confirmReturn;
     }
   }
 
   String get confirmReturnMessage {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.confirmReturnMessage;
-      case 'Marathi': return MarathiLocalization.confirmReturnMessage;
-      default: return EnglishLocalization.confirmReturnMessage;
+      case 'Hindi':
+        return HindiLocalization.confirmReturnMessage;
+      case 'Marathi':
+        return MarathiLocalization.confirmReturnMessage;
+      default:
+        return EnglishLocalization.confirmReturnMessage;
     }
   }
 
   String get restoreToInventory {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.restoreToInventory;
-      case 'Marathi': return MarathiLocalization.restoreToInventory;
-      default: return EnglishLocalization.restoreToInventory;
+      case 'Hindi':
+        return HindiLocalization.restoreToInventory;
+      case 'Marathi':
+        return MarathiLocalization.restoreToInventory;
+      default:
+        return EnglishLocalization.restoreToInventory;
     }
   }
 
   String get processReturn {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.processReturn;
-      case 'Marathi': return MarathiLocalization.processReturn;
-      default: return EnglishLocalization.processReturn;
+      case 'Hindi':
+        return HindiLocalization.processReturn;
+      case 'Marathi':
+        return MarathiLocalization.processReturn;
+      default:
+        return EnglishLocalization.processReturn;
     }
   }
 
   String get processingReturn {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.processingReturn;
-      case 'Marathi': return MarathiLocalization.processingReturn;
-      default: return EnglishLocalization.processingReturn;
+      case 'Hindi':
+        return HindiLocalization.processingReturn;
+      case 'Marathi':
+        return MarathiLocalization.processingReturn;
+      default:
+        return EnglishLocalization.processingReturn;
     }
   }
 
   String get returnProcessedSuccess {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.returnProcessedSuccess;
-      case 'Marathi': return MarathiLocalization.returnProcessedSuccess;
-      default: return EnglishLocalization.returnProcessedSuccess;
+      case 'Hindi':
+        return HindiLocalization.returnProcessedSuccess;
+      case 'Marathi':
+        return MarathiLocalization.returnProcessedSuccess;
+      default:
+        return EnglishLocalization.returnProcessedSuccess;
     }
   }
 
   String get returnProcessedPrint {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.returnProcessedPrint;
-      case 'Marathi': return MarathiLocalization.returnProcessedPrint;
-      default: return EnglishLocalization.returnProcessedPrint;
+      case 'Hindi':
+        return HindiLocalization.returnProcessedPrint;
+      case 'Marathi':
+        return MarathiLocalization.returnProcessedPrint;
+      default:
+        return EnglishLocalization.returnProcessedPrint;
     }
   }
 
   String get failedToProcessReturn {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.failedToProcessReturn;
-      case 'Marathi': return MarathiLocalization.failedToProcessReturn;
-      default: return EnglishLocalization.failedToProcessReturn;
+      case 'Hindi':
+        return HindiLocalization.failedToProcessReturn;
+      case 'Marathi':
+        return MarathiLocalization.failedToProcessReturn;
+      default:
+        return EnglishLocalization.failedToProcessReturn;
     }
   }
 
   String get errorProcessingReturn {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.errorProcessingReturn;
-      case 'Marathi': return MarathiLocalization.errorProcessingReturn;
-      default: return EnglishLocalization.errorProcessingReturn;
+      case 'Hindi':
+        return HindiLocalization.errorProcessingReturn;
+      case 'Marathi':
+        return MarathiLocalization.errorProcessingReturn;
+      default:
+        return EnglishLocalization.errorProcessingReturn;
     }
   }
 
   String get returnedOn {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.returnedOn;
-      case 'Marathi': return MarathiLocalization.returnedOn;
-      default: return EnglishLocalization.returnedOn;
+      case 'Hindi':
+        return HindiLocalization.returnedOn;
+      case 'Marathi':
+        return MarathiLocalization.returnedOn;
+      default:
+        return EnglishLocalization.returnedOn;
     }
   }
 
   String get refund {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.refund;
-      case 'Marathi': return MarathiLocalization.refund;
-      default: return EnglishLocalization.refund;
+      case 'Hindi':
+        return HindiLocalization.refund;
+      case 'Marathi':
+        return MarathiLocalization.refund;
+      default:
+        return EnglishLocalization.refund;
     }
   }
 
@@ -4572,129 +4827,177 @@ class AppLocalizations {
 
   String get enterPhoneNumber {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.enterPhoneNumber;
-      case 'Marathi': return MarathiLocalization.enterPhoneNumber;
-      default: return EnglishLocalization.enterPhoneNumber;
+      case 'Hindi':
+        return HindiLocalization.enterPhoneNumber;
+      case 'Marathi':
+        return MarathiLocalization.enterPhoneNumber;
+      default:
+        return EnglishLocalization.enterPhoneNumber;
     }
   }
 
   String get enterCustomerPhone {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.enterCustomerPhone;
-      case 'Marathi': return MarathiLocalization.enterCustomerPhone;
-      default: return EnglishLocalization.enterCustomerPhone;
+      case 'Hindi':
+        return HindiLocalization.enterCustomerPhone;
+      case 'Marathi':
+        return MarathiLocalization.enterCustomerPhone;
+      default:
+        return EnglishLocalization.enterCustomerPhone;
     }
   }
 
   String get firstNameRequired2 {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.firstNameRequired2;
-      case 'Marathi': return MarathiLocalization.firstNameRequired2;
-      default: return EnglishLocalization.firstNameRequired2;
+      case 'Hindi':
+        return HindiLocalization.firstNameRequired2;
+      case 'Marathi':
+        return MarathiLocalization.firstNameRequired2;
+      default:
+        return EnglishLocalization.firstNameRequired2;
     }
   }
 
   String get lastNameRequired2 {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.lastNameRequired2;
-      case 'Marathi': return MarathiLocalization.lastNameRequired2;
-      default: return EnglishLocalization.lastNameRequired2;
+      case 'Hindi':
+        return HindiLocalization.lastNameRequired2;
+      case 'Marathi':
+        return MarathiLocalization.lastNameRequired2;
+      default:
+        return EnglishLocalization.lastNameRequired2;
     }
   }
 
   String get saveAndAttach {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.saveAndAttach;
-      case 'Marathi': return MarathiLocalization.saveAndAttach;
-      default: return EnglishLocalization.saveAndAttach;
+      case 'Hindi':
+        return HindiLocalization.saveAndAttach;
+      case 'Marathi':
+        return MarathiLocalization.saveAndAttach;
+      default:
+        return EnglishLocalization.saveAndAttach;
     }
   }
 
   String get skip {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.skip;
-      case 'Marathi': return MarathiLocalization.skip;
-      default: return EnglishLocalization.skip;
+      case 'Hindi':
+        return HindiLocalization.skip;
+      case 'Marathi':
+        return MarathiLocalization.skip;
+      default:
+        return EnglishLocalization.skip;
     }
   }
 
   String get full {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.full;
-      case 'Marathi': return MarathiLocalization.full;
-      default: return EnglishLocalization.full;
+      case 'Hindi':
+        return HindiLocalization.full;
+      case 'Marathi':
+        return MarathiLocalization.full;
+      default:
+        return EnglishLocalization.full;
     }
   }
 
   String get continuingWithoutCustomer {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.continuingWithoutCustomer;
-      case 'Marathi': return MarathiLocalization.continuingWithoutCustomer;
-      default: return EnglishLocalization.continuingWithoutCustomer;
+      case 'Hindi':
+        return HindiLocalization.continuingWithoutCustomer;
+      case 'Marathi':
+        return MarathiLocalization.continuingWithoutCustomer;
+      default:
+        return EnglishLocalization.continuingWithoutCustomer;
     }
   }
 
   String get billProcessingFailed {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.billProcessingFailed;
-      case 'Marathi': return MarathiLocalization.billProcessingFailed;
-      default: return EnglishLocalization.billProcessingFailed;
+      case 'Hindi':
+        return HindiLocalization.billProcessingFailed;
+      case 'Marathi':
+        return MarathiLocalization.billProcessingFailed;
+      default:
+        return EnglishLocalization.billProcessingFailed;
     }
   }
 
   String get pleaseEnterValidContact {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.pleaseEnterValidContact;
-      case 'Marathi': return MarathiLocalization.pleaseEnterValidContact;
-      default: return EnglishLocalization.pleaseEnterValidContact;
+      case 'Hindi':
+        return HindiLocalization.pleaseEnterValidContact;
+      case 'Marathi':
+        return MarathiLocalization.pleaseEnterValidContact;
+      default:
+        return EnglishLocalization.pleaseEnterValidContact;
     }
   }
 
   String get clearPhoneNumber {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.clearPhoneNumber;
-      case 'Marathi': return MarathiLocalization.clearPhoneNumber;
-      default: return EnglishLocalization.clearPhoneNumber;
+      case 'Hindi':
+        return HindiLocalization.clearPhoneNumber;
+      case 'Marathi':
+        return MarathiLocalization.clearPhoneNumber;
+      default:
+        return EnglishLocalization.clearPhoneNumber;
     }
   }
 
   String get phoneNumberOptional {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.phoneNumberOptional;
-      case 'Marathi': return MarathiLocalization.phoneNumberOptional;
-      default: return EnglishLocalization.phoneNumberOptional;
+      case 'Hindi':
+        return HindiLocalization.phoneNumberOptional;
+      case 'Marathi':
+        return MarathiLocalization.phoneNumberOptional;
+      default:
+        return EnglishLocalization.phoneNumberOptional;
     }
   }
 
   String get printBill {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.printBill;
-      case 'Marathi': return MarathiLocalization.printBill;
-      default: return EnglishLocalization.printBill;
+      case 'Hindi':
+        return HindiLocalization.printBill;
+      case 'Marathi':
+        return MarathiLocalization.printBill;
+      default:
+        return EnglishLocalization.printBill;
     }
   }
 
   String get customerNotFoundFor {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.customerNotFoundFor;
-      case 'Marathi': return MarathiLocalization.customerNotFoundFor;
-      default: return EnglishLocalization.customerNotFoundFor;
+      case 'Hindi':
+        return HindiLocalization.customerNotFoundFor;
+      case 'Marathi':
+        return MarathiLocalization.customerNotFoundFor;
+      default:
+        return EnglishLocalization.customerNotFoundFor;
     }
   }
 
   String get customerColon {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.customerColon;
-      case 'Marathi': return MarathiLocalization.customerColon;
-      default: return EnglishLocalization.customerColon;
+      case 'Hindi':
+        return HindiLocalization.customerColon;
+      case 'Marathi':
+        return MarathiLocalization.customerColon;
+      default:
+        return EnglishLocalization.customerColon;
     }
   }
 
   String get discountWithPercent {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.discountWithPercent;
-      case 'Marathi': return MarathiLocalization.discountWithPercent;
-      default: return EnglishLocalization.discountWithPercent;
+      case 'Hindi':
+        return HindiLocalization.discountWithPercent;
+      case 'Marathi':
+        return MarathiLocalization.discountWithPercent;
+      default:
+        return EnglishLocalization.discountWithPercent;
     }
   }
 
@@ -4704,121 +5007,166 @@ class AppLocalizations {
 
   String get billingSettings {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.billingSettings;
-      case 'Marathi': return MarathiLocalization.billingSettings;
-      default: return EnglishLocalization.billingSettings;
+      case 'Hindi':
+        return HindiLocalization.billingSettings;
+      case 'Marathi':
+        return MarathiLocalization.billingSettings;
+      default:
+        return EnglishLocalization.billingSettings;
     }
   }
 
   String get billType {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.billType;
-      case 'Marathi': return MarathiLocalization.billType;
-      default: return EnglishLocalization.billType;
+      case 'Hindi':
+        return HindiLocalization.billType;
+      case 'Marathi':
+        return MarathiLocalization.billType;
+      default:
+        return EnglishLocalization.billType;
     }
   }
 
   String get selectDefaultBillType {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.selectDefaultBillType;
-      case 'Marathi': return MarathiLocalization.selectDefaultBillType;
-      default: return EnglishLocalization.selectDefaultBillType;
+      case 'Hindi':
+        return HindiLocalization.selectDefaultBillType;
+      case 'Marathi':
+        return MarathiLocalization.selectDefaultBillType;
+      default:
+        return EnglishLocalization.selectDefaultBillType;
     }
   }
 
   String get normalBill {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.normalBill;
-      case 'Marathi': return MarathiLocalization.normalBill;
-      default: return EnglishLocalization.normalBill;
+      case 'Hindi':
+        return HindiLocalization.normalBill;
+      case 'Marathi':
+        return MarathiLocalization.normalBill;
+      default:
+        return EnglishLocalization.normalBill;
     }
   }
 
   String get thermalReceipt {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.thermalReceipt;
-      case 'Marathi': return MarathiLocalization.thermalReceipt;
-      default: return EnglishLocalization.thermalReceipt;
+      case 'Hindi':
+        return HindiLocalization.thermalReceipt;
+      case 'Marathi':
+        return MarathiLocalization.thermalReceipt;
+      default:
+        return EnglishLocalization.thermalReceipt;
     }
   }
 
   String get selected {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.selected;
-      case 'Marathi': return MarathiLocalization.selected;
-      default: return EnglishLocalization.selected;
+      case 'Hindi':
+        return HindiLocalization.selected;
+      case 'Marathi':
+        return MarathiLocalization.selected;
+      default:
+        return EnglishLocalization.selected;
     }
   }
 
   String get printSettings {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.printSettings;
-      case 'Marathi': return MarathiLocalization.printSettings;
-      default: return EnglishLocalization.printSettings;
+      case 'Hindi':
+        return HindiLocalization.printSettings;
+      case 'Marathi':
+        return MarathiLocalization.printSettings;
+      default:
+        return EnglishLocalization.printSettings;
     }
   }
 
   String get posPrinter {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.posPrinter;
-      case 'Marathi': return MarathiLocalization.posPrinter;
-      default: return EnglishLocalization.posPrinter;
+      case 'Hindi':
+        return HindiLocalization.posPrinter;
+      case 'Marathi':
+        return MarathiLocalization.posPrinter;
+      default:
+        return EnglishLocalization.posPrinter;
     }
   }
 
   String get pdfFormat {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.pdfFormat;
-      case 'Marathi': return MarathiLocalization.pdfFormat;
-      default: return EnglishLocalization.pdfFormat;
+      case 'Hindi':
+        return HindiLocalization.pdfFormat;
+      case 'Marathi':
+        return MarathiLocalization.pdfFormat;
+      default:
+        return EnglishLocalization.pdfFormat;
     }
   }
 
   String get showCustomerDetailsOnBill {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.showCustomerDetailsOnBill;
-      case 'Marathi': return MarathiLocalization.showCustomerDetailsOnBill;
-      default: return EnglishLocalization.showCustomerDetailsOnBill;
+      case 'Hindi':
+        return HindiLocalization.showCustomerDetailsOnBill;
+      case 'Marathi':
+        return MarathiLocalization.showCustomerDetailsOnBill;
+      default:
+        return EnglishLocalization.showCustomerDetailsOnBill;
     }
   }
 
   String get displayCustomerOnBill {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.displayCustomerOnBill;
-      case 'Marathi': return MarathiLocalization.displayCustomerOnBill;
-      default: return EnglishLocalization.displayCustomerOnBill;
+      case 'Hindi':
+        return HindiLocalization.displayCustomerOnBill;
+      case 'Marathi':
+        return MarathiLocalization.displayCustomerOnBill;
+      default:
+        return EnglishLocalization.displayCustomerOnBill;
     }
   }
 
   String get generateBillViaContact {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.generateBillViaContact;
-      case 'Marathi': return MarathiLocalization.generateBillViaContact;
-      default: return EnglishLocalization.generateBillViaContact;
+      case 'Hindi':
+        return HindiLocalization.generateBillViaContact;
+      case 'Marathi':
+        return MarathiLocalization.generateBillViaContact;
+      default:
+        return EnglishLocalization.generateBillViaContact;
     }
   }
 
   String get requireContactNumber {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.requireContactNumber;
-      case 'Marathi': return MarathiLocalization.requireContactNumber;
-      default: return EnglishLocalization.requireContactNumber;
+      case 'Hindi':
+        return HindiLocalization.requireContactNumber;
+      case 'Marathi':
+        return MarathiLocalization.requireContactNumber;
+      default:
+        return EnglishLocalization.requireContactNumber;
     }
   }
 
   String get contactNumberNote {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.contactNumberNote;
-      case 'Marathi': return MarathiLocalization.contactNumberNote;
-      default: return EnglishLocalization.contactNumberNote;
+      case 'Hindi':
+        return HindiLocalization.contactNumberNote;
+      case 'Marathi':
+        return MarathiLocalization.contactNumberNote;
+      default:
+        return EnglishLocalization.contactNumberNote;
     }
   }
 
   String get settingsSaved {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.settingsSaved;
-      case 'Marathi': return MarathiLocalization.settingsSaved;
-      default: return EnglishLocalization.settingsSaved;
+      case 'Hindi':
+        return HindiLocalization.settingsSaved;
+      case 'Marathi':
+        return MarathiLocalization.settingsSaved;
+      default:
+        return EnglishLocalization.settingsSaved;
     }
   }
 
@@ -4828,89 +5176,122 @@ class AppLocalizations {
 
   String get shopDetails {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.shopDetails;
-      case 'Marathi': return MarathiLocalization.shopDetails;
-      default: return EnglishLocalization.shopDetails;
+      case 'Hindi':
+        return HindiLocalization.shopDetails;
+      case 'Marathi':
+        return MarathiLocalization.shopDetails;
+      default:
+        return EnglishLocalization.shopDetails;
     }
   }
 
   String get shopInformation {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.shopInformation;
-      case 'Marathi': return MarathiLocalization.shopInformation;
-      default: return EnglishLocalization.shopInformation;
+      case 'Hindi':
+        return HindiLocalization.shopInformation;
+      case 'Marathi':
+        return MarathiLocalization.shopInformation;
+      default:
+        return EnglishLocalization.shopInformation;
     }
   }
 
   String get shopName {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.shopName;
-      case 'Marathi': return MarathiLocalization.shopName;
-      default: return EnglishLocalization.shopName;
+      case 'Hindi':
+        return HindiLocalization.shopName;
+      case 'Marathi':
+        return MarathiLocalization.shopName;
+      default:
+        return EnglishLocalization.shopName;
     }
   }
 
   String get businessInformation {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.businessInformation;
-      case 'Marathi': return MarathiLocalization.businessInformation;
-      default: return EnglishLocalization.businessInformation;
+      case 'Hindi':
+        return HindiLocalization.businessInformation;
+      case 'Marathi':
+        return MarathiLocalization.businessInformation;
+      default:
+        return EnglishLocalization.businessInformation;
     }
   }
 
   String get gstNumber {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.gstNumber;
-      case 'Marathi': return MarathiLocalization.gstNumber;
-      default: return EnglishLocalization.gstNumber;
+      case 'Hindi':
+        return HindiLocalization.gstNumber;
+      case 'Marathi':
+        return MarathiLocalization.gstNumber;
+      default:
+        return EnglishLocalization.gstNumber;
     }
   }
 
   String get contactInformation {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.contactInformation;
-      case 'Marathi': return MarathiLocalization.contactInformation;
-      default: return EnglishLocalization.contactInformation;
+      case 'Hindi':
+        return HindiLocalization.contactInformation;
+      case 'Marathi':
+        return MarathiLocalization.contactInformation;
+      default:
+        return EnglishLocalization.contactInformation;
     }
   }
 
   String get email {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.email;
-      case 'Marathi': return MarathiLocalization.email;
-      default: return EnglishLocalization.email;
+      case 'Hindi':
+        return HindiLocalization.email;
+      case 'Marathi':
+        return MarathiLocalization.email;
+      default:
+        return EnglishLocalization.email;
     }
   }
 
   String get pincode {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.pincode;
-      case 'Marathi': return MarathiLocalization.pincode;
-      default: return EnglishLocalization.pincode;
+      case 'Hindi':
+        return HindiLocalization.pincode;
+      case 'Marathi':
+        return MarathiLocalization.pincode;
+      default:
+        return EnglishLocalization.pincode;
     }
   }
 
   String get ownerName {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.ownerName;
-      case 'Marathi': return MarathiLocalization.ownerName;
-      default: return EnglishLocalization.ownerName;
+      case 'Hindi':
+        return HindiLocalization.ownerName;
+      case 'Marathi':
+        return MarathiLocalization.ownerName;
+      default:
+        return EnglishLocalization.ownerName;
     }
   }
 
   String get saveShopDetails {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.saveShopDetails;
-      case 'Marathi': return MarathiLocalization.saveShopDetails;
-      default: return EnglishLocalization.saveShopDetails;
+      case 'Hindi':
+        return HindiLocalization.saveShopDetails;
+      case 'Marathi':
+        return MarathiLocalization.saveShopDetails;
+      default:
+        return EnglishLocalization.saveShopDetails;
     }
   }
 
   String get shopDetailsSaved {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.shopDetailsSaved;
-      case 'Marathi': return MarathiLocalization.shopDetailsSaved;
-      default: return EnglishLocalization.shopDetailsSaved;
+      case 'Hindi':
+        return HindiLocalization.shopDetailsSaved;
+      case 'Marathi':
+        return MarathiLocalization.shopDetailsSaved;
+      default:
+        return EnglishLocalization.shopDetailsSaved;
     }
   }
 
@@ -4920,169 +5301,232 @@ class AppLocalizations {
 
   String get profile {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.profile;
-      case 'Marathi': return MarathiLocalization.profile;
-      default: return EnglishLocalization.profile;
+      case 'Hindi':
+        return HindiLocalization.profile;
+      case 'Marathi':
+        return MarathiLocalization.profile;
+      default:
+        return EnglishLocalization.profile;
     }
   }
 
   String get settings {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.settings;
-      case 'Marathi': return MarathiLocalization.settings;
-      default: return EnglishLocalization.settings;
+      case 'Hindi':
+        return HindiLocalization.settings;
+      case 'Marathi':
+        return MarathiLocalization.settings;
+      default:
+        return EnglishLocalization.settings;
     }
   }
 
   String get inventory {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.inventory;
-      case 'Marathi': return MarathiLocalization.inventory;
-      default: return EnglishLocalization.inventory;
+      case 'Hindi':
+        return HindiLocalization.inventory;
+      case 'Marathi':
+        return MarathiLocalization.inventory;
+      default:
+        return EnglishLocalization.inventory;
     }
   }
 
   String get clients {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.clients;
-      case 'Marathi': return MarathiLocalization.clients;
-      default: return EnglishLocalization.clients;
+      case 'Hindi':
+        return HindiLocalization.clients;
+      case 'Marathi':
+        return MarathiLocalization.clients;
+      default:
+        return EnglishLocalization.clients;
     }
   }
 
   String get purchases {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.purchases;
-      case 'Marathi': return MarathiLocalization.purchases;
-      default: return EnglishLocalization.purchases;
+      case 'Hindi':
+        return HindiLocalization.purchases;
+      case 'Marathi':
+        return MarathiLocalization.purchases;
+      default:
+        return EnglishLocalization.purchases;
     }
   }
 
   String get reports {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.reports;
-      case 'Marathi': return MarathiLocalization.reports;
-      default: return EnglishLocalization.reports;
+      case 'Hindi':
+        return HindiLocalization.reports;
+      case 'Marathi':
+        return MarathiLocalization.reports;
+      default:
+        return EnglishLocalization.reports;
     }
   }
 
   String get reportsComingSoon {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.reportsComingSoon;
-      case 'Marathi': return MarathiLocalization.reportsComingSoon;
-      default: return EnglishLocalization.reportsComingSoon;
+      case 'Hindi':
+        return HindiLocalization.reportsComingSoon;
+      case 'Marathi':
+        return MarathiLocalization.reportsComingSoon;
+      default:
+        return EnglishLocalization.reportsComingSoon;
     }
   }
 
   String get invoicesComingSoon {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.invoicesComingSoon;
-      case 'Marathi': return MarathiLocalization.invoicesComingSoon;
-      default: return EnglishLocalization.invoicesComingSoon;
+      case 'Hindi':
+        return HindiLocalization.invoicesComingSoon;
+      case 'Marathi':
+        return MarathiLocalization.invoicesComingSoon;
+      default:
+        return EnglishLocalization.invoicesComingSoon;
     }
   }
 
   String get logout {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.logout;
-      case 'Marathi': return MarathiLocalization.logout;
-      default: return EnglishLocalization.logout;
+      case 'Hindi':
+        return HindiLocalization.logout;
+      case 'Marathi':
+        return MarathiLocalization.logout;
+      default:
+        return EnglishLocalization.logout;
     }
   }
 
   String get close {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.close;
-      case 'Marathi': return MarathiLocalization.close;
-      default: return EnglishLocalization.close;
+      case 'Hindi':
+        return HindiLocalization.close;
+      case 'Marathi':
+        return MarathiLocalization.close;
+      default:
+        return EnglishLocalization.close;
     }
   }
 
   String get online {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.online;
-      case 'Marathi': return MarathiLocalization.online;
-      default: return EnglishLocalization.online;
+      case 'Hindi':
+        return HindiLocalization.online;
+      case 'Marathi':
+        return MarathiLocalization.online;
+      default:
+        return EnglishLocalization.online;
     }
   }
 
   String get forgotPassword {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.forgotPassword;
-      case 'Marathi': return MarathiLocalization.forgotPassword;
-      default: return EnglishLocalization.forgotPassword;
+      case 'Hindi':
+        return HindiLocalization.forgotPassword;
+      case 'Marathi':
+        return MarathiLocalization.forgotPassword;
+      default:
+        return EnglishLocalization.forgotPassword;
     }
   }
 
   String get changePassword {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.changePassword;
-      case 'Marathi': return MarathiLocalization.changePassword;
-      default: return EnglishLocalization.changePassword;
+      case 'Hindi':
+        return HindiLocalization.changePassword;
+      case 'Marathi':
+        return MarathiLocalization.changePassword;
+      default:
+        return EnglishLocalization.changePassword;
     }
   }
 
   String get biometricLock {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.biometricLock;
-      case 'Marathi': return MarathiLocalization.biometricLock;
-      default: return EnglishLocalization.biometricLock;
+      case 'Hindi':
+        return HindiLocalization.biometricLock;
+      case 'Marathi':
+        return MarathiLocalization.biometricLock;
+      default:
+        return EnglishLocalization.biometricLock;
     }
   }
 
   String get unlockWithBiometric {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.unlockWithBiometric;
-      case 'Marathi': return MarathiLocalization.unlockWithBiometric;
-      default: return EnglishLocalization.unlockWithBiometric;
+      case 'Hindi':
+        return HindiLocalization.unlockWithBiometric;
+      case 'Marathi':
+        return MarathiLocalization.unlockWithBiometric;
+      default:
+        return EnglishLocalization.unlockWithBiometric;
     }
   }
 
   String get biometricEnabled {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.biometricEnabled;
-      case 'Marathi': return MarathiLocalization.biometricEnabled;
-      default: return EnglishLocalization.biometricEnabled;
+      case 'Hindi':
+        return HindiLocalization.biometricEnabled;
+      case 'Marathi':
+        return MarathiLocalization.biometricEnabled;
+      default:
+        return EnglishLocalization.biometricEnabled;
     }
   }
 
   String get biometricDisabled {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.biometricDisabled;
-      case 'Marathi': return MarathiLocalization.biometricDisabled;
-      default: return EnglishLocalization.biometricDisabled;
+      case 'Hindi':
+        return HindiLocalization.biometricDisabled;
+      case 'Marathi':
+        return MarathiLocalization.biometricDisabled;
+      default:
+        return EnglishLocalization.biometricDisabled;
     }
   }
 
   String get biometricsNotAvailable {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.biometricsNotAvailable;
-      case 'Marathi': return MarathiLocalization.biometricsNotAvailable;
-      default: return EnglishLocalization.biometricsNotAvailable;
+      case 'Hindi':
+        return HindiLocalization.biometricsNotAvailable;
+      case 'Marathi':
+        return MarathiLocalization.biometricsNotAvailable;
+      default:
+        return EnglishLocalization.biometricsNotAvailable;
     }
   }
 
   String get version {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.version;
-      case 'Marathi': return MarathiLocalization.version;
-      default: return EnglishLocalization.version;
+      case 'Hindi':
+        return HindiLocalization.version;
+      case 'Marathi':
+        return MarathiLocalization.version;
+      default:
+        return EnglishLocalization.version;
     }
   }
 
   String get user {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.user;
-      case 'Marathi': return MarathiLocalization.user;
-      default: return EnglishLocalization.user;
+      case 'Hindi':
+        return HindiLocalization.user;
+      case 'Marathi':
+        return MarathiLocalization.user;
+      default:
+        return EnglishLocalization.user;
     }
   }
 
   String get logs {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.logs;
-      case 'Marathi': return MarathiLocalization.logs;
-      default: return EnglishLocalization.logs;
+      case 'Hindi':
+        return HindiLocalization.logs;
+      case 'Marathi':
+        return MarathiLocalization.logs;
+      default:
+        return EnglishLocalization.logs;
     }
   }
 
@@ -5092,113 +5536,155 @@ class AppLocalizations {
 
   String get myProfile {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.myProfile;
-      case 'Marathi': return MarathiLocalization.myProfile;
-      default: return EnglishLocalization.myProfile;
+      case 'Hindi':
+        return HindiLocalization.myProfile;
+      case 'Marathi':
+        return MarathiLocalization.myProfile;
+      default:
+        return EnglishLocalization.myProfile;
     }
   }
 
   String get fullName {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.fullName;
-      case 'Marathi': return MarathiLocalization.fullName;
-      default: return EnglishLocalization.fullName;
+      case 'Hindi':
+        return HindiLocalization.fullName;
+      case 'Marathi':
+        return MarathiLocalization.fullName;
+      default:
+        return EnglishLocalization.fullName;
     }
   }
 
   String get enterFullName {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.enterFullName;
-      case 'Marathi': return MarathiLocalization.enterFullName;
-      default: return EnglishLocalization.enterFullName;
+      case 'Hindi':
+        return HindiLocalization.enterFullName;
+      case 'Marathi':
+        return MarathiLocalization.enterFullName;
+      default:
+        return EnglishLocalization.enterFullName;
     }
   }
 
   String get emailAddress {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.emailAddress;
-      case 'Marathi': return MarathiLocalization.emailAddress;
-      default: return EnglishLocalization.emailAddress;
+      case 'Hindi':
+        return HindiLocalization.emailAddress;
+      case 'Marathi':
+        return MarathiLocalization.emailAddress;
+      default:
+        return EnglishLocalization.emailAddress;
     }
   }
 
   String get yourEmail {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.yourEmail;
-      case 'Marathi': return MarathiLocalization.yourEmail;
-      default: return EnglishLocalization.yourEmail;
+      case 'Hindi':
+        return HindiLocalization.yourEmail;
+      case 'Marathi':
+        return MarathiLocalization.yourEmail;
+      default:
+        return EnglishLocalization.yourEmail;
     }
   }
 
   String get phoneNumber {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.phoneNumber;
-      case 'Marathi': return MarathiLocalization.phoneNumber;
-      default: return EnglishLocalization.phoneNumber;
+      case 'Hindi':
+        return HindiLocalization.phoneNumber;
+      case 'Marathi':
+        return MarathiLocalization.phoneNumber;
+      default:
+        return EnglishLocalization.phoneNumber;
     }
   }
 
   String get enterPhoneNumberProfile {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.enterPhoneNumberProfile;
-      case 'Marathi': return MarathiLocalization.enterPhoneNumberProfile;
-      default: return EnglishLocalization.enterPhoneNumberProfile;
+      case 'Hindi':
+        return HindiLocalization.enterPhoneNumberProfile;
+      case 'Marathi':
+        return MarathiLocalization.enterPhoneNumberProfile;
+      default:
+        return EnglishLocalization.enterPhoneNumberProfile;
     }
   }
 
   String get enterAddress {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.enterAddress;
-      case 'Marathi': return MarathiLocalization.enterAddress;
-      default: return EnglishLocalization.enterAddress;
+      case 'Hindi':
+        return HindiLocalization.enterAddress;
+      case 'Marathi':
+        return MarathiLocalization.enterAddress;
+      default:
+        return EnglishLocalization.enterAddress;
     }
   }
 
   String get saveChanges {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.saveChanges;
-      case 'Marathi': return MarathiLocalization.saveChanges;
-      default: return EnglishLocalization.saveChanges;
+      case 'Hindi':
+        return HindiLocalization.saveChanges;
+      case 'Marathi':
+        return MarathiLocalization.saveChanges;
+      default:
+        return EnglishLocalization.saveChanges;
     }
   }
 
   String get pleaseEnterName {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.pleaseEnterName;
-      case 'Marathi': return MarathiLocalization.pleaseEnterName;
-      default: return EnglishLocalization.pleaseEnterName;
+      case 'Hindi':
+        return HindiLocalization.pleaseEnterName;
+      case 'Marathi':
+        return MarathiLocalization.pleaseEnterName;
+      default:
+        return EnglishLocalization.pleaseEnterName;
     }
   }
 
   String get profileUpdated {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.profileUpdated;
-      case 'Marathi': return MarathiLocalization.profileUpdated;
-      default: return EnglishLocalization.profileUpdated;
+      case 'Hindi':
+        return HindiLocalization.profileUpdated;
+      case 'Marathi':
+        return MarathiLocalization.profileUpdated;
+      default:
+        return EnglishLocalization.profileUpdated;
     }
   }
 
   String get profileUpdatedSuccessfully {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.profileUpdatedSuccessfully;
-      case 'Marathi': return MarathiLocalization.profileUpdatedSuccessfully;
-      default: return EnglishLocalization.profileUpdatedSuccessfully;
+      case 'Hindi':
+        return HindiLocalization.profileUpdatedSuccessfully;
+      case 'Marathi':
+        return MarathiLocalization.profileUpdatedSuccessfully;
+      default:
+        return EnglishLocalization.profileUpdatedSuccessfully;
     }
   }
 
   String get errorSavingProfile {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.errorSavingProfile;
-      case 'Marathi': return MarathiLocalization.errorSavingProfile;
-      default: return EnglishLocalization.errorSavingProfile;
+      case 'Hindi':
+        return HindiLocalization.errorSavingProfile;
+      case 'Marathi':
+        return MarathiLocalization.errorSavingProfile;
+      default:
+        return EnglishLocalization.errorSavingProfile;
     }
   }
 
   String get failedToPickImage {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.failedToPickImage;
-      case 'Marathi': return MarathiLocalization.failedToPickImage;
-      default: return EnglishLocalization.failedToPickImage;
+      case 'Hindi':
+        return HindiLocalization.failedToPickImage;
+      case 'Marathi':
+        return MarathiLocalization.failedToPickImage;
+      default:
+        return EnglishLocalization.failedToPickImage;
     }
   }
 
@@ -5208,401 +5694,551 @@ class AppLocalizations {
 
   String get welcomeBackLogin {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.welcomeBackLogin;
-      case 'Marathi': return MarathiLocalization.welcomeBackLogin;
-      default: return EnglishLocalization.welcomeBackLogin;
+      case 'Hindi':
+        return HindiLocalization.welcomeBackLogin;
+      case 'Marathi':
+        return MarathiLocalization.welcomeBackLogin;
+      default:
+        return EnglishLocalization.welcomeBackLogin;
     }
   }
 
   String get signInToAccount {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.signInToAccount;
-      case 'Marathi': return MarathiLocalization.signInToAccount;
-      default: return EnglishLocalization.signInToAccount;
+      case 'Hindi':
+        return HindiLocalization.signInToAccount;
+      case 'Marathi':
+        return MarathiLocalization.signInToAccount;
+      default:
+        return EnglishLocalization.signInToAccount;
     }
   }
 
   String get backboneOfBusiness {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.backboneOfBusiness;
-      case 'Marathi': return MarathiLocalization.backboneOfBusiness;
-      default: return EnglishLocalization.backboneOfBusiness;
+      case 'Hindi':
+        return HindiLocalization.backboneOfBusiness;
+      case 'Marathi':
+        return MarathiLocalization.backboneOfBusiness;
+      default:
+        return EnglishLocalization.backboneOfBusiness;
     }
   }
 
   String get enterEmailPhone {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.enterEmailPhone;
-      case 'Marathi': return MarathiLocalization.enterEmailPhone;
-      default: return EnglishLocalization.enterEmailPhone;
+      case 'Hindi':
+        return HindiLocalization.enterEmailPhone;
+      case 'Marathi':
+        return MarathiLocalization.enterEmailPhone;
+      default:
+        return EnglishLocalization.enterEmailPhone;
     }
   }
 
   String get password {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.password;
-      case 'Marathi': return MarathiLocalization.password;
-      default: return EnglishLocalization.password;
+      case 'Hindi':
+        return HindiLocalization.password;
+      case 'Marathi':
+        return MarathiLocalization.password;
+      default:
+        return EnglishLocalization.password;
     }
   }
 
   String get forgotPasswordQuestion {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.forgotPasswordQuestion;
-      case 'Marathi': return MarathiLocalization.forgotPasswordQuestion;
-      default: return EnglishLocalization.forgotPasswordQuestion;
+      case 'Hindi':
+        return HindiLocalization.forgotPasswordQuestion;
+      case 'Marathi':
+        return MarathiLocalization.forgotPasswordQuestion;
+      default:
+        return EnglishLocalization.forgotPasswordQuestion;
     }
   }
 
   String get signIn {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.signIn;
-      case 'Marathi': return MarathiLocalization.signIn;
-      default: return EnglishLocalization.signIn;
+      case 'Hindi':
+        return HindiLocalization.signIn;
+      case 'Marathi':
+        return MarathiLocalization.signIn;
+      default:
+        return EnglishLocalization.signIn;
     }
   }
 
   String get continueWithGoogle {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.continueWithGoogle;
-      case 'Marathi': return MarathiLocalization.continueWithGoogle;
-      default: return EnglishLocalization.continueWithGoogle;
+      case 'Hindi':
+        return HindiLocalization.continueWithGoogle;
+      case 'Marathi':
+        return MarathiLocalization.continueWithGoogle;
+      default:
+        return EnglishLocalization.continueWithGoogle;
     }
   }
 
   String get signUp {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.signUp;
-      case 'Marathi': return MarathiLocalization.signUp;
-      default: return EnglishLocalization.signUp;
+      case 'Hindi':
+        return HindiLocalization.signUp;
+      case 'Marathi':
+        return MarathiLocalization.signUp;
+      default:
+        return EnglishLocalization.signUp;
     }
   }
 
   String get orDivider {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.orDivider;
-      case 'Marathi': return MarathiLocalization.orDivider;
-      default: return EnglishLocalization.orDivider;
+      case 'Hindi':
+        return HindiLocalization.orDivider;
+      case 'Marathi':
+        return MarathiLocalization.orDivider;
+      default:
+        return EnglishLocalization.orDivider;
     }
   }
 
   String get dontHaveAccount {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.dontHaveAccount;
-      case 'Marathi': return MarathiLocalization.dontHaveAccount;
-      default: return EnglishLocalization.dontHaveAccount;
+      case 'Hindi':
+        return HindiLocalization.dontHaveAccount;
+      case 'Marathi':
+        return MarathiLocalization.dontHaveAccount;
+      default:
+        return EnglishLocalization.dontHaveAccount;
     }
   }
 
   String get cBillingAppLogs {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.cBillingAppLogs;
-      case 'Marathi': return MarathiLocalization.cBillingAppLogs;
-      default: return EnglishLocalization.cBillingAppLogs;
+      case 'Hindi':
+        return HindiLocalization.cBillingAppLogs;
+      case 'Marathi':
+        return MarathiLocalization.cBillingAppLogs;
+      default:
+        return EnglishLocalization.cBillingAppLogs;
     }
   }
 
   String get loginSuccessful {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.loginSuccessful;
-      case 'Marathi': return MarathiLocalization.loginSuccessful;
-      default: return EnglishLocalization.loginSuccessful;
+      case 'Hindi':
+        return HindiLocalization.loginSuccessful;
+      case 'Marathi':
+        return MarathiLocalization.loginSuccessful;
+      default:
+        return EnglishLocalization.loginSuccessful;
     }
   }
 
   String get authError {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.authError;
-      case 'Marathi': return MarathiLocalization.authError;
-      default: return EnglishLocalization.authError;
+      case 'Hindi':
+        return HindiLocalization.authError;
+      case 'Marathi':
+        return MarathiLocalization.authError;
+      default:
+        return EnglishLocalization.authError;
     }
   }
 
   String get sessionExpired {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.sessionExpired;
-      case 'Marathi': return MarathiLocalization.sessionExpired;
-      default: return EnglishLocalization.sessionExpired;
+      case 'Hindi':
+        return HindiLocalization.sessionExpired;
+      case 'Marathi':
+        return MarathiLocalization.sessionExpired;
+      default:
+        return EnglishLocalization.sessionExpired;
     }
   }
 
   String get createAccount {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.createAccount;
-      case 'Marathi': return MarathiLocalization.createAccount;
-      default: return EnglishLocalization.createAccount;
+      case 'Hindi':
+        return HindiLocalization.createAccount;
+      case 'Marathi':
+        return MarathiLocalization.createAccount;
+      default:
+        return EnglishLocalization.createAccount;
     }
   }
 
   String get createYourAccount {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.createYourAccount;
-      case 'Marathi': return MarathiLocalization.createYourAccount;
-      default: return EnglishLocalization.createYourAccount;
+      case 'Hindi':
+        return HindiLocalization.createYourAccount;
+      case 'Marathi':
+        return MarathiLocalization.createYourAccount;
+      default:
+        return EnglishLocalization.createYourAccount;
     }
   }
 
   String get confirmPassword {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.confirmPassword;
-      case 'Marathi': return MarathiLocalization.confirmPassword;
-      default: return EnglishLocalization.confirmPassword;
+      case 'Hindi':
+        return HindiLocalization.confirmPassword;
+      case 'Marathi':
+        return MarathiLocalization.confirmPassword;
+      default:
+        return EnglishLocalization.confirmPassword;
     }
   }
 
   String get alreadyHaveAccount {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.alreadyHaveAccount;
-      case 'Marathi': return MarathiLocalization.alreadyHaveAccount;
-      default: return EnglishLocalization.alreadyHaveAccount;
+      case 'Hindi':
+        return HindiLocalization.alreadyHaveAccount;
+      case 'Marathi':
+        return MarathiLocalization.alreadyHaveAccount;
+      default:
+        return EnglishLocalization.alreadyHaveAccount;
     }
   }
 
   String get accountCreated {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.accountCreated;
-      case 'Marathi': return MarathiLocalization.accountCreated;
-      default: return EnglishLocalization.accountCreated;
+      case 'Hindi':
+        return HindiLocalization.accountCreated;
+      case 'Marathi':
+        return MarathiLocalization.accountCreated;
+      default:
+        return EnglishLocalization.accountCreated;
     }
   }
 
   String get accountCreationFailed {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.accountCreationFailed;
-      case 'Marathi': return MarathiLocalization.accountCreationFailed;
-      default: return EnglishLocalization.accountCreationFailed;
+      case 'Hindi':
+        return HindiLocalization.accountCreationFailed;
+      case 'Marathi':
+        return MarathiLocalization.accountCreationFailed;
+      default:
+        return EnglishLocalization.accountCreationFailed;
     }
   }
 
   String get passwordsDoNotMatch {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.passwordsDoNotMatch;
-      case 'Marathi': return MarathiLocalization.passwordsDoNotMatch;
-      default: return EnglishLocalization.passwordsDoNotMatch;
+      case 'Hindi':
+        return HindiLocalization.passwordsDoNotMatch;
+      case 'Marathi':
+        return MarathiLocalization.passwordsDoNotMatch;
+      default:
+        return EnglishLocalization.passwordsDoNotMatch;
     }
   }
 
   String get pleaseFillAllFields {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.pleaseFillAllFields;
-      case 'Marathi': return MarathiLocalization.pleaseFillAllFields;
-      default: return EnglishLocalization.pleaseFillAllFields;
+      case 'Hindi':
+        return HindiLocalization.pleaseFillAllFields;
+      case 'Marathi':
+        return MarathiLocalization.pleaseFillAllFields;
+      default:
+        return EnglishLocalization.pleaseFillAllFields;
     }
   }
 
   String get enterValid10DigitPhone {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.enterValid10DigitPhone;
-      case 'Marathi': return MarathiLocalization.enterValid10DigitPhone;
-      default: return EnglishLocalization.enterValid10DigitPhone;
+      case 'Hindi':
+        return HindiLocalization.enterValid10DigitPhone;
+      case 'Marathi':
+        return MarathiLocalization.enterValid10DigitPhone;
+      default:
+        return EnglishLocalization.enterValid10DigitPhone;
     }
   }
 
   String get changePasswordTitle {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.changePasswordTitle;
-      case 'Marathi': return MarathiLocalization.changePasswordTitle;
-      default: return EnglishLocalization.changePasswordTitle;
+      case 'Hindi':
+        return HindiLocalization.changePasswordTitle;
+      case 'Marathi':
+        return MarathiLocalization.changePasswordTitle;
+      default:
+        return EnglishLocalization.changePasswordTitle;
     }
   }
 
   String get updateYourPassword {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.updateYourPassword;
-      case 'Marathi': return MarathiLocalization.updateYourPassword;
-      default: return EnglishLocalization.updateYourPassword;
+      case 'Hindi':
+        return HindiLocalization.updateYourPassword;
+      case 'Marathi':
+        return MarathiLocalization.updateYourPassword;
+      default:
+        return EnglishLocalization.updateYourPassword;
     }
   }
 
   String get enterOldAndNew {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.enterOldAndNew;
-      case 'Marathi': return MarathiLocalization.enterOldAndNew;
-      default: return EnglishLocalization.enterOldAndNew;
+      case 'Hindi':
+        return HindiLocalization.enterOldAndNew;
+      case 'Marathi':
+        return MarathiLocalization.enterOldAndNew;
+      default:
+        return EnglishLocalization.enterOldAndNew;
     }
   }
 
   String get oldPassword {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.oldPassword;
-      case 'Marathi': return MarathiLocalization.oldPassword;
-      default: return EnglishLocalization.oldPassword;
+      case 'Hindi':
+        return HindiLocalization.oldPassword;
+      case 'Marathi':
+        return MarathiLocalization.oldPassword;
+      default:
+        return EnglishLocalization.oldPassword;
     }
   }
 
   String get enterOldPassword {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.enterOldPassword;
-      case 'Marathi': return MarathiLocalization.enterOldPassword;
-      default: return EnglishLocalization.enterOldPassword;
+      case 'Hindi':
+        return HindiLocalization.enterOldPassword;
+      case 'Marathi':
+        return MarathiLocalization.enterOldPassword;
+      default:
+        return EnglishLocalization.enterOldPassword;
     }
   }
 
   String get newPassword {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.newPassword;
-      case 'Marathi': return MarathiLocalization.newPassword;
-      default: return EnglishLocalization.newPassword;
+      case 'Hindi':
+        return HindiLocalization.newPassword;
+      case 'Marathi':
+        return MarathiLocalization.newPassword;
+      default:
+        return EnglishLocalization.newPassword;
     }
   }
 
   String get enterNewPassword {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.enterNewPassword;
-      case 'Marathi': return MarathiLocalization.enterNewPassword;
-      default: return EnglishLocalization.enterNewPassword;
+      case 'Hindi':
+        return HindiLocalization.enterNewPassword;
+      case 'Marathi':
+        return MarathiLocalization.enterNewPassword;
+      default:
+        return EnglishLocalization.enterNewPassword;
     }
   }
 
   String get reenterNewPassword {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.reenterNewPassword;
-      case 'Marathi': return MarathiLocalization.reenterNewPassword;
-      default: return EnglishLocalization.reenterNewPassword;
+      case 'Hindi':
+        return HindiLocalization.reenterNewPassword;
+      case 'Marathi':
+        return MarathiLocalization.reenterNewPassword;
+      default:
+        return EnglishLocalization.reenterNewPassword;
     }
   }
 
   String get updatePassword {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.updatePassword;
-      case 'Marathi': return MarathiLocalization.updatePassword;
-      default: return EnglishLocalization.updatePassword;
+      case 'Hindi':
+        return HindiLocalization.updatePassword;
+      case 'Marathi':
+        return MarathiLocalization.updatePassword;
+      default:
+        return EnglishLocalization.updatePassword;
     }
   }
 
   String get pleaseEnterOldPassword {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.pleaseEnterOldPassword;
-      case 'Marathi': return MarathiLocalization.pleaseEnterOldPassword;
-      default: return EnglishLocalization.pleaseEnterOldPassword;
+      case 'Hindi':
+        return HindiLocalization.pleaseEnterOldPassword;
+      case 'Marathi':
+        return MarathiLocalization.pleaseEnterOldPassword;
+      default:
+        return EnglishLocalization.pleaseEnterOldPassword;
     }
   }
 
   String get pleaseEnterNewPassword {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.pleaseEnterNewPassword;
-      case 'Marathi': return MarathiLocalization.pleaseEnterNewPassword;
-      default: return EnglishLocalization.pleaseEnterNewPassword;
+      case 'Hindi':
+        return HindiLocalization.pleaseEnterNewPassword;
+      case 'Marathi':
+        return MarathiLocalization.pleaseEnterNewPassword;
+      default:
+        return EnglishLocalization.pleaseEnterNewPassword;
     }
   }
 
   String get pleaseConfirmNewPassword {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.pleaseConfirmNewPassword;
-      case 'Marathi': return MarathiLocalization.pleaseConfirmNewPassword;
-      default: return EnglishLocalization.pleaseConfirmNewPassword;
+      case 'Hindi':
+        return HindiLocalization.pleaseConfirmNewPassword;
+      case 'Marathi':
+        return MarathiLocalization.pleaseConfirmNewPassword;
+      default:
+        return EnglishLocalization.pleaseConfirmNewPassword;
     }
   }
 
   String get newPasswordDoNotMatch {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.newPasswordDoNotMatch;
-      case 'Marathi': return MarathiLocalization.newPasswordDoNotMatch;
-      default: return EnglishLocalization.newPasswordDoNotMatch;
+      case 'Hindi':
+        return HindiLocalization.newPasswordDoNotMatch;
+      case 'Marathi':
+        return MarathiLocalization.newPasswordDoNotMatch;
+      default:
+        return EnglishLocalization.newPasswordDoNotMatch;
     }
   }
 
   String get newPasswordTooWeak {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.newPasswordTooWeak;
-      case 'Marathi': return MarathiLocalization.newPasswordTooWeak;
-      default: return EnglishLocalization.newPasswordTooWeak;
+      case 'Hindi':
+        return HindiLocalization.newPasswordTooWeak;
+      case 'Marathi':
+        return MarathiLocalization.newPasswordTooWeak;
+      default:
+        return EnglishLocalization.newPasswordTooWeak;
     }
   }
 
   String get newPasswordMustDiffer {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.newPasswordMustDiffer;
-      case 'Marathi': return MarathiLocalization.newPasswordMustDiffer;
-      default: return EnglishLocalization.newPasswordMustDiffer;
+      case 'Hindi':
+        return HindiLocalization.newPasswordMustDiffer;
+      case 'Marathi':
+        return MarathiLocalization.newPasswordMustDiffer;
+      default:
+        return EnglishLocalization.newPasswordMustDiffer;
     }
   }
 
   String get oldPasswordIncorrect {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.oldPasswordIncorrect;
-      case 'Marathi': return MarathiLocalization.oldPasswordIncorrect;
-      default: return EnglishLocalization.oldPasswordIncorrect;
+      case 'Hindi':
+        return HindiLocalization.oldPasswordIncorrect;
+      case 'Marathi':
+        return MarathiLocalization.oldPasswordIncorrect;
+      default:
+        return EnglishLocalization.oldPasswordIncorrect;
     }
   }
 
   String get passwordUpdated {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.passwordUpdated;
-      case 'Marathi': return MarathiLocalization.passwordUpdated;
-      default: return EnglishLocalization.passwordUpdated;
+      case 'Hindi':
+        return HindiLocalization.passwordUpdated;
+      case 'Marathi':
+        return MarathiLocalization.passwordUpdated;
+      default:
+        return EnglishLocalization.passwordUpdated;
     }
   }
 
   String get failedToUpdatePassword {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.failedToUpdatePassword;
-      case 'Marathi': return MarathiLocalization.failedToUpdatePassword;
-      default: return EnglishLocalization.failedToUpdatePassword;
+      case 'Hindi':
+        return HindiLocalization.failedToUpdatePassword;
+      case 'Marathi':
+        return MarathiLocalization.failedToUpdatePassword;
+      default:
+        return EnglishLocalization.failedToUpdatePassword;
     }
   }
 
   String get noUserLoggedIn {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.noUserLoggedIn;
-      case 'Marathi': return MarathiLocalization.noUserLoggedIn;
-      default: return EnglishLocalization.noUserLoggedIn;
+      case 'Hindi':
+        return HindiLocalization.noUserLoggedIn;
+      case 'Marathi':
+        return MarathiLocalization.noUserLoggedIn;
+      default:
+        return EnglishLocalization.noUserLoggedIn;
     }
   }
 
   String get pleaseRelogin {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.pleaseRelogin;
-      case 'Marathi': return MarathiLocalization.pleaseRelogin;
-      default: return EnglishLocalization.pleaseRelogin;
+      case 'Hindi':
+        return HindiLocalization.pleaseRelogin;
+      case 'Marathi':
+        return MarathiLocalization.pleaseRelogin;
+      default:
+        return EnglishLocalization.pleaseRelogin;
     }
   }
 
   String get passwordMinLength {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.passwordMinLength;
-      case 'Marathi': return MarathiLocalization.passwordMinLength;
-      default: return EnglishLocalization.passwordMinLength;
+      case 'Hindi':
+        return HindiLocalization.passwordMinLength;
+      case 'Marathi':
+        return MarathiLocalization.passwordMinLength;
+      default:
+        return EnglishLocalization.passwordMinLength;
     }
   }
 
   String get passwordTips {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.passwordTips;
-      case 'Marathi': return MarathiLocalization.passwordTips;
-      default: return EnglishLocalization.passwordTips;
+      case 'Hindi':
+        return HindiLocalization.passwordTips;
+      case 'Marathi':
+        return MarathiLocalization.passwordTips;
+      default:
+        return EnglishLocalization.passwordTips;
     }
   }
 
   String get useAtLeast6Chars {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.useAtLeast6Chars;
-      case 'Marathi': return MarathiLocalization.useAtLeast6Chars;
-      default: return EnglishLocalization.useAtLeast6Chars;
+      case 'Hindi':
+        return HindiLocalization.useAtLeast6Chars;
+      case 'Marathi':
+        return MarathiLocalization.useAtLeast6Chars;
+      default:
+        return EnglishLocalization.useAtLeast6Chars;
     }
   }
 
   String get includeUpperLower {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.includeUpperLower;
-      case 'Marathi': return MarathiLocalization.includeUpperLower;
-      default: return EnglishLocalization.includeUpperLower;
+      case 'Hindi':
+        return HindiLocalization.includeUpperLower;
+      case 'Marathi':
+        return MarathiLocalization.includeUpperLower;
+      default:
+        return EnglishLocalization.includeUpperLower;
     }
   }
 
   String get addNumbersSpecial {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.addNumbersSpecial;
-      case 'Marathi': return MarathiLocalization.addNumbersSpecial;
-      default: return EnglishLocalization.addNumbersSpecial;
+      case 'Hindi':
+        return HindiLocalization.addNumbersSpecial;
+      case 'Marathi':
+        return MarathiLocalization.addNumbersSpecial;
+      default:
+        return EnglishLocalization.addNumbersSpecial;
     }
   }
 
   String get avoidPersonalInfo {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.avoidPersonalInfo;
-      case 'Marathi': return MarathiLocalization.avoidPersonalInfo;
-      default: return EnglishLocalization.avoidPersonalInfo;
+      case 'Hindi':
+        return HindiLocalization.avoidPersonalInfo;
+      case 'Marathi':
+        return MarathiLocalization.avoidPersonalInfo;
+      default:
+        return EnglishLocalization.avoidPersonalInfo;
     }
   }
 
@@ -5612,162 +6248,222 @@ class AppLocalizations {
 
   String get appLogs {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.appLogs;
-      case 'Marathi': return MarathiLocalization.appLogs;
-      default: return EnglishLocalization.appLogs;
+      case 'Hindi':
+        return HindiLocalization.appLogs;
+      case 'Marathi':
+        return MarathiLocalization.appLogs;
+      default:
+        return EnglishLocalization.appLogs;
     }
   }
 
   String get searchLogs {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.searchLogs;
-      case 'Marathi': return MarathiLocalization.searchLogs;
-      default: return EnglishLocalization.searchLogs;
+      case 'Hindi':
+        return HindiLocalization.searchLogs;
+      case 'Marathi':
+        return MarathiLocalization.searchLogs;
+      default:
+        return EnglishLocalization.searchLogs;
     }
   }
 
   String get clearLogs {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.clearLogs;
-      case 'Marathi': return MarathiLocalization.clearLogs;
-      default: return EnglishLocalization.clearLogs;
+      case 'Hindi':
+        return HindiLocalization.clearLogs;
+      case 'Marathi':
+        return MarathiLocalization.clearLogs;
+      default:
+        return EnglishLocalization.clearLogs;
     }
   }
 
   String get clearLogsConfirm {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.clearLogsConfirm;
-      case 'Marathi': return MarathiLocalization.clearLogsConfirm;
-      default: return EnglishLocalization.clearLogsConfirm;
+      case 'Hindi':
+        return HindiLocalization.clearLogsConfirm;
+      case 'Marathi':
+        return MarathiLocalization.clearLogsConfirm;
+      default:
+        return EnglishLocalization.clearLogsConfirm;
     }
   }
 
   String get clearLogsMessage {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.clearLogsMessage;
-      case 'Marathi': return MarathiLocalization.clearLogsMessage;
-      default: return EnglishLocalization.clearLogsMessage;
+      case 'Hindi':
+        return HindiLocalization.clearLogsMessage;
+      case 'Marathi':
+        return MarathiLocalization.clearLogsMessage;
+      default:
+        return EnglishLocalization.clearLogsMessage;
     }
   }
 
   String get shareLogs {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.shareLogs;
-      case 'Marathi': return MarathiLocalization.shareLogs;
-      default: return EnglishLocalization.shareLogs;
+      case 'Hindi':
+        return HindiLocalization.shareLogs;
+      case 'Marathi':
+        return MarathiLocalization.shareLogs;
+      default:
+        return EnglishLocalization.shareLogs;
     }
   }
 
   String get copyLogs {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.copyLogs;
-      case 'Marathi': return MarathiLocalization.copyLogs;
-      default: return EnglishLocalization.copyLogs;
+      case 'Hindi':
+        return HindiLocalization.copyLogs;
+      case 'Marathi':
+        return MarathiLocalization.copyLogs;
+      default:
+        return EnglishLocalization.copyLogs;
     }
   }
 
   String get logsCopied {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.logsCopied;
-      case 'Marathi': return MarathiLocalization.logsCopied;
-      default: return EnglishLocalization.logsCopied;
+      case 'Hindi':
+        return HindiLocalization.logsCopied;
+      case 'Marathi':
+        return MarathiLocalization.logsCopied;
+      default:
+        return EnglishLocalization.logsCopied;
     }
   }
 
   String get enableAutoScroll {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.enableAutoScroll;
-      case 'Marathi': return MarathiLocalization.enableAutoScroll;
-      default: return EnglishLocalization.enableAutoScroll;
+      case 'Hindi':
+        return HindiLocalization.enableAutoScroll;
+      case 'Marathi':
+        return MarathiLocalization.enableAutoScroll;
+      default:
+        return EnglishLocalization.enableAutoScroll;
     }
   }
 
   String get disableAutoScroll {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.disableAutoScroll;
-      case 'Marathi': return MarathiLocalization.disableAutoScroll;
-      default: return EnglishLocalization.disableAutoScroll;
+      case 'Hindi':
+        return HindiLocalization.disableAutoScroll;
+      case 'Marathi':
+        return MarathiLocalization.disableAutoScroll;
+      default:
+        return EnglishLocalization.disableAutoScroll;
     }
   }
 
   String get noLogsToDisplay {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.noLogsToDisplay;
-      case 'Marathi': return MarathiLocalization.noLogsToDisplay;
-      default: return EnglishLocalization.noLogsToDisplay;
+      case 'Hindi':
+        return HindiLocalization.noLogsToDisplay;
+      case 'Marathi':
+        return MarathiLocalization.noLogsToDisplay;
+      default:
+        return EnglishLocalization.noLogsToDisplay;
     }
   }
 
   String get errorSharingLogs {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.errorSharingLogs;
-      case 'Marathi': return MarathiLocalization.errorSharingLogs;
-      default: return EnglishLocalization.errorSharingLogs;
+      case 'Hindi':
+        return HindiLocalization.errorSharingLogs;
+      case 'Marathi':
+        return MarathiLocalization.errorSharingLogs;
+      default:
+        return EnglishLocalization.errorSharingLogs;
     }
   }
 
   String get appLogsExported {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.appLogsExported;
-      case 'Marathi': return MarathiLocalization.appLogsExported;
-      default: return EnglishLocalization.appLogsExported;
+      case 'Hindi':
+        return HindiLocalization.appLogsExported;
+      case 'Marathi':
+        return MarathiLocalization.appLogsExported;
+      default:
+        return EnglishLocalization.appLogsExported;
     }
   }
 
   String get debug {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.debug;
-      case 'Marathi': return MarathiLocalization.debug;
-      default: return EnglishLocalization.debug;
+      case 'Hindi':
+        return HindiLocalization.debug;
+      case 'Marathi':
+        return MarathiLocalization.debug;
+      default:
+        return EnglishLocalization.debug;
     }
   }
 
   String get info {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.info;
-      case 'Marathi': return MarathiLocalization.info;
-      default: return EnglishLocalization.info;
+      case 'Hindi':
+        return HindiLocalization.info;
+      case 'Marathi':
+        return MarathiLocalization.info;
+      default:
+        return EnglishLocalization.info;
     }
   }
 
   String get warn {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.warn;
-      case 'Marathi': return MarathiLocalization.warn;
-      default: return EnglishLocalization.warn;
+      case 'Hindi':
+        return HindiLocalization.warn;
+      case 'Marathi':
+        return MarathiLocalization.warn;
+      default:
+        return EnglishLocalization.warn;
     }
   }
 
   String get level {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.level;
-      case 'Marathi': return MarathiLocalization.level;
-      default: return EnglishLocalization.level;
+      case 'Hindi':
+        return HindiLocalization.level;
+      case 'Marathi':
+        return MarathiLocalization.level;
+      default:
+        return EnglishLocalization.level;
     }
   }
 
   String get stackTrace {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.stackTrace;
-      case 'Marathi': return MarathiLocalization.stackTrace;
-      default: return EnglishLocalization.stackTrace;
+      case 'Hindi':
+        return HindiLocalization.stackTrace;
+      case 'Marathi':
+        return MarathiLocalization.stackTrace;
+      default:
+        return EnglishLocalization.stackTrace;
     }
   }
 
   // Action Menu
   String get options {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.options;
-      case 'Marathi': return MarathiLocalization.options;
-      default: return EnglishLocalization.options;
+      case 'Hindi':
+        return HindiLocalization.options;
+      case 'Marathi':
+        return MarathiLocalization.options;
+      default:
+        return EnglishLocalization.options;
     }
   }
 
   String get reportIssue {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.reportIssue;
-      case 'Marathi': return MarathiLocalization.reportIssue;
-      default: return EnglishLocalization.reportIssue;
+      case 'Hindi':
+        return HindiLocalization.reportIssue;
+      case 'Marathi':
+        return MarathiLocalization.reportIssue;
+      default:
+        return EnglishLocalization.reportIssue;
     }
   }
 
@@ -5776,25 +6472,34 @@ class AppLocalizations {
   // ═══════════════════════════════════════════════════
   String get purchaseHistory {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.purchaseHistory;
-      case 'Marathi': return MarathiLocalization.purchaseHistory;
-      default: return EnglishLocalization.purchaseHistory;
+      case 'Hindi':
+        return HindiLocalization.purchaseHistory;
+      case 'Marathi':
+        return MarathiLocalization.purchaseHistory;
+      default:
+        return EnglishLocalization.purchaseHistory;
     }
   }
 
   String get noPurchasesFound {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.noPurchasesFound;
-      case 'Marathi': return MarathiLocalization.noPurchasesFound;
-      default: return EnglishLocalization.noPurchasesFound;
+      case 'Hindi':
+        return HindiLocalization.noPurchasesFound;
+      case 'Marathi':
+        return MarathiLocalization.noPurchasesFound;
+      default:
+        return EnglishLocalization.noPurchasesFound;
     }
   }
 
   String get addNewPurchase {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.addNewPurchase;
-      case 'Marathi': return MarathiLocalization.addNewPurchase;
-      default: return EnglishLocalization.addNewPurchase;
+      case 'Hindi':
+        return HindiLocalization.addNewPurchase;
+      case 'Marathi':
+        return MarathiLocalization.addNewPurchase;
+      default:
+        return EnglishLocalization.addNewPurchase;
     }
   }
 
@@ -5803,217 +6508,543 @@ class AppLocalizations {
   // ═══════════════════════════════════════════════════
   String get taxSettings {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.taxSettings;
-      case 'Marathi': return MarathiLocalization.taxSettings;
-      default: return EnglishLocalization.taxSettings;
+      case 'Hindi':
+        return HindiLocalization.taxSettings;
+      case 'Marathi':
+        return MarathiLocalization.taxSettings;
+      default:
+        return EnglishLocalization.taxSettings;
     }
   }
 
   String get taxConfiguration {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.taxConfiguration;
-      case 'Marathi': return MarathiLocalization.taxConfiguration;
-      default: return EnglishLocalization.taxConfiguration;
+      case 'Hindi':
+        return HindiLocalization.taxConfiguration;
+      case 'Marathi':
+        return MarathiLocalization.taxConfiguration;
+      default:
+        return EnglishLocalization.taxConfiguration;
     }
   }
 
   String get enableCgst {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.enableCgst;
-      case 'Marathi': return MarathiLocalization.enableCgst;
-      default: return EnglishLocalization.enableCgst;
+      case 'Hindi':
+        return HindiLocalization.enableCgst;
+      case 'Marathi':
+        return MarathiLocalization.enableCgst;
+      default:
+        return EnglishLocalization.enableCgst;
     }
   }
 
   String get enableSgst {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.enableSgst;
-      case 'Marathi': return MarathiLocalization.enableSgst;
-      default: return EnglishLocalization.enableSgst;
+      case 'Hindi':
+        return HindiLocalization.enableSgst;
+      case 'Marathi':
+        return MarathiLocalization.enableSgst;
+      default:
+        return EnglishLocalization.enableSgst;
     }
   }
 
   String get enableOtherTax {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.enableOtherTax;
-      case 'Marathi': return MarathiLocalization.enableOtherTax;
-      default: return EnglishLocalization.enableOtherTax;
+      case 'Hindi':
+        return HindiLocalization.enableOtherTax;
+      case 'Marathi':
+        return MarathiLocalization.enableOtherTax;
+      default:
+        return EnglishLocalization.enableOtherTax;
     }
   }
 
   String get cgstPercent {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.cgstPercent;
-      case 'Marathi': return MarathiLocalization.cgstPercent;
-      default: return EnglishLocalization.cgstPercent;
+      case 'Hindi':
+        return HindiLocalization.cgstPercent;
+      case 'Marathi':
+        return MarathiLocalization.cgstPercent;
+      default:
+        return EnglishLocalization.cgstPercent;
     }
   }
 
   String get sgstPercent {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.sgstPercent;
-      case 'Marathi': return MarathiLocalization.sgstPercent;
-      default: return EnglishLocalization.sgstPercent;
+      case 'Hindi':
+        return HindiLocalization.sgstPercent;
+      case 'Marathi':
+        return MarathiLocalization.sgstPercent;
+      default:
+        return EnglishLocalization.sgstPercent;
     }
   }
 
   String get otherTaxName {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.otherTaxName;
-      case 'Marathi': return MarathiLocalization.otherTaxName;
-      default: return EnglishLocalization.otherTaxName;
+      case 'Hindi':
+        return HindiLocalization.otherTaxName;
+      case 'Marathi':
+        return MarathiLocalization.otherTaxName;
+      default:
+        return EnglishLocalization.otherTaxName;
     }
   }
 
   String get otherTaxPercent {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.otherTaxPercent;
-      case 'Marathi': return MarathiLocalization.otherTaxPercent;
-      default: return EnglishLocalization.otherTaxPercent;
+      case 'Hindi':
+        return HindiLocalization.otherTaxPercent;
+      case 'Marathi':
+        return MarathiLocalization.otherTaxPercent;
+      default:
+        return EnglishLocalization.otherTaxPercent;
     }
   }
 
   String get defaultGstMode {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.defaultGstMode;
-      case 'Marathi': return MarathiLocalization.defaultGstMode;
-      default: return EnglishLocalization.defaultGstMode;
+      case 'Hindi':
+        return HindiLocalization.defaultGstMode;
+      case 'Marathi':
+        return MarathiLocalization.defaultGstMode;
+      default:
+        return EnglishLocalization.defaultGstMode;
     }
   }
 
   String get includeGstInTotal {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.includeGstInTotal;
-      case 'Marathi': return MarathiLocalization.includeGstInTotal;
-      default: return EnglishLocalization.includeGstInTotal;
+      case 'Hindi':
+        return HindiLocalization.includeGstInTotal;
+      case 'Marathi':
+        return MarathiLocalization.includeGstInTotal;
+      default:
+        return EnglishLocalization.includeGstInTotal;
     }
   }
 
   String get excludeGstFromTotal {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.excludeGstFromTotal;
-      case 'Marathi': return MarathiLocalization.excludeGstFromTotal;
-      default: return EnglishLocalization.excludeGstFromTotal;
+      case 'Hindi':
+        return HindiLocalization.excludeGstFromTotal;
+      case 'Marathi':
+        return MarathiLocalization.excludeGstFromTotal;
+      default:
+        return EnglishLocalization.excludeGstFromTotal;
     }
   }
 
   String get includeGstSubtitle {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.includeGstSubtitle;
-      case 'Marathi': return MarathiLocalization.includeGstSubtitle;
-      default: return EnglishLocalization.includeGstSubtitle;
+      case 'Hindi':
+        return HindiLocalization.includeGstSubtitle;
+      case 'Marathi':
+        return MarathiLocalization.includeGstSubtitle;
+      default:
+        return EnglishLocalization.includeGstSubtitle;
     }
   }
 
   String get excludeGstSubtitle {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.excludeGstSubtitle;
-      case 'Marathi': return MarathiLocalization.excludeGstSubtitle;
-      default: return EnglishLocalization.excludeGstSubtitle;
+      case 'Hindi':
+        return HindiLocalization.excludeGstSubtitle;
+      case 'Marathi':
+        return MarathiLocalization.excludeGstSubtitle;
+      default:
+        return EnglishLocalization.excludeGstSubtitle;
     }
   }
 
   String get billWithoutGst {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.billWithoutGst;
-      case 'Marathi': return MarathiLocalization.billWithoutGst;
-      default: return EnglishLocalization.billWithoutGst;
+      case 'Hindi':
+        return HindiLocalization.billWithoutGst;
+      case 'Marathi':
+        return MarathiLocalization.billWithoutGst;
+      default:
+        return EnglishLocalization.billWithoutGst;
     }
   }
 
   String get billWithGst {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.billWithGst;
-      case 'Marathi': return MarathiLocalization.billWithGst;
-      default: return EnglishLocalization.billWithGst;
+      case 'Hindi':
+        return HindiLocalization.billWithGst;
+      case 'Marathi':
+        return MarathiLocalization.billWithGst;
+      default:
+        return EnglishLocalization.billWithGst;
     }
   }
 
   String get gstCalculationMode {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.gstCalculationMode;
-      case 'Marathi': return MarathiLocalization.gstCalculationMode;
-      default: return EnglishLocalization.gstCalculationMode;
+      case 'Hindi':
+        return HindiLocalization.gstCalculationMode;
+      case 'Marathi':
+        return MarathiLocalization.gstCalculationMode;
+      default:
+        return EnglishLocalization.gstCalculationMode;
     }
   }
 
   String get taxMode {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.taxMode;
-      case 'Marathi': return MarathiLocalization.taxMode;
-      default: return EnglishLocalization.taxMode;
+      case 'Hindi':
+        return HindiLocalization.taxMode;
+      case 'Marathi':
+        return MarathiLocalization.taxMode;
+      default:
+        return EnglishLocalization.taxMode;
     }
   }
 
   String get cgst {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.cgst;
-      case 'Marathi': return MarathiLocalization.cgst;
-      default: return EnglishLocalization.cgst;
+      case 'Hindi':
+        return HindiLocalization.cgst;
+      case 'Marathi':
+        return MarathiLocalization.cgst;
+      default:
+        return EnglishLocalization.cgst;
     }
   }
 
   String get sgst {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.sgst;
-      case 'Marathi': return MarathiLocalization.sgst;
-      default: return EnglishLocalization.sgst;
+      case 'Hindi':
+        return HindiLocalization.sgst;
+      case 'Marathi':
+        return MarathiLocalization.sgst;
+      default:
+        return EnglishLocalization.sgst;
     }
   }
 
   String get totalTax {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.totalTax;
-      case 'Marathi': return MarathiLocalization.totalTax;
-      default: return EnglishLocalization.totalTax;
+      case 'Hindi':
+        return HindiLocalization.totalTax;
+      case 'Marathi':
+        return MarathiLocalization.totalTax;
+      default:
+        return EnglishLocalization.totalTax;
     }
   }
 
   String get taxableValue {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.taxableValue;
-      case 'Marathi': return MarathiLocalization.taxableValue;
-      default: return EnglishLocalization.taxableValue;
+      case 'Hindi':
+        return HindiLocalization.taxableValue;
+      case 'Marathi':
+        return MarathiLocalization.taxableValue;
+      default:
+        return EnglishLocalization.taxableValue;
     }
   }
 
   String get pricesInclusiveOfGst {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.pricesInclusiveOfGst;
-      case 'Marathi': return MarathiLocalization.pricesInclusiveOfGst;
-      default: return EnglishLocalization.pricesInclusiveOfGst;
+      case 'Hindi':
+        return HindiLocalization.pricesInclusiveOfGst;
+      case 'Marathi':
+        return MarathiLocalization.pricesInclusiveOfGst;
+      default:
+        return EnglishLocalization.pricesInclusiveOfGst;
     }
   }
 
   String get gstExtra {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.gstExtra;
-      case 'Marathi': return MarathiLocalization.gstExtra;
-      default: return EnglishLocalization.gstExtra;
+      case 'Hindi':
+        return HindiLocalization.gstExtra;
+      case 'Marathi':
+        return MarathiLocalization.gstExtra;
+      default:
+        return EnglishLocalization.gstExtra;
     }
   }
 
   String get enterValidPercentage {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.enterValidPercentage;
-      case 'Marathi': return MarathiLocalization.enterValidPercentage;
-      default: return EnglishLocalization.enterValidPercentage;
+      case 'Hindi':
+        return HindiLocalization.enterValidPercentage;
+      case 'Marathi':
+        return MarathiLocalization.enterValidPercentage;
+      default:
+        return EnglishLocalization.enterValidPercentage;
     }
   }
 
   String get taxPercentageInputs {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.taxPercentageInputs;
-      case 'Marathi': return MarathiLocalization.taxPercentageInputs;
-      default: return EnglishLocalization.taxPercentageInputs;
+      case 'Hindi':
+        return HindiLocalization.taxPercentageInputs;
+      case 'Marathi':
+        return MarathiLocalization.taxPercentageInputs;
+      default:
+        return EnglishLocalization.taxPercentageInputs;
     }
   }
 
   String get taxToggles {
     switch (languageCode) {
-      case 'Hindi': return HindiLocalization.taxToggles;
-      case 'Marathi': return MarathiLocalization.taxToggles;
-      default: return EnglishLocalization.taxToggles;
+      case 'Hindi':
+        return HindiLocalization.taxToggles;
+      case 'Marathi':
+        return MarathiLocalization.taxToggles;
+      default:
+        return EnglishLocalization.taxToggles;
+    }
+  }
+
+  // ═══════════════════════════════════════════════════
+  // Billing Module Extended
+  // ═══════════════════════════════════════════════════
+  String get linkCustomerToBill {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.linkCustomerToBill;
+      case 'Marathi':
+        return MarathiLocalization.linkCustomerToBill;
+      default:
+        return EnglishLocalization.linkCustomerToBill;
+    }
+  }
+
+  String get autoLinkByPhone {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.autoLinkByPhone;
+      case 'Marathi':
+        return MarathiLocalization.autoLinkByPhone;
+      default:
+        return EnglishLocalization.autoLinkByPhone;
+    }
+  }
+
+  String get quickAddByCodeOrSearch {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.quickAddByCodeOrSearch;
+      case 'Marathi':
+        return MarathiLocalization.quickAddByCodeOrSearch;
+      default:
+        return EnglishLocalization.quickAddByCodeOrSearch;
+    }
+  }
+
+  String get enterValidAmount {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.enterValidAmount;
+      case 'Marathi':
+        return MarathiLocalization.enterValidAmount;
+      default:
+        return EnglishLocalization.enterValidAmount;
+    }
+  }
+
+  String get pleaseEnterValidPrice {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.pleaseEnterValidPrice;
+      case 'Marathi':
+        return MarathiLocalization.pleaseEnterValidPrice;
+      default:
+        return EnglishLocalization.pleaseEnterValidPrice;
+    }
+  }
+
+  String get reset {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.reset;
+      case 'Marathi':
+        return MarathiLocalization.reset;
+      default:
+        return EnglishLocalization.reset;
+    }
+  }
+
+  String get applyDiscountToBill {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.applyDiscountToBill;
+      case 'Marathi':
+        return MarathiLocalization.applyDiscountToBill;
+      default:
+        return EnglishLocalization.applyDiscountToBill;
+    }
+  }
+
+  String get selectTaxMethod {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.selectTaxMethod;
+      case 'Marathi':
+        return MarathiLocalization.selectTaxMethod;
+      default:
+        return EnglishLocalization.selectTaxMethod;
+    }
+  }
+
+  String get noGst {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.noGst;
+      case 'Marathi':
+        return MarathiLocalization.noGst;
+      default:
+        return EnglishLocalization.noGst;
+    }
+  }
+
+  String get incl {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.incl;
+      case 'Marathi':
+        return MarathiLocalization.incl;
+      default:
+        return EnglishLocalization.incl;
+    }
+  }
+
+  String get excl {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.excl;
+      case 'Marathi':
+        return MarathiLocalization.excl;
+      default:
+        return EnglishLocalization.excl;
+    }
+  }
+
+  String get selectPaymentMethod {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.selectPaymentMethod;
+      case 'Marathi':
+        return MarathiLocalization.selectPaymentMethod;
+      default:
+        return EnglishLocalization.selectPaymentMethod;
+    }
+  }
+
+  String get quickActions {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.quickActions;
+      case 'Marathi':
+        return MarathiLocalization.quickActions;
+      default:
+        return EnglishLocalization.quickActions;
+    }
+  }
+
+  String get events {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.events;
+      case 'Marathi':
+        return MarathiLocalization.events;
+      default:
+        return EnglishLocalization.events;
+    }
+  }
+
+  String get barcode {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.barcode;
+      case 'Marathi':
+        return MarathiLocalization.barcode;
+      default:
+        return EnglishLocalization.barcode;
+    }
+  }
+
+  String get createAndPrintInvoices {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.createAndPrintInvoices;
+      case 'Marathi':
+        return MarathiLocalization.createAndPrintInvoices;
+      default:
+        return EnglishLocalization.createAndPrintInvoices;
+    }
+  }
+
+  String get printColumnSettings {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.printColumnSettings;
+      case 'Marathi':
+        return MarathiLocalization.printColumnSettings;
+      default:
+        return EnglishLocalization.printColumnSettings;
+    }
+  }
+
+  String get pdfCreationFailed {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.pdfCreationFailed;
+      case 'Marathi':
+        return MarathiLocalization.pdfCreationFailed;
+      default:
+        return EnglishLocalization.pdfCreationFailed;
+    }
+  }
+
+  String get pdfFileEmpty {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.pdfFileEmpty;
+      case 'Marathi':
+        return MarathiLocalization.pdfFileEmpty;
+      default:
+        return EnglishLocalization.pdfFileEmpty;
+    }
+  }
+
+  String get failedToGeneratePdf {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.failedToGeneratePdf;
+      case 'Marathi':
+        return MarathiLocalization.failedToGeneratePdf;
+      default:
+        return EnglishLocalization.failedToGeneratePdf;
+    }
+  }
+
+  String get full {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.full;
+      case 'Marathi':
+        return MarathiLocalization.full;
+      default:
+        return EnglishLocalization.full;
+    }
+  }
+
+  String get partial {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.partial;
+      case 'Marathi':
+        return MarathiLocalization.partial;
+      default:
+        return EnglishLocalization.partial;
     }
   }
 }
