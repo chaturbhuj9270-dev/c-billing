@@ -239,7 +239,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
       if (mounted && _customers.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error loading customers: $e'),
+            content: Text('${_localizations.errorLoadingCustomers}: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -410,7 +410,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
         _clearForm();
         if (mounted && context.mounted) {
           Navigator.pop(context);
-          _showSnackbar('Customer updated successfully', false);
+          _showSnackbar(_localizations.customerUpdatedSuccess, false);
         }
       } else {
         // Create new -> Isar first (offline-first)
@@ -427,13 +427,13 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
         _clearForm();
         if (mounted && context.mounted) {
           Navigator.pop(context);
-          _showSnackbar('Customer saved. Will sync when online.', false);
+          _showSnackbar(_localizations.customerSavedOffline, false);
         }
       }
     } catch (e) {
       debugPrint('[EnhancedCustomer] Save error: $e');
       if (mounted && context.mounted) {
-        _showSnackbar('Error saving customer: $e', true);
+        _showSnackbar('${_localizations.errorSavingCustomer}: $e', true);
       }
     } finally {
       if (mounted) setState(() => _isSaving = false);
@@ -465,7 +465,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Are you sure you want to delete this customer?',
+                _localizations.deleteCustomerConfirmation,
                 style: TextStyle(
                   fontFamily: 'Literata',
                   fontSize: 14,
@@ -535,7 +535,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
               ),
               const SizedBox(height: 12),
               Text(
-                'This action cannot be undone.',
+                _localizations.actionCannotBeUndone,
                 style: TextStyle(
                   fontFamily: 'Literata',
                   fontSize: 12,
@@ -610,12 +610,12 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
       );
 
       if (mounted && context.mounted) {
-        _showSnackbar('Customer deleted successfully', false);
+        _showSnackbar(_localizations.customerDeletedSuccess, false);
       }
     } catch (e) {
       debugPrint('[EnhancedCustomer] Delete error: $e');
       if (mounted && context.mounted) {
-        _showSnackbar('Error deleting customer: $e', true);
+        _showSnackbar('${_localizations.errorDeletingCustomer}: $e', true);
       }
     }
   }
@@ -680,6 +680,10 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
                         CustomerSummaryWidget(
                           customers: _customers,
                           searchQuery: _searchQuery,
+                          customersLabel: _localizations.customers,
+                          pendingLabel: _localizations.pendingAmount,
+                          unsyncedLabel: _localizations.unsynced,
+                          allSyncedLabel: _localizations.allSynced,
                         ),
 
                         const SizedBox(height: 16),
@@ -699,6 +703,9 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
                             setState(() => _sortAscending = !_sortAscending);
                           },
                           searchHint: _localizations.searchCustomers,
+                          sortByNameLabel: _localizations.sortByName,
+                          sortByDateLabel: _localizations.sortByDate,
+                          sortByPendingLabel: _localizations.pendingAmount,
                         ),
 
                         const SizedBox(height: 16),
@@ -721,6 +728,8 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
                             noResultsTitle: _localizations.noResultsFound,
                             noResultsSubtitle:
                                 _localizations.tryDifferentSearch,
+                            pendingLabel: _localizations.syncPending
+                                .toLowerCase(),
                           ),
                         ),
                       ],
@@ -1023,7 +1032,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
                   const Divider(height: 1),
                   _buildContextMenuItem(
                     icon: Icons.visibility_rounded,
-                    label: 'View Details',
+                    label: _localizations.viewDetails,
                     onTap: () {
                       Navigator.pop(context);
                       _showCustomerDetails(customer);
@@ -1331,7 +1340,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
                 return '$label ${_localizations.isRequired}';
               }
               if (label == _localizations.contactNumber && value.length != 10) {
-                return 'Contact number must be exactly 10 digits';
+                return _localizations.contactMustBe10Digits;
               }
               return null;
             }
@@ -1486,7 +1495,9 @@ class _CustomerDetailsSheet extends StatelessWidget {
                                         ),
                                         const SizedBox(width: 4),
                                         Text(
-                                          isSynced ? 'Synced' : 'Pending',
+                                          isSynced
+                                              ? localizations.synced
+                                              : localizations.syncPending,
                                           style: TextStyle(
                                             fontFamily: 'Literata',
                                             fontSize: 10,
@@ -1560,7 +1571,7 @@ class _CustomerDetailsSheet extends StatelessWidget {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    'Pending Amount',
+                                    localizations.pendingAmount,
                                     style: TextStyle(
                                       fontFamily: 'Literata',
                                       fontSize: 12,

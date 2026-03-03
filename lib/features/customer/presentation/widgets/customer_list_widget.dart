@@ -21,6 +21,7 @@ class CustomerListWidget extends StatelessWidget {
   final String emptySubtitle;
   final String noResultsTitle;
   final String noResultsSubtitle;
+  final String pendingLabel;
 
   const CustomerListWidget({
     super.key,
@@ -38,6 +39,7 @@ class CustomerListWidget extends StatelessWidget {
     this.emptySubtitle = 'Add your first customer to get started',
     this.noResultsTitle = 'No results found',
     this.noResultsSubtitle = 'Try a different search term',
+    this.pendingLabel = 'pending',
   });
 
   List<Map<String, dynamic>> get _filteredAndSortedCustomers {
@@ -138,6 +140,7 @@ class CustomerListWidget extends StatelessWidget {
               onTransactionsTap: onTransactionsTap != null
                   ? () => onTransactionsTap!(filtered[index])
                   : null,
+              pendingLabel: pendingLabel,
             ),
           );
         },
@@ -216,6 +219,7 @@ class _CustomerCard extends StatelessWidget {
   final VoidCallback? onLongPress;
   final VoidCallback? onFinanceTap;
   final VoidCallback? onTransactionsTap;
+  final String pendingLabel;
 
   const _CustomerCard({
     required this.customer,
@@ -223,6 +227,7 @@ class _CustomerCard extends StatelessWidget {
     this.onLongPress,
     this.onFinanceTap,
     this.onTransactionsTap,
+    this.pendingLabel = 'pending',
   });
 
   @override
@@ -390,7 +395,7 @@ class _CustomerCard extends StatelessWidget {
                             ),
                           ),
                           Text(
-                            'pending',
+                            pendingLabel,
                             style: TextStyle(
                               fontSize: 9,
                               fontWeight: FontWeight.w500,

@@ -918,4 +918,97 @@ class EnglishLocalization {
   static const String margin = 'Margin';
   static const String itemsReturned = 'items returned';
   static const String purchaseReturnShort = 'P. Return';
+
+  // Customer Extended
+  static const String deleteCustomerConfirmation =
+      'Are you sure you want to delete this customer?';
+  static const String customerUpdatedSuccess = 'Customer updated successfully';
+  static const String customerSavedOffline =
+      'Customer saved. Will sync when online.';
+  static const String errorSavingCustomer = 'Error saving customer';
+  static const String customerDeletedSuccess = 'Customer deleted successfully';
+  static const String errorDeletingCustomer = 'Error deleting customer';
+  static const String synced = 'Synced';
+  static const String syncPending = 'Pending';
+  static const String contactMustBe10Digits =
+      'Contact number must be exactly 10 digits';
+  static const String errorLoadingCustomers = 'Error loading customers';
+  static const String unsynced = 'Unsynced';
+  static const String allSynced = 'All Synced';
+  static const String sortByName = 'Name';
+  static const String sortByDate = 'Date';
+  static const String financeHistory = 'Finance History';
+  static const String clearBalance = 'Clear';
+  static const String totalBilled = 'Total Billed';
+  static const String noBillsYet = 'No Bills Yet';
+  static const String billsWillAppearHere =
+      'Bills created for this customer will appear here';
+  static const String noEventsYet = 'No Events/Orders Yet';
+  static const String eventsWillAppearHere =
+      'Events and orders for this customer will appear here';
+
+  // Events & Orders Extended
+  static const String orderUpdated = 'Order updated';
+  static const String orderSaved = 'Order saved';
+  static const String errorSavingOrder = 'Error saving order';
+  static const String editEvent = 'Edit Event';
+  static const String editOrder = 'Edit Order';
+  static const String newEvent = 'New Event';
+  static const String newOrder = 'New Order';
+  static const String event = 'Event';
+  static const String salesOrder = 'Sales Order';
+  static const String customerDetails = 'Customer Details';
+  static const String customerNameRequired = 'Customer name is required';
+  static const String eventDetails = 'Event Details';
+  static const String orderDetails = 'Order Details';
+  static const String eventName = 'Event Name';
+  static const String orderName = 'Order Name';
+  static const String nameIsRequired = 'Name is required';
+  static const String descriptionOptional = 'Description (Optional)';
+  static const String locationVenueOptional = 'Location/Venue (Optional)';
+  static const String dateRequired = 'Date *';
+  static const String timeRequired = 'Time *';
+  static const String subEvents = 'Sub Events';
+  static const String noSubEventsAdded = 'No sub-events added';
+  static const String tapToAddSubEvents =
+      'Tap + to add events like Haldi, Sangeet, etc.';
+  static const String eventsAndOrders = 'Events & Orders';
+  static const String salesOrders = 'Sales Orders';
+  static const String manageYourEvents = 'Manage your events';
+  static const String manageYourOrders = 'Manage your sales orders';
+  static const String manageYourEventsAndOrders =
+      'Manage your events and sales orders';
+  static const String searchEventsOrOrders = 'Search events or orders...';
+  static const String ordersCount = 'orders';
+  static const String clearStatus = 'Clear status';
+  static const String noEventsFound = 'No events found';
+  static const String noSalesOrdersFound = 'No sales orders found';
+  static const String noOrdersFound = 'No orders found';
+  static const String tapToCreateFirstOrder =
+      'Tap + to create your first order';
+  static const String errorLoadingOrders = 'Error loading orders';
+  static const String pleaseTryAgain = 'Please try again';
+  static const String syncing = 'Syncing...';
+  static const String sales = 'Sales';
+  static const String confirmed = 'Confirmed';
+  static const String subEventsCount = 'sub-events';
+  static const String productsCount = 'products';
+  static const String displayMode = 'Display Mode';
+  static const String showEvents = 'Show Events';
+  static const String eventModeActive = 'Event mode is active';
+  static const String orderModeActive = 'Order mode is active';
+  static const String eventModeTitle = 'Event Mode';
+  static const String orderModeTitle = 'Order Mode';
+  static const String eventModeDescription =
+      'For managing events with sub-events, venues, and schedules';
+  static const String orderModeDescription =
+      'For managing sales orders with products and deliveries';
+  static const String howItWorks = 'How it works';
+  static const String settingsDescription =
+      'When enabled, the list will focus on Events with event-specific features. '
+      'When disabled, it will focus on Sales Orders with order-specific features. '
+      'Reports and invoices will be generated accordingly.';
+  static const String addColumn = 'Add Column';
+  static const String addCustomFieldsDesc =
+      'Add custom fields for events & sub-events';
 }

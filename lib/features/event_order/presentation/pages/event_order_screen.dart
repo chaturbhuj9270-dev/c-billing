@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../../../core/localization/app_localizations.dart';
+import '../../../../core/services/language_service.dart';
 import '../../../../core/services/event_order_settings_service.dart';
 import '../../domain/entities/event_order.dart';
 import '../../domain/entities/sub_event.dart';
@@ -401,9 +403,12 @@ class _EventOrderScreenState extends State<EventOrderScreen>
 
       if (mounted) {
         Navigator.of(context).pop(true);
+        final l10n = AppLocalizations.of(
+          LanguageService.instance.currentLanguage,
+        );
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(_isEditing ? 'Order updated' : 'Order saved'),
+            content: Text(_isEditing ? l10n.orderUpdated : l10n.orderSaved),
             backgroundColor: Colors.green.shade600,
             behavior: SnackBarBehavior.floating,
           ),
@@ -412,7 +417,9 @@ class _EventOrderScreenState extends State<EventOrderScreen>
     } catch (e) {
       debugPrint('[EventOrderScreen] Error saving order: $e');
       if (mounted) {
-        _showErrorSnackBar('Error saving order: $e');
+        _showErrorSnackBar(
+          '${AppLocalizations.of(LanguageService.instance.currentLanguage).errorSavingOrder}: $e',
+        );
       }
     } finally {
       if (mounted) {
@@ -517,8 +524,20 @@ class _EventOrderScreenState extends State<EventOrderScreen>
       ),
       title: Text(
         _isEditing
-            ? 'Edit ${_orderType == OrderType.event ? "Event" : "Order"}'
-            : 'New ${_orderType == OrderType.event ? "Event" : "Order"}',
+            ? (_orderType == OrderType.event
+                  ? AppLocalizations.of(
+                      LanguageService.instance.currentLanguage,
+                    ).editEvent
+                  : AppLocalizations.of(
+                      LanguageService.instance.currentLanguage,
+                    ).editOrder)
+            : (_orderType == OrderType.event
+                  ? AppLocalizations.of(
+                      LanguageService.instance.currentLanguage,
+                    ).newEvent
+                  : AppLocalizations.of(
+                      LanguageService.instance.currentLanguage,
+                    ).newOrder),
         style: const TextStyle(
           fontFamily: 'Literata',
           color: Color(0xFF1A1A2E),
@@ -626,14 +645,18 @@ class _EventOrderScreenState extends State<EventOrderScreen>
           fontFamily: 'Literata',
         ),
         dividerColor: Colors.transparent,
-        tabs: const [
+        tabs: [
           Tab(
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.celebration_rounded, size: 18),
-                SizedBox(width: 8),
-                Text('Event'),
+                const Icon(Icons.celebration_rounded, size: 18),
+                const SizedBox(width: 8),
+                Text(
+                  AppLocalizations.of(
+                    LanguageService.instance.currentLanguage,
+                  ).event,
+                ),
               ],
             ),
           ),
@@ -641,9 +664,13 @@ class _EventOrderScreenState extends State<EventOrderScreen>
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.shopping_bag_rounded, size: 18),
-                SizedBox(width: 8),
-                Text('Sales Order'),
+                const Icon(Icons.shopping_bag_rounded, size: 18),
+                const SizedBox(width: 8),
+                Text(
+                  AppLocalizations.of(
+                    LanguageService.instance.currentLanguage,
+                  ).salesOrder,
+                ),
               ],
             ),
           ),
@@ -653,8 +680,9 @@ class _EventOrderScreenState extends State<EventOrderScreen>
   }
 
   Widget _buildCustomerSection() {
+    final l10n = AppLocalizations.of(LanguageService.instance.currentLanguage);
     return _buildSectionCard(
-      title: 'Customer Details',
+      title: l10n.customerDetails,
       icon: Icons.person_outline,
       trailing: TextButton.icon(
         onPressed: _showCustomerPickerSheet,
@@ -663,9 +691,9 @@ class _EventOrderScreenState extends State<EventOrderScreen>
           size: 18,
           color: Color(0xFF1B4D3E),
         ),
-        label: const Text(
-          'Select',
-          style: TextStyle(
+        label: Text(
+          l10n.selectText,
+          style: const TextStyle(
             fontFamily: 'Literata',
             color: Color(0xFF1B4D3E),
             fontWeight: FontWeight.w600,
@@ -683,12 +711,12 @@ class _EventOrderScreenState extends State<EventOrderScreen>
           // Customer name with autocomplete
           _buildTextField(
             controller: _customerNameController,
-            label: 'Customer Name *',
+            label: '${l10n.customerName} *',
             icon: Icons.person,
             onChanged: (value) => _searchCustomers(value),
             validator: (value) {
               if (value == null || value.trim().isEmpty) {
-                return 'Customer name is required';
+                return l10n.customerNameRequired;
               }
               return null;
             },
@@ -784,14 +812,14 @@ class _EventOrderScreenState extends State<EventOrderScreen>
           const SizedBox(height: 12),
           _buildTextField(
             controller: _customerContactController,
-            label: 'Contact Number',
+            label: l10n.contactNumber,
             icon: Icons.phone,
             keyboardType: TextInputType.phone,
           ),
           const SizedBox(height: 12),
           _buildTextField(
             controller: _customerAddressController,
-            label: 'Address (Optional)',
+            label: '${l10n.address} (${l10n.optional})',
             icon: Icons.location_on,
             maxLines: 2,
           ),
@@ -823,20 +851,23 @@ class _EventOrderScreenState extends State<EventOrderScreen>
   }
 
   Widget _buildOrderDetailsSection() {
+    final l10n = AppLocalizations.of(LanguageService.instance.currentLanguage);
     return _buildSectionCard(
-      title: _orderType == OrderType.event ? 'Event Details' : 'Order Details',
+      title: _orderType == OrderType.event
+          ? l10n.eventDetails
+          : l10n.orderDetails,
       icon: _orderType == OrderType.event ? Icons.event : Icons.assignment,
       child: Column(
         children: [
           _buildTextField(
             controller: _orderNameController,
             label: _orderType == OrderType.event
-                ? 'Event Name *'
-                : 'Order Name *',
+                ? '${l10n.eventName} *'
+                : '${l10n.orderName} *',
             icon: Icons.title,
             validator: (value) {
               if (value == null || value.trim().isEmpty) {
-                return 'Name is required';
+                return l10n.nameIsRequired;
               }
               return null;
             },
@@ -844,14 +875,14 @@ class _EventOrderScreenState extends State<EventOrderScreen>
           const SizedBox(height: 12),
           _buildTextField(
             controller: _descriptionController,
-            label: 'Description (Optional)',
+            label: l10n.descriptionOptional,
             icon: Icons.description,
             maxLines: 2,
           ),
           const SizedBox(height: 12),
           _buildTextField(
             controller: _locationController,
-            label: 'Location/Venue (Optional)',
+            label: l10n.locationVenueOptional,
             icon: Icons.location_on,
           ),
           const SizedBox(height: 12),
@@ -869,6 +900,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
   }
 
   Widget _buildDatePicker() {
+    final l10n = AppLocalizations.of(LanguageService.instance.currentLanguage);
     return InkWell(
       onTap: () async {
         // Allow selecting past dates when editing existing events
@@ -920,7 +952,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Date *',
+                    l10n.dateRequired,
                     style: TextStyle(
                       fontFamily: 'Literata',
                       color: Colors.grey[500],
@@ -986,7 +1018,9 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Time *',
+                    AppLocalizations.of(
+                      LanguageService.instance.currentLanguage,
+                    ).timeRequired,
                     style: TextStyle(
                       fontFamily: 'Literata',
                       color: Colors.grey[500],
@@ -1013,8 +1047,9 @@ class _EventOrderScreenState extends State<EventOrderScreen>
   }
 
   Widget _buildSubEventsSection() {
+    final l10n = AppLocalizations.of(LanguageService.instance.currentLanguage);
     return _buildSectionCard(
-      title: 'Sub Events',
+      title: l10n.subEvents,
       icon: Icons.event_note,
       trailing: IconButton(
         icon: const Icon(Icons.add_circle, color: Color(0xFF1B4D3E)),
@@ -1034,7 +1069,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'No sub-events added',
+                    l10n.noSubEventsAdded,
                     style: TextStyle(
                       fontFamily: 'Literata',
                       color: Colors.grey[600],
@@ -1042,7 +1077,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Tap + to add events like Haldi, Sangeet, etc.',
+                    l10n.tapToAddSubEvents,
                     style: TextStyle(
                       fontFamily: 'Literata',
                       color: Colors.grey[400],

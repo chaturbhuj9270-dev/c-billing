@@ -905,7 +905,6 @@ class MarathiLocalization {
       'तुम्हाला खात्री आहे की तुम्ही ही खरेदी हटवू इच्छिता?';
   static const String purchaseDeletedSuccessfully = 'खरेदी यशस्वीरित्या हटवली';
   static const String errorDeletingPurchase = 'खरेदी हटवताना त्रुटी';
-  static const String searchProducts = 'उत्पादने शोधा...';
   static const String noReturnableProducts =
       'या पुरवठादारासाठी कोणतीही परत करण्यायोग्य उत्पादने सापडली नाहीत';
   static const String noProductsMatchSearch =
@@ -917,7 +916,6 @@ class MarathiLocalization {
       'नवीन परत टॅबमधून तुमचा पहिला परतावा प्रक्रिया करा';
   static const String returnProcessedSuccessfully =
       'खरेदी परतावा यशस्वीरित्या प्रक्रिया झाला!';
-  static const String partial = 'आंशिक';
 
   // Dashboard Extended
   static const String upcomingEvents = 'आगामी कार्यक्रम';
@@ -925,4 +923,97 @@ class MarathiLocalization {
   static const String margin = 'मार्जिन';
   static const String itemsReturned = 'आयटम परत केले';
   static const String purchaseReturnShort = 'खरे. परत';
+
+  // Customer Extended
+  static const String deleteCustomerConfirmation =
+      'तुम्हाला खात्री आहे की तुम्ही हा ग्राहक हटवू इच्छिता?';
+  static const String customerUpdatedSuccess = 'ग्राहक यशस्वीरित्या अपडेट केला';
+  static const String customerSavedOffline =
+      'ग्राहक सेव्ह केला. ऑनलाइन असताना सिंक होईल.';
+  static const String errorSavingCustomer = 'ग्राहक सेव्ह करताना त्रुटी';
+  static const String customerDeletedSuccess = 'ग्राहक यशस्वीरित्या हटवला';
+  static const String errorDeletingCustomer = 'ग्राहक हटवताना त्रुटी';
+  static const String synced = 'सिंक झाले';
+  static const String syncPending = 'प्रलंबित';
+  static const String contactMustBe10Digits =
+      'संपर्क क्रमांक अचूक 10 अंकांचा असणे आवश्यक आहे';
+  static const String errorLoadingCustomers = 'ग्राहक लोड करताना त्रुटी';
+  static const String unsynced = 'सिंक नाही';
+  static const String allSynced = 'सर्व सिंक झाले';
+  static const String sortByName = 'नाव';
+  static const String sortByDate = 'तारीख';
+  static const String financeHistory = 'वित्त इतिहास';
+  static const String clearBalance = 'क्लियर';
+  static const String totalBilled = 'एकूण बिल';
+  static const String noBillsYet = 'अजून कोणतेही बिल नाही';
+  static const String billsWillAppearHere =
+      'या ग्राहकासाठी तयार केलेली बिले येथे दिसतील';
+  static const String noEventsYet = 'अजून कोणतेही कार्यक्रम/ऑर्डर नाही';
+  static const String eventsWillAppearHere =
+      'या ग्राहकासाठी कार्यक्रम आणि ऑर्डर येथे दिसतील';
+
+  // Events & Orders Extended
+  static const String orderUpdated = 'ऑर्डर अपडेट झाला';
+  static const String orderSaved = 'ऑर्डर सेव्ह झाला';
+  static const String errorSavingOrder = 'ऑर्डर सेव्ह करताना त्रुटी';
+  static const String editEvent = 'कार्यक्रम संपादित करा';
+  static const String editOrder = 'ऑर्डर संपादित करा';
+  static const String newEvent = 'नवीन कार्यक्रम';
+  static const String newOrder = 'नवीन ऑर्डर';
+  static const String event = 'कार्यक्रम';
+  static const String salesOrder = 'सेल्स ऑर्डर';
+  static const String customerDetails = 'ग्राहक तपशील';
+  static const String customerNameRequired = 'ग्राहकाचे नाव आवश्यक आहे';
+  static const String eventDetails = 'कार्यक्रम तपशील';
+  static const String orderDetails = 'ऑर्डर तपशील';
+  static const String eventName = 'कार्यक्रमाचे नाव';
+  static const String orderName = 'ऑर्डरचे नाव';
+  static const String nameIsRequired = 'नाव आवश्यक आहे';
+  static const String descriptionOptional = 'वर्णन (पर्यायी)';
+  static const String locationVenueOptional = 'स्थान/वेन्यू (पर्यायी)';
+  static const String dateRequired = 'तारीख *';
+  static const String timeRequired = 'वेळ *';
+  static const String subEvents = 'उप-कार्यक्रम';
+  static const String noSubEventsAdded = 'कोणताही उप-कार्यक्रम जोडला नाही';
+  static const String tapToAddSubEvents =
+      'हळद, संगीत इ. सारखे कार्यक्रम जोडण्यासाठी + टॅप करा';
+  static const String eventsAndOrders = 'कार्यक्रम आणि ऑर्डर';
+  static const String salesOrders = 'सेल्स ऑर्डर';
+  static const String manageYourEvents = 'तुमचे कार्यक्रम व्यवस्थापित करा';
+  static const String manageYourOrders = 'तुमचे सेल्स ऑर्डर व्यवस्थापित करा';
+  static const String manageYourEventsAndOrders =
+      'तुमचे कार्यक्रम आणि सेल्स ऑर्डर व्यवस्थापित करा';
+  static const String searchEventsOrOrders = 'कार्यक्रम किंवा ऑर्डर शोधा...';
+  static const String ordersCount = 'ऑर्डर';
+  static const String clearStatus = 'स्थिती साफ करा';
+  static const String noEventsFound = 'कोणताही कार्यक्रम सापडला नाही';
+  static const String noSalesOrdersFound = 'कोणताही सेल्स ऑर्डर सापडला नाही';
+  static const String noOrdersFound = 'कोणताही ऑर्डर सापडला नाही';
+  static const String tapToCreateFirstOrder =
+      'तुमचा पहिला ऑर्डर तयार करण्यासाठी + टॅप करा';
+  static const String errorLoadingOrders = 'ऑर्डर लोड करताना त्रुटी';
+  static const String pleaseTryAgain = 'कृपया पुन्हा प्रयत्न करा';
+  static const String syncing = 'सिंक होत आहे...';
+  static const String sales = 'विक्री';
+  static const String confirmed = 'पुष्टी';
+  static const String subEventsCount = 'उप-कार्यक्रम';
+  static const String productsCount = 'उत्पादने';
+  static const String displayMode = 'प्रदर्शन मोड';
+  static const String showEvents = 'कार्यक्रम दाखवा';
+  static const String eventModeActive = 'कार्यक्रम मोड सक्रिय आहे';
+  static const String orderModeActive = 'ऑर्डर मोड सक्रिय आहे';
+  static const String eventModeTitle = 'कार्यक्रम मोड';
+  static const String orderModeTitle = 'ऑर्डर मोड';
+  static const String eventModeDescription =
+      'उप-कार्यक्रम, वेन्यू आणि शेड्यूलसह कार्यक्रम व्यवस्थापनासाठी';
+  static const String orderModeDescription =
+      'उत्पादने आणि डिलिव्हरीसह सेल्स ऑर्डर व्यवस्थापनासाठी';
+  static const String howItWorks = 'हे कसे काम करते';
+  static const String settingsDescription =
+      'सक्षम असताना, सूची कार्यक्रम-विशिष्ट वैशिष्ट्यांसह कार्यक्रमांवर केंद्रित असेल. '
+      'अक्षम असताना, ते ऑर्डर-विशिष्ट वैशिष्ट्यांसह सेल्स ऑर्डरवर केंद्रित असेल. '
+      'अहवाल आणि इनव्हॉइस त्यानुसार तयार होतील.';
+  static const String addColumn = 'कॉलम जोडा';
+  static const String addCustomFieldsDesc =
+      'कार्यक्रम आणि उप-कार्यक्रमांसाठी कस्टम फील्ड जोडा';
 }

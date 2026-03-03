@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:printing/printing.dart';
 
+import '../../../../core/localization/app_localizations.dart';
+import '../../../../core/services/language_service.dart';
 import '../../domain/entities/event_order.dart';
 import '../cubit/event_order_cubit.dart';
 import '../cubit/event_order_state.dart';
@@ -162,8 +164,8 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Row(
-                      children: const [
-                        SizedBox(
+                      children: [
+                        const SizedBox(
                           width: 16,
                           height: 16,
                           child: CircularProgressIndicator(
@@ -171,10 +173,12 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                             color: Colors.white,
                           ),
                         ),
-                        SizedBox(width: 12),
+                        const SizedBox(width: 12),
                         Text(
-                          'Syncing...',
-                          style: TextStyle(fontFamily: 'Literata'),
+                          AppLocalizations.of(
+                            LanguageService.instance.currentLanguage,
+                          ).syncing,
+                          style: const TextStyle(fontFamily: 'Literata'),
                         ),
                       ],
                     ),
@@ -329,10 +333,16 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                           children: [
                             Text(
                               _selectedType == OrderType.event
-                                  ? 'Events'
+                                  ? AppLocalizations.of(
+                                      LanguageService.instance.currentLanguage,
+                                    ).events
                                   : _selectedType == OrderType.salesOrder
-                                  ? 'Sales Orders'
-                                  : 'Events & Orders',
+                                  ? AppLocalizations.of(
+                                      LanguageService.instance.currentLanguage,
+                                    ).salesOrders
+                                  : AppLocalizations.of(
+                                      LanguageService.instance.currentLanguage,
+                                    ).eventsAndOrders,
                               style: const TextStyle(
                                 fontFamily: 'Literata',
                                 fontSize: 22,
@@ -343,10 +353,16 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                             const SizedBox(height: 2),
                             Text(
                               _selectedType == OrderType.event
-                                  ? 'Manage your events'
+                                  ? AppLocalizations.of(
+                                      LanguageService.instance.currentLanguage,
+                                    ).manageYourEvents
                                   : _selectedType == OrderType.salesOrder
-                                  ? 'Manage your sales orders'
-                                  : 'Manage your events and sales orders',
+                                  ? AppLocalizations.of(
+                                      LanguageService.instance.currentLanguage,
+                                    ).manageYourOrders
+                                  : AppLocalizations.of(
+                                      LanguageService.instance.currentLanguage,
+                                    ).manageYourEventsAndOrders,
                               style: TextStyle(
                                 fontFamily: 'Literata',
                                 fontSize: 12,
@@ -412,7 +428,9 @@ class _EventOrderListPageState extends State<EventOrderListPage>
             child: Row(
               children: [
                 _buildStatCard(
-                  title: 'All',
+                  title: AppLocalizations.of(
+                    LanguageService.instance.currentLanguage,
+                  ).all,
                   value: totalOrders,
                   icon: Icons.all_inbox_rounded,
                   gradient: [_primaryColor, _primaryDark],
@@ -421,7 +439,9 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                 ),
                 const SizedBox(width: 10),
                 _buildStatCard(
-                  title: 'Events',
+                  title: AppLocalizations.of(
+                    LanguageService.instance.currentLanguage,
+                  ).events,
                   value: eventCount,
                   icon: Icons.celebration_rounded,
                   gradient: [_eventColor, const Color(0xFFBA68C8)],
@@ -430,7 +450,9 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                 ),
                 const SizedBox(width: 10),
                 _buildStatCard(
-                  title: 'Sales',
+                  title: AppLocalizations.of(
+                    LanguageService.instance.currentLanguage,
+                  ).sales,
                   value: salesCount,
                   icon: Icons.shopping_bag_rounded,
                   gradient: [_salesColor, const Color(0xFF64B5F6)],
@@ -440,7 +462,9 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                 ),
                 const SizedBox(width: 10),
                 _buildStatCard(
-                  title: 'Pending',
+                  title: AppLocalizations.of(
+                    LanguageService.instance.currentLanguage,
+                  ).pending,
                   value: pendingCount,
                   icon: Icons.schedule_rounded,
                   gradient: [Colors.orange, Colors.orangeAccent],
@@ -450,7 +474,9 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                 ),
                 const SizedBox(width: 10),
                 _buildStatCard(
-                  title: 'Confirmed',
+                  title: AppLocalizations.of(
+                    LanguageService.instance.currentLanguage,
+                  ).confirmed,
                   value: confirmedCount,
                   icon: Icons.check_circle_rounded,
                   gradient: [Colors.green, Colors.lightGreen],
@@ -570,7 +596,9 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                   },
                   style: const TextStyle(fontFamily: 'Literata', fontSize: 14),
                   decoration: InputDecoration(
-                    hintText: 'Search events or orders...',
+                    hintText: AppLocalizations.of(
+                      LanguageService.instance.currentLanguage,
+                    ).searchEventsOrOrders,
                     hintStyle: TextStyle(
                       color: Colors.grey[400],
                       fontFamily: 'Literata',
@@ -789,10 +817,16 @@ class _EventOrderListPageState extends State<EventOrderListPage>
           const SizedBox(height: 24),
           Text(
             _selectedType == OrderType.event
-                ? 'No events found'
+                ? AppLocalizations.of(
+                    LanguageService.instance.currentLanguage,
+                  ).noEventsFound
                 : _selectedType == OrderType.salesOrder
-                ? 'No sales orders found'
-                : 'No orders found',
+                ? AppLocalizations.of(
+                    LanguageService.instance.currentLanguage,
+                  ).noSalesOrdersFound
+                : AppLocalizations.of(
+                    LanguageService.instance.currentLanguage,
+                  ).noOrdersFound,
             style: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w700,
@@ -802,7 +836,9 @@ class _EventOrderListPageState extends State<EventOrderListPage>
           ),
           const SizedBox(height: 8),
           Text(
-            'Tap + to create your first order',
+            AppLocalizations.of(
+              LanguageService.instance.currentLanguage,
+            ).tapToCreateFirstOrder,
             style: TextStyle(
               fontSize: 13,
               fontFamily: 'Literata',
@@ -833,9 +869,11 @@ class _EventOrderListPageState extends State<EventOrderListPage>
             ),
           ),
           const SizedBox(height: 20),
-          const Text(
-            'Error loading orders',
-            style: TextStyle(
+          Text(
+            AppLocalizations.of(
+              LanguageService.instance.currentLanguage,
+            ).errorLoadingOrders,
+            style: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w700,
               fontFamily: 'Literata',
@@ -844,7 +882,9 @@ class _EventOrderListPageState extends State<EventOrderListPage>
           ),
           const SizedBox(height: 8),
           Text(
-            'Please try again',
+            AppLocalizations.of(
+              LanguageService.instance.currentLanguage,
+            ).pleaseTryAgain,
             style: TextStyle(
               fontSize: 13,
               fontFamily: 'Literata',
@@ -857,7 +897,11 @@ class _EventOrderListPageState extends State<EventOrderListPage>
               filterType: _selectedType,
             ),
             icon: const Icon(Icons.refresh_rounded),
-            label: const Text('Retry'),
+            label: Text(
+              AppLocalizations.of(
+                LanguageService.instance.currentLanguage,
+              ).retry,
+            ),
             style: ElevatedButton.styleFrom(
               backgroundColor: _primaryColor,
               foregroundColor: Colors.white,

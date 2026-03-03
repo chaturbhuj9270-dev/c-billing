@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../../core/localization/app_localizations.dart';
+import '../../../../core/services/language_service.dart';
 import '../../domain/entities/event_order.dart';
 import 'event_order_custom_columns_page.dart';
 
@@ -38,7 +40,7 @@ class _EventOrderSettingsPageState extends State<EventOrderSettingsPage> {
     try {
       final prefs = await SharedPreferences.getInstance();
       final savedMode = prefs.getBool(_prefsKey);
-      
+
       setState(() {
         // If we have a saved preference, use it
         // Otherwise, infer from current type
@@ -69,7 +71,7 @@ class _EventOrderSettingsPageState extends State<EventOrderSettingsPage> {
   void _onModeChanged(bool value) {
     setState(() => _showEventMode = value);
     _saveSettings(value);
-    
+
     // Notify parent of type change
     final newType = value ? OrderType.event : OrderType.salesOrder;
     widget.onTypeChanged(newType);
@@ -98,9 +100,11 @@ class _EventOrderSettingsPageState extends State<EventOrderSettingsPage> {
             ),
           ),
         ),
-        title: const Text(
-          'Settings',
-          style: TextStyle(
+        title: Text(
+          AppLocalizations.of(
+            LanguageService.instance.currentLanguage,
+          ).settings,
+          style: const TextStyle(
             fontFamily: 'Literata',
             fontWeight: FontWeight.w700,
             fontSize: 20,
@@ -110,11 +114,7 @@ class _EventOrderSettingsPageState extends State<EventOrderSettingsPage> {
         centerTitle: true,
       ),
       body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(
-                color: _primaryColor,
-              ),
-            )
+          ? const Center(child: CircularProgressIndicator(color: _primaryColor))
           : SingleChildScrollView(
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -124,7 +124,9 @@ class _EventOrderSettingsPageState extends State<EventOrderSettingsPage> {
                   Padding(
                     padding: const EdgeInsets.only(left: 4, bottom: 12),
                     child: Text(
-                      'Display Mode',
+                      AppLocalizations.of(
+                        LanguageService.instance.currentLanguage,
+                      ).displayMode,
                       style: TextStyle(
                         fontFamily: 'Literata',
                         fontSize: 14,
@@ -158,8 +160,14 @@ class _EventOrderSettingsPageState extends State<EventOrderSettingsPage> {
                                 decoration: BoxDecoration(
                                   gradient: LinearGradient(
                                     colors: _showEventMode
-                                        ? [_eventColor, _eventColor.withOpacity(0.7)]
-                                        : [_salesColor, _salesColor.withOpacity(0.7)],
+                                        ? [
+                                            _eventColor,
+                                            _eventColor.withOpacity(0.7),
+                                          ]
+                                        : [
+                                            _salesColor,
+                                            _salesColor.withOpacity(0.7),
+                                          ],
                                   ),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
@@ -177,7 +185,11 @@ class _EventOrderSettingsPageState extends State<EventOrderSettingsPage> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      'Show Events',
+                                      AppLocalizations.of(
+                                        LanguageService
+                                            .instance
+                                            .currentLanguage,
+                                      ).showEvents,
                                       style: const TextStyle(
                                         fontFamily: 'Literata',
                                         fontSize: 16,
@@ -188,8 +200,16 @@ class _EventOrderSettingsPageState extends State<EventOrderSettingsPage> {
                                     const SizedBox(height: 2),
                                     Text(
                                       _showEventMode
-                                          ? 'Event mode is active'
-                                          : 'Order mode is active',
+                                          ? AppLocalizations.of(
+                                              LanguageService
+                                                  .instance
+                                                  .currentLanguage,
+                                            ).eventModeActive
+                                          : AppLocalizations.of(
+                                              LanguageService
+                                                  .instance
+                                                  .currentLanguage,
+                                            ).orderModeActive,
                                       style: TextStyle(
                                         fontFamily: 'Literata',
                                         fontSize: 12,
@@ -204,7 +224,9 @@ class _EventOrderSettingsPageState extends State<EventOrderSettingsPage> {
                                 onChanged: _onModeChanged,
                                 activeColor: _eventColor,
                                 inactiveThumbColor: _salesColor,
-                                inactiveTrackColor: _salesColor.withOpacity(0.3),
+                                inactiveTrackColor: _salesColor.withOpacity(
+                                  0.3,
+                                ),
                               ),
                             ],
                           ),
@@ -220,16 +242,24 @@ class _EventOrderSettingsPageState extends State<EventOrderSettingsPage> {
                               _buildModeInfoRow(
                                 icon: Icons.celebration_rounded,
                                 color: _eventColor,
-                                title: 'Event Mode',
-                                description: 'For managing events with sub-events, venues, and schedules',
+                                title: AppLocalizations.of(
+                                  LanguageService.instance.currentLanguage,
+                                ).eventModeTitle,
+                                description: AppLocalizations.of(
+                                  LanguageService.instance.currentLanguage,
+                                ).eventModeDescription,
                                 isActive: _showEventMode,
                               ),
                               const SizedBox(height: 12),
                               _buildModeInfoRow(
                                 icon: Icons.shopping_bag_rounded,
                                 color: _salesColor,
-                                title: 'Order Mode',
-                                description: 'For managing sales orders with products and deliveries',
+                                title: AppLocalizations.of(
+                                  LanguageService.instance.currentLanguage,
+                                ).orderModeTitle,
+                                description: AppLocalizations.of(
+                                  LanguageService.instance.currentLanguage,
+                                ).orderModeDescription,
                                 isActive: !_showEventMode,
                               ),
                             ],
@@ -245,9 +275,7 @@ class _EventOrderSettingsPageState extends State<EventOrderSettingsPage> {
                     decoration: BoxDecoration(
                       color: _primaryColor.withOpacity(0.08),
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: _primaryColor.withOpacity(0.2),
-                      ),
+                      border: Border.all(color: _primaryColor.withOpacity(0.2)),
                     ),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -262,9 +290,11 @@ class _EventOrderSettingsPageState extends State<EventOrderSettingsPage> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
-                                'How it works',
-                                style: TextStyle(
+                              Text(
+                                AppLocalizations.of(
+                                  LanguageService.instance.currentLanguage,
+                                ).howItWorks,
+                                style: const TextStyle(
                                   fontFamily: 'Literata',
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
@@ -273,9 +303,9 @@ class _EventOrderSettingsPageState extends State<EventOrderSettingsPage> {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                'When enabled, the list will focus on Events with event-specific features. '
-                                'When disabled, it will focus on Sales Orders with order-specific features. '
-                                'Reports and invoices will be generated accordingly.',
+                                AppLocalizations.of(
+                                  LanguageService.instance.currentLanguage,
+                                ).settingsDescription,
                                 style: TextStyle(
                                   fontFamily: 'Literata',
                                   fontSize: 12,
@@ -294,7 +324,9 @@ class _EventOrderSettingsPageState extends State<EventOrderSettingsPage> {
                   Padding(
                     padding: const EdgeInsets.only(left: 4, bottom: 12),
                     child: Text(
-                      'Custom Fields',
+                      AppLocalizations.of(
+                        LanguageService.instance.currentLanguage,
+                      ).customFields,
                       style: TextStyle(
                         fontFamily: 'Literata',
                         fontSize: 14,
@@ -346,9 +378,11 @@ class _EventOrderSettingsPageState extends State<EventOrderSettingsPage> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text(
-                                  'Custom Columns',
-                                  style: TextStyle(
+                                Text(
+                                  AppLocalizations.of(
+                                    LanguageService.instance.currentLanguage,
+                                  ).customFields,
+                                  style: const TextStyle(
                                     fontFamily: 'Literata',
                                     fontSize: 16,
                                     fontWeight: FontWeight.w600,
@@ -357,7 +391,9 @@ class _EventOrderSettingsPageState extends State<EventOrderSettingsPage> {
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
-                                  'Add custom fields for events & sub-events',
+                                  AppLocalizations.of(
+                                    LanguageService.instance.currentLanguage,
+                                  ).addCustomFieldsDesc,
                                   style: TextStyle(
                                     fontFamily: 'Literata',
                                     fontSize: 12,
@@ -402,11 +438,7 @@ class _EventOrderSettingsPageState extends State<EventOrderSettingsPage> {
       ),
       child: Row(
         children: [
-          Icon(
-            icon,
-            color: isActive ? color : Colors.grey[400],
-            size: 20,
-          ),
+          Icon(icon, color: isActive ? color : Colors.grey[400], size: 20),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -433,11 +465,7 @@ class _EventOrderSettingsPageState extends State<EventOrderSettingsPage> {
             ),
           ),
           if (isActive)
-            Icon(
-              Icons.check_circle_rounded,
-              color: color,
-              size: 20,
-            ),
+            Icon(Icons.check_circle_rounded, color: color, size: 20),
         ],
       ),
     );

@@ -920,4 +920,99 @@ class HindiLocalization {
   static const String margin = 'मार्जिन';
   static const String itemsReturned = 'आइटम वापस किए गए';
   static const String purchaseReturnShort = 'खरी. वापसी';
+
+  // Customer Extended
+  static const String deleteCustomerConfirmation =
+      'क्या आप वाकई इस ग्राहक को हटाना चाहते हैं?';
+  static const String customerUpdatedSuccess =
+      'ग्राहक सफलतापूर्वक अपडेट किया गया';
+  static const String customerSavedOffline =
+      'ग्राहक सहेजा गया। ऑनलाइन होने पर सिंक होगा।';
+  static const String errorSavingCustomer = 'ग्राहक सहेजने में त्रुटि';
+  static const String customerDeletedSuccess =
+      'ग्राहक सफलतापूर्वक हटा दिया गया';
+  static const String errorDeletingCustomer = 'ग्राहक हटाने में त्रुटि';
+  static const String synced = 'सिंक किया गया';
+  static const String syncPending = 'बाकी';
+  static const String contactMustBe10Digits =
+      'संपर्क नंबर ठीक 10 अंकों का होना चाहिए';
+  static const String errorLoadingCustomers = 'ग्राहक लोड करने में त्रुटि';
+  static const String unsynced = 'सिंक नहीं हुआ';
+  static const String allSynced = 'सब सिंक हुआ';
+  static const String sortByName = 'नाम';
+  static const String sortByDate = 'तारीख';
+  static const String financeHistory = 'वित्त इतिहास';
+  static const String clearBalance = 'क्लियर';
+  static const String totalBilled = 'कुल बिल';
+  static const String noBillsYet = 'अभी तक कोई बिल नहीं';
+  static const String billsWillAppearHere =
+      'इस ग्राहक के लिए बनाए गए बिल यहां दिखाई देंगे';
+  static const String noEventsYet = 'अभी तक कोई कार्यक्रम/ऑर्डर नहीं';
+  static const String eventsWillAppearHere =
+      'इस ग्राहक के लिए कार्यक्रम और ऑर्डर यहां दिखाई देंगे';
+
+  // Events & Orders Extended
+  static const String orderUpdated = 'ऑर्डर अपडेट किया गया';
+  static const String orderSaved = 'ऑर्डर सेव किया गया';
+  static const String errorSavingOrder = 'ऑर्डर सेव करने में त्रुटि';
+  static const String editEvent = 'कार्यक्रम संपादित करें';
+  static const String editOrder = 'ऑर्डर संपादित करें';
+  static const String newEvent = 'नया कार्यक्रम';
+  static const String newOrder = 'नया ऑर्डर';
+  static const String event = 'कार्यक्रम';
+  static const String salesOrder = 'सेल्स ऑर्डर';
+  static const String customerDetails = 'ग्राहक विवरण';
+  static const String customerNameRequired = 'ग्राहक का नाम आवश्यक है';
+  static const String eventDetails = 'कार्यक्रम विवरण';
+  static const String orderDetails = 'ऑर्डर विवरण';
+  static const String eventName = 'कार्यक्रम का नाम';
+  static const String orderName = 'ऑर्डर का नाम';
+  static const String nameIsRequired = 'नाम आवश्यक है';
+  static const String descriptionOptional = 'विवरण (वैकल्पिक)';
+  static const String locationVenueOptional = 'स्थान/वेन्यू (वैकल्पिक)';
+  static const String dateRequired = 'तारीख *';
+  static const String timeRequired = 'समय *';
+  static const String subEvents = 'उप-कार्यक्रम';
+  static const String noSubEventsAdded = 'कोई उप-कार्यक्रम नहीं जोड़ा गया';
+  static const String tapToAddSubEvents =
+      'हल्दी, संगीत आदि जैसे कार्यक्रम जोड़ने के लिए + टैप करें';
+  static const String eventsAndOrders = 'कार्यक्रम और ऑर्डर';
+  static const String salesOrders = 'सेल्स ऑर्डर';
+  static const String manageYourEvents = 'अपने कार्यक्रम प्रबंधित करें';
+  static const String manageYourOrders = 'अपने सेल्स ऑर्डर प्रबंधित करें';
+  static const String manageYourEventsAndOrders =
+      'अपने कार्यक्रम और सेल्स ऑर्डर प्रबंधित करें';
+  static const String searchEventsOrOrders = 'कार्यक्रम या ऑर्डर खोजें...';
+  static const String ordersCount = 'ऑर्डर';
+  static const String clearStatus = 'स्थिति साफ़ करें';
+  static const String noEventsFound = 'कोई कार्यक्रम नहीं मिला';
+  static const String noSalesOrdersFound = 'कोई सेल्स ऑर्डर नहीं मिला';
+  static const String noOrdersFound = 'कोई ऑर्डर नहीं मिला';
+  static const String tapToCreateFirstOrder =
+      'अपना पहला ऑर्डर बनाने के लिए + टैप करें';
+  static const String errorLoadingOrders = 'ऑर्डर लोड करने में त्रुटि';
+  static const String pleaseTryAgain = 'कृपया पुनः प्रयास करें';
+  static const String syncing = 'सिंक हो रहा है...';
+  static const String sales = 'बिक्री';
+  static const String confirmed = 'पुष्टि';
+  static const String subEventsCount = 'उप-कार्यक्रम';
+  static const String productsCount = 'उत्पाद';
+  static const String displayMode = 'प्रदर्शन मोड';
+  static const String showEvents = 'कार्यक्रम दिखाएं';
+  static const String eventModeActive = 'कार्यक्रम मोड सक्रिय है';
+  static const String orderModeActive = 'ऑर्डर मोड सक्रिय है';
+  static const String eventModeTitle = 'कार्यक्रम मोड';
+  static const String orderModeTitle = 'ऑर्डर मोड';
+  static const String eventModeDescription =
+      'उप-कार्यक्रम, वेन्यू और शेड्यूल के साथ कार्यक्रम प्रबंधन के लिए';
+  static const String orderModeDescription =
+      'उत्पादों और डिलीवरी के साथ सेल्स ऑर्डर प्रबंधन के लिए';
+  static const String howItWorks = 'यह कैसे काम करता है';
+  static const String settingsDescription =
+      'सक्षम होने पर, सूची कार्यक्रम-विशिष्ट सुविधाओं के साथ कार्यक्रमों पर केंद्रित होगी। '
+      'अक्षम होने पर, यह ऑर्डर-विशिष्ट सुविधाओं के साथ सेल्स ऑर्डर पर केंद्रित होगी। '
+      'रिपोर्ट और इनवॉइस तदनुसार जेनरेट होंगे।';
+  static const String addColumn = 'कॉलम जोड़ें';
+  static const String addCustomFieldsDesc =
+      'कार्यक्रम और उप-कार्यक्रम के लिए कस्टम फील्ड जोड़ें';
 }

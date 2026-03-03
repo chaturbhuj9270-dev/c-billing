@@ -6,15 +6,25 @@ class CustomerSummaryWidget extends StatelessWidget {
   final List<Map<String, dynamic>> customers;
   final String searchQuery;
 
+  // Labels
+  final String customersLabel;
+  final String pendingLabel;
+  final String unsyncedLabel;
+  final String allSyncedLabel;
+
   const CustomerSummaryWidget({
     super.key,
     required this.customers,
     this.searchQuery = '',
+    this.customersLabel = 'Customers',
+    this.pendingLabel = 'Pending',
+    this.unsyncedLabel = 'Unsynced',
+    this.allSyncedLabel = 'All Synced',
   });
 
   List<Map<String, dynamic>> get _filteredCustomers {
     if (searchQuery.isEmpty) return customers;
-    
+
     final query = searchQuery.toLowerCase();
     return customers.where((c) {
       final firstName = (c['firstName'] ?? '').toString().toLowerCase();
@@ -33,7 +43,8 @@ class CustomerSummaryWidget extends StatelessWidget {
     final filtered = _filteredCustomers;
     final totalPending = filtered.fold<double>(
       0,
-      (sum, c) => sum + ((c['currentPendingAmount'] as num?)?.toDouble() ?? 0.0),
+      (sum, c) =>
+          sum + ((c['currentPendingAmount'] as num?)?.toDouble() ?? 0.0),
     );
     final unsyncedCount = filtered.where((c) => c['isSynced'] != true).length;
 
@@ -61,13 +72,13 @@ class CustomerSummaryWidget extends StatelessWidget {
         children: [
           _buildStatItem(
             icon: Icons.people_rounded,
-            label: 'Customers',
+            label: customersLabel,
             value: '${filtered.length}',
           ),
           _buildDivider(),
           _buildStatItem(
             icon: Icons.account_balance_wallet_rounded,
-            label: 'Pending',
+            label: pendingLabel,
             value: '₹${totalPending.toStringAsFixed(0)}',
             valueColor: totalPending > 0 ? Colors.amber[300] : null,
           ),
@@ -77,9 +88,11 @@ class CustomerSummaryWidget extends StatelessWidget {
               icon: unsyncedCount > 0
                   ? Icons.cloud_off_rounded
                   : Icons.cloud_done_rounded,
-              label: unsyncedCount > 0 ? 'Unsynced' : 'All Synced',
+              label: unsyncedCount > 0 ? unsyncedLabel : allSyncedLabel,
               value: unsyncedCount > 0 ? '$unsyncedCount' : '✓',
-              valueColor: unsyncedCount > 0 ? Colors.orange[300] : Colors.green[300],
+              valueColor: unsyncedCount > 0
+                  ? Colors.orange[300]
+                  : Colors.green[300],
               isExpanded: true,
             ),
           ),
@@ -100,11 +113,7 @@ class CustomerSummaryWidget extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            icon,
-            color: Colors.white.withOpacity(0.8),
-            size: 20,
-          ),
+          Icon(icon, color: Colors.white.withOpacity(0.8), size: 20),
           const SizedBox(height: 6),
           Text(
             value,
