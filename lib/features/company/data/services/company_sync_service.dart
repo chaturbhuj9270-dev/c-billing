@@ -122,20 +122,33 @@ class CompanySyncService extends ChangeNotifier {
         '[CompanySync] Initial sync check: $localCount local companies',
       );
 
+      // Always try to sync, even if there's local data (to upload any pending)
+      final results = await _connectivity.checkConnectivity();
+      final isConnected = _isConnected(results);
+      final isAuth = _apiService.isAuthenticated;
+
+      debugPrint(
+        '[CompanySync] Connected: $isConnected, Authenticated: $isAuth',
+      );
+
+      if (!isConnected || !isAuth) {
+        debugPrint(
+          '[CompanySync] Not connected or not authenticated, will retry in 3 seconds',
+        );
+        // Retry after 3 seconds
+        Future.delayed(const Duration(seconds: 3), () => _initialSync());
+        return;
+      }
+
       if (localCount == 0) {
         debugPrint(
-          '[CompanySync] No local companies, downloading from server...',
+          '[CompanySync] No local companies, downloading all from server...',
         );
-        final results = await _connectivity.checkConnectivity();
-        if (_isConnected(results) && _apiService.isAuthenticated) {
-          await forceFullSync();
-        } else {
-          debugPrint(
-            '[CompanySync] Not connected or not authenticated, will retry later',
-          );
-          // Retry after 3 seconds
-          Future.delayed(const Duration(seconds: 3), () => _initialSync());
-        }
+        await forceFullSync();
+      } else {
+        // Even with local data, sync to upload any pending changes
+        debugPrint('[CompanySync] Syncing pending local changes...');
+        await syncNow();
       }
     } catch (e) {
       debugPrint('[CompanySync] Initial sync failed: $e');
@@ -186,7 +199,9 @@ class CompanySyncService extends ChangeNotifier {
     }
 
     // Check if user is authenticated
-    if (!_apiService.isAuthenticated) {
+    final isAuth = _apiService.isAuthenticated;
+    debugPrint('[CompanySync] Auth check - isAuthenticated: $isAuth');
+    if (!isAuth) {
       debugPrint('[CompanySync] User not authenticated, skipping sync');
       return CompanySyncResult(
         success: false,
@@ -290,6 +305,15 @@ class CompanySyncService extends ChangeNotifier {
       );
 
       debugPrint('[CompanySync] $result');
+
+      // If there were failures, retry after a short delay
+      if (failedCount > 0) {
+        debugPrint(
+          '[CompanySync] $failedCount items failed, scheduling retry...',
+        );
+        Future.delayed(const Duration(seconds: 10), () => syncNow());
+      }
+
       return result;
     } catch (e) {
       stopwatch.stop();

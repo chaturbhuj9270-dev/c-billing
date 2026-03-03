@@ -121,20 +121,33 @@ class SupplierSyncService extends ChangeNotifier {
         '[SupplierSync] Initial sync check: $localCount local suppliers',
       );
 
+      // Always try to sync, even if there's local data (to upload any pending)
+      final results = await _connectivity.checkConnectivity();
+      final isConnected = _isConnected(results);
+      final isAuth = _apiService.isAuthenticated;
+
+      debugPrint(
+        '[SupplierSync] Connected: $isConnected, Authenticated: $isAuth',
+      );
+
+      if (!isConnected || !isAuth) {
+        debugPrint(
+          '[SupplierSync] Not connected or not authenticated, will retry in 3 seconds',
+        );
+        // Retry after 3 seconds
+        Future.delayed(const Duration(seconds: 3), () => _initialSync());
+        return;
+      }
+
       if (localCount == 0) {
         debugPrint(
-          '[SupplierSync] No local suppliers, downloading from server...',
+          '[SupplierSync] No local suppliers, downloading all from server...',
         );
-        final results = await _connectivity.checkConnectivity();
-        if (_isConnected(results) && _apiService.isAuthenticated) {
-          await _downloadAllFromServer();
-        } else {
-          debugPrint(
-            '[SupplierSync] Not connected or not authenticated, will retry later',
-          );
-          // Retry after 3 seconds
-          Future.delayed(const Duration(seconds: 3), () => _initialSync());
-        }
+        await _downloadAllFromServer();
+      } else {
+        // Even with local data, sync to upload any pending changes
+        debugPrint('[SupplierSync] Syncing pending local changes...');
+        await syncNow();
       }
     } catch (e) {
       debugPrint('[SupplierSync] Initial sync failed: $e');
@@ -193,7 +206,9 @@ class SupplierSyncService extends ChangeNotifier {
     }
 
     // Check if user is authenticated
-    if (!_apiService.isAuthenticated) {
+    final isAuth = _apiService.isAuthenticated;
+    debugPrint('[SupplierSync] Auth check - isAuthenticated: $isAuth');
+    if (!isAuth) {
       debugPrint('[SupplierSync] User not authenticated, skipping sync');
       return SupplierSyncResult(
         success: false,
@@ -323,6 +338,13 @@ class SupplierSyncService extends ChangeNotifier {
       );
 
       debugPrint('[SupplierSync] $result');
+
+      // If there were failures, retry after a short delay
+      if (failed > 0) {
+        debugPrint('[SupplierSync] $failed items failed, scheduling retry...');
+        Future.delayed(const Duration(seconds: 10), () => syncNow());
+      }
+
       notifyListeners();
       return result;
     } catch (e) {

@@ -187,7 +187,7 @@ class _EnhancedSupplierPageState extends State<EnhancedSupplierPage>
       if (!mounted || _isNavigatingAway) return;
 
       final freshSuppliers = snapshot.docs
-          .map((doc) => {'id': doc.id, ...doc.data()})
+          .map((doc) => {...doc.data(), 'id': doc.id})
           .toList();
 
       // Import to Isar
@@ -220,7 +220,7 @@ class _EnhancedSupplierPageState extends State<EnhancedSupplierPage>
             if (!mounted || _isNavigatingAway) return;
 
             final freshSuppliers = snapshot.docs
-                .map((doc) => {'id': doc.id, ...doc.data()})
+                .map((doc) => {...doc.data(), 'id': doc.id})
                 .toList();
 
             await SupplierOfflineController.instance.importFromServer(
@@ -629,7 +629,8 @@ class _EnhancedSupplierPageState extends State<EnhancedSupplierPage>
         );
       }
 
-      SupplierSyncService.instance.syncNow();
+      final syncResult = await SupplierSyncService.instance.syncNow();
+      debugPrint('[EnhancedSupplier] Sync after save result: $syncResult');
 
       if (mounted && ctx.mounted) {
         Navigator.pop(ctx);
@@ -703,7 +704,8 @@ class _EnhancedSupplierPageState extends State<EnhancedSupplierPage>
         throw Exception('Supplier not found');
       }
 
-      SupplierSyncService.instance.syncNow();
+      final syncResult = await SupplierSyncService.instance.syncNow();
+      debugPrint('[EnhancedSupplier] Sync after delete result: $syncResult');
       DashboardRefreshService.instance.notifyDataChanged(
         DataChangeType.supplier,
       );

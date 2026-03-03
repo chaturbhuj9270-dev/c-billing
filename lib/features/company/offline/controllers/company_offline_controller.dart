@@ -292,10 +292,25 @@ class CompanyOfflineController extends ChangeNotifier {
   Future<void> importFromServer(
     List<Map<String, dynamic>> serverCompanies,
   ) async {
+    debugPrint(
+      '[CompanyOffline] Starting import of ${serverCompanies.length} companies',
+    );
+    int newCount = 0;
+    int updatedCount = 0;
+    int skippedCount = 0;
+
     await _isar.writeTxn(() async {
       for (final data in serverCompanies) {
         final serverId = data['id'] as String?;
-        if (serverId == null) continue;
+        final companyName = (data['companyName'] ?? '').toString();
+
+        if (serverId == null) {
+          debugPrint(
+            '[CompanyOffline] Skipping company with null serverId: $companyName',
+          );
+          skippedCount++;
+          continue;
+        }
 
         // Check if we already have this company by serverId
         var existing = await _isar.companyEntitys
@@ -305,7 +320,6 @@ class CompanyOfflineController extends ChangeNotifier {
 
         // Fallback: check by companyName or companyCode (handles locally-created records without serverId yet)
         if (existing == null) {
-          final companyName = (data['companyName'] ?? '').toString();
           final companyCode = (data['companyCode'] ?? '').toString();
           if (companyCode.isNotEmpty) {
             existing = await _isar.companyEntitys
@@ -324,6 +338,9 @@ class CompanyOfflineController extends ChangeNotifier {
             existing.serverId = serverId;
             existing.syncStatus = CompanySyncStatus.synced;
             await _isar.companyEntitys.put(existing);
+            debugPrint(
+              '[CompanyOffline] Linked local company: $companyName -> $serverId',
+            );
             continue;
           }
         }
@@ -332,19 +349,34 @@ class CompanyOfflineController extends ChangeNotifier {
           // New company from server
           final company = CompanyEntity.fromServer(data);
           await _isar.companyEntitys.put(company);
+          newCount++;
+          debugPrint(
+            '[CompanyOffline] Added new company: $companyName ($serverId)',
+          );
         } else if (existing.syncStatus == CompanySyncStatus.synced) {
           // Only update if local is synced (no local changes)
           final updated = CompanyEntity.fromServer(data);
           updated.id = existing.id;
           await _isar.companyEntitys.put(updated);
+          updatedCount++;
+        } else {
+          // Local has changes, don't overwrite
+          skippedCount++;
+          debugPrint('[CompanyOffline] Skipped (local changes): $companyName');
         }
-        // If local has changes (NEW, UPDATED, DELETED), don't overwrite
       }
     });
 
     debugPrint(
-      '[CompanyOffline] Imported ${serverCompanies.length} companies from server',
+      '[CompanyOffline] Import complete: $newCount new, $updatedCount updated, $skippedCount skipped',
     );
+
+    // Verify total count after import
+    final totalCount = await _isar.companyEntitys.count();
+    debugPrint(
+      '[CompanyOffline] Total companies in Isar after import: $totalCount',
+    );
+
     notifyListeners();
   }
 

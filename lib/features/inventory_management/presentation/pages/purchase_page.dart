@@ -20,8 +20,10 @@ import '../../../product/offline/controllers/product_offline_controller.dart';
 import '../../../product/data/services/product_sync_service.dart';
 import '../../../supplier/offline/controllers/supplier_offline_controller.dart';
 import '../../../supplier/offline/entities/supplier_entity.dart';
+import '../../../supplier/data/services/supplier_sync_service.dart';
 import '../../../company/offline/controllers/company_offline_controller.dart';
 import '../../../company/offline/entities/company_entity.dart';
+import '../../../company/data/services/company_sync_service.dart';
 import '../../../product/offline/entities/product_entity.dart';
 import '../../../../core/services/inventory_integration_service.dart';
 import 'purchase_settings_page.dart';
@@ -2836,6 +2838,10 @@ class _PurchasePageState extends State<PurchasePage>
         address: _newSupplierAddressController.text.trim(),
       );
 
+      // Trigger sync to upload to server immediately and wait for it
+      final supplierSyncResult = await SupplierSyncService.instance.syncNow();
+      debugPrint('Supplier sync result: $supplierSyncResult');
+
       if (dialogContext.mounted) {
         Navigator.pop(dialogContext);
       }
@@ -3084,6 +3090,12 @@ class _PurchasePageState extends State<PurchasePage>
         companyName: companyName,
         contact: _newCompanyContactController.text.trim(),
         address: _newCompanyAddressController.text.trim(),
+      );
+
+      // Trigger sync to upload to server immediately and await result
+      final syncResult = await CompanySyncService.instance.syncNow();
+      debugPrint(
+        '[PurchasePage] Company sync result: ${syncResult.success}, created: ${syncResult.createdCount}, error: ${syncResult.errorMessage}',
       );
 
       if (dialogContext.mounted) {

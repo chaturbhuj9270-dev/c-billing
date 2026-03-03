@@ -179,7 +179,7 @@ class _EnhancedCompanyPageState extends State<EnhancedCompanyPage>
       if (!mounted || _isNavigatingAway) return;
 
       final freshCompanies = snapshot.docs
-          .map((doc) => {'id': doc.id, ...doc.data()})
+          .map((doc) => {...doc.data(), 'id': doc.id})
           .toList();
 
       // Import to Isar
@@ -212,7 +212,7 @@ class _EnhancedCompanyPageState extends State<EnhancedCompanyPage>
             if (!mounted || _isNavigatingAway) return;
 
             final freshCompanies = snapshot.docs
-                .map((doc) => {'id': doc.id, ...doc.data()})
+                .map((doc) => {...doc.data(), 'id': doc.id})
                 .toList();
 
             await CompanyOfflineController.instance.importFromServer(
@@ -588,7 +588,8 @@ class _EnhancedCompanyPageState extends State<EnhancedCompanyPage>
         );
       }
 
-      CompanySyncService.instance.syncNow();
+      final syncResult = await CompanySyncService.instance.syncNow();
+      debugPrint('[EnhancedCompany] Sync after save result: $syncResult');
 
       if (mounted && ctx.mounted) {
         Navigator.pop(ctx);
@@ -662,7 +663,8 @@ class _EnhancedCompanyPageState extends State<EnhancedCompanyPage>
         throw Exception('Company not found');
       }
 
-      CompanySyncService.instance.syncNow();
+      final syncResult = await CompanySyncService.instance.syncNow();
+      debugPrint('[EnhancedCompany] Sync after delete result: $syncResult');
       DashboardRefreshService.instance.notifyDataChanged(
         DataChangeType.company,
       );
