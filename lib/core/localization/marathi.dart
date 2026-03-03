@@ -1016,4 +1016,60 @@ class MarathiLocalization {
   static const String addColumn = 'कॉलम जोडा';
   static const String addCustomFieldsDesc =
       'कार्यक्रम आणि उप-कार्यक्रमांसाठी कस्टम फील्ड जोडा';
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Bill History Extended
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // Error Messages
+  static const String errorGeneratingPdf = 'PDF तयार करण्यात त्रुटी';
+  static const String noBillDataForReport = 'अहवालासाठी बिल डेटा नाही';
+  static const String generatingBillReport = 'बिल अहवाल तयार करत आहे...';
+  static const String failedToGenerateReport = 'अहवाल तयार करण्यात अयशस्वी';
+
+  // Filter Labels
+  static const String returnedBillsOnly = 'फक्त परत केलेली बिले';
+  static const String returnsOnly = 'फक्त परत';
+  static const String filtered = 'फिल्टर केलेले';
+  static const String activeFilters = 'सक्रिय फिल्टर';
+
+  // Report Settings
+  static const String reportSettings = 'अहवाल सेटिंग्ज';
+  static const String billReport = 'बिल अहवाल';
+  static const String resetToDefaults = 'डिफॉल्ट वर रीसेट करा';
+  static const String resetColumnVisibilityConfirm =
+      'हे सर्व कॉलम दृश्यमानता सेटिंग्ज त्यांच्या डिफॉल्ट मूल्यांवर रीसेट करेल. पुढे जायचे?';
+  static const String resetButton = 'रीसेट';
+  static const String settingsResetToDefaults = 'सेटिंग्ज डिफॉल्ट वर रीसेट';
+  static const String productInformation = 'उत्पाद माहिती';
+  static const String pricingAndAmount = 'किंमत आणि रक्कम';
+  static const String columnsVisible = 'कॉलम दृश्यमान';
+  static const String toggleColumnsDescription =
+      'छापलेल्या बिलांवर दाखवण्यासाठी/लपवण्यासाठी कॉलम टॉगल करा';
+  static const String proTip = 'सूचना';
+  static const String columnSelectionTip =
+      'निवडलेले कॉलम POS थर्मल पावत्या आणि PDF बिले दोन्हीवर दिसतील. बदल आपोआप जतन होतात.';
+
+  // Bill Item Labels
+  static const String qtyLabel = 'प्रमाण';
+  static const String walkInCustomer = 'वॉक-इन';
+  static const String returnedCount = 'परत केले';
+
+  // Action Labels
+  static const String previewBill = 'बिल पूर्वावलोकन';
+  static const String generatingLabel = 'तयार करत आहे...';
+  static const String selectLabel = 'निवडा';
+
+  // Return Bill Page Extended
+  static const String cannotReturnMoreThanSold =
+      'विकलेल्या प्रमाणापेक्षा जास्त परत करू शकत नाही';
+  static const String refundAmountLabel = 'परतावा रक्कम';
+  static const String printSharePrompt =
+      'जाण्यापूर्वी पावती प्रिंट किंवा शेअर करा.';
+  static const String returnQtyLabel = 'परतावा प्रमाण:';
+  static const String allReturnLabel = 'सर्व';
+  static const String shareErrorLabel = 'शेअर त्रुटी';
+  static const String subtotalColonLabel = 'उप-एकूण:';
+  static const String finalAmountColonLabel = 'अंतिम रक्कम:';
+  static const String discountPercentLabel = 'सूट';
 }

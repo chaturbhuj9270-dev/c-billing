@@ -581,7 +581,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
               children: [
                 const Icon(Icons.error_outline, color: Colors.white),
                 const SizedBox(width: 8),
-                Expanded(child: Text('Share error: $e')),
+                Expanded(child: Text('${_localizations.shareErrorLabel}: $e')),
               ],
             ),
             backgroundColor: Colors.red,

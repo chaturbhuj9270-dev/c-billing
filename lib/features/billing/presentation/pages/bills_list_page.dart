@@ -268,7 +268,7 @@ class _BillsListPageState extends State<BillsListPage>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error generating PDF: $e'),
+            content: Text('${_localizations.errorGeneratingPdf}: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -385,9 +385,9 @@ class _BillsListPageState extends State<BillsListPage>
       debugPrint('[BillReport] No data - showing snackbar');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('No bill data to generate report'),
-            duration: Duration(seconds: 2),
+          SnackBar(
+            content: Text(_localizations.noBillDataForReport),
+            duration: const Duration(seconds: 2),
           ),
         );
       }
@@ -399,10 +399,10 @@ class _BillsListPageState extends State<BillsListPage>
     // Show loading indicator
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Row(
             children: [
-              SizedBox(
+              const SizedBox(
                 width: 20,
                 height: 20,
                 child: CircularProgressIndicator(
@@ -410,11 +410,11 @@ class _BillsListPageState extends State<BillsListPage>
                   color: Colors.white,
                 ),
               ),
-              SizedBox(width: 12),
-              Text('Generating bill report...'),
+              const SizedBox(width: 12),
+              Text(_localizations.generatingBillReport),
             ],
           ),
-          duration: Duration(seconds: 30),
+          duration: const Duration(seconds: 30),
         ),
       );
     }
@@ -451,7 +451,7 @@ class _BillsListPageState extends State<BillsListPage>
         MaterialPageRoute(
           builder: (context) => FilePreviewPage(
             file: tempFile,
-            fileName: 'Bill Report',
+            fileName: _localizations.billReport,
             fileType: FilePreviewType.pdf,
             subtitle:
                 '${filtered.length} bills • ${DateFormat('dd MMM yyyy').format(DateTime.now())}',
@@ -467,7 +467,7 @@ class _BillsListPageState extends State<BillsListPage>
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to generate report: $e'),
+            content: Text('${_localizations.failedToGenerateReport}: $e'),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 4),
           ),
@@ -484,16 +484,16 @@ class _BillsListPageState extends State<BillsListPage>
 
     switch (_dateFilter) {
       case _BillDateFilter.today:
-        parts.add('Today');
+        parts.add(_localizations.today);
         break;
       case _BillDateFilter.thisWeek:
-        parts.add('This Week');
+        parts.add(_localizations.thisWeek);
         break;
       case _BillDateFilter.thisMonth:
-        parts.add('This Month');
+        parts.add(_localizations.thisMonth);
         break;
       case _BillDateFilter.thisYear:
-        parts.add('This Year');
+        parts.add(_localizations.thisYear);
         break;
       case _BillDateFilter.custom:
         if (_startDate != null && _endDate != null) {
@@ -502,12 +502,12 @@ class _BillsListPageState extends State<BillsListPage>
         }
         break;
       case _BillDateFilter.none:
-        parts.add('All Time');
+        parts.add(_localizations.allTime);
         break;
     }
 
     if (_showReturnedOnly) {
-      parts.add('Returned Bills Only');
+      parts.add(_localizations.returnedBillsOnly);
     }
 
     if (_searchController.text.isNotEmpty) {
@@ -1009,9 +1009,9 @@ class _BillsListPageState extends State<BillsListPage>
                               size: 20,
                             ),
                             const SizedBox(width: 12),
-                            const Text(
-                              'Report Settings',
-                              style: TextStyle(
+                            Text(
+                              _localizations.reportSettings,
+                              style: const TextStyle(
                                 fontFamily: 'Literata',
                                 fontSize: 14,
                               ),
@@ -1207,19 +1207,19 @@ class _BillsListPageState extends State<BillsListPage>
     if (_dateFilter != _BillDateFilter.none) {
       switch (_dateFilter) {
         case _BillDateFilter.today:
-          filters.add('Today');
+          filters.add(_localizations.today);
           break;
         case _BillDateFilter.thisWeek:
-          filters.add('This Week');
+          filters.add(_localizations.thisWeek);
           break;
         case _BillDateFilter.thisMonth:
-          filters.add('This Month');
+          filters.add(_localizations.thisMonth);
           break;
         case _BillDateFilter.thisYear:
-          filters.add('This Year');
+          filters.add(_localizations.thisYear);
           break;
         case _BillDateFilter.custom:
-          filters.add('Custom Range');
+          filters.add(_localizations.customRange);
           break;
         case _BillDateFilter.none:
           break;
@@ -1227,14 +1227,14 @@ class _BillsListPageState extends State<BillsListPage>
     }
 
     if (_showReturnedOnly) {
-      filters.add('Returns Only');
+      filters.add(_localizations.returnsOnly);
     }
 
     if (_searchController.text.isNotEmpty) {
-      filters.add('Search: "${_searchController.text}"');
+      filters.add('${_localizations.searchBill}: "${_searchController.text}"');
     }
 
-    return filters.isEmpty ? 'Filtered' : filters.join(' • ');
+    return filters.isEmpty ? _localizations.filtered : filters.join(' • ');
   }
 
   Widget _buildFeaturedStatCard({
@@ -1581,7 +1581,7 @@ class _BillsListPageState extends State<BillsListPage>
                   ),
                   const SizedBox(width: 6),
                   Text(
-                    'Active Filters',
+                    _localizations.activeFilters,
                     style: TextStyle(
                       fontFamily: 'Literata',
                       fontSize: 11,
@@ -2265,7 +2265,7 @@ class _BillsListPageState extends State<BillsListPage>
                               ),
                               const SizedBox(width: 4),
                               Text(
-                                '${bill.items.length} items',
+                                '${bill.items.length} ${_localizations.itemsLabel}',
                                 style: TextStyle(
                                   fontFamily: 'Literata',
                                   fontSize: 10,
@@ -2296,7 +2296,7 @@ class _BillsListPageState extends State<BillsListPage>
                               ),
                               const SizedBox(width: 4),
                               Text(
-                                '${bill.totalQuantity} qty',
+                                '${bill.totalQuantity} ${_localizations.qtyLabel}',
                                 style: TextStyle(
                                   fontFamily: 'Literata',
                                   fontSize: 10,
@@ -2507,7 +2507,9 @@ class _DateRangePickerDialogState extends State<_DateRangePickerDialog> {
                         Text(
                           _startDate != null
                               ? dateFormat.format(_startDate!)
-                              : 'Select',
+                              : AppLocalizations(
+                                  LanguageService.instance.currentLanguage,
+                                ).selectLabel,
                           style: const TextStyle(
                             fontFamily: 'Literata',
                             fontWeight: FontWeight.w600,
@@ -2548,7 +2550,9 @@ class _DateRangePickerDialogState extends State<_DateRangePickerDialog> {
                         Text(
                           _endDate != null
                               ? dateFormat.format(_endDate!)
-                              : 'Select',
+                              : AppLocalizations(
+                                  LanguageService.instance.currentLanguage,
+                                ).selectLabel,
                           style: const TextStyle(
                             fontFamily: 'Literata',
                             fontWeight: FontWeight.w600,
@@ -2877,7 +2881,9 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
                               icon: Icons.person_rounded,
                               iconColor: const Color(0xFF2196F3),
                               title: _localizations.customerName,
-                              value: _bill.customerName ?? 'Walk-in',
+                              value:
+                                  _bill.customerName ??
+                                  _localizations.walkInCustomer,
                             ),
                           ),
                         ],
@@ -3563,11 +3569,13 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to generate PDF: ${e.toString()}'),
+            content: Text(
+              '${_localizations.failedToGeneratePdf}: ${e.toString()}',
+            ),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 6),
             action: SnackBarAction(
-              label: 'Retry',
+              label: _localizations.retry,
               textColor: Colors.white,
               onPressed: () => _showPdfPreview(),
             ),
@@ -3589,7 +3597,9 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
           icon: _isGeneratingPdf
               ? Icons.hourglass_empty_rounded
               : Icons.preview_rounded,
-          label: _isGeneratingPdf ? 'Generating...' : 'Preview Bill',
+          label: _isGeneratingPdf
+              ? _localizations.generatingLabel
+              : _localizations.previewBill,
           isPrimary: true,
           onTap: _isGeneratingPdf ? () {} : _showPdfPreview,
         ),
@@ -3714,7 +3724,7 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
                             ),
                             const SizedBox(width: 3),
                             Text(
-                              '${item.returnedQuantity} returned',
+                              '${item.returnedQuantity} ${_localizations.returnedCount}',
                               style: TextStyle(
                                 fontFamily: 'Literata',
                                 fontSize: 10,

@@ -1011,4 +1011,60 @@ class EnglishLocalization {
   static const String addColumn = 'Add Column';
   static const String addCustomFieldsDesc =
       'Add custom fields for events & sub-events';
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Bill History Extended
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // Error Messages
+  static const String errorGeneratingPdf = 'Error generating PDF';
+  static const String noBillDataForReport = 'No bill data to generate report';
+  static const String generatingBillReport = 'Generating bill report...';
+  static const String failedToGenerateReport = 'Failed to generate report';
+
+  // Filter Labels
+  static const String returnedBillsOnly = 'Returned Bills Only';
+  static const String returnsOnly = 'Returns Only';
+  static const String filtered = 'Filtered';
+  static const String activeFilters = 'Active Filters';
+
+  // Report Settings
+  static const String reportSettings = 'Report Settings';
+  static const String billReport = 'Bill Report';
+  static const String resetToDefaults = 'Reset to Defaults';
+  static const String resetColumnVisibilityConfirm =
+      'This will reset all column visibility settings to their default values. Continue?';
+  static const String resetButton = 'Reset';
+  static const String settingsResetToDefaults = 'Settings reset to defaults';
+  static const String productInformation = 'Product Information';
+  static const String pricingAndAmount = 'Pricing & Amount';
+  static const String columnsVisible = 'columns visible';
+  static const String toggleColumnsDescription =
+      'Toggle columns to show/hide on printed bills';
+  static const String proTip = 'Pro Tip';
+  static const String columnSelectionTip =
+      'Selected columns will appear on both POS thermal receipts and PDF bills. Changes are saved automatically.';
+
+  // Bill Item Labels
+  static const String qtyLabel = 'qty';
+  static const String walkInCustomer = 'Walk-in';
+  static const String returnedCount = 'returned';
+
+  // Action Labels
+  static const String previewBill = 'Preview Bill';
+  static const String generatingLabel = 'Generating...';
+  static const String selectLabel = 'Select';
+
+  // Return Bill Page Extended
+  static const String cannotReturnMoreThanSold =
+      'Cannot return more than sold quantity';
+  static const String refundAmountLabel = 'Refund';
+  static const String printSharePrompt =
+      'Print or share the receipt before leaving.';
+  static const String returnQtyLabel = 'Return Qty:';
+  static const String allReturnLabel = 'All';
+  static const String shareErrorLabel = 'Share error';
+  static const String subtotalColonLabel = 'Subtotal:';
+  static const String finalAmountColonLabel = 'Final Amount:';
+  static const String discountPercentLabel = 'Discount';
 }

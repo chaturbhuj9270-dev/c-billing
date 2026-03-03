@@ -1,6 +1,8 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:c_billing/core/services/bill_report_settings_service.dart';
+import 'package:c_billing/core/services/language_service.dart';
+import 'package:c_billing/core/localization/app_localizations.dart';
 
 /// Page for managing which columns appear in bill prints/reports
 class BillReportSettingsPage extends StatefulWidget {
@@ -16,10 +18,13 @@ class _BillReportSettingsPageState extends State<BillReportSettingsPage>
   bool _isLoading = true;
   late AnimationController _animController;
   late Animation<double> _fadeAnimation;
+  late AppLocalizations _localizations;
 
   @override
   void initState() {
     super.initState();
+    _localizations = AppLocalizations(LanguageService.instance.currentLanguage);
+    LanguageService.instance.addListener(_onLanguageChanged);
     _animController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 600),
@@ -32,8 +37,19 @@ class _BillReportSettingsPageState extends State<BillReportSettingsPage>
     _loadColumns();
   }
 
+  void _onLanguageChanged() {
+    if (mounted) {
+      setState(() {
+        _localizations = AppLocalizations(
+          LanguageService.instance.currentLanguage,
+        );
+      });
+    }
+  }
+
   @override
   void dispose() {
+    LanguageService.instance.removeListener(_onLanguageChanged);
     _animController.dispose();
     super.dispose();
   }
@@ -65,23 +81,23 @@ class _BillReportSettingsPageState extends State<BillReportSettingsPage>
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text(
-          'Reset to Defaults',
-          style: TextStyle(
+        title: Text(
+          _localizations.resetToDefaults,
+          style: const TextStyle(
             fontFamily: 'Literata',
             fontWeight: FontWeight.w700,
             color: Color(0xFF1B4D3E),
           ),
         ),
-        content: const Text(
-          'This will reset all column visibility settings to their default values. Continue?',
-          style: TextStyle(fontFamily: 'Literata'),
+        content: Text(
+          _localizations.resetColumnVisibilityConfirm,
+          style: const TextStyle(fontFamily: 'Literata'),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
             child: Text(
-              'Cancel',
+              _localizations.cancel,
               style: TextStyle(fontFamily: 'Literata', color: Colors.grey[600]),
             ),
           ),
@@ -93,9 +109,12 @@ class _BillReportSettingsPageState extends State<BillReportSettingsPage>
                 borderRadius: BorderRadius.circular(10),
               ),
             ),
-            child: const Text(
-              'Reset',
-              style: TextStyle(fontFamily: 'Literata', color: Colors.white),
+            child: Text(
+              _localizations.resetButton,
+              style: const TextStyle(
+                fontFamily: 'Literata',
+                color: Colors.white,
+              ),
             ),
           ),
         ],
@@ -108,9 +127,9 @@ class _BillReportSettingsPageState extends State<BillReportSettingsPage>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text(
-              'Settings reset to defaults',
-              style: TextStyle(fontFamily: 'Literata'),
+            content: Text(
+              _localizations.settingsResetToDefaults,
+              style: const TextStyle(fontFamily: 'Literata'),
             ),
             backgroundColor: const Color(0xFF1B4D3E),
             behavior: SnackBarBehavior.floating,
@@ -159,7 +178,7 @@ class _BillReportSettingsPageState extends State<BillReportSettingsPage>
 
                           // Product Info Columns
                           _buildSectionTitle(
-                            'Product Information',
+                            _localizations.productInformation,
                             Icons.inventory_2_rounded,
                           ),
                           const SizedBox(height: 12),
@@ -171,7 +190,7 @@ class _BillReportSettingsPageState extends State<BillReportSettingsPage>
 
                           // Pricing Columns
                           _buildSectionTitle(
-                            'Pricing & Amount',
+                            _localizations.pricingAndAmount,
                             Icons.currency_rupee_rounded,
                           ),
                           const SizedBox(height: 12),
@@ -255,7 +274,7 @@ class _BillReportSettingsPageState extends State<BillReportSettingsPage>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '$visibleCount of ${_columns.length} columns visible',
+                  '$visibleCount / ${_columns.length} ${_localizations.columnsVisible}',
                   style: const TextStyle(
                     fontFamily: 'Literata',
                     fontWeight: FontWeight.w700,
@@ -265,7 +284,7 @@ class _BillReportSettingsPageState extends State<BillReportSettingsPage>
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Toggle columns to show/hide on printed bills',
+                  _localizations.toggleColumnsDescription,
                   style: TextStyle(
                     fontFamily: 'Literata',
                     fontWeight: FontWeight.w400,
@@ -426,7 +445,7 @@ class _BillReportSettingsPageState extends State<BillReportSettingsPage>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Pro Tip',
+                  _localizations.proTip,
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
@@ -436,7 +455,7 @@ class _BillReportSettingsPageState extends State<BillReportSettingsPage>
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Selected columns will appear on both POS thermal receipts and PDF bills. Changes are saved automatically.',
+                  _localizations.columnSelectionTip,
                   style: TextStyle(
                     fontSize: 12,
                     color: Colors.grey[600],
