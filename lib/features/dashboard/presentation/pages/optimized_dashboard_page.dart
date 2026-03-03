@@ -780,12 +780,12 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
           ),
           const SizedBox(height: 10),
           _buildGlassyStatRow(
-            title: 'Upcoming Events',
+            title: _localizations.upcomingEvents,
             count: _upcomingEvents.length,
             icon: Icons.event_rounded,
             gradientColors: const [Color(0xFF00BCD4), Color(0xFF0097A7)],
             onTap: () => _showQuickInsightDetail(
-              'Upcoming Events',
+              _localizations.upcomingEvents,
               _upcomingEvents,
               'events',
             ),
@@ -834,9 +834,9 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
   String _getFilterLabel(DashboardParams params) {
     switch (params.filter) {
       case DashboardFilter.today:
-        return 'Today';
+        return _localizations.today;
       case DashboardFilter.thisWeek:
-        return 'This Week';
+        return _localizations.thisWeek;
       case DashboardFilter.thisMonth:
         return DateFormat('MMMM yyyy').format(DateTime.now());
       case DashboardFilter.thisYear:
@@ -845,9 +845,9 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
         if (params.startDate != null && params.endDate != null) {
           return '${DateFormat('dd MMM').format(params.startDate!)} - ${DateFormat('dd MMM').format(params.endDate!)}';
         }
-        return '${_localizations.custom} Range';
+        return _localizations.customRange;
       case DashboardFilter.all:
-        return 'All Time';
+        return _localizations.allTime;
     }
   }
 
@@ -960,7 +960,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
           _buildQuickStatItem(
             icon: Icons.celebration_rounded,
             value: '${data.totalEventOrders}',
-            label: '${data.upcomingEvents} Upcoming',
+            label: '${data.upcomingEvents} ${_localizations.upcoming}',
             color: const Color(0xFFE91E63),
             isLoading: isLoading,
             onTap: () => Navigator.push(
@@ -972,7 +972,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
           _buildQuickStatItem(
             icon: Icons.keyboard_return_rounded,
             value: '${data.totalReturnedItems}',
-            label: 'P. Return',
+            label: _localizations.purchaseReturnShort,
             color: const Color(0xFFE65100),
             isLoading: isLoading,
             onTap: () => Navigator.push(
@@ -984,7 +984,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
           _buildQuickStatItem(
             icon: Icons.trending_up_rounded,
             value: _formatCompactAmount(data.profit),
-            label: 'Margin',
+            label: _localizations.margin,
             color: data.profit >= 0
                 ? const Color(0xFF2E7D32)
                 : const Color(0xFFD32F2F),
@@ -1361,7 +1361,8 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
               child: _buildGradientMetricCard(
                 title: _localizations.returns,
                 amount: _formatAmount(data.totalReturns),
-                subtitle: '${data.totalReturnedItems} items returned',
+                subtitle:
+                    '${data.totalReturnedItems} ${_localizations.itemsReturned}',
                 gradient: const LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
@@ -1652,7 +1653,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        '${data.lowStockCount} low stock',
+                        '${data.lowStockCount} ${_localizations.lowStock}',
                         style: const TextStyle(
                           color: Colors.orange,
                           fontSize: 11,

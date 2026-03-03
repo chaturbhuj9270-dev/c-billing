@@ -7980,17 +7980,6 @@ class AppLocalizations {
     }
   }
 
-  String get searchProducts {
-    switch (languageCode) {
-      case 'Hindi':
-        return HindiLocalization.searchProducts;
-      case 'Marathi':
-        return MarathiLocalization.searchProducts;
-      default:
-        return EnglishLocalization.searchProducts;
-    }
-  }
-
   String get noReturnableProducts {
     switch (languageCode) {
       case 'Hindi':
@@ -8068,14 +8057,59 @@ class AppLocalizations {
     }
   }
 
-  String get partial {
+  // Dashboard Extended
+  String get upcomingEvents {
     switch (languageCode) {
       case 'Hindi':
-        return HindiLocalization.partial;
+        return HindiLocalization.upcomingEvents;
       case 'Marathi':
-        return MarathiLocalization.partial;
+        return MarathiLocalization.upcomingEvents;
       default:
-        return EnglishLocalization.partial;
+        return EnglishLocalization.upcomingEvents;
+    }
+  }
+
+  String get upcoming {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.upcoming;
+      case 'Marathi':
+        return MarathiLocalization.upcoming;
+      default:
+        return EnglishLocalization.upcoming;
+    }
+  }
+
+  String get margin {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.margin;
+      case 'Marathi':
+        return MarathiLocalization.margin;
+      default:
+        return EnglishLocalization.margin;
+    }
+  }
+
+  String get itemsReturned {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.itemsReturned;
+      case 'Marathi':
+        return MarathiLocalization.itemsReturned;
+      default:
+        return EnglishLocalization.itemsReturned;
+    }
+  }
+
+  String get purchaseReturnShort {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.purchaseReturnShort;
+      case 'Marathi':
+        return MarathiLocalization.purchaseReturnShort;
+      default:
+        return EnglishLocalization.purchaseReturnShort;
     }
   }
 }

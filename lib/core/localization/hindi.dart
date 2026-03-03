@@ -913,4 +913,11 @@ class HindiLocalization {
       'नई वापसी टैब से अपनी पहली वापसी प्रोसेस करें';
   static const String returnProcessedSuccessfully =
       'खरीदारी वापसी सफलतापूर्वक प्रोसेस हुई!';
+
+  // Dashboard Extended
+  static const String upcomingEvents = 'आगामी कार्यक्रम';
+  static const String upcoming = 'आगामी';
+  static const String margin = 'मार्जिन';
+  static const String itemsReturned = 'आइटम वापस किए गए';
+  static const String purchaseReturnShort = 'खरी. वापसी';
 }

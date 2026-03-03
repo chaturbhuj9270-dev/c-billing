@@ -918,4 +918,11 @@ class MarathiLocalization {
   static const String returnProcessedSuccessfully =
       'खरेदी परतावा यशस्वीरित्या प्रक्रिया झाला!';
   static const String partial = 'आंशिक';
+
+  // Dashboard Extended
+  static const String upcomingEvents = 'आगामी कार्यक्रम';
+  static const String upcoming = 'आगामी';
+  static const String margin = 'मार्जिन';
+  static const String itemsReturned = 'आयटम परत केले';
+  static const String purchaseReturnShort = 'खरे. परत';
 }

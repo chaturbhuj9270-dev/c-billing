@@ -911,4 +911,11 @@ class EnglishLocalization {
       'Process your first return from the New Return tab';
   static const String returnProcessedSuccessfully =
       'Purchase return processed successfully!';
+
+  // Dashboard Extended
+  static const String upcomingEvents = 'Upcoming Events';
+  static const String upcoming = 'Upcoming';
+  static const String margin = 'Margin';
+  static const String itemsReturned = 'items returned';
+  static const String purchaseReturnShort = 'P. Return';
 }
