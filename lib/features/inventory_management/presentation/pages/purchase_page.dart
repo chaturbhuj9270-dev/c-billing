@@ -2826,24 +2826,12 @@ class _PurchasePageState extends State<PurchasePage>
     }
 
     try {
-      // Auto-generate supplier code
-      int maxCode = 0;
-      for (var supplier in _suppliers) {
-        final code = supplier['supplierCode'] as String?;
-        if (code != null && code.isNotEmpty) {
-          final numericCode = int.tryParse(code);
-          if (numericCode != null && numericCode > maxCode) {
-            maxCode = numericCode;
-          }
-        }
-      }
-      final supplierCode = '${maxCode + 1}';
-
       // Use offline controller — saves to Isar (stream auto-updates UI) + syncs to Firestore in background
+      // Supplier code is optional, so we don't pass it - avoids duplicate code issues
       await SupplierOfflineController.instance.addSupplier(
         firstName: firstName,
         lastName: lastName,
-        supplierCode: supplierCode,
+        supplierCode: '', // Optional - leave empty
         contact: contact,
         address: _newSupplierAddressController.text.trim(),
       );
@@ -3090,23 +3078,10 @@ class _PurchasePageState extends State<PurchasePage>
     }
 
     try {
-      // Auto-generate company code
-      int maxCode = 0;
-      for (var company in _companies) {
-        final code = company['companyCode'] as String?;
-        if (code != null && code.isNotEmpty) {
-          final numericCode = int.tryParse(code);
-          if (numericCode != null && numericCode > maxCode) {
-            maxCode = numericCode;
-          }
-        }
-      }
-      final companyCode = '${maxCode + 1}';
-
       // Use offline controller — saves to Isar (stream auto-updates UI) + syncs to Firestore in background
+      // Company code is optional, so we don't pass it - avoids duplicate code issues
       await CompanyOfflineController.instance.addCompany(
         companyName: companyName,
-        companyCode: companyCode,
         contact: _newCompanyContactController.text.trim(),
         address: _newCompanyAddressController.text.trim(),
       );

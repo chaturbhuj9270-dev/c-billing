@@ -5,12 +5,7 @@ import '../../offline/controllers/supplier_offline_controller.dart';
 import 'supplier_api_service.dart';
 
 /// Sync status for tracking sync state
-enum SupplierSyncServiceStatus {
-  idle,
-  syncing,
-  success,
-  failed,
-}
+enum SupplierSyncServiceStatus { idle, syncing, success, failed }
 
 /// Result of a sync operation
 class SupplierSyncResult {
@@ -59,7 +54,7 @@ class SupplierSyncService extends ChangeNotifier {
   String? _lastError;
   StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
   Timer? _periodicSyncTimer;
-  
+
   /// Mutex to prevent concurrent sync operations
   bool _isSyncing = false;
 
@@ -67,9 +62,10 @@ class SupplierSyncService extends ChangeNotifier {
     SupplierOfflineController? offlineController,
     SupplierApiService? apiService,
     Connectivity? connectivity,
-  })  : _offlineController = offlineController ?? SupplierOfflineController.instance,
-        _apiService = apiService ?? SupplierApiService.instance,
-        _connectivity = connectivity ?? Connectivity();
+  }) : _offlineController =
+           offlineController ?? SupplierOfflineController.instance,
+       _apiService = apiService ?? SupplierApiService.instance,
+       _connectivity = connectivity ?? Connectivity();
 
   /// Get the singleton instance
   static SupplierSyncService get instance {
@@ -92,9 +88,11 @@ class SupplierSyncService extends ChangeNotifier {
   /// Initialize the sync service
   void initialize() {
     debugPrint('[SupplierSync] Initializing...');
-    
+
     // Listen for connectivity changes
-    _connectivitySubscription = _connectivity.onConnectivityChanged.listen((results) {
+    _connectivitySubscription = _connectivity.onConnectivityChanged.listen((
+      results,
+    ) {
       if (_isConnected(results)) {
         debugPrint('[SupplierSync] Network available - triggering sync');
         Future.delayed(const Duration(seconds: 2), () => syncNow());
@@ -105,11 +103,57 @@ class SupplierSyncService extends ChangeNotifier {
     _periodicSyncTimer = Timer.periodic(const Duration(minutes: 3), (_) {
       _checkAndSync();
     });
-    
-    // Initial sync
-    _checkAndSync();
-    
+
+    // Initial sync - download from server if local is empty
+    _initialSync();
+
     debugPrint('[SupplierSync] Initialized');
+  }
+
+  /// Perform initial sync - download all suppliers if local database is empty
+  Future<void> _initialSync() async {
+    // Add a small delay to ensure authentication is fully ready
+    await Future.delayed(const Duration(milliseconds: 500));
+
+    try {
+      final localCount = await _offlineController.getTotalCount();
+      debugPrint(
+        '[SupplierSync] Initial sync check: $localCount local suppliers',
+      );
+
+      if (localCount == 0) {
+        debugPrint(
+          '[SupplierSync] No local suppliers, downloading from server...',
+        );
+        final results = await _connectivity.checkConnectivity();
+        if (_isConnected(results) && _apiService.isAuthenticated) {
+          await _downloadAllFromServer();
+        } else {
+          debugPrint(
+            '[SupplierSync] Not connected or not authenticated, will retry later',
+          );
+          // Retry after 3 seconds
+          Future.delayed(const Duration(seconds: 3), () => _initialSync());
+        }
+      }
+    } catch (e) {
+      debugPrint('[SupplierSync] Initial sync failed: $e');
+      // Retry after 5 seconds on error
+      Future.delayed(const Duration(seconds: 5), () => _initialSync());
+    }
+  }
+
+  /// Download all suppliers from server to local
+  Future<void> _downloadAllFromServer() async {
+    try {
+      final serverSuppliers = await _apiService.getSuppliers();
+      debugPrint(
+        '[SupplierSync] Downloaded ${serverSuppliers.length} suppliers from server',
+      );
+      await _offlineController.importFromServer(serverSuppliers);
+    } catch (e) {
+      debugPrint('[SupplierSync] Failed to download suppliers: $e');
+    }
   }
 
   @override
@@ -186,12 +230,19 @@ class SupplierSyncService extends ChangeNotifier {
       final newSuppliers = await _offlineController.getNewSuppliers();
       for (final supplier in newSuppliers) {
         try {
-          final serverResponse = await _apiService.createSupplier(supplier.toSyncPayload());
-          await _offlineController.updateWithServerResponse(supplier.id, serverResponse);
+          final serverResponse = await _apiService.createSupplier(
+            supplier.toSyncPayload(),
+          );
+          await _offlineController.updateWithServerResponse(
+            supplier.id,
+            serverResponse,
+          );
           created++;
           debugPrint('[SupplierSync] Created: ${supplier.fullName}');
         } catch (e) {
-          debugPrint('[SupplierSync] Failed to create ${supplier.fullName}: $e');
+          debugPrint(
+            '[SupplierSync] Failed to create ${supplier.fullName}: $e',
+          );
           failed++;
         }
       }
@@ -200,16 +251,23 @@ class SupplierSyncService extends ChangeNotifier {
       final updatedSuppliers = await _offlineController.getUpdatedSuppliers();
       for (final supplier in updatedSuppliers) {
         if (supplier.serverId == null) {
-          debugPrint('[SupplierSync] Skipping update - no server ID: ${supplier.fullName}');
+          debugPrint(
+            '[SupplierSync] Skipping update - no server ID: ${supplier.fullName}',
+          );
           continue;
         }
         try {
-          await _apiService.updateSupplier(supplier.serverId!, supplier.toSyncPayload());
+          await _apiService.updateSupplier(
+            supplier.serverId!,
+            supplier.toSyncPayload(),
+          );
           await _offlineController.markAsSynced(supplier.id);
           updated++;
           debugPrint('[SupplierSync] Updated: ${supplier.fullName}');
         } catch (e) {
-          debugPrint('[SupplierSync] Failed to update ${supplier.fullName}: $e');
+          debugPrint(
+            '[SupplierSync] Failed to update ${supplier.fullName}: $e',
+          );
           failed++;
         }
       }
@@ -229,7 +287,9 @@ class SupplierSyncService extends ChangeNotifier {
           deleted++;
           debugPrint('[SupplierSync] Deleted: ${supplier.fullName}');
         } catch (e) {
-          debugPrint('[SupplierSync] Failed to delete ${supplier.fullName}: $e');
+          debugPrint(
+            '[SupplierSync] Failed to delete ${supplier.fullName}: $e',
+          );
           failed++;
         }
       }
@@ -240,7 +300,9 @@ class SupplierSyncService extends ChangeNotifier {
           updatedSince: _lastSyncTime,
         );
         downloaded = await _offlineController.importFromServer(serverSuppliers);
-        debugPrint('[SupplierSync] Downloaded $downloaded suppliers from server');
+        debugPrint(
+          '[SupplierSync] Downloaded $downloaded suppliers from server',
+        );
       } catch (e) {
         debugPrint('[SupplierSync] Failed to pull server changes: $e');
       }
@@ -263,7 +325,6 @@ class SupplierSyncService extends ChangeNotifier {
       debugPrint('[SupplierSync] $result');
       notifyListeners();
       return result;
-
     } catch (e) {
       stopwatch.stop();
       _status = SupplierSyncServiceStatus.failed;
@@ -283,7 +344,6 @@ class SupplierSyncService extends ChangeNotifier {
       debugPrint('[SupplierSync] Sync failed: $e');
       notifyListeners();
       return result;
-
     } finally {
       _isSyncing = false;
     }

@@ -6,12 +6,7 @@ import '../../offline/entities/company_entity.dart';
 import 'company_api_service.dart';
 
 /// Sync status for tracking sync state
-enum CompanySyncServiceStatus {
-  idle,
-  syncing,
-  success,
-  failed,
-}
+enum CompanySyncServiceStatus { idle, syncing, success, failed }
 
 /// Result of a sync operation
 class CompanySyncResult {
@@ -60,7 +55,7 @@ class CompanySyncService extends ChangeNotifier {
   String? _lastError;
   StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
   Timer? _periodicSyncTimer;
-  
+
   /// Mutex to prevent concurrent sync operations
   bool _isSyncing = false;
 
@@ -68,9 +63,10 @@ class CompanySyncService extends ChangeNotifier {
     CompanyOfflineController? offlineController,
     CompanyApiService? apiService,
     Connectivity? connectivity,
-  })  : _offlineController = offlineController ?? CompanyOfflineController.instance,
-        _apiService = apiService ?? CompanyApiService.instance,
-        _connectivity = connectivity ?? Connectivity();
+  }) : _offlineController =
+           offlineController ?? CompanyOfflineController.instance,
+       _apiService = apiService ?? CompanyApiService.instance,
+       _connectivity = connectivity ?? Connectivity();
 
   /// Get the singleton instance
   static CompanySyncService get instance {
@@ -93,9 +89,11 @@ class CompanySyncService extends ChangeNotifier {
   /// Initialize the sync service
   void initialize() {
     debugPrint('[CompanySync] Initializing...');
-    
+
     // Listen for connectivity changes
-    _connectivitySubscription = _connectivity.onConnectivityChanged.listen((results) {
+    _connectivitySubscription = _connectivity.onConnectivityChanged.listen((
+      results,
+    ) {
       if (_isConnected(results)) {
         debugPrint('[CompanySync] Network available - triggering sync');
         Future.delayed(const Duration(seconds: 2), () => syncNow());
@@ -106,28 +104,43 @@ class CompanySyncService extends ChangeNotifier {
     _periodicSyncTimer = Timer.periodic(const Duration(minutes: 3), (_) {
       _checkAndSync();
     });
-    
+
     // Initial sync - download from server if local is empty
     _initialSync();
-    
+
     debugPrint('[CompanySync] Initialized');
   }
 
   /// Perform initial sync - download all companies if local database is empty
   Future<void> _initialSync() async {
+    // Add a small delay to ensure authentication is fully ready
+    await Future.delayed(const Duration(milliseconds: 500));
+
     try {
       final localCount = await _offlineController.getTotalCount();
-      debugPrint('[CompanySync] Initial sync check: $localCount local companies');
-      
+      debugPrint(
+        '[CompanySync] Initial sync check: $localCount local companies',
+      );
+
       if (localCount == 0) {
-        debugPrint('[CompanySync] No local companies, downloading from server...');
+        debugPrint(
+          '[CompanySync] No local companies, downloading from server...',
+        );
         final results = await _connectivity.checkConnectivity();
         if (_isConnected(results) && _apiService.isAuthenticated) {
           await forceFullSync();
+        } else {
+          debugPrint(
+            '[CompanySync] Not connected or not authenticated, will retry later',
+          );
+          // Retry after 3 seconds
+          Future.delayed(const Duration(seconds: 3), () => _initialSync());
         }
       }
     } catch (e) {
       debugPrint('[CompanySync] Initial sync failed: $e');
+      // Retry after 5 seconds on error
+      Future.delayed(const Duration(seconds: 5), () => _initialSync());
     }
   }
 
@@ -139,10 +152,11 @@ class CompanySyncService extends ChangeNotifier {
   }
 
   bool _isConnected(List<ConnectivityResult> results) {
-    return results.any((r) => 
-      r == ConnectivityResult.wifi || 
-      r == ConnectivityResult.mobile ||
-      r == ConnectivityResult.ethernet
+    return results.any(
+      (r) =>
+          r == ConnectivityResult.wifi ||
+          r == ConnectivityResult.mobile ||
+          r == ConnectivityResult.ethernet,
     );
   }
 
@@ -196,30 +210,45 @@ class CompanySyncService extends ChangeNotifier {
       debugPrint('[CompanySync] Starting delta sync...');
 
       // Get all companies that need syncing
-      final pendingCompanies = await _offlineController.getCompaniesNeedingSync();
-      debugPrint('[CompanySync] Found ${pendingCompanies.length} companies to sync');
+      final pendingCompanies = await _offlineController
+          .getCompaniesNeedingSync();
+      debugPrint(
+        '[CompanySync] Found ${pendingCompanies.length} companies to sync',
+      );
 
       for (final company in pendingCompanies) {
         try {
           switch (company.syncStatus) {
             case CompanySyncStatus.newRecord:
               // Create on server
-              final serverId = await _apiService.createCompany(company.toSyncPayload());
+              final serverId = await _apiService.createCompany(
+                company.toSyncPayload(),
+              );
               await _offlineController.markAsSynced(company.id, serverId);
               createdCount++;
-              debugPrint('[CompanySync] Created: ${company.companyName} -> $serverId');
+              debugPrint(
+                '[CompanySync] Created: ${company.companyName} -> $serverId',
+              );
               break;
 
             case CompanySyncStatus.updated:
               // Update on server (needs serverId)
               if (company.serverId != null) {
-                await _apiService.updateCompany(company.serverId!, company.toSyncPayload());
-                await _offlineController.markAsSynced(company.id, company.serverId!);
+                await _apiService.updateCompany(
+                  company.serverId!,
+                  company.toSyncPayload(),
+                );
+                await _offlineController.markAsSynced(
+                  company.id,
+                  company.serverId!,
+                );
                 updatedCount++;
                 debugPrint('[CompanySync] Updated: ${company.companyName}');
               } else {
                 // No serverId, treat as new
-                final serverId = await _apiService.createCompany(company.toSyncPayload());
+                final serverId = await _apiService.createCompany(
+                  company.toSyncPayload(),
+                );
                 await _offlineController.markAsSynced(company.id, serverId);
                 createdCount++;
               }
@@ -262,7 +291,6 @@ class CompanySyncService extends ChangeNotifier {
 
       debugPrint('[CompanySync] $result');
       return result;
-
     } catch (e) {
       stopwatch.stop();
       _lastError = e.toString();
@@ -283,18 +311,34 @@ class CompanySyncService extends ChangeNotifier {
 
   /// Force a full sync (re-download all from server)
   Future<CompanySyncResult> forceFullSync() async {
-    // First upload any local changes
-    await syncNow();
-    
-    // Then download all from server
-    final serverCompanies = await _apiService.getCompanies();
-    await _offlineController.importFromServer(serverCompanies);
-    
-    return CompanySyncResult(
-      success: true,
-      downloadedCount: serverCompanies.length,
-      duration: Duration.zero,
-    );
+    try {
+      // First upload any local changes
+      await syncNow();
+
+      // Then download all from server
+      final serverCompanies = await _apiService.getCompanies();
+      debugPrint(
+        '[CompanySync] Downloaded ${serverCompanies.length} companies from server',
+      );
+
+      await _offlineController.importFromServer(serverCompanies);
+
+      _lastSyncTime = DateTime.now();
+      notifyListeners();
+
+      return CompanySyncResult(
+        success: true,
+        downloadedCount: serverCompanies.length,
+        duration: Duration.zero,
+      );
+    } catch (e) {
+      debugPrint('[CompanySync] forceFullSync failed: $e');
+      return CompanySyncResult(
+        success: false,
+        errorMessage: e.toString(),
+        duration: Duration.zero,
+      );
+    }
   }
 
   /// Get count of pending syncs
