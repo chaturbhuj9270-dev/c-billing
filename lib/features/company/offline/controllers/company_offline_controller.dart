@@ -51,7 +51,6 @@ class CompanyOfflineController extends ChangeNotifier {
   Future<CompanyEntity> addCompany({
     required String companyName,
     String companyCode = '',
-    String gstCode = '',
     String contact = '',
     String address = '',
   }) async {
@@ -66,7 +65,6 @@ class CompanyOfflineController extends ChangeNotifier {
     final company = CompanyEntity.create(
       companyName: companyName,
       companyCode: companyCode,
-      gstCode: gstCode,
       contact: contact,
       address: address,
       syncStatus: CompanySyncStatus.newRecord,
@@ -153,7 +151,6 @@ class CompanyOfflineController extends ChangeNotifier {
     required Id id,
     String? companyName,
     String? companyCode,
-    String? gstCode,
     String? contact,
     String? address,
     bool? isActive,
@@ -192,7 +189,6 @@ class CompanyOfflineController extends ChangeNotifier {
     final updated = existing.copyWith(
       companyName: companyName,
       companyCode: companyCode,
-      gstCode: gstCode,
       contact: contact,
       address: address,
       isActive: isActive,

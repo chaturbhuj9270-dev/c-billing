@@ -187,7 +187,7 @@ class _EnhancedSupplierPageState extends State<EnhancedSupplierPage>
       if (!mounted || _isNavigatingAway) return;
 
       final freshSuppliers = snapshot.docs
-          .map((doc) => {...doc.data(), 'id': doc.id})
+          .map((doc) => {'id': doc.id, ...doc.data()})
           .toList();
 
       // Import to Isar
@@ -220,7 +220,7 @@ class _EnhancedSupplierPageState extends State<EnhancedSupplierPage>
             if (!mounted || _isNavigatingAway) return;
 
             final freshSuppliers = snapshot.docs
-                .map((doc) => {...doc.data(), 'id': doc.id})
+                .map((doc) => {'id': doc.id, ...doc.data()})
                 .toList();
 
             await SupplierOfflineController.instance.importFromServer(

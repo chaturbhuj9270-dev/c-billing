@@ -158,7 +158,7 @@ class _BillsListPageState extends State<BillsListPage>
             );
 
             final serverBills = snapshot.docs.map((doc) {
-              return <String, dynamic>{...doc.data(), 'id': doc.id};
+              return <String, dynamic>{'id': doc.id, ...doc.data()};
             }).toList();
 
             // Import to Isar — the Isar stream listener auto-updates the UI
