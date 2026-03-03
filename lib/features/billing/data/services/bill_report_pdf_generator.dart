@@ -32,9 +32,18 @@ class BillReportPdfGenerator {
 
       debugPrint('[BillReport] Document created');
 
-      // Initialize report settings and get visible columns
-      await BillReportSettingsService.instance.init();
+      // Initialize report settings - use defaults if init fails
+      try {
+        await BillReportSettingsService.instance.init().timeout(
+          const Duration(seconds: 5),
+        );
+        debugPrint('[BillReport] Settings initialized');
+      } catch (e) {
+        debugPrint('[BillReport] Settings init failed, using defaults: $e');
+        // visibleColumns getter already returns defaults if not initialized
+      }
       final visibleColumns = BillReportSettingsService.instance.visibleColumns;
+      debugPrint('[BillReport] Got ${visibleColumns.length} visible columns');
 
       debugPrint(
         '[BillReport] Visible columns: ${visibleColumns.map((c) => c.id).toList()}',
@@ -77,6 +86,26 @@ class BillReportPdfGenerator {
       int srNo = 0;
 
       for (final bill in bills) {
+        // Handle bills with no items - add a single row with bill info only
+        if (bill.items.isEmpty) {
+          srNo++;
+          final row = <String>[];
+          row.add('$srNo');
+          row.add(_truncate(bill.billNumber, 15));
+          row.add(_dateFmt.format(bill.billDate));
+          row.add(_truncate(bill.customerName ?? '-', 12));
+
+          // Add empty values for item columns
+          for (final col in visibleColumns) {
+            if (col.id != 'sr_no') {
+              row.add('-');
+            }
+          }
+          row.add('Rs.${bill.finalAmount.toStringAsFixed(2)}');
+          data.add(row);
+          continue;
+        }
+
         for (int itemIdx = 0; itemIdx < bill.items.length; itemIdx++) {
           srNo++;
           final item = bill.items[itemIdx];

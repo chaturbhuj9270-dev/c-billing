@@ -25,12 +25,13 @@ class BillReportColumn {
     'isVisible': isVisible,
   };
 
-  factory BillReportColumn.fromJson(Map<String, dynamic> json) => BillReportColumn(
-    id: json['id'] as String,
-    name: json['name'] as String,
-    isDefault: json['isDefault'] as bool? ?? true,
-    isVisible: json['isVisible'] as bool? ?? true,
-  );
+  factory BillReportColumn.fromJson(Map<String, dynamic> json) =>
+      BillReportColumn(
+        id: json['id'] as String,
+        name: json['name'] as String,
+        isDefault: json['isDefault'] as bool? ?? true,
+        isVisible: json['isVisible'] as bool? ?? true,
+      );
 
   BillReportColumn copyWith({bool? isVisible}) => BillReportColumn(
     id: id,
@@ -44,33 +45,65 @@ class BillReportColumn {
 /// Stored in Firestore per user with SharedPreferences fallback
 class BillReportSettingsService {
   BillReportSettingsService._();
-  static final BillReportSettingsService instance = BillReportSettingsService._();
+  static final BillReportSettingsService instance =
+      BillReportSettingsService._();
 
   static const String _prefsKey = 'bill_report_columns';
-  
+
   // Default columns for bill/invoice
   static const List<Map<String, dynamic>> _defaultColumns = [
     {'id': 'sr_no', 'name': 'Sr No', 'isDefault': true, 'isVisible': true},
-    {'id': 'product_name', 'name': 'Product Name', 'isDefault': true, 'isVisible': true},
-    {'id': 'hsn_code', 'name': 'HSN Code', 'isDefault': true, 'isVisible': false},
+    {
+      'id': 'product_name',
+      'name': 'Product Name',
+      'isDefault': true,
+      'isVisible': true,
+    },
+    {
+      'id': 'hsn_code',
+      'name': 'HSN Code',
+      'isDefault': true,
+      'isVisible': false,
+    },
     {'id': 'company', 'name': 'Company', 'isDefault': true, 'isVisible': false},
-    {'id': 'quantity', 'name': 'Quantity', 'isDefault': true, 'isVisible': true},
+    {
+      'id': 'quantity',
+      'name': 'Quantity',
+      'isDefault': true,
+      'isVisible': true,
+    },
     {'id': 'unit', 'name': 'Unit', 'isDefault': true, 'isVisible': false},
     {'id': 'rate', 'name': 'Rate', 'isDefault': true, 'isVisible': true},
-    {'id': 'discount', 'name': 'Discount', 'isDefault': true, 'isVisible': false},
+    {
+      'id': 'discount',
+      'name': 'Discount',
+      'isDefault': true,
+      'isVisible': false,
+    },
     {'id': 'tax', 'name': 'Tax', 'isDefault': true, 'isVisible': false},
     {'id': 'amount', 'name': 'Amount', 'isDefault': true, 'isVisible': true},
   ];
 
-  List<BillReportColumn> _columns = [];
+  // Initialize with defaults immediately so visibleColumns never returns empty
+  late List<BillReportColumn> _columns = _defaultColumns
+      .map((e) => BillReportColumn.fromJson(e))
+      .toList();
   bool _initialized = false;
 
   /// Get all report columns
   List<BillReportColumn> get columns => List.unmodifiable(_columns);
 
-  /// Get only visible columns
-  List<BillReportColumn> get visibleColumns => 
-      _columns.where((c) => c.isVisible).toList();
+  /// Get only visible columns - always returns defaults if not yet loaded
+  List<BillReportColumn> get visibleColumns {
+    if (_columns.isEmpty) {
+      // Fallback to defaults if columns somehow got cleared
+      return _defaultColumns
+          .map((e) => BillReportColumn.fromJson(e))
+          .where((c) => c.isVisible)
+          .toList();
+    }
+    return _columns.where((c) => c.isVisible).toList();
+  }
 
   /// Check if a column is visible by ID
   bool isColumnVisible(String columnId) {
@@ -83,7 +116,7 @@ class BillReportSettingsService {
       );
       return defaultCol['isVisible'] as bool? ?? false;
     }
-    
+
     final column = _columns.firstWhere(
       (c) => c.id == columnId,
       orElse: () => BillReportColumn(id: columnId, name: '', isVisible: false),
@@ -110,49 +143,72 @@ class BillReportSettingsService {
     try {
       final user = FirebaseAuth.instance.currentUser;
       if (user != null) {
-        // Try to load from Firestore
-        final doc = await FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid)
-            .collection('settings')
-            .doc('bill_report_columns')
-            .get();
+        // Try to load from Firestore with timeout
+        try {
+          final doc = await FirebaseFirestore.instance
+              .collection('users')
+              .doc(user.uid)
+              .collection('settings')
+              .doc('bill_report_columns')
+              .get(const GetOptions(source: Source.serverAndCache))
+              .timeout(const Duration(seconds: 5));
 
-        if (doc.exists && doc.data() != null) {
-          final data = doc.data()!;
-          final savedColumns = (data['columns'] as List<dynamic>?)
-              ?.map((e) => BillReportColumn.fromJson(e as Map<String, dynamic>))
-              .toList() ?? [];
-          
-          // Merge with defaults to ensure new columns are included
-          _columns = _mergeWithDefaults(savedColumns);
-          debugPrint('[BillReportSettings] Loaded ${_columns.length} columns from Firestore');
-          
-          // Also save to SharedPreferences as cache
-          await _saveToPrefs();
-          return;
+          if (doc.exists && doc.data() != null) {
+            final data = doc.data()!;
+            final savedColumns =
+                (data['columns'] as List<dynamic>?)
+                    ?.map(
+                      (e) =>
+                          BillReportColumn.fromJson(e as Map<String, dynamic>),
+                    )
+                    .toList() ??
+                [];
+
+            // Merge with defaults to ensure new columns are included
+            _columns = _mergeWithDefaults(savedColumns);
+            debugPrint(
+              '[BillReportSettings] Loaded ${_columns.length} columns from Firestore',
+            );
+
+            // Also save to SharedPreferences as cache
+            await _saveToPrefs();
+            return;
+          }
+        } catch (e) {
+          debugPrint(
+            '[BillReportSettings] Firestore load failed (using cache): $e',
+          );
+          // Continue to SharedPreferences fallback
         }
       }
 
       // Fallback to SharedPreferences
       final prefs = await SharedPreferences.getInstance();
       final savedJson = prefs.getString(_prefsKey);
-      
+
       if (savedJson != null) {
         final savedData = jsonDecode(savedJson) as Map<String, dynamic>;
-        final savedColumns = (savedData['columns'] as List<dynamic>?)
-            ?.map((e) => BillReportColumn.fromJson(e as Map<String, dynamic>))
-            .toList() ?? [];
-        
+        final savedColumns =
+            (savedData['columns'] as List<dynamic>?)
+                ?.map(
+                  (e) => BillReportColumn.fromJson(e as Map<String, dynamic>),
+                )
+                .toList() ??
+            [];
+
         _columns = _mergeWithDefaults(savedColumns);
-        debugPrint('[BillReportSettings] Loaded ${_columns.length} columns from SharedPreferences');
+        debugPrint(
+          '[BillReportSettings] Loaded ${_columns.length} columns from SharedPreferences',
+        );
       } else {
         // Initialize with defaults
         _columns = _defaultColumns
             .map((e) => BillReportColumn.fromJson(e))
             .toList();
-        
-        debugPrint('[BillReportSettings] Initialized with ${_columns.length} default columns');
+
+        debugPrint(
+          '[BillReportSettings] Initialized with ${_columns.length} default columns',
+        );
       }
     } catch (e) {
       debugPrint('[BillReportSettings] Error loading columns: $e');
@@ -165,7 +221,7 @@ class BillReportSettingsService {
   /// Merge saved columns with defaults (to handle new columns added later)
   List<BillReportColumn> _mergeWithDefaults(List<BillReportColumn> saved) {
     final result = <BillReportColumn>[];
-    
+
     // Add all default columns, using saved visibility if available
     for (final defaultCol in _defaultColumns) {
       final savedCol = saved.firstWhere(
@@ -174,14 +230,14 @@ class BillReportSettingsService {
       );
       result.add(savedCol);
     }
-    
+
     // Add any saved non-default columns (custom columns)
     for (final savedCol in saved) {
       if (!_defaultColumns.any((d) => d['id'] == savedCol.id)) {
         result.add(savedCol);
       }
     }
-    
+
     return result;
   }
 
@@ -205,12 +261,12 @@ class BillReportSettingsService {
             .collection('settings')
             .doc('bill_report_columns')
             .set({
-          'columns': _columns.map((c) => c.toJson()).toList(),
-          'updatedAt': FieldValue.serverTimestamp(),
-        });
+              'columns': _columns.map((c) => c.toJson()).toList(),
+              'updatedAt': FieldValue.serverTimestamp(),
+            });
         debugPrint('[BillReportSettings] Saved to Firestore');
       }
-      
+
       await _saveToPrefs();
     } catch (e) {
       debugPrint('[BillReportSettings] Error saving columns: $e');
@@ -220,9 +276,10 @@ class BillReportSettingsService {
   Future<void> _saveToPrefs() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(_prefsKey, jsonEncode({
-        'columns': _columns.map((c) => c.toJson()).toList(),
-      }));
+      await prefs.setString(
+        _prefsKey,
+        jsonEncode({'columns': _columns.map((c) => c.toJson()).toList()}),
+      );
     } catch (e) {
       debugPrint('[BillReportSettings] Error saving to prefs: $e');
     }

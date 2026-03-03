@@ -422,10 +422,18 @@ class _BillsListPageState extends State<BillsListPage>
     try {
       debugPrint('[BillReport] Generating PDF for ${filtered.length} bills...');
 
-      final pdfBytes = await BillReportPdfGenerator.generate(
-        bills: filtered,
-        filterDescription: _buildFilterDescription(),
-      );
+      final pdfBytes =
+          await BillReportPdfGenerator.generate(
+            bills: filtered,
+            filterDescription: _buildFilterDescription(),
+          ).timeout(
+            const Duration(seconds: 60),
+            onTimeout: () {
+              throw Exception(
+                'Report generation timed out. Try with fewer bills.',
+              );
+            },
+          );
 
       debugPrint('[BillReport] PDF generated: ${pdfBytes.length} bytes');
 

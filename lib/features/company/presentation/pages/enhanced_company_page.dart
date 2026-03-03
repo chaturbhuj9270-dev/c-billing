@@ -360,13 +360,13 @@ class _EnhancedCompanyPageState extends State<EnhancedCompanyPage>
                       isRequired: true,
                     ),
                     const SizedBox(height: 16),
-                    // Only show code field when editing
+                    // Only show code field when editing (optional field)
                     if (_isEditing) ...[
                       _buildInputField(
                         label: _localizations.companyCode,
                         controller: _companyCodeController,
                         icon: Icons.qr_code_rounded,
-                        isRequired: true,
+                        isRequired: false,
                       ),
                       const SizedBox(height: 16),
                     ],

@@ -219,35 +219,53 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
       // Collect all pages first to know total count
       final pages = <Uint8List>[];
       int pageCount = 0;
+      bool timedOut = false;
 
       setState(() {
         _renderingStatus = 'Rendering pages...';
       });
 
-      // Use Printing.raster to convert PDF pages to images
-      await for (final page in Printing.raster(
-        _pdfBytes!,
-        pages: null, // Render all pages
-        dpi: dpi,
-      )) {
-        // Convert raster page to PNG bytes
-        final pngBytes = await page.toPng();
-        pages.add(pngBytes);
-        pageCount++;
+      // Use Printing.raster to convert PDF pages to images with timeout
+      try {
+        await for (final page
+            in Printing.raster(
+              _pdfBytes!,
+              pages: null, // Render all pages
+              dpi: dpi,
+            ).timeout(
+              const Duration(seconds: 30),
+              onTimeout: (sink) {
+                debugPrint('[FilePreviewPage] PDF rendering timed out');
+                timedOut = true;
+                sink.close();
+              },
+            )) {
+          // Convert raster page to PNG bytes
+          final pngBytes = await page.toPng();
+          pages.add(pngBytes);
+          pageCount++;
 
-        debugPrint('[FilePreviewPage] Rendered page $pageCount');
+          debugPrint('[FilePreviewPage] Rendered page $pageCount');
 
-        if (mounted) {
-          setState(() {
-            _totalPages = pageCount;
-            _pagesRendered = pageCount;
-            _renderingStatus = 'Rendered page $pageCount';
-            _renderedPages = List<Uint8List?>.from(pages);
-          });
+          if (mounted) {
+            setState(() {
+              _totalPages = pageCount;
+              _pagesRendered = pageCount;
+              _renderingStatus = 'Rendered page $pageCount';
+              _renderedPages = List<Uint8List?>.from(pages);
+            });
+          }
         }
+      } catch (e) {
+        debugPrint('[FilePreviewPage] PDF rendering error: $e');
+        if (pages.isEmpty) rethrow;
+        // If we have some pages, continue with what we have
       }
 
       if (pages.isEmpty) {
+        if (timedOut) {
+          throw Exception('PDF rendering timed out. Please try again.');
+        }
         throw Exception('No pages were rendered from PDF');
       }
 
