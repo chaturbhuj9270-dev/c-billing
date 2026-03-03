@@ -331,11 +331,20 @@ class BillOfflineController extends ChangeNotifier {
 
   /// Get all bills that need to be synced
   Future<List<BillEntity>> getUnsyncedBills() async {
-    return await _isar.billEntitys
+    final bills = await _isar.billEntitys
         .filter()
         .not()
         .syncStatusEqualTo(BillSyncStatus.synced)
         .findAll();
+    debugPrint(
+      '[BillOffline] getUnsyncedBills: Found ${bills.length} unsynced bills',
+    );
+    for (final bill in bills) {
+      debugPrint(
+        '[BillOffline] - Bill ${bill.id}: syncStatus=${bill.syncStatus.name}, serverId=${bill.serverId}',
+      );
+    }
+    return bills;
   }
 
   /// Get count of unsynced bills
@@ -362,6 +371,7 @@ class BillOfflineController extends ChangeNotifier {
     });
 
     debugPrint('[BillOffline] Bill marked as synced: $localId -> $serverId');
+    notifyListeners();
   }
 
   /// Remove a bill after successful server deletion

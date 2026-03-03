@@ -72,6 +72,9 @@ class Bill {
   /// Total tax amount (CGST + SGST + Other)
   final double totalTaxAmount;
 
+  /// Whether the bill is synced with the server
+  final bool isSynced;
+
   Bill({
     required this.id,
     this.customerId,
@@ -102,6 +105,7 @@ class Bill {
     this.sgstAmount = 0.0,
     this.otherTaxAmount = 0.0,
     this.totalTaxAmount = 0.0,
+    this.isSynced = true,
   });
 
   /// Factory constructor to create from JSON (for Firebase)
@@ -253,6 +257,7 @@ class Bill {
       sgstAmount: entity.sgstAmount,
       otherTaxAmount: entity.otherTaxAmount,
       totalTaxAmount: entity.totalTaxAmount,
+      isSynced: entity.syncStatus == BillSyncStatus.synced,
     );
   }
 
@@ -336,6 +341,7 @@ class Bill {
     double? sgstAmount,
     double? otherTaxAmount,
     double? totalTaxAmount,
+    bool? isSynced,
   }) {
     return Bill(
       id: id ?? this.id,
@@ -367,6 +373,7 @@ class Bill {
       sgstAmount: sgstAmount ?? this.sgstAmount,
       otherTaxAmount: otherTaxAmount ?? this.otherTaxAmount,
       totalTaxAmount: totalTaxAmount ?? this.totalTaxAmount,
+      isSynced: isSynced ?? this.isSynced,
     );
   }
 

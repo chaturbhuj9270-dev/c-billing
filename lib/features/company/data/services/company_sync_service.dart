@@ -290,6 +290,9 @@ class CompanySyncService extends ChangeNotifier {
         }
       }
 
+      // Step 2: Pull changes from server
+      final downloadedCount = await _pullServerChanges();
+
       stopwatch.stop();
       _lastSyncTime = DateTime.now();
       _status = CompanySyncServiceStatus.success;
@@ -300,6 +303,7 @@ class CompanySyncService extends ChangeNotifier {
         createdCount: createdCount,
         updatedCount: updatedCount,
         deletedCount: deletedCount,
+        downloadedCount: downloadedCount,
         failedCount: failedCount,
         duration: stopwatch.elapsed,
       );
@@ -330,6 +334,27 @@ class CompanySyncService extends ChangeNotifier {
       );
     } finally {
       _isSyncing = false;
+    }
+  }
+
+  /// Pull changes from server
+  Future<int> _pullServerChanges() async {
+    try {
+      // Fetch all companies from server
+      final serverCompanies = await _apiService.getCompanies();
+      debugPrint(
+        '[CompanySync] Received ${serverCompanies.length} companies from server',
+      );
+
+      if (serverCompanies.isNotEmpty) {
+        await _offlineController.importFromServer(serverCompanies);
+        return serverCompanies.length;
+      }
+
+      return 0;
+    } catch (e) {
+      debugPrint('[CompanySync] Failed to pull server changes: $e');
+      rethrow;
     }
   }
 

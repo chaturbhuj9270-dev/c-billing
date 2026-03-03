@@ -96,17 +96,70 @@ class BillSyncService extends ChangeNotifier {
     ) {
       if (_isConnected(results)) {
         debugPrint('[BillSync] Network available - triggering sync');
-        syncNow();
+        Future.delayed(const Duration(seconds: 2), () => syncNow());
       }
     });
 
     // Start periodic sync (every 3 minutes)
     _periodicSyncTimer = Timer.periodic(const Duration(minutes: 3), (_) {
-      syncNow();
+      _checkAndSync();
     });
 
-    // Initial sync
-    syncNow();
+    // Initial sync - download from server if local is empty
+    _initialSync();
+
+    debugPrint('[BillSync] Initialized');
+  }
+
+  /// Check conditions and sync if appropriate
+  Future<void> _checkAndSync() async {
+    try {
+      final results = await _connectivity.checkConnectivity();
+      if (_isConnected(results) && _apiService.isAuthenticated) {
+        await syncNow();
+      }
+    } catch (e) {
+      debugPrint('[BillSync] Check and sync failed: $e');
+    }
+  }
+
+  /// Initial sync logic - downloads all bills if local DB is empty
+  Future<void> _initialSync() async {
+    debugPrint('[BillSync] Starting initial sync...');
+
+    try {
+      final localCount = await _offlineController.getTotalCount();
+      debugPrint('[BillSync] Initial sync check: $localCount local bills');
+
+      // Check connectivity and auth
+      final results = await _connectivity.checkConnectivity();
+      final isConnected = _isConnected(results);
+      final isAuth = _apiService.isAuthenticated;
+
+      debugPrint('[BillSync] Connected: $isConnected, Authenticated: $isAuth');
+
+      if (!isConnected || !isAuth) {
+        debugPrint(
+          '[BillSync] Not connected or not authenticated, will retry in 3 seconds',
+        );
+        // Retry after 3 seconds
+        Future.delayed(const Duration(seconds: 3), () => _initialSync());
+        return;
+      }
+
+      if (localCount == 0) {
+        debugPrint('[BillSync] No local bills, downloading all from server...');
+        await forceFullRefresh();
+      } else {
+        // Even with local data, sync to upload any pending changes
+        debugPrint('[BillSync] Syncing pending local changes...');
+        await syncNow();
+      }
+    } catch (e) {
+      debugPrint('[BillSync] Initial sync failed: $e');
+      // Retry after 5 seconds on error
+      Future.delayed(const Duration(seconds: 5), () => _initialSync());
+    }
   }
 
   /// Dispose resources
@@ -173,14 +226,22 @@ class BillSyncService extends ChangeNotifier {
       debugPrint('[BillSync] Found ${unsyncedBills.length} unsynced bills');
 
       for (final bill in unsyncedBills) {
+        debugPrint(
+          '[BillSync] Processing bill ${bill.id}: syncStatus=${bill.syncStatus.name}, serverId=${bill.serverId}',
+        );
         try {
           switch (bill.syncStatus) {
             case BillSyncStatus.newRecord:
               // Create on server
+              debugPrint('[BillSync] Creating bill ${bill.id} on server...');
               final serverId = await _apiService.createBill(
                 bill.toSyncPayload(),
               );
+              debugPrint(
+                '[BillSync] Bill ${bill.id} created on server with serverId: $serverId',
+              );
               await _offlineController.markAsSynced(bill.id, serverId);
+              debugPrint('[BillSync] Bill ${bill.id} marked as synced');
               created++;
               break;
 
@@ -283,7 +344,7 @@ class BillSyncService extends ChangeNotifier {
     }
   }
 
-  /// Force full refresh from server
+  /// Force full refresh from server (downloads all bills)
   Future<BillSyncResult> forceFullRefresh() async {
     if (_isSyncing) {
       return BillSyncResult(
@@ -300,8 +361,58 @@ class BillSyncService extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // Get all bills from server
+      // First upload any local changes
+      final unsyncedBills = await _offlineController.getUnsyncedBills();
+      debugPrint(
+        '[BillSync] Force refresh - uploading ${unsyncedBills.length} local changes first',
+      );
+
+      int created = 0;
+      int updated = 0;
+      int deleted = 0;
+
+      for (final bill in unsyncedBills) {
+        try {
+          switch (bill.syncStatus) {
+            case BillSyncStatus.newRecord:
+              final serverId = await _apiService.createBill(
+                bill.toSyncPayload(),
+              );
+              await _offlineController.markAsSynced(bill.id, serverId);
+              created++;
+              debugPrint('[BillSync] Created bill: ${bill.id} -> $serverId');
+              break;
+            case BillSyncStatus.updated:
+              if (bill.serverId != null) {
+                await _apiService.updateBill(
+                  bill.serverId!,
+                  bill.toSyncPayload(),
+                );
+                await _offlineController.markAsSynced(bill.id, bill.serverId!);
+                updated++;
+              }
+              break;
+            case BillSyncStatus.deleted:
+              if (bill.serverId != null) {
+                await _apiService.deleteBill(bill.serverId!);
+              }
+              await _offlineController.removeAfterServerDelete(bill.id);
+              deleted++;
+              break;
+            case BillSyncStatus.synced:
+              break;
+          }
+        } catch (e) {
+          debugPrint('[BillSync] Failed to upload bill ${bill.id}: $e');
+        }
+      }
+
+      // Then download all from server
+      debugPrint('[BillSync] Downloading all bills from server...');
       final serverBills = await _apiService.getBills();
+      debugPrint(
+        '[BillSync] Downloaded ${serverBills.length} bills from server',
+      );
 
       // Import all
       await _offlineController.importFromServer(serverBills);
@@ -311,20 +422,27 @@ class BillSyncService extends ChangeNotifier {
       notifyListeners();
 
       // Notify dashboard to refresh after full sync
-      if (serverBills.isNotEmpty) {
+      if (serverBills.isNotEmpty || created > 0 || updated > 0 || deleted > 0) {
         DashboardRefreshService.instance.notifyDataChanged(DataChangeType.bill);
       }
 
-      return BillSyncResult(
+      final result = BillSyncResult(
         success: true,
+        createdCount: created,
+        updatedCount: updated,
+        deletedCount: deleted,
         downloadedCount: serverBills.length,
         duration: DateTime.now().difference(startTime),
       );
+
+      debugPrint('[BillSync] Force refresh completed: $result');
+      return result;
     } catch (e) {
       _status = BillSyncServiceStatus.failed;
       _lastError = e.toString();
       notifyListeners();
 
+      debugPrint('[BillSync] Force refresh failed: $e');
       return BillSyncResult(
         success: false,
         errorMessage: e.toString(),

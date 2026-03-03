@@ -108,13 +108,25 @@ class _BillsListPageState extends State<BillsListPage>
       entities,
     ) {
       if (mounted) {
-        final bills = entities.map((e) => Bill.fromBillEntity(e)).toList();
+        debugPrint(
+          '[BillsListPage] Bills stream fired with ${entities.length} bills',
+        );
+        final bills = entities.map((e) {
+          final bill = Bill.fromBillEntity(e);
+          debugPrint(
+            '[BillsListPage] Bill ${e.id}: syncStatus=${e.syncStatus.name}, isSynced=${bill.isSynced}',
+          );
+          return bill;
+        }).toList();
         setState(() {
           _bills = bills;
           _filterBills(_searchController.text);
         });
       }
     });
+
+    // Also listen to BillSyncService to force refresh when sync completes
+    BillSyncService.instance.addListener(_onSyncStatusChanged);
 
     // Initialize animations
     _animController = AnimationController(
@@ -186,7 +198,20 @@ class _BillsListPageState extends State<BillsListPage>
     _searchController.dispose();
     _printerService.dispose();
     LanguageService.instance.removeListener(_onLanguageChanged);
+    BillSyncService.instance.removeListener(_onSyncStatusChanged);
     super.dispose();
+  }
+
+  /// Called when sync status changes - forces UI refresh
+  void _onSyncStatusChanged() {
+    debugPrint(
+      '[BillsListPage] Sync status changed: ${BillSyncService.instance.status}',
+    );
+    if (mounted &&
+        BillSyncService.instance.status == BillSyncServiceStatus.success) {
+      // Force reload bills to pick up sync status changes
+      _loadBills();
+    }
   }
 
   void _onLanguageChanged() {
@@ -2055,6 +2080,19 @@ class _BillsListPageState extends State<BillsListPage>
                                           : const Color(0xFF1B4D3E),
                                     ),
                                     overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                // Sync status icon
+                                Padding(
+                                  padding: const EdgeInsets.only(left: 4),
+                                  child: Icon(
+                                    bill.isSynced
+                                        ? Icons.cloud_done_rounded
+                                        : Icons.cloud_upload_rounded,
+                                    size: 12,
+                                    color: bill.isSynced
+                                        ? Colors.green
+                                        : Colors.orange,
                                   ),
                                 ),
                               ],

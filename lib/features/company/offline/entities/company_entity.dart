@@ -78,7 +78,7 @@ class CompanyEntity {
     this.companyCode = '',
     this.gstCode = '',
     this.contact = '',
-    this.address = ''
+    this.address = '',
     this.isActive = true,
     this.syncStatus = CompanySyncStatus.newRecord,
     required this.updatedAt,

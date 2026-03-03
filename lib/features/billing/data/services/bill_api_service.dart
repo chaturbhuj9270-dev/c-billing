@@ -6,15 +6,13 @@ import 'package:flutter/foundation.dart';
 /// Used by BillSyncService for server communication
 class BillApiService {
   static BillApiService? _instance;
-  
+
   final FirebaseFirestore _firestore;
   final FirebaseAuth _auth;
 
-  BillApiService._({
-    FirebaseFirestore? firestore,
-    FirebaseAuth? auth,
-  })  : _firestore = firestore ?? FirebaseFirestore.instance,
-        _auth = auth ?? FirebaseAuth.instance;
+  BillApiService._({FirebaseFirestore? firestore, FirebaseAuth? auth})
+    : _firestore = firestore ?? FirebaseFirestore.instance,
+      _auth = auth ?? FirebaseAuth.instance;
 
   /// Get the singleton instance
   static BillApiService get instance {
@@ -28,57 +26,66 @@ class BillApiService {
   /// Get bills collection reference
   CollectionReference<Map<String, dynamic>> get _billsCollection {
     if (_userId == null) throw Exception('User not authenticated');
-    return _firestore
-        .collection('users')
-        .doc(_userId)
-        .collection('bills');
+    return _firestore.collection('users').doc(_userId).collection('bills');
   }
 
   // ==================== CREATE ====================
 
   /// Create a new bill on server
-  /// Also updates product stock on server (decrements stock for each item)
+  /// Also tries to update product stock on server (decrements stock for each item)
   /// Returns the server-generated ID
   Future<String> createBill(Map<String, dynamic> data) async {
     try {
       final docRef = _billsCollection.doc();
       final billId = docRef.id;
-      
-      // Use batch write to create bill and update product stock atomically
-      final batch = _firestore.batch();
-      
+
       // Add bill document with ID
       final billData = Map<String, dynamic>.from(data);
       billData['id'] = billId;
-      batch.set(docRef, billData);
-      
-      // Decrement stock for each product in the bill items
+      await docRef.set(billData);
+
+      debugPrint('[BillApi] Created bill: $billId');
+
+      // Try to decrement stock for each product (non-critical - don't fail if product doesn't exist)
       final items = data['items'] as List<dynamic>?;
       if (items != null && items.isNotEmpty) {
         final productsCollection = _firestore
             .collection('users')
             .doc(_userId)
             .collection('products');
-            
+
         for (final item in items) {
-          final productId = item['productId'] as String?;
-          final quantity = item['quantity'] as int? ?? 0;
-          
-          if (productId != null && productId.isNotEmpty && quantity > 0) {
-            final productRef = productsCollection.doc(productId);
-            batch.update(productRef, {
-              'currentStock': FieldValue.increment(-quantity),
-              'updatedAt': DateTime.now().toIso8601String(),
-            });
-            debugPrint('[BillApi] Will decrement stock for product $productId by $quantity');
+          try {
+            final productId = item['productId'] as String?;
+            // Handle quantity as num (could be int or double)
+            final quantity = (item['quantity'] as num?)?.toInt() ?? 0;
+
+            if (productId != null && productId.isNotEmpty && quantity > 0) {
+              final productRef = productsCollection.doc(productId);
+              // Check if product exists first
+              final productDoc = await productRef.get();
+              if (productDoc.exists) {
+                await productRef.update({
+                  'currentStock': FieldValue.increment(-quantity),
+                  'updatedAt': DateTime.now().toIso8601String(),
+                });
+                debugPrint(
+                  '[BillApi] Decremented stock for product $productId by $quantity',
+                );
+              } else {
+                debugPrint(
+                  '[BillApi] Product $productId not found in Firebase, skipping stock update',
+                );
+              }
+            }
+          } catch (e) {
+            debugPrint(
+              '[BillApi] Failed to update stock for item: $e (non-critical)',
+            );
           }
         }
       }
-      
-      // Commit batch
-      await batch.commit();
-      
-      debugPrint('[BillApi] Created bill: $billId with stock updates');
+
       return billId;
     } catch (e) {
       debugPrint('[BillApi] Failed to create bill: $e');
@@ -92,16 +99,16 @@ class BillApiService {
   Future<List<Map<String, dynamic>>> getBills({DateTime? updatedSince}) async {
     try {
       Query<Map<String, dynamic>> query = _billsCollection;
-      
+
       if (updatedSince != null) {
         query = query.where(
           'updatedAt',
           isGreaterThan: updatedSince.toIso8601String(),
         );
       }
-      
+
       final snapshot = await query.orderBy('createdAt', descending: true).get();
-      
+
       return snapshot.docs.map((doc) {
         final data = doc.data();
         data['id'] = doc.id;
@@ -109,7 +116,8 @@ class BillApiService {
       }).toList();
     } catch (e) {
       // If ordering fails, try without ordering
-      if (e.toString().contains('index') || e.toString().contains('FAILED_PRECONDITION')) {
+      if (e.toString().contains('index') ||
+          e.toString().contains('FAILED_PRECONDITION')) {
         debugPrint('[BillApi] Index not available, fetching without order');
         final snapshot = await _billsCollection.get();
         return snapshot.docs.map((doc) {
@@ -128,7 +136,7 @@ class BillApiService {
     try {
       final doc = await _billsCollection.doc(id).get();
       if (!doc.exists) return null;
-      
+
       final data = doc.data()!;
       data['id'] = doc.id;
       return data;
@@ -139,13 +147,15 @@ class BillApiService {
   }
 
   /// Get bills by customer ID
-  Future<List<Map<String, dynamic>>> getBillsByCustomerId(String customerId) async {
+  Future<List<Map<String, dynamic>>> getBillsByCustomerId(
+    String customerId,
+  ) async {
     try {
       final snapshot = await _billsCollection
           .where('customerId', isEqualTo: customerId)
           .orderBy('createdAt', descending: true)
           .get();
-      
+
       return snapshot.docs.map((doc) {
         final data = doc.data();
         data['id'] = doc.id;
@@ -191,7 +201,7 @@ class BillApiService {
       final snapshot = await _billsCollection
           .where('updatedAt', isGreaterThan: since.toIso8601String())
           .get();
-      
+
       return snapshot.docs.map((doc) {
         final data = doc.data();
         data['id'] = doc.id;
