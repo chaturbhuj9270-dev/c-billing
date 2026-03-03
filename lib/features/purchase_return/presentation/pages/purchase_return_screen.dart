@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
+import 'package:c_billing/core/localization/app_localizations.dart';
+import 'package:c_billing/core/services/language_service.dart';
 import '../../../../core/services/session_manager.dart';
 import '../../../../core/services/dashboard_refresh_service.dart';
 import '../../data/services/purchase_return_service.dart';
@@ -30,6 +32,9 @@ class PurchaseReturnScreen extends StatefulWidget {
 
 class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
     with SingleTickerProviderStateMixin {
+  // ── Localization ──
+  late AppLocalizations _localizations;
+
   // ── Tab ──
   late TabController _tabController;
 
@@ -295,7 +300,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
       );
 
       if (result.success) {
-        _showSnackbar('Purchase return processed successfully!', false);
+        _showSnackbar(_localizations.returnProcessedSuccessfully, false);
         _resetForm();
         // Notify dashboard to refresh data
         DashboardRefreshService.instance.notifyDataChanged(
@@ -356,6 +361,9 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
 
   @override
   Widget build(BuildContext context) {
+    _localizations = AppLocalizations.of(
+      LanguageService.instance.currentLanguage,
+    );
     _sessionManager.resetSession();
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
@@ -406,13 +414,13 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
                       ),
                     ),
                     const SizedBox(width: 12),
-                    const Expanded(
+                    Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Purchase Return',
-                            style: TextStyle(
+                            _localizations.purchaseReturn,
+                            style: const TextStyle(
                               color: Colors.white,
                               fontSize: 18,
                               fontWeight: FontWeight.w700,
@@ -420,8 +428,8 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
                             ),
                           ),
                           Text(
-                            'Return stock to supplier',
-                            style: TextStyle(
+                            _localizations.returnStockToSupplier,
+                            style: const TextStyle(
                               color: Colors.white70,
                               fontSize: 11,
                               fontFamily: 'Literata',
@@ -456,7 +464,9 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
                               () => _isPartialMode = !_isPartialMode,
                             ),
                             child: Text(
-                              _isPartialMode ? 'Partial' : 'Full Batch',
+                              _isPartialMode
+                                  ? _localizations.partial
+                                  : _localizations.fullBatch,
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 11,
@@ -483,9 +493,9 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
                   fontWeight: FontWeight.w700,
                   fontSize: 13,
                 ),
-                tabs: const [
-                  Tab(text: 'New Return'),
-                  Tab(text: 'Return History'),
+                tabs: [
+                  Tab(text: _localizations.newReturn),
+                  Tab(text: _localizations.returnHistory),
                 ],
               ),
             ],
@@ -577,7 +587,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
                     child: Text(
                       _selectedSupplier != null
                           ? _selectedSupplier!['name'] as String
-                          : 'Select Supplier *',
+                          : '${_localizations.selectSupplier} *',
                       style: TextStyle(
                         fontFamily: 'Literata',
                         fontSize: 14,
@@ -700,9 +710,9 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Select Supplier',
-                      style: TextStyle(
+                    Text(
+                      _localizations.selectSupplier,
+                      style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
                         fontFamily: 'Literata',
@@ -724,7 +734,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
                           fontSize: 14,
                         ),
                         decoration: InputDecoration(
-                          hintText: 'Search supplier...',
+                          hintText: _localizations.searchSupplier,
                           hintStyle: TextStyle(color: Colors.grey[400]),
                           prefixIcon: Icon(
                             Icons.search,
@@ -753,7 +763,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
                     : filtered.isEmpty
                     ? Center(
                         child: Text(
-                          'No suppliers found',
+                          _localizations.noSuppliersFound,
                           style: TextStyle(
                             color: Colors.grey[500],
                             fontFamily: 'Literata',
@@ -847,7 +857,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
         controller: _productSearchCtrl,
         style: const TextStyle(fontFamily: 'Literata', fontSize: 14),
         decoration: InputDecoration(
-          hintText: 'Search products...',
+          hintText: _localizations.searchProducts,
           hintStyle: TextStyle(color: Colors.grey[400]),
           prefixIcon: Icon(Icons.search, color: Colors.grey[600], size: 20),
           suffixIcon: _productSearchCtrl.text.isNotEmpty
@@ -899,8 +909,8 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
               const SizedBox(height: 12),
               Text(
                 _products.isEmpty
-                    ? 'No returnable products found for this supplier'
-                    : 'No products match your search',
+                    ? _localizations.noReturnableProducts
+                    : _localizations.noProductsMatchSearch,
                 style: TextStyle(
                   color: Colors.grey[500],
                   fontFamily: 'Literata',
@@ -934,9 +944,9 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
             child: Row(
               children: [
-                const Text(
-                  'Products',
-                  style: TextStyle(
+                Text(
+                  _localizations.productsLabel,
+                  style: const TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
                     fontFamily: 'Literata',
@@ -945,7 +955,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
                 ),
                 const Spacer(),
                 Text(
-                  '${filtered.length} items',
+                  '${filtered.length} ${_localizations.itemsLabel}',
                   style: TextStyle(
                     color: Colors.grey[500],
                     fontSize: 12,
@@ -1844,7 +1854,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
             ),
             const SizedBox(height: 16),
             Text(
-              'No returns yet',
+              _localizations.noReturnsYet,
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
@@ -1854,7 +1864,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
             ),
             const SizedBox(height: 6),
             Text(
-              'Process your first return from the New Return tab',
+              _localizations.processFirstReturn,
               style: TextStyle(
                 fontSize: 13,
                 fontFamily: 'Literata',

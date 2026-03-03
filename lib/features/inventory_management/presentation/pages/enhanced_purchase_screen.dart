@@ -64,7 +64,9 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
   @override
   void initState() {
     super.initState();
-    _localizations = AppLocalizations.of(LanguageService.instance.currentLanguage);
+    _localizations = AppLocalizations.of(
+      LanguageService.instance.currentLanguage,
+    );
     LanguageService.instance.addListener(_onLanguageChanged);
 
     // Initialize animations
@@ -99,7 +101,9 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
   void _onLanguageChanged() {
     if (mounted) {
       setState(() {
-        _localizations = AppLocalizations.of(LanguageService.instance.currentLanguage);
+        _localizations = AppLocalizations.of(
+          LanguageService.instance.currentLanguage,
+        );
       });
     }
   }
@@ -118,7 +122,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
   Future<void> _loadPurchasesFromIsar() async {
     try {
       final isar = IsarService.instance.isar;
-      
+
       // Query all purchase batches directly from Isar
       var batches = await isar.purchaseBatchEntitys
           .filter()
@@ -126,15 +130,17 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
           .syncStatusEqualTo(BatchSyncStatus.deleted)
           .sortByPurchaseDateDesc()
           .findAll();
-      
+
       debugPrint('[EnhancedPurchase] Isar found ${batches.length} batches');
-      
+
       // If Isar is empty, let the sync service handle downloading from server
       // Do NOT do manual Firestore import here — PurchaseBatchSyncService handles it
       if (batches.isEmpty) {
-        debugPrint('[EnhancedPurchase] Isar empty, requesting sync service to download...');
+        debugPrint(
+          '[EnhancedPurchase] Isar empty, requesting sync service to download...',
+        );
         await PurchaseBatchSyncService.instance.forceFullSync();
-        
+
         // Re-query Isar after sync
         batches = await isar.purchaseBatchEntitys
             .filter()
@@ -142,20 +148,21 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
             .syncStatusEqualTo(BatchSyncStatus.deleted)
             .sortByPurchaseDateDesc()
             .findAll();
-        
-        debugPrint('[EnhancedPurchase] After sync service download: ${batches.length} batches');
+
+        debugPrint(
+          '[EnhancedPurchase] After sync service download: ${batches.length} batches',
+        );
       }
-      
+
       if (mounted) {
         setState(() {
           _purchases = batches;
           _isLoading = false;
         });
       }
-      
+
       // Now setup the stream for real-time updates
       _setupPurchaseStream();
-      
     } catch (e, stack) {
       debugPrint('[EnhancedPurchase] Error loading from Isar: $e');
       debugPrint('[EnhancedPurchase] Stack: $stack');
@@ -168,26 +175,30 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
   /// Setup real-time purchase stream from Isar (for updates after initial load)
   void _setupPurchaseStream() {
     final isar = IsarService.instance.isar;
-    
+
     _purchaseStreamSubscription = isar.purchaseBatchEntitys
         .filter()
         .not()
         .syncStatusEqualTo(BatchSyncStatus.deleted)
         .sortByPurchaseDateDesc()
-        .watch(fireImmediately: false) // Don't fire immediately since we already loaded
+        .watch(
+          fireImmediately: false,
+        ) // Don't fire immediately since we already loaded
         .listen(
-      (purchases) {
-        debugPrint('[EnhancedPurchase] Stream update: ${purchases.length} purchases');
-        if (mounted) {
-          setState(() {
-            _purchases = purchases;
-          });
-        }
-      },
-      onError: (e) {
-        debugPrint('[EnhancedPurchase] Stream error: $e');
-      },
-    );
+          (purchases) {
+            debugPrint(
+              '[EnhancedPurchase] Stream update: ${purchases.length} purchases',
+            );
+            if (mounted) {
+              setState(() {
+                _purchases = purchases;
+              });
+            }
+          },
+          onError: (e) {
+            debugPrint('[EnhancedPurchase] Stream error: $e');
+          },
+        );
   }
 
   /// Setup supplier stream for filter dropdown
@@ -199,16 +210,21 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
   /// Load suppliers once
   Future<void> _loadSuppliers() async {
     try {
-      final suppliers = await SupplierOfflineController.instance.getAllSuppliers();
+      final suppliers = await SupplierOfflineController.instance
+          .getAllSuppliers();
       if (mounted) {
         setState(() {
-          _suppliers = suppliers.map((s) => {
-            'id': s.serverId ?? s.id.toString(),
-            'firstName': s.firstName,
-            'lastName': s.lastName,
-            'fullName': '${s.firstName} ${s.lastName}'.trim(),
-            'contact': s.contact,
-          }).toList();
+          _suppliers = suppliers
+              .map(
+                (s) => {
+                  'id': s.serverId ?? s.id.toString(),
+                  'firstName': s.firstName,
+                  'lastName': s.lastName,
+                  'fullName': '${s.firstName} ${s.lastName}'.trim(),
+                  'contact': s.contact,
+                },
+              )
+              .toList();
         });
       }
     } catch (e) {
@@ -218,14 +234,15 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
 
   /// Listen for purchase changes from other screens
   void _setupCrossPageRefresh() {
-    _purchaseChangeSubscription = DashboardRefreshService.instance
+    _purchaseChangeSubscription = DashboardRefreshService
+        .instance
         .onPurchaseChanged
         .listen((_) {
-      if (mounted) {
-        // Reload from Isar when purchases change
-        _loadPurchasesFromIsar();
-      }
-    });
+          if (mounted) {
+            // Reload from Isar when purchases change
+            _loadPurchasesFromIsar();
+          }
+        });
   }
 
   /// Navigate to add purchase page
@@ -272,7 +289,9 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
           child: Container(
             decoration: BoxDecoration(
               color: Colors.white.withOpacity(0.95),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(20),
+              ),
             ),
             child: SafeArea(
               child: Column(
@@ -304,7 +323,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                   const Divider(height: 1),
                   _buildContextMenuItem(
                     icon: Icons.visibility_rounded,
-                    label: 'View Details',
+                    label: _localizations.viewDetails,
                     onTap: () {
                       Navigator.pop(context);
                       _showPurchaseDetails(purchase);
@@ -312,7 +331,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                   ),
                   _buildContextMenuItem(
                     icon: Icons.edit_rounded,
-                    label: 'Edit',
+                    label: _localizations.edit,
                     onTap: () {
                       Navigator.pop(context);
                       _showEditPurchaseDialog(purchase);
@@ -320,7 +339,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                   ),
                   _buildContextMenuItem(
                     icon: Icons.delete_outline_rounded,
-                    label: 'Delete',
+                    label: _localizations.delete,
                     isDestructive: true,
                     onTap: () {
                       Navigator.pop(context);
@@ -433,9 +452,9 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Edit Purchase',
-                        style: TextStyle(
+                      Text(
+                        _localizations.editPurchase,
+                        style: const TextStyle(
                           fontFamily: 'Literata',
                           fontWeight: FontWeight.w700,
                           fontSize: 16,
@@ -467,7 +486,9 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                     controller: purchasePriceController,
                     label: _localizations.purchasePrice,
                     icon: Icons.currency_rupee_rounded,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
                   ),
                   const SizedBox(height: 12),
 
@@ -476,7 +497,9 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                     controller: sellingPriceController,
                     label: _localizations.salesPrice,
                     icon: Icons.sell_rounded,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
                   ),
                   const SizedBox(height: 12),
 
@@ -486,7 +509,8 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                       Expanded(
                         child: _buildEditField(
                           controller: quantityController,
-                          label: '${_localizations.quantity} (min: $consumed sold)',
+                          label:
+                              '${_localizations.quantity} (min: $consumed sold)',
                           icon: Icons.inventory_2_rounded,
                           keyboardType: TextInputType.number,
                         ),
@@ -495,7 +519,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                       Expanded(
                         child: _buildEditField(
                           controller: unitController,
-                          label: 'Unit',
+                          label: _localizations.unit,
                           icon: Icons.straighten_rounded,
                         ),
                       ),
@@ -510,23 +534,32 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                       if (supplier != null) {
                         setDialogState(() {
                           selectedSupplierId = supplier['id'] as String?;
-                          selectedSupplierName = supplier['fullName'] as String?;
+                          selectedSupplierName =
+                              supplier['fullName'] as String?;
                         });
                       }
                     },
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 14,
+                      ),
                       decoration: BoxDecoration(
                         border: Border.all(color: Colors.grey[300]!),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
                         children: [
-                          Icon(Icons.person_rounded, size: 20, color: Colors.grey[600]),
+                          Icon(
+                            Icons.person_rounded,
+                            size: 20,
+                            color: Colors.grey[600],
+                          ),
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(
-                              selectedSupplierName ?? _localizations.selectSupplier,
+                              selectedSupplierName ??
+                                  _localizations.selectSupplier,
                               style: TextStyle(
                                 fontFamily: 'Literata',
                                 fontSize: 14,
@@ -544,10 +577,17 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                                   selectedSupplierName = null;
                                 });
                               },
-                              child: Icon(Icons.close, size: 18, color: Colors.grey[500]),
+                              child: Icon(
+                                Icons.close,
+                                size: 18,
+                                color: Colors.grey[500],
+                              ),
                             ),
                           if (selectedSupplierName == null)
-                            Icon(Icons.arrow_drop_down, color: Colors.grey[500]),
+                            Icon(
+                              Icons.arrow_drop_down,
+                              color: Colors.grey[500],
+                            ),
                         ],
                       ),
                     ),
@@ -568,7 +608,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                       }
                     },
                     child: _buildDateField(
-                      label: 'Purchase Date',
+                      label: _localizations.purchaseDate,
                       date: selectedPurchaseDate,
                       icon: Icons.calendar_today_rounded,
                     ),
@@ -583,16 +623,21 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                           onTap: () async {
                             final date = await showDatePicker(
                               context: context,
-                              initialDate: selectedProductionDate ?? DateTime.now(),
+                              initialDate:
+                                  selectedProductionDate ?? DateTime.now(),
                               firstDate: DateTime(2020),
-                              lastDate: DateTime.now().add(const Duration(days: 1)),
+                              lastDate: DateTime.now().add(
+                                const Duration(days: 1),
+                              ),
                             );
                             if (date != null) {
-                              setDialogState(() => selectedProductionDate = date);
+                              setDialogState(
+                                () => selectedProductionDate = date,
+                              );
                             }
                           },
                           child: _buildDateField(
-                            label: 'Mfg Date',
+                            label: _localizations.mfgDate,
                             date: selectedProductionDate,
                             icon: Icons.factory_rounded,
                           ),
@@ -604,7 +649,9 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                           onTap: () async {
                             final date = await showDatePicker(
                               context: context,
-                              initialDate: selectedExpiryDate ?? DateTime.now().add(const Duration(days: 365)),
+                              initialDate:
+                                  selectedExpiryDate ??
+                                  DateTime.now().add(const Duration(days: 365)),
                               firstDate: DateTime.now(),
                               lastDate: DateTime(2035),
                             );
@@ -613,7 +660,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                             }
                           },
                           child: _buildDateField(
-                            label: 'Expiry',
+                            label: _localizations.expiry,
                             date: selectedExpiryDate,
                             icon: Icons.event_busy_rounded,
                           ),
@@ -626,7 +673,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                   // Warranty
                   _buildEditField(
                     controller: warrantyController,
-                    label: 'Warranty (months)',
+                    label: _localizations.warrantyMonths,
                     icon: Icons.verified_user_rounded,
                     keyboardType: TextInputType.number,
                   ),
@@ -635,11 +682,11 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                   // Notes
                   _buildEditField(
                     controller: notesController,
-                    label: 'Notes',
+                    label: _localizations.notes,
                     icon: Icons.notes_rounded,
                     maxLines: 3,
                   ),
-                  
+
                   // Custom Fields Section (Read-only display)
                   if (customColumns.isNotEmpty) ...[
                     const SizedBox(height: 16),
@@ -647,12 +694,14 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                       padding: const EdgeInsets.symmetric(vertical: 8),
                       child: Row(
                         children: [
-                          Icon(Icons.tune_rounded, 
-                              size: 16, 
-                              color: Colors.grey[600]),
+                          Icon(
+                            Icons.tune_rounded,
+                            size: 16,
+                            color: Colors.grey[600],
+                          ),
                           const SizedBox(width: 8),
                           Text(
-                            'Custom Fields',
+                            _localizations.customFields,
                             style: TextStyle(
                               fontFamily: 'Literata',
                               fontSize: 12,
@@ -666,7 +715,8 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                     FutureBuilder<Map<String, dynamic>>(
                       future: _loadProductCustomFields(purchase.productId),
                       builder: (context, snapshot) {
-                        if (snapshot.connectionState == ConnectionState.waiting) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
                           return const Padding(
                             padding: EdgeInsets.all(8.0),
                             child: Center(
@@ -715,21 +765,20 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                   try {
                     final newPurchasePrice =
                         double.tryParse(purchasePriceController.text) ??
-                            purchase.purchasePrice;
+                        purchase.purchasePrice;
                     final newSellingPrice =
                         double.tryParse(sellingPriceController.text) ??
-                            purchase.sellingPrice;
+                        purchase.sellingPrice;
                     var newQuantity =
                         int.tryParse(quantityController.text) ??
-                            purchase.quantityPurchased;
+                        purchase.quantityPurchased;
                     final newUnit = unitController.text.trim().isNotEmpty
                         ? unitController.text.trim()
                         : purchase.unit;
                     final newNotes = notesController.text.trim().isNotEmpty
                         ? notesController.text.trim()
                         : null;
-                    final newWarranty =
-                        int.tryParse(warrantyController.text);
+                    final newWarranty = int.tryParse(warrantyController.text);
 
                     // Validate: quantity cannot be less than already consumed
                     if (newQuantity < consumed) {
@@ -766,8 +815,9 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                     );
 
                     // Notify dashboard
-                    DashboardRefreshService.instance
-                        .notifyDataChanged(DataChangeType.purchase);
+                    DashboardRefreshService.instance.notifyDataChanged(
+                      DataChangeType.purchase,
+                    );
 
                     // Trigger background sync
                     PurchaseBatchSyncService.instance.syncNow();
@@ -775,12 +825,12 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                     if (mounted) {
                       Navigator.pop(context);
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
+                        SnackBar(
                           content: Text(
-                            'Purchase updated successfully',
-                            style: TextStyle(fontFamily: 'Literata'),
+                            _localizations.purchaseUpdatedSuccessfully,
+                            style: const TextStyle(fontFamily: 'Literata'),
                           ),
-                          backgroundColor: Color(0xFF1B4D3E),
+                          backgroundColor: const Color(0xFF1B4D3E),
                         ),
                       );
                     }
@@ -788,7 +838,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(
-                          'Error updating purchase: $e',
+                          '${_localizations.errorUpdatingPurchase}: $e',
                           style: const TextStyle(fontFamily: 'Literata'),
                         ),
                         backgroundColor: Colors.red,
@@ -802,9 +852,12 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: const Text(
-                  'Update',
-                  style: TextStyle(fontFamily: 'Literata', color: Colors.white),
+                child: Text(
+                  _localizations.update,
+                  style: const TextStyle(
+                    fontFamily: 'Literata',
+                    color: Colors.white,
+                  ),
                 ),
               ),
             ],
@@ -847,7 +900,10 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: Color(0xFF1B4D3E), width: 1.5),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: 14,
+        ),
         isDense: true,
       ),
     );
@@ -883,7 +939,9 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                   ),
                 ),
                 Text(
-                  date != null ? dateFormat.format(date) : 'Not set',
+                  date != null
+                      ? dateFormat.format(date)
+                      : _localizations.notSet,
                   style: TextStyle(
                     fontFamily: 'Literata',
                     fontSize: 13,
@@ -900,10 +958,15 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
   }
 
   /// Load custom field values from the product
-  Future<Map<String, dynamic>> _loadProductCustomFields(String productId) async {
+  Future<Map<String, dynamic>> _loadProductCustomFields(
+    String productId,
+  ) async {
     try {
-      final product = await ProductOfflineController.instance.getProductByServerId(productId);
-      if (product != null && product.customFieldsJson != null && product.customFieldsJson!.isNotEmpty) {
+      final product = await ProductOfflineController.instance
+          .getProductByServerId(productId);
+      if (product != null &&
+          product.customFieldsJson != null &&
+          product.customFieldsJson!.isNotEmpty) {
         return jsonDecode(product.customFieldsJson!) as Map<String, dynamic>;
       }
     } catch (e) {
@@ -917,7 +980,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
     final primaryColor = const Color(0xFF1B4D3E);
     String displayValue = '';
     IconData icon = Icons.text_fields_rounded;
-    
+
     switch (column.type) {
       case CustomColumnType.text:
         displayValue = value?.toString() ?? '-';
@@ -949,11 +1012,13 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
         icon = Icons.arrow_drop_down_circle_rounded;
         break;
       case CustomColumnType.boolean:
-        displayValue = value == true || value == 'true' ? 'Yes' : 'No';
+        displayValue = value == true || value == 'true'
+            ? _localizations.yes
+            : _localizations.no;
         icon = Icons.check_circle_outline_rounded;
         break;
     }
-    
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
@@ -985,7 +1050,9 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                     fontFamily: 'Literata',
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
-                    color: displayValue != '-' ? Colors.black87 : Colors.grey[400],
+                    color: displayValue != '-'
+                        ? Colors.black87
+                        : Colors.grey[400],
                   ),
                 ),
               ],
@@ -997,7 +1064,9 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
   }
 
   /// Show supplier picker dialog
-  Future<Map<String, dynamic>?> _showSupplierPickerDialog(BuildContext parentContext) async {
+  Future<Map<String, dynamic>?> _showSupplierPickerDialog(
+    BuildContext parentContext,
+  ) async {
     return await showDialog<Map<String, dynamic>>(
       context: parentContext,
       builder: (context) {
@@ -1005,7 +1074,9 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
         return StatefulBuilder(
           builder: (context, setPickerState) => AlertDialog(
             backgroundColor: Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
             title: Text(
               _localizations.selectSupplier,
               style: const TextStyle(
@@ -1023,17 +1094,29 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                   TextField(
                     decoration: InputDecoration(
                       hintText: 'Search supplier...',
-                      hintStyle: const TextStyle(fontFamily: 'Literata', fontSize: 13),
+                      hintStyle: const TextStyle(
+                        fontFamily: 'Literata',
+                        fontSize: 13,
+                      ),
                       prefixIcon: const Icon(Icons.search, size: 20),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                       isDense: true,
                     ),
-                    style: const TextStyle(fontFamily: 'Literata', fontSize: 13),
+                    style: const TextStyle(
+                      fontFamily: 'Literata',
+                      fontSize: 13,
+                    ),
                     onChanged: (q) {
                       setPickerState(() {
-                        filtered = _suppliers.where((s) =>
-                          (s['fullName'] as String).toLowerCase().contains(q.toLowerCase())
-                        ).toList();
+                        filtered = _suppliers
+                            .where(
+                              (s) => (s['fullName'] as String)
+                                  .toLowerCase()
+                                  .contains(q.toLowerCase()),
+                            )
+                            .toList();
                       });
                     },
                   ),
@@ -1042,7 +1125,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                     child: filtered.isEmpty
                         ? Center(
                             child: Text(
-                              'No suppliers found',
+                              _localizations.noSuppliersFound,
                               style: TextStyle(
                                 fontFamily: 'Literata',
                                 color: Colors.grey[500],
@@ -1098,9 +1181,9 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
-          title: const Text(
-            'Delete Purchase',
-            style: TextStyle(
+          title: Text(
+            _localizations.deletePurchase,
+            style: const TextStyle(
               fontFamily: 'Literata',
               fontWeight: FontWeight.w700,
               color: Colors.red,
@@ -1112,7 +1195,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Are you sure you want to delete this purchase?',
+                _localizations.confirmDeletePurchase,
                 style: TextStyle(
                   fontFamily: 'Literata',
                   fontSize: 14,
@@ -1147,7 +1230,8 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                         color: Colors.grey[600],
                       ),
                     ),
-                    if (purchase.quantityRemaining < purchase.quantityPurchased) ...[
+                    if (purchase.quantityRemaining <
+                        purchase.quantityPurchased) ...[
                       const SizedBox(height: 4),
                       Text(
                         '⚠ ${purchase.quantityPurchased - purchase.quantityRemaining} units already sold from this batch',
@@ -1192,10 +1276,12 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                   await controller.deleteBatch(purchase.id);
 
                   // Update product stock
-                  DashboardRefreshService.instance
-                      .notifyDataChanged(DataChangeType.purchase);
-                  DashboardRefreshService.instance
-                      .notifyDataChanged(DataChangeType.product);
+                  DashboardRefreshService.instance.notifyDataChanged(
+                    DataChangeType.purchase,
+                  );
+                  DashboardRefreshService.instance.notifyDataChanged(
+                    DataChangeType.product,
+                  );
 
                   // Trigger background sync
                   PurchaseBatchSyncService.instance.syncNow();
@@ -1203,12 +1289,12 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                   if (mounted) {
                     Navigator.pop(context);
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
+                      SnackBar(
                         content: Text(
-                          'Purchase deleted successfully',
-                          style: TextStyle(fontFamily: 'Literata'),
+                          _localizations.purchaseDeletedSuccessfully,
+                          style: const TextStyle(fontFamily: 'Literata'),
                         ),
-                        backgroundColor: Color(0xFF1B4D3E),
+                        backgroundColor: const Color(0xFF1B4D3E),
                       ),
                     );
                   }
@@ -1216,7 +1302,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text(
-                        'Error deleting purchase: $e',
+                        '${_localizations.errorDeletingPurchase}: $e',
                         style: const TextStyle(fontFamily: 'Literata'),
                       ),
                       backgroundColor: Colors.red,
@@ -1252,7 +1338,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
           children: [
             // Header (only when not embedded)
             if (!widget.isEmbedded) _buildHeader(),
-            
+
             // Main content
             Expanded(
               child: Padding(
@@ -1265,7 +1351,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const SizedBox(height: 16),
-                        
+
                         // Summary stats
                         PurchaseSummaryWidget(
                           purchases: _purchases,
@@ -1274,9 +1360,9 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                           customStartDate: _customStartDate,
                           customEndDate: _customEndDate,
                         ),
-                        
+
                         const SizedBox(height: 16),
-                        
+
                         // Filters
                         PurchaseFilterWidget(
                           selectedDateFilter: _dateFilter,
@@ -1301,9 +1387,9 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                           todayLabel: _localizations.today,
                           supplierLabel: _localizations.supplier,
                         ),
-                        
+
                         const SizedBox(height: 16),
-                        
+
                         // Purchase list
                         Expanded(
                           child: PurchaseListWidget(
@@ -1358,7 +1444,8 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
       filtered = filtered.where((p) {
         return p.purchaseDate.year == now.year;
       }).toList();
-    } else if (_dateFilter == PurchaseDateFilter.custom && _customStartDate != null) {
+    } else if (_dateFilter == PurchaseDateFilter.custom &&
+        _customStartDate != null) {
       final start = DateTime(
         _customStartDate!.year,
         _customStartDate!.month,
@@ -1369,18 +1456,24 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
               _customEndDate!.year,
               _customEndDate!.month,
               _customEndDate!.day,
-              23, 59, 59,
+              23,
+              59,
+              59,
             )
           : DateTime(start.year, start.month, start.day, 23, 59, 59);
       filtered = filtered.where((p) {
-        return p.purchaseDate.isAfter(start.subtract(const Duration(seconds: 1))) &&
+        return p.purchaseDate.isAfter(
+              start.subtract(const Duration(seconds: 1)),
+            ) &&
             p.purchaseDate.isBefore(end.add(const Duration(seconds: 1)));
       }).toList();
     }
 
     // Supplier filter
     if (_supplierFilter != null && _supplierFilter!.isNotEmpty) {
-      filtered = filtered.where((p) => p.supplierId == _supplierFilter).toList();
+      filtered = filtered
+          .where((p) => p.supplierId == _supplierFilter)
+          .toList();
     }
 
     return filtered;
@@ -1394,7 +1487,8 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
       parts.add('This Month');
     } else if (_dateFilter == PurchaseDateFilter.thisYear) {
       parts.add('This Year');
-    } else if (_dateFilter == PurchaseDateFilter.custom && _customStartDate != null) {
+    } else if (_dateFilter == PurchaseDateFilter.custom &&
+        _customStartDate != null) {
       final dateFormat = DateFormat('dd MMM yyyy');
       final start = dateFormat.format(_customStartDate!);
       if (_customEndDate == null || _customStartDate == _customEndDate) {
@@ -1423,17 +1517,19 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
 
   // ── Generate & show purchase report ──
   Future<void> _generatePurchaseReport() async {
-    debugPrint('[PurchaseReport] Button tapped! _isGeneratingReport=$_isGeneratingReport');
-    
+    debugPrint(
+      '[PurchaseReport] Button tapped! _isGeneratingReport=$_isGeneratingReport',
+    );
+
     // Prevent concurrent generation
     if (_isGeneratingReport) {
       debugPrint('[PurchaseReport] Already generating, skipping');
       return;
     }
-    
+
     final filtered = _filteredPurchases;
     debugPrint('[PurchaseReport] Filtered purchases: ${filtered.length}');
-    
+
     if (filtered.isEmpty) {
       debugPrint('[PurchaseReport] No data - showing snackbar');
       if (mounted) {
@@ -1473,21 +1569,23 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
     }
 
     try {
-      debugPrint('[PurchaseReport] Generating PDF for ${filtered.length} entries...');
-      
+      debugPrint(
+        '[PurchaseReport] Generating PDF for ${filtered.length} entries...',
+      );
+
       final pdfBytes = await PurchaseReportPdfGenerator.generate(
         purchases: filtered,
         filterDescription: _buildFilterDescription(),
       );
-      
+
       debugPrint('[PurchaseReport] PDF generated: ${pdfBytes.length} bytes');
-      
+
       // Save to temporary file for preview
       final tempDir = await getTemporaryDirectory();
       final timestamp = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
       final tempFile = File('${tempDir.path}/purchase_report_$timestamp.pdf');
       await tempFile.writeAsBytes(pdfBytes);
-      
+
       // Dismiss loading snackbar
       if (mounted) {
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
@@ -1506,11 +1604,12 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
             file: tempFile,
             fileName: 'Purchase Report',
             fileType: FilePreviewType.pdf,
-            subtitle: '${filtered.length} entries • ${DateFormat('dd MMM yyyy').format(DateTime.now())}',
+            subtitle:
+                '${filtered.length} entries • ${DateFormat('dd MMM yyyy').format(DateTime.now())}',
           ),
         ),
       );
-      
+
       _isGeneratingReport = false;
     } catch (e, stack) {
       debugPrint('[PurchaseReport] Error: $e');
@@ -1587,7 +1686,9 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                   onTap: () async {
                     final result = await Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (_) => const InvoiceScannerPage()),
+                      MaterialPageRoute(
+                        builder: (_) => const InvoiceScannerPage(),
+                      ),
                     );
                     if (result == true && mounted) {
                       setState(() {});
@@ -1614,7 +1715,9 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                 color: Colors.transparent,
                 child: InkWell(
                   onTap: () {
-                    debugPrint('[PurchaseReport] Report button InkWell tapped!');
+                    debugPrint(
+                      '[PurchaseReport] Report button InkWell tapped!',
+                    );
                     _generatePurchaseReport();
                   },
                   borderRadius: BorderRadius.circular(10),
@@ -1663,7 +1766,8 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                     await Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const PurchaseReportSettingsPage(),
+                        builder: (context) =>
+                            const PurchaseReportSettingsPage(),
                       ),
                     );
                   }
@@ -1673,8 +1777,11 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                     value: 'purchase_settings',
                     child: Row(
                       children: [
-                        Icon(Icons.tune_rounded, 
-                            color: Colors.grey[700], size: 20),
+                        Icon(
+                          Icons.tune_rounded,
+                          color: Colors.grey[700],
+                          size: 20,
+                        ),
                         const SizedBox(width: 12),
                         const Text(
                           'Purchase Settings',
@@ -1690,8 +1797,11 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                     value: 'report_settings',
                     child: Row(
                       children: [
-                        Icon(Icons.view_column_rounded, 
-                            color: Colors.grey[700], size: 20),
+                        Icon(
+                          Icons.view_column_rounded,
+                          color: Colors.grey[700],
+                          size: 20,
+                        ),
                         const SizedBox(width: 12),
                         const Text(
                           'Report Settings',
@@ -1746,11 +1856,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
               highlightColor: Colors.white.withOpacity(0.1),
               borderRadius: BorderRadius.circular(22),
               child: const Center(
-                child: Icon(
-                  Icons.add_rounded,
-                  size: 32,
-                  color: Colors.white,
-                ),
+                child: Icon(Icons.add_rounded, size: 32, color: Colors.white),
               ),
             ),
           ),
@@ -1778,13 +1884,17 @@ class _PurchaseDetailsSheet extends StatefulWidget {
 
 class _PurchaseDetailsSheetState extends State<_PurchaseDetailsSheet> {
   /// Calculate total amount for this batch
-  double get totalAmount => widget.purchase.purchasePrice * widget.purchase.quantityPurchased;
+  double get totalAmount =>
+      widget.purchase.purchasePrice * widget.purchase.quantityPurchased;
 
   /// Load custom field values from the product
   Future<Map<String, dynamic>> _loadProductCustomFields() async {
     try {
-      final product = await ProductOfflineController.instance.getProductByServerId(widget.purchase.productId);
-      if (product != null && product.customFieldsJson != null && product.customFieldsJson!.isNotEmpty) {
+      final product = await ProductOfflineController.instance
+          .getProductByServerId(widget.purchase.productId);
+      if (product != null &&
+          product.customFieldsJson != null &&
+          product.customFieldsJson!.isNotEmpty) {
         return jsonDecode(product.customFieldsJson!) as Map<String, dynamic>;
       }
     } catch (e) {
@@ -1876,27 +1986,58 @@ class _PurchaseDetailsSheetState extends State<_PurchaseDetailsSheet> {
                   const SizedBox(height: 24),
 
                   // Details grid
-                  _buildDetailRow('Quantity', '${widget.purchase.quantityPurchased} ${widget.purchase.unit}'),
-                  _buildDetailRow('Purchase Price', '₹${widget.purchase.purchasePrice.toStringAsFixed(2)}/unit'),
-                  _buildDetailRow('Sales Price', '₹${widget.purchase.sellingPrice.toStringAsFixed(2)}/unit'),
-                  _buildDetailRow('Total Amount', '₹${totalAmount.toStringAsFixed(2)}', highlight: true),
-                  
-                  if (widget.purchase.supplierName != null && widget.purchase.supplierName!.isNotEmpty)
+                  _buildDetailRow(
+                    'Quantity',
+                    '${widget.purchase.quantityPurchased} ${widget.purchase.unit}',
+                  ),
+                  _buildDetailRow(
+                    'Purchase Price',
+                    '₹${widget.purchase.purchasePrice.toStringAsFixed(2)}/unit',
+                  ),
+                  _buildDetailRow(
+                    'Sales Price',
+                    '₹${widget.purchase.sellingPrice.toStringAsFixed(2)}/unit',
+                  ),
+                  _buildDetailRow(
+                    'Total Amount',
+                    '₹${totalAmount.toStringAsFixed(2)}',
+                    highlight: true,
+                  ),
+
+                  if (widget.purchase.supplierName != null &&
+                      widget.purchase.supplierName!.isNotEmpty)
                     _buildDetailRow('Supplier', widget.purchase.supplierName!),
-                  
-                  _buildDetailRow('Date', dateFormat.format(widget.purchase.purchaseDate)),
-                  _buildDetailRow('Time', timeFormat.format(widget.purchase.purchaseDate)),
-                  
+
+                  _buildDetailRow(
+                    'Date',
+                    dateFormat.format(widget.purchase.purchaseDate),
+                  ),
+                  _buildDetailRow(
+                    'Time',
+                    timeFormat.format(widget.purchase.purchaseDate),
+                  ),
+
                   if (widget.purchase.productionDate != null)
-                    _buildDetailRow('Production Date', dateFormat.format(widget.purchase.productionDate!)),
-                  
+                    _buildDetailRow(
+                      'Production Date',
+                      dateFormat.format(widget.purchase.productionDate!),
+                    ),
+
                   if (widget.purchase.expiryDate != null)
-                    _buildDetailRow('Expiry Date', dateFormat.format(widget.purchase.expiryDate!)),
-                  
-                  if (widget.purchase.warrantyMonths != null && widget.purchase.warrantyMonths! > 0)
-                    _buildDetailRow('Warranty', '${widget.purchase.warrantyMonths} months'),
-                  
-                  if (widget.purchase.notes != null && widget.purchase.notes!.isNotEmpty) ...[
+                    _buildDetailRow(
+                      'Expiry Date',
+                      dateFormat.format(widget.purchase.expiryDate!),
+                    ),
+
+                  if (widget.purchase.warrantyMonths != null &&
+                      widget.purchase.warrantyMonths! > 0)
+                    _buildDetailRow(
+                      'Warranty',
+                      '${widget.purchase.warrantyMonths} months',
+                    ),
+
+                  if (widget.purchase.notes != null &&
+                      widget.purchase.notes!.isNotEmpty) ...[
                     const SizedBox(height: 16),
                     const Text(
                       'Notes',
@@ -1928,12 +2069,15 @@ class _PurchaseDetailsSheetState extends State<_PurchaseDetailsSheet> {
                   ],
 
                   // Custom Fields Section
-                  if (customColumns.isNotEmpty) ...[                    const SizedBox(height: 16),
+                  if (customColumns.isNotEmpty) ...[
+                    const SizedBox(height: 16),
                     Row(
                       children: [
-                        Icon(Icons.tune_rounded, 
-                            size: 16, 
-                            color: Colors.grey[600]),
+                        Icon(
+                          Icons.tune_rounded,
+                          size: 16,
+                          color: Colors.grey[600],
+                        ),
                         const SizedBox(width: 8),
                         Text(
                           'Custom Fields',
@@ -1950,7 +2094,8 @@ class _PurchaseDetailsSheetState extends State<_PurchaseDetailsSheet> {
                     FutureBuilder<Map<String, dynamic>>(
                       future: _loadProductCustomFields(),
                       builder: (context, snapshot) {
-                        if (snapshot.connectionState == ConnectionState.waiting) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
                           return const Padding(
                             padding: EdgeInsets.all(8.0),
                             child: Center(
@@ -1969,7 +2114,10 @@ class _PurchaseDetailsSheetState extends State<_PurchaseDetailsSheet> {
                         return Column(
                           children: customColumns.map((column) {
                             final value = fieldValues[column.id];
-                            String displayValue = _formatCustomFieldValue(column, value);
+                            String displayValue = _formatCustomFieldValue(
+                              column,
+                              value,
+                            );
                             return _buildDetailRow(column.name, displayValue);
                           }).toList(),
                         );
@@ -2001,7 +2149,10 @@ class _PurchaseDetailsSheetState extends State<_PurchaseDetailsSheet> {
                       Expanded(
                         child: OutlinedButton.icon(
                           onPressed: widget.onDelete,
-                          icon: const Icon(Icons.delete_outline_rounded, size: 18),
+                          icon: const Icon(
+                            Icons.delete_outline_rounded,
+                            size: 18,
+                          ),
                           label: const Text('Delete'),
                           style: OutlinedButton.styleFrom(
                             foregroundColor: Colors.red,
@@ -2027,7 +2178,7 @@ class _PurchaseDetailsSheetState extends State<_PurchaseDetailsSheet> {
   /// Format custom field value for display
   String _formatCustomFieldValue(CustomColumn column, dynamic value) {
     if (value == null) return '-';
-    
+
     switch (column.type) {
       case CustomColumnType.date:
         if (value.toString().isNotEmpty) {

@@ -1,15 +1,11 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'package:intl/intl.dart';
+import 'package:c_billing/core/localization/app_localizations.dart';
+import 'package:c_billing/core/services/language_service.dart';
 
 /// Filter options for purchase list
-enum PurchaseDateFilter {
-  all,
-  today,
-  thisMonth,
-  thisYear,
-  custom,
-}
+enum PurchaseDateFilter { all, today, thisMonth, thisYear, custom }
 
 /// Sticky filter widget for purchase list
 /// Features: All/Today toggle, Supplier searchable dropdown
@@ -55,6 +51,7 @@ class PurchaseFilterWidget extends StatefulWidget {
 
 class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
   final _supplierSearchController = TextEditingController();
+  late AppLocalizations _localizations;
 
   @override
   void dispose() {
@@ -64,6 +61,9 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
 
   @override
   Widget build(BuildContext context) {
+    _localizations = AppLocalizations.of(
+      LanguageService.instance.currentLanguage,
+    );
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
@@ -91,38 +91,56 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
                     children: [
                       _buildFilterChip(
                         label: widget.allLabel,
-                        isSelected: widget.selectedDateFilter == PurchaseDateFilter.all,
-                        onTap: () => widget.onDateFilterChanged(PurchaseDateFilter.all),
+                        isSelected:
+                            widget.selectedDateFilter == PurchaseDateFilter.all,
+                        onTap: () =>
+                            widget.onDateFilterChanged(PurchaseDateFilter.all),
                         icon: Icons.list_alt_rounded,
                       ),
                       const SizedBox(width: 8),
                       _buildFilterChip(
                         label: widget.todayLabel,
-                        isSelected: widget.selectedDateFilter == PurchaseDateFilter.today,
-                        onTap: () => widget.onDateFilterChanged(PurchaseDateFilter.today),
+                        isSelected:
+                            widget.selectedDateFilter ==
+                            PurchaseDateFilter.today,
+                        onTap: () => widget.onDateFilterChanged(
+                          PurchaseDateFilter.today,
+                        ),
                         icon: Icons.today_rounded,
                       ),
                       const SizedBox(width: 8),
                       _buildFilterChip(
                         label: widget.thisMonthLabel,
-                        isSelected: widget.selectedDateFilter == PurchaseDateFilter.thisMonth,
-                        onTap: () => widget.onDateFilterChanged(PurchaseDateFilter.thisMonth),
+                        isSelected:
+                            widget.selectedDateFilter ==
+                            PurchaseDateFilter.thisMonth,
+                        onTap: () => widget.onDateFilterChanged(
+                          PurchaseDateFilter.thisMonth,
+                        ),
                         icon: Icons.calendar_month_rounded,
                       ),
                       const SizedBox(width: 8),
                       _buildFilterChip(
                         label: widget.thisYearLabel,
-                        isSelected: widget.selectedDateFilter == PurchaseDateFilter.thisYear,
-                        onTap: () => widget.onDateFilterChanged(PurchaseDateFilter.thisYear),
+                        isSelected:
+                            widget.selectedDateFilter ==
+                            PurchaseDateFilter.thisYear,
+                        onTap: () => widget.onDateFilterChanged(
+                          PurchaseDateFilter.thisYear,
+                        ),
                         icon: Icons.calendar_today_rounded,
                       ),
                       const SizedBox(width: 8),
                       _buildFilterChip(
-                        label: widget.selectedDateFilter == PurchaseDateFilter.custom && 
-                               widget.customStartDate != null
+                        label:
+                            widget.selectedDateFilter ==
+                                    PurchaseDateFilter.custom &&
+                                widget.customStartDate != null
                             ? _formatCustomDateLabel()
                             : widget.customLabel,
-                        isSelected: widget.selectedDateFilter == PurchaseDateFilter.custom,
+                        isSelected:
+                            widget.selectedDateFilter ==
+                            PurchaseDateFilter.custom,
                         onTap: () => _showCustomDatePicker(context),
                         icon: Icons.date_range_rounded,
                       ),
@@ -140,9 +158,9 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
               ],
             ],
           ),
-          
+
           // Show active filters indicator
-          if (widget.selectedDateFilter != PurchaseDateFilter.all || 
+          if (widget.selectedDateFilter != PurchaseDateFilter.all ||
               widget.selectedSupplierId != null) ...[
             const SizedBox(height: 10),
             _buildActiveFiltersRow(),
@@ -183,14 +201,10 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
         curve: Curves.easeInOut,
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: isSelected 
-              ? const Color(0xFF1B4D3E) 
-              : Colors.grey[100],
+          color: isSelected ? const Color(0xFF1B4D3E) : Colors.grey[100],
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: isSelected 
-                ? const Color(0xFF1B4D3E) 
-                : Colors.grey[300]!,
+            color: isSelected ? const Color(0xFF1B4D3E) : Colors.grey[300]!,
             width: 1,
           ),
         ),
@@ -229,22 +243,24 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
         selectedSupplier = null;
       }
     }
-    
+
     final displayText = selectedSupplier != null && selectedSupplier.isNotEmpty
-        ? (selectedSupplier['fullName'] ?? selectedSupplier['firstName'] ?? 'Supplier')
+        ? (selectedSupplier['fullName'] ??
+              selectedSupplier['firstName'] ??
+              'Supplier')
         : widget.supplierLabel;
-    
+
     return GestureDetector(
       onTap: () => _showSupplierPicker(context),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
-          color: widget.selectedSupplierId != null 
+          color: widget.selectedSupplierId != null
               ? const Color(0xFF1B4D3E).withOpacity(0.1)
               : Colors.grey[100],
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: widget.selectedSupplierId != null 
+            color: widget.selectedSupplierId != null
                 ? const Color(0xFF1B4D3E)
                 : Colors.grey[300]!,
             width: 1,
@@ -256,7 +272,7 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
             Icon(
               Icons.person_outline_rounded,
               size: 16,
-              color: widget.selectedSupplierId != null 
+              color: widget.selectedSupplierId != null
                   ? const Color(0xFF1B4D3E)
                   : Colors.grey[600],
             ),
@@ -269,7 +285,7 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
                   fontFamily: 'Literata',
                   fontWeight: FontWeight.w600,
                   fontSize: 13,
-                  color: widget.selectedSupplierId != null 
+                  color: widget.selectedSupplierId != null
                       ? const Color(0xFF1B4D3E)
                       : Colors.grey[700],
                 ),
@@ -281,7 +297,7 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
             Icon(
               Icons.arrow_drop_down_rounded,
               size: 20,
-              color: widget.selectedSupplierId != null 
+              color: widget.selectedSupplierId != null
                   ? const Color(0xFF1B4D3E)
                   : Colors.grey[600],
             ),
@@ -297,7 +313,7 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
       child: Row(
         children: [
           Text(
-            'Active: ',
+            '${_localizations.activeLabel}: ',
             style: TextStyle(
               fontFamily: 'Literata',
               fontWeight: FontWeight.w500,
@@ -308,17 +324,20 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
           if (widget.selectedDateFilter == PurchaseDateFilter.today)
             _buildActiveFilterTag(
               label: widget.todayLabel,
-              onRemove: () => widget.onDateFilterChanged(PurchaseDateFilter.all),
+              onRemove: () =>
+                  widget.onDateFilterChanged(PurchaseDateFilter.all),
             ),
           if (widget.selectedDateFilter == PurchaseDateFilter.thisMonth)
             _buildActiveFilterTag(
               label: widget.thisMonthLabel,
-              onRemove: () => widget.onDateFilterChanged(PurchaseDateFilter.all),
+              onRemove: () =>
+                  widget.onDateFilterChanged(PurchaseDateFilter.all),
             ),
           if (widget.selectedDateFilter == PurchaseDateFilter.thisYear)
             _buildActiveFilterTag(
               label: widget.thisYearLabel,
-              onRemove: () => widget.onDateFilterChanged(PurchaseDateFilter.all),
+              onRemove: () =>
+                  widget.onDateFilterChanged(PurchaseDateFilter.all),
             ),
           if (widget.selectedDateFilter == PurchaseDateFilter.custom)
             _buildActiveFilterTag(
@@ -348,7 +367,7 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
       );
       return supplier['fullName'] ?? supplier['firstName'] ?? 'Supplier';
     } catch (_) {
-      return 'Unknown';
+      return _localizations.unknownText;
     }
   }
 
@@ -396,7 +415,7 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
     if (widget.customStartDate == null) return widget.customLabel;
     final dateFormat = DateFormat('dd MMM');
     final start = dateFormat.format(widget.customStartDate!);
-    if (widget.customEndDate == null || 
+    if (widget.customEndDate == null ||
         widget.customStartDate == widget.customEndDate) {
       return start;
     }
@@ -444,7 +463,7 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
 
   void _showSupplierPicker(BuildContext context) {
     _supplierSearchController.clear();
-    
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -455,7 +474,8 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
           final filteredSuppliers = query.isEmpty
               ? widget.suppliers
               : widget.suppliers.where((s) {
-                  final name = (s['fullName'] ?? s['firstName'] ?? '').toLowerCase();
+                  final name = (s['fullName'] ?? s['firstName'] ?? '')
+                      .toLowerCase();
                   return name.contains(query);
                 }).toList();
 
@@ -469,7 +489,9 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
                 ),
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.95),
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(24),
+                  ),
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -484,16 +506,16 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
-                    
+
                     // Header
                     Padding(
                       padding: const EdgeInsets.all(16),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text(
-                            'Select Supplier',
-                            style: TextStyle(
+                          Text(
+                            _localizations.selectSupplier,
+                            style: const TextStyle(
                               fontFamily: 'Literata',
                               fontWeight: FontWeight.w700,
                               fontSize: 18,
@@ -506,9 +528,9 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
                                 widget.onSupplierChanged(null);
                                 Navigator.pop(context);
                               },
-                              child: const Text(
-                                'Clear',
-                                style: TextStyle(
+                              child: Text(
+                                _localizations.clearText,
+                                style: const TextStyle(
                                   fontFamily: 'Literata',
                                   fontWeight: FontWeight.w600,
                                   fontSize: 14,
@@ -519,7 +541,7 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
                         ],
                       ),
                     ),
-                    
+
                     // Search field
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -527,22 +549,28 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
                         controller: _supplierSearchController,
                         onChanged: (_) => setSheetState(() {}),
                         decoration: InputDecoration(
-                          hintText: 'Search supplier...',
+                          hintText: _localizations.searchSupplier,
                           hintStyle: TextStyle(color: Colors.grey[500]),
-                          prefixIcon: Icon(Icons.search_rounded, color: Colors.grey[500]),
+                          prefixIcon: Icon(
+                            Icons.search_rounded,
+                            color: Colors.grey[500],
+                          ),
                           filled: true,
                           fillColor: Colors.grey[100],
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide.none,
                           ),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
                         ),
                       ),
                     ),
-                    
+
                     const SizedBox(height: 12),
-                    
+
                     // Supplier list
                     Flexible(
                       child: filteredSuppliers.isEmpty
@@ -559,7 +587,7 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
                                     ),
                                     const SizedBox(height: 12),
                                     Text(
-                                      'No suppliers found',
+                                      _localizations.noSuppliersFound,
                                       style: TextStyle(
                                         fontFamily: 'Literata',
                                         fontWeight: FontWeight.w500,
@@ -577,10 +605,13 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
                               itemCount: filteredSuppliers.length,
                               itemBuilder: (context, index) {
                                 final supplier = filteredSuppliers[index];
-                                final isSelected = supplier['id'] == widget.selectedSupplierId;
-                                final name = supplier['fullName'] ?? 
-                                    '${supplier['firstName'] ?? ''} ${supplier['lastName'] ?? ''}'.trim();
-                                
+                                final isSelected =
+                                    supplier['id'] == widget.selectedSupplierId;
+                                final name =
+                                    supplier['fullName'] ??
+                                    '${supplier['firstName'] ?? ''} ${supplier['lastName'] ?? ''}'
+                                        .trim();
+
                                 return GestureDetector(
                                   onTap: () {
                                     widget.onSupplierChanged(supplier['id']);
@@ -590,12 +621,14 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
                                     margin: const EdgeInsets.only(bottom: 8),
                                     padding: const EdgeInsets.all(12),
                                     decoration: BoxDecoration(
-                                      color: isSelected 
-                                          ? const Color(0xFF1B4D3E).withOpacity(0.1)
+                                      color: isSelected
+                                          ? const Color(
+                                              0xFF1B4D3E,
+                                            ).withOpacity(0.1)
                                           : Colors.grey[50],
                                       borderRadius: BorderRadius.circular(12),
                                       border: Border.all(
-                                        color: isSelected 
+                                        color: isSelected
                                             ? const Color(0xFF1B4D3E)
                                             : Colors.grey[200]!,
                                         width: isSelected ? 1.5 : 1,
@@ -607,15 +640,17 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
                                           width: 40,
                                           height: 40,
                                           decoration: BoxDecoration(
-                                            color: isSelected 
+                                            color: isSelected
                                                 ? const Color(0xFF1B4D3E)
                                                 : Colors.grey[200],
-                                            borderRadius: BorderRadius.circular(10),
+                                            borderRadius: BorderRadius.circular(
+                                              10,
+                                            ),
                                           ),
                                           child: Icon(
                                             Icons.person_rounded,
-                                            color: isSelected 
-                                                ? Colors.white 
+                                            color: isSelected
+                                                ? Colors.white
                                                 : Colors.grey[600],
                                             size: 20,
                                           ),
@@ -623,22 +658,27 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
                                         const SizedBox(width: 12),
                                         Expanded(
                                           child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
                                             children: [
                                               Text(
-                                                name.isNotEmpty ? name : 'Unknown Supplier',
+                                                name.isNotEmpty
+                                                    ? name
+                                                    : _localizations
+                                                          .unknownSupplier,
                                                 style: TextStyle(
                                                   fontFamily: 'Literata',
-                                                  fontWeight: isSelected 
-                                                      ? FontWeight.w700 
+                                                  fontWeight: isSelected
+                                                      ? FontWeight.w700
                                                       : FontWeight.w600,
                                                   fontSize: 14,
-                                                  color: isSelected 
+                                                  color: isSelected
                                                       ? const Color(0xFF1B4D3E)
                                                       : Colors.grey[800],
                                                 ),
                                               ),
-                                              if (supplier['contact'] != null) ...[
+                                              if (supplier['contact'] !=
+                                                  null) ...[
                                                 const SizedBox(height: 2),
                                                 Text(
                                                   supplier['contact'],

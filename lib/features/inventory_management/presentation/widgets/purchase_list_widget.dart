@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:c_billing/core/localization/app_localizations.dart';
+import 'package:c_billing/core/services/language_service.dart';
 import '../../offline/entities/purchase_batch_entity.dart';
 import 'purchase_card_widget.dart';
 import 'purchase_filter_widget.dart';
@@ -39,6 +41,7 @@ class PurchaseListWidget extends StatefulWidget {
 
 class _PurchaseListWidgetState extends State<PurchaseListWidget> {
   final ScrollController _scrollController = ScrollController();
+  late AppLocalizations _localizations;
 
   @override
   void dispose() {
@@ -70,7 +73,7 @@ class _PurchaseListWidgetState extends State<PurchaseListWidget> {
         return p.purchaseDate.year == now.year;
       }).toList();
     } else if (widget.dateFilter == PurchaseDateFilter.custom &&
-               widget.customStartDate != null) {
+        widget.customStartDate != null) {
       final start = DateTime(
         widget.customStartDate!.year,
         widget.customStartDate!.month,
@@ -81,18 +84,24 @@ class _PurchaseListWidgetState extends State<PurchaseListWidget> {
               widget.customEndDate!.year,
               widget.customEndDate!.month,
               widget.customEndDate!.day,
-              23, 59, 59,
+              23,
+              59,
+              59,
             )
           : DateTime(start.year, start.month, start.day, 23, 59, 59);
       filtered = filtered.where((p) {
-        return p.purchaseDate.isAfter(start.subtract(const Duration(seconds: 1))) &&
+        return p.purchaseDate.isAfter(
+              start.subtract(const Duration(seconds: 1)),
+            ) &&
             p.purchaseDate.isBefore(end.add(const Duration(seconds: 1)));
       }).toList();
     }
 
     // Apply supplier filter
     if (widget.supplierFilter != null && widget.supplierFilter!.isNotEmpty) {
-      filtered = filtered.where((p) => p.supplierId == widget.supplierFilter).toList();
+      filtered = filtered
+          .where((p) => p.supplierId == widget.supplierFilter)
+          .toList();
     }
 
     return filtered;
@@ -100,6 +109,9 @@ class _PurchaseListWidgetState extends State<PurchaseListWidget> {
 
   @override
   Widget build(BuildContext context) {
+    _localizations = AppLocalizations.of(
+      LanguageService.instance.currentLanguage,
+    );
     if (widget.isLoading) {
       return _buildShimmerList();
     }
@@ -129,7 +141,7 @@ class _PurchaseListWidgetState extends State<PurchaseListWidget> {
             child: PurchaseCardWidget(
               key: ValueKey(purchase.id),
               purchase: purchase,
-              onTap: widget.onPurchaseTap != null 
+              onTap: widget.onPurchaseTap != null
                   ? () => widget.onPurchaseTap!(purchase)
                   : null,
               onLongPress: widget.onPurchaseLongPress != null
@@ -168,9 +180,10 @@ class _PurchaseListWidgetState extends State<PurchaseListWidget> {
   }
 
   Widget _buildEmptyState() {
-    final isFiltered = widget.dateFilter != PurchaseDateFilter.all || 
+    final isFiltered =
+        widget.dateFilter != PurchaseDateFilter.all ||
         widget.supplierFilter != null;
-    
+
     return Center(
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
@@ -186,10 +199,7 @@ class _PurchaseListWidgetState extends State<PurchaseListWidget> {
                 builder: (context, value, child) {
                   return Transform.scale(
                     scale: value,
-                    child: Opacity(
-                      opacity: value,
-                      child: child,
-                    ),
+                    child: Opacity(opacity: value, child: child),
                   );
                 },
                 child: Container(
@@ -200,8 +210,8 @@ class _PurchaseListWidgetState extends State<PurchaseListWidget> {
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
-                    isFiltered 
-                        ? Icons.filter_alt_off_rounded 
+                    isFiltered
+                        ? Icons.filter_alt_off_rounded
                         : Icons.shopping_cart_outlined,
                     size: 56,
                     color: const Color(0xFF1B4D3E).withOpacity(0.5),
@@ -209,7 +219,7 @@ class _PurchaseListWidgetState extends State<PurchaseListWidget> {
                 ),
               ),
               const SizedBox(height: 24),
-              
+
               // Title
               TweenAnimationBuilder<double>(
                 tween: Tween(begin: 0.0, end: 1.0),
@@ -224,7 +234,9 @@ class _PurchaseListWidgetState extends State<PurchaseListWidget> {
                   );
                 },
                 child: Text(
-                  isFiltered ? 'No Matching Purchases' : widget.emptyTitle,
+                  isFiltered
+                      ? _localizations.noMatchingPurchases
+                      : widget.emptyTitle,
                   style: const TextStyle(
                     fontFamily: 'Literata',
                     fontWeight: FontWeight.w700,
@@ -235,20 +247,17 @@ class _PurchaseListWidgetState extends State<PurchaseListWidget> {
                 ),
               ),
               const SizedBox(height: 12),
-              
+
               // Subtitle
               TweenAnimationBuilder<double>(
                 tween: Tween(begin: 0.0, end: 1.0),
                 duration: const Duration(milliseconds: 800),
                 builder: (context, value, child) {
-                  return Opacity(
-                    opacity: value,
-                    child: child,
-                  );
+                  return Opacity(opacity: value, child: child);
                 },
                 child: Text(
-                  isFiltered 
-                      ? 'Try adjusting your filters to see more results'
+                  isFiltered
+                      ? _localizations.tryAdjustingFilters
                       : widget.emptySubtitle,
                   style: TextStyle(
                     fontFamily: 'Literata',
@@ -259,7 +268,7 @@ class _PurchaseListWidgetState extends State<PurchaseListWidget> {
                   textAlign: TextAlign.center,
                 ),
               ),
-              
+
               // Add button hint (only when not filtered)
               if (!isFiltered) ...[
                 const SizedBox(height: 32),
@@ -267,13 +276,13 @@ class _PurchaseListWidgetState extends State<PurchaseListWidget> {
                   tween: Tween(begin: 0.0, end: 1.0),
                   duration: const Duration(milliseconds: 1000),
                   builder: (context, value, child) {
-                    return Opacity(
-                      opacity: value,
-                      child: child,
-                    );
+                    return Opacity(opacity: value, child: child);
                   },
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 10,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFF1B4D3E).withOpacity(0.06),
                       borderRadius: BorderRadius.circular(12),
@@ -292,7 +301,7 @@ class _PurchaseListWidgetState extends State<PurchaseListWidget> {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          'Tap + to add your first purchase',
+                          _localizations.tapToAddFirstPurchase,
                           style: TextStyle(
                             fontFamily: 'Literata',
                             fontWeight: FontWeight.w500,
@@ -351,7 +360,8 @@ class PurchaseSummaryWidget extends StatelessWidget {
       filtered = filtered.where((p) {
         return p.purchaseDate.year == now.year;
       }).toList();
-    } else if (dateFilter == PurchaseDateFilter.custom && customStartDate != null) {
+    } else if (dateFilter == PurchaseDateFilter.custom &&
+        customStartDate != null) {
       final start = DateTime(
         customStartDate!.year,
         customStartDate!.month,
@@ -362,11 +372,15 @@ class PurchaseSummaryWidget extends StatelessWidget {
               customEndDate!.year,
               customEndDate!.month,
               customEndDate!.day,
-              23, 59, 59,
+              23,
+              59,
+              59,
             )
           : DateTime(start.year, start.month, start.day, 23, 59, 59);
       filtered = filtered.where((p) {
-        return p.purchaseDate.isAfter(start.subtract(const Duration(seconds: 1))) &&
+        return p.purchaseDate.isAfter(
+              start.subtract(const Duration(seconds: 1)),
+            ) &&
             p.purchaseDate.isBefore(end.add(const Duration(seconds: 1)));
       }).toList();
     }
@@ -380,9 +394,18 @@ class PurchaseSummaryWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final _localizations = AppLocalizations.of(
+      LanguageService.instance.currentLanguage,
+    );
     final filtered = _filteredPurchases;
-    final totalAmount = filtered.fold<double>(0, (sum, p) => sum + (p.purchasePrice * p.quantityPurchased));
-    final totalQuantity = filtered.fold<int>(0, (sum, p) => sum + p.quantityPurchased);
+    final totalAmount = filtered.fold<double>(
+      0,
+      (sum, p) => sum + (p.purchasePrice * p.quantityPurchased),
+    );
+    final totalQuantity = filtered.fold<int>(
+      0,
+      (sum, p) => sum + p.quantityPurchased,
+    );
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -408,20 +431,20 @@ class PurchaseSummaryWidget extends StatelessWidget {
         children: [
           _buildStatItem(
             icon: Icons.receipt_long_rounded,
-            label: 'Purchases',
+            label: _localizations.purchases,
             value: '${filtered.length}',
           ),
           _buildDivider(),
           _buildStatItem(
             icon: Icons.inventory_2_rounded,
-            label: 'Total Qty',
+            label: _localizations.totalQty,
             value: '$totalQuantity',
           ),
           _buildDivider(),
           Expanded(
             child: _buildStatItem(
               icon: Icons.currency_rupee_rounded,
-              label: 'Total Value',
+              label: _localizations.totalValue,
               value: '₹${totalAmount.toStringAsFixed(0)}',
               isExpanded: true,
             ),
@@ -442,11 +465,7 @@ class PurchaseSummaryWidget extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            icon,
-            color: Colors.white.withOpacity(0.8),
-            size: 20,
-          ),
+          Icon(icon, color: Colors.white.withOpacity(0.8), size: 20),
           const SizedBox(height: 6),
           Text(
             value,

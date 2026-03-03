@@ -829,4 +829,88 @@ class HindiLocalization {
   static const String pleaseSelectAtLeastOneItem =
       'कृपया कम से कम एक आइटम चुनें';
   static const String selling = 'बिक्री';
+
+  // ═══════════════════════════════════════════════════
+  // Purchase Module Extended
+  // ═══════════════════════════════════════════════════
+  static const String createNewProductRecord = 'एक नया उत्पाद रिकॉर्ड बनाएं';
+  static const String hsnCodeRequired = 'GST लागू होने पर HSN कोड आवश्यक है';
+  static const String hsnCode = 'HSN कोड';
+  static const String tapToSelect = 'चुनने के लिए टैप करें';
+  static const String perUnit = 'प्रति इकाई';
+  static const String expiryDateAfterProduction =
+      'समाप्ति तिथि उत्पादन तिथि के बाद होनी चाहिए';
+  static const String purchaseProcessingFailed = 'खरीदारी प्रसंस्करण विफल';
+  static const String createNewSupplierRecord =
+      'एक नया आपूर्तिकर्ता रिकॉर्ड बनाएं';
+  static const String enterTenDigitNumber = '10 अंकों का नंबर दर्ज करें';
+  static const String createNewCompanyRecord = 'एक नया कंपनी रिकॉर्ड बनाएं';
+  static const String addPurchase = 'खरीदारी जोड़ें';
+  static const String recordNewInventoryPurchase =
+      'नई इन्वेंटरी खरीदारी दर्ज करें';
+  static const String selectionDetails = 'चयन विवरण';
+  static const String mfgDate = 'निर्माण तिथि';
+  static const String purchaseQuantity = 'खरीदारी मात्रा';
+  static const String measurementUnit = 'माप इकाई';
+  static const String warrantyPeriod = 'वारंटी अवधि';
+  static const String selectText = 'चुनें';
+  static const String pricing = 'मूल्य निर्धारण';
+  static const String totalAmount = 'कुल राशि';
+  static const String addNotesAboutPurchase =
+      'इस खरीदारी के बारे में नोट्स जोड़ें...';
+  static const String productsAvailable = 'उत्पाद उपलब्ध';
+  static const String suppliersAvailable = 'आपूर्तिकर्ता उपलब्ध';
+  static const String companiesAvailable = 'कंपनियां उपलब्ध';
+  static const String viewDetails = 'विवरण देखें';
+  static const String editPurchase = 'खरीदारी संपादित करें';
+  static const String unit = 'इकाई';
+  static const String purchaseDate = 'खरीदारी तिथि';
+  static const String warrantyMonths = 'वारंटी (महीने)';
+  static const String notSet = 'सेट नहीं';
+  static const String customFields = 'कस्टम फ़ील्ड';
+  static const String yes = 'हां';
+  static const String no = 'नहीं';
+  static const String quantityCannotBeLess = 'मात्रा इससे कम नहीं हो सकती';
+  static const String alreadySold = 'पहले से बिक चुका';
+  static const String purchaseUpdatedSuccessfully =
+      'खरीदारी सफलतापूर्वक अपडेट हुई';
+  static const String errorUpdatingPurchase = 'खरीदारी अपडेट करने में त्रुटि';
+  static const String activeLabel = 'सक्रिय:';
+  static const String unknownText = 'अज्ञात';
+  static const String clearText = 'साफ़ करें';
+  static const String searchSupplier = 'आपूर्तिकर्ता खोजें...';
+  static const String unknownSupplier = 'अज्ञात आपूर्तिकर्ता';
+  static const String purchaseHistoryWillAppear =
+      'आपका खरीदारी इतिहास यहां दिखाई देगा';
+  static const String noMatchingPurchases = 'कोई मेल खाती खरीदारी नहीं';
+  static const String tryAdjustingFilters =
+      'अधिक परिणाम देखने के लिए फ़िल्टर समायोजित करें';
+  static const String tapToAddFirstPurchase =
+      'अपनी पहली खरीदारी जोड़ने के लिए + टैप करें';
+  static const String totalQty = 'कुल मात्रा';
+  static const String totalValue = 'कुल मूल्य';
+  static const String purchaseReturn = 'खरीदारी वापसी';
+  static const String returnStockToSupplier = 'आपूर्तिकर्ता को स्टॉक वापस करें';
+  static const String fullBatch = 'पूर्ण बैच';
+  static const String newReturn = 'नई वापसी';
+  static const String returnHistory = 'वापसी इतिहास';
+  static const String expiry = 'समाप्ति';
+  static const String productText = 'उत्पाद';
+  static const String deletePurchase = 'खरीदारी हटाएं';
+  static const String confirmDeletePurchase =
+      'क्या आप वाकई इस खरीदारी को हटाना चाहते हैं?';
+  static const String purchaseDeletedSuccessfully =
+      'खरीदारी सफलतापूर्वक हटा दी गई';
+  static const String errorDeletingPurchase = 'खरीदारी हटाने में त्रुटि';
+  static const String noReturnableProducts =
+      'इस आपूर्तिकर्ता के लिए कोई वापस करने योग्य उत्पाद नहीं मिला';
+  static const String noProductsMatchSearch =
+      'कोई उत्पाद आपकी खोज से मेल नहीं खाता';
+  static const String productsLabel = 'उत्पाद';
+  static const String itemsLabel = 'आइटम';
+  static const String noReturnsYet = 'अभी तक कोई वापसी नहीं';
+  static const String processFirstReturn =
+      'नई वापसी टैब से अपनी पहली वापसी प्रोसेस करें';
+  static const String returnProcessedSuccessfully =
+      'खरीदारी वापसी सफलतापूर्वक प्रोसेस हुई!';
 }

@@ -382,7 +382,7 @@ class _PurchasePageState extends State<PurchasePage>
                             ),
                           ),
                           Text(
-                            'Create a new product record',
+                            _localizations.createNewProductRecord,
                             style: TextStyle(
                               fontSize: 13,
                               color: Colors.grey[500],
@@ -522,7 +522,7 @@ class _PurchasePageState extends State<PurchasePage>
                       // HSN Code
                       _buildBottomSheetTextField(
                         controller: hsnController,
-                        label: 'HSN Code',
+                        label: _localizations.hsnCode,
                         hint: 'e.g. 30049099',
                         icon: Icons.tag,
                         keyboardType: TextInputType.number,
@@ -653,10 +653,10 @@ class _PurchasePageState extends State<PurchasePage>
       final hsnVal = hsnController.text.trim();
       if ((cgstVal > 0 || sgstVal > 0) && hsnVal.isEmpty) {
         ScaffoldMessenger.of(sheetContext).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text(
-              'HSN Code is required when GST is applied',
-              style: TextStyle(fontFamily: 'Literata'),
+              _localizations.hsnCodeRequired,
+              style: const TextStyle(fontFamily: 'Literata'),
             ),
             backgroundColor: Colors.red,
           ),
@@ -844,7 +844,7 @@ class _PurchasePageState extends State<PurchasePage>
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    value ?? 'Tap to select',
+                    value ?? _localizations.tapToSelect,
                     style: TextStyle(
                       fontFamily: 'Literata',
                       color: hasValue ? Colors.black87 : Colors.grey[500],
@@ -1685,7 +1685,7 @@ class _PurchasePageState extends State<PurchasePage>
                                           ),
                                         ),
                                         Text(
-                                          'per unit',
+                                          _localizations.perUnit,
                                           style: TextStyle(
                                             fontSize: 11,
                                             color: Colors.grey[400],
@@ -2248,9 +2248,7 @@ class _PurchasePageState extends State<PurchasePage>
         _expiryDate != null &&
         _expiryDate!.isBefore(_productionDate!)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Expiry date must be after production date'),
-        ),
+        SnackBar(content: Text(_localizations.expiryDateAfterProduction)),
       );
       return;
     }
@@ -2307,7 +2305,8 @@ class _PurchasePageState extends State<PurchasePage>
 
       if (!integrationResult.success) {
         throw Exception(
-          integrationResult.errorMessage ?? 'Purchase processing failed',
+          integrationResult.errorMessage ??
+              _localizations.purchaseProcessingFailed,
         );
       }
 
@@ -2603,7 +2602,7 @@ class _PurchasePageState extends State<PurchasePage>
                               ),
                             ),
                             Text(
-                              'Create a new supplier record',
+                              _localizations.createNewSupplierRecord,
                               style: TextStyle(
                                 fontSize: 13,
                                 color: Colors.grey[500],
@@ -2653,7 +2652,7 @@ class _PurchasePageState extends State<PurchasePage>
                   _buildBottomSheetTextField(
                     controller: _newSupplierContactController,
                     label: _localizations.contactNumber,
-                    hint: 'Enter 10-digit number',
+                    hint: _localizations.enterTenDigitNumber,
                     icon: Icons.phone_outlined,
                     keyboardType: TextInputType.phone,
                     maxLength: 10,
@@ -2663,7 +2662,7 @@ class _PurchasePageState extends State<PurchasePage>
                   _buildBottomSheetTextField(
                     controller: _newSupplierAddressController,
                     label: _localizations.address,
-                    hint: 'Enter address',
+                    hint: _localizations.enterAddress,
                     icon: Icons.location_on_outlined,
                     maxLines: 3,
                     onChanged: (_) => setSheetState(() {}),
@@ -2953,7 +2952,7 @@ class _PurchasePageState extends State<PurchasePage>
                               ),
                             ),
                             Text(
-                              'Create a new company record',
+                              _localizations.createNewCompanyRecord,
                               style: TextStyle(
                                 fontSize: 13,
                                 color: Colors.grey[500],
@@ -2994,7 +2993,7 @@ class _PurchasePageState extends State<PurchasePage>
                   _buildBottomSheetTextField(
                     controller: _newCompanyContactController,
                     label: _localizations.contactNumber,
-                    hint: 'Enter 10-digit number',
+                    hint: _localizations.enterTenDigitNumber,
                     icon: Icons.phone_outlined,
                     keyboardType: TextInputType.phone,
                     maxLength: 10,
@@ -3004,7 +3003,7 @@ class _PurchasePageState extends State<PurchasePage>
                   _buildBottomSheetTextField(
                     controller: _newCompanyAddressController,
                     label: _localizations.address,
-                    hint: 'Enter address',
+                    hint: _localizations.enterAddress,
                     icon: Icons.location_on_outlined,
                     maxLines: 3,
                     onChanged: (_) => setSheetState(() {}),
@@ -3123,8 +3122,8 @@ class _PurchasePageState extends State<PurchasePage>
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Company added successfully'),
+          SnackBar(
+            content: Text(_localizations.companyAddedSuccessfully),
             backgroundColor: Colors.green,
           ),
         );
@@ -3263,18 +3262,18 @@ class _PurchasePageState extends State<PurchasePage>
                     valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                   ),
                 )
-              : const Row(
+              : Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(
+                    const Icon(
                       Icons.check_circle_rounded,
                       color: Colors.white,
                       size: 22,
                     ),
-                    SizedBox(width: 10),
+                    const SizedBox(width: 10),
                     Text(
-                      'Record Purchase',
-                      style: TextStyle(
+                      _localizations.recordPurchase,
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
                         fontFamily: 'Literata',
@@ -3332,8 +3331,8 @@ class _PurchasePageState extends State<PurchasePage>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Add Purchase',
+                Text(
+                  _localizations.addPurchase,
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 20,
@@ -3342,7 +3341,7 @@ class _PurchasePageState extends State<PurchasePage>
                   ),
                 ),
                 Text(
-                  'Record new inventory purchase',
+                  _localizations.recordNewInventoryPurchase,
                   style: TextStyle(
                     color: Colors.white.withValues(alpha: 0.7),
                     fontSize: 12,
@@ -3433,8 +3432,8 @@ class _PurchasePageState extends State<PurchasePage>
                 ),
               ),
               const SizedBox(width: 12),
-              const Text(
-                'Selection Details',
+              Text(
+                _localizations.selectionDetails,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
@@ -3447,7 +3446,7 @@ class _PurchasePageState extends State<PurchasePage>
           const SizedBox(height: 16),
           // Product Selection
           _buildSelectionCard(
-            title: 'Product',
+            title: _localizations.productText,
             value: _selectedProduct?.name,
             subtitle: _selectedProduct != null
                 ? 'Stock: ${_selectedProduct!.currentStock} • ${_selectedProduct!.companyName}'
@@ -3463,7 +3462,7 @@ class _PurchasePageState extends State<PurchasePage>
             children: [
               Expanded(
                 child: _buildSelectionCard(
-                  title: 'Supplier',
+                  title: _localizations.supplier,
                   value: _selectedSupplier?['fullName'],
                   icon: Icons.person_rounded,
                   color: const Color(0xFFFF6B6B),
@@ -3475,7 +3474,7 @@ class _PurchasePageState extends State<PurchasePage>
               const SizedBox(width: 12),
               Expanded(
                 child: _buildSelectionCard(
-                  title: 'Company',
+                  title: _localizations.company,
                   value: _selectedCompany?['companyName'],
                   icon: Icons.business_rounded,
                   color: const Color(0xFF7B68EE),
@@ -3620,9 +3619,9 @@ class _PurchasePageState extends State<PurchasePage>
                 ),
               ),
               const SizedBox(width: 12),
-              const Text(
-                'Purchase Details',
-                style: TextStyle(
+              Text(
+                _localizations.purchase,
+                style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
                   fontFamily: 'Literata',
@@ -3640,7 +3639,7 @@ class _PurchasePageState extends State<PurchasePage>
                 if (PurchaseSettingsService.instance.showManufacturingDate)
                   Expanded(
                     child: _buildDateField(
-                      label: 'Mfg. Date',
+                      label: _localizations.mfgDate,
                       value: _productionDate,
                       icon: Icons.event_rounded,
                       color: const Color(0xFF4CAF50),
@@ -3653,7 +3652,7 @@ class _PurchasePageState extends State<PurchasePage>
                 if (PurchaseSettingsService.instance.showExpiryDate)
                   Expanded(
                     child: _buildDateField(
-                      label: 'Expiry Date',
+                      label: _localizations.expiryDate,
                       value: _expiryDate,
                       icon: Icons.event_busy_rounded,
                       color: const Color(0xFFFF9800),
@@ -3668,8 +3667,8 @@ class _PurchasePageState extends State<PurchasePage>
           // Quantity field
           _buildTextField(
             controller: _quantityController,
-            label: 'Purchase Quantity',
-            hint: 'Enter quantity',
+            label: _localizations.purchaseQuantity,
+            hint: _localizations.enterQuantity,
             icon: Icons.shopping_cart_rounded,
             keyboardType: TextInputType.number,
             onChanged: (_) => _calculateTotal(),
@@ -3677,7 +3676,7 @@ class _PurchasePageState extends State<PurchasePage>
           const SizedBox(height: 16),
           // Measurement Unit
           _buildChipSelector(
-            label: 'Measurement Unit',
+            label: _localizations.measurementUnit,
             options: PurchaseSettingsService.instance.availableUnits,
             selectedValue: _selectedUnit,
             onSelected: (unit) => setState(() => _selectedUnit = unit),
@@ -3688,7 +3687,7 @@ class _PurchasePageState extends State<PurchasePage>
           if (PurchaseSettingsService.instance.showWarranty) ...[
             const SizedBox(height: 16),
             _buildChipSelector<int>(
-              label: 'Warranty Period',
+              label: _localizations.warrantyPeriod,
               options: PurchaseSettingsService.instance.warrantyOptions,
               selectedValue: _selectedWarranty,
               onSelected: (warranty) =>
@@ -3715,7 +3714,7 @@ class _PurchasePageState extends State<PurchasePage>
     final hasValue = value != null;
     final dateStr = hasValue
         ? '${value.day.toString().padLeft(2, '0')}/${value.month.toString().padLeft(2, '0')}/${value.year}'
-        : 'Select';
+        : _localizations.selectText;
 
     return GestureDetector(
       onTap: onTap,
@@ -4013,9 +4012,9 @@ class _PurchasePageState extends State<PurchasePage>
                 ),
               ),
               const SizedBox(width: 12),
-              const Text(
-                'Pricing',
-                style: TextStyle(
+              Text(
+                _localizations.pricing,
+                style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
                   fontFamily: 'Literata',
@@ -4031,7 +4030,7 @@ class _PurchasePageState extends State<PurchasePage>
               Expanded(
                 child: _buildPriceField(
                   controller: _priceController,
-                  label: 'Purchase Price',
+                  label: _localizations.purchasePrice,
                   hint: '0.00',
                   onChanged: (_) => _calculateTotal(),
                 ),
@@ -4040,7 +4039,7 @@ class _PurchasePageState extends State<PurchasePage>
               Expanded(
                 child: _buildPriceField(
                   controller: _salesPriceController,
-                  label: 'Sales Price',
+                  label: _localizations.salesPrice,
                   hint: '0.00',
                 ),
               ),
@@ -4086,7 +4085,7 @@ class _PurchasePageState extends State<PurchasePage>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Total Amount',
+                          _localizations.totalAmount,
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w500,
@@ -4221,9 +4220,9 @@ class _PurchasePageState extends State<PurchasePage>
                 ),
               ),
               const SizedBox(width: 12),
-              const Text(
-                'Notes',
-                style: TextStyle(
+              Text(
+                _localizations.notes,
+                style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
                   fontFamily: 'Literata',
@@ -4232,7 +4231,7 @@ class _PurchasePageState extends State<PurchasePage>
               ),
               const SizedBox(width: 8),
               Text(
-                '(Optional)',
+                '(${_localizations.optional})',
                 style: TextStyle(
                   fontSize: 12,
                   fontFamily: 'Literata',
@@ -4247,7 +4246,7 @@ class _PurchasePageState extends State<PurchasePage>
             maxLines: 3,
             style: const TextStyle(fontFamily: 'Literata'),
             decoration: InputDecoration(
-              hintText: 'Add any notes about this purchase...',
+              hintText: _localizations.addNotesAboutPurchase,
               hintStyle: TextStyle(
                 color: Colors.grey[400],
                 fontFamily: 'Literata',

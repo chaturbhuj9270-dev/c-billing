@@ -828,4 +828,87 @@ class EnglishLocalization {
   static const String pleaseSelectAtLeastOneItem =
       'Please select at least one item';
   static const String selling = 'Selling';
+
+  // ═══════════════════════════════════════════════════
+  // Purchase Module Extended
+  // ═══════════════════════════════════════════════════
+  static const String createNewProductRecord = 'Create a new product record';
+  static const String hsnCodeRequired =
+      'HSN Code is required when GST is applied';
+  static const String hsnCode = 'HSN Code';
+  static const String tapToSelect = 'Tap to select';
+  static const String perUnit = 'per unit';
+  static const String expiryDateAfterProduction =
+      'Expiry date must be after production date';
+  static const String purchaseProcessingFailed = 'Purchase processing failed';
+  static const String createNewSupplierRecord = 'Create a new supplier record';
+  static const String enterTenDigitNumber = 'Enter 10-digit number';
+  static const String createNewCompanyRecord = 'Create a new company record';
+  static const String addPurchase = 'Add Purchase';
+  static const String recordNewInventoryPurchase =
+      'Record new inventory purchase';
+  static const String selectionDetails = 'Selection Details';
+  static const String mfgDate = 'Mfg. Date';
+  static const String purchaseQuantity = 'Purchase Quantity';
+  static const String measurementUnit = 'Measurement Unit';
+  static const String warrantyPeriod = 'Warranty Period';
+  static const String selectText = 'Select';
+  static const String pricing = 'Pricing';
+  static const String totalAmount = 'Total Amount';
+  static const String addNotesAboutPurchase =
+      'Add any notes about this purchase...';
+  static const String productsAvailable = 'products available';
+  static const String suppliersAvailable = 'suppliers available';
+  static const String companiesAvailable = 'companies available';
+  static const String viewDetails = 'View Details';
+  static const String editPurchase = 'Edit Purchase';
+  static const String unit = 'Unit';
+  static const String purchaseDate = 'Purchase Date';
+  static const String warrantyMonths = 'Warranty (months)';
+  static const String notSet = 'Not set';
+  static const String customFields = 'Custom Fields';
+  static const String yes = 'Yes';
+  static const String no = 'No';
+  static const String quantityCannotBeLess = 'Quantity cannot be less than';
+  static const String alreadySold = 'already sold';
+  static const String purchaseUpdatedSuccessfully =
+      'Purchase updated successfully';
+  static const String errorUpdatingPurchase = 'Error updating purchase';
+  static const String activeLabel = 'Active:';
+  static const String unknownText = 'Unknown';
+  static const String clearText = 'Clear';
+  static const String searchSupplier = 'Search supplier...';
+  static const String unknownSupplier = 'Unknown Supplier';
+  static const String purchaseHistoryWillAppear =
+      'Your purchase history will appear here';
+  static const String noMatchingPurchases = 'No Matching Purchases';
+  static const String tryAdjustingFilters =
+      'Try adjusting your filters to see more results';
+  static const String tapToAddFirstPurchase =
+      'Tap + to add your first purchase';
+  static const String totalQty = 'Total Qty';
+  static const String totalValue = 'Total Value';
+  static const String purchaseReturn = 'Purchase Return';
+  static const String returnStockToSupplier = 'Return stock to supplier';
+  static const String fullBatch = 'Full Batch';
+  static const String newReturn = 'New Return';
+  static const String returnHistory = 'Return History';
+  static const String expiry = 'Expiry';
+  static const String productText = 'Product';
+  static const String deletePurchase = 'Delete Purchase';
+  static const String confirmDeletePurchase =
+      'Are you sure you want to delete this purchase?';
+  static const String purchaseDeletedSuccessfully =
+      'Purchase deleted successfully';
+  static const String errorDeletingPurchase = 'Error deleting purchase';
+  static const String noReturnableProducts =
+      'No returnable products found for this supplier';
+  static const String noProductsMatchSearch = 'No products match your search';
+  static const String productsLabel = 'Products';
+  static const String itemsLabel = 'items';
+  static const String noReturnsYet = 'No returns yet';
+  static const String processFirstReturn =
+      'Process your first return from the New Return tab';
+  static const String returnProcessedSuccessfully =
+      'Purchase return processed successfully!';
 }
