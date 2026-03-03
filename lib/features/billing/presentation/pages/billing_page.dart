@@ -3007,31 +3007,30 @@ class _BillingPageState extends State<BillingPage> {
                                     ),
                                   ),
                                 ),
-                                // Quantity display - tappable for manual entry
-                                GestureDetector(
-                                  onTap: () => _showBillItemQuantityDialog(
-                                    index: index,
-                                    item: item,
-                                    maxStock: maxStock,
-                                  ),
-                                  child: Container(
-                                    constraints: const BoxConstraints(
-                                      minWidth: 36,
-                                    ),
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 4,
-                                    ),
-                                    alignment: Alignment.center,
-                                    child: Text(
-                                      item.displayQuantity,
-                                      style: const TextStyle(
-                                        fontFamily: 'Literata',
-                                        fontWeight: FontWeight.w700,
-                                        fontSize: 11,
-                                        color: Color(0xFF1B4D3E),
-                                      ),
-                                    ),
-                                  ),
+                                // Inline editable quantity field
+                                _InlineQuantityField(
+                                  item: item,
+                                  maxStock: maxStock,
+                                  onQuantityChanged: (newQty) {
+                                    setState(() {
+                                      _billItems[index] = BillItem.create(
+                                        productId: item.productId,
+                                        productName: item.productName,
+                                        companyName: item.companyName,
+                                        sellingPrice: item.sellingPrice,
+                                        purchasePrice: item.purchasePrice,
+                                        quantity: newQty,
+                                        cgstPercent: item.cgstPercent,
+                                        sgstPercent: item.sgstPercent,
+                                        hsnCode: item.hsnCode,
+                                        unit: item.unit,
+                                        sellUnit: item.sellUnit,
+                                      );
+                                    });
+                                  },
+                                  onRemoveItem: () {
+                                    setState(() => _billItems.removeAt(index));
+                                  },
                                 ),
                                 // Plus
                                 GestureDetector(
@@ -9449,5 +9448,234 @@ class _BillingHeaderDelegate extends SliverPersistentHeaderDelegate {
     return maxHeight != oldDelegate.maxHeight ||
         minHeight != oldDelegate.minHeight ||
         billItemsCount != oldDelegate.billItemsCount;
+  }
+}
+
+/// Inline editable quantity field for bill items
+class _InlineQuantityField extends StatefulWidget {
+  final BillItem item;
+  final int maxStock;
+  final ValueChanged<double> onQuantityChanged;
+  final VoidCallback onRemoveItem;
+
+  const _InlineQuantityField({
+    required this.item,
+    required this.maxStock,
+    required this.onQuantityChanged,
+    required this.onRemoveItem,
+  });
+
+  @override
+  State<_InlineQuantityField> createState() => _InlineQuantityFieldState();
+}
+
+class _InlineQuantityFieldState extends State<_InlineQuantityField> {
+  late TextEditingController _controller;
+  late FocusNode _focusNode;
+  bool _isEditing = false;
+  bool _hasSubmitted = false; // Guard against double submission
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: _getDisplayValue());
+    _focusNode = FocusNode();
+    _focusNode.addListener(_onFocusChange);
+  }
+
+  @override
+  void didUpdateWidget(_InlineQuantityField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Update controller text if quantity changed externally (e.g., via +/- buttons)
+    if (!_isEditing && oldWidget.item.quantity != widget.item.quantity) {
+      _controller.text = _getDisplayValue();
+    }
+  }
+
+  @override
+  void dispose() {
+    _focusNode.removeListener(_onFocusChange);
+    _focusNode.dispose();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _onFocusChange() {
+    if (_focusNode.hasFocus) {
+      setState(() {
+        _isEditing = true;
+        _hasSubmitted = false; // Reset guard when gaining focus
+      });
+      // Select all text when focused for easy replacement
+      _controller.selection = TextSelection(
+        baseOffset: 0,
+        extentOffset: _controller.text.length,
+      );
+    } else {
+      setState(() => _isEditing = false);
+      // Only validate if not already submitted (via Enter key)
+      if (!_hasSubmitted) {
+        _validateAndSubmit();
+      }
+    }
+  }
+
+  /// Get the display value based on unit conversion
+  String _getDisplayValue() {
+    final item = widget.item;
+    double displayQty = item.quantity;
+
+    // Convert to display unit if needed
+    if (item.sellUnit == 'gm' && item.unit == 'kg') {
+      displayQty = item.quantity * 1000;
+    } else if (item.sellUnit == 'ml' && item.unit == 'ltr') {
+      displayQty = item.quantity * 1000;
+    }
+
+    // Format nicely - remove decimals if whole number
+    if (displayQty == displayQty.roundToDouble()) {
+      return displayQty.toInt().toString();
+    }
+    return displayQty.toStringAsFixed(2);
+  }
+
+  /// Get the unit suffix for display
+  String _getUnitSuffix() {
+    final item = widget.item;
+    return item.sellUnit ?? item.unit ?? '';
+  }
+
+  /// Convert display value back to base unit quantity
+  double _convertToBaseUnit(double displayQty) {
+    final item = widget.item;
+    if (item.sellUnit == 'gm' && item.unit == 'kg') {
+      return displayQty / 1000;
+    } else if (item.sellUnit == 'ml' && item.unit == 'ltr') {
+      return displayQty / 1000;
+    }
+    return displayQty;
+  }
+
+  /// Get max stock in display units
+  double _getMaxStockInDisplayUnit() {
+    final item = widget.item;
+    if (item.sellUnit == 'gm' && item.unit == 'kg') {
+      return widget.maxStock * 1000.0;
+    } else if (item.sellUnit == 'ml' && item.unit == 'ltr') {
+      return widget.maxStock * 1000.0;
+    }
+    return widget.maxStock.toDouble();
+  }
+
+  void _validateAndSubmit() {
+    _hasSubmitted = true; // Mark as submitted to prevent double calls
+
+    final text = _controller.text.trim();
+    final displayQty = double.tryParse(text);
+
+    if (displayQty == null || displayQty <= 0) {
+      // Invalid input - revert to original value
+      _controller.text = _getDisplayValue();
+      _focusNode.unfocus();
+      return;
+    }
+
+    final maxDisplayStock = _getMaxStockInDisplayUnit();
+    if (displayQty > maxDisplayStock) {
+      // Exceeds stock - cap at max and show feedback
+      final baseQty = _convertToBaseUnit(maxDisplayStock);
+      widget.onQuantityChanged(baseQty);
+      _focusNode.unfocus();
+      return;
+    }
+
+    // Valid quantity - convert and update
+    final baseQty = _convertToBaseUnit(displayQty);
+
+    // Check if quantity would be effectively zero (removed)
+    if (baseQty < 0.001) {
+      widget.onRemoveItem();
+      return;
+    }
+
+    widget.onQuantityChanged(baseQty);
+    _focusNode.unfocus();
+  }
+
+  /// Update quantity in real-time as user types (without validation side effects)
+  void _onTextChanged(String text) {
+    final displayQty = double.tryParse(text.trim());
+
+    // Only update if it's a valid positive number
+    if (displayQty == null || displayQty <= 0) {
+      return; // Don't update for invalid input, let them keep typing
+    }
+
+    final maxDisplayStock = _getMaxStockInDisplayUnit();
+    // Cap at max stock silently while typing
+    final effectiveDisplayQty = displayQty > maxDisplayStock
+        ? maxDisplayStock
+        : displayQty;
+
+    final baseQty = _convertToBaseUnit(effectiveDisplayQty);
+
+    // Don't remove item while typing - that's too aggressive
+    if (baseQty >= 0.001) {
+      widget.onQuantityChanged(baseQty);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final unitSuffix = _getUnitSuffix();
+
+    return Container(
+      constraints: const BoxConstraints(minWidth: 36, maxWidth: 60),
+      padding: const EdgeInsets.symmetric(horizontal: 2),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Flexible(
+            child: TextField(
+              controller: _controller,
+              focusNode: _focusNode,
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontFamily: 'Literata',
+                fontWeight: FontWeight.w700,
+                fontSize: 11,
+                color: Color(0xFF1B4D3E),
+              ),
+              decoration: const InputDecoration(
+                isDense: true,
+                contentPadding: EdgeInsets.symmetric(
+                  vertical: 4,
+                  horizontal: 2,
+                ),
+                border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+              ),
+              onChanged: _onTextChanged,
+              onSubmitted: (_) => _validateAndSubmit(),
+            ),
+          ),
+          if (unitSuffix.isNotEmpty)
+            Text(
+              ' $unitSuffix',
+              style: const TextStyle(
+                fontFamily: 'Literata',
+                fontWeight: FontWeight.w600,
+                fontSize: 9,
+                color: Color(0xFF1B4D3E),
+              ),
+            ),
+        ],
+      ),
+    );
   }
 }
