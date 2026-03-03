@@ -255,7 +255,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
 
             final serverProducts = snapshot.docs.map((doc) {
               final data = doc.data();
-              return <String, dynamic>{'id': doc.id, ...data};
+              return <String, dynamic>{...data, 'id': doc.id};
             }).toList();
 
             // Import to Isar — the Isar stream listener auto-updates the UI

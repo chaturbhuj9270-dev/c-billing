@@ -81,6 +81,7 @@ class _PurchasePageState extends State<PurchasePage>
   final _newCompanyNameController = TextEditingController();
   final _newCompanyContactController = TextEditingController();
   final _newCompanyAddressController = TextEditingController();
+  final _newCompanyGstCodeController = TextEditingController();
 
   bool _isLoading = false;
   List<Product> _products = [];
@@ -2419,6 +2420,7 @@ class _PurchasePageState extends State<PurchasePage>
     _newCompanyNameController.dispose();
     _newCompanyContactController.dispose();
     _newCompanyAddressController.dispose();
+    _newCompanyGstCodeController.dispose();
     _productionDateController.dispose();
     _expiryDateController.dispose();
     _scrollController.removeListener(_onScroll);
@@ -2872,6 +2874,7 @@ class _PurchasePageState extends State<PurchasePage>
     _newCompanyNameController.clear();
     _newCompanyContactController.clear();
     _newCompanyAddressController.clear();
+    _newCompanyGstCodeController.clear();
 
     showModalBottomSheet(
       context: context,
@@ -2995,6 +2998,14 @@ class _PurchasePageState extends State<PurchasePage>
                   ),
                   const SizedBox(height: 16),
                   _buildBottomSheetTextField(
+                    controller: _newCompanyGstCodeController,
+                    label: 'GST Code',
+                    hint: 'Enter GST code',
+                    icon: Icons.receipt_long_outlined,
+                    onChanged: (_) => setSheetState(() {}),
+                  ),
+                  const SizedBox(height: 16),
+                  _buildBottomSheetTextField(
                     controller: _newCompanyAddressController,
                     label: _localizations.address,
                     hint: _localizations.enterAddress,
@@ -3088,13 +3099,16 @@ class _PurchasePageState extends State<PurchasePage>
       // Company code is optional, so we don't pass it - avoids duplicate code issues
       await CompanyOfflineController.instance.addCompany(
         companyName: companyName,
+        gstCode: _newCompanyGstCodeController.text.trim(),
         contact: _newCompanyContactController.text.trim(),
         address: _newCompanyAddressController.text.trim(),
       );
 
       // Trigger sync to upload to server immediately and await result
       final syncResult = await CompanySyncService.instance.syncNow();
-      debugPrint('[PurchasePage] Company sync result: ${syncResult.success}, created: ${syncResult.createdCount}, error: ${syncResult.errorMessage}');
+      debugPrint(
+        '[PurchasePage] Company sync result: ${syncResult.success}, created: ${syncResult.createdCount}, error: ${syncResult.errorMessage}',
+      );
 
       if (dialogContext.mounted) {
         Navigator.pop(dialogContext);

@@ -33,6 +33,7 @@ class _EnhancedCompanyPageState extends State<EnhancedCompanyPage>
   // Form controllers
   final _companyNameController = TextEditingController();
   final _companyCodeController = TextEditingController();
+  final _gstCodeController = TextEditingController();
   final _contactController = TextEditingController();
   final _addressController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
@@ -104,6 +105,7 @@ class _EnhancedCompanyPageState extends State<EnhancedCompanyPage>
     _firestoreStreamSub?.cancel();
     _companyNameController.dispose();
     _companyCodeController.dispose();
+    _gstCodeController.dispose();
     _contactController.dispose();
     _addressController.dispose();
     LanguageService.instance.removeListener(_onLanguageChanged);
@@ -152,6 +154,7 @@ class _EnhancedCompanyPageState extends State<EnhancedCompanyPage>
       'localId': e.id,
       'companyName': e.companyName,
       'companyCode': e.companyCode,
+      'gstCode': e.gstCode,
       'contact': e.contact,
       'address': e.address,
       'isActive': e.isActive,
@@ -179,7 +182,7 @@ class _EnhancedCompanyPageState extends State<EnhancedCompanyPage>
       if (!mounted || _isNavigatingAway) return;
 
       final freshCompanies = snapshot.docs
-          .map((doc) => {'id': doc.id, ...doc.data()})
+          .map((doc) => {...doc.data(), 'id': doc.id})
           .toList();
 
       // Import to Isar
@@ -212,7 +215,7 @@ class _EnhancedCompanyPageState extends State<EnhancedCompanyPage>
             if (!mounted || _isNavigatingAway) return;
 
             final freshCompanies = snapshot.docs
-                .map((doc) => {'id': doc.id, ...doc.data()})
+                .map((doc) => {...doc.data(), 'id': doc.id})
                 .toList();
 
             await CompanyOfflineController.instance.importFromServer(
@@ -231,6 +234,7 @@ class _EnhancedCompanyPageState extends State<EnhancedCompanyPage>
   void _clearForm() {
     _companyNameController.clear();
     _companyCodeController.clear();
+    _gstCodeController.clear();
     _contactController.clear();
     _addressController.clear();
     _editingCompanyId = null;
@@ -276,6 +280,7 @@ class _EnhancedCompanyPageState extends State<EnhancedCompanyPage>
   void _showEditCompanySheet(Map<String, dynamic> company) {
     _companyNameController.text = company['companyName'] ?? '';
     _companyCodeController.text = company['companyCode'] ?? '';
+    _gstCodeController.text = company['gstCode'] ?? '';
     _contactController.text = company['contact'] ?? '';
     _addressController.text = company['address'] ?? '';
     _editingCompanyId = company['id'];
@@ -360,8 +365,8 @@ class _EnhancedCompanyPageState extends State<EnhancedCompanyPage>
                       isRequired: true,
                     ),
                     const SizedBox(height: 16),
-                    // Only show code field when editing (optional field)
-                    if (_isEditing) ...[
+                    // Only show code field when adding (hide when editing)
+                    if (!_isEditing) ...[
                       _buildInputField(
                         label: _localizations.companyCode,
                         controller: _companyCodeController,
@@ -370,6 +375,14 @@ class _EnhancedCompanyPageState extends State<EnhancedCompanyPage>
                       ),
                       const SizedBox(height: 16),
                     ],
+                    // GST Code field
+                    _buildInputField(
+                      label: 'GST Code',
+                      controller: _gstCodeController,
+                      icon: Icons.receipt_long_outlined,
+                      isRequired: false,
+                    ),
+                    const SizedBox(height: 16),
                     _buildInputField(
                       label: _localizations.contactNumber,
                       controller: _contactController,
@@ -567,6 +580,7 @@ class _EnhancedCompanyPageState extends State<EnhancedCompanyPage>
             id: localId,
             companyName: _companyNameController.text.trim(),
             companyCode: _companyCodeController.text.trim(),
+            gstCode: _gstCodeController.text.trim(),
             contact: _contactController.text.trim(),
             address: _addressController.text.trim(),
           );
@@ -580,6 +594,7 @@ class _EnhancedCompanyPageState extends State<EnhancedCompanyPage>
         await offlineCtrl.addCompany(
           companyName: _companyNameController.text.trim(),
           companyCode: _companyCodeController.text.trim(),
+          gstCode: _gstCodeController.text.trim(),
           contact: _contactController.text.trim(),
           address: _addressController.text.trim(),
         );
