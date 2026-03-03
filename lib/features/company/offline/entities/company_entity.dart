@@ -47,6 +47,9 @@ class CompanyEntity {
   @Index(caseSensitive: false)
   String companyCode;
 
+  /// GST code
+  String gstCode;
+
   /// Contact number (indexed for fast lookup)
   @Index()
   String contact;
@@ -73,8 +76,9 @@ class CompanyEntity {
     this.serverId,
     required this.companyName,
     this.companyCode = '',
+    this.gstCode = '',
     this.contact = '',
-    this.address = '',
+    this.address = ''
     this.isActive = true,
     this.syncStatus = CompanySyncStatus.newRecord,
     required this.updatedAt,
@@ -86,6 +90,7 @@ class CompanyEntity {
     String? serverId,
     required String companyName,
     String companyCode = '',
+    String gstCode = '',
     String contact = '',
     String address = '',
     bool isActive = true,
@@ -96,6 +101,7 @@ class CompanyEntity {
       serverId: serverId,
       companyName: companyName,
       companyCode: companyCode,
+      gstCode: gstCode,
       contact: contact,
       address: address,
       isActive: isActive,
@@ -112,6 +118,7 @@ class CompanyEntity {
       serverId: data['id'] as String?,
       companyName: data['companyName'] as String? ?? '',
       companyCode: data['companyCode'] as String? ?? '',
+      gstCode: data['gstCode'] as String? ?? '',
       contact: data['contact'] as String? ?? '',
       address: data['address'] as String? ?? '',
       isActive: data['isActive'] as bool? ?? true,
@@ -127,6 +134,7 @@ class CompanyEntity {
       'id': serverId,
       'companyName': companyName,
       'companyCode': companyCode,
+      'gstCode': gstCode,
       'contact': contact,
       'address': address,
       'isActive': isActive,
@@ -142,6 +150,7 @@ class CompanyEntity {
       'localId': id,
       'companyName': companyName,
       'companyCode': companyCode,
+      'gstCode': gstCode,
       'contact': contact,
       'address': address,
       'isActive': isActive,
@@ -158,6 +167,7 @@ class CompanyEntity {
     String? serverId,
     String? companyName,
     String? companyCode,
+    String? gstCode,
     String? contact,
     String? address,
     bool? isActive,
@@ -169,6 +179,7 @@ class CompanyEntity {
       serverId: serverId ?? this.serverId,
       companyName: companyName ?? this.companyName,
       companyCode: companyCode ?? this.companyCode,
+      gstCode: gstCode ?? this.gstCode,
       contact: contact ?? this.contact,
       address: address ?? this.address,
       isActive: isActive ?? this.isActive,
