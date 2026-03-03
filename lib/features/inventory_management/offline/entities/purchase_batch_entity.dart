@@ -1,18 +1,28 @@
 import 'package:isar_community/isar.dart';
+import 'package:cloud_firestore/cloud_firestore.dart' show Timestamp;
 
 part 'purchase_batch_entity.g.dart';
+
+/// Helper to parse DateTime from Firestore Timestamp or ISO8601 string
+DateTime? _parseDateTime(dynamic value) {
+  if (value == null) return null;
+  if (value is Timestamp) return value.toDate();
+  if (value is DateTime) return value;
+  if (value is String) return DateTime.tryParse(value);
+  return null;
+}
 
 /// Sync status for delta sync logic
 enum BatchSyncStatus {
   /// Newly created locally, not yet on server
   newRecord,
-  
+
   /// Modified locally after sync
   updated,
-  
+
   /// Marked for deletion, pending server delete
   deleted,
-  
+
   /// Fully synced with server
   synced,
 }
@@ -153,8 +163,9 @@ class PurchaseBatchEntity {
     BatchSyncStatus syncStatus = BatchSyncStatus.newRecord,
   }) {
     final now = DateTime.now();
-    final uniqueKey = '${productName.toLowerCase().trim()}_${companyName.toLowerCase().trim()}_${modelName.toLowerCase().trim()}';
-    
+    final uniqueKey =
+        '${productName.toLowerCase().trim()}_${companyName.toLowerCase().trim()}_${modelName.toLowerCase().trim()}';
+
     return PurchaseBatchEntity(
       serverId: serverId,
       productId: productId,
@@ -188,8 +199,9 @@ class PurchaseBatchEntity {
     final productName = data['productName'] as String? ?? '';
     final companyName = data['companyName'] as String? ?? '';
     final modelName = data['modelName'] as String? ?? '';
-    final uniqueKey = '${productName.toLowerCase().trim()}_${companyName.toLowerCase().trim()}_${modelName.toLowerCase().trim()}';
-    
+    final uniqueKey =
+        '${productName.toLowerCase().trim()}_${companyName.toLowerCase().trim()}_${modelName.toLowerCase().trim()}';
+
     return PurchaseBatchEntity(
       serverId: data['batchId'] as String? ?? data['id'] as String?,
       productId: data['productId'] as String? ?? '',
@@ -202,22 +214,18 @@ class PurchaseBatchEntity {
       sellingPrice: (data['sellingPrice'] as num?)?.toDouble() ?? 0.0,
       quantityPurchased: (data['quantityPurchased'] as num?)?.toInt() ?? 0,
       quantityRemaining: (data['quantityRemaining'] as num?)?.toInt() ?? 0,
-      purchaseDate: DateTime.tryParse(data['purchaseDate']?.toString() ?? '') ?? now,
+      purchaseDate: _parseDateTime(data['purchaseDate']) ?? now,
       supplierId: data['supplierId'] as String?,
       supplierName: data['supplierName'] as String?,
       unit: data['unit'] as String? ?? 'pcs',
-      expiryDate: data['expiryDate'] != null 
-          ? DateTime.tryParse(data['expiryDate'].toString()) 
-          : null,
-      productionDate: data['productionDate'] != null
-          ? DateTime.tryParse(data['productionDate'].toString())
-          : null,
+      expiryDate: _parseDateTime(data['expiryDate']),
+      productionDate: _parseDateTime(data['productionDate']),
       warrantyMonths: (data['warrantyMonths'] as num?)?.toInt(),
       notes: data['notes'] as String?,
       isConsumed: data['isConsumed'] as bool? ?? false,
       syncStatus: BatchSyncStatus.synced,
-      createdAt: DateTime.tryParse(data['createdAt']?.toString() ?? '') ?? now,
-      updatedAt: DateTime.tryParse(data['updatedAt']?.toString() ?? '') ?? now,
+      createdAt: _parseDateTime(data['createdAt']) ?? now,
+      updatedAt: _parseDateTime(data['updatedAt']) ?? now,
     );
   }
 

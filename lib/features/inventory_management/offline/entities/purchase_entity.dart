@@ -1,19 +1,29 @@
 import 'package:isar_community/isar.dart';
+import 'package:cloud_firestore/cloud_firestore.dart' show Timestamp;
 
 part 'purchase_entity.g.dart';
+
+/// Helper to parse DateTime from Firestore Timestamp or ISO8601 string
+DateTime? _parseDateTime(dynamic value) {
+  if (value == null) return null;
+  if (value is Timestamp) return value.toDate();
+  if (value is DateTime) return value;
+  if (value is String) return DateTime.tryParse(value);
+  return null;
+}
 
 /// Sync status for delta sync logic
 /// Only purchases with status != SYNCED will be pushed to server
 enum PurchaseSyncStatus {
   /// Newly created locally, not yet on server
   newRecord,
-  
+
   /// Modified locally after sync
   updated,
-  
+
   /// Marked for deletion, pending server delete
   deleted,
-  
+
   /// Fully synced with server
   synced,
 }
@@ -170,17 +180,13 @@ class PurchaseEntity {
       purchasePrice: (data['purchasePrice'] as num?)?.toDouble() ?? 0.0,
       salesPrice: (data['salesPrice'] as num?)?.toDouble() ?? 0.0,
       totalAmount: (data['totalAmount'] as num?)?.toDouble() ?? 0.0,
-      productionDate: data['productionDate'] != null
-          ? DateTime.tryParse(data['productionDate'].toString())
-          : null,
-      expiryDate: data['expiryDate'] != null
-          ? DateTime.tryParse(data['expiryDate'].toString())
-          : null,
+      productionDate: _parseDateTime(data['productionDate']),
+      expiryDate: _parseDateTime(data['expiryDate']),
       warrantyMonths: (data['warrantyMonths'] as num?)?.toInt(),
       notes: data['notes'] as String?,
       syncStatus: PurchaseSyncStatus.synced,
-      createdAt: DateTime.tryParse(data['createdAt']?.toString() ?? '') ?? now,
-      updatedAt: DateTime.tryParse(data['updatedAt']?.toString() ?? '') ?? now,
+      createdAt: _parseDateTime(data['createdAt']) ?? now,
+      updatedAt: _parseDateTime(data['updatedAt']) ?? now,
     );
   }
 

@@ -1,19 +1,29 @@
 import 'package:isar_community/isar.dart';
+import 'package:cloud_firestore/cloud_firestore.dart' show Timestamp;
 
 part 'company_entity.g.dart';
+
+/// Helper to parse DateTime from Firestore Timestamp or ISO8601 string
+DateTime? _parseDateTime(dynamic value) {
+  if (value == null) return null;
+  if (value is Timestamp) return value.toDate();
+  if (value is DateTime) return value;
+  if (value is String) return DateTime.tryParse(value);
+  return null;
+}
 
 /// Sync status for delta sync logic
 /// Only companies with status != SYNCED will be pushed to server
 enum CompanySyncStatus {
   /// Newly created locally, not yet on server
   newRecord,
-  
+
   /// Modified locally after sync
   updated,
-  
+
   /// Marked for deletion, pending server delete
   deleted,
-  
+
   /// Fully synced with server
   synced,
 }
@@ -106,8 +116,8 @@ class CompanyEntity {
       address: data['address'] as String? ?? '',
       isActive: data['isActive'] as bool? ?? true,
       syncStatus: CompanySyncStatus.synced,
-      updatedAt: DateTime.tryParse(data['updatedAt']?.toString() ?? '') ?? now,
-      createdAt: DateTime.tryParse(data['createdAt']?.toString() ?? '') ?? now,
+      updatedAt: _parseDateTime(data['updatedAt']) ?? now,
+      createdAt: _parseDateTime(data['createdAt']) ?? now,
     );
   }
 

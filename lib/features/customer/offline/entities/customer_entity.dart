@@ -1,6 +1,16 @@
 import 'package:isar_community/isar.dart';
+import 'package:cloud_firestore/cloud_firestore.dart' show Timestamp;
 
 part 'customer_entity.g.dart';
+
+/// Helper to parse DateTime from Firestore Timestamp or ISO8601 string
+DateTime? _parseDateTime(dynamic value) {
+  if (value == null) return null;
+  if (value is Timestamp) return value.toDate();
+  if (value is DateTime) return value;
+  if (value is String) return DateTime.tryParse(value);
+  return null;
+}
 
 /// Isar Collection for Customer with offline-first support
 /// Designed for high-performance CRUD operations with proper indexing
@@ -60,7 +70,7 @@ class CustomerEntity {
     required this.updatedAt,
     required this.createdAt,
   });
-  
+
   /// Factory constructor for convenience with default timestamps
   factory CustomerEntity.create({
     String? serverId,
@@ -94,7 +104,7 @@ class CustomerEntity {
   /// Handles both flat format (name, mobile) and Firebase format (firstName, lastName, contact)
   factory CustomerEntity.fromCustomer(Map<String, dynamic> customer) {
     final now = DateTime.now();
-    
+
     // Build name: prefer pre-built 'name' field, otherwise join firstName/middleName/lastName
     String name;
     if (customer['name'] != null && (customer['name'] as String).isNotEmpty) {
@@ -103,24 +113,28 @@ class CustomerEntity {
       final firstName = (customer['firstName'] ?? '').toString();
       final middleName = (customer['middleName'] ?? '').toString();
       final lastName = (customer['lastName'] ?? '').toString();
-      name = [firstName, middleName, lastName]
-          .where((s) => s.isNotEmpty)
-          .join(' ');
+      name = [
+        firstName,
+        middleName,
+        lastName,
+      ].where((s) => s.isNotEmpty).join(' ');
     }
-    
+
     // Mobile: prefer 'mobile', fallback to 'contact'
     final mobile = (customer['mobile'] ?? customer['contact'] ?? '').toString();
-    
+
     // Pending amount
-    final pendingAmount = (customer['currentPendingAmount'] as num?)?.toDouble()
-        ?? (customer['pendingBalance'] as num?)?.toDouble()
-        ?? 0.0;
-    
+    final pendingAmount =
+        (customer['currentPendingAmount'] as num?)?.toDouble() ??
+        (customer['pendingBalance'] as num?)?.toDouble() ??
+        0.0;
+
     // Total purchases
-    final totalPurchases = (customer['totalPurchases'] as num?)?.toDouble()
-        ?? (customer['totalPurchaseAmount'] as num?)?.toDouble()
-        ?? 0.0;
-    
+    final totalPurchases =
+        (customer['totalPurchases'] as num?)?.toDouble() ??
+        (customer['totalPurchaseAmount'] as num?)?.toDouble() ??
+        0.0;
+
     return CustomerEntity(
       serverId: customer['id'] as String?,
       name: name,
@@ -131,8 +145,8 @@ class CustomerEntity {
       totalPurchases: totalPurchases,
       isSynced: true, // From server, so it's synced
       isDeleted: customer['isActive'] == false,
-      updatedAt: DateTime.tryParse(customer['updatedAt']?.toString() ?? '') ?? now,
-      createdAt: DateTime.tryParse(customer['createdAt']?.toString() ?? '') ?? now,
+      updatedAt: _parseDateTime(customer['updatedAt']) ?? now,
+      createdAt: _parseDateTime(customer['createdAt']) ?? now,
     );
   }
 
@@ -142,7 +156,9 @@ class CustomerEntity {
     // Split name into firstName, middleName, lastName for Firebase compatibility
     final nameParts = name.split(' ');
     final firstName = nameParts.isNotEmpty ? nameParts.first : '';
-    final middleName = nameParts.length > 2 ? nameParts.sublist(1, nameParts.length - 1).join(' ') : '';
+    final middleName = nameParts.length > 2
+        ? nameParts.sublist(1, nameParts.length - 1).join(' ')
+        : '';
     final lastName = nameParts.length > 1 ? nameParts.last : '';
 
     return {

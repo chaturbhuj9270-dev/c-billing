@@ -1,17 +1,22 @@
 import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../offline/controllers/event_order_offline_controller.dart';
 import '../../offline/entities/event_order_entity.dart';
 import 'event_order_api_service.dart';
 
-/// Sync status for tracking sync state
-enum EventOrderSyncStatusIndicator {
-  idle,
-  syncing,
-  success,
-  failed,
+/// Helper to parse DateTime from Firestore Timestamp or ISO8601 string
+DateTime? _parseDateTime(dynamic value) {
+  if (value == null) return null;
+  if (value is Timestamp) return value.toDate();
+  if (value is DateTime) return value;
+  if (value is String) return DateTime.tryParse(value);
+  return null;
 }
+
+/// Sync status for tracking sync state
+enum EventOrderSyncStatusIndicator { idle, syncing, success, failed }
 
 /// Result of a sync operation
 class EventOrderSyncResult {
@@ -54,7 +59,7 @@ class EventOrderSyncService extends ChangeNotifier {
   String? _lastError;
   StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
   Timer? _periodicSyncTimer;
-  
+
   /// Mutex to prevent concurrent sync operations
   bool _isSyncing = false;
 
@@ -62,9 +67,10 @@ class EventOrderSyncService extends ChangeNotifier {
     EventOrderOfflineController? offlineController,
     EventOrderApiService? apiService,
     Connectivity? connectivity,
-  })  : _offlineController = offlineController ?? EventOrderOfflineController.instance,
-        _apiService = apiService ?? EventOrderApiService.instance,
-        _connectivity = connectivity ?? Connectivity();
+  }) : _offlineController =
+           offlineController ?? EventOrderOfflineController.instance,
+       _apiService = apiService ?? EventOrderApiService.instance,
+       _connectivity = connectivity ?? Connectivity();
 
   /// Get the singleton instance
   static EventOrderSyncService get instance {
@@ -88,9 +94,11 @@ class EventOrderSyncService extends ChangeNotifier {
   /// Call this after Isar is initialized
   void initialize() {
     debugPrint('[EventOrderSync] Initializing...');
-    
+
     // Listen for connectivity changes
-    _connectivitySubscription = _connectivity.onConnectivityChanged.listen((result) {
+    _connectivitySubscription = _connectivity.onConnectivityChanged.listen((
+      result,
+    ) {
       if (_isConnected(result)) {
         // Back online - trigger sync with delay
         Future.delayed(const Duration(seconds: 2), () {
@@ -106,10 +114,10 @@ class EventOrderSyncService extends ChangeNotifier {
     _periodicSyncTimer = Timer.periodic(const Duration(minutes: 3), (_) {
       _checkAndSync();
     });
-    
+
     // Initial sync
     _checkAndSync();
-    
+
     debugPrint('[EventOrderSync] Initialized');
   }
 
@@ -234,11 +242,19 @@ class EventOrderSyncService extends ChangeNotifier {
           // Will be purged in cleanup step
         } else if (order.serverId == null) {
           // Create on server
-          final response = await _apiService.createEventOrder(_toSyncPayload(order));
-          await _offlineController.markAsSynced(order.id, response['id'] as String);
+          final response = await _apiService.createEventOrder(
+            _toSyncPayload(order),
+          );
+          await _offlineController.markAsSynced(
+            order.id,
+            response['id'] as String,
+          );
         } else {
           // Update on server
-          await _apiService.updateEventOrder(order.serverId!, _toSyncPayload(order));
+          await _apiService.updateEventOrder(
+            order.serverId!,
+            _toSyncPayload(order),
+          );
           await _offlineController.markAsSynced(order.id, order.serverId!);
         }
         uploaded++;
@@ -263,31 +279,39 @@ class EventOrderSyncService extends ChangeNotifier {
       'description': order.description,
       'eventDate': order.eventDate.toIso8601String(),
       'eventLocation': order.eventLocation,
-      'subEvents': order.subEvents.map((e) => {
-        'id': e.id,
-        'name': e.name,
-        'date': e.date?.toIso8601String(),
-        'charges': e.charges,
-        'notes': e.notes,
-        'customDataJson': e.customDataJson,
-      }).toList(),
-      'items': order.items.map((e) => {
-        'id': e.id,
-        'productId': e.productId,
-        'productName': e.productName,
-        'hsnCode': e.hsnCode,
-        'quantity': e.quantity,
-        'rate': e.rate,
-        'discountPercent': e.discountPercent,
-        'discountAmount': e.discountAmount,
-        'cgstPercent': e.cgstPercent,
-        'sgstPercent': e.sgstPercent,
-        'cgstAmount': e.cgstAmount,
-        'sgstAmount': e.sgstAmount,
-        'taxAmount': e.taxAmount,
-        'subtotal': e.subtotal,
-        'total': e.total,
-      }).toList(),
+      'subEvents': order.subEvents
+          .map(
+            (e) => {
+              'id': e.id,
+              'name': e.name,
+              'date': e.date?.toIso8601String(),
+              'charges': e.charges,
+              'notes': e.notes,
+              'customDataJson': e.customDataJson,
+            },
+          )
+          .toList(),
+      'items': order.items
+          .map(
+            (e) => {
+              'id': e.id,
+              'productId': e.productId,
+              'productName': e.productName,
+              'hsnCode': e.hsnCode,
+              'quantity': e.quantity,
+              'rate': e.rate,
+              'discountPercent': e.discountPercent,
+              'discountAmount': e.discountAmount,
+              'cgstPercent': e.cgstPercent,
+              'sgstPercent': e.sgstPercent,
+              'cgstAmount': e.cgstAmount,
+              'sgstAmount': e.sgstAmount,
+              'taxAmount': e.taxAmount,
+              'subtotal': e.subtotal,
+              'total': e.total,
+            },
+          )
+          .toList(),
       'eventCharges': order.eventCharges,
       'totalAmount': order.totalAmount,
       'advanceAmount': order.advanceAmount,
@@ -306,7 +330,7 @@ class EventOrderSyncService extends ChangeNotifier {
     try {
       // Get last sync time for incremental sync
       final lastSync = _lastSyncTime;
-      
+
       // Fetch orders from server (with optional since parameter)
       final serverOrders = await _apiService.getEventOrders(
         updatedSince: lastSync,
@@ -324,20 +348,25 @@ class EventOrderSyncService extends ChangeNotifier {
   }
 
   /// Import orders from server
-  Future<void> _importFromServer(List<Map<String, dynamic>> serverOrders) async {
+  Future<void> _importFromServer(
+    List<Map<String, dynamic>> serverOrders,
+  ) async {
     for (final orderData in serverOrders) {
       try {
         final serverId = orderData['id'] as String?;
         if (serverId == null) continue;
 
         // Check if exists locally by serverId
-        final existing = await _offlineController.getEventOrderByServerId(serverId);
+        final existing = await _offlineController.getEventOrderByServerId(
+          serverId,
+        );
 
         if (existing != null) {
           // Update existing if server version is newer and local is synced
           if (existing.syncStatus == EventOrderSyncStatus.synced) {
-            final serverUpdatedAt = DateTime.tryParse(orderData['updatedAt']?.toString() ?? '');
-            if (serverUpdatedAt != null && serverUpdatedAt.isAfter(existing.updatedAt)) {
+            final serverUpdatedAt = _parseDateTime(orderData['updatedAt']);
+            if (serverUpdatedAt != null &&
+                serverUpdatedAt.isAfter(existing.updatedAt)) {
               await _updateFromServer(existing.id, orderData);
             }
           }
@@ -354,36 +383,46 @@ class EventOrderSyncService extends ChangeNotifier {
 
   /// Create order from server data
   Future<void> _createFromServer(Map<String, dynamic> data) async {
-    final subEvents = (data['subEvents'] as List<dynamic>?)
-        ?.map((e) => SubEventEmbedded(
-              id: e['id'] as String?,
-              name: e['name'] as String?,
-              date: DateTime.tryParse(e['date']?.toString() ?? ''),
-              charges: (e['charges'] as num?)?.toDouble() ?? 0.0,
-              notes: e['notes'] as String?,
-              customDataJson: e['customDataJson'] as String?,
-            ))
-        .toList() ?? [];
+    final subEvents =
+        (data['subEvents'] as List<dynamic>?)
+            ?.map(
+              (e) => SubEventEmbedded(
+                id: e['id'] as String?,
+                name: e['name'] as String?,
+                date: _parseDateTime(e['date']),
+                charges: (e['charges'] as num?)?.toDouble() ?? 0.0,
+                notes: e['notes'] as String?,
+                customDataJson: e['customDataJson'] as String?,
+              ),
+            )
+            .toList() ??
+        [];
 
-    final items = (data['items'] as List<dynamic>?)
-        ?.map((e) => OrderItemEmbedded(
-              id: e['id'] as String?,
-              productId: e['productId'] as String?,
-              productName: e['productName'] as String?,
-              hsnCode: e['hsnCode'] as String?,
-              quantity: (e['quantity'] as num?)?.toInt() ?? 0,
-              rate: (e['rate'] as num?)?.toDouble() ?? 0.0,
-              discountPercent: (e['discountPercent'] as num?)?.toDouble() ?? 0.0,
-              discountAmount: (e['discountAmount'] as num?)?.toDouble() ?? 0.0,
-              cgstPercent: (e['cgstPercent'] as num?)?.toDouble() ?? 0.0,
-              sgstPercent: (e['sgstPercent'] as num?)?.toDouble() ?? 0.0,
-              cgstAmount: (e['cgstAmount'] as num?)?.toDouble() ?? 0.0,
-              sgstAmount: (e['sgstAmount'] as num?)?.toDouble() ?? 0.0,
-              taxAmount: (e['taxAmount'] as num?)?.toDouble() ?? 0.0,
-              subtotal: (e['subtotal'] as num?)?.toDouble() ?? 0.0,
-              total: (e['total'] as num?)?.toDouble() ?? 0.0,
-            ))
-        .toList() ?? [];
+    final items =
+        (data['items'] as List<dynamic>?)
+            ?.map(
+              (e) => OrderItemEmbedded(
+                id: e['id'] as String?,
+                productId: e['productId'] as String?,
+                productName: e['productName'] as String?,
+                hsnCode: e['hsnCode'] as String?,
+                quantity: (e['quantity'] as num?)?.toInt() ?? 0,
+                rate: (e['rate'] as num?)?.toDouble() ?? 0.0,
+                discountPercent:
+                    (e['discountPercent'] as num?)?.toDouble() ?? 0.0,
+                discountAmount:
+                    (e['discountAmount'] as num?)?.toDouble() ?? 0.0,
+                cgstPercent: (e['cgstPercent'] as num?)?.toDouble() ?? 0.0,
+                sgstPercent: (e['sgstPercent'] as num?)?.toDouble() ?? 0.0,
+                cgstAmount: (e['cgstAmount'] as num?)?.toDouble() ?? 0.0,
+                sgstAmount: (e['sgstAmount'] as num?)?.toDouble() ?? 0.0,
+                taxAmount: (e['taxAmount'] as num?)?.toDouble() ?? 0.0,
+                subtotal: (e['subtotal'] as num?)?.toDouble() ?? 0.0,
+                total: (e['total'] as num?)?.toDouble() ?? 0.0,
+              ),
+            )
+            .toList() ??
+        [];
 
     final entity = EventOrderEntity(
       serverId: data['id'] as String?,
@@ -394,7 +433,7 @@ class EventOrderSyncService extends ChangeNotifier {
       customerAddress: data['customerAddress'] as String?,
       orderName: data['orderName'] as String? ?? '',
       description: data['description'] as String?,
-      eventDate: DateTime.tryParse(data['eventDate']?.toString() ?? '') ?? DateTime.now(),
+      eventDate: _parseDateTime(data['eventDate']) ?? DateTime.now(),
       eventLocation: data['eventLocation'] as String?,
       subEvents: subEvents,
       items: items,
@@ -406,8 +445,8 @@ class EventOrderSyncService extends ChangeNotifier {
       status: (data['status'] as num?)?.toInt() ?? 0,
       convertedBillId: data['convertedBillId'] as String?,
       customDataJson: data['customDataJson'] as String?,
-      createdAt: DateTime.tryParse(data['createdAt']?.toString() ?? '') ?? DateTime.now(),
-      updatedAt: DateTime.tryParse(data['updatedAt']?.toString() ?? '') ?? DateTime.now(),
+      createdAt: _parseDateTime(data['createdAt']) ?? DateTime.now(),
+      updatedAt: _parseDateTime(data['updatedAt']) ?? DateTime.now(),
       syncStatus: EventOrderSyncStatus.synced,
     );
 
@@ -437,7 +476,7 @@ class EventOrderSyncService extends ChangeNotifier {
     try {
       // Get all orders from server
       final serverOrders = await _apiService.getEventOrders();
-      
+
       // Import all
       await _importFromServer(serverOrders);
 

@@ -1,27 +1,37 @@
 import 'package:isar_community/isar.dart';
+import 'package:cloud_firestore/cloud_firestore.dart' show Timestamp;
 
 part 'stock_ledger_entity.g.dart';
+
+/// Helper to parse DateTime from Firestore Timestamp or ISO8601 string
+DateTime? _parseDateTime(dynamic value) {
+  if (value == null) return null;
+  if (value is Timestamp) return value.toDate();
+  if (value is DateTime) return value;
+  if (value is String) return DateTime.tryParse(value);
+  return null;
+}
 
 /// Type of ledger transaction
 enum LedgerTransactionType {
   /// Stock increased due to purchase
   PURCHASE,
-  
+
   /// Stock decreased due to sale
   SALE,
-  
+
   /// Stock adjustment (manual correction)
   ADJUSTMENT,
-  
+
   /// Stock returned from customer
   SALE_RETURN,
-  
+
   /// Stock returned to supplier
   PURCHASE_RETURN,
-  
+
   /// Stock transferred between locations
   TRANSFER,
-  
+
   /// Initial stock entry
   OPENING_STOCK,
 }
@@ -30,13 +40,13 @@ enum LedgerTransactionType {
 enum LedgerSyncStatus {
   /// Newly created locally, not yet on server
   newRecord,
-  
+
   /// Modified locally after sync
   updated,
-  
+
   /// Marked for deletion, pending server delete
   deleted,
-  
+
   /// Fully synced with server
   synced,
 }
@@ -172,8 +182,9 @@ class StockLedgerEntity {
     LedgerSyncStatus syncStatus = LedgerSyncStatus.newRecord,
   }) {
     final now = DateTime.now();
-    final uniqueKey = '${productName.toLowerCase().trim()}_${companyName.toLowerCase().trim()}_${modelName.toLowerCase().trim()}';
-    
+    final uniqueKey =
+        '${productName.toLowerCase().trim()}_${companyName.toLowerCase().trim()}_${modelName.toLowerCase().trim()}';
+
     return StockLedgerEntity(
       serverId: serverId,
       productId: productId,
@@ -220,10 +231,11 @@ class StockLedgerEntity {
     LedgerSyncStatus syncStatus = LedgerSyncStatus.newRecord,
   }) {
     final now = DateTime.now();
-    final uniqueKey = '${productName.toLowerCase().trim()}_${companyName.toLowerCase().trim()}_${modelName.toLowerCase().trim()}';
+    final uniqueKey =
+        '${productName.toLowerCase().trim()}_${companyName.toLowerCase().trim()}_${modelName.toLowerCase().trim()}';
     final totalCost = costPrice * quantity;
     final totalRevenue = sellingPrice * quantity;
-    
+
     return StockLedgerEntity(
       serverId: serverId,
       productId: productId,
@@ -270,10 +282,11 @@ class StockLedgerEntity {
     LedgerSyncStatus syncStatus = LedgerSyncStatus.newRecord,
   }) {
     final now = DateTime.now();
-    final uniqueKey = '${productName.toLowerCase().trim()}_${companyName.toLowerCase().trim()}_${modelName.toLowerCase().trim()}';
+    final uniqueKey =
+        '${productName.toLowerCase().trim()}_${companyName.toLowerCase().trim()}_${modelName.toLowerCase().trim()}';
     final totalCost = costPrice * quantity;
     final totalRevenue = sellingPrice * quantity;
-    
+
     return StockLedgerEntity(
       serverId: serverId,
       productId: productId,
@@ -307,8 +320,9 @@ class StockLedgerEntity {
     final productName = data['productName'] as String? ?? '';
     final companyName = data['companyName'] as String? ?? '';
     final modelName = data['modelName'] as String? ?? '';
-    final uniqueKey = '${productName.toLowerCase().trim()}_${companyName.toLowerCase().trim()}_${modelName.toLowerCase().trim()}';
-    
+    final uniqueKey =
+        '${productName.toLowerCase().trim()}_${companyName.toLowerCase().trim()}_${modelName.toLowerCase().trim()}';
+
     LedgerTransactionType ledgerType;
     final typeString = data['ledgerType'] as String? ?? 'ADJUSTMENT';
     try {
@@ -319,7 +333,7 @@ class StockLedgerEntity {
     } catch (_) {
       ledgerType = LedgerTransactionType.ADJUSTMENT;
     }
-    
+
     return StockLedgerEntity(
       serverId: data['ledgerId'] as String? ?? data['id'] as String?,
       productId: data['productId'] as String? ?? '',
@@ -340,10 +354,10 @@ class StockLedgerEntity {
       profit: (data['profit'] as num?)?.toDouble() ?? 0.0,
       balanceQuantity: (data['balanceQuantity'] as num?)?.toInt() ?? 0,
       balanceValue: (data['balanceValue'] as num?)?.toDouble() ?? 0.0,
-      transactionDate: DateTime.tryParse(data['transactionDate']?.toString() ?? '') ?? now,
+      transactionDate: _parseDateTime(data['transactionDate']) ?? now,
       notes: data['notes'] as String?,
       syncStatus: LedgerSyncStatus.synced,
-      createdAt: DateTime.tryParse(data['createdAt']?.toString() ?? '') ?? now,
+      createdAt: _parseDateTime(data['createdAt']) ?? now,
     );
   }
 
@@ -403,11 +417,13 @@ class StockLedgerEntity {
       'syncStatus': syncStatus.name,
       'isSynced': syncStatus == LedgerSyncStatus.synced,
       'createdAt': createdAt,
-      'isInbound': ledgerType == LedgerTransactionType.PURCHASE ||
-                  ledgerType == LedgerTransactionType.SALE_RETURN ||
-                  ledgerType == LedgerTransactionType.OPENING_STOCK,
-      'isOutbound': ledgerType == LedgerTransactionType.SALE ||
-                   ledgerType == LedgerTransactionType.PURCHASE_RETURN,
+      'isInbound':
+          ledgerType == LedgerTransactionType.PURCHASE ||
+          ledgerType == LedgerTransactionType.SALE_RETURN ||
+          ledgerType == LedgerTransactionType.OPENING_STOCK,
+      'isOutbound':
+          ledgerType == LedgerTransactionType.SALE ||
+          ledgerType == LedgerTransactionType.PURCHASE_RETURN,
     };
   }
 
@@ -474,7 +490,7 @@ class StockLedgerEntity {
   bool get isMarkedForDeletion => syncStatus == LedgerSyncStatus.deleted;
 
   /// Check if this is an inbound transaction (increases stock)
-  bool get isInbound => 
+  bool get isInbound =>
       ledgerType == LedgerTransactionType.PURCHASE ||
       ledgerType == LedgerTransactionType.SALE_RETURN ||
       ledgerType == LedgerTransactionType.OPENING_STOCK;

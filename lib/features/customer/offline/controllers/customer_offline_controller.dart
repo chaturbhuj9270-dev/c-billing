@@ -1,14 +1,24 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:isar_community/isar.dart';
+import 'package:cloud_firestore/cloud_firestore.dart' show Timestamp;
 import '../../../../core/services/isar_service.dart';
 import '../entities/customer_entity.dart';
+
+/// Helper to parse DateTime from Firestore Timestamp or ISO8601 string
+DateTime? _parseDateTime(dynamic value) {
+  if (value == null) return null;
+  if (value is Timestamp) return value.toDate();
+  if (value is DateTime) return value;
+  if (value is String) return DateTime.tryParse(value);
+  return null;
+}
 
 /// Controller for handling offline-first Customer CRUD operations
 /// All UI reads should go through this controller (never directly from API)
 class CustomerOfflineController extends ChangeNotifier {
   static CustomerOfflineController? _instance;
-  
+
   Isar get _isar => IsarService.instance.isar;
 
   CustomerOfflineController._();
@@ -99,15 +109,17 @@ class CustomerOfflineController extends ChangeNotifier {
   /// Search customers by name or mobile
   Future<List<CustomerEntity>> searchCustomers(String query) async {
     if (query.isEmpty) return getAllCustomers();
-    
+
     final lowerQuery = query.toLowerCase();
     return await _isar.customerEntitys
         .filter()
         .isDeletedEqualTo(false)
-        .group((q) => q
-            .nameContains(lowerQuery, caseSensitive: false)
-            .or()
-            .mobileContains(lowerQuery))
+        .group(
+          (q) => q
+              .nameContains(lowerQuery, caseSensitive: false)
+              .or()
+              .mobileContains(lowerQuery),
+        )
         .findAll();
   }
 
@@ -121,10 +133,7 @@ class CustomerOfflineController extends ChangeNotifier {
 
   /// Get count of unsynced records
   Future<int> getUnsyncedCount() async {
-    return await _isar.customerEntitys
-        .filter()
-        .isSyncedEqualTo(false)
-        .count();
+    return await _isar.customerEntitys.filter().isSyncedEqualTo(false).count();
   }
 
   /// Get customers marked for deletion (need to delete on server)
@@ -258,7 +267,9 @@ class CustomerOfflineController extends ChangeNotifier {
   // ==================== SYNC HELPERS ====================
 
   /// Import customers from server (for initial sync or refresh)
-  Future<void> importFromServer(List<Map<String, dynamic>> serverCustomers) async {
+  Future<void> importFromServer(
+    List<Map<String, dynamic>> serverCustomers,
+  ) async {
     await _isar.writeTxn(() async {
       for (final customerData in serverCustomers) {
         final serverId = customerData['id'] as String?;
@@ -272,7 +283,9 @@ class CustomerOfflineController extends ChangeNotifier {
 
         // Fallback: check by mobile number (handles locally-created records without serverId yet)
         if (existing == null) {
-          final mobile = (customerData['mobile'] ?? customerData['contact'] ?? '').toString();
+          final mobile =
+              (customerData['mobile'] ?? customerData['contact'] ?? '')
+                  .toString();
           if (mobile.isNotEmpty) {
             existing = await _isar.customerEntitys
                 .filter()
@@ -291,8 +304,9 @@ class CustomerOfflineController extends ChangeNotifier {
         if (existing != null) {
           // Update existing if server version is newer and local is synced
           if (existing.isSynced) {
-            final serverUpdatedAt = DateTime.tryParse(customerData['updatedAt']?.toString() ?? '');
-            if (serverUpdatedAt != null && serverUpdatedAt.isAfter(existing.updatedAt)) {
+            final serverUpdatedAt = _parseDateTime(customerData['updatedAt']);
+            if (serverUpdatedAt != null &&
+                serverUpdatedAt.isAfter(existing.updatedAt)) {
               final updated = CustomerEntity.fromCustomer(customerData);
               updated.id = existing.id; // Keep local ID
               await _isar.customerEntitys.put(updated);
@@ -319,7 +333,10 @@ class CustomerOfflineController extends ChangeNotifier {
   }
 
   /// Update customer with server response (after successful create/update)
-  Future<void> updateWithServerResponse(Id localId, Map<String, dynamic> serverResponse) async {
+  Future<void> updateWithServerResponse(
+    Id localId,
+    Map<String, dynamic> serverResponse,
+  ) async {
     final existing = await _isar.customerEntitys.get(localId);
     if (existing == null) return;
 
@@ -337,10 +354,7 @@ class CustomerOfflineController extends ChangeNotifier {
 
   /// Get total customer count
   Future<int> getTotalCount() async {
-    return await _isar.customerEntitys
-        .filter()
-        .isDeletedEqualTo(false)
-        .count();
+    return await _isar.customerEntitys.filter().isDeletedEqualTo(false).count();
   }
 
   /// Get total pending amount across all customers

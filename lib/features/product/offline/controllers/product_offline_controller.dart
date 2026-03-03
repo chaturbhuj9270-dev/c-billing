@@ -1,8 +1,18 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:isar_community/isar.dart';
+import 'package:cloud_firestore/cloud_firestore.dart' show Timestamp;
 import '../../../../core/services/isar_service.dart';
 import '../entities/product_entity.dart';
+
+/// Helper to parse DateTime from Firestore Timestamp or ISO8601 string
+DateTime? _parseDateTime(dynamic value) {
+  if (value == null) return null;
+  if (value is Timestamp) return value.toDate();
+  if (value is DateTime) return value;
+  if (value is String) return DateTime.tryParse(value);
+  return null;
+}
 
 /// Controller for handling offline-first Product CRUD operations
 /// All UI reads should go through this controller (never directly from API)
@@ -552,9 +562,7 @@ class ProductOfflineController extends ChangeNotifier {
         if (existing != null) {
           // Only update if not locally modified AND server is newer
           if (existing.syncStatus == SyncStatus.synced) {
-            final serverUpdatedAt = DateTime.tryParse(
-              productData['updatedAt']?.toString() ?? '',
-            );
+            final serverUpdatedAt = _parseDateTime(productData['updatedAt']);
             if (serverUpdatedAt != null &&
                 serverUpdatedAt.isAfter(existing.updatedAt)) {
               final updated = ProductEntity.fromServer(productData);

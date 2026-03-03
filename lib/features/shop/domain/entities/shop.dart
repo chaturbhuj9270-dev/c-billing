@@ -1,3 +1,14 @@
+import 'package:cloud_firestore/cloud_firestore.dart' show Timestamp;
+
+/// Helper to parse DateTime from Firestore Timestamp or ISO8601 string
+DateTime? _parseDateTime(dynamic value) {
+  if (value == null) return null;
+  if (value is Timestamp) return value.toDate();
+  if (value is DateTime) return value;
+  if (value is String) return DateTime.tryParse(value);
+  return null;
+}
+
 /// Represents shop details used for bill printing and display
 class Shop {
   final String id;
@@ -36,11 +47,7 @@ class Shop {
       email: json['email'] as String?,
       gstNumber: json['gst'] as String?,
       logoUrl: json['logoUrl'] as String?,
-      updatedAt: json['updatedAt'] != null
-          ? (json['updatedAt'] is DateTime
-              ? json['updatedAt'] as DateTime
-              : DateTime.tryParse(json['updatedAt'].toString()))
-          : null,
+      updatedAt: _parseDateTime(json['updatedAt']),
     );
   }
 

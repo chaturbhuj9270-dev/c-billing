@@ -1,11 +1,21 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:isar_community/isar.dart';
+import 'package:cloud_firestore/cloud_firestore.dart' show Timestamp;
 import '../../../../core/services/isar_service.dart';
 import '../entities/event_order_entity.dart';
 import '../../domain/entities/event_order.dart';
 import '../../domain/entities/sub_event.dart';
 import '../../domain/entities/order_item.dart';
+
+/// Helper to parse DateTime from Firestore Timestamp or ISO8601 string
+DateTime? _parseDateTime(dynamic value) {
+  if (value == null) return null;
+  if (value is Timestamp) return value.toDate();
+  if (value is DateTime) return value;
+  if (value is String) return DateTime.tryParse(value);
+  return null;
+}
 
 /// Offline-first controller for Event/Sales Order CRUD operations
 /// All operations go to local Isar first, then sync in background
@@ -597,9 +607,7 @@ class EventOrderOfflineController extends ChangeNotifier {
         data['convertedBillId'] as String? ?? existing.convertedBillId;
     existing.customDataJson =
         data['customDataJson'] as String? ?? existing.customDataJson;
-    existing.updatedAt =
-        DateTime.tryParse(data['updatedAt']?.toString() ?? '') ??
-        DateTime.now();
+    existing.updatedAt = _parseDateTime(data['updatedAt']) ?? DateTime.now();
     existing.syncStatus = EventOrderSyncStatus.synced;
 
     await _isar.writeTxn(() async {

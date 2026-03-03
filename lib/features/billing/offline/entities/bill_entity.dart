@@ -1,6 +1,16 @@
 import 'package:isar_community/isar.dart';
+import 'package:cloud_firestore/cloud_firestore.dart' show Timestamp;
 
 part 'bill_entity.g.dart';
+
+/// Helper to parse DateTime from Firestore Timestamp or ISO8601 string
+DateTime? _parseDateTimeHelper(dynamic value) {
+  if (value == null) return null;
+  if (value is Timestamp) return value.toDate();
+  if (value is DateTime) return value;
+  if (value is String) return DateTime.tryParse(value);
+  return null;
+}
 
 /// Sync status for delta sync logic
 enum BillSyncStatus {
@@ -319,14 +329,10 @@ class BillEntity {
       discountAmount: (data['discountAmount'] as num?)?.toDouble() ?? 0.0,
       discountPercent: (data['discountPercent'] as num?)?.toDouble() ?? 0.0,
       finalAmount: (data['finalAmount'] as num?)?.toDouble() ?? 0.0,
-      billDate: data['billDate'] != null
-          ? DateTime.tryParse(data['billDate'].toString()) ?? now
-          : now,
+      billDate: _parseDateTimeHelper(data['billDate']) ?? now,
       notes: data['notes'] as String?,
       returnStatus: data['returnStatus'] as bool? ?? false,
-      returnDate: data['returnDate'] != null
-          ? DateTime.tryParse(data['returnDate'].toString())
-          : null,
+      returnDate: _parseDateTimeHelper(data['returnDate']),
       paymentStatus: _parsePaymentStatus(data['paymentStatus'] as String?),
       paidAmount: (data['paidAmount'] as num?)?.toDouble() ?? 0.0,
       pendingAmount: (data['pendingAmount'] as num?)?.toDouble() ?? 0.0,
@@ -341,12 +347,8 @@ class BillEntity {
       otherTaxAmount: (data['otherTaxAmount'] as num?)?.toDouble() ?? 0.0,
       totalTaxAmount: (data['totalTaxAmount'] as num?)?.toDouble() ?? 0.0,
       syncStatus: BillSyncStatus.synced,
-      createdAt: data['createdAt'] != null
-          ? DateTime.tryParse(data['createdAt'].toString()) ?? now
-          : now,
-      updatedAt: data['updatedAt'] != null
-          ? DateTime.tryParse(data['updatedAt'].toString()) ?? now
-          : now,
+      createdAt: _parseDateTimeHelper(data['createdAt']) ?? now,
+      updatedAt: _parseDateTimeHelper(data['updatedAt']) ?? now,
     );
   }
 
