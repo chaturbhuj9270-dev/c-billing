@@ -597,6 +597,34 @@ class HindiLocalization {
   static const String saveShopDetails = 'दुकान विवरण सहेजें';
   static const String shopDetailsSaved = 'दुकान विवरण सफलतापूर्वक सहेजे गए';
 
+  // Bank Details
+  static const String bankDetails = 'बैंक विवरण';
+  static const String bankName = 'बैंक का नाम';
+  static const String accountNumber = 'खाता संख्या';
+  static const String ifscCode = 'IFSC कोड';
+  static const String accountHolderName = 'खाता धारक का नाम';
+  static const String paymentQrCode = 'भुगतान QR कोड';
+  static const String uploadQrCode = 'QR कोड अपलोड करें';
+  static const String removeQrCode = 'हटाएं';
+  static const String qrCodeUploaded = 'QR कोड सफलतापूर्वक अपलोड हुआ';
+  static const String qrCodeRemoved = 'QR कोड हटाया गया';
+  static const String uploadingQrCode = 'QR कोड अपलोड हो रहा है...';
+  static const String errorUploadingQrCode = 'QR कोड अपलोड करने में त्रुटि';
+  
+  // Shop Logo & Signature
+  static const String shopLogo = 'दुकान लोगो';
+  static const String uploadLogo = 'लोगो अपलोड करें';
+  static const String logoUploaded = 'लोगो सफलतापूर्वक अपलोड हुआ';
+  static const String logoRemoved = 'लोगो हटाया गया';
+  static const String uploadingLogo = 'लोगो अपलोड हो रहा है...';
+  static const String errorUploadingLogo = 'लोगो अपलोड करने में त्रुटि';
+  static const String signature = 'हस्ताक्षर';
+  static const String uploadSignature = 'हस्ताक्षर बनाएं';
+  static const String signatureUploaded = 'हस्ताक्षर सफलतापूर्वक अपलोड हुआ';
+  static const String signatureRemoved = 'हस्ताक्षर हटाया गया';
+  static const String uploadingSignature = 'हस्ताक्षर अपलोड हो रहा है...';
+  static const String errorUploadingSignature = 'हस्ताक्षर अपलोड करने में त्रुटि';
+
   // ═══════════════════════════════════════════════════
   // Flyout Menu
   // ═══════════════════════════════════════════════════

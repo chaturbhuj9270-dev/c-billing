@@ -50,6 +50,8 @@ dependencies:
   barcode_widget: ^2.0.4
   # Barcode Scanning
   mobile_scanner: ^5.2.3
+  # Signature Pad
+  signature: ^5.4.1
 
 dev_dependencies:
   flutter_test:

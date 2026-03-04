@@ -596,6 +596,34 @@ class EnglishLocalization {
   static const String saveShopDetails = 'Save Shop Details';
   static const String shopDetailsSaved = 'Shop details saved successfully';
 
+  // Bank Details
+  static const String bankDetails = 'Bank Details';
+  static const String bankName = 'Bank Name';
+  static const String accountNumber = 'Account Number';
+  static const String ifscCode = 'IFSC Code';
+  static const String accountHolderName = 'Account Holder Name';
+  static const String paymentQrCode = 'Payment QR Code';
+  static const String uploadQrCode = 'Upload QR Code';
+  static const String removeQrCode = 'Remove';
+  static const String qrCodeUploaded = 'QR code uploaded successfully';
+  static const String qrCodeRemoved = 'QR code removed';
+  static const String uploadingQrCode = 'Uploading QR code...';
+  static const String errorUploadingQrCode = 'Error uploading QR code';
+  
+  // Shop Logo & Signature
+  static const String shopLogo = 'Shop Logo';
+  static const String uploadLogo = 'Upload Logo';
+  static const String logoUploaded = 'Logo uploaded successfully';
+  static const String logoRemoved = 'Logo removed';
+  static const String uploadingLogo = 'Uploading logo...';
+  static const String errorUploadingLogo = 'Error uploading logo';
+  static const String signature = 'Signature';
+  static const String uploadSignature = 'Draw Signature';
+  static const String signatureUploaded = 'Signature uploaded successfully';
+  static const String signatureRemoved = 'Signature removed';
+  static const String uploadingSignature = 'Uploading signature...';
+  static const String errorUploadingSignature = 'Error uploading signature';
+
   // ═══════════════════════════════════════════════════
   // Flyout Menu
   // ═══════════════════════════════════════════════════

@@ -600,6 +600,34 @@ class MarathiLocalization {
   static const String saveShopDetails = 'दुकान तपशील सेव्ह करा';
   static const String shopDetailsSaved = 'दुकान तपशील यशस्वीरीत्या सेव्ह केले';
 
+  // Bank Details
+  static const String bankDetails = 'बँक तपशील';
+  static const String bankName = 'बँकेचे नाव';
+  static const String accountNumber = 'खाते क्रमांक';
+  static const String ifscCode = 'IFSC कोड';
+  static const String accountHolderName = 'खातेदाराचे नाव';
+  static const String paymentQrCode = 'पेमेंट QR कोड';
+  static const String uploadQrCode = 'QR कोड अपलोड करा';
+  static const String removeQrCode = 'काढा';
+  static const String qrCodeUploaded = 'QR कोड यशस्वीरीत्या अपलोड झाला';
+  static const String qrCodeRemoved = 'QR कोड काढला';
+  static const String uploadingQrCode = 'QR कोड अपलोड होत आहे...';
+  static const String errorUploadingQrCode = 'QR कोड अपलोड करताना त्रुटी';
+  
+  // Shop Logo & Signature
+  static const String shopLogo = 'दुकान लोगो';
+  static const String uploadLogo = 'लोगो अपलोड करा';
+  static const String logoUploaded = 'लोगो यशस्वीरीत्या अपलोड झाला';
+  static const String logoRemoved = 'लोगो काढला';
+  static const String uploadingLogo = 'लोगो अपलोड होत आहे...';
+  static const String errorUploadingLogo = 'लोगो अपलोड करताना त्रुटी';
+  static const String signature = 'स्वाक्षरी';
+  static const String uploadSignature = 'स्वाक्षरी काढा';
+  static const String signatureUploaded = 'स्वाक्षरी यशस्वीरीत्या अपलोड झाली';
+  static const String signatureRemoved = 'स्वाक्षरी काढली';
+  static const String uploadingSignature = 'स्वाक्षरी अपलोड होत आहे...';
+  static const String errorUploadingSignature = 'स्वाक्षरी अपलोड करताना त्रुटी';
+
   // ═══════════════════════════════════════════════════
   // Flyout Menu
   // ═══════════════════════════════════════════════════

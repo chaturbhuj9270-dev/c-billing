@@ -5295,6 +5295,272 @@ class AppLocalizations {
     }
   }
 
+  // Bank Details
+  String get bankDetails {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.bankDetails;
+      case 'Marathi':
+        return MarathiLocalization.bankDetails;
+      default:
+        return EnglishLocalization.bankDetails;
+    }
+  }
+
+  String get bankName {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.bankName;
+      case 'Marathi':
+        return MarathiLocalization.bankName;
+      default:
+        return EnglishLocalization.bankName;
+    }
+  }
+
+  String get accountNumber {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.accountNumber;
+      case 'Marathi':
+        return MarathiLocalization.accountNumber;
+      default:
+        return EnglishLocalization.accountNumber;
+    }
+  }
+
+  String get ifscCode {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.ifscCode;
+      case 'Marathi':
+        return MarathiLocalization.ifscCode;
+      default:
+        return EnglishLocalization.ifscCode;
+    }
+  }
+
+  String get accountHolderName {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.accountHolderName;
+      case 'Marathi':
+        return MarathiLocalization.accountHolderName;
+      default:
+        return EnglishLocalization.accountHolderName;
+    }
+  }
+
+  String get paymentQrCode {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.paymentQrCode;
+      case 'Marathi':
+        return MarathiLocalization.paymentQrCode;
+      default:
+        return EnglishLocalization.paymentQrCode;
+    }
+  }
+
+  String get uploadQrCode {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.uploadQrCode;
+      case 'Marathi':
+        return MarathiLocalization.uploadQrCode;
+      default:
+        return EnglishLocalization.uploadQrCode;
+    }
+  }
+
+  String get removeQrCode {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.removeQrCode;
+      case 'Marathi':
+        return MarathiLocalization.removeQrCode;
+      default:
+        return EnglishLocalization.removeQrCode;
+    }
+  }
+
+  String get qrCodeUploaded {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.qrCodeUploaded;
+      case 'Marathi':
+        return MarathiLocalization.qrCodeUploaded;
+      default:
+        return EnglishLocalization.qrCodeUploaded;
+    }
+  }
+
+  String get qrCodeRemoved {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.qrCodeRemoved;
+      case 'Marathi':
+        return MarathiLocalization.qrCodeRemoved;
+      default:
+        return EnglishLocalization.qrCodeRemoved;
+    }
+  }
+
+  String get uploadingQrCode {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.uploadingQrCode;
+      case 'Marathi':
+        return MarathiLocalization.uploadingQrCode;
+      default:
+        return EnglishLocalization.uploadingQrCode;
+    }
+  }
+
+  String get errorUploadingQrCode {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.errorUploadingQrCode;
+      case 'Marathi':
+        return MarathiLocalization.errorUploadingQrCode;
+      default:
+        return EnglishLocalization.errorUploadingQrCode;
+    }
+  }
+
+  // Shop Logo & Signature
+  String get shopLogo {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.shopLogo;
+      case 'Marathi':
+        return MarathiLocalization.shopLogo;
+      default:
+        return EnglishLocalization.shopLogo;
+    }
+  }
+
+  String get uploadLogo {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.uploadLogo;
+      case 'Marathi':
+        return MarathiLocalization.uploadLogo;
+      default:
+        return EnglishLocalization.uploadLogo;
+    }
+  }
+
+  String get logoUploaded {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.logoUploaded;
+      case 'Marathi':
+        return MarathiLocalization.logoUploaded;
+      default:
+        return EnglishLocalization.logoUploaded;
+    }
+  }
+
+  String get logoRemoved {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.logoRemoved;
+      case 'Marathi':
+        return MarathiLocalization.logoRemoved;
+      default:
+        return EnglishLocalization.logoRemoved;
+    }
+  }
+
+  String get uploadingLogo {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.uploadingLogo;
+      case 'Marathi':
+        return MarathiLocalization.uploadingLogo;
+      default:
+        return EnglishLocalization.uploadingLogo;
+    }
+  }
+
+  String get errorUploadingLogo {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.errorUploadingLogo;
+      case 'Marathi':
+        return MarathiLocalization.errorUploadingLogo;
+      default:
+        return EnglishLocalization.errorUploadingLogo;
+    }
+  }
+
+  String get signature {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.signature;
+      case 'Marathi':
+        return MarathiLocalization.signature;
+      default:
+        return EnglishLocalization.signature;
+    }
+  }
+
+  String get uploadSignature {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.uploadSignature;
+      case 'Marathi':
+        return MarathiLocalization.uploadSignature;
+      default:
+        return EnglishLocalization.uploadSignature;
+    }
+  }
+
+  String get signatureUploaded {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.signatureUploaded;
+      case 'Marathi':
+        return MarathiLocalization.signatureUploaded;
+      default:
+        return EnglishLocalization.signatureUploaded;
+    }
+  }
+
+  String get signatureRemoved {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.signatureRemoved;
+      case 'Marathi':
+        return MarathiLocalization.signatureRemoved;
+      default:
+        return EnglishLocalization.signatureRemoved;
+    }
+  }
+
+  String get uploadingSignature {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.uploadingSignature;
+      case 'Marathi':
+        return MarathiLocalization.uploadingSignature;
+      default:
+        return EnglishLocalization.uploadingSignature;
+    }
+  }
+
+  String get errorUploadingSignature {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.errorUploadingSignature;
+      case 'Marathi':
+        return MarathiLocalization.errorUploadingSignature;
+      default:
+        return EnglishLocalization.errorUploadingSignature;
+    }
+  }
+
   // ═══════════════════════════════════════════════════
   // Flyout Menu
   // ═══════════════════════════════════════════════════
