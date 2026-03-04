@@ -20,6 +20,13 @@ class Shop {
   final String? email;
   final String? gstNumber;
   final String? logoUrl;
+  final String? shopLogoBase64;
+  final String? signatureBase64;
+  final String? qrCodeBase64;
+  final String? bankName;
+  final String? accountNumber;
+  final String? ifscCode;
+  final String? accountHolderName;
   final DateTime? updatedAt;
 
   const Shop({
@@ -32,6 +39,13 @@ class Shop {
     this.email,
     this.gstNumber,
     this.logoUrl,
+    this.shopLogoBase64,
+    this.signatureBase64,
+    this.qrCodeBase64,
+    this.bankName,
+    this.accountNumber,
+    this.ifscCode,
+    this.accountHolderName,
     this.updatedAt,
   });
 
@@ -47,6 +61,13 @@ class Shop {
       email: json['email'] as String?,
       gstNumber: json['gst'] as String?,
       logoUrl: json['logoUrl'] as String?,
+      shopLogoBase64: json['shopLogoBase64'] as String?,
+      signatureBase64: json['signatureBase64'] as String?,
+      qrCodeBase64: json['qrCodeBase64'] as String?,
+      bankName: json['bankName'] as String?,
+      accountNumber: json['accountNumber'] as String?,
+      ifscCode: json['ifscCode'] as String?,
+      accountHolderName: json['accountHolderName'] as String?,
       updatedAt: _parseDateTime(json['updatedAt']),
     );
   }
@@ -63,6 +84,13 @@ class Shop {
       'email': email,
       'gst': gstNumber,
       'logoUrl': logoUrl,
+      'shopLogoBase64': shopLogoBase64,
+      'signatureBase64': signatureBase64,
+      'qrCodeBase64': qrCodeBase64,
+      'bankName': bankName,
+      'accountNumber': accountNumber,
+      'ifscCode': ifscCode,
+      'accountHolderName': accountHolderName,
       'updatedAt': updatedAt?.toIso8601String(),
     };
   }
@@ -78,6 +106,13 @@ class Shop {
     String? email,
     String? gstNumber,
     String? logoUrl,
+    String? shopLogoBase64,
+    String? signatureBase64,
+    String? qrCodeBase64,
+    String? bankName,
+    String? accountNumber,
+    String? ifscCode,
+    String? accountHolderName,
     DateTime? updatedAt,
   }) {
     return Shop(
@@ -90,6 +125,13 @@ class Shop {
       email: email ?? this.email,
       gstNumber: gstNumber ?? this.gstNumber,
       logoUrl: logoUrl ?? this.logoUrl,
+      shopLogoBase64: shopLogoBase64 ?? this.shopLogoBase64,
+      signatureBase64: signatureBase64 ?? this.signatureBase64,
+      qrCodeBase64: qrCodeBase64 ?? this.qrCodeBase64,
+      bankName: bankName ?? this.bankName,
+      accountNumber: accountNumber ?? this.accountNumber,
+      ifscCode: ifscCode ?? this.ifscCode,
+      accountHolderName: accountHolderName ?? this.accountHolderName,
       updatedAt: updatedAt ?? this.updatedAt,
     );
   }

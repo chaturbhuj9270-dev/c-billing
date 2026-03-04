@@ -9,6 +9,7 @@ import '../../../../core/services/session_manager.dart';
 import '../../../../core/services/language_service.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../../offline/controllers/shop_image_cache_controller.dart';
+import '../../data/repositories/shop_repository.dart';
 
 class ShopDetailsPage extends StatefulWidget {
   const ShopDetailsPage({super.key});
@@ -132,16 +133,20 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
   /// Load images from local Isar cache for instant display
   Future<void> _loadImagesFromCache(String userId) async {
     try {
-      final cachedImages = await ShopImageCacheController.instance.getCachedImages(userId);
+      final cachedImages = await ShopImageCacheController.instance
+          .getCachedImages(userId);
       if (cachedImages != null && cachedImages.hasAnyImages) {
         setState(() {
-          if (cachedImages.shopLogoBase64 != null && cachedImages.shopLogoBase64!.isNotEmpty) {
+          if (cachedImages.shopLogoBase64 != null &&
+              cachedImages.shopLogoBase64!.isNotEmpty) {
             _shopLogoBase64 = cachedImages.shopLogoBase64;
           }
-          if (cachedImages.signatureBase64 != null && cachedImages.signatureBase64!.isNotEmpty) {
+          if (cachedImages.signatureBase64 != null &&
+              cachedImages.signatureBase64!.isNotEmpty) {
             _signatureBase64 = cachedImages.signatureBase64;
           }
-          if (cachedImages.qrCodeBase64 != null && cachedImages.qrCodeBase64!.isNotEmpty) {
+          if (cachedImages.qrCodeBase64 != null &&
+              cachedImages.qrCodeBase64!.isNotEmpty) {
             _qrCodeBase64 = cachedImages.qrCodeBase64;
           }
         });
@@ -247,7 +252,13 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
           .set({'qrCodeBase64': base64Image}, SetOptions(merge: true));
 
       // Update local cache for instant loading next time
-      await ShopImageCacheController.instance.updateQrCode(currentUser.uid, base64Image);
+      await ShopImageCacheController.instance.updateQrCode(
+        currentUser.uid,
+        base64Image,
+      );
+
+      // Clear shop repository cache so next bill print gets fresh data
+      ShopRepository().clearCache();
 
       setState(() {
         _qrCodeBase64 = base64Image;
@@ -295,6 +306,9 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
 
       // Clear from local cache
       await ShopImageCacheController.instance.removeQrCode(currentUser.uid);
+
+      // Clear shop repository cache so next bill print gets fresh data
+      ShopRepository().clearCache();
 
       setState(() {
         _qrCodeBase64 = null;
@@ -354,7 +368,13 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
           .set({'shopLogoBase64': base64Image}, SetOptions(merge: true));
 
       // Update local cache for instant loading next time
-      await ShopImageCacheController.instance.updateLogo(currentUser.uid, base64Image);
+      await ShopImageCacheController.instance.updateLogo(
+        currentUser.uid,
+        base64Image,
+      );
+
+      // Clear shop repository cache so next bill print gets fresh data
+      ShopRepository().clearCache();
 
       setState(() {
         _shopLogoBase64 = base64Image;
@@ -402,6 +422,9 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
 
       // Clear from local cache
       await ShopImageCacheController.instance.removeLogo(currentUser.uid);
+
+      // Clear shop repository cache so next bill print gets fresh data
+      ShopRepository().clearCache();
 
       setState(() {
         _shopLogoBase64 = null;
@@ -539,7 +562,13 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
           .set({'signatureBase64': base64Image}, SetOptions(merge: true));
 
       // Update local cache for instant loading next time
-      await ShopImageCacheController.instance.updateSignature(currentUser.uid, base64Image);
+      await ShopImageCacheController.instance.updateSignature(
+        currentUser.uid,
+        base64Image,
+      );
+
+      // Clear shop repository cache so next bill print gets fresh data
+      ShopRepository().clearCache();
 
       setState(() {
         _signatureBase64 = base64Image;
@@ -587,6 +616,9 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
 
       // Clear from local cache
       await ShopImageCacheController.instance.removeSignature(currentUser.uid);
+
+      // Clear shop repository cache so next bill print gets fresh data
+      ShopRepository().clearCache();
 
       setState(() {
         _signatureBase64 = null;
