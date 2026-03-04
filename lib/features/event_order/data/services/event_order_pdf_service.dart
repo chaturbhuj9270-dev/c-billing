@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -14,17 +15,18 @@ import '../../../shop/domain/entities/shop.dart';
 
 /// Service for generating PDF for Event Orders / Sales Orders
 class EventOrderPdfService {
-  static final EventOrderPdfService _instance = EventOrderPdfService._internal();
+  static final EventOrderPdfService _instance =
+      EventOrderPdfService._internal();
   factory EventOrderPdfService() => _instance;
   EventOrderPdfService._internal();
 
   bool _isGenerating = false;
-  
+
   /// Reset the generating flag - useful for error recovery
   void resetGeneratingState() {
     _isGenerating = false;
   }
-  
+
   /// Check if PDF generation is in progress
   bool get isGenerating => _isGenerating;
 
@@ -40,11 +42,8 @@ class EventOrderPdfService {
       pw.Page(
         pageFormat: PdfPageFormat.a4,
         margin: const pw.EdgeInsets.all(24),
-        build: (context) => _buildOrderContent(
-          order,
-          shopDetails,
-          dateFormatter,
-        ),
+        build: (context) =>
+            _buildOrderContent(order, shopDetails, dateFormatter),
       ),
     );
 
@@ -74,22 +73,44 @@ class EventOrderPdfService {
           // ═══════════════════════════════════════════
           pw.Container(
             width: double.infinity,
-            padding: const pw.EdgeInsets.symmetric(vertical: 10, horizontal: 12),
-            decoration: pw.BoxDecoration(
-              border: pw.Border(bottom: borderSide),
+            padding: const pw.EdgeInsets.symmetric(
+              vertical: 10,
+              horizontal: 12,
             ),
+            decoration: pw.BoxDecoration(border: pw.Border(bottom: borderSide)),
             child: pw.Column(
               children: [
-                pw.Text(
-                  shopDetails.shopName.isNotEmpty
-                      ? shopDetails.shopName.toUpperCase()
-                      : 'STORE',
-                  style: pw.TextStyle(
-                    fontSize: 18,
-                    fontWeight: pw.FontWeight.bold,
-                    letterSpacing: 1.0,
-                  ),
-                  textAlign: pw.TextAlign.center,
+                // Shop Logo and Name side by side
+                pw.Row(
+                  mainAxisAlignment: pw.MainAxisAlignment.center,
+                  crossAxisAlignment: pw.CrossAxisAlignment.center,
+                  children: [
+                    if (shopDetails.shopLogoBase64 != null &&
+                        shopDetails.shopLogoBase64!.isNotEmpty) ...[
+                      pw.Container(
+                        width: 40,
+                        height: 40,
+                        child: pw.Image(
+                          pw.MemoryImage(
+                            base64Decode(shopDetails.shopLogoBase64!),
+                          ),
+                          fit: pw.BoxFit.contain,
+                        ),
+                      ),
+                      pw.SizedBox(width: 10),
+                    ],
+                    pw.Text(
+                      shopDetails.shopName.isNotEmpty
+                          ? shopDetails.shopName.toUpperCase()
+                          : 'STORE',
+                      style: pw.TextStyle(
+                        fontSize: 18,
+                        fontWeight: pw.FontWeight.bold,
+                        letterSpacing: 1.0,
+                      ),
+                      textAlign: pw.TextAlign.center,
+                    ),
+                  ],
                 ),
                 if (shopDetails.address.isNotEmpty) ...[
                   pw.SizedBox(height: 3),
@@ -111,7 +132,8 @@ class EventOrderPdfService {
                           'Mo. No: ${shopDetails.phone}',
                           style: const pw.TextStyle(fontSize: 9),
                         ),
-                      if (shopDetails.email != null && shopDetails.email!.isNotEmpty)
+                      if (shopDetails.email != null &&
+                          shopDetails.email!.isNotEmpty)
                         pw.Text(
                           shopDetails.email!,
                           style: const pw.TextStyle(fontSize: 9),
@@ -119,11 +141,15 @@ class EventOrderPdfService {
                     ],
                   ),
                 ),
-                if (shopDetails.gstNumber != null && shopDetails.gstNumber!.isNotEmpty) ...[
+                if (shopDetails.gstNumber != null &&
+                    shopDetails.gstNumber!.isNotEmpty) ...[
                   pw.SizedBox(height: 2),
                   pw.Text(
                     'GST No: ${shopDetails.gstNumber}',
-                    style: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold),
+                    style: pw.TextStyle(
+                      fontSize: 9,
+                      fontWeight: pw.FontWeight.bold,
+                    ),
                   ),
                 ],
               ],
@@ -134,9 +160,7 @@ class EventOrderPdfService {
           // CUSTOMER INFO + INVOICE INFO (side by side)
           // ═══════════════════════════════════════════
           pw.Container(
-            decoration: pw.BoxDecoration(
-              border: pw.Border(bottom: borderSide),
-            ),
+            decoration: pw.BoxDecoration(border: pw.Border(bottom: borderSide)),
             child: pw.Row(
               children: [
                 // Left: Customer Details
@@ -150,14 +174,25 @@ class EventOrderPdfService {
                     child: pw.Column(
                       crossAxisAlignment: pw.CrossAxisAlignment.start,
                       children: [
-                        _buildCompactInfoRow('Customer Name', order.customerName.toUpperCase(), bold: true),
+                        _buildCompactInfoRow(
+                          'Customer Name',
+                          order.customerName.toUpperCase(),
+                          bold: true,
+                        ),
                         if (order.customerContact.isNotEmpty) ...[
                           pw.SizedBox(height: 3),
-                          _buildCompactInfoRow('Contact', order.customerContact),
+                          _buildCompactInfoRow(
+                            'Contact',
+                            order.customerContact,
+                          ),
                         ],
-                        if (order.customerAddress != null && order.customerAddress!.isNotEmpty) ...[
+                        if (order.customerAddress != null &&
+                            order.customerAddress!.isNotEmpty) ...[
                           pw.SizedBox(height: 3),
-                          _buildCompactInfoRow('Address', order.customerAddress!),
+                          _buildCompactInfoRow(
+                            'Address',
+                            order.customerAddress!,
+                          ),
                         ],
                       ],
                     ),
@@ -186,9 +221,13 @@ class EventOrderPdfService {
                           'Status',
                           order.status.displayName.toUpperCase(),
                         ),
-                        if (order.eventLocation != null && order.eventLocation!.isNotEmpty) ...[
+                        if (order.eventLocation != null &&
+                            order.eventLocation!.isNotEmpty) ...[
                           pw.SizedBox(height: 3),
-                          _buildCompactInfoRow('Location', order.eventLocation!),
+                          _buildCompactInfoRow(
+                            'Location',
+                            order.eventLocation!,
+                          ),
                         ],
                       ],
                     ),
@@ -203,10 +242,21 @@ class EventOrderPdfService {
           // ═══════════════════════════════════════════
           if (isEvent) ...[
             if (order.subEvents.isNotEmpty)
-              _buildSubEventsTable(order.subEvents, dateFormatter, borderSide, thinBorder),
+              _buildSubEventsTable(
+                order.subEvents,
+                dateFormatter,
+                borderSide,
+                thinBorder,
+              ),
             if (order.items.isNotEmpty)
-              _buildProductsTable(order.items, borderSide, thinBorder, 
-                title: order.subEvents.isNotEmpty ? 'Event Products' : 'Products'),
+              _buildProductsTable(
+                order.items,
+                borderSide,
+                thinBorder,
+                title: order.subEvents.isNotEmpty
+                    ? 'Event Products'
+                    : 'Products',
+              ),
           ] else if (order.items.isNotEmpty)
             _buildProductsTable(order.items, borderSide, thinBorder),
 
@@ -227,10 +277,14 @@ class EventOrderPdfService {
                   child: pw.Column(
                     crossAxisAlignment: pw.CrossAxisAlignment.start,
                     children: [
-                      if (order.description != null && order.description!.isNotEmpty) ...[
+                      if (order.description != null &&
+                          order.description!.isNotEmpty) ...[
                         pw.Text(
                           'Description:',
-                          style: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold),
+                          style: pw.TextStyle(
+                            fontSize: 8,
+                            fontWeight: pw.FontWeight.bold,
+                          ),
                         ),
                         pw.SizedBox(height: 2),
                         pw.Text(
@@ -242,7 +296,10 @@ class EventOrderPdfService {
                       if (order.notes != null && order.notes!.isNotEmpty) ...[
                         pw.Text(
                           'Notes:',
-                          style: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold),
+                          style: pw.TextStyle(
+                            fontSize: 8,
+                            fontWeight: pw.FontWeight.bold,
+                          ),
                         ),
                         pw.SizedBox(height: 2),
                         pw.Text(
@@ -251,19 +308,21 @@ class EventOrderPdfService {
                         ),
                         pw.SizedBox(height: 6),
                       ],
-                      pw.Text(
-                        'Terms & Conditions:',
-                        style: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold),
-                      ),
-                      pw.SizedBox(height: 2),
-                      pw.Text(
-                        '1. Advance payment is non-refundable.',
-                        style: const pw.TextStyle(fontSize: 7),
-                      ),
-                      pw.Text(
-                        '2. Balance to be paid before delivery/event.',
-                        style: const pw.TextStyle(fontSize: 7),
-                      ),
+                      if (shopDetails.termsAndConditions != null &&
+                          shopDetails.termsAndConditions!.isNotEmpty) ...[
+                        pw.Text(
+                          'Terms & Conditions:',
+                          style: pw.TextStyle(
+                            fontSize: 8,
+                            fontWeight: pw.FontWeight.bold,
+                          ),
+                        ),
+                        pw.SizedBox(height: 2),
+                        pw.Text(
+                          shopDetails.termsAndConditions!,
+                          style: const pw.TextStyle(fontSize: 7),
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -289,7 +348,10 @@ class EventOrderPdfService {
                       ),
                     // Grand Total
                     pw.Container(
-                      padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                      padding: const pw.EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 5,
+                      ),
                       decoration: pw.BoxDecoration(
                         color: PdfColors.grey200,
                         border: pw.Border(bottom: thinBorder),
@@ -323,9 +385,14 @@ class EventOrderPdfService {
                     ),
                     // Balance Amount
                     pw.Container(
-                      padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                      padding: const pw.EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 5,
+                      ),
                       decoration: pw.BoxDecoration(
-                        color: order.remainingAmount > 0 ? PdfColors.orange50 : PdfColors.green50,
+                        color: order.remainingAmount > 0
+                            ? PdfColors.orange50
+                            : PdfColors.green50,
                         border: pw.Border(bottom: thinBorder),
                       ),
                       child: pw.Row(
@@ -336,7 +403,9 @@ class EventOrderPdfService {
                             style: pw.TextStyle(
                               fontSize: 10,
                               fontWeight: pw.FontWeight.bold,
-                              color: order.remainingAmount > 0 ? PdfColors.orange900 : PdfColors.green900,
+                              color: order.remainingAmount > 0
+                                  ? PdfColors.orange900
+                                  : PdfColors.green900,
                             ),
                           ),
                           pw.Text(
@@ -344,7 +413,9 @@ class EventOrderPdfService {
                             style: pw.TextStyle(
                               fontSize: 11,
                               fontWeight: pw.FontWeight.bold,
-                              color: order.remainingAmount > 0 ? PdfColors.orange900 : PdfColors.green900,
+                              color: order.remainingAmount > 0
+                                  ? PdfColors.orange900
+                                  : PdfColors.green900,
                             ),
                           ),
                         ],
@@ -361,9 +432,7 @@ class EventOrderPdfService {
           // ═══════════════════════════════════════════
           pw.Container(
             padding: const pw.EdgeInsets.fromLTRB(12, 8, 12, 10),
-            decoration: pw.BoxDecoration(
-              border: pw.Border(top: borderSide),
-            ),
+            decoration: pw.BoxDecoration(border: pw.Border(top: borderSide)),
             child: pw.Row(
               mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
               crossAxisAlignment: pw.CrossAxisAlignment.end,
@@ -377,7 +446,10 @@ class EventOrderPdfService {
                       width: 100,
                       decoration: const pw.BoxDecoration(
                         border: pw.Border(
-                          bottom: pw.BorderSide(color: PdfColors.grey500, width: 0.5),
+                          bottom: pw.BorderSide(
+                            color: PdfColors.grey500,
+                            width: 0.5,
+                          ),
                         ),
                       ),
                     ),
@@ -391,7 +463,10 @@ class EventOrderPdfService {
                 // Generated date
                 pw.Text(
                   'Generated: ${DateFormat('dd/MM/yyyy hh:mm a').format(DateTime.now())}',
-                  style: const pw.TextStyle(fontSize: 7, color: PdfColors.grey600),
+                  style: const pw.TextStyle(
+                    fontSize: 7,
+                    color: PdfColors.grey600,
+                  ),
                 ),
                 // Shop Signature
                 pw.Column(
@@ -404,7 +479,23 @@ class EventOrderPdfService {
                         fontWeight: pw.FontWeight.bold,
                       ),
                     ),
-                    pw.SizedBox(height: 16),
+                    pw.SizedBox(height: 4),
+                    // Proprietor's Signature Image
+                    if (shopDetails.signatureBase64 != null &&
+                        shopDetails.signatureBase64!.isNotEmpty) ...[
+                      pw.Container(
+                        width: 60,
+                        height: 25,
+                        child: pw.Image(
+                          pw.MemoryImage(
+                            base64Decode(shopDetails.signatureBase64!),
+                          ),
+                          fit: pw.BoxFit.contain,
+                        ),
+                      ),
+                    ] else ...[
+                      pw.SizedBox(height: 12),
+                    ],
                     pw.Text(
                       'Authorized Signatory',
                       style: const pw.TextStyle(fontSize: 8),
@@ -414,22 +505,121 @@ class EventOrderPdfService {
               ],
             ),
           ),
+
+          // ═══════════════════════════════════════════
+          // QR CODE AND BANK DETAILS
+          // ═══════════════════════════════════════════
+          if ((shopDetails.qrCodeBase64 != null &&
+                  shopDetails.qrCodeBase64!.isNotEmpty) ||
+              (shopDetails.bankName != null &&
+                  shopDetails.bankName!.isNotEmpty) ||
+              (shopDetails.accountNumber != null &&
+                  shopDetails.accountNumber!.isNotEmpty))
+            pw.Container(
+              padding: const pw.EdgeInsets.all(10),
+              decoration: pw.BoxDecoration(border: pw.Border(top: thinBorder)),
+              child: pw.Row(
+                crossAxisAlignment: pw.CrossAxisAlignment.center,
+                children: [
+                  // QR Code on left
+                  if (shopDetails.qrCodeBase64 != null &&
+                      shopDetails.qrCodeBase64!.isNotEmpty)
+                    pw.Expanded(
+                      flex: 1,
+                      child: pw.Column(
+                        children: [
+                          pw.Container(
+                            width: 70,
+                            height: 70,
+                            child: pw.Image(
+                              pw.MemoryImage(
+                                base64Decode(shopDetails.qrCodeBase64!),
+                              ),
+                              fit: pw.BoxFit.contain,
+                            ),
+                          ),
+                          pw.SizedBox(height: 3),
+                          pw.Text(
+                            'Scan to Pay',
+                            style: const pw.TextStyle(fontSize: 7),
+                          ),
+                        ],
+                      ),
+                    ),
+                  // Bank Details on right
+                  if ((shopDetails.bankName != null &&
+                          shopDetails.bankName!.isNotEmpty) ||
+                      (shopDetails.accountNumber != null &&
+                          shopDetails.accountNumber!.isNotEmpty))
+                    pw.Expanded(
+                      flex: 2,
+                      child: pw.Container(
+                        padding: const pw.EdgeInsets.all(6),
+                        decoration: pw.BoxDecoration(
+                          border: pw.Border.all(
+                            color: PdfColors.grey400,
+                            width: 0.5,
+                          ),
+                        ),
+                        child: pw.Column(
+                          crossAxisAlignment: pw.CrossAxisAlignment.start,
+                          children: [
+                            pw.Text(
+                              'Bank Details',
+                              style: pw.TextStyle(
+                                fontSize: 9,
+                                fontWeight: pw.FontWeight.bold,
+                              ),
+                            ),
+                            pw.SizedBox(height: 3),
+                            if (shopDetails.bankName != null &&
+                                shopDetails.bankName!.isNotEmpty)
+                              pw.Text(
+                                shopDetails.bankName!,
+                                style: const pw.TextStyle(fontSize: 8),
+                              ),
+                            if (shopDetails.accountHolderName != null &&
+                                shopDetails.accountHolderName!.isNotEmpty)
+                              pw.Text(
+                                'A/C Name: ${shopDetails.accountHolderName}',
+                                style: const pw.TextStyle(fontSize: 8),
+                              ),
+                            if (shopDetails.accountNumber != null &&
+                                shopDetails.accountNumber!.isNotEmpty)
+                              pw.Text(
+                                'A/C No: ${shopDetails.accountNumber}',
+                                style: const pw.TextStyle(fontSize: 8),
+                              ),
+                            if (shopDetails.ifscCode != null &&
+                                shopDetails.ifscCode!.isNotEmpty)
+                              pw.Text(
+                                'IFSC: ${shopDetails.ifscCode}',
+                                style: const pw.TextStyle(fontSize: 8),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
         ],
       ),
     );
   }
 
   /// Compact info row (label: value) for customer/invoice section
-  pw.Widget _buildCompactInfoRow(String label, String value, {bool bold = false}) {
+  pw.Widget _buildCompactInfoRow(
+    String label,
+    String value, {
+    bool bold = false,
+  }) {
     return pw.Row(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
         pw.Text(
           '$label: ',
-          style: pw.TextStyle(
-            fontSize: 8,
-            fontWeight: pw.FontWeight.bold,
-          ),
+          style: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold),
         ),
         pw.Expanded(
           child: pw.Text(
@@ -454,9 +644,7 @@ class EventOrderPdfService {
   }) {
     return pw.Container(
       padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: pw.BoxDecoration(
-        border: pw.Border(bottom: border),
-      ),
+      decoration: pw.BoxDecoration(border: pw.Border(bottom: border)),
       child: pw.Row(
         mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
         children: [
@@ -501,10 +689,7 @@ class EventOrderPdfService {
             ),
             child: pw.Text(
               'SUB-EVENTS',
-              style: pw.TextStyle(
-                fontSize: 10,
-                fontWeight: pw.FontWeight.bold,
-              ),
+              style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold),
             ),
           ),
           pw.Table(
@@ -526,7 +711,11 @@ class EventOrderPdfService {
                   _buildTableCell('#', isHeader: true),
                   _buildTableCell('Event Name', isHeader: true),
                   _buildTableCell('Date', isHeader: true),
-                  _buildTableCell('Charges', isHeader: true, align: pw.TextAlign.right),
+                  _buildTableCell(
+                    'Charges',
+                    isHeader: true,
+                    align: pw.TextAlign.right,
+                  ),
                 ],
               ),
               // Data rows
@@ -538,8 +727,10 @@ class EventOrderPdfService {
                     _buildTableCell('${idx + 1}'),
                     _buildTableCell(subEvent.name),
                     _buildTableCell(dateFormatter.format(subEvent.date)),
-                    _buildTableCell('Rs. ${subEvent.charges.toStringAsFixed(0)}', 
-                      align: pw.TextAlign.right),
+                    _buildTableCell(
+                      'Rs. ${subEvent.charges.toStringAsFixed(0)}',
+                      align: pw.TextAlign.right,
+                    ),
                   ],
                 );
               }),
@@ -570,10 +761,7 @@ class EventOrderPdfService {
             ),
             child: pw.Text(
               title.toUpperCase(),
-              style: pw.TextStyle(
-                fontSize: 10,
-                fontWeight: pw.FontWeight.bold,
-              ),
+              style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold),
             ),
           ),
           pw.Table(
@@ -596,10 +784,26 @@ class EventOrderPdfService {
                 children: [
                   _buildTableCell('#', isHeader: true),
                   _buildTableCell('Product', isHeader: true),
-                  _buildTableCell('Qty', isHeader: true, align: pw.TextAlign.center),
-                  _buildTableCell('Rate', isHeader: true, align: pw.TextAlign.right),
-                  _buildTableCell('Disc%', isHeader: true, align: pw.TextAlign.center),
-                  _buildTableCell('Total', isHeader: true, align: pw.TextAlign.right),
+                  _buildTableCell(
+                    'Qty',
+                    isHeader: true,
+                    align: pw.TextAlign.center,
+                  ),
+                  _buildTableCell(
+                    'Rate',
+                    isHeader: true,
+                    align: pw.TextAlign.right,
+                  ),
+                  _buildTableCell(
+                    'Disc%',
+                    isHeader: true,
+                    align: pw.TextAlign.center,
+                  ),
+                  _buildTableCell(
+                    'Total',
+                    isHeader: true,
+                    align: pw.TextAlign.right,
+                  ),
                 ],
               ),
               // Data rows
@@ -610,15 +814,24 @@ class EventOrderPdfService {
                   children: [
                     _buildTableCell('${idx + 1}'),
                     _buildTableCell(item.productName),
-                    _buildTableCell('${item.quantity}', align: pw.TextAlign.center),
-                    _buildTableCell('Rs. ${item.rate.toStringAsFixed(0)}', 
-                      align: pw.TextAlign.right),
-                    _buildTableCell(item.discountPercent > 0 
-                      ? '${item.discountPercent.toStringAsFixed(0)}%' 
-                      : '-', 
-                      align: pw.TextAlign.center),
-                    _buildTableCell('Rs. ${item.total.toStringAsFixed(0)}', 
-                      align: pw.TextAlign.right),
+                    _buildTableCell(
+                      '${item.quantity}',
+                      align: pw.TextAlign.center,
+                    ),
+                    _buildTableCell(
+                      'Rs. ${item.rate.toStringAsFixed(0)}',
+                      align: pw.TextAlign.right,
+                    ),
+                    _buildTableCell(
+                      item.discountPercent > 0
+                          ? '${item.discountPercent.toStringAsFixed(0)}%'
+                          : '-',
+                      align: pw.TextAlign.center,
+                    ),
+                    _buildTableCell(
+                      'Rs. ${item.total.toStringAsFixed(0)}',
+                      align: pw.TextAlign.right,
+                    ),
                   ],
                 );
               }),
@@ -654,14 +867,18 @@ class EventOrderPdfService {
     required Shop shopDetails,
   }) async {
     if (_isGenerating) {
-      debugPrint('[EventOrderPdfService] Already generating PDF, resetting flag and retrying...');
+      debugPrint(
+        '[EventOrderPdfService] Already generating PDF, resetting flag and retrying...',
+      );
       // Reset flag and allow retry instead of silently returning
       _isGenerating = false;
     }
 
     try {
       _isGenerating = true;
-      debugPrint('[EventOrderPdfService] Starting shareOrderAsPdf for: ${order.orderName}');
+      debugPrint(
+        '[EventOrderPdfService] Starting shareOrderAsPdf for: ${order.orderName}',
+      );
 
       final pdf = await generateEventOrderPdf(
         order: order,
@@ -670,22 +887,29 @@ class EventOrderPdfService {
       debugPrint('[EventOrderPdfService] PDF generated successfully');
 
       final bytes = await pdf.save();
-      debugPrint('[EventOrderPdfService] PDF bytes saved, size: ${bytes.length}');
+      debugPrint(
+        '[EventOrderPdfService] PDF bytes saved, size: ${bytes.length}',
+      );
 
       // Write to temp file
       final dir = await getTemporaryDirectory();
       final isEvent = order.orderType == OrderType.event;
       final prefix = isEvent ? 'event' : 'order';
-      final fileName = '${prefix}_${order.orderName.replaceAll(RegExp(r'[^\w\s]'), '_')}_${DateTime.now().millisecondsSinceEpoch}.pdf';
+      final fileName =
+          '${prefix}_${order.orderName.replaceAll(RegExp(r'[^\w\s]'), '_')}_${DateTime.now().millisecondsSinceEpoch}.pdf';
       final file = File('${dir.path}/$fileName');
       await file.writeAsBytes(bytes);
-      debugPrint('[EventOrderPdfService] PDF written to temp file: ${file.path}');
+      debugPrint(
+        '[EventOrderPdfService] PDF written to temp file: ${file.path}',
+      );
 
       debugPrint('[EventOrderPdfService] Calling Share.shareXFiles...');
       final result = await Share.shareXFiles(
         [XFile(file.path)],
-        text: '${isEvent ? "Event" : "Order"}: ${order.orderName} - ${shopDetails.shopName}',
-        subject: '${isEvent ? "Event Order" : "Sales Order"} from ${shopDetails.shopName}',
+        text:
+            '${isEvent ? "Event" : "Order"}: ${order.orderName} - ${shopDetails.shopName}',
+        subject:
+            '${isEvent ? "Event Order" : "Sales Order"} from ${shopDetails.shopName}',
       );
       debugPrint('[EventOrderPdfService] Share result: ${result.status}');
     } catch (e, stackTrace) {
@@ -703,7 +927,9 @@ class EventOrderPdfService {
     required Shop shopDetails,
   }) async {
     if (_isGenerating) {
-      debugPrint('[EventOrderPdfService] Already generating PDF, resetting flag and retrying...');
+      debugPrint(
+        '[EventOrderPdfService] Already generating PDF, resetting flag and retrying...',
+      );
       // Reset flag and allow retry instead of silently returning
       _isGenerating = false;
     }
@@ -730,12 +956,14 @@ class EventOrderPdfService {
     required EventOrder order,
     required Shop shopDetails,
   }) async {
-    debugPrint('[EventOrderPdfService] saveOrderPdf started for: ${order.orderName}');
-    
+    debugPrint(
+      '[EventOrderPdfService] saveOrderPdf started for: ${order.orderName}',
+    );
+
     try {
       // Yield to allow UI to update
       await Future.delayed(Duration.zero);
-      
+
       debugPrint('[EventOrderPdfService] Generating PDF document...');
       final pdf = await generateEventOrderPdf(
         order: order,
@@ -745,43 +973,49 @@ class EventOrderPdfService {
 
       // Yield again before heavy save operation
       await Future.delayed(Duration.zero);
-      
+
       debugPrint('[EventOrderPdfService] Saving PDF bytes...');
       final bytes = await pdf.save();
-      debugPrint('[EventOrderPdfService] PDF bytes saved: ${bytes.length} bytes');
-      
+      debugPrint(
+        '[EventOrderPdfService] PDF bytes saved: ${bytes.length} bytes',
+      );
+
       if (bytes.isEmpty) {
         throw Exception('PDF generation failed: empty bytes');
       }
-      
+
       // Yield before file operations
       await Future.delayed(Duration.zero);
-      
+
       debugPrint('[EventOrderPdfService] Getting temporary directory...');
       final dir = await getTemporaryDirectory();
       debugPrint('[EventOrderPdfService] Directory: ${dir.path}');
-      
+
       final isEvent = order.orderType == OrderType.event;
       final prefix = isEvent ? 'event_invoice' : 'order_invoice';
       final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final safeOrderName = order.orderName.replaceAll(RegExp(r'[^\w\s]'), '').replaceAll(' ', '_');
+      final safeOrderName = order.orderName
+          .replaceAll(RegExp(r'[^\w\s]'), '')
+          .replaceAll(' ', '_');
       final fileName = '${prefix}_${safeOrderName}_$timestamp.pdf';
       final file = File('${dir.path}/$fileName');
-      
+
       debugPrint('[EventOrderPdfService] Writing file to: ${file.path}');
       await file.writeAsBytes(bytes, flush: true);
-      
+
       // Verify file was written successfully
       if (!file.existsSync()) {
         throw Exception('Failed to write PDF file to storage');
       }
-      
+
       final actualSize = file.lengthSync();
       if (actualSize == 0) {
         throw Exception('PDF file was written but is empty');
       }
-      
-      debugPrint('[EventOrderPdfService] File written successfully: $actualSize bytes');
+
+      debugPrint(
+        '[EventOrderPdfService] File written successfully: $actualSize bytes',
+      );
       return file;
     } catch (e, stack) {
       debugPrint('[EventOrderPdfService] ERROR in saveOrderPdf: $e');

@@ -27,6 +27,7 @@ class Shop {
   final String? accountNumber;
   final String? ifscCode;
   final String? accountHolderName;
+  final String? termsAndConditions;
   final DateTime? updatedAt;
 
   const Shop({
@@ -46,6 +47,7 @@ class Shop {
     this.accountNumber,
     this.ifscCode,
     this.accountHolderName,
+    this.termsAndConditions,
     this.updatedAt,
   });
 
@@ -68,6 +70,7 @@ class Shop {
       accountNumber: json['accountNumber'] as String?,
       ifscCode: json['ifscCode'] as String?,
       accountHolderName: json['accountHolderName'] as String?,
+      termsAndConditions: json['termsAndConditions'] as String?,
       updatedAt: _parseDateTime(json['updatedAt']),
     );
   }
@@ -91,6 +94,7 @@ class Shop {
       'accountNumber': accountNumber,
       'ifscCode': ifscCode,
       'accountHolderName': accountHolderName,
+      'termsAndConditions': termsAndConditions,
       'updatedAt': updatedAt?.toIso8601String(),
     };
   }
@@ -113,6 +117,7 @@ class Shop {
     String? accountNumber,
     String? ifscCode,
     String? accountHolderName,
+    String? termsAndConditions,
     DateTime? updatedAt,
   }) {
     return Shop(
@@ -132,6 +137,7 @@ class Shop {
       accountNumber: accountNumber ?? this.accountNumber,
       ifscCode: ifscCode ?? this.ifscCode,
       accountHolderName: accountHolderName ?? this.accountHolderName,
+      termsAndConditions: termsAndConditions ?? this.termsAndConditions,
       updatedAt: updatedAt ?? this.updatedAt,
     );
   }

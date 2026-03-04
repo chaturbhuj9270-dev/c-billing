@@ -33,6 +33,9 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
   final _ifscCodeController = TextEditingController();
   final _accountHolderNameController = TextEditingController();
 
+  // Terms and Conditions Controller
+  final _termsConditionsController = TextEditingController();
+
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
   bool _isEditing = false;
@@ -104,6 +107,8 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
           _accountNumberController.text = doc['accountNumber'] ?? '';
           _ifscCodeController.text = doc['ifscCode'] ?? '';
           _accountHolderNameController.text = doc['accountHolderName'] ?? '';
+          // Terms and Conditions
+          _termsConditionsController.text = doc['termsAndConditions'] ?? '';
           // Only update images if Firebase has data and differs from cache
           if (firebaseLogo != null && firebaseLogo.isNotEmpty) {
             _shopLogoBase64 = firebaseLogo;
@@ -189,6 +194,8 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
         'accountNumber': _accountNumberController.text,
         'ifscCode': _ifscCodeController.text,
         'accountHolderName': _accountHolderNameController.text,
+        // Terms and Conditions
+        'termsAndConditions': _termsConditionsController.text,
         'qrCodeBase64': _qrCodeBase64,
         'shopLogoBase64': _shopLogoBase64,
         'signatureBase64': _signatureBase64,
@@ -1130,6 +1137,8 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
     _accountNumberController.dispose();
     _ifscCodeController.dispose();
     _accountHolderNameController.dispose();
+    // Terms and Conditions
+    _termsConditionsController.dispose();
     super.dispose();
   }
 
@@ -1413,6 +1422,70 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
                     ),
                     const SizedBox(height: 12),
                     _buildSignatureSection(),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+              // Terms and Conditions Section
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.grey[200]!),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.03),
+                      blurRadius: 4,
+                      offset: const Offset(0, 1),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Terms & Conditions',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF1B4D3E),
+                        fontFamily: 'Literata',
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _termsConditionsController,
+                      maxLines: 5,
+                      decoration: InputDecoration(
+                        hintText: 'Enter terms and conditions for invoices...',
+                        hintStyle: TextStyle(
+                          color: Colors.grey[400],
+                          fontSize: 13,
+                        ),
+                        filled: true,
+                        fillColor: Colors.grey[50],
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(color: Colors.grey[300]!),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(color: Colors.grey[300]!),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: const BorderSide(
+                            color: Color(0xFF1B4D3E),
+                          ),
+                        ),
+                        contentPadding: const EdgeInsets.all(12),
+                      ),
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: Colors.black87,
+                      ),
+                    ),
                   ],
                 ),
               ),
