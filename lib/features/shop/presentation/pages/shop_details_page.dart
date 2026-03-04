@@ -8,6 +8,7 @@ import 'dart:convert';
 import '../../../../core/services/session_manager.dart';
 import '../../../../core/services/language_service.dart';
 import '../../../../core/localization/app_localizations.dart';
+import '../../offline/controllers/shop_image_cache_controller.dart';
 
 class ShopDetailsPage extends StatefulWidget {
   const ShopDetailsPage({super.key});
@@ -39,17 +40,17 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
   String? _qrCodeBase64;
   File? _pickedQrImage;
   bool _isUploadingQr = false;
-  
+
   // Shop Logo state
   String? _shopLogoBase64;
   File? _pickedLogoImage;
   bool _isUploadingLogo = false;
-  
+
   // Signature state
   String? _signatureBase64;
   File? _pickedSignatureImage;
   bool _isUploadingSignature = false;
-  
+
   final _imagePicker = ImagePicker();
 
   final _auth = FirebaseAuth.instance;
@@ -73,6 +74,10 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
         throw Exception('User not authenticated');
       }
 
+      // Step 1: Load images from local cache FIRST (instant display)
+      await _loadImagesFromCache(currentUser.uid);
+
+      // Step 2: Fetch from Firebase and sync to cache (background)
       final doc = await _firestore
           .collection('users')
           .doc(currentUser.uid)
@@ -81,6 +86,10 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
           .get();
 
       if (doc.exists) {
+        final firebaseLogo = doc['shopLogoBase64'] as String?;
+        final firebaseSignature = doc['signatureBase64'] as String?;
+        final firebaseQrCode = doc['qrCodeBase64'] as String?;
+
         setState(() {
           _shopNameController.text = doc['shopName'] ?? '';
           _ownerNameController.text = doc['ownerName'] ?? '';
@@ -94,14 +103,53 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
           _accountNumberController.text = doc['accountNumber'] ?? '';
           _ifscCodeController.text = doc['ifscCode'] ?? '';
           _accountHolderNameController.text = doc['accountHolderName'] ?? '';
-          _qrCodeBase64 = doc['qrCodeBase64'];
-          _shopLogoBase64 = doc['shopLogoBase64'];
-          _signatureBase64 = doc['signatureBase64'];
+          // Only update images if Firebase has data and differs from cache
+          if (firebaseLogo != null && firebaseLogo.isNotEmpty) {
+            _shopLogoBase64 = firebaseLogo;
+          }
+          if (firebaseSignature != null && firebaseSignature.isNotEmpty) {
+            _signatureBase64 = firebaseSignature;
+          }
+          if (firebaseQrCode != null && firebaseQrCode.isNotEmpty) {
+            _qrCodeBase64 = firebaseQrCode;
+          }
           _isEditing = true;
         });
+
+        // Sync Firebase images to local cache for future fast loading
+        await ShopImageCacheController.instance.syncFromFirebase(
+          userId: currentUser.uid,
+          shopLogoBase64: firebaseLogo,
+          signatureBase64: firebaseSignature,
+          qrCodeBase64: firebaseQrCode,
+        );
       }
     } catch (e) {
       print('[ERROR] Failed to load shop details: $e');
+    }
+  }
+
+  /// Load images from local Isar cache for instant display
+  Future<void> _loadImagesFromCache(String userId) async {
+    try {
+      final cachedImages = await ShopImageCacheController.instance.getCachedImages(userId);
+      if (cachedImages != null && cachedImages.hasAnyImages) {
+        setState(() {
+          if (cachedImages.shopLogoBase64 != null && cachedImages.shopLogoBase64!.isNotEmpty) {
+            _shopLogoBase64 = cachedImages.shopLogoBase64;
+          }
+          if (cachedImages.signatureBase64 != null && cachedImages.signatureBase64!.isNotEmpty) {
+            _signatureBase64 = cachedImages.signatureBase64;
+          }
+          if (cachedImages.qrCodeBase64 != null && cachedImages.qrCodeBase64!.isNotEmpty) {
+            _qrCodeBase64 = cachedImages.qrCodeBase64;
+          }
+        });
+        print('[CACHE] Loaded shop images from local cache instantly');
+      }
+    } catch (e) {
+      print('[CACHE] Failed to load from cache: $e');
+      // Continue without cache - Firebase will be used
     }
   }
 
@@ -198,6 +246,9 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
           .doc('main')
           .set({'qrCodeBase64': base64Image}, SetOptions(merge: true));
 
+      // Update local cache for instant loading next time
+      await ShopImageCacheController.instance.updateQrCode(currentUser.uid, base64Image);
+
       setState(() {
         _qrCodeBase64 = base64Image;
         _isUploadingQr = false;
@@ -242,6 +293,9 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
           .doc('main')
           .update({'qrCodeBase64': FieldValue.delete()});
 
+      // Clear from local cache
+      await ShopImageCacheController.instance.removeQrCode(currentUser.uid);
+
       setState(() {
         _qrCodeBase64 = null;
         _pickedQrImage = null;
@@ -265,7 +319,7 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
   // ═══════════════════════════════════════════════════
   // Shop Logo Methods
   // ═══════════════════════════════════════════════════
-  
+
   Future<void> _pickAndUploadLogo() async {
     try {
       final XFile? pickedFile = await _imagePicker.pickImage(
@@ -298,6 +352,9 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
           .collection('shop_details')
           .doc('main')
           .set({'shopLogoBase64': base64Image}, SetOptions(merge: true));
+
+      // Update local cache for instant loading next time
+      await ShopImageCacheController.instance.updateLogo(currentUser.uid, base64Image);
 
       setState(() {
         _shopLogoBase64 = base64Image;
@@ -343,6 +400,9 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
           .doc('main')
           .update({'shopLogoBase64': FieldValue.delete()});
 
+      // Clear from local cache
+      await ShopImageCacheController.instance.removeLogo(currentUser.uid);
+
       setState(() {
         _shopLogoBase64 = null;
         _pickedLogoImage = null;
@@ -366,7 +426,7 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
   // ═══════════════════════════════════════════════════
   // Signature Methods
   // ═══════════════════════════════════════════════════
-  
+
   Future<void> _showSignaturePad() async {
     final SignatureController signatureController = SignatureController(
       penStrokeWidth: 3,
@@ -410,9 +470,7 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
                 onPressed: () => signatureController.clear(),
                 icon: const Icon(Icons.refresh, size: 18),
                 label: const Text('Clear'),
-                style: TextButton.styleFrom(
-                  foregroundColor: Colors.grey[600],
-                ),
+                style: TextButton.styleFrom(foregroundColor: Colors.grey[600]),
               ),
             ],
           ),
@@ -465,7 +523,7 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
 
       // Export signature to PNG bytes
       final bytes = await controller.toPngBytes();
-      
+
       if (bytes == null) {
         throw Exception('Failed to export signature');
       }
@@ -479,6 +537,9 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
           .collection('shop_details')
           .doc('main')
           .set({'signatureBase64': base64Image}, SetOptions(merge: true));
+
+      // Update local cache for instant loading next time
+      await ShopImageCacheController.instance.updateSignature(currentUser.uid, base64Image);
 
       setState(() {
         _signatureBase64 = base64Image;
@@ -523,6 +584,9 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
           .collection('shop_details')
           .doc('main')
           .update({'signatureBase64': FieldValue.delete()});
+
+      // Clear from local cache
+      await ShopImageCacheController.instance.removeSignature(currentUser.uid);
 
       setState(() {
         _signatureBase64 = null;
@@ -795,9 +859,16 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.error_outline, color: Colors.red[400], size: 40),
+                        Icon(
+                          Icons.error_outline,
+                          color: Colors.red[400],
+                          size: 40,
+                        ),
                         const SizedBox(height: 8),
-                        Text('Failed to load logo', style: TextStyle(color: Colors.grey[600])),
+                        Text(
+                          'Failed to load logo',
+                          style: TextStyle(color: Colors.grey[600]),
+                        ),
                       ],
                     ),
                   );
@@ -816,7 +887,9 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
                   style: OutlinedButton.styleFrom(
                     foregroundColor: const Color(0xFF1B4D3E),
                     side: const BorderSide(color: Color(0xFF1B4D3E)),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
                 ),
               ),
@@ -829,7 +902,9 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
                   style: OutlinedButton.styleFrom(
                     foregroundColor: Colors.red,
                     side: const BorderSide(color: Colors.red),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
                 ),
               ),
@@ -865,7 +940,10 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
                 ),
               ),
               const SizedBox(height: 4),
-              Text('Tap to select image', style: TextStyle(color: Colors.grey[500], fontSize: 12)),
+              Text(
+                'Tap to select image',
+                style: TextStyle(color: Colors.grey[500], fontSize: 12),
+              ),
             ],
           ),
         ),
@@ -919,9 +997,16 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.error_outline, color: Colors.red[400], size: 40),
+                        Icon(
+                          Icons.error_outline,
+                          color: Colors.red[400],
+                          size: 40,
+                        ),
                         const SizedBox(height: 8),
-                        Text('Failed to load signature', style: TextStyle(color: Colors.grey[600])),
+                        Text(
+                          'Failed to load signature',
+                          style: TextStyle(color: Colors.grey[600]),
+                        ),
                       ],
                     ),
                   );
@@ -940,7 +1025,9 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
                   style: OutlinedButton.styleFrom(
                     foregroundColor: const Color(0xFF1B4D3E),
                     side: const BorderSide(color: Color(0xFF1B4D3E)),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
                 ),
               ),
@@ -953,7 +1040,9 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
                   style: OutlinedButton.styleFrom(
                     foregroundColor: Colors.red,
                     side: const BorderSide(color: Colors.red),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
                 ),
               ),

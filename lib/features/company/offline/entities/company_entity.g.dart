@@ -34,30 +34,31 @@ const CompanyEntitySchema = CollectionSchema(
       name: r'createdAt',
       type: IsarType.dateTime,
     ),
-    r'isActive': PropertySchema(id: 5, name: r'isActive', type: IsarType.bool),
+    r'gstCode': PropertySchema(id: 5, name: r'gstCode', type: IsarType.string),
+    r'isActive': PropertySchema(id: 6, name: r'isActive', type: IsarType.bool),
     r'isMarkedForDeletion': PropertySchema(
-      id: 6,
+      id: 7,
       name: r'isMarkedForDeletion',
       type: IsarType.bool,
     ),
     r'needsSync': PropertySchema(
-      id: 7,
+      id: 8,
       name: r'needsSync',
       type: IsarType.bool,
     ),
     r'serverId': PropertySchema(
-      id: 8,
+      id: 9,
       name: r'serverId',
       type: IsarType.string,
     ),
     r'syncStatus': PropertySchema(
-      id: 9,
+      id: 10,
       name: r'syncStatus',
       type: IsarType.byte,
       enumMap: _CompanyEntitysyncStatusEnumValueMap,
     ),
     r'updatedAt': PropertySchema(
-      id: 10,
+      id: 11,
       name: r'updatedAt',
       type: IsarType.dateTime,
     ),
@@ -167,6 +168,7 @@ int _companyEntityEstimateSize(
   bytesCount += 3 + object.companyCode.length * 3;
   bytesCount += 3 + object.companyName.length * 3;
   bytesCount += 3 + object.contact.length * 3;
+  bytesCount += 3 + object.gstCode.length * 3;
   {
     final value = object.serverId;
     if (value != null) {
@@ -187,12 +189,13 @@ void _companyEntitySerialize(
   writer.writeString(offsets[2], object.companyName);
   writer.writeString(offsets[3], object.contact);
   writer.writeDateTime(offsets[4], object.createdAt);
-  writer.writeBool(offsets[5], object.isActive);
-  writer.writeBool(offsets[6], object.isMarkedForDeletion);
-  writer.writeBool(offsets[7], object.needsSync);
-  writer.writeString(offsets[8], object.serverId);
-  writer.writeByte(offsets[9], object.syncStatus.index);
-  writer.writeDateTime(offsets[10], object.updatedAt);
+  writer.writeString(offsets[5], object.gstCode);
+  writer.writeBool(offsets[6], object.isActive);
+  writer.writeBool(offsets[7], object.isMarkedForDeletion);
+  writer.writeBool(offsets[8], object.needsSync);
+  writer.writeString(offsets[9], object.serverId);
+  writer.writeByte(offsets[10], object.syncStatus.index);
+  writer.writeDateTime(offsets[11], object.updatedAt);
 }
 
 CompanyEntity _companyEntityDeserialize(
@@ -207,14 +210,15 @@ CompanyEntity _companyEntityDeserialize(
     companyName: reader.readString(offsets[2]),
     contact: reader.readStringOrNull(offsets[3]) ?? '',
     createdAt: reader.readDateTime(offsets[4]),
-    isActive: reader.readBoolOrNull(offsets[5]) ?? true,
-    serverId: reader.readStringOrNull(offsets[8]),
+    gstCode: reader.readStringOrNull(offsets[5]) ?? '',
+    isActive: reader.readBoolOrNull(offsets[6]) ?? true,
+    serverId: reader.readStringOrNull(offsets[9]),
     syncStatus:
         _CompanyEntitysyncStatusValueEnumMap[reader.readByteOrNull(
-          offsets[9],
+          offsets[10],
         )] ??
         CompanySyncStatus.newRecord,
-    updatedAt: reader.readDateTime(offsets[10]),
+    updatedAt: reader.readDateTime(offsets[11]),
   );
   object.id = id;
   return object;
@@ -238,20 +242,22 @@ P _companyEntityDeserializeProp<P>(
     case 4:
       return (reader.readDateTime(offset)) as P;
     case 5:
-      return (reader.readBoolOrNull(offset) ?? true) as P;
+      return (reader.readStringOrNull(offset) ?? '') as P;
     case 6:
-      return (reader.readBool(offset)) as P;
+      return (reader.readBoolOrNull(offset) ?? true) as P;
     case 7:
       return (reader.readBool(offset)) as P;
     case 8:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 9:
+      return (reader.readStringOrNull(offset)) as P;
+    case 10:
       return (_CompanyEntitysyncStatusValueEnumMap[reader.readByteOrNull(
                 offset,
               )] ??
               CompanySyncStatus.newRecord)
           as P;
-    case 10:
+    case 11:
       return (reader.readDateTime(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -1554,6 +1560,147 @@ extension CompanyEntityQueryFilter
     });
   }
 
+  QueryBuilder<CompanyEntity, CompanyEntity, QAfterFilterCondition>
+  gstCodeEqualTo(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'gstCode',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<CompanyEntity, CompanyEntity, QAfterFilterCondition>
+  gstCodeGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'gstCode',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<CompanyEntity, CompanyEntity, QAfterFilterCondition>
+  gstCodeLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'gstCode',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<CompanyEntity, CompanyEntity, QAfterFilterCondition>
+  gstCodeBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'gstCode',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<CompanyEntity, CompanyEntity, QAfterFilterCondition>
+  gstCodeStartsWith(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.startsWith(
+          property: r'gstCode',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<CompanyEntity, CompanyEntity, QAfterFilterCondition>
+  gstCodeEndsWith(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.endsWith(
+          property: r'gstCode',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<CompanyEntity, CompanyEntity, QAfterFilterCondition>
+  gstCodeContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.contains(
+          property: r'gstCode',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<CompanyEntity, CompanyEntity, QAfterFilterCondition>
+  gstCodeMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.matches(
+          property: r'gstCode',
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<CompanyEntity, CompanyEntity, QAfterFilterCondition>
+  gstCodeIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'gstCode', value: ''),
+      );
+    });
+  }
+
+  QueryBuilder<CompanyEntity, CompanyEntity, QAfterFilterCondition>
+  gstCodeIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(property: r'gstCode', value: ''),
+      );
+    });
+  }
+
   QueryBuilder<CompanyEntity, CompanyEntity, QAfterFilterCondition> idEqualTo(
     Id value,
   ) {
@@ -1979,6 +2126,18 @@ extension CompanyEntityQuerySortBy
     });
   }
 
+  QueryBuilder<CompanyEntity, CompanyEntity, QAfterSortBy> sortByGstCode() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'gstCode', Sort.asc);
+    });
+  }
+
+  QueryBuilder<CompanyEntity, CompanyEntity, QAfterSortBy> sortByGstCodeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'gstCode', Sort.desc);
+    });
+  }
+
   QueryBuilder<CompanyEntity, CompanyEntity, QAfterSortBy> sortByIsActive() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'isActive', Sort.asc);
@@ -2124,6 +2283,18 @@ extension CompanyEntityQuerySortThenBy
     });
   }
 
+  QueryBuilder<CompanyEntity, CompanyEntity, QAfterSortBy> thenByGstCode() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'gstCode', Sort.asc);
+    });
+  }
+
+  QueryBuilder<CompanyEntity, CompanyEntity, QAfterSortBy> thenByGstCodeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'gstCode', Sort.desc);
+    });
+  }
+
   QueryBuilder<CompanyEntity, CompanyEntity, QAfterSortBy> thenById() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'id', Sort.asc);
@@ -2256,6 +2427,14 @@ extension CompanyEntityQueryWhereDistinct
     });
   }
 
+  QueryBuilder<CompanyEntity, CompanyEntity, QDistinct> distinctByGstCode({
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'gstCode', caseSensitive: caseSensitive);
+    });
+  }
+
   QueryBuilder<CompanyEntity, CompanyEntity, QDistinct> distinctByIsActive() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'isActive');
@@ -2331,6 +2510,12 @@ extension CompanyEntityQueryProperty
   QueryBuilder<CompanyEntity, DateTime, QQueryOperations> createdAtProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'createdAt');
+    });
+  }
+
+  QueryBuilder<CompanyEntity, String, QQueryOperations> gstCodeProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'gstCode');
     });
   }
 

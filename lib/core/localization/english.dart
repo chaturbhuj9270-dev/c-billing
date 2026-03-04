@@ -609,7 +609,7 @@ class EnglishLocalization {
   static const String qrCodeRemoved = 'QR code removed';
   static const String uploadingQrCode = 'Uploading QR code...';
   static const String errorUploadingQrCode = 'Error uploading QR code';
-  
+
   // Shop Logo & Signature
   static const String shopLogo = 'Shop Logo';
   static const String uploadLogo = 'Upload Logo';

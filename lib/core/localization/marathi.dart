@@ -613,7 +613,7 @@ class MarathiLocalization {
   static const String qrCodeRemoved = 'QR कोड काढला';
   static const String uploadingQrCode = 'QR कोड अपलोड होत आहे...';
   static const String errorUploadingQrCode = 'QR कोड अपलोड करताना त्रुटी';
-  
+
   // Shop Logo & Signature
   static const String shopLogo = 'दुकान लोगो';
   static const String uploadLogo = 'लोगो अपलोड करा';

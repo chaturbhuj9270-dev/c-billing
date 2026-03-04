@@ -610,7 +610,7 @@ class HindiLocalization {
   static const String qrCodeRemoved = 'QR कोड हटाया गया';
   static const String uploadingQrCode = 'QR कोड अपलोड हो रहा है...';
   static const String errorUploadingQrCode = 'QR कोड अपलोड करने में त्रुटि';
-  
+
   // Shop Logo & Signature
   static const String shopLogo = 'दुकान लोगो';
   static const String uploadLogo = 'लोगो अपलोड करें';
@@ -623,7 +623,8 @@ class HindiLocalization {
   static const String signatureUploaded = 'हस्ताक्षर सफलतापूर्वक अपलोड हुआ';
   static const String signatureRemoved = 'हस्ताक्षर हटाया गया';
   static const String uploadingSignature = 'हस्ताक्षर अपलोड हो रहा है...';
-  static const String errorUploadingSignature = 'हस्ताक्षर अपलोड करने में त्रुटि';
+  static const String errorUploadingSignature =
+      'हस्ताक्षर अपलोड करने में त्रुटि';
 
   // ═══════════════════════════════════════════════════
   // Flyout Menu
