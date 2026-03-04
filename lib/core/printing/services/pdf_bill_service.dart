@@ -103,16 +103,37 @@ class PdfBillService {
             decoration: pw.BoxDecoration(border: pw.Border(bottom: borderSide)),
             child: pw.Column(
               children: [
-                pw.Text(
-                  shopDetails.shopName.isNotEmpty
-                      ? shopDetails.shopName.toUpperCase()
-                      : 'STORE',
-                  style: pw.TextStyle(
-                    fontSize: 18,
-                    fontWeight: pw.FontWeight.bold,
-                    letterSpacing: 1.0,
-                  ),
-                  textAlign: pw.TextAlign.center,
+                // Shop Logo and Name side by side
+                pw.Row(
+                  mainAxisAlignment: pw.MainAxisAlignment.center,
+                  crossAxisAlignment: pw.CrossAxisAlignment.center,
+                  children: [
+                    if (shopDetails.shopLogoBase64 != null &&
+                        shopDetails.shopLogoBase64!.isNotEmpty) ...[
+                      pw.Container(
+                        width: 40,
+                        height: 40,
+                        child: pw.Image(
+                          pw.MemoryImage(
+                            base64Decode(shopDetails.shopLogoBase64!),
+                          ),
+                          fit: pw.BoxFit.contain,
+                        ),
+                      ),
+                      pw.SizedBox(width: 10),
+                    ],
+                    pw.Text(
+                      shopDetails.shopName.isNotEmpty
+                          ? shopDetails.shopName.toUpperCase()
+                          : 'STORE',
+                      style: pw.TextStyle(
+                        fontSize: 18,
+                        fontWeight: pw.FontWeight.bold,
+                        letterSpacing: 1.0,
+                      ),
+                      textAlign: pw.TextAlign.center,
+                    ),
+                  ],
                 ),
                 if (shopDetails.address.isNotEmpty) ...[
                   pw.SizedBox(height: 3),
@@ -523,7 +544,23 @@ class PdfBillService {
                         fontWeight: pw.FontWeight.bold,
                       ),
                     ),
-                    pw.SizedBox(height: 16),
+                    pw.SizedBox(height: 4),
+                    // Proprietor's Signature Image
+                    if (shopDetails.signatureBase64 != null &&
+                        shopDetails.signatureBase64!.isNotEmpty) ...[
+                      pw.Container(
+                        width: 60,
+                        height: 25,
+                        child: pw.Image(
+                          pw.MemoryImage(
+                            base64Decode(shopDetails.signatureBase64!),
+                          ),
+                          fit: pw.BoxFit.contain,
+                        ),
+                      ),
+                    ] else ...[
+                      pw.SizedBox(height: 12),
+                    ],
                     pw.Text(
                       'Authorized Signatory',
                       style: const pw.TextStyle(fontSize: 8),
@@ -533,6 +570,104 @@ class PdfBillService {
               ],
             ),
           ),
+
+          // ═══════════════════════════════════════════
+          // QR CODE AND BANK DETAILS
+          // ═══════════════════════════════════════════
+          if ((shopDetails.qrCodeBase64 != null &&
+                  shopDetails.qrCodeBase64!.isNotEmpty) ||
+              (shopDetails.bankName != null &&
+                  shopDetails.bankName!.isNotEmpty) ||
+              (shopDetails.accountNumber != null &&
+                  shopDetails.accountNumber!.isNotEmpty))
+            pw.Container(
+              padding: const pw.EdgeInsets.all(10),
+              decoration: pw.BoxDecoration(border: pw.Border(top: thinBorder)),
+              child: pw.Row(
+                crossAxisAlignment: pw.CrossAxisAlignment.center,
+                children: [
+                  // QR Code on left
+                  if (shopDetails.qrCodeBase64 != null &&
+                      shopDetails.qrCodeBase64!.isNotEmpty)
+                    pw.Expanded(
+                      flex: 1,
+                      child: pw.Column(
+                        children: [
+                          pw.Container(
+                            width: 70,
+                            height: 70,
+                            child: pw.Image(
+                              pw.MemoryImage(
+                                base64Decode(shopDetails.qrCodeBase64!),
+                              ),
+                              fit: pw.BoxFit.contain,
+                            ),
+                          ),
+                          pw.SizedBox(height: 3),
+                          pw.Text(
+                            'Scan to Pay',
+                            style: const pw.TextStyle(fontSize: 7),
+                          ),
+                        ],
+                      ),
+                    ),
+                  // Bank Details on right
+                  if ((shopDetails.bankName != null &&
+                          shopDetails.bankName!.isNotEmpty) ||
+                      (shopDetails.accountNumber != null &&
+                          shopDetails.accountNumber!.isNotEmpty))
+                    pw.Expanded(
+                      flex: 2,
+                      child: pw.Container(
+                        padding: const pw.EdgeInsets.all(6),
+                        decoration: pw.BoxDecoration(
+                          border: pw.Border.all(
+                            color: PdfColors.grey400,
+                            width: 0.5,
+                          ),
+                        ),
+                        child: pw.Column(
+                          crossAxisAlignment: pw.CrossAxisAlignment.start,
+                          children: [
+                            pw.Text(
+                              'Bank Details',
+                              style: pw.TextStyle(
+                                fontSize: 9,
+                                fontWeight: pw.FontWeight.bold,
+                              ),
+                            ),
+                            pw.SizedBox(height: 3),
+                            if (shopDetails.bankName != null &&
+                                shopDetails.bankName!.isNotEmpty)
+                              pw.Text(
+                                shopDetails.bankName!,
+                                style: const pw.TextStyle(fontSize: 8),
+                              ),
+                            if (shopDetails.accountHolderName != null &&
+                                shopDetails.accountHolderName!.isNotEmpty)
+                              pw.Text(
+                                'A/C Name: ${shopDetails.accountHolderName}',
+                                style: const pw.TextStyle(fontSize: 8),
+                              ),
+                            if (shopDetails.accountNumber != null &&
+                                shopDetails.accountNumber!.isNotEmpty)
+                              pw.Text(
+                                'A/C No: ${shopDetails.accountNumber}',
+                                style: const pw.TextStyle(fontSize: 8),
+                              ),
+                            if (shopDetails.ifscCode != null &&
+                                shopDetails.ifscCode!.isNotEmpty)
+                              pw.Text(
+                                'IFSC: ${shopDetails.ifscCode}',
+                                style: const pw.TextStyle(fontSize: 8),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
         ],
       ),
     );
@@ -905,7 +1040,7 @@ class PdfBillService {
             children: [
               // Shop Logo above shop name
               if (shopDetails.shopLogoBase64 != null &&
-                  shopDetails.shopLogoBase64!.isNotEmpty) ...[  
+                  shopDetails.shopLogoBase64!.isNotEmpty) ...[
                 pw.Container(
                   width: 35,
                   height: 35,
@@ -1427,9 +1562,12 @@ class PdfBillService {
         ),
 
         // QR Code and Bank Details side by side
-        if ((shopDetails.qrCodeBase64 != null && shopDetails.qrCodeBase64!.isNotEmpty) ||
-            (shopDetails.bankName != null && shopDetails.bankName!.isNotEmpty) ||
-            (shopDetails.accountNumber != null && shopDetails.accountNumber!.isNotEmpty)) ...[
+        if ((shopDetails.qrCodeBase64 != null &&
+                shopDetails.qrCodeBase64!.isNotEmpty) ||
+            (shopDetails.bankName != null &&
+                shopDetails.bankName!.isNotEmpty) ||
+            (shopDetails.accountNumber != null &&
+                shopDetails.accountNumber!.isNotEmpty)) ...[
           pw.SizedBox(height: 10),
           pw.Row(
             crossAxisAlignment: pw.CrossAxisAlignment.center,
@@ -1445,7 +1583,9 @@ class PdfBillService {
                         width: 60,
                         height: 60,
                         child: pw.Image(
-                          pw.MemoryImage(base64Decode(shopDetails.qrCodeBase64!)),
+                          pw.MemoryImage(
+                            base64Decode(shopDetails.qrCodeBase64!),
+                          ),
                           fit: pw.BoxFit.contain,
                         ),
                       ),
@@ -1458,14 +1598,19 @@ class PdfBillService {
                   ),
                 ),
               // Bank Details on right
-              if ((shopDetails.bankName != null && shopDetails.bankName!.isNotEmpty) ||
-                  (shopDetails.accountNumber != null && shopDetails.accountNumber!.isNotEmpty))
+              if ((shopDetails.bankName != null &&
+                      shopDetails.bankName!.isNotEmpty) ||
+                  (shopDetails.accountNumber != null &&
+                      shopDetails.accountNumber!.isNotEmpty))
                 pw.Expanded(
                   flex: 2,
                   child: pw.Container(
                     padding: const pw.EdgeInsets.all(4),
                     decoration: pw.BoxDecoration(
-                      border: pw.Border.all(color: PdfColors.grey400, width: 0.5),
+                      border: pw.Border.all(
+                        color: PdfColors.grey400,
+                        width: 0.5,
+                      ),
                     ),
                     child: pw.Column(
                       crossAxisAlignment: pw.CrossAxisAlignment.start,
@@ -1478,22 +1623,26 @@ class PdfBillService {
                           ),
                         ),
                         pw.SizedBox(height: 2),
-                        if (shopDetails.bankName != null && shopDetails.bankName!.isNotEmpty)
+                        if (shopDetails.bankName != null &&
+                            shopDetails.bankName!.isNotEmpty)
                           pw.Text(
                             shopDetails.bankName!,
                             style: const pw.TextStyle(fontSize: 6),
                           ),
-                        if (shopDetails.accountHolderName != null && shopDetails.accountHolderName!.isNotEmpty)
+                        if (shopDetails.accountHolderName != null &&
+                            shopDetails.accountHolderName!.isNotEmpty)
                           pw.Text(
                             'A/C: ${shopDetails.accountHolderName}',
                             style: const pw.TextStyle(fontSize: 6),
                           ),
-                        if (shopDetails.accountNumber != null && shopDetails.accountNumber!.isNotEmpty)
+                        if (shopDetails.accountNumber != null &&
+                            shopDetails.accountNumber!.isNotEmpty)
                           pw.Text(
                             'No: ${shopDetails.accountNumber}',
                             style: const pw.TextStyle(fontSize: 6),
                           ),
-                        if (shopDetails.ifscCode != null && shopDetails.ifscCode!.isNotEmpty)
+                        if (shopDetails.ifscCode != null &&
+                            shopDetails.ifscCode!.isNotEmpty)
                           pw.Text(
                             'IFSC: ${shopDetails.ifscCode}',
                             style: const pw.TextStyle(fontSize: 6),
