@@ -81,9 +81,9 @@ class PdfBillService {
     Shop shopDetails,
     bool showCustomer,
   ) {
-    final primaryColor = PdfColor.fromHex('#1B4D3E');
-    final accentColor = PdfColor.fromHex('#2E7D5A');
-    final lightBg = PdfColor.fromHex('#F8FAF9');
+    final primaryColor = PdfColor.fromHex('#1A1A1A'); // Black
+    final accentColor = PdfColor.fromHex('#4A4A4A'); // Dark grey
+    final lightBg = PdfColor.fromHex('#F5F5F5'); // Light grey
     final borderColor = PdfColors.grey400;
     final thinBorder = pw.BorderSide(color: borderColor, width: 0.5);
 
