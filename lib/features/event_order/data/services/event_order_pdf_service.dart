@@ -9,7 +9,6 @@ import 'package:printing/printing.dart';
 import 'package:intl/intl.dart';
 
 import '../../domain/entities/event_order.dart';
-import '../../domain/entities/sub_event.dart';
 import '../../domain/entities/order_item.dart';
 import '../../../shop/domain/entities/shop.dart';
 
@@ -50,185 +49,313 @@ class EventOrderPdfService {
     return pdf;
   }
 
-  /// Build the main content of the PDF
+  /// Build the main content of the PDF - Bill-like UI
   pw.Widget _buildOrderContent(
     EventOrder order,
     Shop shopDetails,
     DateFormat dateFormatter,
   ) {
     final isEvent = order.orderType == OrderType.event;
-    final borderSide = pw.BorderSide(color: PdfColors.grey800, width: 0.8);
-    final thinBorder = pw.BorderSide(color: PdfColors.grey600, width: 0.5);
+    final primaryColor = PdfColor.fromHex('#1A1A1A');
+    final accentColor = PdfColor.fromHex('#4A4A4A');
+    final lightBg = PdfColor.fromHex('#F5F5F5');
+    final borderSide = pw.BorderSide(color: primaryColor, width: 0.8);
+    final thinBorder = pw.BorderSide(color: PdfColors.grey400, width: 0.5);
+
+    // Calculate totals
+    final subEventsTotal = order.subEvents.fold(
+      0.0,
+      (sum, e) => sum + e.charges,
+    );
+    final mainEventCharges = order.eventCharges;
+    final allEventsTotal = mainEventCharges + subEventsTotal;
+    final productsTotal = order.items.fold(
+      0.0,
+      (sum, item) => sum + item.total,
+    );
+    final grandTotal = allEventsTotal + productsTotal;
+    final balanceDue = grandTotal - order.advanceAmount;
 
     return pw.Container(
       decoration: pw.BoxDecoration(
-        border: pw.Border.all(color: PdfColors.grey800, width: 1.0),
+        border: pw.Border.all(color: primaryColor, width: 1.5),
       ),
       child: pw.Column(
         mainAxisSize: pw.MainAxisSize.min,
-        crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: [
-          // ═══════════════════════════════════════════
-          // SHOP HEADER
-          // ═══════════════════════════════════════════
+          // ═══════════════════════════════════════════════════════════════
+          // SECTION 1: SHOP HEADER (Gradient Background)
+          // ═══════════════════════════════════════════════════════════════
           pw.Container(
             width: double.infinity,
             padding: const pw.EdgeInsets.symmetric(
-              vertical: 10,
-              horizontal: 12,
+              vertical: 12,
+              horizontal: 16,
             ),
-            decoration: pw.BoxDecoration(border: pw.Border(bottom: borderSide)),
-            child: pw.Column(
+            decoration: pw.BoxDecoration(
+              gradient: pw.LinearGradient(
+                colors: [primaryColor, accentColor],
+                begin: pw.Alignment.centerLeft,
+                end: pw.Alignment.centerRight,
+              ),
+            ),
+            child: pw.Row(
+              crossAxisAlignment: pw.CrossAxisAlignment.center,
               children: [
-                // Shop Logo and Name side by side
-                pw.Row(
-                  mainAxisAlignment: pw.MainAxisAlignment.center,
-                  crossAxisAlignment: pw.CrossAxisAlignment.center,
-                  children: [
-                    if (shopDetails.shopLogoBase64 != null &&
-                        shopDetails.shopLogoBase64!.isNotEmpty) ...[
-                      pw.Container(
-                        width: 40,
-                        height: 40,
-                        child: pw.Image(
-                          pw.MemoryImage(
-                            base64Decode(shopDetails.shopLogoBase64!),
-                          ),
-                          fit: pw.BoxFit.contain,
-                        ),
-                      ),
-                      pw.SizedBox(width: 10),
-                    ],
-                    pw.Text(
-                      shopDetails.shopName.isNotEmpty
-                          ? shopDetails.shopName.toUpperCase()
-                          : 'STORE',
-                      style: pw.TextStyle(
-                        fontSize: 18,
-                        fontWeight: pw.FontWeight.bold,
-                        letterSpacing: 1.0,
-                      ),
-                      textAlign: pw.TextAlign.center,
+                // Logo on left
+                if (shopDetails.shopLogoBase64 != null &&
+                    shopDetails.shopLogoBase64!.isNotEmpty)
+                  _buildSafeImage(
+                    base64String: shopDetails.shopLogoBase64!,
+                    width: 50,
+                    height: 50,
+                    margin: const pw.EdgeInsets.only(right: 12),
+                    decoration: pw.BoxDecoration(
+                      color: PdfColors.white,
+                      borderRadius: pw.BorderRadius.circular(6),
                     ),
-                  ],
-                ),
-                if (shopDetails.address.isNotEmpty) ...[
-                  pw.SizedBox(height: 3),
-                  pw.Text(
-                    shopDetails.address.toUpperCase(),
-                    style: const pw.TextStyle(fontSize: 9),
-                    textAlign: pw.TextAlign.center,
+                    padding: const pw.EdgeInsets.all(4),
                   ),
-                ],
-                pw.SizedBox(height: 3),
-                pw.Align(
-                  alignment: pw.Alignment.centerRight,
-                  child: pw.Wrap(
-                    alignment: pw.WrapAlignment.end,
-                    spacing: 12,
+                // Shop details in center
+                pw.Expanded(
+                  child: pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
                     children: [
-                      if (shopDetails.phone.isNotEmpty)
-                        pw.Text(
-                          'Mo. No: ${shopDetails.phone}',
-                          style: const pw.TextStyle(fontSize: 9),
+                      pw.Text(
+                        shopDetails.shopName.isNotEmpty
+                            ? shopDetails.shopName.toUpperCase()
+                            : 'STORE',
+                        style: pw.TextStyle(
+                          fontSize: 20,
+                          fontWeight: pw.FontWeight.bold,
+                          color: PdfColors.white,
+                          letterSpacing: 1.2,
                         ),
-                      if (shopDetails.email != null &&
-                          shopDetails.email!.isNotEmpty)
+                      ),
+                      if (shopDetails.address.isNotEmpty) ...[
+                        pw.SizedBox(height: 2),
                         pw.Text(
-                          shopDetails.email!,
-                          style: const pw.TextStyle(fontSize: 9),
+                          shopDetails.address,
+                          style: const pw.TextStyle(
+                            fontSize: 9,
+                            color: PdfColors.white,
+                          ),
                         ),
+                      ],
+                      pw.SizedBox(height: 2),
+                      pw.Row(
+                        children: [
+                          if (shopDetails.phone.isNotEmpty)
+                            pw.Text(
+                              'Ph: ${shopDetails.phone}',
+                              style: const pw.TextStyle(
+                                fontSize: 9,
+                                color: PdfColors.white,
+                              ),
+                            ),
+                          if (shopDetails.phone.isNotEmpty &&
+                              shopDetails.email != null &&
+                              shopDetails.email!.isNotEmpty)
+                            pw.Text(
+                              ' | ',
+                              style: const pw.TextStyle(
+                                fontSize: 9,
+                                color: PdfColors.white,
+                              ),
+                            ),
+                          if (shopDetails.email != null &&
+                              shopDetails.email!.isNotEmpty)
+                            pw.Text(
+                              shopDetails.email!,
+                              style: const pw.TextStyle(
+                                fontSize: 9,
+                                color: PdfColors.white,
+                              ),
+                            ),
+                        ],
+                      ),
                     ],
                   ),
                 ),
+                // GST badge on right
                 if (shopDetails.gstNumber != null &&
-                    shopDetails.gstNumber!.isNotEmpty) ...[
-                  pw.SizedBox(height: 2),
-                  pw.Text(
-                    'GST No: ${shopDetails.gstNumber}',
-                    style: pw.TextStyle(
-                      fontSize: 9,
-                      fontWeight: pw.FontWeight.bold,
+                    shopDetails.gstNumber!.isNotEmpty)
+                  pw.Container(
+                    padding: const pw.EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                    decoration: pw.BoxDecoration(
+                      color: PdfColors.white,
+                      borderRadius: pw.BorderRadius.circular(4),
+                    ),
+                    child: pw.Column(
+                      children: [
+                        pw.Text(
+                          'GSTIN',
+                          style: pw.TextStyle(
+                            fontSize: 7,
+                            fontWeight: pw.FontWeight.bold,
+                            color: primaryColor,
+                          ),
+                        ),
+                        pw.Text(
+                          shopDetails.gstNumber!,
+                          style: pw.TextStyle(
+                            fontSize: 9,
+                            fontWeight: pw.FontWeight.bold,
+                            color: primaryColor,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ],
               ],
             ),
           ),
 
-          // ═══════════════════════════════════════════
-          // CUSTOMER INFO + INVOICE INFO (side by side)
-          // ═══════════════════════════════════════════
+          // ═══════════════════════════════════════════════════════════════
+          // SECTION 2: INVOICE TITLE BAR
+          // ═══════════════════════════════════════════════════════════════
+          pw.Container(
+            width: double.infinity,
+            padding: const pw.EdgeInsets.symmetric(vertical: 6),
+            color: lightBg,
+            child: pw.Center(
+              child: pw.Text(
+                isEvent ? 'EVENT INVOICE' : 'ORDER INVOICE',
+                style: pw.TextStyle(
+                  fontSize: 14,
+                  fontWeight: pw.FontWeight.bold,
+                  letterSpacing: 2.0,
+                ),
+              ),
+            ),
+          ),
+
+          // ═══════════════════════════════════════════════════════════════
+          // SECTION 3: CUSTOMER & INVOICE INFO (3-Column Layout)
+          // ═══════════════════════════════════════════════════════════════
           pw.Container(
             decoration: pw.BoxDecoration(border: pw.Border(bottom: borderSide)),
             child: pw.Row(
               children: [
-                // Left: Customer Details
+                // Left: Customer Details (BILL TO)
                 pw.Expanded(
-                  flex: 3,
+                  flex: 5,
                   child: pw.Container(
-                    padding: const pw.EdgeInsets.all(8),
+                    padding: const pw.EdgeInsets.all(10),
                     decoration: pw.BoxDecoration(
                       border: pw.Border(right: thinBorder),
                     ),
                     child: pw.Column(
                       crossAxisAlignment: pw.CrossAxisAlignment.start,
                       children: [
-                        _buildCompactInfoRow(
-                          'Customer Name',
+                        pw.Text(
+                          'BILL TO',
+                          style: pw.TextStyle(
+                            fontSize: 8,
+                            fontWeight: pw.FontWeight.bold,
+                            color: accentColor,
+                          ),
+                        ),
+                        pw.SizedBox(height: 4),
+                        pw.Text(
                           order.customerName.toUpperCase(),
-                          bold: true,
+                          style: pw.TextStyle(
+                            fontSize: 11,
+                            fontWeight: pw.FontWeight.bold,
+                          ),
                         ),
                         if (order.customerContact.isNotEmpty) ...[
-                          pw.SizedBox(height: 3),
-                          _buildCompactInfoRow(
-                            'Contact',
-                            order.customerContact,
+                          pw.SizedBox(height: 2),
+                          pw.Text(
+                            'Mobile: ${order.customerContact}',
+                            style: const pw.TextStyle(fontSize: 9),
                           ),
                         ],
                         if (order.customerAddress != null &&
                             order.customerAddress!.isNotEmpty) ...[
-                          pw.SizedBox(height: 3),
-                          _buildCompactInfoRow(
-                            'Address',
-                            order.customerAddress!,
+                          pw.SizedBox(height: 2),
+                          pw.Text(
+                            'Address: ${order.customerAddress}',
+                            style: const pw.TextStyle(fontSize: 8),
                           ),
                         ],
                       ],
                     ),
                   ),
                 ),
-                // Right: Invoice Details
+                // Center: Invoice/Event Details
                 pw.Expanded(
-                  flex: 2,
+                  flex: 4,
                   child: pw.Container(
-                    padding: const pw.EdgeInsets.all(8),
+                    padding: const pw.EdgeInsets.all(10),
+                    decoration: pw.BoxDecoration(
+                      border: pw.Border(right: thinBorder),
+                    ),
                     child: pw.Column(
                       crossAxisAlignment: pw.CrossAxisAlignment.start,
                       children: [
-                        _buildCompactInfoRow(
-                          isEvent ? 'Event Date' : 'Delivery Date',
-                          dateFormatter.format(order.eventDate),
-                        ),
-                        pw.SizedBox(height: 3),
-                        _buildCompactInfoRow(
-                          isEvent ? 'Event Name' : 'Order Name',
+                        _buildInfoLine(
+                          isEvent ? 'Event' : 'Order',
                           order.orderName,
                           bold: true,
                         ),
                         pw.SizedBox(height: 3),
-                        _buildCompactInfoRow(
+                        _buildInfoLine(
+                          isEvent ? 'Event Date' : 'Delivery Date',
+                          dateFormatter.format(order.eventDate),
+                        ),
+                        pw.SizedBox(height: 3),
+                        _buildInfoLine(
                           'Status',
                           order.status.displayName.toUpperCase(),
                         ),
                         if (order.eventLocation != null &&
                             order.eventLocation!.isNotEmpty) ...[
                           pw.SizedBox(height: 3),
-                          _buildCompactInfoRow(
-                            'Location',
-                            order.eventLocation!,
+                          _buildInfoLine('Location', order.eventLocation!),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+                // Right: Owner/Proprietor Details
+                pw.Expanded(
+                  flex: 3,
+                  child: pw.Container(
+                    padding: const pw.EdgeInsets.all(10),
+                    child: pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.end,
+                      children: [
+                        if (shopDetails.ownerName != null &&
+                            shopDetails.ownerName!.isNotEmpty) ...[
+                          pw.Text(
+                            'Prop: ${shopDetails.ownerName}',
+                            style: pw.TextStyle(
+                              fontSize: 9,
+                              fontWeight: pw.FontWeight.bold,
+                            ),
+                            textAlign: pw.TextAlign.right,
                           ),
                         ],
+                        if (shopDetails.phone.isNotEmpty) ...[
+                          pw.SizedBox(height: 2),
+                          pw.Text(
+                            'Ph: ${shopDetails.phone}',
+                            style: const pw.TextStyle(fontSize: 8),
+                            textAlign: pw.TextAlign.right,
+                          ),
+                        ],
+                        pw.SizedBox(height: 4),
+                        pw.Text(
+                          'Created: ${DateFormat('dd/MM/yy').format(order.createdAt)}',
+                          style: const pw.TextStyle(
+                            fontSize: 7,
+                            color: PdfColors.grey600,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -237,202 +364,226 @@ class EventOrderPdfService {
             ),
           ),
 
-          // ═══════════════════════════════════════════
-          // ITEMS TABLES (Sub-events and/or Products)
-          // ═══════════════════════════════════════════
-          if (isEvent) ...[
-            if (order.subEvents.isNotEmpty)
-              _buildSubEventsTable(
-                order.subEvents,
-                dateFormatter,
-                borderSide,
-                thinBorder,
-              ),
-            if (order.items.isNotEmpty)
-              _buildProductsTable(
-                order.items,
-                borderSide,
-                thinBorder,
-                title: order.subEvents.isNotEmpty
-                    ? 'Event Products'
-                    : 'Products',
-              ),
-          ] else if (order.items.isNotEmpty)
+          // ═══════════════════════════════════════════════════════════════
+          // SECTION 4: EVENT DETAILS TABLE (Main Event + Sub-Events)
+          // ═══════════════════════════════════════════════════════════════
+          if (isEvent && order.subEvents.isNotEmpty)
+            _buildEventDetailsTable(
+              order,
+              dateFormatter,
+              borderSide,
+              thinBorder,
+            ),
+
+          // ═══════════════════════════════════════════════════════════════
+          // SECTION 5: PRODUCTS TABLE
+          // ═══════════════════════════════════════════════════════════════
+          if (order.items.isNotEmpty)
             _buildProductsTable(order.items, borderSide, thinBorder),
 
-          // ═══════════════════════════════════════════
-          // BOTTOM SECTION — Notes (left) + Totals (right)
-          // ═══════════════════════════════════════════
-          pw.Row(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
-            children: [
-              // Left: Notes + Terms
-              pw.Expanded(
-                flex: 3,
-                child: pw.Container(
-                  padding: const pw.EdgeInsets.all(8),
-                  decoration: pw.BoxDecoration(
-                    border: pw.Border(right: thinBorder),
-                  ),
-                  child: pw.Column(
-                    crossAxisAlignment: pw.CrossAxisAlignment.start,
-                    children: [
-                      if (order.description != null &&
-                          order.description!.isNotEmpty) ...[
+          // ═══════════════════════════════════════════════════════════════
+          // SECTION 6: SUMMARY (Notes + Totals)
+          // ═══════════════════════════════════════════════════════════════
+          pw.Container(
+            decoration: pw.BoxDecoration(border: pw.Border(bottom: borderSide)),
+            child: pw.Row(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                // Left: Notes, Description, Terms
+                pw.Expanded(
+                  flex: 6,
+                  child: pw.Container(
+                    padding: const pw.EdgeInsets.all(10),
+                    decoration: pw.BoxDecoration(
+                      border: pw.Border(right: thinBorder),
+                    ),
+                    child: pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.start,
+                      children: [
                         pw.Text(
-                          'Description:',
+                          'Amount in Words:',
                           style: pw.TextStyle(
                             fontSize: 8,
                             fontWeight: pw.FontWeight.bold,
+                            color: accentColor,
                           ),
                         ),
                         pw.SizedBox(height: 2),
                         pw.Text(
-                          order.description!,
-                          style: const pw.TextStyle(fontSize: 7),
-                        ),
-                        pw.SizedBox(height: 6),
-                      ],
-                      if (order.notes != null && order.notes!.isNotEmpty) ...[
-                        pw.Text(
-                          'Notes:',
+                          _numberToWords(order.totalAmount),
                           style: pw.TextStyle(
-                            fontSize: 8,
+                            fontSize: 10,
                             fontWeight: pw.FontWeight.bold,
                           ),
                         ),
-                        pw.SizedBox(height: 2),
-                        pw.Text(
-                          order.notes!,
-                          style: const pw.TextStyle(fontSize: 7),
-                        ),
-                        pw.SizedBox(height: 6),
-                      ],
-                      if (shopDetails.termsAndConditions != null &&
-                          shopDetails.termsAndConditions!.isNotEmpty) ...[
-                        pw.Text(
-                          'Terms & Conditions:',
-                          style: pw.TextStyle(
-                            fontSize: 8,
-                            fontWeight: pw.FontWeight.bold,
-                          ),
-                        ),
-                        pw.SizedBox(height: 2),
-                        pw.Text(
-                          shopDetails.termsAndConditions!,
-                          style: const pw.TextStyle(fontSize: 7),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              ),
-              // Right: Financial Summary
-              pw.Expanded(
-                flex: 2,
-                child: pw.Column(
-                  children: [
-                    // Sub-events total (if any)
-                    if (isEvent && order.subEvents.isNotEmpty)
-                      _buildCompactAmountRow(
-                        'SUB-EVENTS TOTAL',
-                        order.subEvents.fold(0.0, (sum, e) => sum + e.charges),
-                        border: thinBorder,
-                      ),
-                    // Products total (if any)
-                    if (order.items.isNotEmpty)
-                      _buildCompactAmountRow(
-                        'PRODUCTS TOTAL',
-                        order.items.fold(0.0, (sum, item) => sum + item.total),
-                        border: thinBorder,
-                      ),
-                    // Grand Total
-                    pw.Container(
-                      padding: const pw.EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 5,
-                      ),
-                      decoration: pw.BoxDecoration(
-                        color: PdfColors.grey200,
-                        border: pw.Border(bottom: thinBorder),
-                      ),
-                      child: pw.Row(
-                        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                        children: [
+                        if (order.description != null &&
+                            order.description!.isNotEmpty) ...[
+                          pw.SizedBox(height: 8),
                           pw.Text(
-                            'GRAND TOTAL',
+                            'Description:',
                             style: pw.TextStyle(
-                              fontSize: 10,
+                              fontSize: 8,
                               fontWeight: pw.FontWeight.bold,
+                              color: accentColor,
                             ),
                           ),
+                          pw.SizedBox(height: 2),
                           pw.Text(
-                            'Rs. ${order.totalAmount.toStringAsFixed(2)}',
-                            style: pw.TextStyle(
-                              fontSize: 11,
-                              fontWeight: pw.FontWeight.bold,
-                            ),
+                            order.description!,
+                            style: const pw.TextStyle(fontSize: 7),
                           ),
                         ],
-                      ),
-                    ),
-                    // Advance Paid
-                    _buildCompactAmountRow(
-                      'ADVANCE PAID',
-                      order.advanceAmount,
-                      border: thinBorder,
-                      color: PdfColors.green800,
-                    ),
-                    // Balance Amount
-                    pw.Container(
-                      padding: const pw.EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 5,
-                      ),
-                      decoration: pw.BoxDecoration(
-                        color: order.remainingAmount > 0
-                            ? PdfColors.orange50
-                            : PdfColors.green50,
-                        border: pw.Border(bottom: thinBorder),
-                      ),
-                      child: pw.Row(
-                        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                        children: [
+                        if (order.notes != null && order.notes!.isNotEmpty) ...[
+                          pw.SizedBox(height: 6),
                           pw.Text(
-                            'BALANCE AMT',
+                            'Notes:',
                             style: pw.TextStyle(
-                              fontSize: 10,
+                              fontSize: 8,
                               fontWeight: pw.FontWeight.bold,
-                              color: order.remainingAmount > 0
-                                  ? PdfColors.orange900
-                                  : PdfColors.green900,
+                              color: accentColor,
                             ),
                           ),
+                          pw.SizedBox(height: 2),
                           pw.Text(
-                            'Rs. ${order.remainingAmount.toStringAsFixed(2)}',
-                            style: pw.TextStyle(
-                              fontSize: 11,
-                              fontWeight: pw.FontWeight.bold,
-                              color: order.remainingAmount > 0
-                                  ? PdfColors.orange900
-                                  : PdfColors.green900,
-                            ),
+                            order.notes!,
+                            style: const pw.TextStyle(fontSize: 7),
                           ),
                         ],
-                      ),
+                        if (shopDetails.termsAndConditions != null &&
+                            shopDetails.termsAndConditions!.isNotEmpty) ...[
+                          pw.SizedBox(height: 8),
+                          pw.Text(
+                            'Terms & Conditions:',
+                            style: pw.TextStyle(
+                              fontSize: 8,
+                              fontWeight: pw.FontWeight.bold,
+                              color: accentColor,
+                            ),
+                          ),
+                          pw.SizedBox(height: 2),
+                          pw.Text(
+                            shopDetails.termsAndConditions!,
+                            style: const pw.TextStyle(fontSize: 7),
+                          ),
+                        ],
+                      ],
                     ),
-                  ],
+                  ),
                 ),
-              ),
-            ],
+                // Right: Financial Summary
+                pw.Expanded(
+                  flex: 4,
+                  child: pw.Container(
+                    padding: const pw.EdgeInsets.all(8),
+                    child: pw.Column(
+                      children: [
+                        if (isEvent && mainEventCharges > 0)
+                          _buildSummaryRow(
+                            'Main Event Charges',
+                            mainEventCharges,
+                          ),
+                        if (isEvent && order.subEvents.isNotEmpty)
+                          _buildSummaryRow('Sub-Events Total', subEventsTotal),
+                        if (isEvent &&
+                            (mainEventCharges > 0 ||
+                                order.subEvents.isNotEmpty))
+                          _buildSummaryRow(
+                            'Events Total',
+                            allEventsTotal,
+                            color: PdfColors.blue800,
+                          ),
+                        if (order.items.isNotEmpty)
+                          _buildSummaryRow('Products Total', productsTotal),
+                        pw.Container(
+                          padding: const pw.EdgeInsets.symmetric(
+                            vertical: 6,
+                            horizontal: 8,
+                          ),
+                          margin: const pw.EdgeInsets.only(top: 4),
+                          decoration: pw.BoxDecoration(
+                            color: PdfColors.grey200,
+                            borderRadius: pw.BorderRadius.circular(2),
+                          ),
+                          child: pw.Row(
+                            mainAxisAlignment:
+                                pw.MainAxisAlignment.spaceBetween,
+                            children: [
+                              pw.Text(
+                                'GRAND TOTAL',
+                                style: pw.TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: pw.FontWeight.bold,
+                                ),
+                              ),
+                              pw.Text(
+                                'Rs. ${grandTotal.toStringAsFixed(2)}',
+                                style: pw.TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: pw.FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        pw.SizedBox(height: 4),
+                        _buildSummaryRow(
+                          'Advance Paid',
+                          order.advanceAmount,
+                          color: PdfColors.green800,
+                        ),
+                        pw.Container(
+                          padding: const pw.EdgeInsets.symmetric(
+                            vertical: 6,
+                            horizontal: 8,
+                          ),
+                          margin: const pw.EdgeInsets.only(top: 4),
+                          decoration: pw.BoxDecoration(
+                            color: balanceDue > 0
+                                ? PdfColors.orange50
+                                : PdfColors.green50,
+                            borderRadius: pw.BorderRadius.circular(2),
+                          ),
+                          child: pw.Row(
+                            mainAxisAlignment:
+                                pw.MainAxisAlignment.spaceBetween,
+                            children: [
+                              pw.Text(
+                                'BALANCE DUE',
+                                style: pw.TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: pw.FontWeight.bold,
+                                  color: balanceDue > 0
+                                      ? PdfColors.orange900
+                                      : PdfColors.green900,
+                                ),
+                              ),
+                              pw.Text(
+                                'Rs. ${balanceDue.toStringAsFixed(2)}',
+                                style: pw.TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: pw.FontWeight.bold,
+                                  color: balanceDue > 0
+                                      ? PdfColors.orange900
+                                      : PdfColors.green900,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
 
-          // ═══════════════════════════════════════════
-          // FOOTER — Signature
-          // ═══════════════════════════════════════════
+          // ═══════════════════════════════════════════════════════════════
+          // SECTION 7: SIGNATURE
+          // ═══════════════════════════════════════════════════════════════
           pw.Container(
             padding: const pw.EdgeInsets.fromLTRB(12, 8, 12, 10),
-            decoration: pw.BoxDecoration(border: pw.Border(top: borderSide)),
+            decoration: pw.BoxDecoration(border: pw.Border(bottom: thinBorder)),
             child: pw.Row(
               mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
               crossAxisAlignment: pw.CrossAxisAlignment.end,
@@ -473,25 +624,19 @@ class EventOrderPdfService {
                   crossAxisAlignment: pw.CrossAxisAlignment.end,
                   children: [
                     pw.Text(
-                      'For ${shopDetails.shopName.isNotEmpty ? shopDetails.shopName.toUpperCase() : 'STORE'}',
+                      'For ${shopDetails.shopName.isNotEmpty ? shopDetails.shopName.toUpperCase() : "STORE"}',
                       style: pw.TextStyle(
                         fontSize: 8,
                         fontWeight: pw.FontWeight.bold,
                       ),
                     ),
                     pw.SizedBox(height: 4),
-                    // Proprietor's Signature Image
                     if (shopDetails.signatureBase64 != null &&
                         shopDetails.signatureBase64!.isNotEmpty) ...[
-                      pw.Container(
+                      _buildSafeImage(
+                        base64String: shopDetails.signatureBase64!,
                         width: 60,
                         height: 25,
-                        child: pw.Image(
-                          pw.MemoryImage(
-                            base64Decode(shopDetails.signatureBase64!),
-                          ),
-                          fit: pw.BoxFit.contain,
-                        ),
                       ),
                     ] else ...[
                       pw.SizedBox(height: 12),
@@ -506,9 +651,9 @@ class EventOrderPdfService {
             ),
           ),
 
-          // ═══════════════════════════════════════════
-          // QR CODE AND BANK DETAILS
-          // ═══════════════════════════════════════════
+          // ═══════════════════════════════════════════════════════════════
+          // SECTION 8: BANK DETAILS & QR CODE
+          // ═══════════════════════════════════════════════════════════════
           if ((shopDetails.qrCodeBase64 != null &&
                   shopDetails.qrCodeBase64!.isNotEmpty) ||
               (shopDetails.bankName != null &&
@@ -517,7 +662,6 @@ class EventOrderPdfService {
                   shopDetails.accountNumber!.isNotEmpty))
             pw.Container(
               padding: const pw.EdgeInsets.all(10),
-              decoration: pw.BoxDecoration(border: pw.Border(top: thinBorder)),
               child: pw.Row(
                 crossAxisAlignment: pw.CrossAxisAlignment.center,
                 children: [
@@ -528,15 +672,10 @@ class EventOrderPdfService {
                       flex: 1,
                       child: pw.Column(
                         children: [
-                          pw.Container(
+                          _buildSafeImage(
+                            base64String: shopDetails.qrCodeBase64!,
                             width: 70,
                             height: 70,
-                            child: pw.Image(
-                              pw.MemoryImage(
-                                base64Decode(shopDetails.qrCodeBase64!),
-                              ),
-                              fit: pw.BoxFit.contain,
-                            ),
                           ),
                           pw.SizedBox(height: 3),
                           pw.Text(
@@ -554,12 +693,13 @@ class EventOrderPdfService {
                     pw.Expanded(
                       flex: 2,
                       child: pw.Container(
-                        padding: const pw.EdgeInsets.all(6),
+                        padding: const pw.EdgeInsets.all(8),
                         decoration: pw.BoxDecoration(
                           border: pw.Border.all(
                             color: PdfColors.grey400,
                             width: 0.5,
                           ),
+                          borderRadius: pw.BorderRadius.circular(4),
                         ),
                         child: pw.Column(
                           crossAxisAlignment: pw.CrossAxisAlignment.start,
@@ -571,7 +711,7 @@ class EventOrderPdfService {
                                 fontWeight: pw.FontWeight.bold,
                               ),
                             ),
-                            pw.SizedBox(height: 3),
+                            pw.SizedBox(height: 4),
                             if (shopDetails.bankName != null &&
                                 shopDetails.bankName!.isNotEmpty)
                               pw.Text(
@@ -608,12 +748,221 @@ class EventOrderPdfService {
     );
   }
 
-  /// Compact info row (label: value) for customer/invoice section
-  pw.Widget _buildCompactInfoRow(
-    String label,
-    String value, {
-    bool bold = false,
+  /// Build Event Details Table (Main Event + Sub-Events combined)
+  pw.Widget _buildEventDetailsTable(
+    EventOrder order,
+    DateFormat dateFormatter,
+    pw.BorderSide borderSide,
+    pw.BorderSide thinBorder,
+  ) {
+    final subEventsTotal = order.subEvents.fold(
+      0.0,
+      (sum, e) => sum + e.charges,
+    );
+    final mainEventCharges = order.eventCharges;
+    final allEventsTotal = mainEventCharges + subEventsTotal;
+
+    return pw.Container(
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          // Table Header Section
+          pw.Container(
+            width: double.infinity,
+            padding: const pw.EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: pw.BoxDecoration(
+              color: PdfColors.blue800,
+              border: pw.Border(bottom: thinBorder),
+            ),
+            child: pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+              children: [
+                pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  children: [
+                    pw.Text(
+                      'EVENT DETAILS',
+                      style: pw.TextStyle(
+                        fontSize: 10,
+                        fontWeight: pw.FontWeight.bold,
+                        color: PdfColors.white,
+                      ),
+                    ),
+                    pw.SizedBox(height: 2),
+                    pw.Text(
+                      'Main Event: ${order.orderName}',
+                      style: const pw.TextStyle(
+                        fontSize: 9,
+                        color: PdfColors.white,
+                      ),
+                    ),
+                  ],
+                ),
+                pw.Container(
+                  padding: const pw.EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: pw.BoxDecoration(
+                    color: PdfColors.white,
+                    borderRadius: pw.BorderRadius.circular(4),
+                  ),
+                  child: pw.Text(
+                    '${order.subEvents.length} Sub-Event(s)',
+                    style: pw.TextStyle(
+                      fontSize: 8,
+                      fontWeight: pw.FontWeight.bold,
+                      color: PdfColors.blue800,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Sub-Events Table
+          pw.Table(
+            border: pw.TableBorder(
+              horizontalInside: thinBorder,
+              verticalInside: thinBorder,
+              left: thinBorder,
+              right: thinBorder,
+            ),
+            columnWidths: {
+              0: const pw.FlexColumnWidth(0.5), // Sr
+              1: const pw.FlexColumnWidth(2.8), // Sub-Event Name
+              2: const pw.FlexColumnWidth(1.3), // Date
+              3: const pw.FlexColumnWidth(1.2), // Charges
+              4: const pw.FlexColumnWidth(2.0), // Notes
+            },
+            children: [
+              // Header Row
+              pw.TableRow(
+                decoration: const pw.BoxDecoration(color: PdfColors.grey200),
+                children: [
+                  _buildTableCell('Sr', isHeader: true),
+                  _buildTableCell(
+                    'Event / Sub-Event Name',
+                    isHeader: true,
+                    align: pw.TextAlign.left,
+                  ),
+                  _buildTableCell('Date', isHeader: true),
+                  _buildTableCell(
+                    'Charges',
+                    isHeader: true,
+                    align: pw.TextAlign.right,
+                  ),
+                  _buildTableCell(
+                    'Notes',
+                    isHeader: true,
+                    align: pw.TextAlign.left,
+                  ),
+                ],
+              ),
+              // Main Event Row (highlighted)
+              if (mainEventCharges > 0)
+                pw.TableRow(
+                  decoration: const pw.BoxDecoration(color: PdfColors.amber50),
+                  children: [
+                    _buildTableCell('★', isHeader: true),
+                    _buildTableCell(
+                      '${order.orderName} (Main Event)',
+                      isHeader: true,
+                      align: pw.TextAlign.left,
+                    ),
+                    _buildTableCell(dateFormatter.format(order.eventDate)),
+                    _buildTableCell(
+                      'Rs. ${mainEventCharges.toStringAsFixed(0)}',
+                      isHeader: true,
+                      align: pw.TextAlign.right,
+                    ),
+                    _buildTableCell('-', align: pw.TextAlign.left),
+                  ],
+                ),
+              // Sub-Event Data Rows
+              ...order.subEvents.asMap().entries.map((entry) {
+                final idx = entry.key;
+                final subEvent = entry.value;
+                return pw.TableRow(
+                  decoration: pw.BoxDecoration(
+                    color: idx % 2 == 0 ? PdfColors.white : PdfColors.grey50,
+                  ),
+                  children: [
+                    _buildTableCell('${idx + 1}'),
+                    _buildTableCell(subEvent.name, align: pw.TextAlign.left),
+                    _buildTableCell(dateFormatter.format(subEvent.date)),
+                    _buildTableCell(
+                      'Rs. ${subEvent.charges.toStringAsFixed(0)}',
+                      align: pw.TextAlign.right,
+                    ),
+                    _buildTableCell(
+                      subEvent.notes ?? '-',
+                      align: pw.TextAlign.left,
+                    ),
+                  ],
+                );
+              }),
+              // Total Row
+              pw.TableRow(
+                decoration: const pw.BoxDecoration(color: PdfColors.blue100),
+                children: [
+                  _buildTableCell(''),
+                  _buildTableCell(
+                    'EVENTS TOTAL',
+                    isHeader: true,
+                    align: pw.TextAlign.right,
+                  ),
+                  _buildTableCell(''),
+                  _buildTableCell(
+                    'Rs. ${allEventsTotal.toStringAsFixed(0)}',
+                    isHeader: true,
+                    align: pw.TextAlign.right,
+                  ),
+                  _buildTableCell(''),
+                ],
+              ),
+            ],
+          ),
+          pw.Container(
+            width: double.infinity,
+            decoration: pw.BoxDecoration(border: pw.Border(bottom: borderSide)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Build image safely with base64 decoding error handling
+  pw.Widget _buildSafeImage({
+    required String base64String,
+    double? width,
+    double? height,
+    pw.EdgeInsets? margin,
+    pw.EdgeInsets? padding,
+    pw.BoxDecoration? decoration,
+    pw.BoxFit fit = pw.BoxFit.contain,
   }) {
+    try {
+      final bytes = base64Decode(base64String);
+      if (bytes.isEmpty) {
+        debugPrint('[EventOrderPdfService] Empty image bytes');
+        return pw.SizedBox(width: width, height: height);
+      }
+      return pw.Container(
+        width: width,
+        height: height,
+        margin: margin,
+        padding: padding,
+        decoration: decoration,
+        child: pw.Image(pw.MemoryImage(bytes), fit: fit),
+      );
+    } catch (e) {
+      debugPrint('[EventOrderPdfService] Error decoding image: $e');
+      return pw.SizedBox(width: width, height: height);
+    }
+  }
+
+  /// Info line helper (Label: Value)
+  pw.Widget _buildInfoLine(String label, String value, {bool bold = false}) {
     return pw.Row(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
@@ -634,33 +983,19 @@ class EventOrderPdfService {
     );
   }
 
-  /// Compact amount row for totals section
-  pw.Widget _buildCompactAmountRow(
-    String label,
-    double amount, {
-    required pw.BorderSide border,
-    PdfColor? color,
-    bool bold = false,
-  }) {
-    return pw.Container(
-      padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: pw.BoxDecoration(border: pw.Border(bottom: border)),
+  /// Summary row helper
+  pw.Widget _buildSummaryRow(String label, double amount, {PdfColor? color}) {
+    return pw.Padding(
+      padding: const pw.EdgeInsets.symmetric(vertical: 2, horizontal: 8),
       child: pw.Row(
         mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
         children: [
-          pw.Text(
-            label,
-            style: pw.TextStyle(
-              fontSize: 9,
-              fontWeight: bold ? pw.FontWeight.bold : pw.FontWeight.normal,
-              color: color,
-            ),
-          ),
+          pw.Text(label, style: pw.TextStyle(fontSize: 9, color: color)),
           pw.Text(
             'Rs. ${amount.toStringAsFixed(2)}',
             style: pw.TextStyle(
               fontSize: 9,
-              fontWeight: bold ? pw.FontWeight.bold : pw.FontWeight.normal,
+              fontWeight: pw.FontWeight.bold,
               color: color,
             ),
           ),
@@ -669,76 +1004,94 @@ class EventOrderPdfService {
     );
   }
 
-  /// Build sub-events table for Event type orders
-  pw.Widget _buildSubEventsTable(
-    List<SubEvent> subEvents,
-    DateFormat dateFormatter,
-    pw.BorderSide borderSide,
-    pw.BorderSide thinBorder,
-  ) {
-    return pw.Container(
-      child: pw.Column(
-        crossAxisAlignment: pw.CrossAxisAlignment.start,
-        children: [
-          pw.Container(
-            width: double.infinity,
-            padding: const pw.EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: pw.BoxDecoration(
-              color: PdfColors.grey200,
-              border: pw.Border(bottom: thinBorder),
-            ),
-            child: pw.Text(
-              'SUB-EVENTS',
-              style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold),
-            ),
-          ),
-          pw.Table(
-            border: pw.TableBorder(
-              horizontalInside: thinBorder,
-              bottom: borderSide,
-            ),
-            columnWidths: {
-              0: const pw.FlexColumnWidth(1),
-              1: const pw.FlexColumnWidth(2.5),
-              2: const pw.FlexColumnWidth(1.5),
-              3: const pw.FlexColumnWidth(1.5),
-            },
-            children: [
-              // Header
-              pw.TableRow(
-                decoration: pw.BoxDecoration(color: PdfColors.grey100),
-                children: [
-                  _buildTableCell('#', isHeader: true),
-                  _buildTableCell('Event Name', isHeader: true),
-                  _buildTableCell('Date', isHeader: true),
-                  _buildTableCell(
-                    'Charges',
-                    isHeader: true,
-                    align: pw.TextAlign.right,
-                  ),
-                ],
-              ),
-              // Data rows
-              ...subEvents.asMap().entries.map((entry) {
-                final idx = entry.key;
-                final subEvent = entry.value;
-                return pw.TableRow(
-                  children: [
-                    _buildTableCell('${idx + 1}'),
-                    _buildTableCell(subEvent.name),
-                    _buildTableCell(dateFormatter.format(subEvent.date)),
-                    _buildTableCell(
-                      'Rs. ${subEvent.charges.toStringAsFixed(0)}',
-                      align: pw.TextAlign.right,
-                    ),
-                  ],
-                );
-              }),
-            ],
-          ),
-        ],
-      ),
-    );
+  /// Number to words converter
+  String _numberToWords(double number) {
+    final units = [
+      '',
+      'One',
+      'Two',
+      'Three',
+      'Four',
+      'Five',
+      'Six',
+      'Seven',
+      'Eight',
+      'Nine',
+      'Ten',
+      'Eleven',
+      'Twelve',
+      'Thirteen',
+      'Fourteen',
+      'Fifteen',
+      'Sixteen',
+      'Seventeen',
+      'Eighteen',
+      'Nineteen',
+    ];
+    final tens = [
+      '',
+      '',
+      'Twenty',
+      'Thirty',
+      'Forty',
+      'Fifty',
+      'Sixty',
+      'Seventy',
+      'Eighty',
+      'Ninety',
+    ];
+
+    if (number == 0) return 'Zero Rupees Only';
+
+    int rupees = number.floor();
+    int paise = ((number - rupees) * 100).round();
+
+    String result = '';
+
+    if (rupees >= 10000000) {
+      result += '${units[rupees ~/ 10000000]} Crore ';
+      rupees %= 10000000;
+    }
+    if (rupees >= 100000) {
+      result += '${units[rupees ~/ 100000]} Lakh ';
+      rupees %= 100000;
+    }
+    if (rupees >= 1000) {
+      int thousands = rupees ~/ 1000;
+      if (thousands < 20) {
+        result += '${units[thousands]} Thousand ';
+      } else {
+        result +=
+            '${tens[thousands ~/ 10]}${thousands % 10 > 0 ? " ${units[thousands % 10]}" : ""} Thousand ';
+      }
+      rupees %= 1000;
+    }
+    if (rupees >= 100) {
+      result += '${units[rupees ~/ 100]} Hundred ';
+      rupees %= 100;
+    }
+    if (rupees >= 20) {
+      result += tens[rupees ~/ 10];
+      if (rupees % 10 > 0) result += ' ${units[rupees % 10]}';
+      result += ' ';
+    } else if (rupees > 0) {
+      result += '${units[rupees]} ';
+    }
+
+    result += 'Rupees';
+    if (paise > 0) {
+      result += ' and ';
+      if (paise >= 20) {
+        result += tens[paise ~/ 10];
+        if (paise % 10 > 0) result += ' ${units[paise % 10]}';
+      } else {
+        result += units[paise];
+      }
+      result += ' Paise';
+    }
+    result += ' Only';
+
+    return result.trim();
   }
 
   /// Build products table for Sales Order type or Event products
@@ -748,59 +1101,88 @@ class EventOrderPdfService {
     pw.BorderSide thinBorder, {
     String title = 'PRODUCTS',
   }) {
+    final productsTotal = items.fold(0.0, (sum, item) => sum + item.total);
+
     return pw.Container(
       child: pw.Column(
         crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: [
+          // Header
           pw.Container(
             width: double.infinity,
-            padding: const pw.EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            padding: const pw.EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: pw.BoxDecoration(
-              color: PdfColors.grey200,
+              color: PdfColors.green800,
               border: pw.Border(bottom: thinBorder),
             ),
-            child: pw.Text(
-              title.toUpperCase(),
-              style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold),
+            child: pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+              children: [
+                pw.Text(
+                  title.toUpperCase(),
+                  style: pw.TextStyle(
+                    fontSize: 10,
+                    fontWeight: pw.FontWeight.bold,
+                    color: PdfColors.white,
+                  ),
+                ),
+                pw.Container(
+                  padding: const pw.EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: pw.BoxDecoration(
+                    color: PdfColors.white,
+                    borderRadius: pw.BorderRadius.circular(4),
+                  ),
+                  child: pw.Text(
+                    '${items.length} Item(s)',
+                    style: pw.TextStyle(
+                      fontSize: 8,
+                      fontWeight: pw.FontWeight.bold,
+                      color: PdfColors.green800,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
+          // Table
           pw.Table(
             border: pw.TableBorder(
               horizontalInside: thinBorder,
-              bottom: borderSide,
+              verticalInside: thinBorder,
+              left: thinBorder,
+              right: thinBorder,
             ),
             columnWidths: {
-              0: const pw.FlexColumnWidth(0.6),
-              1: const pw.FlexColumnWidth(2.5),
+              0: const pw.FlexColumnWidth(0.5),
+              1: const pw.FlexColumnWidth(2.8),
               2: const pw.FlexColumnWidth(0.8),
-              3: const pw.FlexColumnWidth(1),
-              4: const pw.FlexColumnWidth(0.8),
+              3: const pw.FlexColumnWidth(1.0),
+              4: const pw.FlexColumnWidth(0.7),
               5: const pw.FlexColumnWidth(1.2),
             },
             children: [
-              // Header
+              // Header Row
               pw.TableRow(
-                decoration: pw.BoxDecoration(color: PdfColors.grey100),
+                decoration: const pw.BoxDecoration(color: PdfColors.grey200),
                 children: [
-                  _buildTableCell('#', isHeader: true),
-                  _buildTableCell('Product', isHeader: true),
+                  _buildTableCell('Sr', isHeader: true),
                   _buildTableCell(
-                    'Qty',
+                    'Product Name',
                     isHeader: true,
-                    align: pw.TextAlign.center,
+                    align: pw.TextAlign.left,
                   ),
+                  _buildTableCell('Qty', isHeader: true),
                   _buildTableCell(
                     'Rate',
                     isHeader: true,
                     align: pw.TextAlign.right,
                   ),
+                  _buildTableCell('Disc', isHeader: true),
                   _buildTableCell(
-                    'Disc%',
-                    isHeader: true,
-                    align: pw.TextAlign.center,
-                  ),
-                  _buildTableCell(
-                    'Total',
+                    'Amount',
                     isHeader: true,
                     align: pw.TextAlign.right,
                   ),
@@ -811,13 +1193,13 @@ class EventOrderPdfService {
                 final idx = entry.key;
                 final item = entry.value;
                 return pw.TableRow(
+                  decoration: pw.BoxDecoration(
+                    color: idx % 2 == 0 ? PdfColors.white : PdfColors.grey50,
+                  ),
                   children: [
                     _buildTableCell('${idx + 1}'),
-                    _buildTableCell(item.productName),
-                    _buildTableCell(
-                      '${item.quantity}',
-                      align: pw.TextAlign.center,
-                    ),
+                    _buildTableCell(item.productName, align: pw.TextAlign.left),
+                    _buildTableCell('${item.quantity}'),
                     _buildTableCell(
                       'Rs. ${item.rate.toStringAsFixed(0)}',
                       align: pw.TextAlign.right,
@@ -826,7 +1208,6 @@ class EventOrderPdfService {
                       item.discountPercent > 0
                           ? '${item.discountPercent.toStringAsFixed(0)}%'
                           : '-',
-                      align: pw.TextAlign.center,
                     ),
                     _buildTableCell(
                       'Rs. ${item.total.toStringAsFixed(0)}',
@@ -835,7 +1216,31 @@ class EventOrderPdfService {
                   ],
                 );
               }),
+              // Total Row
+              pw.TableRow(
+                decoration: const pw.BoxDecoration(color: PdfColors.green100),
+                children: [
+                  _buildTableCell(''),
+                  _buildTableCell(
+                    'PRODUCTS TOTAL',
+                    isHeader: true,
+                    align: pw.TextAlign.right,
+                  ),
+                  _buildTableCell(''),
+                  _buildTableCell(''),
+                  _buildTableCell(''),
+                  _buildTableCell(
+                    'Rs. ${productsTotal.toStringAsFixed(0)}',
+                    isHeader: true,
+                    align: pw.TextAlign.right,
+                  ),
+                ],
+              ),
             ],
+          ),
+          pw.Container(
+            width: double.infinity,
+            decoration: pw.BoxDecoration(border: pw.Border(bottom: borderSide)),
           ),
         ],
       ),
@@ -846,7 +1251,7 @@ class EventOrderPdfService {
   pw.Widget _buildTableCell(
     String text, {
     bool isHeader = false,
-    pw.TextAlign align = pw.TextAlign.left,
+    pw.TextAlign align = pw.TextAlign.center,
   }) {
     return pw.Container(
       padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 6),

@@ -2415,10 +2415,23 @@ class _EventOrderListPageState extends State<EventOrderListPage>
       final isEvent = _selectedType == OrderType.event;
       final filterDesc = _getDateFilterLabel();
 
+      // Fetch shop details for the report header
+      Shop? shopDetails;
+      try {
+        shopDetails = await ShopRepository().getShopDetails().timeout(
+          const Duration(seconds: 5),
+          onTimeout: () => Shop.empty,
+        );
+      } catch (e) {
+        debugPrint('[EventOrderList] Failed to get shop details: $e');
+        shopDetails = Shop.empty;
+      }
+
       // Generate PDF bytes with timeout
       final pdfBytes =
           await EventOrderReportPdfGenerator.generate(
             orders: orders,
+            shopDetails: shopDetails,
             filterDescription: filterDesc,
             isEventReport: isEvent,
           ).timeout(

@@ -8,6 +8,7 @@ import 'package:printing/printing.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../domain/entities/event_order.dart';
+import '../../../shop/domain/entities/shop.dart';
 
 /// PDF Report generator for Event Orders / Sales Orders.
 /// Generates tabular reports from lists of orders with date filtering.
@@ -20,6 +21,7 @@ class EventOrderReportPdfGenerator {
   /// Generate PDF bytes from a list of event orders.
   static Future<Uint8List> generate({
     required List<EventOrder> orders,
+    Shop? shopDetails,
     String? filterDescription,
     bool isEventReport = true,
   }) async {
