@@ -35,7 +35,7 @@ class EventOrderPdfService {
     required Shop shopDetails,
   }) async {
     final pdf = pw.Document();
-    final dateFormatter = DateFormat('dd MMM yyyy');
+    final dateFormatter = DateFormat('dd MMM yyyy, hh:mm a');
 
     pdf.addPage(
       pw.Page(
@@ -579,170 +579,206 @@ class EventOrderPdfService {
           ),
 
           // ═══════════════════════════════════════════════════════════════
-          // SECTION 7: SIGNATURE
+          // SECTION 7: BANK DETAILS | CUSTOMER SIGNATURE | OWNER SIGNATURE
           // ═══════════════════════════════════════════════════════════════
           pw.Container(
-            padding: const pw.EdgeInsets.fromLTRB(12, 8, 12, 10),
-            decoration: pw.BoxDecoration(border: pw.Border(bottom: thinBorder)),
+            padding: const pw.EdgeInsets.all(10),
             child: pw.Row(
-              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
               crossAxisAlignment: pw.CrossAxisAlignment.end,
               children: [
-                // Customer Signature
-                pw.Column(
-                  crossAxisAlignment: pw.CrossAxisAlignment.start,
-                  children: [
-                    pw.SizedBox(height: 20),
-                    pw.Container(
-                      width: 100,
-                      decoration: const pw.BoxDecoration(
-                        border: pw.Border(
-                          bottom: pw.BorderSide(
-                            color: PdfColors.grey500,
-                            width: 0.5,
-                          ),
-                        ),
+                // LEFT: Bank Details with QR Code
+                pw.Expanded(
+                  flex: 3,
+                  child: pw.Container(
+                    padding: const pw.EdgeInsets.all(8),
+                    decoration: pw.BoxDecoration(
+                      color: lightBg,
+                      borderRadius: pw.BorderRadius.circular(4),
+                      border: pw.Border.all(
+                        color: PdfColors.grey400,
+                        width: 0.5,
                       ),
                     ),
-                    pw.SizedBox(height: 3),
-                    pw.Text(
-                      'Customer Signature',
-                      style: const pw.TextStyle(fontSize: 8),
+                    child: pw.Row(
+                      crossAxisAlignment: pw.CrossAxisAlignment.start,
+                      children: [
+                        // QR Code
+                        if (shopDetails.qrCodeBase64 != null &&
+                            shopDetails.qrCodeBase64!.isNotEmpty)
+                          pw.Container(
+                            margin: const pw.EdgeInsets.only(right: 8),
+                            child: pw.Column(
+                              children: [
+                                pw.Container(
+                                  width: 50,
+                                  height: 50,
+                                  padding: const pw.EdgeInsets.all(2),
+                                  decoration: pw.BoxDecoration(
+                                    border: pw.Border.all(
+                                      color: accentColor,
+                                      width: 0.5,
+                                    ),
+                                    borderRadius: pw.BorderRadius.circular(3),
+                                  ),
+                                  child: _buildSafeImage(
+                                    base64String: shopDetails.qrCodeBase64!,
+                                    width: 46,
+                                    height: 46,
+                                  ),
+                                ),
+                                pw.SizedBox(height: 2),
+                                pw.Text(
+                                  'Scan to Pay',
+                                  style: pw.TextStyle(
+                                    fontSize: 6,
+                                    color: accentColor,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        // Bank Details Text
+                        if ((shopDetails.bankName != null &&
+                                shopDetails.bankName!.isNotEmpty) ||
+                            (shopDetails.accountNumber != null &&
+                                shopDetails.accountNumber!.isNotEmpty))
+                          pw.Expanded(
+                            child: pw.Column(
+                              crossAxisAlignment: pw.CrossAxisAlignment.start,
+                              children: [
+                                pw.Text(
+                                  'Bank Details',
+                                  style: pw.TextStyle(
+                                    fontSize: 9,
+                                    fontWeight: pw.FontWeight.bold,
+                                    color: accentColor,
+                                  ),
+                                ),
+                                pw.SizedBox(height: 3),
+                                if (shopDetails.bankName != null &&
+                                    shopDetails.bankName!.isNotEmpty)
+                                  pw.Text(
+                                    shopDetails.bankName!,
+                                    style: pw.TextStyle(
+                                      fontSize: 8,
+                                      fontWeight: pw.FontWeight.bold,
+                                    ),
+                                  ),
+                                if (shopDetails.accountHolderName != null &&
+                                    shopDetails.accountHolderName!.isNotEmpty)
+                                  pw.Text(
+                                    'A/C Name: ${shopDetails.accountHolderName}',
+                                    style: const pw.TextStyle(fontSize: 8),
+                                  ),
+                                if (shopDetails.accountNumber != null &&
+                                    shopDetails.accountNumber!.isNotEmpty)
+                                  pw.Text(
+                                    'A/C No: ${shopDetails.accountNumber}',
+                                    style: const pw.TextStyle(fontSize: 8),
+                                  ),
+                                if (shopDetails.ifscCode != null &&
+                                    shopDetails.ifscCode!.isNotEmpty)
+                                  pw.Text(
+                                    'IFSC: ${shopDetails.ifscCode}',
+                                    style: const pw.TextStyle(fontSize: 8),
+                                  ),
+                              ],
+                            ),
+                          )
+                        else if (shopDetails.qrCodeBase64 == null ||
+                            shopDetails.qrCodeBase64!.isEmpty)
+                          pw.Expanded(
+                            child: pw.Center(
+                              child: pw.Text(
+                                'Bank Details Not Available',
+                                style: const pw.TextStyle(
+                                  fontSize: 8,
+                                  color: PdfColors.grey500,
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
-                  ],
-                ),
-                // Generated date
-                pw.Text(
-                  'Generated: ${DateFormat('dd/MM/yyyy hh:mm a').format(DateTime.now())}',
-                  style: const pw.TextStyle(
-                    fontSize: 7,
-                    color: PdfColors.grey600,
                   ),
                 ),
-                // Shop Signature
-                pw.Column(
-                  crossAxisAlignment: pw.CrossAxisAlignment.end,
-                  children: [
-                    pw.Text(
-                      'For ${shopDetails.shopName.isNotEmpty ? shopDetails.shopName.toUpperCase() : "STORE"}',
-                      style: pw.TextStyle(
-                        fontSize: 8,
-                        fontWeight: pw.FontWeight.bold,
-                      ),
+                pw.SizedBox(width: 8),
+                // CENTER: Customer Signature
+                pw.Expanded(
+                  flex: 2,
+                  child: pw.Container(
+                    padding: const pw.EdgeInsets.all(8),
+                    child: pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.center,
+                      children: [
+                        pw.SizedBox(height: 30),
+                        pw.Container(
+                          width: 100,
+                          decoration: const pw.BoxDecoration(
+                            border: pw.Border(
+                              bottom: pw.BorderSide(
+                                color: PdfColors.grey500,
+                                width: 0.5,
+                              ),
+                            ),
+                          ),
+                        ),
+                        pw.SizedBox(height: 4),
+                        pw.Text(
+                          'Customer Signature',
+                          style: pw.TextStyle(
+                            fontSize: 8,
+                            fontWeight: pw.FontWeight.bold,
+                          ),
+                        ),
+                      ],
                     ),
-                    pw.SizedBox(height: 4),
-                    if (shopDetails.signatureBase64 != null &&
-                        shopDetails.signatureBase64!.isNotEmpty) ...[
-                      _buildSafeImage(
-                        base64String: shopDetails.signatureBase64!,
-                        width: 60,
-                        height: 25,
-                      ),
-                    ] else ...[
-                      pw.SizedBox(height: 12),
-                    ],
-                    pw.Text(
-                      'Authorized Signatory',
-                      style: const pw.TextStyle(fontSize: 8),
+                  ),
+                ),
+                pw.SizedBox(width: 8),
+                // RIGHT: Owner/Authorized Signature
+                pw.Expanded(
+                  flex: 2,
+                  child: pw.Container(
+                    padding: const pw.EdgeInsets.all(8),
+                    child: pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.center,
+                      children: [
+                        if (shopDetails.signatureBase64 != null &&
+                            shopDetails.signatureBase64!.isNotEmpty)
+                          _buildSafeImage(
+                            base64String: shopDetails.signatureBase64!,
+                            width: 70,
+                            height: 28,
+                          )
+                        else
+                          pw.SizedBox(height: 22),
+                        pw.Container(
+                          width: 100,
+                          decoration: const pw.BoxDecoration(
+                            border: pw.Border(
+                              bottom: pw.BorderSide(
+                                color: PdfColors.grey500,
+                                width: 0.5,
+                              ),
+                            ),
+                          ),
+                        ),
+                        pw.SizedBox(height: 4),
+                        pw.Text(
+                          'Authorized Signatory',
+                          style: pw.TextStyle(
+                            fontSize: 8,
+                            fontWeight: pw.FontWeight.bold,
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ],
             ),
           ),
-
-          // ═══════════════════════════════════════════════════════════════
-          // SECTION 8: BANK DETAILS & QR CODE
-          // ═══════════════════════════════════════════════════════════════
-          if ((shopDetails.qrCodeBase64 != null &&
-                  shopDetails.qrCodeBase64!.isNotEmpty) ||
-              (shopDetails.bankName != null &&
-                  shopDetails.bankName!.isNotEmpty) ||
-              (shopDetails.accountNumber != null &&
-                  shopDetails.accountNumber!.isNotEmpty))
-            pw.Container(
-              padding: const pw.EdgeInsets.all(10),
-              child: pw.Row(
-                crossAxisAlignment: pw.CrossAxisAlignment.center,
-                children: [
-                  // QR Code on left
-                  if (shopDetails.qrCodeBase64 != null &&
-                      shopDetails.qrCodeBase64!.isNotEmpty)
-                    pw.Expanded(
-                      flex: 1,
-                      child: pw.Column(
-                        children: [
-                          _buildSafeImage(
-                            base64String: shopDetails.qrCodeBase64!,
-                            width: 70,
-                            height: 70,
-                          ),
-                          pw.SizedBox(height: 3),
-                          pw.Text(
-                            'Scan to Pay',
-                            style: const pw.TextStyle(fontSize: 7),
-                          ),
-                        ],
-                      ),
-                    ),
-                  // Bank Details on right
-                  if ((shopDetails.bankName != null &&
-                          shopDetails.bankName!.isNotEmpty) ||
-                      (shopDetails.accountNumber != null &&
-                          shopDetails.accountNumber!.isNotEmpty))
-                    pw.Expanded(
-                      flex: 2,
-                      child: pw.Container(
-                        padding: const pw.EdgeInsets.all(8),
-                        decoration: pw.BoxDecoration(
-                          border: pw.Border.all(
-                            color: PdfColors.grey400,
-                            width: 0.5,
-                          ),
-                          borderRadius: pw.BorderRadius.circular(4),
-                        ),
-                        child: pw.Column(
-                          crossAxisAlignment: pw.CrossAxisAlignment.start,
-                          children: [
-                            pw.Text(
-                              'Bank Details',
-                              style: pw.TextStyle(
-                                fontSize: 9,
-                                fontWeight: pw.FontWeight.bold,
-                              ),
-                            ),
-                            pw.SizedBox(height: 4),
-                            if (shopDetails.bankName != null &&
-                                shopDetails.bankName!.isNotEmpty)
-                              pw.Text(
-                                shopDetails.bankName!,
-                                style: const pw.TextStyle(fontSize: 8),
-                              ),
-                            if (shopDetails.accountHolderName != null &&
-                                shopDetails.accountHolderName!.isNotEmpty)
-                              pw.Text(
-                                'A/C Name: ${shopDetails.accountHolderName}',
-                                style: const pw.TextStyle(fontSize: 8),
-                              ),
-                            if (shopDetails.accountNumber != null &&
-                                shopDetails.accountNumber!.isNotEmpty)
-                              pw.Text(
-                                'A/C No: ${shopDetails.accountNumber}',
-                                style: const pw.TextStyle(fontSize: 8),
-                              ),
-                            if (shopDetails.ifscCode != null &&
-                                shopDetails.ifscCode!.isNotEmpty)
-                              pw.Text(
-                                'IFSC: ${shopDetails.ifscCode}',
-                                style: const pw.TextStyle(fontSize: 8),
-                              ),
-                          ],
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ),
         ],
       ),
     );
@@ -829,10 +865,9 @@ class EventOrderPdfService {
             ),
             columnWidths: {
               0: const pw.FlexColumnWidth(0.5), // Sr
-              1: const pw.FlexColumnWidth(2.8), // Sub-Event Name
-              2: const pw.FlexColumnWidth(1.3), // Date
-              3: const pw.FlexColumnWidth(1.2), // Charges
-              4: const pw.FlexColumnWidth(2.0), // Notes
+              1: const pw.FlexColumnWidth(3.0), // Sub-Event Name
+              2: const pw.FlexColumnWidth(2.0), // Date
+              3: const pw.FlexColumnWidth(1.5), // Charges
             },
             children: [
               // Header Row
@@ -851,11 +886,6 @@ class EventOrderPdfService {
                     isHeader: true,
                     align: pw.TextAlign.right,
                   ),
-                  _buildTableCell(
-                    'Notes',
-                    isHeader: true,
-                    align: pw.TextAlign.left,
-                  ),
                 ],
               ),
               // Main Event Row (highlighted)
@@ -863,7 +893,7 @@ class EventOrderPdfService {
                 pw.TableRow(
                   decoration: const pw.BoxDecoration(color: PdfColors.amber50),
                   children: [
-                    _buildTableCell('★', isHeader: true),
+                    _buildTableCell('1', isHeader: true),
                     _buildTableCell(
                       '${order.orderName} (Main Event)',
                       isHeader: true,
@@ -875,28 +905,24 @@ class EventOrderPdfService {
                       isHeader: true,
                       align: pw.TextAlign.right,
                     ),
-                    _buildTableCell('-', align: pw.TextAlign.left),
                   ],
                 ),
               // Sub-Event Data Rows
               ...order.subEvents.asMap().entries.map((entry) {
                 final idx = entry.key;
                 final subEvent = entry.value;
+                final srNo = mainEventCharges > 0 ? idx + 2 : idx + 1;
                 return pw.TableRow(
                   decoration: pw.BoxDecoration(
                     color: idx % 2 == 0 ? PdfColors.white : PdfColors.grey50,
                   ),
                   children: [
-                    _buildTableCell('${idx + 1}'),
+                    _buildTableCell('$srNo'),
                     _buildTableCell(subEvent.name, align: pw.TextAlign.left),
                     _buildTableCell(dateFormatter.format(subEvent.date)),
                     _buildTableCell(
                       'Rs. ${subEvent.charges.toStringAsFixed(0)}',
                       align: pw.TextAlign.right,
-                    ),
-                    _buildTableCell(
-                      subEvent.notes ?? '-',
-                      align: pw.TextAlign.left,
                     ),
                   ],
                 );
@@ -917,7 +943,6 @@ class EventOrderPdfService {
                     isHeader: true,
                     align: pw.TextAlign.right,
                   ),
-                  _buildTableCell(''),
                 ],
               ),
             ],
