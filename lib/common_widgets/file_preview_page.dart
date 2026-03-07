@@ -6,7 +6,6 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:printing/printing.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:pdf/pdf.dart';
-import 'package:c_billing/core/services/communication_service.dart';
 
 /// A reusable page for previewing PDF and CSV files with share and print functionality.
 ///
@@ -340,119 +339,39 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
     if (_isSharingWhatsApp) return;
 
     setState(() => _isSharingWhatsApp = true);
+
+    final customerPhone = widget.customerPhone;
+
     try {
-      final customerPhone = widget.customerPhone;
-
-      if (customerPhone != null && customerPhone.isNotEmpty) {
-        // If customer phone is available, open WhatsApp chat with that number
-        // Then share the file - user can attach in the opened chat
-        final message = 'Please find attached: ${widget.fileName}';
-
-        // First share the file using system share sheet
-        await Share.shareXFiles(
-          [XFile(widget.file.path)],
-          subject: widget.fileName,
-          text: message,
-        );
-
-        // After sharing, optionally open WhatsApp chat with the customer
-        // This gives them the option to send to the specific customer
-        if (mounted) {
-          _showWhatsAppOptionDialog(customerPhone);
-        }
-      } else {
-        // No customer phone, just open share sheet
-        await Share.shareXFiles(
-          [XFile(widget.file.path)],
-          subject: widget.fileName,
-          text: 'Sharing: ${widget.fileName}',
-        );
+      // Check if file exists
+      if (!await widget.file.exists()) {
+        _showSnackBar('File not found', isError: true);
+        return;
       }
+
+      // Show guidance message
+      if (customerPhone != null && customerPhone.isNotEmpty) {
+        _showSnackBar('Tap WhatsApp → Select "$customerPhone"', isError: false);
+      }
+
+      // Share file directly - this opens share sheet with file attached
+      // User selects WhatsApp from sheet, then picks the contact
+      await Share.shareXFiles(
+        [XFile(widget.file.path)],
+        subject: widget.fileName,
+        text: customerPhone != null && customerPhone.isNotEmpty
+            ? 'Invoice for $customerPhone'
+            : 'Invoice: ${widget.fileName}',
+      );
     } catch (e) {
       if (mounted) {
-        _showSnackBar('Error sharing via WhatsApp: $e', isError: true);
+        _showSnackBar('Error sharing: $e', isError: true);
       }
     } finally {
       if (mounted) {
         setState(() => _isSharingWhatsApp = false);
       }
     }
-  }
-
-  /// Show dialog with option to open WhatsApp chat with customer
-  void _showWhatsAppOptionDialog(String phoneNumber) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: const Color(0xFF25D366).withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const FaIcon(
-                FontAwesomeIcons.whatsapp,
-                color: Color(0xFF25D366),
-                size: 20,
-              ),
-            ),
-            const SizedBox(width: 12),
-            const Expanded(
-              child: Text(
-                'Open Customer Chat?',
-                style: TextStyle(
-                  fontFamily: 'Literata',
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ],
-        ),
-        content: Text(
-          'Would you like to open WhatsApp chat with the customer ($phoneNumber) to send the file directly?',
-          style: TextStyle(
-            fontFamily: 'Literata',
-            fontSize: 14,
-            color: Colors.grey[700],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              'Cancel',
-              style: TextStyle(fontFamily: 'Literata', color: Colors.grey[600]),
-            ),
-          ),
-          ElevatedButton.icon(
-            onPressed: () {
-              Navigator.pop(context);
-              CommunicationService.instance.openWhatsApp(
-                phoneNumber,
-                message: 'Please find attached: ${widget.fileName}',
-                context: context,
-              );
-            },
-            icon: const FaIcon(FontAwesomeIcons.whatsapp, size: 16),
-            label: const Text(
-              'Open Chat',
-              style: TextStyle(fontFamily: 'Literata'),
-            ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF25D366),
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
   }
 
   Future<void> _handlePrint() async {
