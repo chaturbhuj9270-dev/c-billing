@@ -1,7 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
-import 'package:printing/printing.dart';
 
 import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/services/language_service.dart';
@@ -1853,6 +1854,19 @@ class _EventOrderListPageState extends State<EventOrderListPage>
         throw Exception('PDF generation failed - empty result');
       }
 
+      // Save PDF to temp file for preview
+      debugPrint('[EventOrderList] Saving PDF to temp file...');
+      final tempDir = await Directory.systemTemp.createTemp('invoice_');
+      final isEvent = order.orderType == OrderType.event;
+      final prefix = isEvent ? 'event_invoice' : 'order_invoice';
+      final safeOrderName = order.orderName
+          .replaceAll(RegExp(r'[^\w\s]'), '')
+          .replaceAll(' ', '_');
+      final fileName = '${prefix}_$safeOrderName.pdf';
+      final file = File('${tempDir.path}/$fileName');
+      await file.writeAsBytes(pdfBytes);
+      debugPrint('[EventOrderList] PDF saved to: ${file.path}');
+
       // Close loading dialog
       closeDialog();
 
@@ -1864,14 +1878,21 @@ class _EventOrderListPageState extends State<EventOrderListPage>
       // Reset processing state before preview
       setState(() => _processingOrderId = null);
 
-      final isEvent = order.orderType == OrderType.event;
       final title = isEvent ? 'Event Invoice' : 'Order Invoice';
 
-      // Use Printing.layoutPdf for direct preview (more reliable)
+      // Navigate to FilePreviewPage for preview with share/print options
       debugPrint('[EventOrderList] Opening PDF preview...');
-      await Printing.layoutPdf(
-        onLayout: (format) async => pdfBytes,
-        name: '$title - ${order.orderName}',
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => FilePreviewPage(
+            file: file,
+            fileName: '$title - ${order.orderName}',
+            fileType: FilePreviewType.pdf,
+            subtitle: DateFormat('dd MMM yyyy').format(order.eventDate),
+            customerPhone: order.customerContact,
+          ),
+        ),
       );
       debugPrint('[EventOrderList] PDF preview closed');
     } catch (e, stack) {
