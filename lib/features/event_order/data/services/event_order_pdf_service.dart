@@ -40,7 +40,7 @@ class EventOrderPdfService {
     pdf.addPage(
       pw.Page(
         pageFormat: PdfPageFormat.a4,
-        margin: const pw.EdgeInsets.all(24),
+        margin: const pw.EdgeInsets.all(12),
         build: (context) =>
             _buildOrderContent(order, shopDetails, dateFormatter),
       ),
@@ -49,7 +49,7 @@ class EventOrderPdfService {
     return pdf;
   }
 
-  /// Build the main content of the PDF - Bill-like UI
+  /// Build the main content of the PDF - Compact Professional UI
   pw.Widget _buildOrderContent(
     EventOrder order,
     Shop shopDetails,
@@ -58,7 +58,7 @@ class EventOrderPdfService {
     final isEvent = order.orderType == OrderType.event;
     final primaryColor = PdfColor.fromHex('#1A1A1A');
     final accentColor = PdfColor.fromHex('#4A4A4A');
-    final lightBg = PdfColor.fromHex('#F5F5F5');
+    final lightBg = PdfColor.fromHex('#F8F9FA');
     final borderSide = pw.BorderSide(color: primaryColor, width: 0.8);
     final thinBorder = pw.BorderSide(color: PdfColors.grey400, width: 0.5);
 
@@ -78,79 +78,70 @@ class EventOrderPdfService {
 
     return pw.Container(
       decoration: pw.BoxDecoration(
-        border: pw.Border.all(color: primaryColor, width: 1.5),
+        border: pw.Border.all(color: primaryColor, width: 1.2),
       ),
       child: pw.Column(
         mainAxisSize: pw.MainAxisSize.min,
         children: [
           // ═══════════════════════════════════════════════════════════════
-          // SECTION 1: SHOP HEADER (Gradient Background)
+          // ROW 1: COMPACT HEADER (Logo | Shop Info | Invoice Type | GSTIN)
           // ═══════════════════════════════════════════════════════════════
           pw.Container(
             width: double.infinity,
-            padding: const pw.EdgeInsets.symmetric(
-              vertical: 12,
-              horizontal: 16,
-            ),
-            decoration: pw.BoxDecoration(
-              gradient: pw.LinearGradient(
-                colors: [primaryColor, accentColor],
-                begin: pw.Alignment.centerLeft,
-                end: pw.Alignment.centerRight,
-              ),
-            ),
+            padding: const pw.EdgeInsets.symmetric(vertical: 8, horizontal: 10),
+            decoration: pw.BoxDecoration(color: primaryColor),
             child: pw.Row(
               crossAxisAlignment: pw.CrossAxisAlignment.center,
               children: [
-                // Logo on left
+                // Logo
                 if (shopDetails.shopLogoBase64 != null &&
                     shopDetails.shopLogoBase64!.isNotEmpty)
                   _buildSafeImage(
                     base64String: shopDetails.shopLogoBase64!,
-                    width: 50,
-                    height: 50,
-                    margin: const pw.EdgeInsets.only(right: 12),
+                    width: 36,
+                    height: 36,
+                    margin: const pw.EdgeInsets.only(right: 8),
                     decoration: pw.BoxDecoration(
                       color: PdfColors.white,
-                      borderRadius: pw.BorderRadius.circular(6),
+                      borderRadius: pw.BorderRadius.circular(4),
                     ),
-                    padding: const pw.EdgeInsets.all(4),
+                    padding: const pw.EdgeInsets.all(2),
                   ),
-                // Shop details in center
+                // Shop Info
                 pw.Expanded(
+                  flex: 4,
                   child: pw.Column(
                     crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    mainAxisSize: pw.MainAxisSize.min,
                     children: [
                       pw.Text(
                         shopDetails.shopName.isNotEmpty
                             ? shopDetails.shopName.toUpperCase()
-                            : 'STORE',
+                            : 'BUSINESS',
                         style: pw.TextStyle(
-                          fontSize: 20,
+                          fontSize: 13,
                           fontWeight: pw.FontWeight.bold,
                           color: PdfColors.white,
-                          letterSpacing: 1.2,
+                          letterSpacing: 0.8,
                         ),
                       ),
-                      if (shopDetails.address.isNotEmpty) ...[
-                        pw.SizedBox(height: 2),
+                      if (shopDetails.address.isNotEmpty)
                         pw.Text(
                           shopDetails.address,
                           style: const pw.TextStyle(
-                            fontSize: 9,
-                            color: PdfColors.white,
+                            fontSize: 7,
+                            color: PdfColors.grey300,
                           ),
+                          maxLines: 1,
                         ),
-                      ],
-                      pw.SizedBox(height: 2),
                       pw.Row(
                         children: [
                           if (shopDetails.phone.isNotEmpty)
                             pw.Text(
-                              'Ph: ${shopDetails.phone}',
+                              shopDetails.phone,
                               style: const pw.TextStyle(
-                                fontSize: 9,
-                                color: PdfColors.white,
+                                fontSize: 7,
+                                color: PdfColors.grey300,
                               ),
                             ),
                           if (shopDetails.phone.isNotEmpty &&
@@ -159,8 +150,8 @@ class EventOrderPdfService {
                             pw.Text(
                               ' | ',
                               style: const pw.TextStyle(
-                                fontSize: 9,
-                                color: PdfColors.white,
+                                fontSize: 7,
+                                color: PdfColors.grey500,
                               ),
                             ),
                           if (shopDetails.email != null &&
@@ -168,8 +159,8 @@ class EventOrderPdfService {
                             pw.Text(
                               shopDetails.email!,
                               style: const pw.TextStyle(
-                                fontSize: 9,
-                                color: PdfColors.white,
+                                fontSize: 7,
+                                color: PdfColors.grey300,
                               ),
                             ),
                         ],
@@ -177,34 +168,57 @@ class EventOrderPdfService {
                     ],
                   ),
                 ),
-                // GST badge on right
+                // Invoice Type Badge
+                pw.Container(
+                  padding: const pw.EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
+                  decoration: pw.BoxDecoration(
+                    color: PdfColors.white,
+                    borderRadius: pw.BorderRadius.circular(3),
+                  ),
+                  child: pw.Text(
+                    isEvent ? 'EVENT INVOICE' : 'ORDER INVOICE',
+                    style: pw.TextStyle(
+                      fontSize: 9,
+                      fontWeight: pw.FontWeight.bold,
+                      color: primaryColor,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
+                // GSTIN
                 if (shopDetails.gstNumber != null &&
                     shopDetails.gstNumber!.isNotEmpty)
                   pw.Container(
+                    margin: const pw.EdgeInsets.only(left: 8),
                     padding: const pw.EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 6,
+                      horizontal: 6,
+                      vertical: 4,
                     ),
                     decoration: pw.BoxDecoration(
-                      color: PdfColors.white,
-                      borderRadius: pw.BorderRadius.circular(4),
+                      border: pw.Border.all(
+                        color: PdfColors.grey500,
+                        width: 0.5,
+                      ),
+                      borderRadius: pw.BorderRadius.circular(2),
                     ),
                     child: pw.Column(
                       children: [
                         pw.Text(
                           'GSTIN',
-                          style: pw.TextStyle(
-                            fontSize: 7,
-                            fontWeight: pw.FontWeight.bold,
-                            color: primaryColor,
+                          style: const pw.TextStyle(
+                            fontSize: 5,
+                            color: PdfColors.grey400,
                           ),
                         ),
                         pw.Text(
                           shopDetails.gstNumber!,
                           style: pw.TextStyle(
-                            fontSize: 9,
+                            fontSize: 7,
                             fontWeight: pw.FontWeight.bold,
-                            color: primaryColor,
+                            color: PdfColors.white,
                           ),
                         ),
                       ],
@@ -215,147 +229,221 @@ class EventOrderPdfService {
           ),
 
           // ═══════════════════════════════════════════════════════════════
-          // SECTION 2: INVOICE TITLE BAR
+          // ROW 2: ORDER INFO BAR (Event/Order | Date | Status | Created)
           // ═══════════════════════════════════════════════════════════════
           pw.Container(
             width: double.infinity,
-            padding: const pw.EdgeInsets.symmetric(vertical: 6),
-            color: lightBg,
-            child: pw.Center(
-              child: pw.Text(
-                isEvent ? 'EVENT INVOICE' : 'ORDER INVOICE',
-                style: pw.TextStyle(
-                  fontSize: 14,
-                  fontWeight: pw.FontWeight.bold,
-                  letterSpacing: 2.0,
+            padding: const pw.EdgeInsets.symmetric(vertical: 5, horizontal: 10),
+            decoration: pw.BoxDecoration(
+              color: lightBg,
+              border: pw.Border(bottom: thinBorder),
+            ),
+            child: pw.Row(
+              children: [
+                pw.Expanded(
+                  flex: 3,
+                  child: pw.Row(
+                    children: [
+                      pw.Text(
+                        '${isEvent ? "Event" : "Order"}: ',
+                        style: const pw.TextStyle(
+                          fontSize: 8,
+                          color: PdfColors.grey600,
+                        ),
+                      ),
+                      pw.Expanded(
+                        child: pw.Text(
+                          order.orderName,
+                          style: pw.TextStyle(
+                            fontSize: 9,
+                            fontWeight: pw.FontWeight.bold,
+                          ),
+                          maxLines: 1,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
+                pw.Container(
+                  width: 1,
+                  height: 12,
+                  color: PdfColors.grey400,
+                  margin: const pw.EdgeInsets.symmetric(horizontal: 8),
+                ),
+                pw.Expanded(
+                  flex: 2,
+                  child: pw.Text(
+                    dateFormatter.format(order.eventDate),
+                    style: const pw.TextStyle(fontSize: 8),
+                    textAlign: pw.TextAlign.center,
+                  ),
+                ),
+                pw.Container(
+                  width: 1,
+                  height: 12,
+                  color: PdfColors.grey400,
+                  margin: const pw.EdgeInsets.symmetric(horizontal: 8),
+                ),
+                pw.Container(
+                  padding: const pw.EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
+                  decoration: pw.BoxDecoration(
+                    color: _getStatusColor(order.status),
+                    borderRadius: pw.BorderRadius.circular(2),
+                  ),
+                  child: pw.Text(
+                    order.status.displayName.toUpperCase(),
+                    style: pw.TextStyle(
+                      fontSize: 7,
+                      fontWeight: pw.FontWeight.bold,
+                      color: PdfColors.white,
+                    ),
+                  ),
+                ),
+                pw.Container(
+                  width: 1,
+                  height: 12,
+                  color: PdfColors.grey400,
+                  margin: const pw.EdgeInsets.symmetric(horizontal: 8),
+                ),
+                pw.Text(
+                  'Created: ${DateFormat('dd/MM/yy').format(order.createdAt)}',
+                  style: const pw.TextStyle(
+                    fontSize: 7,
+                    color: PdfColors.grey600,
+                  ),
+                ),
+              ],
             ),
           ),
 
           // ═══════════════════════════════════════════════════════════════
-          // SECTION 3: CUSTOMER & INVOICE INFO (3-Column Layout)
+          // ROW 3: CUSTOMER & OWNER INFO (2-Column Compact)
           // ═══════════════════════════════════════════════════════════════
           pw.Container(
             decoration: pw.BoxDecoration(border: pw.Border(bottom: borderSide)),
             child: pw.Row(
               children: [
-                // Left: Customer Details (BILL TO)
+                // BILL TO
                 pw.Expanded(
-                  flex: 5,
+                  flex: 6,
                   child: pw.Container(
-                    padding: const pw.EdgeInsets.all(10),
+                    padding: const pw.EdgeInsets.all(8),
                     decoration: pw.BoxDecoration(
                       border: pw.Border(right: thinBorder),
                     ),
-                    child: pw.Column(
+                    child: pw.Row(
                       crossAxisAlignment: pw.CrossAxisAlignment.start,
                       children: [
-                        pw.Text(
-                          'BILL TO',
-                          style: pw.TextStyle(
-                            fontSize: 8,
-                            fontWeight: pw.FontWeight.bold,
+                        pw.Container(
+                          padding: const pw.EdgeInsets.symmetric(
+                            horizontal: 4,
+                            vertical: 2,
+                          ),
+                          decoration: pw.BoxDecoration(
                             color: accentColor,
+                            borderRadius: pw.BorderRadius.circular(2),
+                          ),
+                          child: pw.Text(
+                            'BILL TO',
+                            style: pw.TextStyle(
+                              fontSize: 6,
+                              fontWeight: pw.FontWeight.bold,
+                              color: PdfColors.white,
+                            ),
                           ),
                         ),
-                        pw.SizedBox(height: 4),
-                        pw.Text(
-                          order.customerName.toUpperCase(),
-                          style: pw.TextStyle(
-                            fontSize: 11,
-                            fontWeight: pw.FontWeight.bold,
+                        pw.SizedBox(width: 8),
+                        pw.Expanded(
+                          child: pw.Column(
+                            crossAxisAlignment: pw.CrossAxisAlignment.start,
+                            children: [
+                              pw.Text(
+                                order.customerName.toUpperCase(),
+                                style: pw.TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: pw.FontWeight.bold,
+                                ),
+                              ),
+                              pw.Row(
+                                children: [
+                                  if (order.customerContact.isNotEmpty)
+                                    pw.Text(
+                                      order.customerContact,
+                                      style: const pw.TextStyle(fontSize: 8),
+                                    ),
+                                  if (order.customerContact.isNotEmpty &&
+                                      order.customerAddress != null &&
+                                      order.customerAddress!.isNotEmpty)
+                                    pw.Text(
+                                      ' | ',
+                                      style: const pw.TextStyle(
+                                        fontSize: 8,
+                                        color: PdfColors.grey500,
+                                      ),
+                                    ),
+                                  if (order.customerAddress != null &&
+                                      order.customerAddress!.isNotEmpty)
+                                    pw.Expanded(
+                                      child: pw.Text(
+                                        order.customerAddress!,
+                                        style: const pw.TextStyle(fontSize: 7),
+                                        maxLines: 1,
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ],
                           ),
                         ),
-                        if (order.customerContact.isNotEmpty) ...[
-                          pw.SizedBox(height: 2),
-                          pw.Text(
-                            'Mobile: ${order.customerContact}',
-                            style: const pw.TextStyle(fontSize: 9),
-                          ),
-                        ],
-                        if (order.customerAddress != null &&
-                            order.customerAddress!.isNotEmpty) ...[
-                          pw.SizedBox(height: 2),
-                          pw.Text(
-                            'Address: ${order.customerAddress}',
-                            style: const pw.TextStyle(fontSize: 8),
-                          ),
-                        ],
                       ],
                     ),
                   ),
                 ),
-                // Center: Invoice/Event Details
+                // PROPRIETOR / LOCATION
                 pw.Expanded(
                   flex: 4,
                   child: pw.Container(
-                    padding: const pw.EdgeInsets.all(10),
-                    decoration: pw.BoxDecoration(
-                      border: pw.Border(right: thinBorder),
-                    ),
-                    child: pw.Column(
-                      crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    padding: const pw.EdgeInsets.all(8),
+                    child: pw.Row(
+                      mainAxisAlignment: pw.MainAxisAlignment.end,
+                      crossAxisAlignment: pw.CrossAxisAlignment.center,
                       children: [
-                        _buildInfoLine(
-                          isEvent ? 'Event' : 'Order',
-                          order.orderName,
-                          bold: true,
-                        ),
-                        pw.SizedBox(height: 3),
-                        _buildInfoLine(
-                          isEvent ? 'Event Date' : 'Delivery Date',
-                          dateFormatter.format(order.eventDate),
-                        ),
-                        pw.SizedBox(height: 3),
-                        _buildInfoLine(
-                          'Status',
-                          order.status.displayName.toUpperCase(),
-                        ),
                         if (order.eventLocation != null &&
-                            order.eventLocation!.isNotEmpty) ...[
-                          pw.SizedBox(height: 3),
-                          _buildInfoLine('Location', order.eventLocation!),
-                        ],
-                      ],
-                    ),
-                  ),
-                ),
-                // Right: Owner/Proprietor Details
-                pw.Expanded(
-                  flex: 3,
-                  child: pw.Container(
-                    padding: const pw.EdgeInsets.all(10),
-                    child: pw.Column(
-                      crossAxisAlignment: pw.CrossAxisAlignment.end,
-                      children: [
-                        if (shopDetails.ownerName != null &&
-                            shopDetails.ownerName!.isNotEmpty) ...[
-                          pw.Text(
-                            'Prop: ${shopDetails.ownerName}',
-                            style: pw.TextStyle(
-                              fontSize: 9,
-                              fontWeight: pw.FontWeight.bold,
+                            order.eventLocation!.isNotEmpty)
+                          pw.Expanded(
+                            child: pw.Text(
+                              'Loc: ${order.eventLocation}',
+                              style: const pw.TextStyle(
+                                fontSize: 7,
+                                color: PdfColors.grey700,
+                              ),
+                              maxLines: 1,
+                              textAlign: pw.TextAlign.right,
                             ),
-                            textAlign: pw.TextAlign.right,
                           ),
-                        ],
-                        if (shopDetails.phone.isNotEmpty) ...[
-                          pw.SizedBox(height: 2),
-                          pw.Text(
-                            'Ph: ${shopDetails.phone}',
-                            style: const pw.TextStyle(fontSize: 8),
-                            textAlign: pw.TextAlign.right,
+                        if (shopDetails.ownerName != null &&
+                            shopDetails.ownerName!.isNotEmpty)
+                          pw.Container(
+                            margin: const pw.EdgeInsets.only(left: 8),
+                            padding: const pw.EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 3,
+                            ),
+                            decoration: pw.BoxDecoration(
+                              color: lightBg,
+                              borderRadius: pw.BorderRadius.circular(2),
+                            ),
+                            child: pw.Text(
+                              'Prop: ${shopDetails.ownerName}',
+                              style: pw.TextStyle(
+                                fontSize: 7,
+                                fontWeight: pw.FontWeight.bold,
+                              ),
+                            ),
                           ),
-                        ],
-                        pw.SizedBox(height: 4),
-                        pw.Text(
-                          'Created: ${DateFormat('dd/MM/yy').format(order.createdAt)}',
-                          style: const pw.TextStyle(
-                            fontSize: 7,
-                            color: PdfColors.grey600,
-                          ),
-                        ),
                       ],
                     ),
                   ),
@@ -365,10 +453,10 @@ class EventOrderPdfService {
           ),
 
           // ═══════════════════════════════════════════════════════════════
-          // SECTION 4: EVENT DETAILS TABLE (Main Event + Sub-Events)
+          // SECTION 4: EVENT DETAILS TABLE (Compact)
           // ═══════════════════════════════════════════════════════════════
           if (isEvent && order.subEvents.isNotEmpty)
-            _buildEventDetailsTable(
+            _buildEventDetailsTableCompact(
               order,
               dateFormatter,
               borderSide,
@@ -376,199 +464,198 @@ class EventOrderPdfService {
             ),
 
           // ═══════════════════════════════════════════════════════════════
-          // SECTION 5: PRODUCTS TABLE
+          // SECTION 5: PRODUCTS TABLE (Compact)
           // ═══════════════════════════════════════════════════════════════
           if (order.items.isNotEmpty)
-            _buildProductsTable(order.items, borderSide, thinBorder),
+            _buildProductsTableCompact(order.items, borderSide, thinBorder),
 
           // ═══════════════════════════════════════════════════════════════
-          // SECTION 6: SUMMARY (Notes + Totals)
+          // SECTION 6: SUMMARY ROW (Amount Words | Description | Totals)
           // ═══════════════════════════════════════════════════════════════
           pw.Container(
             decoration: pw.BoxDecoration(border: pw.Border(bottom: borderSide)),
             child: pw.Row(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
-                // Left: Notes, Description, Terms
+                // LEFT: Amount in Words + Notes + Terms
                 pw.Expanded(
-                  flex: 6,
+                  flex: 5,
                   child: pw.Container(
-                    padding: const pw.EdgeInsets.all(10),
+                    padding: const pw.EdgeInsets.all(8),
                     decoration: pw.BoxDecoration(
                       border: pw.Border(right: thinBorder),
                     ),
                     child: pw.Column(
                       crossAxisAlignment: pw.CrossAxisAlignment.start,
                       children: [
-                        pw.Text(
-                          'Amount in Words:',
-                          style: pw.TextStyle(
-                            fontSize: 8,
-                            fontWeight: pw.FontWeight.bold,
-                            color: accentColor,
-                          ),
-                        ),
-                        pw.SizedBox(height: 2),
-                        pw.Text(
-                          _numberToWords(order.totalAmount),
-                          style: pw.TextStyle(
-                            fontSize: 10,
-                            fontWeight: pw.FontWeight.bold,
-                          ),
+                        pw.Row(
+                          crossAxisAlignment: pw.CrossAxisAlignment.start,
+                          children: [
+                            pw.Text(
+                              'Amount: ',
+                              style: const pw.TextStyle(
+                                fontSize: 7,
+                                color: PdfColors.grey600,
+                              ),
+                            ),
+                            pw.Expanded(
+                              child: pw.Text(
+                                _numberToWords(order.totalAmount),
+                                style: pw.TextStyle(
+                                  fontSize: 8,
+                                  fontWeight: pw.FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                         if (order.description != null &&
                             order.description!.isNotEmpty) ...[
-                          pw.SizedBox(height: 8),
+                          pw.SizedBox(height: 4),
                           pw.Text(
-                            'Description:',
-                            style: pw.TextStyle(
-                              fontSize: 8,
-                              fontWeight: pw.FontWeight.bold,
-                              color: accentColor,
+                            'Desc: ${order.description}',
+                            style: const pw.TextStyle(
+                              fontSize: 7,
+                              color: PdfColors.grey700,
                             ),
-                          ),
-                          pw.SizedBox(height: 2),
-                          pw.Text(
-                            order.description!,
-                            style: const pw.TextStyle(fontSize: 7),
+                            maxLines: 2,
                           ),
                         ],
                         if (order.notes != null && order.notes!.isNotEmpty) ...[
-                          pw.SizedBox(height: 6),
+                          pw.SizedBox(height: 3),
                           pw.Text(
-                            'Notes:',
-                            style: pw.TextStyle(
-                              fontSize: 8,
-                              fontWeight: pw.FontWeight.bold,
-                              color: accentColor,
+                            'Notes: ${order.notes}',
+                            style: const pw.TextStyle(
+                              fontSize: 7,
+                              color: PdfColors.grey700,
                             ),
-                          ),
-                          pw.SizedBox(height: 2),
-                          pw.Text(
-                            order.notes!,
-                            style: const pw.TextStyle(fontSize: 7),
+                            maxLines: 2,
                           ),
                         ],
                         if (shopDetails.termsAndConditions != null &&
                             shopDetails.termsAndConditions!.isNotEmpty) ...[
-                          pw.SizedBox(height: 8),
+                          pw.SizedBox(height: 4),
                           pw.Text(
-                            'Terms & Conditions:',
-                            style: pw.TextStyle(
-                              fontSize: 8,
-                              fontWeight: pw.FontWeight.bold,
-                              color: accentColor,
+                            'T&C: ${shopDetails.termsAndConditions}',
+                            style: const pw.TextStyle(
+                              fontSize: 6,
+                              color: PdfColors.grey600,
                             ),
-                          ),
-                          pw.SizedBox(height: 2),
-                          pw.Text(
-                            shopDetails.termsAndConditions!,
-                            style: const pw.TextStyle(fontSize: 7),
+                            maxLines: 2,
                           ),
                         ],
                       ],
                     ),
                   ),
                 ),
-                // Right: Financial Summary
+                // RIGHT: Financial Summary (Compact)
                 pw.Expanded(
-                  flex: 4,
+                  flex: 5,
                   child: pw.Container(
-                    padding: const pw.EdgeInsets.all(8),
-                    child: pw.Column(
+                    padding: const pw.EdgeInsets.all(6),
+                    child: pw.Row(
+                      crossAxisAlignment: pw.CrossAxisAlignment.start,
                       children: [
-                        if (isEvent && mainEventCharges > 0)
-                          _buildSummaryRow(
-                            'Main Event Charges',
-                            mainEventCharges,
-                          ),
-                        if (isEvent && order.subEvents.isNotEmpty)
-                          _buildSummaryRow('Sub-Events Total', subEventsTotal),
-                        if (isEvent &&
-                            (mainEventCharges > 0 ||
-                                order.subEvents.isNotEmpty))
-                          _buildSummaryRow(
-                            'Events Total',
-                            allEventsTotal,
-                            color: PdfColors.blue800,
-                          ),
-                        if (order.items.isNotEmpty)
-                          _buildSummaryRow('Products Total', productsTotal),
-                        pw.Container(
-                          padding: const pw.EdgeInsets.symmetric(
-                            vertical: 6,
-                            horizontal: 8,
-                          ),
-                          margin: const pw.EdgeInsets.only(top: 4),
-                          decoration: pw.BoxDecoration(
-                            color: PdfColors.grey200,
-                            borderRadius: pw.BorderRadius.circular(2),
-                          ),
-                          child: pw.Row(
-                            mainAxisAlignment:
-                                pw.MainAxisAlignment.spaceBetween,
+                        // Left column: breakdowns
+                        pw.Expanded(
+                          child: pw.Column(
+                            crossAxisAlignment: pw.CrossAxisAlignment.start,
                             children: [
-                              pw.Text(
-                                'GRAND TOTAL',
-                                style: pw.TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: pw.FontWeight.bold,
+                              if (isEvent && mainEventCharges > 0)
+                                _buildCompactSummaryLine(
+                                  'Main Event',
+                                  mainEventCharges,
                                 ),
-                              ),
-                              pw.Text(
-                                'Rs. ${grandTotal.toStringAsFixed(2)}',
-                                style: pw.TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: pw.FontWeight.bold,
+                              if (isEvent && order.subEvents.isNotEmpty)
+                                _buildCompactSummaryLine(
+                                  'Sub-Events',
+                                  subEventsTotal,
                                 ),
+                              if (order.items.isNotEmpty)
+                                _buildCompactSummaryLine(
+                                  'Products',
+                                  productsTotal,
+                                ),
+                              _buildCompactSummaryLine(
+                                'Advance',
+                                order.advanceAmount,
+                                color: PdfColors.green700,
                               ),
                             ],
                           ),
                         ),
-                        pw.SizedBox(height: 4),
-                        _buildSummaryRow(
-                          'Advance Paid',
-                          order.advanceAmount,
-                          color: PdfColors.green800,
-                        ),
-                        pw.Container(
-                          padding: const pw.EdgeInsets.symmetric(
-                            vertical: 6,
-                            horizontal: 8,
-                          ),
-                          margin: const pw.EdgeInsets.only(top: 4),
-                          decoration: pw.BoxDecoration(
-                            color: balanceDue > 0
-                                ? PdfColors.orange50
-                                : PdfColors.green50,
-                            borderRadius: pw.BorderRadius.circular(2),
-                          ),
-                          child: pw.Row(
-                            mainAxisAlignment:
-                                pw.MainAxisAlignment.spaceBetween,
-                            children: [
-                              pw.Text(
-                                'BALANCE DUE',
-                                style: pw.TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: pw.FontWeight.bold,
-                                  color: balanceDue > 0
-                                      ? PdfColors.orange900
-                                      : PdfColors.green900,
-                                ),
+                        // Right column: totals
+                        pw.Column(
+                          crossAxisAlignment: pw.CrossAxisAlignment.end,
+                          children: [
+                            pw.Container(
+                              padding: const pw.EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
                               ),
-                              pw.Text(
-                                'Rs. ${balanceDue.toStringAsFixed(2)}',
-                                style: pw.TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: pw.FontWeight.bold,
-                                  color: balanceDue > 0
-                                      ? PdfColors.orange900
-                                      : PdfColors.green900,
-                                ),
+                              decoration: pw.BoxDecoration(
+                                color: PdfColors.grey200,
+                                borderRadius: pw.BorderRadius.circular(2),
                               ),
-                            ],
-                          ),
+                              child: pw.Column(
+                                crossAxisAlignment: pw.CrossAxisAlignment.end,
+                                children: [
+                                  pw.Text(
+                                    'GRAND TOTAL',
+                                    style: pw.TextStyle(
+                                      fontSize: 7,
+                                      fontWeight: pw.FontWeight.bold,
+                                    ),
+                                  ),
+                                  pw.Text(
+                                    'Rs. ${grandTotal.toStringAsFixed(0)}',
+                                    style: pw.TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: pw.FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            pw.SizedBox(height: 4),
+                            pw.Container(
+                              padding: const pw.EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              decoration: pw.BoxDecoration(
+                                color: balanceDue > 0
+                                    ? PdfColors.orange100
+                                    : PdfColors.green100,
+                                borderRadius: pw.BorderRadius.circular(2),
+                              ),
+                              child: pw.Column(
+                                crossAxisAlignment: pw.CrossAxisAlignment.end,
+                                children: [
+                                  pw.Text(
+                                    'BALANCE DUE',
+                                    style: pw.TextStyle(
+                                      fontSize: 6,
+                                      fontWeight: pw.FontWeight.bold,
+                                      color: balanceDue > 0
+                                          ? PdfColors.orange800
+                                          : PdfColors.green800,
+                                    ),
+                                  ),
+                                  pw.Text(
+                                    'Rs. ${balanceDue.toStringAsFixed(0)}',
+                                    style: pw.TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: pw.FontWeight.bold,
+                                      color: balanceDue > 0
+                                          ? PdfColors.orange900
+                                          : PdfColors.green900,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -579,21 +666,21 @@ class EventOrderPdfService {
           ),
 
           // ═══════════════════════════════════════════════════════════════
-          // SECTION 7: BANK DETAILS | CUSTOMER SIGNATURE | OWNER SIGNATURE
+          // FOOTER: Bank Details | Customer Signature | Owner Signature
           // ═══════════════════════════════════════════════════════════════
           pw.Container(
-            padding: const pw.EdgeInsets.all(10),
+            padding: const pw.EdgeInsets.all(8),
             child: pw.Row(
               crossAxisAlignment: pw.CrossAxisAlignment.end,
               children: [
-                // LEFT: Bank Details with QR Code
+                // Bank Details + QR
                 pw.Expanded(
                   flex: 3,
                   child: pw.Container(
-                    padding: const pw.EdgeInsets.all(8),
+                    padding: const pw.EdgeInsets.all(6),
                     decoration: pw.BoxDecoration(
                       color: lightBg,
-                      borderRadius: pw.BorderRadius.circular(4),
+                      borderRadius: pw.BorderRadius.circular(3),
                       border: pw.Border.all(
                         color: PdfColors.grey400,
                         width: 0.5,
@@ -602,42 +689,39 @@ class EventOrderPdfService {
                     child: pw.Row(
                       crossAxisAlignment: pw.CrossAxisAlignment.start,
                       children: [
-                        // QR Code
                         if (shopDetails.qrCodeBase64 != null &&
                             shopDetails.qrCodeBase64!.isNotEmpty)
                           pw.Container(
-                            margin: const pw.EdgeInsets.only(right: 8),
+                            margin: const pw.EdgeInsets.only(right: 6),
                             child: pw.Column(
                               children: [
                                 pw.Container(
-                                  width: 50,
-                                  height: 50,
+                                  width: 40,
+                                  height: 40,
                                   padding: const pw.EdgeInsets.all(2),
                                   decoration: pw.BoxDecoration(
                                     border: pw.Border.all(
                                       color: accentColor,
                                       width: 0.5,
                                     ),
-                                    borderRadius: pw.BorderRadius.circular(3),
+                                    borderRadius: pw.BorderRadius.circular(2),
                                   ),
                                   child: _buildSafeImage(
                                     base64String: shopDetails.qrCodeBase64!,
-                                    width: 46,
-                                    height: 46,
+                                    width: 36,
+                                    height: 36,
                                   ),
                                 ),
-                                pw.SizedBox(height: 2),
                                 pw.Text(
                                   'Scan to Pay',
-                                  style: pw.TextStyle(
-                                    fontSize: 6,
-                                    color: accentColor,
+                                  style: const pw.TextStyle(
+                                    fontSize: 5,
+                                    color: PdfColors.grey600,
                                   ),
                                 ),
                               ],
                             ),
                           ),
-                        // Bank Details Text
                         if ((shopDetails.bankName != null &&
                                 shopDetails.bankName!.isNotEmpty) ||
                             (shopDetails.accountNumber != null &&
@@ -649,38 +733,37 @@ class EventOrderPdfService {
                                 pw.Text(
                                   'Bank Details',
                                   style: pw.TextStyle(
-                                    fontSize: 9,
+                                    fontSize: 7,
                                     fontWeight: pw.FontWeight.bold,
                                     color: accentColor,
                                   ),
                                 ),
-                                pw.SizedBox(height: 3),
                                 if (shopDetails.bankName != null &&
                                     shopDetails.bankName!.isNotEmpty)
                                   pw.Text(
                                     shopDetails.bankName!,
                                     style: pw.TextStyle(
-                                      fontSize: 8,
+                                      fontSize: 7,
                                       fontWeight: pw.FontWeight.bold,
                                     ),
                                   ),
                                 if (shopDetails.accountHolderName != null &&
                                     shopDetails.accountHolderName!.isNotEmpty)
                                   pw.Text(
-                                    'A/C Name: ${shopDetails.accountHolderName}',
-                                    style: const pw.TextStyle(fontSize: 8),
+                                    'Name: ${shopDetails.accountHolderName}',
+                                    style: const pw.TextStyle(fontSize: 6),
                                   ),
                                 if (shopDetails.accountNumber != null &&
                                     shopDetails.accountNumber!.isNotEmpty)
                                   pw.Text(
-                                    'A/C No: ${shopDetails.accountNumber}',
-                                    style: const pw.TextStyle(fontSize: 8),
+                                    'A/C: ${shopDetails.accountNumber}',
+                                    style: const pw.TextStyle(fontSize: 6),
                                   ),
                                 if (shopDetails.ifscCode != null &&
                                     shopDetails.ifscCode!.isNotEmpty)
                                   pw.Text(
                                     'IFSC: ${shopDetails.ifscCode}',
-                                    style: const pw.TextStyle(fontSize: 8),
+                                    style: const pw.TextStyle(fontSize: 6),
                                   ),
                               ],
                             ),
@@ -692,7 +775,7 @@ class EventOrderPdfService {
                               child: pw.Text(
                                 'Bank Details Not Available',
                                 style: const pw.TextStyle(
-                                  fontSize: 8,
+                                  fontSize: 7,
                                   color: PdfColors.grey500,
                                 ),
                               ),
@@ -702,18 +785,18 @@ class EventOrderPdfService {
                     ),
                   ),
                 ),
-                pw.SizedBox(width: 8),
-                // CENTER: Customer Signature
+                pw.SizedBox(width: 6),
+                // Customer Signature
                 pw.Expanded(
                   flex: 2,
                   child: pw.Container(
-                    padding: const pw.EdgeInsets.all(8),
+                    padding: const pw.EdgeInsets.all(6),
                     child: pw.Column(
                       crossAxisAlignment: pw.CrossAxisAlignment.center,
                       children: [
-                        pw.SizedBox(height: 30),
+                        pw.SizedBox(height: 20),
                         pw.Container(
-                          width: 100,
+                          width: 80,
                           decoration: const pw.BoxDecoration(
                             border: pw.Border(
                               bottom: pw.BorderSide(
@@ -723,11 +806,11 @@ class EventOrderPdfService {
                             ),
                           ),
                         ),
-                        pw.SizedBox(height: 4),
+                        pw.SizedBox(height: 3),
                         pw.Text(
                           'Customer Signature',
                           style: pw.TextStyle(
-                            fontSize: 8,
+                            fontSize: 7,
                             fontWeight: pw.FontWeight.bold,
                           ),
                         ),
@@ -735,12 +818,12 @@ class EventOrderPdfService {
                     ),
                   ),
                 ),
-                pw.SizedBox(width: 8),
-                // RIGHT: Owner/Authorized Signature
+                pw.SizedBox(width: 6),
+                // Owner Signature
                 pw.Expanded(
                   flex: 2,
                   child: pw.Container(
-                    padding: const pw.EdgeInsets.all(8),
+                    padding: const pw.EdgeInsets.all(6),
                     child: pw.Column(
                       crossAxisAlignment: pw.CrossAxisAlignment.center,
                       children: [
@@ -748,13 +831,14 @@ class EventOrderPdfService {
                             shopDetails.signatureBase64!.isNotEmpty)
                           _buildSafeImage(
                             base64String: shopDetails.signatureBase64!,
-                            width: 70,
-                            height: 28,
+                            width: 60,
+                            height: 22,
+                            margin: const pw.EdgeInsets.only(bottom: 4),
                           )
                         else
-                          pw.SizedBox(height: 22),
+                          pw.SizedBox(height: 18),
                         pw.Container(
-                          width: 100,
+                          width: 80,
                           decoration: const pw.BoxDecoration(
                             border: pw.Border(
                               bottom: pw.BorderSide(
@@ -764,11 +848,11 @@ class EventOrderPdfService {
                             ),
                           ),
                         ),
-                        pw.SizedBox(height: 4),
+                        pw.SizedBox(height: 3),
                         pw.Text(
                           'Authorized Signatory',
                           style: pw.TextStyle(
-                            fontSize: 8,
+                            fontSize: 7,
                             fontWeight: pw.FontWeight.bold,
                           ),
                         ),
@@ -784,8 +868,52 @@ class EventOrderPdfService {
     );
   }
 
-  /// Build Event Details Table (Main Event + Sub-Events combined)
-  pw.Widget _buildEventDetailsTable(
+  /// Get status color
+  PdfColor _getStatusColor(OrderStatus status) {
+    switch (status) {
+      case OrderStatus.confirmed:
+        return PdfColors.green700;
+      case OrderStatus.pending:
+        return PdfColors.orange700;
+      case OrderStatus.delivered:
+        return PdfColors.blue700;
+      case OrderStatus.cancelled:
+        return PdfColors.red700;
+      default:
+        return PdfColors.grey700;
+    }
+  }
+
+  /// Compact summary line helper
+  pw.Widget _buildCompactSummaryLine(
+    String label,
+    double amount, {
+    PdfColor? color,
+  }) {
+    return pw.Padding(
+      padding: const pw.EdgeInsets.symmetric(vertical: 1),
+      child: pw.Row(
+        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+        children: [
+          pw.Text(
+            label,
+            style: pw.TextStyle(fontSize: 7, color: color ?? PdfColors.grey700),
+          ),
+          pw.Text(
+            'Rs. ${amount.toStringAsFixed(0)}',
+            style: pw.TextStyle(
+              fontSize: 7,
+              fontWeight: pw.FontWeight.bold,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Build Compact Event Details Table
+  pw.Widget _buildEventDetailsTableCompact(
     EventOrder order,
     DateFormat dateFormatter,
     pw.BorderSide borderSide,
@@ -802,10 +930,10 @@ class EventOrderPdfService {
       child: pw.Column(
         crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: [
-          // Table Header Section
+          // Compact Header
           pw.Container(
             width: double.infinity,
-            padding: const pw.EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 5),
             decoration: pw.BoxDecoration(
               color: PdfColors.blue800,
               border: pw.Border(bottom: thinBorder),
@@ -813,40 +941,27 @@ class EventOrderPdfService {
             child: pw.Row(
               mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
               children: [
-                pw.Column(
-                  crossAxisAlignment: pw.CrossAxisAlignment.start,
-                  children: [
-                    pw.Text(
-                      'EVENT DETAILS',
-                      style: pw.TextStyle(
-                        fontSize: 10,
-                        fontWeight: pw.FontWeight.bold,
-                        color: PdfColors.white,
-                      ),
-                    ),
-                    pw.SizedBox(height: 2),
-                    pw.Text(
-                      'Main Event: ${order.orderName}',
-                      style: const pw.TextStyle(
-                        fontSize: 9,
-                        color: PdfColors.white,
-                      ),
-                    ),
-                  ],
+                pw.Text(
+                  'EVENT DETAILS - ${order.orderName}',
+                  style: pw.TextStyle(
+                    fontSize: 9,
+                    fontWeight: pw.FontWeight.bold,
+                    color: PdfColors.white,
+                  ),
                 ),
                 pw.Container(
                   padding: const pw.EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
+                    horizontal: 6,
+                    vertical: 2,
                   ),
                   decoration: pw.BoxDecoration(
                     color: PdfColors.white,
-                    borderRadius: pw.BorderRadius.circular(4),
+                    borderRadius: pw.BorderRadius.circular(2),
                   ),
                   child: pw.Text(
                     '${order.subEvents.length} Sub-Event(s)',
                     style: pw.TextStyle(
-                      fontSize: 8,
+                      fontSize: 7,
                       fontWeight: pw.FontWeight.bold,
                       color: PdfColors.blue800,
                     ),
@@ -855,7 +970,7 @@ class EventOrderPdfService {
               ],
             ),
           ),
-          // Sub-Events Table
+          // Table
           pw.Table(
             border: pw.TableBorder(
               horizontalInside: thinBorder,
@@ -864,50 +979,52 @@ class EventOrderPdfService {
               right: thinBorder,
             ),
             columnWidths: {
-              0: const pw.FlexColumnWidth(0.5), // Sr
-              1: const pw.FlexColumnWidth(3.0), // Sub-Event Name
-              2: const pw.FlexColumnWidth(2.0), // Date
-              3: const pw.FlexColumnWidth(1.5), // Charges
+              0: const pw.FlexColumnWidth(0.4),
+              1: const pw.FlexColumnWidth(3.5),
+              2: const pw.FlexColumnWidth(2.0),
+              3: const pw.FlexColumnWidth(1.3),
             },
             children: [
-              // Header Row
+              // Header
               pw.TableRow(
                 decoration: const pw.BoxDecoration(color: PdfColors.grey200),
                 children: [
-                  _buildTableCell('Sr', isHeader: true),
-                  _buildTableCell(
-                    'Event / Sub-Event Name',
+                  _buildTableCellCompact('Sr', isHeader: true),
+                  _buildTableCellCompact(
+                    'Event / Sub-Event',
                     isHeader: true,
                     align: pw.TextAlign.left,
                   ),
-                  _buildTableCell('Date', isHeader: true),
-                  _buildTableCell(
+                  _buildTableCellCompact('Date', isHeader: true),
+                  _buildTableCellCompact(
                     'Charges',
                     isHeader: true,
                     align: pw.TextAlign.right,
                   ),
                 ],
               ),
-              // Main Event Row (highlighted)
+              // Main Event
               if (mainEventCharges > 0)
                 pw.TableRow(
                   decoration: const pw.BoxDecoration(color: PdfColors.amber50),
                   children: [
-                    _buildTableCell('1', isHeader: true),
-                    _buildTableCell(
-                      '${order.orderName} (Main Event)',
+                    _buildTableCellCompact('1', isHeader: true),
+                    _buildTableCellCompact(
+                      '${order.orderName} (Main)',
                       isHeader: true,
                       align: pw.TextAlign.left,
                     ),
-                    _buildTableCell(dateFormatter.format(order.eventDate)),
-                    _buildTableCell(
+                    _buildTableCellCompact(
+                      dateFormatter.format(order.eventDate),
+                    ),
+                    _buildTableCellCompact(
                       'Rs. ${mainEventCharges.toStringAsFixed(0)}',
                       isHeader: true,
                       align: pw.TextAlign.right,
                     ),
                   ],
                 ),
-              // Sub-Event Data Rows
+              // Sub-Events
               ...order.subEvents.asMap().entries.map((entry) {
                 final idx = entry.key;
                 final subEvent = entry.value;
@@ -917,28 +1034,31 @@ class EventOrderPdfService {
                     color: idx % 2 == 0 ? PdfColors.white : PdfColors.grey50,
                   ),
                   children: [
-                    _buildTableCell('$srNo'),
-                    _buildTableCell(subEvent.name, align: pw.TextAlign.left),
-                    _buildTableCell(dateFormatter.format(subEvent.date)),
-                    _buildTableCell(
+                    _buildTableCellCompact('$srNo'),
+                    _buildTableCellCompact(
+                      subEvent.name,
+                      align: pw.TextAlign.left,
+                    ),
+                    _buildTableCellCompact(dateFormatter.format(subEvent.date)),
+                    _buildTableCellCompact(
                       'Rs. ${subEvent.charges.toStringAsFixed(0)}',
                       align: pw.TextAlign.right,
                     ),
                   ],
                 );
               }),
-              // Total Row
+              // Total
               pw.TableRow(
                 decoration: const pw.BoxDecoration(color: PdfColors.blue100),
                 children: [
-                  _buildTableCell(''),
-                  _buildTableCell(
+                  _buildTableCellCompact(''),
+                  _buildTableCellCompact(
                     'EVENTS TOTAL',
                     isHeader: true,
                     align: pw.TextAlign.right,
                   ),
-                  _buildTableCell(''),
-                  _buildTableCell(
+                  _buildTableCellCompact(''),
+                  _buildTableCellCompact(
                     'Rs. ${allEventsTotal.toStringAsFixed(0)}',
                     isHeader: true,
                     align: pw.TextAlign.right,
@@ -952,6 +1072,180 @@ class EventOrderPdfService {
             decoration: pw.BoxDecoration(border: pw.Border(bottom: borderSide)),
           ),
         ],
+      ),
+    );
+  }
+
+  /// Build Compact Products Table
+  pw.Widget _buildProductsTableCompact(
+    List<OrderItem> items,
+    pw.BorderSide borderSide,
+    pw.BorderSide thinBorder,
+  ) {
+    final productsTotal = items.fold(0.0, (sum, item) => sum + item.total);
+
+    return pw.Container(
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          // Compact Header
+          pw.Container(
+            width: double.infinity,
+            padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            decoration: pw.BoxDecoration(
+              color: PdfColors.green800,
+              border: pw.Border(bottom: thinBorder),
+            ),
+            child: pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+              children: [
+                pw.Text(
+                  'PRODUCTS',
+                  style: pw.TextStyle(
+                    fontSize: 9,
+                    fontWeight: pw.FontWeight.bold,
+                    color: PdfColors.white,
+                  ),
+                ),
+                pw.Container(
+                  padding: const pw.EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
+                  decoration: pw.BoxDecoration(
+                    color: PdfColors.white,
+                    borderRadius: pw.BorderRadius.circular(2),
+                  ),
+                  child: pw.Text(
+                    '${items.length} Item(s)',
+                    style: pw.TextStyle(
+                      fontSize: 7,
+                      fontWeight: pw.FontWeight.bold,
+                      color: PdfColors.green800,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Table
+          pw.Table(
+            border: pw.TableBorder(
+              horizontalInside: thinBorder,
+              verticalInside: thinBorder,
+              left: thinBorder,
+              right: thinBorder,
+            ),
+            columnWidths: {
+              0: const pw.FlexColumnWidth(0.4),
+              1: const pw.FlexColumnWidth(3.0),
+              2: const pw.FlexColumnWidth(0.7),
+              3: const pw.FlexColumnWidth(1.0),
+              4: const pw.FlexColumnWidth(0.6),
+              5: const pw.FlexColumnWidth(1.3),
+            },
+            children: [
+              // Header
+              pw.TableRow(
+                decoration: const pw.BoxDecoration(color: PdfColors.grey200),
+                children: [
+                  _buildTableCellCompact('Sr', isHeader: true),
+                  _buildTableCellCompact(
+                    'Product',
+                    isHeader: true,
+                    align: pw.TextAlign.left,
+                  ),
+                  _buildTableCellCompact('Qty', isHeader: true),
+                  _buildTableCellCompact(
+                    'Rate',
+                    isHeader: true,
+                    align: pw.TextAlign.right,
+                  ),
+                  _buildTableCellCompact('Disc', isHeader: true),
+                  _buildTableCellCompact(
+                    'Amount',
+                    isHeader: true,
+                    align: pw.TextAlign.right,
+                  ),
+                ],
+              ),
+              // Data rows
+              ...items.asMap().entries.map((entry) {
+                final idx = entry.key;
+                final item = entry.value;
+                return pw.TableRow(
+                  decoration: pw.BoxDecoration(
+                    color: idx % 2 == 0 ? PdfColors.white : PdfColors.grey50,
+                  ),
+                  children: [
+                    _buildTableCellCompact('${idx + 1}'),
+                    _buildTableCellCompact(
+                      item.productName,
+                      align: pw.TextAlign.left,
+                    ),
+                    _buildTableCellCompact('${item.quantity}'),
+                    _buildTableCellCompact(
+                      'Rs. ${item.rate.toStringAsFixed(0)}',
+                      align: pw.TextAlign.right,
+                    ),
+                    _buildTableCellCompact(
+                      item.discountPercent > 0
+                          ? '${item.discountPercent.toStringAsFixed(0)}%'
+                          : '-',
+                    ),
+                    _buildTableCellCompact(
+                      'Rs. ${item.total.toStringAsFixed(0)}',
+                      align: pw.TextAlign.right,
+                    ),
+                  ],
+                );
+              }),
+              // Total
+              pw.TableRow(
+                decoration: const pw.BoxDecoration(color: PdfColors.green100),
+                children: [
+                  _buildTableCellCompact(''),
+                  _buildTableCellCompact(
+                    'PRODUCTS TOTAL',
+                    isHeader: true,
+                    align: pw.TextAlign.right,
+                  ),
+                  _buildTableCellCompact(''),
+                  _buildTableCellCompact(''),
+                  _buildTableCellCompact(''),
+                  _buildTableCellCompact(
+                    'Rs. ${productsTotal.toStringAsFixed(0)}',
+                    isHeader: true,
+                    align: pw.TextAlign.right,
+                  ),
+                ],
+              ),
+            ],
+          ),
+          pw.Container(
+            width: double.infinity,
+            decoration: pw.BoxDecoration(border: pw.Border(bottom: borderSide)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Compact table cell
+  pw.Widget _buildTableCellCompact(
+    String text, {
+    bool isHeader = false,
+    pw.TextAlign align = pw.TextAlign.center,
+  }) {
+    return pw.Container(
+      padding: const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+      child: pw.Text(
+        text,
+        style: pw.TextStyle(
+          fontSize: 8,
+          fontWeight: isHeader ? pw.FontWeight.bold : pw.FontWeight.normal,
+        ),
+        textAlign: align,
       ),
     );
   }
@@ -984,49 +1278,6 @@ class EventOrderPdfService {
       debugPrint('[EventOrderPdfService] Error decoding image: $e');
       return pw.SizedBox(width: width, height: height);
     }
-  }
-
-  /// Info line helper (Label: Value)
-  pw.Widget _buildInfoLine(String label, String value, {bool bold = false}) {
-    return pw.Row(
-      crossAxisAlignment: pw.CrossAxisAlignment.start,
-      children: [
-        pw.Text(
-          '$label: ',
-          style: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold),
-        ),
-        pw.Expanded(
-          child: pw.Text(
-            value,
-            style: pw.TextStyle(
-              fontSize: 8,
-              fontWeight: bold ? pw.FontWeight.bold : pw.FontWeight.normal,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  /// Summary row helper
-  pw.Widget _buildSummaryRow(String label, double amount, {PdfColor? color}) {
-    return pw.Padding(
-      padding: const pw.EdgeInsets.symmetric(vertical: 2, horizontal: 8),
-      child: pw.Row(
-        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-        children: [
-          pw.Text(label, style: pw.TextStyle(fontSize: 9, color: color)),
-          pw.Text(
-            'Rs. ${amount.toStringAsFixed(2)}',
-            style: pw.TextStyle(
-              fontSize: 9,
-              fontWeight: pw.FontWeight.bold,
-              color: color,
-            ),
-          ),
-        ],
-      ),
-    );
   }
 
   /// Number to words converter
@@ -1117,178 +1368,6 @@ class EventOrderPdfService {
     result += ' Only';
 
     return result.trim();
-  }
-
-  /// Build products table for Sales Order type or Event products
-  pw.Widget _buildProductsTable(
-    List<OrderItem> items,
-    pw.BorderSide borderSide,
-    pw.BorderSide thinBorder, {
-    String title = 'PRODUCTS',
-  }) {
-    final productsTotal = items.fold(0.0, (sum, item) => sum + item.total);
-
-    return pw.Container(
-      child: pw.Column(
-        crossAxisAlignment: pw.CrossAxisAlignment.start,
-        children: [
-          // Header
-          pw.Container(
-            width: double.infinity,
-            padding: const pw.EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: pw.BoxDecoration(
-              color: PdfColors.green800,
-              border: pw.Border(bottom: thinBorder),
-            ),
-            child: pw.Row(
-              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-              children: [
-                pw.Text(
-                  title.toUpperCase(),
-                  style: pw.TextStyle(
-                    fontSize: 10,
-                    fontWeight: pw.FontWeight.bold,
-                    color: PdfColors.white,
-                  ),
-                ),
-                pw.Container(
-                  padding: const pw.EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: pw.BoxDecoration(
-                    color: PdfColors.white,
-                    borderRadius: pw.BorderRadius.circular(4),
-                  ),
-                  child: pw.Text(
-                    '${items.length} Item(s)',
-                    style: pw.TextStyle(
-                      fontSize: 8,
-                      fontWeight: pw.FontWeight.bold,
-                      color: PdfColors.green800,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          // Table
-          pw.Table(
-            border: pw.TableBorder(
-              horizontalInside: thinBorder,
-              verticalInside: thinBorder,
-              left: thinBorder,
-              right: thinBorder,
-            ),
-            columnWidths: {
-              0: const pw.FlexColumnWidth(0.5),
-              1: const pw.FlexColumnWidth(2.8),
-              2: const pw.FlexColumnWidth(0.8),
-              3: const pw.FlexColumnWidth(1.0),
-              4: const pw.FlexColumnWidth(0.7),
-              5: const pw.FlexColumnWidth(1.2),
-            },
-            children: [
-              // Header Row
-              pw.TableRow(
-                decoration: const pw.BoxDecoration(color: PdfColors.grey200),
-                children: [
-                  _buildTableCell('Sr', isHeader: true),
-                  _buildTableCell(
-                    'Product Name',
-                    isHeader: true,
-                    align: pw.TextAlign.left,
-                  ),
-                  _buildTableCell('Qty', isHeader: true),
-                  _buildTableCell(
-                    'Rate',
-                    isHeader: true,
-                    align: pw.TextAlign.right,
-                  ),
-                  _buildTableCell('Disc', isHeader: true),
-                  _buildTableCell(
-                    'Amount',
-                    isHeader: true,
-                    align: pw.TextAlign.right,
-                  ),
-                ],
-              ),
-              // Data rows
-              ...items.asMap().entries.map((entry) {
-                final idx = entry.key;
-                final item = entry.value;
-                return pw.TableRow(
-                  decoration: pw.BoxDecoration(
-                    color: idx % 2 == 0 ? PdfColors.white : PdfColors.grey50,
-                  ),
-                  children: [
-                    _buildTableCell('${idx + 1}'),
-                    _buildTableCell(item.productName, align: pw.TextAlign.left),
-                    _buildTableCell('${item.quantity}'),
-                    _buildTableCell(
-                      'Rs. ${item.rate.toStringAsFixed(0)}',
-                      align: pw.TextAlign.right,
-                    ),
-                    _buildTableCell(
-                      item.discountPercent > 0
-                          ? '${item.discountPercent.toStringAsFixed(0)}%'
-                          : '-',
-                    ),
-                    _buildTableCell(
-                      'Rs. ${item.total.toStringAsFixed(0)}',
-                      align: pw.TextAlign.right,
-                    ),
-                  ],
-                );
-              }),
-              // Total Row
-              pw.TableRow(
-                decoration: const pw.BoxDecoration(color: PdfColors.green100),
-                children: [
-                  _buildTableCell(''),
-                  _buildTableCell(
-                    'PRODUCTS TOTAL',
-                    isHeader: true,
-                    align: pw.TextAlign.right,
-                  ),
-                  _buildTableCell(''),
-                  _buildTableCell(''),
-                  _buildTableCell(''),
-                  _buildTableCell(
-                    'Rs. ${productsTotal.toStringAsFixed(0)}',
-                    isHeader: true,
-                    align: pw.TextAlign.right,
-                  ),
-                ],
-              ),
-            ],
-          ),
-          pw.Container(
-            width: double.infinity,
-            decoration: pw.BoxDecoration(border: pw.Border(bottom: borderSide)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// Build table cell
-  pw.Widget _buildTableCell(
-    String text, {
-    bool isHeader = false,
-    pw.TextAlign align = pw.TextAlign.center,
-  }) {
-    return pw.Container(
-      padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-      child: pw.Text(
-        text,
-        style: pw.TextStyle(
-          fontSize: isHeader ? 9 : 9,
-          fontWeight: isHeader ? pw.FontWeight.bold : pw.FontWeight.normal,
-        ),
-        textAlign: align,
-      ),
-    );
   }
 
   /// Share the order as PDF via the system share sheet
