@@ -6,6 +6,8 @@ import 'package:c_billing/features/customer/domain/entities/customer_transaction
 import 'package:c_billing/features/customer/data/repositories/customer_repository.dart';
 import 'package:c_billing/features/customer/data/repositories/customer_transaction_repository.dart';
 import 'package:c_billing/core/services/customer_transaction_service.dart';
+import 'package:c_billing/features/event_order/offline/controllers/event_order_offline_controller.dart';
+import 'package:c_billing/features/event_order/domain/entities/event_order.dart';
 
 /// Page to display customer details, pending balance, and transaction history
 /// Also provides functionality to receive payments
@@ -26,8 +28,14 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
 
   Customer? _customer;
   List<CustomerTransaction> _transactions = [];
+  List<EventOrder> _eventOrders = [];
   bool _isLoading = true;
   String? _error;
+
+  // Combined transactions data for display
+  List<_CombinedTransaction> _combinedTransactions = [];
+  double _totalEventsAmount = 0.0;
+  double _totalAdvanceReceived = 0.0;
 
   @override
   void initState() {
@@ -66,9 +74,93 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
         return;
       }
 
+      // Load event orders for this customer
+      // Try with the passed customerId first
+      debugPrint(
+        '[CustomerDetails] Loading events for customerId: ${widget.customerId}',
+      );
+      var eventOrderEntities = await EventOrderOfflineController.instance
+          .getEventOrdersByCustomerId(widget.customerId);
+      debugPrint(
+        '[CustomerDetails] Events found with customerId: ${eventOrderEntities.length}',
+      );
+
+      // If no results and customerId has 'local_' prefix, try with just the numeric ID
+      // This handles the mismatch where customer page uses 'local_123' but event orders store '123'
+      if (eventOrderEntities.isEmpty &&
+          widget.customerId.startsWith('local_')) {
+        final localId = widget.customerId.substring(
+          6,
+        ); // Remove 'local_' prefix
+        debugPrint('[CustomerDetails] Trying with localId: $localId');
+        eventOrderEntities = await EventOrderOfflineController.instance
+            .getEventOrdersByCustomerId(localId);
+        debugPrint(
+          '[CustomerDetails] Events found with localId: ${eventOrderEntities.length}',
+        );
+      }
+
+      // Debug: Get all event orders to see what customer IDs exist
+      if (eventOrderEntities.isEmpty) {
+        final allOrders = await EventOrderOfflineController.instance
+            .getAllEventOrders();
+        debugPrint(
+          '[CustomerDetails] Total event orders in DB: ${allOrders.length}',
+        );
+        for (final o in allOrders) {
+          debugPrint(
+            '[CustomerDetails] Order customerId: "${o.customerId}" vs looking for: "${widget.customerId}"',
+          );
+        }
+      }
+
+      final eventOrders = eventOrderEntities.map((e) => e.toDomain()).toList();
+
+      // Calculate event totals
+      double totalEventsAmount = 0.0;
+      double totalAdvanceReceived = 0.0;
+      for (final order in eventOrders) {
+        if (order.status != OrderStatus.cancelled) {
+          totalEventsAmount += order.totalAmount;
+          totalAdvanceReceived += order.advanceAmount;
+        }
+      }
+
+      // Build combined transactions list
+      final combined = <_CombinedTransaction>[];
+
+      // Add bill transactions
+      for (final tx in customerWithTransactions.transactions) {
+        combined.add(
+          _CombinedTransaction(
+            type: _TransactionType.billTransaction,
+            date: tx.createdAt,
+            transaction: tx,
+          ),
+        );
+      }
+
+      // Add event orders as transactions
+      for (final order in eventOrders) {
+        combined.add(
+          _CombinedTransaction(
+            type: _TransactionType.eventOrder,
+            date: order.createdAt,
+            eventOrder: order,
+          ),
+        );
+      }
+
+      // Sort by date descending
+      combined.sort((a, b) => b.date.compareTo(a.date));
+
       setState(() {
         _customer = customerWithTransactions.customer;
         _transactions = customerWithTransactions.transactions;
+        _eventOrders = eventOrders;
+        _combinedTransactions = combined;
+        _totalEventsAmount = totalEventsAmount;
+        _totalAdvanceReceived = totalAdvanceReceived;
         _isLoading = false;
       });
     } catch (e) {
@@ -140,10 +232,13 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
                   SliverToBoxAdapter(child: _buildCustomerInfoCard()),
                   // Balance Card
                   SliverToBoxAdapter(child: _buildBalanceCard()),
+                  // Events/Orders Summary Card
+                  if (_eventOrders.isNotEmpty)
+                    SliverToBoxAdapter(child: _buildEventsSummaryCard()),
                   // Transaction History Header
                   SliverToBoxAdapter(child: _buildTransactionHeader()),
                   // Transaction List
-                  _transactions.isEmpty
+                  _combinedTransactions.isEmpty
                       ? SliverFillRemaining(
                           child: Center(
                             child: Column(
@@ -169,9 +264,10 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
                         )
                       : SliverList(
                           delegate: SliverChildBuilderDelegate(
-                            (context, index) =>
-                                _buildTransactionItem(_transactions[index]),
-                            childCount: _transactions.length,
+                            (context, index) => _buildCombinedTransactionItem(
+                              _combinedTransactions[index],
+                            ),
+                            childCount: _combinedTransactions.length,
                           ),
                         ),
                   const SliverToBoxAdapter(child: SizedBox(height: 100)),
@@ -541,6 +637,331 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
         ],
       ),
     );
+  }
+
+  /// Build Events/Orders summary card
+  Widget _buildEventsSummaryCard() {
+    if (_eventOrders.isEmpty) return const SizedBox.shrink();
+
+    final activeOrders = _eventOrders
+        .where((o) => o.status != OrderStatus.cancelled)
+        .toList();
+    final pendingOrders = activeOrders
+        .where((o) => o.remainingAmount > 0)
+        .length;
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFF1B4D3E).withOpacity(0.2)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.event_note,
+                  color: Color(0xFF1B4D3E),
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Text(
+                'Events & Orders',
+                style: TextStyle(
+                  fontFamily: 'Literata',
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1B4D3E),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  '${activeOrders.length}',
+                  style: const TextStyle(
+                    fontFamily: 'Literata',
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          // Stats row
+          Row(
+            children: [
+              Expanded(
+                child: _buildEventStatItem(
+                  'Total Amount',
+                  '₹${_totalEventsAmount.toStringAsFixed(0)}',
+                  Colors.blue,
+                ),
+              ),
+              Expanded(
+                child: _buildEventStatItem(
+                  'Advance Paid',
+                  '₹${_totalAdvanceReceived.toStringAsFixed(0)}',
+                  Colors.green,
+                ),
+              ),
+              Expanded(
+                child: _buildEventStatItem(
+                  'Due',
+                  '₹${(_totalEventsAmount - _totalAdvanceReceived).toStringAsFixed(0)}',
+                  Colors.orange,
+                ),
+              ),
+            ],
+          ),
+          if (pendingOrders > 0) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.orange.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.info_outline, color: Colors.orange[700], size: 16),
+                  const SizedBox(width: 8),
+                  Text(
+                    '$pendingOrders ${pendingOrders == 1 ? 'order' : 'orders'} with pending payment',
+                    style: TextStyle(
+                      fontFamily: 'Literata',
+                      fontSize: 12,
+                      color: Colors.orange[700],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEventStatItem(String label, String value, Color color) {
+    return Column(
+      children: [
+        Text(
+          value,
+          style: TextStyle(
+            fontFamily: 'Literata',
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: color,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          label,
+          style: TextStyle(
+            fontFamily: 'Literata',
+            fontSize: 11,
+            color: Colors.grey[600],
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Build combined transaction item (bills + events/orders)
+  Widget _buildCombinedTransactionItem(_CombinedTransaction item) {
+    if (item.type == _TransactionType.billTransaction &&
+        item.transaction != null) {
+      return _buildTransactionItem(item.transaction!);
+    } else if (item.type == _TransactionType.eventOrder &&
+        item.eventOrder != null) {
+      return _buildEventOrderItem(item.eventOrder!);
+    }
+    return const SizedBox.shrink();
+  }
+
+  /// Build event order item for transaction list
+  Widget _buildEventOrderItem(EventOrder order) {
+    final dateFormat = DateFormat('dd MMM yyyy, hh:mm a');
+    final isEvent = order.orderType == OrderType.event;
+    final statusColor = _getStatusColor(order.status);
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFF1B4D3E).withOpacity(0.15)),
+      ),
+      child: Row(
+        children: [
+          // Icon
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: const Color(0xFF1B4D3E).withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(
+              isEvent ? Icons.celebration : Icons.shopping_bag,
+              color: const Color(0xFF1B4D3E),
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 12),
+          // Details
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        order.orderName,
+                        style: const TextStyle(
+                          fontFamily: 'Literata',
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: statusColor.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        order.status.displayName,
+                        style: TextStyle(
+                          fontFamily: 'Literata',
+                          fontSize: 9,
+                          fontWeight: FontWeight.w600,
+                          color: statusColor,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  dateFormat.format(order.eventDate),
+                  style: TextStyle(
+                    fontFamily: 'Literata',
+                    fontSize: 11,
+                    color: Colors.grey[600],
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: isEvent
+                        ? Colors.purple.withOpacity(0.1)
+                        : Colors.blue.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    isEvent ? 'Event' : 'Sales Order',
+                    style: TextStyle(
+                      fontFamily: 'Literata',
+                      fontSize: 10,
+                      fontWeight: FontWeight.w500,
+                      color: isEvent ? Colors.purple : Colors.blue,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Amount
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                '₹${order.totalAmount.toStringAsFixed(0)}',
+                style: const TextStyle(
+                  fontFamily: 'Literata',
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF1B4D3E),
+                ),
+              ),
+              const SizedBox(height: 4),
+              if (order.advanceAmount > 0)
+                Text(
+                  'Adv: ₹${order.advanceAmount.toStringAsFixed(0)}',
+                  style: TextStyle(
+                    fontFamily: 'Literata',
+                    fontSize: 10,
+                    color: Colors.green[600],
+                  ),
+                ),
+              if (order.remainingAmount > 0)
+                Text(
+                  'Due: ₹${order.remainingAmount.toStringAsFixed(0)}',
+                  style: TextStyle(
+                    fontFamily: 'Literata',
+                    fontSize: 10,
+                    color: Colors.orange[600],
+                  ),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Color _getStatusColor(OrderStatus status) {
+    switch (status) {
+      case OrderStatus.pending:
+        return Colors.orange;
+      case OrderStatus.confirmed:
+        return Colors.blue;
+      case OrderStatus.inProgress:
+        return Colors.purple;
+      case OrderStatus.delivered:
+        return Colors.green;
+      case OrderStatus.cancelled:
+        return Colors.red;
+      case OrderStatus.convertedToBill:
+        return const Color(0xFF1B4D3E);
+    }
   }
 }
 
@@ -937,4 +1358,22 @@ class _ReceivePaymentSheetState extends State<ReceivePaymentSheet> {
       ),
     );
   }
+}
+
+/// Transaction type for combined list
+enum _TransactionType { billTransaction, eventOrder }
+
+/// Combined transaction model for unified display
+class _CombinedTransaction {
+  final _TransactionType type;
+  final DateTime date;
+  final CustomerTransaction? transaction;
+  final EventOrder? eventOrder;
+
+  _CombinedTransaction({
+    required this.type,
+    required this.date,
+    this.transaction,
+    this.eventOrder,
+  });
 }

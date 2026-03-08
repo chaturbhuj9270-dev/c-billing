@@ -9,6 +9,9 @@ import '../../domain/entities/customer_transaction.dart' show PaymentMode;
 import '../../offline/controllers/customer_transaction_offline_controller.dart';
 import '../../offline/entities/customer_transaction_entity.dart';
 import '../../data/services/customer_transaction_sync_service.dart';
+import '../../../event_order/offline/controllers/event_order_offline_controller.dart';
+import '../../../event_order/offline/entities/event_order_entity.dart';
+import '../../../event_order/domain/entities/event_order.dart';
 
 /// Date filter options for transactions
 enum TransactionDateFilter { thisMonth, thisYear, lastYear, custom, all }
@@ -42,6 +45,8 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
   late CustomerTransactionService _transactionService;
 
   List<CustomerTransactionEntity> _transactions = [];
+  List<EventOrderEntity> _eventOrders = [];
+  List<_CombinedItem> _combinedItems = [];
   bool _isLoading = true;
   TransactionDateFilter _selectedFilter = TransactionDateFilter.all;
   DateTime? _customStartDate;
@@ -50,6 +55,8 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
   // Stats
   double _totalReceived = 0;
   double _currentPending = 0;
+  double _totalEventsAmount = 0;
+  double _totalAdvanceReceived = 0;
 
   @override
   void initState() {
@@ -164,6 +171,39 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
           }
       }
 
+      // Load event orders for this customer
+      debugPrint(
+        '[CustomerTransactions] Loading events for customerId: $customerId, localId: ${widget.customerLocalId}',
+      );
+      var eventOrders = await EventOrderOfflineController.instance
+          .getEventOrdersByCustomerId(customerId);
+      debugPrint(
+        '[CustomerTransactions] Events found with customerId: ${eventOrders.length}',
+      );
+
+      // Try with local ID if no results
+      if (eventOrders.isEmpty && widget.customerLocalId != widget.customerId) {
+        eventOrders = await EventOrderOfflineController.instance
+            .getEventOrdersByCustomerId(widget.customerLocalId);
+        debugPrint(
+          '[CustomerTransactions] Events found with localId: ${eventOrders.length}',
+        );
+      }
+
+      // Debug: show all event orders customer IDs for troubleshooting
+      if (eventOrders.isEmpty) {
+        final allOrders = await EventOrderOfflineController.instance
+            .getAllEventOrders();
+        debugPrint(
+          '[CustomerTransactions] Total event orders in DB: ${allOrders.length}',
+        );
+        for (final o in allOrders) {
+          debugPrint(
+            '[CustomerTransactions] Order customerId: "${o.customerId}" vs looking for: "$customerId" or "${widget.customerLocalId}"',
+          );
+        }
+      }
+
       // Calculate stats
       double totalReceived = 0;
       for (final t in transactions) {
@@ -172,6 +212,44 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
         }
       }
 
+      // Calculate event totals
+      double totalEventsAmount = 0;
+      double totalAdvanceReceived = 0;
+      for (final order in eventOrders) {
+        if (order.status != OrderStatus.cancelled.index) {
+          totalEventsAmount += order.totalAmount;
+          totalAdvanceReceived += order.advanceAmount;
+        }
+      }
+
+      // Build combined list
+      final combined = <_CombinedItem>[];
+
+      // Add payment transactions
+      for (final tx in transactions) {
+        combined.add(
+          _CombinedItem(
+            type: _CombinedItemType.transaction,
+            date: tx.createdAt,
+            transaction: tx,
+          ),
+        );
+      }
+
+      // Add event orders
+      for (final order in eventOrders) {
+        combined.add(
+          _CombinedItem(
+            type: _CombinedItemType.eventOrder,
+            date: order.createdAt,
+            eventOrder: order,
+          ),
+        );
+      }
+
+      // Sort by date descending
+      combined.sort((a, b) => b.date.compareTo(a.date));
+
       // Get latest pending amount from last transaction
       if (transactions.isNotEmpty) {
         _currentPending = transactions.first.balanceAfter;
@@ -179,7 +257,11 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
 
       setState(() {
         _transactions = transactions;
+        _eventOrders = eventOrders;
+        _combinedItems = combined;
         _totalReceived = totalReceived;
+        _totalEventsAmount = totalEventsAmount;
+        _totalAdvanceReceived = totalAdvanceReceived;
         _isLoading = false;
       });
     } catch (e) {
@@ -500,19 +582,26 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
   }
 
   Widget _buildTransactionsList() {
-    if (_transactions.isEmpty) {
+    if (_combinedItems.isEmpty) {
       return _buildEmptyState();
     }
 
     return ListView.builder(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
-      itemCount: _transactions.length,
+      itemCount: _combinedItems.length,
       itemBuilder: (context, index) {
-        final transaction = _transactions[index];
-        return _TransactionCard(
-          transaction: transaction,
-          onDelete: () => _deleteTransaction(transaction),
-        );
+        final item = _combinedItems[index];
+        if (item.type == _CombinedItemType.transaction &&
+            item.transaction != null) {
+          return _TransactionCard(
+            transaction: item.transaction!,
+            onDelete: () => _deleteTransaction(item.transaction!),
+          );
+        } else if (item.type == _CombinedItemType.eventOrder &&
+            item.eventOrder != null) {
+          return _EventOrderCard(eventOrder: item.eventOrder!);
+        }
+        return const SizedBox.shrink();
       },
     );
   }
@@ -1301,4 +1390,232 @@ class _ReceivePaymentSheetState extends State<_ReceivePaymentSheet> {
       });
     }
   }
+}
+
+/// Event order card widget for transaction list
+class _EventOrderCard extends StatelessWidget {
+  final EventOrderEntity eventOrder;
+
+  const _EventOrderCard({required this.eventOrder});
+
+  @override
+  Widget build(BuildContext context) {
+    final dateFormat = DateFormat('dd MMM yyyy, hh:mm a');
+    final isEvent = eventOrder.orderType == OrderType.event.index;
+    final statusColor = _getStatusColor(OrderStatus.values[eventOrder.status]);
+    final statusName = OrderStatus.values[eventOrder.status].name;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    isEvent ? Icons.celebration : Icons.shopping_bag,
+                    color: const Color(0xFF1B4D3E),
+                    size: 22,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: isEvent
+                                  ? Colors.purple.withOpacity(0.1)
+                                  : Colors.blue.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              isEvent ? 'Event' : 'Order',
+                              style: TextStyle(
+                                fontFamily: 'Literata',
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: isEvent ? Colors.purple : Colors.blue,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: statusColor.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              statusName[0].toUpperCase() +
+                                  statusName.substring(1),
+                              style: TextStyle(
+                                fontFamily: 'Literata',
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: statusColor,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        eventOrder.orderName,
+                        style: const TextStyle(
+                          fontFamily: 'Literata',
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF1B4D3E),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF5F7F6),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  _buildAmountItem(
+                    'Total',
+                    eventOrder.totalAmount,
+                    Colors.blue,
+                  ),
+                  _buildAmountItem(
+                    'Advance',
+                    eventOrder.advanceAmount,
+                    Colors.green,
+                  ),
+                  _buildAmountItem(
+                    'Due',
+                    eventOrder.remainingAmount,
+                    Colors.orange,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Icon(
+                  Icons.calendar_today_rounded,
+                  size: 14,
+                  color: Colors.grey[500],
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  dateFormat.format(eventOrder.eventDate),
+                  style: TextStyle(
+                    fontFamily: 'Literata',
+                    fontSize: 12,
+                    color: Colors.grey[600],
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAmountItem(String label, double amount, Color color) {
+    return Column(
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontFamily: 'Literata',
+            fontSize: 11,
+            color: Colors.grey[600],
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          '₹${amount.toStringAsFixed(0)}',
+          style: TextStyle(
+            fontFamily: 'Literata',
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: color,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Color _getStatusColor(OrderStatus status) {
+    switch (status) {
+      case OrderStatus.pending:
+        return Colors.orange;
+      case OrderStatus.confirmed:
+        return Colors.blue;
+      case OrderStatus.inProgress:
+        return Colors.purple;
+      case OrderStatus.delivered:
+        return Colors.green;
+      case OrderStatus.cancelled:
+        return Colors.red;
+      case OrderStatus.convertedToBill:
+        return Colors.teal;
+    }
+  }
+}
+
+/// Combined item type for unified display
+enum _CombinedItemType { transaction, eventOrder }
+
+/// Combined item model for unified display
+class _CombinedItem {
+  final _CombinedItemType type;
+  final DateTime date;
+  final CustomerTransactionEntity? transaction;
+  final EventOrderEntity? eventOrder;
+
+  _CombinedItem({
+    required this.type,
+    required this.date,
+    this.transaction,
+    this.eventOrder,
+  });
 }
