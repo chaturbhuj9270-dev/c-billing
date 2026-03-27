@@ -5,11 +5,12 @@ import 'package:url_launcher/url_launcher.dart';
 /// Singleton service for handling communication actions
 /// Provides call, SMS, and WhatsApp functionality
 class CommunicationService {
-  static final CommunicationService _instance = CommunicationService._internal();
-  
+  static final CommunicationService _instance =
+      CommunicationService._internal();
+
   factory CommunicationService() => _instance;
   static CommunicationService get instance => _instance;
-  
+
   CommunicationService._internal();
 
   /// Format phone number for URL schemes
@@ -17,7 +18,7 @@ class CommunicationService {
   String _formatPhoneNumber(String phone) {
     // Remove all non-digit characters except + at the beginning
     String cleaned = phone.replaceAll(RegExp(r'[^\d+]'), '');
-    
+
     // If number doesn't start with + or country code, assume India (+91)
     if (!cleaned.startsWith('+') && !cleaned.startsWith('91')) {
       // If it's a 10-digit number, add India country code
@@ -25,7 +26,7 @@ class CommunicationService {
         cleaned = '91$cleaned';
       }
     }
-    
+
     // Remove leading + if present for WhatsApp API
     return cleaned.replaceFirst('+', '');
   }
@@ -39,7 +40,7 @@ class CommunicationService {
     }
 
     final Uri uri = Uri(scheme: 'tel', path: phoneNumber);
-    
+
     try {
       if (await canLaunchUrl(uri)) {
         await launchUrl(uri);
@@ -57,7 +58,11 @@ class CommunicationService {
 
   /// Send an SMS to the given number
   /// Opens the device's messaging app with the number pre-filled
-  Future<bool> sendSms(String phoneNumber, {String? message, BuildContext? context}) async {
+  Future<bool> sendSms(
+    String phoneNumber, {
+    String? message,
+    BuildContext? context,
+  }) async {
     if (phoneNumber.isEmpty) {
       _showError(context, 'Phone number not available');
       return false;
@@ -74,7 +79,7 @@ class CommunicationService {
     } else {
       uri = Uri(scheme: 'sms', path: phoneNumber);
     }
-    
+
     try {
       if (await canLaunchUrl(uri)) {
         await launchUrl(uri);
@@ -92,40 +97,51 @@ class CommunicationService {
 
   /// Open WhatsApp chat with the given number
   /// Uses WhatsApp's URL scheme to open a chat
-  Future<bool> openWhatsApp(String phoneNumber, {String? message, BuildContext? context}) async {
+  Future<bool> openWhatsApp(
+    String phoneNumber, {
+    String? message,
+    BuildContext? context,
+  }) async {
     if (phoneNumber.isEmpty) {
       _showError(context, 'Phone number not available');
       return false;
     }
 
     final formattedNumber = _formatPhoneNumber(phoneNumber);
-    
+
     // Use wa.me URL (works on both mobile and desktop)
     String url;
     if (message != null && message.isNotEmpty) {
-      url = 'https://wa.me/$formattedNumber?text=${Uri.encodeComponent(message)}';
+      url =
+          'https://wa.me/$formattedNumber?text=${Uri.encodeComponent(message)}';
     } else {
       url = 'https://wa.me/$formattedNumber';
     }
-    
+
     final Uri uri = Uri.parse(url);
-    
+
     try {
       // Launch directly without canLaunchUrl check
       // canLaunchUrl requires URL schemes to be declared in AndroidManifest/Info.plist
       // and may return false even when WhatsApp is installed
-      final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      final launched = await launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication,
+      );
       if (launched) {
         return true;
       }
-      
+
       // Try with whatsapp:// scheme as fallback
       final fallbackUri = Uri.parse('whatsapp://send?phone=$formattedNumber');
-      final fallbackLaunched = await launchUrl(fallbackUri, mode: LaunchMode.externalApplication);
+      final fallbackLaunched = await launchUrl(
+        fallbackUri,
+        mode: LaunchMode.externalApplication,
+      );
       if (fallbackLaunched) {
         return true;
       }
-      
+
       _showError(context, 'Could not open WhatsApp');
       return false;
     } catch (e) {
@@ -178,7 +194,7 @@ class CommunicationActionButtons extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final service = CommunicationService.instance;
-    
+
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -196,7 +212,11 @@ class CommunicationActionButtons extends StatelessWidget {
           icon: Icons.message_rounded,
           color: smsColor ?? const Color(0xFF1976D2),
           label: showLabels ? 'SMS' : null,
-          onTap: () => service.sendSms(phoneNumber, message: defaultMessage, context: context),
+          onTap: () => service.sendSms(
+            phoneNumber,
+            message: defaultMessage,
+            context: context,
+          ),
           iconSize: iconSize,
         ),
         SizedBox(width: spacing),
@@ -205,7 +225,11 @@ class CommunicationActionButtons extends StatelessWidget {
           icon: FontAwesomeIcons.whatsapp,
           color: whatsAppColor ?? const Color(0xFF25D366),
           label: showLabels ? 'WhatsApp' : null,
-          onTap: () => service.openWhatsApp(phoneNumber, message: defaultMessage, context: context),
+          onTap: () => service.openWhatsApp(
+            phoneNumber,
+            message: defaultMessage,
+            context: context,
+          ),
           iconSize: iconSize,
           isWhatsApp: true,
         ),
@@ -215,7 +239,7 @@ class CommunicationActionButtons extends StatelessWidget {
 }
 
 class _ActionButton extends StatelessWidget {
-  final IconData icon;
+  final dynamic icon;
   final Color color;
   final String? label;
   final VoidCallback onTap;
@@ -285,11 +309,11 @@ class CommunicationActionIcons extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final service = CommunicationService.instance;
-    
+
     if (phoneNumber.isEmpty) {
       return const SizedBox.shrink();
     }
-    
+
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -325,7 +349,7 @@ class CommunicationActionIcons extends StatelessWidget {
 }
 
 class _CompactActionIcon extends StatelessWidget {
-  final IconData icon;
+  final dynamic icon;
   final Color color;
   final VoidCallback onTap;
   final double iconSize;
