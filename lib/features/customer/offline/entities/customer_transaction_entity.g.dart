@@ -153,7 +153,7 @@ const CustomerTransactionEntitySchema = CollectionSchema(
   getId: _customerTransactionEntityGetId,
   getLinks: _customerTransactionEntityGetLinks,
   attach: _customerTransactionEntityAttach,
-  version: '3.3.0',
+  version: '3.3.2',
 );
 
 int _customerTransactionEntityEstimateSize(

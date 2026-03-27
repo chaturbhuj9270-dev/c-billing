@@ -44,7 +44,7 @@ dependencies:
   isar_community_flutter_libs: ^3.3.0
   # Network Connectivity
   connectivity_plus: ^6.1.4
-  font_awesome_flutter: ^10.12.0
+  font_awesome_flutter: ^11.0.0
   # Barcode Generation
   barcode: ^2.2.8
   barcode_widget: ^2.0.4

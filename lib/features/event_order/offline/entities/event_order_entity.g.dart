@@ -225,7 +225,7 @@ const EventOrderEntitySchema = CollectionSchema(
   getId: _eventOrderEntityGetId,
   getLinks: _eventOrderEntityGetLinks,
   attach: _eventOrderEntityAttach,
-  version: '3.3.0',
+  version: '3.3.2',
 );
 
 int _eventOrderEntityEstimateSize(

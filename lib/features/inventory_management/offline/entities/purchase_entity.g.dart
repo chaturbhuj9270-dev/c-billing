@@ -204,7 +204,7 @@ const PurchaseEntitySchema = CollectionSchema(
   getId: _purchaseEntityGetId,
   getLinks: _purchaseEntityGetLinks,
   attach: _purchaseEntityAttach,
-  version: '3.3.0',
+  version: '3.3.2',
 );
 
 int _purchaseEntityEstimateSize(

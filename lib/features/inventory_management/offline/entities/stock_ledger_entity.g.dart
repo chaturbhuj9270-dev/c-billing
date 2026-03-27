@@ -270,7 +270,7 @@ const StockLedgerEntitySchema = CollectionSchema(
   getId: _stockLedgerEntityGetId,
   getLinks: _stockLedgerEntityGetLinks,
   attach: _stockLedgerEntityAttach,
-  version: '3.3.0',
+  version: '3.3.2',
 );
 
 int _stockLedgerEntityEstimateSize(

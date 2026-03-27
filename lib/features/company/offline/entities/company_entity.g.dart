@@ -155,7 +155,7 @@ const CompanyEntitySchema = CollectionSchema(
   getId: _companyEntityGetId,
   getLinks: _companyEntityGetLinks,
   attach: _companyEntityAttach,
-  version: '3.3.0',
+  version: '3.3.2',
 );
 
 int _companyEntityEstimateSize(

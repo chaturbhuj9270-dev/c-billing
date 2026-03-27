@@ -157,7 +157,7 @@ const ExpenseEntitySchema = CollectionSchema(
   getId: _expenseEntityGetId,
   getLinks: _expenseEntityGetLinks,
   attach: _expenseEntityAttach,
-  version: '3.3.0',
+  version: '3.3.2',
 );
 
 int _expenseEntityEstimateSize(

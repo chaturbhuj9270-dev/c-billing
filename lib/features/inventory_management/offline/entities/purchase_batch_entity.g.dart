@@ -282,7 +282,7 @@ const PurchaseBatchEntitySchema = CollectionSchema(
   getId: _purchaseBatchEntityGetId,
   getLinks: _purchaseBatchEntityGetLinks,
   attach: _purchaseBatchEntityAttach,
-  version: '3.3.0',
+  version: '3.3.2',
 );
 
 int _purchaseBatchEntityEstimateSize(

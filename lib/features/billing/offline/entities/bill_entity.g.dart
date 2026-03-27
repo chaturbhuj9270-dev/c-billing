@@ -257,7 +257,7 @@ const BillEntitySchema = CollectionSchema(
   getId: _billEntityGetId,
   getLinks: _billEntityGetLinks,
   attach: _billEntityAttach,
-  version: '3.3.0',
+  version: '3.3.2',
 );
 
 int _billEntityEstimateSize(

@@ -77,7 +77,7 @@ const ShopImageCacheEntitySchema = CollectionSchema(
   getId: _shopImageCacheEntityGetId,
   getLinks: _shopImageCacheEntityGetLinks,
   attach: _shopImageCacheEntityAttach,
-  version: '3.3.0',
+  version: '3.3.2',
 );
 
 int _shopImageCacheEntityEstimateSize(

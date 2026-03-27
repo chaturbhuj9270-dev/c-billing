@@ -169,7 +169,7 @@ const SupplierEntitySchema = CollectionSchema(
   getId: _supplierEntityGetId,
   getLinks: _supplierEntityGetLinks,
   attach: _supplierEntityAttach,
-  version: '3.3.0',
+  version: '3.3.2',
 );
 
 int _supplierEntityEstimateSize(
