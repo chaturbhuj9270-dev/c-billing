@@ -703,6 +703,8 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
           _buildMetricsRow(data, isRefreshing),
           const SizedBox(height: 16),
           _buildProfitCard(data, isRefreshing),
+          const SizedBox(height: 12),
+          _buildMarginCard(data, isRefreshing),
           const SizedBox(height: 28),
           _buildSectionHeader(
             title: _localizations.inventoryPayments,
@@ -852,28 +854,11 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
   }
 
   String _formatAmount(double amount) {
-    if (amount >= 10000000) {
-      return '₹${(amount / 10000000).toStringAsFixed(1)} Cr';
-    } else if (amount >= 100000) {
-      return '₹${(amount / 100000).toStringAsFixed(1)} L';
-    } else if (amount >= 1000) {
-      return '₹${(amount / 1000).toStringAsFixed(1)} K';
-    }
     return '₹${amount.toStringAsFixed(0)}';
   }
 
   String _formatCompactAmount(double amount) {
-    final absAmount = amount.abs();
-    String formatted;
-    if (absAmount >= 10000000) {
-      formatted = '${(absAmount / 10000000).toStringAsFixed(1)}Cr';
-    } else if (absAmount >= 100000) {
-      formatted = '${(absAmount / 100000).toStringAsFixed(1)}L';
-    } else if (absAmount >= 1000) {
-      formatted = '${(absAmount / 1000).toStringAsFixed(1)}K';
-    } else {
-      formatted = absAmount.toStringAsFixed(0);
-    }
+    final formatted = amount.abs().toStringAsFixed(0);
     return amount < 0 ? '-₹$formatted' : '₹$formatted';
   }
 
@@ -979,16 +964,6 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
               context,
               MaterialPageRoute(builder: (_) => const PurchaseReturnScreen()),
             ).then((_) => _onDataChanged()),
-          ),
-          const SizedBox(width: 12),
-          _buildQuickStatItem(
-            icon: Icons.trending_up_rounded,
-            value: _formatCompactAmount(data.profit),
-            label: _localizations.margin,
-            color: data.profit >= 0
-                ? const Color(0xFF2E7D32)
-                : const Color(0xFFD32F2F),
-            isLoading: isLoading,
           ),
         ],
       ),
@@ -1595,6 +1570,94 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                     color: Colors.white,
                     size: 36,
                   ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMarginCard(DashboardSummary data, bool isLoading) {
+    final color = data.profit >= 0
+        ? const Color(0xFF2E7D32)
+        : const Color(0xFFD32F2F);
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(20),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                color.withValues(alpha: 0.15),
+                color.withValues(alpha: 0.05),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: color.withValues(alpha: 0.3),
+              width: 1.5,
+            ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: color.withValues(alpha: 0.3),
+                    width: 1,
+                  ),
+                ),
+                child: Icon(Icons.trending_up_rounded, color: color, size: 22),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _localizations.margin,
+                      style: TextStyle(
+                        color: color,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        fontFamily: 'Literata',
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 200),
+                      child: Text(
+                        _formatCompactAmount(data.profit),
+                        key: ValueKey(data.profit),
+                        style: TextStyle(
+                          color: color,
+                          fontSize: 22,
+                          fontWeight: FontWeight.w800,
+                          fontFamily: 'Literata',
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Text(
+                '${data.profitPercentage.toStringAsFixed(1)}%',
+                style: TextStyle(
+                  color: color,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  fontFamily: 'Literata',
                 ),
               ),
             ],
