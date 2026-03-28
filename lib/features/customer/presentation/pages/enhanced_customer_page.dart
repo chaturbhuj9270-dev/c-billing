@@ -171,8 +171,10 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
           if (custId == null || custId.isEmpty) continue;
           // Skip cancelled and convertedToBill orders
           if (order.status == OrderStatus.cancelled.index ||
-              order.status == OrderStatus.convertedToBill.index) continue;
-          pendingMap[custId] = (pendingMap[custId] ?? 0.0) + order.remainingAmount;
+              order.status == OrderStatus.convertedToBill.index)
+            continue;
+          pendingMap[custId] =
+              (pendingMap[custId] ?? 0.0) + order.remainingAmount;
         }
         if (!mounted) return;
         _eventPendingByCustomer = pendingMap;
@@ -212,7 +214,8 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
       'email': entity.email ?? '',
       'isActive': true,
       'isSynced': entity.isSynced,
-      'currentPendingAmount': entity.currentPendingAmount +
+      'currentPendingAmount':
+          entity.currentPendingAmount +
           (_eventPendingByCustomer[entity.serverId] ?? 0.0) +
           (_eventPendingByCustomer['local_${entity.id}'] ?? 0.0),
       'billPendingAmount': entity.currentPendingAmount,

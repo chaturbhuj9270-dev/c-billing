@@ -66,7 +66,9 @@ class EventOrderOfflineController extends ChangeNotifier {
     double totalAmount = 0.0;
     if (orderType == OrderType.event) {
       totalAmount =
-          subEvents.fold(0.0, (sum, e) => sum + e.charges) + eventCharges;
+          subEvents.fold(0.0, (sum, e) => sum + e.charges) +
+          eventCharges +
+          items.fold(0.0, (sum, e) => sum + e.total);
     } else {
       totalAmount = items.fold(0.0, (sum, e) => sum + e.total);
     }
@@ -347,7 +349,8 @@ class EventOrderOfflineController extends ChangeNotifier {
     if (existing.orderType == OrderType.event.index) {
       existing.totalAmount =
           existing.subEvents.fold(0.0, (sum, e) => sum + e.charges) +
-          existing.eventCharges;
+          existing.eventCharges +
+          existing.items.fold(0.0, (sum, e) => sum + e.total);
     } else {
       existing.totalAmount = existing.items.fold(
         0.0,
