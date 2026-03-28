@@ -121,9 +121,9 @@ class _LoginPageV2State extends State<LoginPageV2>
     final emailOrPhone = _emailOrPhoneController.text.trim();
     final password = _passwordController.text;
     if (emailOrPhone.isEmpty || password.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_localizations.enterEmailPhone)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(_localizations.enterEmailPhone)));
       return;
     }
 
@@ -137,7 +137,7 @@ class _LoginPageV2State extends State<LoginPageV2>
 
           // Start sync services now that user is authenticated
           initializeSyncServices();
-          
+
           // Reload product settings to fetch custom columns for this user
           ProductSettingsService.instance.reload();
           PurchaseReportSettingsService.instance.reload();
@@ -151,9 +151,7 @@ class _LoginPageV2State extends State<LoginPageV2>
             // Use LogoutService to ensure all local data is cleared on session expiry
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(_localizations.sessionExpired),
-                ),
+                SnackBar(content: Text(_localizations.sessionExpired)),
               );
               LogoutService.instance.onSessionExpired(context);
             }
@@ -175,9 +173,9 @@ class _LoginPageV2State extends State<LoginPageV2>
               });
 
           setState(() => _loading = false);
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text(_localizations.loginSuccessful)));
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(_localizations.loginSuccessful)),
+          );
           print('[DEBUG] Session timeout set for 2 hours');
 
           // Check subscription status before navigating
@@ -384,7 +382,8 @@ class _LoginPageV2State extends State<LoginPageV2>
                                         onPressed: () {
                                           Navigator.of(context).push(
                                             MaterialPageRoute(
-                                              builder: (_) => const ChangePasswordPage(),
+                                              builder: (_) =>
+                                                  const ChangePasswordPage(),
                                             ),
                                           );
                                         },

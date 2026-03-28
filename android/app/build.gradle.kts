@@ -31,6 +31,9 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+
+        // 16 KB page size alignment support
+        ndkVersion = "26.1.10909125"
     }
 
     buildTypes {
@@ -39,6 +42,18 @@ android {
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("debug")
         }
+    }
+
+    packagingOptions {
+        // 16 KB page size support
+        doNotStrip += listOf(
+            "**/libisar.so",
+            "**/libdatastore_shared_counter.so",
+            "**/libflutter.so",
+            "**/libimage_processing_util_ini.so",
+            "**/libvkLayer_khronos_validation.so",
+            "**/libbarhopper_v3.so"
+        )
     }
 }
 
