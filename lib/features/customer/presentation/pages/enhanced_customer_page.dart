@@ -10,6 +10,9 @@ import '../../data/datasources/customer_cache_datasource.dart';
 import '../../offline/controllers/customer_offline_controller.dart';
 import '../../offline/entities/customer_entity.dart';
 import '../../data/services/customer_sync_service.dart';
+import '../../../event_order/offline/controllers/event_order_offline_controller.dart';
+import '../../../event_order/offline/entities/event_order_entity.dart';
+import '../../../event_order/domain/entities/event_order.dart';
 import '../widgets/customer_summary_widget.dart';
 import '../widgets/customer_filter_widget.dart';
 import '../widgets/customer_list_widget.dart';
@@ -47,6 +50,8 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
   bool _isEditing = false;
   String? _editingCustomerId;
   List<Map<String, dynamic>> _customers = [];
+  // Raw customer entities from Isar stream (used to recompute _customers)
+  List<CustomerEntity> _customerEntities = [];
   String _searchQuery = '';
   CustomerSortField _sortField = CustomerSortField.name;
   bool _sortAscending = true;
@@ -54,6 +59,10 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
 
   // Isar stream for real-time updates
   StreamSubscription<List<CustomerEntity>>? _customerStreamSub;
+  // Event order stream for pending amount calculation
+  StreamSubscription<List<EventOrderEntity>>? _eventOrderStreamSub;
+  // Cached event pending amounts per customer (customerId -> total remaining)
+  Map<String, double> _eventPendingByCustomer = {};
   // Firestore stream for cross-device real-time sync
   StreamSubscription<QuerySnapshot>? _firestoreStreamSub;
 
@@ -88,6 +97,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
 
     _checkUserAuthentication();
     _setupIsarStream();
+    _setupEventOrderStream();
     _fetchFromFirebase();
     _setupFirestoreStream();
 
@@ -102,6 +112,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
     _isNavigatingAway = true;
     _animController.dispose();
     _customerStreamSub?.cancel();
+    _eventOrderStreamSub?.cancel();
     _firestoreStreamSub?.cancel();
     _firstNameController.dispose();
     _middleNameController.dispose();
@@ -135,13 +146,10 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
     _customerStreamSub = offlineCtrl.watchAllCustomers().listen(
       (entities) {
         if (!mounted || _isNavigatingAway) return;
-        final mapped = entities.map(_entityToMap).toList();
-        setState(() {
-          _customers = mapped;
-          _isLoading = false;
-        });
+        _customerEntities = entities;
+        _rebuildCustomerList();
         debugPrint(
-          '[EnhancedCustomer] Isar stream: ${mapped.length} customers',
+          '[EnhancedCustomer] Isar stream: ${entities.length} customers',
         );
       },
       onError: (e) {
@@ -149,6 +157,43 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
         if (mounted) setState(() => _isLoading = false);
       },
     );
+  }
+
+  /// Watch event orders to compute per-customer event pending amounts
+  void _setupEventOrderStream() {
+    final eventCtrl = EventOrderOfflineController.instance;
+    _eventOrderStreamSub = eventCtrl.watchAllEventOrders().listen(
+      (orders) {
+        if (!mounted || _isNavigatingAway) return;
+        final pendingMap = <String, double>{};
+        for (final order in orders) {
+          final custId = order.customerId;
+          if (custId == null || custId.isEmpty) continue;
+          // Skip cancelled and convertedToBill orders
+          if (order.status == OrderStatus.cancelled.index ||
+              order.status == OrderStatus.convertedToBill.index) continue;
+          pendingMap[custId] = (pendingMap[custId] ?? 0.0) + order.remainingAmount;
+        }
+        if (!mounted) return;
+        _eventPendingByCustomer = pendingMap;
+        _rebuildCustomerList();
+        debugPrint(
+          '[EnhancedCustomer] Event pending updated for ${pendingMap.length} customers',
+        );
+      },
+      onError: (e) {
+        debugPrint('[EnhancedCustomer] Event order stream error: $e');
+      },
+    );
+  }
+
+  /// Rebuild _customers list from raw entities + event pending data
+  void _rebuildCustomerList() {
+    final mapped = _customerEntities.map(_entityToMap).toList();
+    setState(() {
+      _customers = mapped;
+      _isLoading = false;
+    });
   }
 
   /// Convert CustomerEntity -> Map for UI
@@ -167,7 +212,13 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
       'email': entity.email ?? '',
       'isActive': true,
       'isSynced': entity.isSynced,
-      'currentPendingAmount': entity.currentPendingAmount,
+      'currentPendingAmount': entity.currentPendingAmount +
+          (_eventPendingByCustomer[entity.serverId] ?? 0.0) +
+          (_eventPendingByCustomer['local_${entity.id}'] ?? 0.0),
+      'billPendingAmount': entity.currentPendingAmount,
+      'eventPendingAmount':
+          (_eventPendingByCustomer[entity.serverId] ?? 0.0) +
+          (_eventPendingByCustomer['local_${entity.id}'] ?? 0.0),
       'totalPurchases': entity.totalPurchases,
       'createdAt': entity.createdAt,
     };
