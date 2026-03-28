@@ -114,6 +114,7 @@ class MyApp extends StatelessWidget {
       title: 'C-Billing',
       theme: ThemeData(useMaterial3: true, fontFamily: 'Literata'),
       home: const SplashPage(),
+      debugShowCheckedModeBanner: false,
     );
   }
 }
