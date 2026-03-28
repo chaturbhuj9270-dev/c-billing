@@ -536,7 +536,7 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
       },
     );
 
-    if (result == true && !signatureController.isEmpty) {
+    if (result == true && signatureController.isNotEmpty) {
       await _saveSignature(signatureController);
     }
     signatureController.dispose();
@@ -1179,7 +1179,7 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
                   border: Border.all(color: Colors.grey[200]!),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.03),
+                      color: Colors.black.withValues(alpha: 0.03),
                       blurRadius: 4,
                       offset: const Offset(0, 1),
                     ),
@@ -1230,7 +1230,7 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
                   border: Border.all(color: Colors.grey[200]!),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.03),
+                      color: Colors.black.withValues(alpha: 0.03),
                       blurRadius: 4,
                       offset: const Offset(0, 1),
                     ),
@@ -1284,7 +1284,7 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
                   border: Border.all(color: Colors.grey[200]!),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.03),
+                      color: Colors.black.withValues(alpha: 0.03),
                       blurRadius: 4,
                       offset: const Offset(0, 1),
                     ),
@@ -1320,7 +1320,7 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
                   border: Border.all(color: Colors.grey[200]!),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.03),
+                      color: Colors.black.withValues(alpha: 0.03),
                       blurRadius: 4,
                       offset: const Offset(0, 1),
                     ),
@@ -1388,7 +1388,7 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
                   border: Border.all(color: Colors.grey[200]!),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.03),
+                      color: Colors.black.withValues(alpha: 0.03),
                       blurRadius: 4,
                       offset: const Offset(0, 1),
                     ),
@@ -1435,7 +1435,7 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
                   border: Border.all(color: Colors.grey[200]!),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.03),
+                      color: Colors.black.withValues(alpha: 0.03),
                       blurRadius: 4,
                       offset: const Offset(0, 1),
                     ),

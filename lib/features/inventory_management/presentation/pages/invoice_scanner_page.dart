@@ -718,7 +718,7 @@ class _InvoiceScannerPageState extends State<InvoiceScannerPage> {
             '$label: ',
             style: TextStyle(
               fontSize: 12,
-              color: colorScheme.onPrimaryContainer.withOpacity(0.7),
+              color: colorScheme.onPrimaryContainer.withValues(alpha: 0.7),
             ),
           ),
           Text(
@@ -924,10 +924,10 @@ class _InvoiceScannerPageState extends State<InvoiceScannerPage> {
                             vertical: 2,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.green.withOpacity(0.1),
+                            color: Colors.green.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(4),
                             border: Border.all(
-                              color: Colors.green.withOpacity(0.3),
+                              color: Colors.green.withValues(alpha: 0.3),
                             ),
                           ),
                           child: Row(

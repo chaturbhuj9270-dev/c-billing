@@ -276,7 +276,7 @@ class _BillSettingsPageState extends State<BillSettingsPage>
                                     vertical: 14,
                                   ),
                                   height: 1,
-                                  color: Colors.grey.withOpacity(0.1),
+                                  color: Colors.grey.withValues(alpha: 0.1),
                                 ),
                                 // SGST Toggle
                                 _buildModernToggle(
@@ -316,7 +316,7 @@ class _BillSettingsPageState extends State<BillSettingsPage>
                                     vertical: 14,
                                   ),
                                   height: 1,
-                                  color: Colors.grey.withOpacity(0.1),
+                                  color: Colors.grey.withValues(alpha: 0.1),
                                 ),
                                 // Other Tax Toggle
                                 _buildModernToggle(
@@ -430,19 +430,21 @@ class _BillSettingsPageState extends State<BillSettingsPage>
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            const Color(0xFF1B4D3E).withOpacity(0.05),
-            const Color(0xFF1B4D3E).withOpacity(0.02),
+            const Color(0xFF1B4D3E).withValues(alpha: 0.05),
+            const Color(0xFF1B4D3E).withValues(alpha: 0.02),
           ],
         ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF1B4D3E).withOpacity(0.1)),
+        border: Border.all(
+          color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+        ),
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: const Color(0xFF1B4D3E).withOpacity(0.1),
+              color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
             ),
             child: const Icon(
@@ -500,8 +502,8 @@ class _BillSettingsPageState extends State<BillSettingsPage>
           gradient: isSelected
               ? LinearGradient(
                   colors: [
-                    const Color(0xFF1B4D3E).withOpacity(0.1),
-                    const Color(0xFF1B4D3E).withOpacity(0.05),
+                    const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+                    const Color(0xFF1B4D3E).withValues(alpha: 0.05),
                   ],
                 )
               : null,
@@ -598,7 +600,7 @@ class _BillSettingsPageState extends State<BillSettingsPage>
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 20,
             offset: const Offset(0, 4),
           ),
@@ -612,8 +614,8 @@ class _BillSettingsPageState extends State<BillSettingsPage>
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  iconColor.withOpacity(0.08),
-                  iconColor.withOpacity(0.02),
+                  iconColor.withValues(alpha: 0.08),
+                  iconColor.withValues(alpha: 0.02),
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
@@ -630,14 +632,14 @@ class _BillSettingsPageState extends State<BillSettingsPage>
                   height: 48,
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
-                      colors: [iconColor, iconColor.withOpacity(0.8)],
+                      colors: [iconColor, iconColor.withValues(alpha: 0.8)],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
                     borderRadius: BorderRadius.circular(14),
                     boxShadow: [
                       BoxShadow(
-                        color: iconColor.withOpacity(0.3),
+                        color: iconColor.withValues(alpha: 0.3),
                         blurRadius: 12,
                         offset: const Offset(0, 4),
                       ),
@@ -702,7 +704,7 @@ class _BillSettingsPageState extends State<BillSettingsPage>
           width: 42,
           height: 42,
           decoration: BoxDecoration(
-            color: iconColor.withOpacity(0.1),
+            color: iconColor.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Icon(icon, color: iconColor, size: 22),
@@ -767,7 +769,7 @@ class _BillSettingsPageState extends State<BillSettingsPage>
               width: 42,
               height: 42,
               decoration: BoxDecoration(
-                color: iconColor.withOpacity(0.1),
+                color: iconColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(icon, color: iconColor, size: 22),
@@ -802,7 +804,7 @@ class _BillSettingsPageState extends State<BillSettingsPage>
               width: 36,
               height: 36,
               decoration: BoxDecoration(
-                color: iconColor.withOpacity(0.1),
+                color: iconColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(
@@ -869,8 +871,8 @@ class _BillSettingsPageState extends State<BillSettingsPage>
           gradient: isSelected
               ? LinearGradient(
                   colors: [
-                    const Color(0xFF1B4D3E).withOpacity(0.1),
-                    const Color(0xFF1B4D3E).withOpacity(0.05),
+                    const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+                    const Color(0xFF1B4D3E).withValues(alpha: 0.05),
                   ],
                 )
               : null,
@@ -883,7 +885,7 @@ class _BillSettingsPageState extends State<BillSettingsPage>
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: const Color(0xFF1B4D3E).withOpacity(0.15),
+                    color: const Color(0xFF1B4D3E).withValues(alpha: 0.15),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -905,7 +907,7 @@ class _BillSettingsPageState extends State<BillSettingsPage>
                 boxShadow: isSelected
                     ? [
                         BoxShadow(
-                          color: const Color(0xFF1B4D3E).withOpacity(0.3),
+                          color: const Color(0xFF1B4D3E).withValues(alpha: 0.3),
                           blurRadius: 8,
                           offset: const Offset(0, 3),
                         ),
@@ -1008,7 +1010,7 @@ class _BillSettingsPageState extends State<BillSettingsPage>
             flex: 1,
             child: Container(
               decoration: BoxDecoration(
-                color: const Color(0xFF1B4D3E).withOpacity(0.05),
+                color: const Color(0xFF1B4D3E).withValues(alpha: 0.05),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: Colors.grey[200]!),
               ),
@@ -1132,7 +1134,7 @@ class _BillSettingsHeaderDelegate extends SliverPersistentHeaderDelegate {
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF1B4D3E).withOpacity(0.3),
+            color: const Color(0xFF1B4D3E).withValues(alpha: 0.3),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
@@ -1161,10 +1163,10 @@ class _BillSettingsHeaderDelegate extends SliverPersistentHeaderDelegate {
                           width: 44,
                           height: 44,
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.15),
+                            color: Colors.white.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(14),
                             border: Border.all(
-                              color: Colors.white.withOpacity(0.2),
+                              color: Colors.white.withValues(alpha: 0.2),
                             ),
                           ),
                           child: const Icon(
@@ -1198,7 +1200,7 @@ class _BillSettingsHeaderDelegate extends SliverPersistentHeaderDelegate {
                                 style: TextStyle(
                                   fontSize: 13,
                                   fontFamily: 'Literata',
-                                  color: Colors.white.withOpacity(0.8),
+                                  color: Colors.white.withValues(alpha: 0.8),
                                 ),
                               ),
                             ],
@@ -1218,7 +1220,7 @@ class _BillSettingsHeaderDelegate extends SliverPersistentHeaderDelegate {
                             borderRadius: BorderRadius.circular(12),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.1),
+                                color: Colors.black.withValues(alpha: 0.1),
                                 blurRadius: 8,
                                 offset: const Offset(0, 2),
                               ),

@@ -71,7 +71,7 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -256,7 +256,7 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
           color: widget.selectedSupplierId != null
-              ? const Color(0xFF1B4D3E).withOpacity(0.1)
+              ? const Color(0xFF1B4D3E).withValues(alpha: 0.1)
               : Colors.grey[100],
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
@@ -378,10 +378,10 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: const Color(0xFF1B4D3E).withOpacity(0.1),
+        color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(6),
         border: Border.all(
-          color: const Color(0xFF1B4D3E).withOpacity(0.3),
+          color: const Color(0xFF1B4D3E).withValues(alpha: 0.3),
           width: 1,
         ),
       ),
@@ -403,7 +403,7 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
             child: Icon(
               Icons.close_rounded,
               size: 14,
-              color: const Color(0xFF1B4D3E).withOpacity(0.7),
+              color: const Color(0xFF1B4D3E).withValues(alpha: 0.7),
             ),
           ),
         ],
@@ -488,7 +488,7 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
                   maxHeight: MediaQuery.of(context).size.height * 0.7,
                 ),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.95),
+                  color: Colors.white.withValues(alpha: 0.95),
                   borderRadius: const BorderRadius.vertical(
                     top: Radius.circular(24),
                   ),
@@ -624,7 +624,7 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
                                       color: isSelected
                                           ? const Color(
                                               0xFF1B4D3E,
-                                            ).withOpacity(0.1)
+                                            ).withValues(alpha: 0.1)
                                           : Colors.grey[50],
                                       borderRadius: BorderRadius.circular(12),
                                       border: Border.all(

@@ -33,7 +33,7 @@ class PrinterSelectionWidget extends StatefulWidget {
 
 class _PrinterSelectionWidgetState extends State<PrinterSelectionWidget> {
   final PosPrinterService _printerService = PosPrinterService();
-  
+
   List<PosPrinterDevice> _devices = [];
   bool _isScanning = false;
   bool _isConnecting = false;
@@ -124,9 +124,7 @@ class _PrinterSelectionWidgetState extends State<PrinterSelectionWidget> {
             children: [
               _buildHeader(),
               _buildPaperSizeSelector(),
-              Expanded(
-                child: _buildDeviceList(scrollController),
-              ),
+              Expanded(child: _buildDeviceList(scrollController)),
             ],
           );
         },
@@ -141,7 +139,7 @@ class _PrinterSelectionWidgetState extends State<PrinterSelectionWidget> {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -164,7 +162,7 @@ class _PrinterSelectionWidgetState extends State<PrinterSelectionWidget> {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                  color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(
@@ -188,7 +186,9 @@ class _PrinterSelectionWidgetState extends State<PrinterSelectionWidget> {
                       ),
                     ),
                     Text(
-                      _isScanning ? 'Scanning...' : '${_devices.length} printer(s) found',
+                      _isScanning
+                          ? 'Scanning...'
+                          : '${_devices.length} printer(s) found',
                       style: TextStyle(
                         fontFamily: 'Literata',
                         fontSize: 12,
@@ -258,9 +258,7 @@ class _PrinterSelectionWidgetState extends State<PrinterSelectionWidget> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: const Color(0xFFF5F6F8),
-        border: Border(
-          bottom: BorderSide(color: Colors.grey[200]!),
-        ),
+        border: Border(bottom: BorderSide(color: Colors.grey[200]!)),
       ),
       child: Row(
         children: [
@@ -294,14 +292,10 @@ class _PrinterSelectionWidgetState extends State<PrinterSelectionWidget> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected
-              ? const Color(0xFF1B4D3E)
-              : Colors.white,
+          color: isSelected ? const Color(0xFF1B4D3E) : Colors.white,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: isSelected
-                ? const Color(0xFF1B4D3E)
-                : Colors.grey[300]!,
+            color: isSelected ? const Color(0xFF1B4D3E) : Colors.grey[300]!,
           ),
         ),
         child: Text(
@@ -399,14 +393,12 @@ class _PrinterSelectionWidgetState extends State<PrinterSelectionWidget> {
             color: Colors.white,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: isSelected
-                  ? const Color(0xFF1B4D3E)
-                  : Colors.grey[200]!,
+              color: isSelected ? const Color(0xFF1B4D3E) : Colors.grey[200]!,
               width: isSelected ? 2 : 1,
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.03),
+                color: Colors.black.withValues(alpha: 0.03),
                 blurRadius: 8,
                 offset: const Offset(0, 2),
               ),
@@ -422,7 +414,7 @@ class _PrinterSelectionWidgetState extends State<PrinterSelectionWidget> {
               decoration: BoxDecoration(
                 color: device.isConnected
                     ? Colors.green[50]
-                    : const Color(0xFF1B4D3E).withOpacity(0.1),
+                    : const Color(0xFF1B4D3E).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(
@@ -461,32 +453,27 @@ class _PrinterSelectionWidgetState extends State<PrinterSelectionWidget> {
                     ),
                   )
                 : device.isConnected
-                    ? Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.green[50],
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          'Connected',
-                          style: TextStyle(
-                            fontFamily: 'Literata',
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.green[700],
-                          ),
-                        ),
-                      )
-                    : const Icon(
-                        Icons.chevron_right,
-                        color: Colors.grey,
+                ? Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.green[50],
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      'Connected',
+                      style: TextStyle(
+                        fontFamily: 'Literata',
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.green[700],
                       ),
-            onTap: isConnecting
-                ? null
-                : () => _connectAndSelect(device),
+                    ),
+                  )
+                : const Icon(Icons.chevron_right, color: Colors.grey),
+            onTap: isConnecting ? null : () => _connectAndSelect(device),
           ),
         );
       },

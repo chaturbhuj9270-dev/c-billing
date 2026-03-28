@@ -642,7 +642,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
           ),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF1B4D3E).withOpacity(0.2),
+              color: const Color(0xFF1B4D3E).withValues(alpha: 0.2),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
@@ -660,7 +660,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
                     width: 40,
                     height: 40,
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
+                      color: Colors.white.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: const Icon(
@@ -689,7 +689,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
                       Text(
                         _localizations.processBillReturns,
                         style: TextStyle(
-                          color: Colors.white.withOpacity(0.7),
+                          color: Colors.white.withValues(alpha: 0.7),
                           fontSize: 11,
                           fontFamily: 'Literata',
                           height: 1.2,
@@ -708,7 +708,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
                       height: 40,
                       margin: const EdgeInsets.only(right: 8),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
+                        color: Colors.white.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: const Icon(
@@ -726,7 +726,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
                       height: 40,
                       margin: const EdgeInsets.only(right: 8),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
+                        color: Colors.white.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: _isPrinting
@@ -754,7 +754,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
+                    color: Colors.white.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: const Icon(
@@ -779,7 +779,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -868,7 +868,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
                   ),
                   disabledBackgroundColor: const Color(
                     0xFF1B4D3E,
-                  ).withOpacity(0.5),
+                  ).withValues(alpha: 0.5),
                 ),
                 child: _isSearching
                     ? const SizedBox(
@@ -975,7 +975,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -1102,7 +1102,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                          color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
@@ -1287,7 +1287,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: const Color(0xFF1B4D3E).withOpacity(0.05),
+              color: const Color(0xFF1B4D3E).withValues(alpha: 0.05),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Row(

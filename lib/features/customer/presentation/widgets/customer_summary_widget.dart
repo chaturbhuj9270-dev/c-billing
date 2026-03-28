@@ -56,13 +56,13 @@ class CustomerSummaryWidget extends StatelessWidget {
           end: Alignment.bottomRight,
           colors: [
             const Color(0xFF1B4D3E),
-            const Color(0xFF1B4D3E).withOpacity(0.85),
+            const Color(0xFF1B4D3E).withValues(alpha: 0.85),
           ],
         ),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF1B4D3E).withOpacity(0.3),
+            color: const Color(0xFF1B4D3E).withValues(alpha: 0.3),
             blurRadius: 12,
             offset: const Offset(0, 6),
           ),
@@ -113,7 +113,7 @@ class CustomerSummaryWidget extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, color: Colors.white.withOpacity(0.8), size: 20),
+          Icon(icon, color: Colors.white.withValues(alpha: 0.8), size: 20),
           const SizedBox(height: 6),
           Text(
             value,
@@ -131,7 +131,7 @@ class CustomerSummaryWidget extends StatelessWidget {
               fontFamily: 'Literata',
               fontWeight: FontWeight.w400,
               fontSize: 11,
-              color: Colors.white.withOpacity(0.7),
+              color: Colors.white.withValues(alpha: 0.7),
             ),
           ),
         ],
@@ -143,7 +143,7 @@ class CustomerSummaryWidget extends StatelessWidget {
     return Container(
       width: 1,
       height: 40,
-      color: Colors.white.withOpacity(0.2),
+      color: Colors.white.withValues(alpha: 0.2),
     );
   }
 }

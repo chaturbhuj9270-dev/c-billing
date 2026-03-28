@@ -17,13 +17,13 @@ class _ProfilePageState extends State<ProfilePage> {
   final _auth = FirebaseAuth.instance;
   final _firestore = FirebaseFirestore.instance;
   final _imagePicker = ImagePicker();
-  
+
   late User? _currentUser;
   late TextEditingController _nameController;
   late TextEditingController _emailController;
   late TextEditingController _phoneController;
   late TextEditingController _addressController;
-  
+
   File? _pickedImage;
   String? _profileImageUrl;
   bool _isLoading = false;
@@ -35,7 +35,9 @@ class _ProfilePageState extends State<ProfilePage> {
     super.initState();
     _localizations = AppLocalizations(LanguageService.instance.currentLanguage);
     _currentUser = _auth.currentUser;
-    _nameController = TextEditingController(text: _currentUser?.displayName ?? '');
+    _nameController = TextEditingController(
+      text: _currentUser?.displayName ?? '',
+    );
     _emailController = TextEditingController(text: _currentUser?.email ?? '');
     _phoneController = TextEditingController();
     _addressController = TextEditingController();
@@ -54,10 +56,13 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Future<void> _loadUserProfile() async {
     if (_currentUser == null) return;
-    
+
     setState(() => _isLoading = true);
     try {
-      final doc = await _firestore.collection('users').doc(_currentUser!.uid).get();
+      final doc = await _firestore
+          .collection('users')
+          .doc(_currentUser!.uid)
+          .get();
       if (doc.exists) {
         final data = doc.data() as Map<String, dynamic>;
         setState(() {
@@ -81,7 +86,7 @@ class _ProfilePageState extends State<ProfilePage> {
         maxWidth: 500,
         maxHeight: 500,
       );
-      
+
       if (pickedFile != null) {
         setState(() {
           _pickedImage = File(pickedFile.path);
@@ -91,18 +96,18 @@ class _ProfilePageState extends State<ProfilePage> {
     } catch (e) {
       print('[ERROR] Error picking image: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to pick image')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Failed to pick image')));
       }
     }
   }
 
   Future<void> _saveProfile() async {
     if (_nameController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_localizations.pleaseEnterName)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(_localizations.pleaseEnterName)));
       return;
     }
 
@@ -144,10 +149,7 @@ class _ProfilePageState extends State<ProfilePage> {
         elevation: 2,
         leading: GestureDetector(
           onTap: () => Navigator.pop(context),
-          child: const Icon(
-            Icons.arrow_back,
-            color: Color(0xFF1B4D3E),
-          ),
+          child: const Icon(Icons.arrow_back, color: Color(0xFF1B4D3E)),
         ),
         title: Text(
           _localizations.myProfile,
@@ -161,9 +163,7 @@ class _ProfilePageState extends State<ProfilePage> {
       ),
       body: _isLoading
           ? const Center(
-              child: CircularProgressIndicator(
-                color: Color(0xFF1B4D3E),
-              ),
+              child: CircularProgressIndicator(color: Color(0xFF1B4D3E)),
             )
           : SingleChildScrollView(
               child: Padding(
@@ -185,7 +185,7 @@ class _ProfilePageState extends State<ProfilePage> {
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.1),
+                                color: Colors.black.withValues(alpha: 0.1),
                                 blurRadius: 8,
                                 offset: const Offset(0, 2),
                               ),
@@ -193,38 +193,20 @@ class _ProfilePageState extends State<ProfilePage> {
                           ),
                           child: ClipOval(
                             child: _pickedImage != null
-                                ? Image.file(
-                                    _pickedImage!,
+                                ? Image.file(_pickedImage!, fit: BoxFit.cover)
+                                : _profileImageUrl != null &&
+                                      _profileImageUrl!.isNotEmpty
+                                ? Image.network(
+                                    _profileImageUrl!,
                                     fit: BoxFit.cover,
-                                  )
-                                : _profileImageUrl != null && _profileImageUrl!.isNotEmpty
-                                    ? Image.network(
-                                        _profileImageUrl!,
-                                        fit: BoxFit.cover,
-                                        errorBuilder: (context, error, stackTrace) {
-                                          return Container(
-                                            color: const Color(0xFFE8F5E9),
-                                            child: Center(
-                                              child: Text(
-                                                _nameController.text.isNotEmpty
-                                                    ? _nameController.text[0].toUpperCase()
-                                                    : 'U',
-                                                style: const TextStyle(
-                                                  fontSize: 48,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: Color(0xFF1B4D3E),
-                                                ),
-                                              ),
-                                            ),
-                                          );
-                                        },
-                                      )
-                                    : Container(
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return Container(
                                         color: const Color(0xFFE8F5E9),
                                         child: Center(
                                           child: Text(
                                             _nameController.text.isNotEmpty
-                                                ? _nameController.text[0].toUpperCase()
+                                                ? _nameController.text[0]
+                                                      .toUpperCase()
                                                 : 'U',
                                             style: const TextStyle(
                                               fontSize: 48,
@@ -233,7 +215,25 @@ class _ProfilePageState extends State<ProfilePage> {
                                             ),
                                           ),
                                         ),
+                                      );
+                                    },
+                                  )
+                                : Container(
+                                    color: const Color(0xFFE8F5E9),
+                                    child: Center(
+                                      child: Text(
+                                        _nameController.text.isNotEmpty
+                                            ? _nameController.text[0]
+                                                  .toUpperCase()
+                                            : 'U',
+                                        style: const TextStyle(
+                                          fontSize: 48,
+                                          fontWeight: FontWeight.bold,
+                                          color: Color(0xFF1B4D3E),
+                                        ),
                                       ),
+                                    ),
+                                  ),
                           ),
                         ),
                         // Edit Image Button
@@ -250,7 +250,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                 color: const Color(0xFF1B4D3E),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black.withOpacity(0.2),
+                                    color: Colors.black.withValues(alpha: 0.2),
                                     blurRadius: 4,
                                     offset: const Offset(0, 2),
                                   ),
@@ -309,7 +309,9 @@ class _ProfilePageState extends State<ProfilePage> {
                           borderRadius: BorderRadius.circular(8),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFF1B4D3E).withOpacity(0.3),
+                              color: const Color(
+                                0xFF1B4D3E,
+                              ).withValues(alpha: 0.3),
                               blurRadius: 8,
                               offset: const Offset(0, 2),
                             ),
@@ -373,7 +375,7 @@ class _ProfilePageState extends State<ProfilePage> {
             borderRadius: BorderRadius.circular(8),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.05),
+                color: Colors.black.withValues(alpha: 0.05),
                 blurRadius: 8,
                 offset: const Offset(0, 2),
               ),
@@ -386,11 +388,7 @@ class _ProfilePageState extends State<ProfilePage> {
             decoration: InputDecoration(
               filled: true,
               fillColor: Colors.white,
-              prefixIcon: Icon(
-                icon,
-                color: const Color(0xFF1B4D3E),
-                size: 20,
-              ),
+              prefixIcon: Icon(icon, color: const Color(0xFF1B4D3E), size: 20),
               hintText: hint,
               hintStyle: const TextStyle(
                 color: Color(0xFFBDBDBD),

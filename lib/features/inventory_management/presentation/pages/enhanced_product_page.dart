@@ -605,7 +605,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
               width: 100,
               height: 100,
               decoration: BoxDecoration(
-                color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(24),
               ),
               child: Icon(
@@ -613,7 +613,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                     ? Icons.search_off_rounded
                     : Icons.inventory_2_outlined,
                 size: 48,
-                color: const Color(0xFF1B4D3E).withOpacity(0.4),
+                color: const Color(0xFF1B4D3E).withValues(alpha: 0.4),
               ),
             ),
             const SizedBox(height: 24),
@@ -660,7 +660,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -674,8 +674,8 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
           leading: CircleAvatar(
             radius: 22,
             backgroundColor: isLow
-                ? Colors.red.withOpacity(0.15)
-                : const Color(0xFF1B4D3E).withOpacity(0.15),
+                ? Colors.red.withValues(alpha: 0.15)
+                : const Color(0xFF1B4D3E).withValues(alpha: 0.15),
             child: Icon(
               Icons.inventory_2_rounded,
               color: isLow ? Colors.red : const Color(0xFF1B4D3E),
@@ -703,8 +703,8 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                   ),
                   decoration: BoxDecoration(
                     color: isLow
-                        ? Colors.red.withOpacity(0.15)
-                        : Colors.green.withOpacity(0.15),
+                        ? Colors.red.withValues(alpha: 0.15)
+                        : Colors.green.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
@@ -725,7 +725,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                       vertical: 2,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.blue.withOpacity(0.12),
+                      color: Colors.blue.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
@@ -746,7 +746,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
             Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              color: const Color(0xFF1B4D3E).withOpacity(0.06),
+              color: const Color(0xFF1B4D3E).withValues(alpha: 0.06),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -936,7 +936,9 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                               ? [Colors.orange[400]!, Colors.orange[300]!]
                               : [
                                   const Color(0xFF1B4D3E),
-                                  const Color(0xFF1B4D3E).withOpacity(0.7),
+                                  const Color(
+                                    0xFF1B4D3E,
+                                  ).withValues(alpha: 0.7),
                                 ],
                         ),
                       ),
@@ -1223,9 +1225,9 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [
@@ -1258,7 +1260,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: const Color(0xFF1B4D3E).withOpacity(0.1),
+              color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(icon, color: const Color(0xFF1B4D3E), size: 20),
@@ -1301,9 +1303,9 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.08),
+        color: color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.2)),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
       ),
       child: Column(
         children: [
@@ -1798,7 +1800,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                     color: Colors.white,
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
+                        color: Colors.black.withValues(alpha: 0.05),
                         blurRadius: 10,
                         offset: const Offset(0, -2),
                       ),
@@ -1974,7 +1976,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
+                    color: Colors.white.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
@@ -2301,7 +2303,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                     color: Colors.white,
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
+                        color: Colors.black.withValues(alpha: 0.05),
                         blurRadius: 10,
                         offset: const Offset(0, -2),
                       ),

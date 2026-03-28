@@ -42,14 +42,14 @@ class _SplashPageState extends State<SplashPage> {
     _localizations = AppLocalizations.of(
       LanguageService.instance.currentLanguage,
     );
-    
+
     // Precache logo for instant display
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         precacheImage(const AssetImage('assets/images/logo.png'), context);
       }
     });
-    
+
     // Defer initialization until after first frame is rendered
     // This ensures splash screen shows immediately
     Future.microtask(() => _initializeApp());
@@ -183,9 +183,9 @@ class _SplashPageState extends State<SplashPage> {
     try {
       final biometricService = BiometricService.instance;
       final isLockEnabled = await biometricService.isBiometricLockEnabled();
-      
+
       print('[DEBUG] Biometric lock enabled: $isLockEnabled');
-      
+
       if (isLockEnabled && mounted) {
         // Show unlock button instead of auto-prompting
         setState(() {
@@ -215,14 +215,14 @@ class _SplashPageState extends State<SplashPage> {
         print('[DEBUG] Fingerprint authentication successful');
         _navigateToDashboard();
       } else {
-        print(
-          '[DEBUG] Fingerprint authentication cancelled/failed',
-        );
+        print('[DEBUG] Fingerprint authentication cancelled/failed');
         // Stay on splash screen - user can tap unlock again
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Authentication cancelled. Tap "Unlock Now" to try again.'),
+              content: Text(
+                'Authentication cancelled. Tap "Unlock Now" to try again.',
+              ),
               backgroundColor: Colors.orange,
             ),
           );
@@ -306,7 +306,7 @@ class _SplashPageState extends State<SplashPage> {
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
-    
+
     return Scaffold(
       body: Container(
         width: double.infinity,
@@ -343,13 +343,15 @@ class _SplashPageState extends State<SplashPage> {
                           borderRadius: BorderRadius.circular(32),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFF1B4D3E).withOpacity(0.25),
+                              color: const Color(
+                                0xFF1B4D3E,
+                              ).withValues(alpha: 0.25),
                               blurRadius: 30,
                               offset: const Offset(0, 10),
                               spreadRadius: 2,
                             ),
                             BoxShadow(
-                              color: Colors.white.withOpacity(0.8),
+                              color: Colors.white.withValues(alpha: 0.8),
                               blurRadius: 15,
                               offset: const Offset(-5, -5),
                             ),
@@ -372,10 +374,7 @@ class _SplashPageState extends State<SplashPage> {
                     // App name with gradient
                     ShaderMask(
                       shaderCallback: (bounds) => const LinearGradient(
-                        colors: [
-                          Color(0xFF1B4D3E),
-                          Color(0xFF2E7D5B),
-                        ],
+                        colors: [Color(0xFF1B4D3E), Color(0xFF2E7D5B)],
                       ).createShader(bounds),
                       child: Text(
                         _localizations.appName,
@@ -397,10 +396,7 @@ class _SplashPageState extends State<SplashPage> {
                       height: 3,
                       decoration: BoxDecoration(
                         gradient: const LinearGradient(
-                          colors: [
-                            Color(0xFF1B4D3E),
-                            Color(0xFF2E7D5B),
-                          ],
+                          colors: [Color(0xFF1B4D3E), Color(0xFF2E7D5B)],
                         ),
                         borderRadius: BorderRadius.circular(2),
                       ),
@@ -414,7 +410,7 @@ class _SplashPageState extends State<SplashPage> {
                         _localizations.tagline,
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          color: const Color(0xFF1B4D3E).withOpacity(0.6),
+                          color: const Color(0xFF1B4D3E).withValues(alpha: 0.6),
                           fontSize: 13,
                           fontWeight: FontWeight.w500,
                           fontFamily: 'Literata',
@@ -430,7 +426,10 @@ class _SplashPageState extends State<SplashPage> {
               // Unlock Now Button - Only visible when biometric lock is enabled
               if (_showUnlockButton)
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 32,
+                    vertical: 20,
+                  ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(28),
                     child: BackdropFilter(
@@ -443,18 +442,20 @@ class _SplashPageState extends State<SplashPage> {
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                             colors: [
-                              Colors.white.withOpacity(0.25),
-                              Colors.white.withOpacity(0.15),
+                              Colors.white.withValues(alpha: 0.25),
+                              Colors.white.withValues(alpha: 0.15),
                             ],
                           ),
                           borderRadius: BorderRadius.circular(28),
                           border: Border.all(
-                            color: Colors.white.withOpacity(0.3),
+                            color: Colors.white.withValues(alpha: 0.3),
                             width: 1.5,
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFF1B4D3E).withOpacity(0.2),
+                              color: const Color(
+                                0xFF1B4D3E,
+                              ).withValues(alpha: 0.2),
                               blurRadius: 20,
                               offset: const Offset(0, 8),
                             ),
@@ -470,7 +471,10 @@ class _SplashPageState extends State<SplashPage> {
                               children: [
                                 ClipOval(
                                   child: BackdropFilter(
-                                    filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                                    filter: ImageFilter.blur(
+                                      sigmaX: 10,
+                                      sigmaY: 10,
+                                    ),
                                     child: Container(
                                       padding: const EdgeInsets.all(8),
                                       decoration: BoxDecoration(
@@ -478,13 +482,15 @@ class _SplashPageState extends State<SplashPage> {
                                           begin: Alignment.topLeft,
                                           end: Alignment.bottomRight,
                                           colors: [
-                                            Colors.white.withOpacity(0.3),
-                                            Colors.white.withOpacity(0.2),
+                                            Colors.white.withValues(alpha: 0.3),
+                                            Colors.white.withValues(alpha: 0.2),
                                           ],
                                         ),
                                         shape: BoxShape.circle,
                                         border: Border.all(
-                                          color: Colors.white.withOpacity(0.4),
+                                          color: Colors.white.withValues(
+                                            alpha: 0.4,
+                                          ),
                                           width: 1.5,
                                         ),
                                       ),
@@ -498,12 +504,13 @@ class _SplashPageState extends State<SplashPage> {
                                 ),
                                 const SizedBox(width: 12),
                                 ShaderMask(
-                                  shaderCallback: (bounds) => const LinearGradient(
-                                    colors: [
-                                      Color(0xFF1B4D3E),
-                                      Color(0xFF2E7D5B),
-                                    ],
-                                  ).createShader(bounds),
+                                  shaderCallback: (bounds) =>
+                                      const LinearGradient(
+                                        colors: [
+                                          Color(0xFF1B4D3E),
+                                          Color(0xFF2E7D5B),
+                                        ],
+                                      ).createShader(bounds),
                                   child: Text(
                                     _localizations.unlockNow,
                                     style: const TextStyle(
@@ -529,9 +536,7 @@ class _SplashPageState extends State<SplashPage> {
 
               // Bottom branding section with enhanced design
               Padding(
-                padding: EdgeInsets.only(
-                  bottom: _showUnlockButton ? 40 : 50,
-                ),
+                padding: EdgeInsets.only(bottom: _showUnlockButton ? 40 : 50),
                 child: Column(
                   children: [
                     // Elegant divider
@@ -545,7 +550,7 @@ class _SplashPageState extends State<SplashPage> {
                             gradient: LinearGradient(
                               colors: [
                                 Colors.transparent,
-                                const Color(0xFF1B4D3E).withOpacity(0.3),
+                                const Color(0xFF1B4D3E).withValues(alpha: 0.3),
                               ],
                             ),
                           ),
@@ -556,7 +561,9 @@ class _SplashPageState extends State<SplashPage> {
                             width: 4,
                             height: 4,
                             decoration: BoxDecoration(
-                              color: const Color(0xFF1B4D3E).withOpacity(0.3),
+                              color: const Color(
+                                0xFF1B4D3E,
+                              ).withValues(alpha: 0.3),
                               shape: BoxShape.circle,
                             ),
                           ),
@@ -567,7 +574,7 @@ class _SplashPageState extends State<SplashPage> {
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
                               colors: [
-                                const Color(0xFF1B4D3E).withOpacity(0.3),
+                                const Color(0xFF1B4D3E).withValues(alpha: 0.3),
                                 Colors.transparent,
                               ],
                             ),
@@ -584,13 +591,15 @@ class _SplashPageState extends State<SplashPage> {
                         vertical: 6,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF1B4D3E).withOpacity(0.08),
+                        color: const Color(0xFF1B4D3E).withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
                         'PREMIUM FINANCIAL SOLUTIONS',
                         style: TextStyle(
-                          color: const Color(0xFF1B4D3E).withOpacity(0.65),
+                          color: const Color(
+                            0xFF1B4D3E,
+                          ).withValues(alpha: 0.65),
                           fontSize: 9,
                           fontWeight: FontWeight.w700,
                           fontFamily: 'Literata',
@@ -608,7 +617,9 @@ class _SplashPageState extends State<SplashPage> {
                           TextSpan(
                             text: 'Powered by ',
                             style: TextStyle(
-                              color: const Color(0xFF1B4D3E).withOpacity(0.45),
+                              color: const Color(
+                                0xFF1B4D3E,
+                              ).withValues(alpha: 0.45),
                               fontSize: 10,
                               fontWeight: FontWeight.w400,
                               fontFamily: 'Literata',
@@ -628,7 +639,7 @@ class _SplashPageState extends State<SplashPage> {
                       ),
                     ),
                     const SizedBox(height: 6),
-                    
+
                     // Contact with icon
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -636,7 +647,7 @@ class _SplashPageState extends State<SplashPage> {
                         Icon(
                           Icons.location_on_outlined,
                           size: 11,
-                          color: const Color(0xFF1B4D3E).withOpacity(0.5),
+                          color: const Color(0xFF1B4D3E).withValues(alpha: 0.5),
                         ),
                         const SizedBox(width: 4),
                         const Text(
@@ -652,7 +663,7 @@ class _SplashPageState extends State<SplashPage> {
                         Icon(
                           Icons.phone_outlined,
                           size: 11,
-                          color: const Color(0xFF1B4D3E).withOpacity(0.5),
+                          color: const Color(0xFF1B4D3E).withValues(alpha: 0.5),
                         ),
                         const SizedBox(width: 4),
                         const Text(

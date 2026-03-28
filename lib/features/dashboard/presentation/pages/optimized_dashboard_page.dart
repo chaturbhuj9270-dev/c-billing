@@ -295,7 +295,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: const Icon(
@@ -553,7 +553,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: const Color(0xFFFF6F00).withOpacity(0.1),
+                color: const Color(0xFFFF6F00).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: const Icon(
@@ -617,13 +617,13 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
           color: isSelected
-              ? const Color(0xFFFF6F00).withOpacity(0.1)
-              : Colors.grey.withOpacity(0.05),
+              ? const Color(0xFFFF6F00).withValues(alpha: 0.1)
+              : Colors.grey.withValues(alpha: 0.05),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected
                 ? const Color(0xFFFF6F00)
-                : Colors.grey.withOpacity(0.2),
+                : Colors.grey.withValues(alpha: 0.2),
             width: isSelected ? 2 : 1,
           ),
         ),
@@ -802,9 +802,9 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.red.withOpacity(0.1),
+        color: Colors.red.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.red.withOpacity(0.3)),
+        border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [
@@ -1184,20 +1184,20 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
           border: Border.all(
             color: isSelected
                 ? Colors.transparent
-                : const Color(0xFF1B4D3E).withOpacity(0.2),
+                : const Color(0xFF1B4D3E).withValues(alpha: 0.2),
             width: 1.5,
           ),
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: const Color(0xFF1B4D3E).withOpacity(0.3),
+                    color: const Color(0xFF1B4D3E).withValues(alpha: 0.3),
                     blurRadius: 8,
                     offset: const Offset(0, 3),
                   ),
                 ]
               : [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.04),
+                    color: Colors.black.withValues(alpha: 0.04),
                     blurRadius: 4,
                     offset: const Offset(0, 2),
                   ),
@@ -1280,7 +1280,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFF1B4D3E).withOpacity(0.3),
+                color: const Color(0xFF1B4D3E).withValues(alpha: 0.3),
                 blurRadius: 8,
                 offset: const Offset(0, 3),
               ),
@@ -1612,7 +1612,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -1640,7 +1640,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.orange.withOpacity(0.1),
+                    color: Colors.orange.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Row(
@@ -1673,7 +1673,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                 child: Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1B4D3E).withOpacity(0.05),
+                    color: const Color(0xFF1B4D3E).withValues(alpha: 0.05),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Column(
@@ -1711,8 +1711,8 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: data.totalPendingAmount > 0
-                        ? const Color(0xFFEF5350).withOpacity(0.05)
-                        : const Color(0xFF667eea).withOpacity(0.05),
+                        ? const Color(0xFFEF5350).withValues(alpha: 0.05)
+                        : const Color(0xFF667eea).withValues(alpha: 0.05),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Column(
@@ -1761,7 +1761,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -1785,7 +1785,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF4CAF50).withOpacity(0.1),
+                  color: const Color(0xFF4CAF50).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
@@ -1820,7 +1820,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: Colors.black.withValues(alpha: 0.08),
             blurRadius: 20,
             offset: const Offset(0, -4),
           ),
@@ -1888,13 +1888,13 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
             color: isSelected
                 ? null
                 : (isPrimary
-                      ? const Color(0xFF1B4D3E).withOpacity(0.08)
+                      ? const Color(0xFF1B4D3E).withValues(alpha: 0.08)
                       : Colors.transparent),
             borderRadius: BorderRadius.circular(12),
             boxShadow: isSelected
                 ? [
                     BoxShadow(
-                      color: const Color(0xFF1B4D3E).withOpacity(0.3),
+                      color: const Color(0xFF1B4D3E).withValues(alpha: 0.3),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),
@@ -1961,20 +1961,20 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  Colors.white.withOpacity(0.7),
-                  Colors.white.withOpacity(0.5),
+                  Colors.white.withValues(alpha: 0.7),
+                  Colors.white.withValues(alpha: 0.5),
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: gradientColors[0].withOpacity(0.2),
+                color: gradientColors[0].withValues(alpha: 0.2),
                 width: 1,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.04),
+                  color: Colors.black.withValues(alpha: 0.04),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
@@ -1995,7 +1995,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                     borderRadius: BorderRadius.circular(10),
                     boxShadow: [
                       BoxShadow(
-                        color: gradientColors[0].withOpacity(0.25),
+                        color: gradientColors[0].withValues(alpha: 0.25),
                         blurRadius: 6,
                         offset: const Offset(0, 2),
                       ),
@@ -2025,15 +2025,15 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
-                        gradientColors[0].withOpacity(0.15),
-                        gradientColors[1].withOpacity(0.1),
+                        gradientColors[0].withValues(alpha: 0.15),
+                        gradientColors[1].withValues(alpha: 0.1),
                       ],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: gradientColors[0].withOpacity(0.3),
+                      color: gradientColors[0].withValues(alpha: 0.3),
                       width: 1,
                     ),
                   ),

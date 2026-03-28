@@ -9,34 +9,34 @@ import 'dart:io';
 /// Service for logging and collecting UI/Flutter errors
 class ErrorLoggingService {
   static final ErrorLoggingService _instance = ErrorLoggingService._internal();
-  
+
   factory ErrorLoggingService() => _instance;
-  
+
   ErrorLoggingService._internal();
-  
+
   static ErrorLoggingService get instance => _instance;
-  
+
   /// List of collected error logs
   final List<ErrorLog> _errorLogs = [];
-  
+
   /// Maximum number of logs to keep
   static const int _maxLogs = 100;
-  
+
   /// Get all error logs
   List<ErrorLog> get errorLogs => List.unmodifiable(_errorLogs);
-  
+
   /// Get logs as a formatted string
   String getLogsAsString() {
     if (_errorLogs.isEmpty) {
       return 'No errors logged.';
     }
-    
+
     final buffer = StringBuffer();
     buffer.writeln('=== C-BILLING ERROR LOG ===');
     buffer.writeln('Generated: ${DateTime.now().toIso8601String()}');
     buffer.writeln('Total Errors: ${_errorLogs.length}');
     buffer.writeln('');
-    
+
     for (int i = 0; i < _errorLogs.length; i++) {
       final log = _errorLogs[i];
       buffer.writeln('--- Error ${i + 1} ---');
@@ -49,10 +49,10 @@ class ErrorLoggingService {
       }
       buffer.writeln('');
     }
-    
+
     return buffer.toString();
   }
-  
+
   /// Log a Flutter error
   void logFlutterError(FlutterErrorDetails details) {
     final log = ErrorLog(
@@ -63,13 +63,13 @@ class ErrorLoggingService {
       context: details.context?.toString(),
     );
     _addLog(log);
-    
+
     // Also print to console in debug mode
     if (kDebugMode) {
       print('[ErrorLogging] Flutter Error: ${details.exceptionAsString()}');
     }
   }
-  
+
   /// Log a general error
   void logError(String errorType, dynamic error, [StackTrace? stackTrace]) {
     final log = ErrorLog(
@@ -79,12 +79,12 @@ class ErrorLoggingService {
       stackTrace: stackTrace?.toString(),
     );
     _addLog(log);
-    
+
     if (kDebugMode) {
       print('[ErrorLogging] $errorType: $error');
     }
   }
-  
+
   /// Log a UI overflow or rendering error
   void logUIError(String message, [String? details]) {
     final log = ErrorLog(
@@ -94,26 +94,26 @@ class ErrorLoggingService {
       context: details,
     );
     _addLog(log);
-    
+
     if (kDebugMode) {
       print('[ErrorLogging] UI Error: $message');
     }
   }
-  
+
   void _addLog(ErrorLog log) {
     _errorLogs.add(log);
-    
+
     // Keep only the last N logs
     while (_errorLogs.length > _maxLogs) {
       _errorLogs.removeAt(0);
     }
   }
-  
+
   /// Clear all logs
   void clearLogs() {
     _errorLogs.clear();
   }
-  
+
   /// Copy logs to clipboard
   Future<void> copyLogsToClipboard() async {
     final logsString = getLogsAsString();
@@ -125,10 +125,14 @@ class ErrorLoggingService {
     try {
       final logsString = getLogsAsString();
       final tempDir = await getTemporaryDirectory();
-      final timestamp = DateTime.now().toIso8601String().replaceAll(':', '-').split('.').first;
+      final timestamp = DateTime.now()
+          .toIso8601String()
+          .replaceAll(':', '-')
+          .split('.')
+          .first;
       final file = File('${tempDir.path}/c_billing_logs_$timestamp.txt');
       await file.writeAsString(logsString);
-      
+
       await Share.shareXFiles(
         [XFile(file.path)],
         subject: 'C-Billing Error Logs',
@@ -147,24 +151,24 @@ class ErrorLoggingService {
     // Capture Flutter framework errors
     FlutterError.onError = (FlutterErrorDetails details) {
       ErrorLoggingService.instance.logFlutterError(details);
-      
+
       // Also use default handler to show error in debug mode
       FlutterError.presentError(details);
     };
-    
+
     // Capture async errors
     PlatformDispatcher.instance.onError = (error, stack) {
       ErrorLoggingService.instance.logError('AsyncError', error, stack);
       return true;
     };
-    
+
     print('[ErrorLogging] Error logging service initialized');
   }
-  
+
   /// Show a dialog to view and copy logs
   static void showLogsDialog(BuildContext context) {
     final logs = ErrorLoggingService.instance.getLogsAsString();
-    
+
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -173,7 +177,7 @@ class ErrorLoggingService {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: Colors.red.withOpacity(0.1),
+                color: Colors.red.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: const Icon(Icons.bug_report, color: Colors.red, size: 20),
@@ -197,10 +201,7 @@ class ErrorLoggingService {
           child: SingleChildScrollView(
             child: SelectableText(
               logs,
-              style: const TextStyle(
-                fontSize: 11,
-                fontFamily: 'monospace',
-              ),
+              style: const TextStyle(fontSize: 11, fontFamily: 'monospace'),
             ),
           ),
         ),
@@ -234,7 +235,11 @@ class ErrorLoggingService {
                   Navigator.of(dialogContext).pop();
                   await ErrorLoggingService.instance.shareLogsAsFile();
                 },
-                icon: const Icon(Icons.share, size: 16, color: Color(0xFF1976D2)),
+                icon: const Icon(
+                  Icons.share,
+                  size: 16,
+                  color: Color(0xFF1976D2),
+                ),
                 label: const Text(
                   'Share',
                   style: TextStyle(color: Color(0xFF1976D2), fontSize: 13),
@@ -256,7 +261,11 @@ class ErrorLoggingService {
                     );
                   }
                 },
-                icon: const Icon(Icons.copy, size: 16, color: Color(0xFF1B4D3E)),
+                icon: const Icon(
+                  Icons.copy,
+                  size: 16,
+                  color: Color(0xFF1B4D3E),
+                ),
                 label: const Text(
                   'Copy',
                   style: TextStyle(color: Color(0xFF1B4D3E), fontSize: 13),
@@ -276,7 +285,7 @@ class ErrorLog {
   final String message;
   final String? stackTrace;
   final String? context;
-  
+
   ErrorLog({
     required this.timestamp,
     required this.errorType,
@@ -284,7 +293,7 @@ class ErrorLog {
     this.stackTrace,
     this.context,
   });
-  
+
   @override
   String toString() {
     return '[$timestamp] $errorType: $message';

@@ -161,16 +161,16 @@ class _PaymentScreenState extends State<PaymentScreen>
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.6),
+                color: Colors.white.withValues(alpha: 0.6),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                  color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
                 ),
               ),
               child: Icon(
                 Icons.arrow_back_ios_new,
                 size: 18,
-                color: const Color(0xFF1B4D3E).withOpacity(0.8),
+                color: const Color(0xFF1B4D3E).withValues(alpha: 0.8),
               ),
             ),
           ),
@@ -206,13 +206,13 @@ class _PaymentScreenState extends State<PaymentScreen>
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                const Color(0xFF1B4D3E).withOpacity(0.15),
-                const Color(0xFF2E7D32).withOpacity(0.08),
+                const Color(0xFF1B4D3E).withValues(alpha: 0.15),
+                const Color(0xFF2E7D32).withValues(alpha: 0.08),
               ],
             ),
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: Colors.white.withOpacity(0.5),
+              color: Colors.white.withValues(alpha: 0.5),
               width: 1.5,
             ),
           ),
@@ -222,7 +222,7 @@ class _PaymentScreenState extends State<PaymentScreen>
                 _localizations.amountToPay,
                 style: TextStyle(
                   fontSize: 13,
-                  color: const Color(0xFF1B4D3E).withOpacity(0.6),
+                  color: const Color(0xFF1B4D3E).withValues(alpha: 0.6),
                   fontFamily: 'Literata',
                   letterSpacing: 0.5,
                 ),
@@ -239,7 +239,7 @@ class _PaymentScreenState extends State<PaymentScreen>
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w600,
-                        color: const Color(0xFF1B4D3E).withOpacity(0.8),
+                        color: const Color(0xFF1B4D3E).withValues(alpha: 0.8),
                         fontFamily: 'Literata',
                       ),
                     ),
@@ -293,7 +293,7 @@ class _PaymentScreenState extends State<PaymentScreen>
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF1B4D3E).withOpacity(0.08),
+            color: const Color(0xFF1B4D3E).withValues(alpha: 0.08),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -306,7 +306,7 @@ class _PaymentScreenState extends State<PaymentScreen>
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
-              color: const Color(0xFF1B4D3E).withOpacity(0.8),
+              color: const Color(0xFF1B4D3E).withValues(alpha: 0.8),
               fontFamily: 'Literata',
               letterSpacing: 0.5,
             ),
@@ -319,12 +319,12 @@ class _PaymentScreenState extends State<PaymentScreen>
               color: Colors.white,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
                 width: 2,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: Colors.black.withValues(alpha: 0.05),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
@@ -351,13 +351,15 @@ class _PaymentScreenState extends State<PaymentScreen>
                         Icon(
                           Icons.qr_code_2,
                           size: 80,
-                          color: const Color(0xFF1B4D3E).withOpacity(0.3),
+                          color: const Color(0xFF1B4D3E).withValues(alpha: 0.3),
                         ),
                         const SizedBox(height: 12),
                         Text(
                           'QR Code',
                           style: TextStyle(
-                            color: const Color(0xFF1B4D3E).withOpacity(0.5),
+                            color: const Color(
+                              0xFF1B4D3E,
+                            ).withValues(alpha: 0.5),
                             fontSize: 14,
                             fontFamily: 'Literata',
                           ),
@@ -383,7 +385,7 @@ class _PaymentScreenState extends State<PaymentScreen>
                 Icon(
                   Icons.account_balance_wallet_outlined,
                   size: 18,
-                  color: const Color(0xFF1B4D3E).withOpacity(0.7),
+                  color: const Color(0xFF1B4D3E).withValues(alpha: 0.7),
                 ),
                 const SizedBox(width: 8),
                 Text(
@@ -391,7 +393,7 @@ class _PaymentScreenState extends State<PaymentScreen>
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
-                    color: const Color(0xFF1B4D3E).withOpacity(0.7),
+                    color: const Color(0xFF1B4D3E).withValues(alpha: 0.7),
                     fontFamily: 'Literata',
                   ),
                 ),
@@ -411,7 +413,7 @@ class _PaymentScreenState extends State<PaymentScreen>
         color: const Color(0xFFFFF8E1),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: const Color(0xFFFFE082).withOpacity(0.5),
+          color: const Color(0xFFFFE082).withValues(alpha: 0.5),
           width: 1,
         ),
       ),
@@ -424,7 +426,7 @@ class _PaymentScreenState extends State<PaymentScreen>
                 width: 28,
                 height: 28,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFFB300).withOpacity(0.2),
+                  color: const Color(0xFFFFB300).withValues(alpha: 0.2),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
@@ -450,7 +452,7 @@ class _PaymentScreenState extends State<PaymentScreen>
             _localizations.pleaseShareScreenshotOn,
             style: TextStyle(
               fontSize: 13,
-              color: const Color(0xFF1B4D3E).withOpacity(0.8),
+              color: const Color(0xFF1B4D3E).withValues(alpha: 0.8),
               fontFamily: 'Literata',
               height: 1.4,
             ),
@@ -464,7 +466,7 @@ class _PaymentScreenState extends State<PaymentScreen>
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(
-                  color: const Color(0xFF1B4D3E).withOpacity(0.15),
+                  color: const Color(0xFF1B4D3E).withValues(alpha: 0.15),
                 ),
               ),
               child: Row(
@@ -486,7 +488,7 @@ class _PaymentScreenState extends State<PaymentScreen>
                   Container(
                     padding: const EdgeInsets.all(4),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                      color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: const Icon(
@@ -504,7 +506,7 @@ class _PaymentScreenState extends State<PaymentScreen>
             _localizations.subscriptionActivatedWithin24Hours,
             style: TextStyle(
               fontSize: 11,
-              color: const Color(0xFF1B4D3E).withOpacity(0.6),
+              color: const Color(0xFF1B4D3E).withValues(alpha: 0.6),
               fontFamily: 'Literata',
               height: 1.4,
             ),
@@ -530,7 +532,7 @@ class _PaymentScreenState extends State<PaymentScreen>
                   borderRadius: BorderRadius.circular(14),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF25D366).withOpacity(0.3),
+                      color: const Color(0xFF25D366).withValues(alpha: 0.3),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                     ),
@@ -550,7 +552,7 @@ class _PaymentScreenState extends State<PaymentScreen>
                             width: 24,
                             height: 24,
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
+                              color: Colors.white.withValues(alpha: 0.2),
                               shape: BoxShape.circle,
                             ),
                             child: const Icon(
@@ -584,10 +586,10 @@ class _PaymentScreenState extends State<PaymentScreen>
           width: double.infinity,
           child: Container(
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.6),
+              color: Colors.white.withValues(alpha: 0.6),
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: const Color(0xFF1B4D3E).withOpacity(0.3),
+                color: const Color(0xFF1B4D3E).withValues(alpha: 0.3),
                 width: 1.5,
               ),
             ),
@@ -604,13 +606,13 @@ class _PaymentScreenState extends State<PaymentScreen>
                       Icon(
                         Icons.call_outlined,
                         size: 20,
-                        color: const Color(0xFF1B4D3E).withOpacity(0.8),
+                        color: const Color(0xFF1B4D3E).withValues(alpha: 0.8),
                       ),
                       const SizedBox(width: 8),
                       Text(
                         _localizations.callSupport,
                         style: TextStyle(
-                          color: const Color(0xFF1B4D3E).withOpacity(0.9),
+                          color: const Color(0xFF1B4D3E).withValues(alpha: 0.9),
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
                           fontFamily: 'Literata',
@@ -636,9 +638,9 @@ class _PaymentScreenState extends State<PaymentScreen>
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                const Color(0xFF1B4D3E).withOpacity(0.05),
+                const Color(0xFF1B4D3E).withValues(alpha: 0.05),
                 const Color(0xFF1B4D3E),
-                const Color(0xFF1B4D3E).withOpacity(0.05),
+                const Color(0xFF1B4D3E).withValues(alpha: 0.05),
               ],
             ),
           ),
@@ -650,14 +652,14 @@ class _PaymentScreenState extends State<PaymentScreen>
             Icon(
               Icons.security,
               size: 14,
-              color: const Color(0xFF1B4D3E).withOpacity(0.4),
+              color: const Color(0xFF1B4D3E).withValues(alpha: 0.4),
             ),
             const SizedBox(width: 6),
             Text(
               _localizations.securePayment,
               style: TextStyle(
                 fontSize: 11,
-                color: const Color(0xFF1B4D3E).withOpacity(0.4),
+                color: const Color(0xFF1B4D3E).withValues(alpha: 0.4),
                 fontFamily: 'Literata',
               ),
             ),

@@ -90,7 +90,7 @@ class _EventOrderSettingsPageState extends State<EventOrderSettingsPage> {
           icon: Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: _primaryColor.withOpacity(0.1),
+              color: _primaryColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(
@@ -142,7 +142,7 @@ class _EventOrderSettingsPageState extends State<EventOrderSettingsPage> {
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.04),
+                          color: Colors.black.withValues(alpha: 0.04),
                           blurRadius: 12,
                           offset: const Offset(0, 4),
                         ),
@@ -162,11 +162,11 @@ class _EventOrderSettingsPageState extends State<EventOrderSettingsPage> {
                                     colors: _showEventMode
                                         ? [
                                             _eventColor,
-                                            _eventColor.withOpacity(0.7),
+                                            _eventColor.withValues(alpha: 0.7),
                                           ]
                                         : [
                                             _salesColor,
-                                            _salesColor.withOpacity(0.7),
+                                            _salesColor.withValues(alpha: 0.7),
                                           ],
                                   ),
                                   borderRadius: BorderRadius.circular(12),
@@ -224,8 +224,8 @@ class _EventOrderSettingsPageState extends State<EventOrderSettingsPage> {
                                 onChanged: _onModeChanged,
                                 activeColor: _eventColor,
                                 inactiveThumbColor: _salesColor,
-                                inactiveTrackColor: _salesColor.withOpacity(
-                                  0.3,
+                                inactiveTrackColor: _salesColor.withValues(
+                                  alpha: 0.3,
                                 ),
                               ),
                             ],
@@ -273,9 +273,11 @@ class _EventOrderSettingsPageState extends State<EventOrderSettingsPage> {
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: _primaryColor.withOpacity(0.08),
+                      color: _primaryColor.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: _primaryColor.withOpacity(0.2)),
+                      border: Border.all(
+                        color: _primaryColor.withValues(alpha: 0.2),
+                      ),
                     ),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -353,7 +355,7 @@ class _EventOrderSettingsPageState extends State<EventOrderSettingsPage> {
                         borderRadius: BorderRadius.circular(16),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.04),
+                            color: Colors.black.withValues(alpha: 0.04),
                             blurRadius: 12,
                             offset: const Offset(0, 4),
                           ),
@@ -364,7 +366,7 @@ class _EventOrderSettingsPageState extends State<EventOrderSettingsPage> {
                           Container(
                             padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
-                              color: _primaryColor.withOpacity(0.1),
+                              color: _primaryColor.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: const Icon(
@@ -429,10 +431,10 @@ class _EventOrderSettingsPageState extends State<EventOrderSettingsPage> {
       duration: const Duration(milliseconds: 200),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: isActive ? color.withOpacity(0.1) : Colors.grey[50],
+        color: isActive ? color.withValues(alpha: 0.1) : Colors.grey[50],
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isActive ? color.withOpacity(0.3) : Colors.grey[200]!,
+          color: isActive ? color.withValues(alpha: 0.3) : Colors.grey[200]!,
           width: isActive ? 1.5 : 1,
         ),
       ),

@@ -417,7 +417,7 @@ class _ReportPageState extends State<ReportPage>
                   Text(
                     'Generate • Save • Share',
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.7),
+                      color: Colors.white.withValues(alpha: 0.7),
                       fontSize: 12,
                       fontFamily: 'Literata',
                     ),
@@ -463,7 +463,7 @@ class _ReportPageState extends State<ReportPage>
               Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: _kGreen.withOpacity(0.1),
+                  color: _kGreen.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Icon(
@@ -537,7 +537,7 @@ class _ReportPageState extends State<ReportPage>
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
-              color: _kGreen.withOpacity(0.06),
+              color: _kGreen.withValues(alpha: 0.06),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Row(
@@ -626,9 +626,9 @@ class _ReportPageState extends State<ReportPage>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -665,7 +665,7 @@ class _ReportPageState extends State<ReportPage>
                   Container(
                     padding: const EdgeInsets.all(6),
                     decoration: BoxDecoration(
-                      color: _kGreen.withOpacity(0.1),
+                      color: _kGreen.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: const Icon(
@@ -905,7 +905,7 @@ class _ReportPageState extends State<ReportPage>
           Container(
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
             decoration: BoxDecoration(
-              color: _kGreen.withOpacity(0.06),
+              color: _kGreen.withValues(alpha: 0.06),
               borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(16),
               ),
@@ -915,7 +915,7 @@ class _ReportPageState extends State<ReportPage>
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: _kGreen.withOpacity(0.12),
+                    color: _kGreen.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: const Icon(
@@ -956,7 +956,7 @@ class _ReportPageState extends State<ReportPage>
                       vertical: 3,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.green.withOpacity(0.1),
+                      color: Colors.green.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: const Row(
@@ -1058,9 +1058,9 @@ class _ReportPageState extends State<ReportPage>
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.06),
+          color: color.withValues(alpha: 0.06),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withOpacity(0.12)),
+          border: Border.all(color: color.withValues(alpha: 0.12)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1099,7 +1099,7 @@ class _ReportPageState extends State<ReportPage>
                 style: TextStyle(
                   fontSize: 11,
                   fontFamily: 'Literata',
-                  color: color.withOpacity(0.7),
+                  color: color.withValues(alpha: 0.7),
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -1121,7 +1121,7 @@ class _ReportPageState extends State<ReportPage>
               Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: _kGreen.withOpacity(0.1),
+                  color: _kGreen.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Icon(
@@ -1223,7 +1223,7 @@ class _ReportPageState extends State<ReportPage>
               style: ElevatedButton.styleFrom(
                 backgroundColor: color,
                 foregroundColor: Colors.white,
-                disabledBackgroundColor: color.withOpacity(0.5),
+                disabledBackgroundColor: color.withValues(alpha: 0.5),
                 disabledForegroundColor: Colors.white70,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -1244,7 +1244,7 @@ class _ReportPageState extends State<ReportPage>
               ),
               style: OutlinedButton.styleFrom(
                 foregroundColor: color,
-                side: BorderSide(color: color.withOpacity(0.4)),
+                side: BorderSide(color: color.withValues(alpha: 0.4)),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -1257,7 +1257,7 @@ class _ReportPageState extends State<ReportPage>
 
   Widget _buildLoadingOverlay() {
     return Container(
-      color: Colors.black.withOpacity(0.3),
+      color: Colors.black.withValues(alpha: 0.3),
       child: Center(
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
@@ -1266,7 +1266,7 @@ class _ReportPageState extends State<ReportPage>
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.15),
+                color: Colors.black.withValues(alpha: 0.15),
                 blurRadius: 20,
                 offset: const Offset(0, 4),
               ),
@@ -1319,7 +1319,7 @@ class _ReportPageState extends State<ReportPage>
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -1382,10 +1382,10 @@ class _ReportPageState extends State<ReportPage>
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
         decoration: BoxDecoration(
-          color: active ? _kGreen.withOpacity(0.12) : Colors.grey[100],
+          color: active ? _kGreen.withValues(alpha: 0.12) : Colors.grey[100],
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: active ? _kGreen.withOpacity(0.4) : Colors.grey[300]!,
+            color: active ? _kGreen.withValues(alpha: 0.4) : Colors.grey[300]!,
           ),
         ),
         child: Row(

@@ -102,7 +102,7 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
                         Container(
                           margin: const EdgeInsets.symmetric(vertical: 8),
                           height: 1,
-                          color: Colors.grey.withOpacity(0.1),
+                          color: Colors.grey.withValues(alpha: 0.1),
                         ),
                         _buildModernToggle(
                           icon: Icons.event_busy_rounded,
@@ -145,7 +145,7 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
                         const SizedBox(height: 20),
                         Container(
                           height: 1,
-                          color: Colors.grey.withOpacity(0.1),
+                          color: Colors.grey.withValues(alpha: 0.1),
                         ),
                         const SizedBox(height: 20),
                         // Default Unit
@@ -193,7 +193,7 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
                           const SizedBox(height: 20),
                           Container(
                             height: 1,
-                            color: Colors.grey.withOpacity(0.1),
+                            color: Colors.grey.withValues(alpha: 0.1),
                           ),
                           const SizedBox(height: 20),
                           // Warranty Options
@@ -213,7 +213,7 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
                           const SizedBox(height: 20),
                           Container(
                             height: 1,
-                            color: Colors.grey.withOpacity(0.1),
+                            color: Colors.grey.withValues(alpha: 0.1),
                           ),
                           const SizedBox(height: 20),
                           // Default Warranty
@@ -245,13 +245,13 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
-                            const Color(0xFF1B4D3E).withOpacity(0.05),
-                            const Color(0xFF1B4D3E).withOpacity(0.02),
+                            const Color(0xFF1B4D3E).withValues(alpha: 0.05),
+                            const Color(0xFF1B4D3E).withValues(alpha: 0.02),
                           ],
                         ),
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                          color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
                         ),
                       ),
                       child: Row(
@@ -259,7 +259,9 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
                           Container(
                             padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                              color: const Color(
+                                0xFF1B4D3E,
+                              ).withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: const Icon(
@@ -322,7 +324,7 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 20,
             offset: const Offset(0, 4),
           ),
@@ -336,8 +338,8 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  iconColor.withOpacity(0.08),
-                  iconColor.withOpacity(0.02),
+                  iconColor.withValues(alpha: 0.08),
+                  iconColor.withValues(alpha: 0.02),
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
@@ -354,14 +356,14 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
                   height: 48,
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
-                      colors: [iconColor, iconColor.withOpacity(0.8)],
+                      colors: [iconColor, iconColor.withValues(alpha: 0.8)],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
                     borderRadius: BorderRadius.circular(14),
                     boxShadow: [
                       BoxShadow(
-                        color: iconColor.withOpacity(0.3),
+                        color: iconColor.withValues(alpha: 0.3),
                         blurRadius: 12,
                         offset: const Offset(0, 4),
                       ),
@@ -426,7 +428,7 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
           width: 42,
           height: 42,
           decoration: BoxDecoration(
-            color: iconColor.withOpacity(0.1),
+            color: iconColor.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Icon(icon, color: iconColor, size: 22),
@@ -604,7 +606,7 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: const Color(0xFFFF6B6B).withOpacity(0.1),
+                color: const Color(0xFFFF6B6B).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Icon(
@@ -849,7 +851,7 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
         ),
       ),
       style: OutlinedButton.styleFrom(
-        side: BorderSide(color: color.withOpacity(0.5), width: 1.5),
+        side: BorderSide(color: color.withValues(alpha: 0.5), width: 1.5),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       ),
@@ -871,7 +873,7 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
                 gradient: LinearGradient(
                   colors: [
                     const Color(0xFF1B4D3E),
-                    const Color(0xFF1B4D3E).withOpacity(0.8),
+                    const Color(0xFF1B4D3E).withValues(alpha: 0.8),
                   ],
                 ),
                 borderRadius: BorderRadius.circular(12),
@@ -1024,7 +1026,7 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
                 gradient: LinearGradient(
                   colors: [
                     const Color(0xFF9C27B0),
-                    const Color(0xFF9C27B0).withOpacity(0.8),
+                    const Color(0xFF9C27B0).withValues(alpha: 0.8),
                   ],
                 ),
                 borderRadius: BorderRadius.circular(12),
@@ -1202,7 +1204,7 @@ class _SettingsHeaderDelegate extends SliverPersistentHeaderDelegate {
           colors: [
             const Color(0xFF1B4D3E),
             const Color(0xFF2D6A4F),
-            const Color(0xFF1B4D3E).withOpacity(0.9),
+            const Color(0xFF1B4D3E).withValues(alpha: 0.9),
           ],
         ),
         borderRadius: const BorderRadius.only(
@@ -1211,7 +1213,7 @@ class _SettingsHeaderDelegate extends SliverPersistentHeaderDelegate {
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF1B4D3E).withOpacity(0.3),
+            color: const Color(0xFF1B4D3E).withValues(alpha: 0.3),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -1240,10 +1242,10 @@ class _SettingsHeaderDelegate extends SliverPersistentHeaderDelegate {
                           width: 44,
                           height: 44,
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.15),
+                            color: Colors.white.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(14),
                             border: Border.all(
-                              color: Colors.white.withOpacity(0.2),
+                              color: Colors.white.withValues(alpha: 0.2),
                             ),
                           ),
                           child: const Icon(
@@ -1277,7 +1279,7 @@ class _SettingsHeaderDelegate extends SliverPersistentHeaderDelegate {
                                 style: TextStyle(
                                   fontSize: 13,
                                   fontFamily: 'Literata',
-                                  color: Colors.white.withOpacity(0.8),
+                                  color: Colors.white.withValues(alpha: 0.8),
                                 ),
                               ),
                             ],
@@ -1297,7 +1299,7 @@ class _SettingsHeaderDelegate extends SliverPersistentHeaderDelegate {
                             borderRadius: BorderRadius.circular(12),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.1),
+                                color: Colors.black.withValues(alpha: 0.1),
                                 blurRadius: 8,
                                 offset: const Offset(0, 2),
                               ),

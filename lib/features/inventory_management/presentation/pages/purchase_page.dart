@@ -752,7 +752,7 @@ class _PurchasePageState extends State<PurchasePage>
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
+                      color: Colors.white.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
@@ -1388,7 +1388,7 @@ class _PurchasePageState extends State<PurchasePage>
                         gradient: LinearGradient(
                           colors: [
                             const Color(0xFF1B4D3E),
-                            const Color(0xFF1B4D3E).withOpacity(0.8),
+                            const Color(0xFF1B4D3E).withValues(alpha: 0.8),
                           ],
                         ),
                         borderRadius: BorderRadius.circular(12),
@@ -1566,7 +1566,7 @@ class _PurchasePageState extends State<PurchasePage>
                                   color: isSelected
                                       ? const Color(
                                           0xFF1B4D3E,
-                                        ).withOpacity(0.08)
+                                        ).withValues(alpha: 0.08)
                                       : Colors.grey[50],
                                   borderRadius: BorderRadius.circular(14),
                                   border: Border.all(
@@ -1584,7 +1584,7 @@ class _PurchasePageState extends State<PurchasePage>
                                       decoration: BoxDecoration(
                                         color: const Color(
                                           0xFF1B4D3E,
-                                        ).withOpacity(0.1),
+                                        ).withValues(alpha: 0.1),
                                         borderRadius: BorderRadius.circular(12),
                                       ),
                                       child: const Icon(
@@ -1621,7 +1621,7 @@ class _PurchasePageState extends State<PurchasePage>
                                                       ),
                                                   decoration: BoxDecoration(
                                                     color: Colors.blue
-                                                        .withOpacity(0.1),
+                                                        .withValues(alpha: 0.1),
                                                     borderRadius:
                                                         BorderRadius.circular(
                                                           6,
@@ -1650,10 +1650,11 @@ class _PurchasePageState extends State<PurchasePage>
                                                 decoration: BoxDecoration(
                                                   color:
                                                       product.currentStock > 0
-                                                      ? Colors.green
-                                                            .withOpacity(0.1)
-                                                      : Colors.red.withOpacity(
-                                                          0.1,
+                                                      ? Colors.green.withValues(
+                                                          alpha: 0.1,
+                                                        )
+                                                      : Colors.red.withValues(
+                                                          alpha: 0.1,
                                                         ),
                                                   borderRadius:
                                                       BorderRadius.circular(6),
@@ -1758,7 +1759,7 @@ class _PurchasePageState extends State<PurchasePage>
                         gradient: LinearGradient(
                           colors: [
                             const Color(0xFFFF6B6B),
-                            const Color(0xFFFF6B6B).withOpacity(0.8),
+                            const Color(0xFFFF6B6B).withValues(alpha: 0.8),
                           ],
                         ),
                         borderRadius: BorderRadius.circular(12),
@@ -1902,7 +1903,7 @@ class _PurchasePageState extends State<PurchasePage>
                                   color: isSelected
                                       ? const Color(
                                           0xFFFF6B6B,
-                                        ).withOpacity(0.08)
+                                        ).withValues(alpha: 0.08)
                                       : Colors.grey[50],
                                   borderRadius: BorderRadius.circular(14),
                                   border: Border.all(
@@ -1920,7 +1921,7 @@ class _PurchasePageState extends State<PurchasePage>
                                       decoration: BoxDecoration(
                                         color: const Color(
                                           0xFFFF6B6B,
-                                        ).withOpacity(0.1),
+                                        ).withValues(alpha: 0.1),
                                         borderRadius: BorderRadius.circular(12),
                                       ),
                                       child: Center(
@@ -2010,7 +2011,7 @@ class _PurchasePageState extends State<PurchasePage>
                         gradient: LinearGradient(
                           colors: [
                             const Color(0xFF7B68EE),
-                            const Color(0xFF7B68EE).withOpacity(0.8),
+                            const Color(0xFF7B68EE).withValues(alpha: 0.8),
                           ],
                         ),
                         borderRadius: BorderRadius.circular(12),
@@ -2154,7 +2155,7 @@ class _PurchasePageState extends State<PurchasePage>
                                   color: isSelected
                                       ? const Color(
                                           0xFF7B68EE,
-                                        ).withOpacity(0.08)
+                                        ).withValues(alpha: 0.08)
                                       : Colors.grey[50],
                                   borderRadius: BorderRadius.circular(14),
                                   border: Border.all(
@@ -2172,7 +2173,7 @@ class _PurchasePageState extends State<PurchasePage>
                                       decoration: BoxDecoration(
                                         color: const Color(
                                           0xFF7B68EE,
-                                        ).withOpacity(0.1),
+                                        ).withValues(alpha: 0.1),
                                         borderRadius: BorderRadius.circular(12),
                                       ),
                                       child: Center(
@@ -2437,7 +2438,7 @@ class _PurchasePageState extends State<PurchasePage>
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
+            color: Colors.black.withValues(alpha: 0.06),
             blurRadius: 10,
             offset: const Offset(0, 3),
           ),
@@ -2490,10 +2491,13 @@ class _PurchasePageState extends State<PurchasePage>
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [color.withOpacity(0.12), color.withOpacity(0.04)],
+            colors: [
+              color.withValues(alpha: 0.12),
+              color.withValues(alpha: 0.04),
+            ],
           ),
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: color.withOpacity(0.15), width: 1),
+          border: Border.all(color: color.withValues(alpha: 0.15), width: 1),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -2502,7 +2506,7 @@ class _PurchasePageState extends State<PurchasePage>
               width: 28,
               height: 28,
               decoration: BoxDecoration(
-                color: color.withOpacity(0.15),
+                color: color.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(icon, color: color, size: 14),
@@ -2514,7 +2518,7 @@ class _PurchasePageState extends State<PurchasePage>
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  color: const Color(0xFF1B4D3E).withOpacity(0.8),
+                  color: const Color(0xFF1B4D3E).withValues(alpha: 0.8),
                   fontSize: 10,
                   fontFamily: 'Literata',
                   fontWeight: FontWeight.w600,

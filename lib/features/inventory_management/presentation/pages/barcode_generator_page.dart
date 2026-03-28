@@ -295,13 +295,13 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
       height: height,
       decoration: BoxDecoration(
         color: isError
-            ? Colors.red.withOpacity(0.05)
-            : Colors.grey.withOpacity(0.05),
+            ? Colors.red.withValues(alpha: 0.05)
+            : Colors.grey.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
           color: isError
-              ? Colors.red.withOpacity(0.2)
-              : Colors.grey.withOpacity(0.2),
+              ? Colors.red.withValues(alpha: 0.2)
+              : Colors.grey.withValues(alpha: 0.2),
           style: BorderStyle.solid,
         ),
       ),
@@ -744,7 +744,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: _primaryColor.withOpacity(0.08),
+        color: _primaryColor.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(12),
       ),
       child: TabBar(
@@ -802,7 +802,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -903,7 +903,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -918,8 +918,8 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  _primaryColor.withOpacity(0.08),
-                  _accentColor.withOpacity(0.04),
+                  _primaryColor.withValues(alpha: 0.08),
+                  _accentColor.withValues(alpha: 0.04),
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
@@ -933,7 +933,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: _primaryColor.withOpacity(0.1),
+                    color: _primaryColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: const Icon(
@@ -1027,7 +1027,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -1043,7 +1043,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: _accentColor.withOpacity(0.1),
+                  color: _accentColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Icon(
@@ -1377,7 +1377,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: _primaryColor.withOpacity(0.1),
+              color: _primaryColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(24),
             ),
             child: const CircularProgressIndicator(
@@ -1412,7 +1412,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
         color: _cardColor,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 12,
             offset: const Offset(0, 2),
           ),
@@ -1426,7 +1426,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
             child: Container(
               padding: EdgeInsets.all(isMobile ? 8 : 10),
               decoration: BoxDecoration(
-                color: _primaryColor.withOpacity(0.1),
+                color: _primaryColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(isMobile ? 10 : 12),
               ),
               child: Icon(
@@ -1497,7 +1497,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
-                color: _primaryColor.withOpacity(0.08),
+                color: _primaryColor.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
@@ -1533,7 +1533,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 16,
             offset: const Offset(0, 4),
           ),
@@ -1545,7 +1545,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: _primaryColor.withOpacity(0.04),
+              color: _primaryColor.withValues(alpha: 0.04),
               borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(20),
               ),
@@ -1557,7 +1557,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
                   children: [
                     Icon(
                       Icons.search_rounded,
-                      color: _primaryColor.withOpacity(0.7),
+                      color: _primaryColor.withValues(alpha: 0.7),
                       size: 20,
                     ),
                     const SizedBox(width: 8),
@@ -1709,7 +1709,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
               color: isSelected
-                  ? _primaryColor.withOpacity(0.08)
+                  ? _primaryColor.withValues(alpha: 0.08)
                   : Colors.grey[50],
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
@@ -1800,8 +1800,8 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
                       ),
                       decoration: BoxDecoration(
                         color: product.currentStock > 0
-                            ? _successColor.withOpacity(0.1)
-                            : _warningColor.withOpacity(0.1),
+                            ? _successColor.withValues(alpha: 0.1)
+                            : _warningColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
@@ -1864,7 +1864,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 16,
             offset: const Offset(0, 4),
           ),
@@ -1878,8 +1878,8 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  _primaryColor.withOpacity(0.06),
-                  _accentColor.withOpacity(0.03),
+                  _primaryColor.withValues(alpha: 0.06),
+                  _accentColor.withValues(alpha: 0.03),
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
@@ -1893,7 +1893,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: _primaryColor.withOpacity(0.1),
+                    color: _primaryColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(
@@ -1985,13 +1985,13 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
           Container(
             padding: const EdgeInsets.all(28),
             decoration: BoxDecoration(
-              color: _primaryColor.withOpacity(0.06),
+              color: _primaryColor.withValues(alpha: 0.06),
               borderRadius: BorderRadius.circular(24),
             ),
             child: Icon(
               Icons.touch_app_rounded,
               size: 56,
-              color: _primaryColor.withOpacity(0.5),
+              color: _primaryColor.withValues(alpha: 0.5),
             ),
           ),
           const SizedBox(height: 20),
@@ -2026,13 +2026,13 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
           Container(
             padding: const EdgeInsets.all(28),
             decoration: BoxDecoration(
-              color: _accentColor.withOpacity(0.08),
+              color: _accentColor.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(24),
             ),
             child: Icon(
               Icons.qr_code_2_rounded,
               size: 56,
-              color: _accentColor.withOpacity(0.6),
+              color: _accentColor.withValues(alpha: 0.6),
             ),
           ),
           const SizedBox(height: 20),
@@ -2106,7 +2106,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
                 border: Border.all(color: Colors.grey.shade200),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: Colors.black.withValues(alpha: 0.05),
                     blurRadius: 15,
                     offset: const Offset(0, 6),
                   ),
@@ -2123,7 +2123,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: _primaryColor.withOpacity(0.05),
+                      color: _primaryColor.withValues(alpha: 0.05),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
@@ -2170,7 +2170,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               decoration: BoxDecoration(
-                color: _accentColor.withOpacity(0.1),
+                color: _accentColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Text(
@@ -2222,7 +2222,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 16,
             offset: const Offset(0, 4),
           ),
@@ -2239,7 +2239,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: _accentColor.withOpacity(0.1),
+                    color: _accentColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: const Icon(
@@ -2613,7 +2613,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
               value: value,
               onChanged: onChanged,
               activeThumbColor: _primaryColor,
-              activeTrackColor: _primaryColor.withOpacity(0.3),
+              activeTrackColor: _primaryColor.withValues(alpha: 0.3),
             ),
           ),
         ],
@@ -2643,11 +2643,11 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
                     end: Alignment.bottomRight,
                   )
                 : null,
-            color: isPrimary ? null : _primaryColor.withOpacity(0.08),
+            color: isPrimary ? null : _primaryColor.withValues(alpha: 0.08),
             borderRadius: BorderRadius.circular(14),
             border: isPrimary
                 ? null
-                : Border.all(color: _primaryColor.withOpacity(0.3)),
+                : Border.all(color: _primaryColor.withValues(alpha: 0.3)),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -2805,7 +2805,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
                 border: Border.all(color: Colors.grey.shade200),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: Colors.black.withValues(alpha: 0.05),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -2821,7 +2821,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
                       vertical: 8,
                     ),
                     decoration: BoxDecoration(
-                      color: _primaryColor.withOpacity(0.05),
+                      color: _primaryColor.withValues(alpha: 0.05),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
@@ -2866,7 +2866,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: _accentColor.withOpacity(0.1),
+                      color: _accentColor.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
@@ -2950,16 +2950,16 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           decoration: BoxDecoration(
-            color: color.withOpacity(0.08),
+            color: color.withValues(alpha: 0.08),
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: color.withOpacity(0.2)),
+            border: Border.all(color: color.withValues(alpha: 0.2)),
           ),
           child: Row(
             children: [
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.15),
+                  color: color.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(icon, color: color, size: 22),

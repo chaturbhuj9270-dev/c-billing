@@ -157,7 +157,7 @@ class _PrintBillButtonState extends State<PrintBillButton> {
               ),
               disabledBackgroundColor:
                   (widget.backgroundColor ?? const Color(0xFF1B4D3E))
-                      .withOpacity(0.5),
+                      .withValues(alpha: 0.5),
             ),
             child: _isPrinting
                 ? Row(

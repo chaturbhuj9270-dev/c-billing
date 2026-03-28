@@ -24,15 +24,12 @@ class ShimmerWidget extends StatefulWidget {
     required this.width,
     required this.height,
     double radius = 8,
-  })  : borderRadius = null,
-        baseColor = const Color(0xFFE0E0E0),
-        highlightColor = const Color(0xFFF5F5F5);
+  }) : borderRadius = null,
+       baseColor = const Color(0xFFE0E0E0),
+       highlightColor = const Color(0xFFF5F5F5);
 
   /// Creates a circular shimmer
-  factory ShimmerWidget.circular({
-    Key? key,
-    required double size,
-  }) {
+  factory ShimmerWidget.circular({Key? key, required double size}) {
     return ShimmerWidget(
       key: key,
       width: size,
@@ -101,11 +98,7 @@ class ShimmerMetricCard extends StatelessWidget {
   final double? width;
   final double height;
 
-  const ShimmerMetricCard({
-    super.key,
-    this.width,
-    this.height = 140,
-  });
+  const ShimmerMetricCard({super.key, this.width, this.height = 140});
 
   @override
   Widget build(BuildContext context) {
@@ -118,7 +111,7 @@ class ShimmerMetricCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -169,7 +162,7 @@ class ShimmerQuickStats extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -216,7 +209,7 @@ class ShimmerProfitCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),

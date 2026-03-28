@@ -387,7 +387,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
           ),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF1B4D3E).withOpacity(0.2),
+              color: const Color(0xFF1B4D3E).withValues(alpha: 0.2),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
@@ -445,7 +445,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.15),
+                        color: Colors.white.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Row(
@@ -546,7 +546,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -847,7 +847,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
         border: Border.all(color: Colors.grey[300]!),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 6,
             offset: const Offset(0, 2),
           ),
@@ -930,7 +930,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -1039,7 +1039,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
                     child: Container(
                       padding: const EdgeInsets.all(4),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF1B4D3E).withOpacity(0.08),
+                        color: const Color(0xFF1B4D3E).withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: const Icon(
@@ -1172,7 +1172,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                          color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: const Text(
@@ -1424,7 +1424,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -1484,12 +1484,14 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            const Color(0xFF1B4D3E).withOpacity(0.08),
-            const Color(0xFF1B4D3E).withOpacity(0.03),
+            const Color(0xFF1B4D3E).withValues(alpha: 0.08),
+            const Color(0xFF1B4D3E).withValues(alpha: 0.03),
           ],
         ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF1B4D3E).withOpacity(0.15)),
+        border: Border.all(
+          color: const Color(0xFF1B4D3E).withValues(alpha: 0.15),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1561,7 +1563,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: Colors.black.withValues(alpha: 0.08),
             blurRadius: 16,
             offset: const Offset(0, -4),
           ),
@@ -1642,7 +1644,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                      color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: const Icon(
@@ -1843,13 +1845,13 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Icon(
                 Icons.history,
                 size: 48,
-                color: const Color(0xFF1B4D3E).withOpacity(0.3),
+                color: const Color(0xFF1B4D3E).withValues(alpha: 0.3),
               ),
             ),
             const SizedBox(height: 16),
@@ -1896,7 +1898,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -1910,7 +1912,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                  color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: const Icon(

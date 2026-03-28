@@ -75,7 +75,7 @@ class _EventOrderCustomColumnsPageState
             child: Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: const Icon(
@@ -124,7 +124,7 @@ class _EventOrderCustomColumnsPageState
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -226,7 +226,7 @@ class _EventOrderCustomColumnsPageState
             width: 80,
             height: 80,
             decoration: BoxDecoration(
-              color: const Color(0xFF1B4D3E).withOpacity(0.1),
+              color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Icon(
@@ -293,8 +293,8 @@ class _EventOrderCustomColumnsPageState
         borderRadius: BorderRadius.circular(16),
         side: BorderSide(
           color: column.isActive
-              ? const Color(0xFF1B4D3E).withOpacity(0.2)
-              : Colors.grey.withOpacity(0.2),
+              ? const Color(0xFF1B4D3E).withValues(alpha: 0.2)
+              : Colors.grey.withValues(alpha: 0.2),
           width: 1,
         ),
       ),
@@ -325,7 +325,7 @@ class _EventOrderCustomColumnsPageState
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: typeColor.withOpacity(0.15),
+                  color: typeColor.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(typeIcon, color: typeColor, size: 22),
@@ -358,7 +358,7 @@ class _EventOrderCustomColumnsPageState
                               vertical: 2,
                             ),
                             decoration: BoxDecoration(
-                              color: Colors.red.withOpacity(0.1),
+                              color: Colors.red.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: const Text(

@@ -1,11 +1,7 @@
 import 'package:flutter/material.dart';
 
 /// Sort options for customer list
-enum CustomerSortField {
-  name,
-  createdDate,
-  pendingAmount,
-}
+enum CustomerSortField { name, createdDate, pendingAmount }
 
 /// Filter widget for customer list
 /// Features: Search bar, Sort options
@@ -17,7 +13,7 @@ class CustomerFilterWidget extends StatefulWidget {
   final ValueChanged<CustomerSortField> onSortFieldChanged;
   final VoidCallback onSortDirectionToggle;
   final VoidCallback? onClearSearch;
-  
+
   // Labels
   final String searchHint;
   final String sortByNameLabel;
@@ -76,7 +72,7 @@ class _CustomerFilterWidgetState extends State<CustomerFilterWidget> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -119,8 +115,9 @@ class _CustomerFilterWidgetState extends State<CustomerFilterWidget> {
                   label: widget.sortByPendingLabel,
                   isSelected:
                       widget.sortField == CustomerSortField.pendingAmount,
-                  onTap: () =>
-                      widget.onSortFieldChanged(CustomerSortField.pendingAmount),
+                  onTap: () => widget.onSortFieldChanged(
+                    CustomerSortField.pendingAmount,
+                  ),
                   icon: Icons.account_balance_wallet_outlined,
                 ),
               ],

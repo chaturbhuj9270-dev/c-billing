@@ -136,20 +136,20 @@ class _BiometricSettingsCardState extends State<BiometricSettingsCard> {
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                Colors.white.withOpacity(0.95),
-                Colors.white.withOpacity(0.85),
+                Colors.white.withValues(alpha: 0.95),
+                Colors.white.withValues(alpha: 0.85),
               ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: Colors.white.withOpacity(0.3),
+              color: Colors.white.withValues(alpha: 0.3),
               width: 1.5,
             ),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFF1B4D3E).withOpacity(0.08),
+                color: const Color(0xFF1B4D3E).withValues(alpha: 0.08),
                 blurRadius: 16,
                 offset: const Offset(0, 4),
               ),
@@ -170,7 +170,9 @@ class _BiometricSettingsCardState extends State<BiometricSettingsCard> {
                           width: 48,
                           height: 48,
                           decoration: BoxDecoration(
-                            color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                            color: const Color(
+                              0xFF1B4D3E,
+                            ).withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: const Center(
@@ -214,7 +216,7 @@ class _BiometricSettingsCardState extends State<BiometricSettingsCard> {
                       activeThumbColor: const Color(0xFF1B4D3E),
                       activeTrackColor: const Color(
                         0xFF1B4D3E,
-                      ).withOpacity(0.3),
+                      ).withValues(alpha: 0.3),
                     ),
                   ],
                 ),
@@ -222,7 +224,7 @@ class _BiometricSettingsCardState extends State<BiometricSettingsCard> {
                   const SizedBox(height: 12),
                   Container(
                     decoration: BoxDecoration(
-                      color: const Color(0xFF1B4D3E).withOpacity(0.05),
+                      color: const Color(0xFF1B4D3E).withValues(alpha: 0.05),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     padding: const EdgeInsets.all(12),

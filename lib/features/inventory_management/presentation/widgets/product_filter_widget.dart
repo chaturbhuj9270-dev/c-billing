@@ -1,12 +1,7 @@
 import 'package:flutter/material.dart';
 
 /// Sort options for product list
-enum ProductSortField {
-  name,
-  stock,
-  price,
-  category,
-}
+enum ProductSortField { name, stock, price, category }
 
 /// Filter widget for product list
 /// Features: Search bar, Sort options, Category filter
@@ -22,7 +17,7 @@ class ProductFilterWidget extends StatefulWidget {
   final ValueChanged<String?> onCategoryChanged;
   final VoidCallback? onClearSearch;
   final VoidCallback? onFilterTap;
-  
+
   // Labels
   final String searchHint;
   final String sortByNameLabel;
@@ -85,7 +80,7 @@ class _ProductFilterWidgetState extends State<ProductFilterWidget> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -122,14 +117,16 @@ class _ProductFilterWidgetState extends State<ProductFilterWidget> {
                 _buildSortChip(
                   label: widget.sortByStockLabel,
                   isSelected: widget.sortField == ProductSortField.stock,
-                  onTap: () => widget.onSortFieldChanged(ProductSortField.stock),
+                  onTap: () =>
+                      widget.onSortFieldChanged(ProductSortField.stock),
                   icon: Icons.inventory_rounded,
                 ),
                 const SizedBox(width: 8),
                 _buildSortChip(
                   label: widget.sortByPriceLabel,
                   isSelected: widget.sortField == ProductSortField.price,
-                  onTap: () => widget.onSortFieldChanged(ProductSortField.price),
+                  onTap: () =>
+                      widget.onSortFieldChanged(ProductSortField.price),
                   icon: Icons.currency_rupee_rounded,
                 ),
                 if (widget.categories.isNotEmpty) ...[
@@ -235,11 +232,7 @@ class _ProductFilterWidgetState extends State<ProductFilterWidget> {
           border: Border.all(color: Colors.grey[300]!, width: 1),
         ),
         child: Center(
-          child: Icon(
-            Icons.tune_rounded,
-            color: Colors.grey[700],
-            size: 20,
-          ),
+          child: Icon(Icons.tune_rounded, color: Colors.grey[700], size: 20),
         ),
       ),
     );
@@ -290,22 +283,20 @@ class _ProductFilterWidgetState extends State<ProductFilterWidget> {
   }
 
   Widget _buildCategoryDropdown() {
-    final hasSelection = widget.selectedCategory != null && 
-                         widget.selectedCategory!.isNotEmpty;
-    
+    final hasSelection =
+        widget.selectedCategory != null && widget.selectedCategory!.isNotEmpty;
+
     return GestureDetector(
       onTap: () => _showCategoryPicker(context),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
-          color: hasSelection 
-              ? const Color(0xFF1B4D3E).withOpacity(0.1)
+          color: hasSelection
+              ? const Color(0xFF1B4D3E).withValues(alpha: 0.1)
               : Colors.grey[100],
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: hasSelection 
-                ? const Color(0xFF1B4D3E)
-                : Colors.grey[300]!,
+            color: hasSelection ? const Color(0xFF1B4D3E) : Colors.grey[300]!,
             width: 1,
           ),
         ),
@@ -315,9 +306,7 @@ class _ProductFilterWidgetState extends State<ProductFilterWidget> {
             Icon(
               Icons.category_rounded,
               size: 16,
-              color: hasSelection 
-                  ? const Color(0xFF1B4D3E)
-                  : Colors.grey[600],
+              color: hasSelection ? const Color(0xFF1B4D3E) : Colors.grey[600],
             ),
             const SizedBox(width: 6),
             ConstrainedBox(
@@ -328,7 +317,7 @@ class _ProductFilterWidgetState extends State<ProductFilterWidget> {
                   fontFamily: 'Literata',
                   fontWeight: FontWeight.w600,
                   fontSize: 13,
-                  color: hasSelection 
+                  color: hasSelection
                       ? const Color(0xFF1B4D3E)
                       : Colors.grey[700],
                 ),
@@ -340,9 +329,7 @@ class _ProductFilterWidgetState extends State<ProductFilterWidget> {
             Icon(
               Icons.arrow_drop_down_rounded,
               size: 18,
-              color: hasSelection 
-                  ? const Color(0xFF1B4D3E)
-                  : Colors.grey[600],
+              color: hasSelection ? const Color(0xFF1B4D3E) : Colors.grey[600],
             ),
           ],
         ),
@@ -389,19 +376,19 @@ class _ProductFilterWidgetState extends State<ProductFilterWidget> {
               ListTile(
                 leading: Icon(
                   Icons.all_inclusive_rounded,
-                  color: widget.selectedCategory == null 
-                      ? const Color(0xFF1B4D3E) 
+                  color: widget.selectedCategory == null
+                      ? const Color(0xFF1B4D3E)
                       : Colors.grey[600],
                 ),
                 title: Text(
                   'All Categories',
                   style: TextStyle(
                     fontFamily: 'Literata',
-                    fontWeight: widget.selectedCategory == null 
-                        ? FontWeight.w700 
+                    fontWeight: widget.selectedCategory == null
+                        ? FontWeight.w700
                         : FontWeight.w500,
-                    color: widget.selectedCategory == null 
-                        ? const Color(0xFF1B4D3E) 
+                    color: widget.selectedCategory == null
+                        ? const Color(0xFF1B4D3E)
                         : Colors.grey[800],
                   ),
                 ),
@@ -424,24 +411,27 @@ class _ProductFilterWidgetState extends State<ProductFilterWidget> {
                     return ListTile(
                       leading: Icon(
                         Icons.label_rounded,
-                        color: isSelected 
-                            ? const Color(0xFF1B4D3E) 
+                        color: isSelected
+                            ? const Color(0xFF1B4D3E)
                             : Colors.grey[600],
                       ),
                       title: Text(
                         category,
                         style: TextStyle(
                           fontFamily: 'Literata',
-                          fontWeight: isSelected 
-                              ? FontWeight.w700 
+                          fontWeight: isSelected
+                              ? FontWeight.w700
                               : FontWeight.w500,
-                          color: isSelected 
-                              ? const Color(0xFF1B4D3E) 
+                          color: isSelected
+                              ? const Color(0xFF1B4D3E)
                               : Colors.grey[800],
                         ),
                       ),
                       trailing: isSelected
-                          ? const Icon(Icons.check_rounded, color: Color(0xFF1B4D3E))
+                          ? const Icon(
+                              Icons.check_rounded,
+                              color: Color(0xFF1B4D3E),
+                            )
                           : null,
                       onTap: () {
                         widget.onCategoryChanged(category);

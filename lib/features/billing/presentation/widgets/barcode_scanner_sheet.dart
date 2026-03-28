@@ -348,7 +348,7 @@ class _BarcodeScannerSheetState extends State<BarcodeScannerSheet>
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF1B4D3E).withOpacity(0.4),
+                  color: const Color(0xFF1B4D3E).withValues(alpha: 0.4),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
@@ -450,7 +450,7 @@ class _BarcodeScannerSheetState extends State<BarcodeScannerSheet>
                   border: Border.all(
                     color: _isProcessing
                         ? const Color(0xFF1B4D3E)
-                        : Colors.white.withOpacity(0.8),
+                        : Colors.white.withValues(alpha: 0.8),
                     width: 2,
                   ),
                   borderRadius: BorderRadius.circular(16),
@@ -487,7 +487,7 @@ class _BarcodeScannerSheetState extends State<BarcodeScannerSheet>
                                 BoxShadow(
                                   color: const Color(
                                     0xFF1B4D3E,
-                                  ).withOpacity(0.5),
+                                  ).withValues(alpha: 0.5),
                                   blurRadius: 8,
                                   spreadRadius: 2,
                                 ),
@@ -511,7 +511,7 @@ class _BarcodeScannerSheetState extends State<BarcodeScannerSheet>
                 height: scanAreaSize,
                 child: Container(
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1B4D3E).withOpacity(0.3),
+                    color: const Color(0xFF1B4D3E).withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: const Center(
@@ -609,13 +609,13 @@ class _BarcodeScannerSheetState extends State<BarcodeScannerSheet>
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
                 color: isActive
-                    ? const Color(0xFF1B4D3E).withOpacity(0.8)
-                    : Colors.black.withOpacity(0.5),
+                    ? const Color(0xFF1B4D3E).withValues(alpha: 0.8)
+                    : Colors.black.withValues(alpha: 0.5),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
                   color: isActive
                       ? const Color(0xFF1B4D3E)
-                      : Colors.white.withOpacity(0.2),
+                      : Colors.white.withValues(alpha: 0.2),
                 ),
               ),
               child: Row(
@@ -653,9 +653,9 @@ class _BarcodeScannerSheetState extends State<BarcodeScannerSheet>
           child: Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.7),
+              color: Colors.black.withValues(alpha: 0.7),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.white.withOpacity(0.2)),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -689,7 +689,7 @@ class _BarcodeScannerSheetState extends State<BarcodeScannerSheet>
                             fontSize: 13,
                           ),
                           filled: true,
-                          fillColor: Colors.white.withOpacity(0.1),
+                          fillColor: Colors.white.withValues(alpha: 0.1),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
                             borderSide: BorderSide.none,
@@ -761,17 +761,17 @@ class _BarcodeScannerSheetState extends State<BarcodeScannerSheet>
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
               color: isRemoved
-                  ? Colors.grey.withOpacity(0.2)
+                  ? Colors.grey.withValues(alpha: 0.2)
                   : item.success
-                  ? const Color(0xFF1B4D3E).withOpacity(0.2)
-                  : Colors.red.withOpacity(0.2),
+                  ? const Color(0xFF1B4D3E).withValues(alpha: 0.2)
+                  : Colors.red.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: isRemoved
-                    ? Colors.grey.withOpacity(0.3)
+                    ? Colors.grey.withValues(alpha: 0.3)
                     : item.success
-                    ? const Color(0xFF1B4D3E).withOpacity(0.5)
-                    : Colors.red.withOpacity(0.5),
+                    ? const Color(0xFF1B4D3E).withValues(alpha: 0.5)
+                    : Colors.red.withValues(alpha: 0.5),
               ),
             ),
             child: Column(
@@ -823,7 +823,7 @@ class _BarcodeScannerSheetState extends State<BarcodeScannerSheet>
                         child: Container(
                           padding: const EdgeInsets.all(4),
                           decoration: BoxDecoration(
-                            color: Colors.red.withOpacity(0.2),
+                            color: Colors.red.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: const Icon(
@@ -937,7 +937,7 @@ class _BarcodeScannerSheetState extends State<BarcodeScannerSheet>
                   vertical: 8,
                 ),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1B4D3E).withOpacity(0.2),
+                  color: const Color(0xFF1B4D3E).withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Row(
@@ -991,7 +991,7 @@ class _BarcodeScannerSheetState extends State<BarcodeScannerSheet>
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFF1B4D3E).withOpacity(0.4),
+                        color: const Color(0xFF1B4D3E).withValues(alpha: 0.4),
                         blurRadius: 8,
                         offset: const Offset(0, 2),
                       ),
@@ -1039,8 +1039,7 @@ class _ScannedItem {
     this.productKey,
     required this.success,
     required this.timestamp,
-    this.isRemoved = false,
-  });
+  }) : isRemoved = false;
 }
 
 /// Custom painter for the scan overlay (darkened corners)
@@ -1051,7 +1050,7 @@ class _ScanOverlayPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()..color = Colors.black.withOpacity(0.6);
+    final paint = Paint()..color = Colors.black.withValues(alpha: 0.6);
 
     // Draw the darkened area with a hole for the scan area
     final path = Path()

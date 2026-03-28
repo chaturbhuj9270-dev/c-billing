@@ -54,12 +54,13 @@ class _BiometricAuthOverlayState extends State<BiometricAuthOverlay> {
             child: Container(
               width: double.infinity,
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.95),
-                borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(24)),
+                color: Colors.white.withValues(alpha: 0.95),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(24),
+                ),
                 border: Border(
                   top: BorderSide(
-                    color: Colors.white.withOpacity(0.3),
+                    color: Colors.white.withValues(alpha: 0.3),
                     width: 1.5,
                   ),
                 ),
@@ -81,7 +82,7 @@ class _BiometricAuthOverlayState extends State<BiometricAuthOverlay> {
                         height: 4,
                         margin: const EdgeInsets.symmetric(horizontal: 0),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF1B4D3E).withOpacity(0.3),
+                          color: const Color(0xFF1B4D3E).withValues(alpha: 0.3),
                           borderRadius: BorderRadius.circular(2),
                         ),
                       ),
@@ -117,15 +118,11 @@ class _BiometricAuthOverlayState extends State<BiometricAuthOverlay> {
           width: 80,
           height: 80,
           decoration: BoxDecoration(
-            color: const Color(0xFF1B4D3E).withOpacity(0.1),
+            color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(20),
           ),
           child: const Center(
-            child: Icon(
-              Icons.fingerprint,
-              color: Color(0xFF1B4D3E),
-              size: 48,
-            ),
+            child: Icon(Icons.fingerprint, color: Color(0xFF1B4D3E), size: 48),
           ),
         ),
         const SizedBox(height: 20),
@@ -188,10 +185,7 @@ class _BiometricAuthOverlayState extends State<BiometricAuthOverlay> {
               Navigator.pop(context);
             },
             style: OutlinedButton.styleFrom(
-              side: const BorderSide(
-                color: Color(0xFF1B4D3E),
-                width: 1.5,
-              ),
+              side: const BorderSide(color: Color(0xFF1B4D3E), width: 1.5),
               padding: const EdgeInsets.symmetric(vertical: 14),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -220,7 +214,7 @@ class _BiometricAuthOverlayState extends State<BiometricAuthOverlay> {
           width: 80,
           height: 80,
           decoration: BoxDecoration(
-            color: const Color(0xFF1B4D3E).withOpacity(0.1),
+            color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(20),
           ),
           child: const Center(
@@ -229,9 +223,7 @@ class _BiometricAuthOverlayState extends State<BiometricAuthOverlay> {
               height: 40,
               child: CircularProgressIndicator(
                 strokeWidth: 3,
-                valueColor: AlwaysStoppedAnimation<Color>(
-                  Color(0xFF1B4D3E),
-                ),
+                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF1B4D3E)),
               ),
             ),
           ),
@@ -265,10 +257,7 @@ class _BiometricAuthOverlayState extends State<BiometricAuthOverlay> {
               Navigator.pop(context);
             },
             style: OutlinedButton.styleFrom(
-              side: const BorderSide(
-                color: Color(0xFF1B4D3E),
-                width: 1.5,
-              ),
+              side: const BorderSide(color: Color(0xFF1B4D3E), width: 1.5),
               padding: const EdgeInsets.symmetric(vertical: 12),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -297,15 +286,11 @@ class _BiometricAuthOverlayState extends State<BiometricAuthOverlay> {
           width: 80,
           height: 80,
           decoration: BoxDecoration(
-            color: const Color(0xFFFF6B6B).withOpacity(0.1),
+            color: const Color(0xFFFF6B6B).withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(20),
           ),
           child: const Center(
-            child: Icon(
-              Icons.error,
-              color: Color(0xFFFF6B6B),
-              size: 40,
-            ),
+            child: Icon(Icons.error, color: Color(0xFFFF6B6B), size: 40),
           ),
         ),
         const SizedBox(height: 16),
@@ -338,10 +323,7 @@ class _BiometricAuthOverlayState extends State<BiometricAuthOverlay> {
                   Navigator.pop(context);
                 },
                 style: OutlinedButton.styleFrom(
-                  side: const BorderSide(
-                    color: Color(0xFF1B4D3E),
-                    width: 1.5,
-                  ),
+                  side: const BorderSide(color: Color(0xFF1B4D3E), width: 1.5),
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -397,15 +379,11 @@ class _BiometricAuthOverlayState extends State<BiometricAuthOverlay> {
           width: 80,
           height: 80,
           decoration: BoxDecoration(
-            color: Colors.orange.withOpacity(0.1),
+            color: Colors.orange.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(20),
           ),
           child: const Center(
-            child: Icon(
-              Icons.cancel,
-              color: Colors.orange,
-              size: 40,
-            ),
+            child: Icon(Icons.cancel, color: Colors.orange, size: 40),
           ),
         ),
         const SizedBox(height: 16),
@@ -438,10 +416,7 @@ class _BiometricAuthOverlayState extends State<BiometricAuthOverlay> {
                   Navigator.pop(context);
                 },
                 style: OutlinedButton.styleFrom(
-                  side: const BorderSide(
-                    color: Color(0xFF1B4D3E),
-                    width: 1.5,
-                  ),
+                  side: const BorderSide(color: Color(0xFF1B4D3E), width: 1.5),
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),

@@ -15,7 +15,7 @@ class ProductSummaryWidget extends StatelessWidget {
 
   List<ProductEntity> get _filteredProducts {
     if (searchQuery.isEmpty) return products;
-    
+
     final query = searchQuery.toLowerCase();
     return products.where((p) {
       final name = p.name.toLowerCase();
@@ -32,7 +32,9 @@ class ProductSummaryWidget extends StatelessWidget {
     final filtered = _filteredProducts;
     final totalStock = filtered.fold<int>(0, (sum, p) => sum + p.currentStock);
     final outOfStock = filtered.where((p) => p.currentStock == 0).length;
-    final unsyncedCount = filtered.where((p) => p.syncStatus != SyncStatus.synced).length;
+    final unsyncedCount = filtered
+        .where((p) => p.syncStatus != SyncStatus.synced)
+        .length;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -42,13 +44,13 @@ class ProductSummaryWidget extends StatelessWidget {
           end: Alignment.bottomRight,
           colors: [
             const Color(0xFF1B4D3E),
-            const Color(0xFF1B4D3E).withOpacity(0.85),
+            const Color(0xFF1B4D3E).withValues(alpha: 0.85),
           ],
         ),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF1B4D3E).withOpacity(0.3),
+            color: const Color(0xFF1B4D3E).withValues(alpha: 0.3),
             blurRadius: 12,
             offset: const Offset(0, 6),
           ),
@@ -82,7 +84,9 @@ class ProductSummaryWidget extends StatelessWidget {
                   : Icons.cloud_done_rounded,
               label: unsyncedCount > 0 ? 'Pending' : 'Synced',
               value: unsyncedCount > 0 ? '$unsyncedCount' : '✓',
-              valueColor: unsyncedCount > 0 ? Colors.orange[300] : Colors.green[300],
+              valueColor: unsyncedCount > 0
+                  ? Colors.orange[300]
+                  : Colors.green[300],
               isExpanded: true,
             ),
           ),
@@ -103,11 +107,7 @@ class ProductSummaryWidget extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            icon,
-            color: Colors.white.withOpacity(0.8),
-            size: 18,
-          ),
+          Icon(icon, color: Colors.white.withValues(alpha: 0.8), size: 18),
           const SizedBox(height: 6),
           Text(
             value,
@@ -125,7 +125,7 @@ class ProductSummaryWidget extends StatelessWidget {
               fontFamily: 'Literata',
               fontWeight: FontWeight.w400,
               fontSize: 10,
-              color: Colors.white.withOpacity(0.7),
+              color: Colors.white.withValues(alpha: 0.7),
             ),
           ),
         ],
@@ -137,7 +137,7 @@ class ProductSummaryWidget extends StatelessWidget {
     return Container(
       width: 1,
       height: 40,
-      color: Colors.white.withOpacity(0.2),
+      color: Colors.white.withValues(alpha: 0.2),
     );
   }
 }

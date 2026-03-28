@@ -597,7 +597,7 @@ class _BillingPageState extends State<BillingPage> {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: const Icon(
@@ -1580,10 +1580,10 @@ class _BillingPageState extends State<BillingPage> {
         borderRadius: BorderRadius.circular(16),
         border: isCustomerRequired && _selectedCustomer == null
             ? Border.all(color: Colors.red[300]!, width: 2)
-            : Border.all(color: Colors.grey.withOpacity(0.1)),
+            : Border.all(color: Colors.grey.withValues(alpha: 0.1)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 12,
             offset: const Offset(0, 3),
           ),
@@ -1598,8 +1598,8 @@ class _BillingPageState extends State<BillingPage> {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  const Color(0xFFFF6B6B).withOpacity(0.1),
-                  const Color(0xFFFF6B6B).withOpacity(0.05),
+                  const Color(0xFFFF6B6B).withValues(alpha: 0.1),
+                  const Color(0xFFFF6B6B).withValues(alpha: 0.05),
                 ],
               ),
               borderRadius: const BorderRadius.only(
@@ -1616,13 +1616,13 @@ class _BillingPageState extends State<BillingPage> {
                     gradient: LinearGradient(
                       colors: [
                         const Color(0xFFFF6B6B),
-                        const Color(0xFFFF6B6B).withOpacity(0.8),
+                        const Color(0xFFFF6B6B).withValues(alpha: 0.8),
                       ],
                     ),
                     borderRadius: BorderRadius.circular(10),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFFFF6B6B).withOpacity(0.3),
+                        color: const Color(0xFFFF6B6B).withValues(alpha: 0.3),
                         blurRadius: 6,
                         offset: const Offset(0, 2),
                       ),
@@ -1680,10 +1680,12 @@ class _BillingPageState extends State<BillingPage> {
                         vertical: 6,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF1B4D3E).withOpacity(0.08),
+                        color: const Color(0xFF1B4D3E).withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
-                          color: const Color(0xFF1B4D3E).withOpacity(0.15),
+                          color: const Color(
+                            0xFF1B4D3E,
+                          ).withValues(alpha: 0.15),
                         ),
                       ),
                       child: Row(
@@ -1729,7 +1731,7 @@ class _BillingPageState extends State<BillingPage> {
                                 BoxShadow(
                                   color: const Color(
                                     0xFF1B4D3E,
-                                  ).withOpacity(0.2),
+                                  ).withValues(alpha: 0.2),
                                   blurRadius: 4,
                                   offset: const Offset(0, 2),
                                 ),
@@ -1774,13 +1776,13 @@ class _BillingPageState extends State<BillingPage> {
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
-                          const Color(0xFF1B4D3E).withOpacity(0.08),
-                          const Color(0xFF1B4D3E).withOpacity(0.03),
+                          const Color(0xFF1B4D3E).withValues(alpha: 0.08),
+                          const Color(0xFF1B4D3E).withValues(alpha: 0.03),
                         ],
                       ),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: const Color(0xFF1B4D3E).withOpacity(0.15),
+                        color: const Color(0xFF1B4D3E).withValues(alpha: 0.15),
                       ),
                     ),
                     child: Row(
@@ -1854,7 +1856,7 @@ class _BillingPageState extends State<BillingPage> {
                                     vertical: 3,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: Colors.orange.withOpacity(0.1),
+                                    color: Colors.orange.withValues(alpha: 0.1),
                                     borderRadius: BorderRadius.circular(6),
                                   ),
                                   child: Row(
@@ -1892,7 +1894,7 @@ class _BillingPageState extends State<BillingPage> {
                           child: Container(
                             padding: const EdgeInsets.all(6),
                             decoration: BoxDecoration(
-                              color: Colors.red.withOpacity(0.1),
+                              color: Colors.red.withValues(alpha: 0.1),
                               shape: BoxShape.circle,
                             ),
                             child: Icon(
@@ -1929,7 +1931,9 @@ class _BillingPageState extends State<BillingPage> {
           decoration: BoxDecoration(
             color: Colors.grey[50],
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: const Color(0xFF1B4D3E).withOpacity(0.2)),
+            border: Border.all(
+              color: const Color(0xFF1B4D3E).withValues(alpha: 0.2),
+            ),
           ),
           child: TextField(
             controller: _customerContactController,
@@ -1954,7 +1958,7 @@ class _BillingPageState extends State<BillingPage> {
                 margin: const EdgeInsets.all(4),
                 padding: const EdgeInsets.all(4),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                  color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(5),
                 ),
                 child: const Icon(
@@ -2012,9 +2016,9 @@ class _BillingPageState extends State<BillingPage> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
-          color: Colors.green.withOpacity(0.1),
+          color: Colors.green.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.green.withOpacity(0.3)),
+          border: Border.all(color: Colors.green.withValues(alpha: 0.3)),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -2055,9 +2059,9 @@ class _BillingPageState extends State<BillingPage> {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           decoration: BoxDecoration(
-            color: Colors.orange.withOpacity(0.1),
+            color: Colors.orange.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.orange.withOpacity(0.3)),
+            border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -2114,12 +2118,12 @@ class _BillingPageState extends State<BillingPage> {
                 Container(
                   padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                    color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Icon(
                     Icons.search_rounded,
-                    color: const Color(0xFF1B4D3E).withOpacity(0.7),
+                    color: const Color(0xFF1B4D3E).withValues(alpha: 0.7),
                     size: 16,
                   ),
                 ),
@@ -2494,10 +2498,10 @@ class _BillingPageState extends State<BillingPage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.withOpacity(0.1)),
+        border: Border.all(color: Colors.grey.withValues(alpha: 0.1)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 12,
             offset: const Offset(0, 3),
           ),
@@ -2511,8 +2515,8 @@ class _BillingPageState extends State<BillingPage> {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  const Color(0xFF1B4D3E).withOpacity(0.1),
-                  const Color(0xFF1B4D3E).withOpacity(0.05),
+                  const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+                  const Color(0xFF1B4D3E).withValues(alpha: 0.05),
                 ],
               ),
               borderRadius: const BorderRadius.only(
@@ -2529,13 +2533,13 @@ class _BillingPageState extends State<BillingPage> {
                     gradient: LinearGradient(
                       colors: [
                         const Color(0xFF1B4D3E),
-                        const Color(0xFF1B4D3E).withOpacity(0.8),
+                        const Color(0xFF1B4D3E).withValues(alpha: 0.8),
                       ],
                     ),
                     borderRadius: BorderRadius.circular(10),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFF1B4D3E).withOpacity(0.3),
+                        color: const Color(0xFF1B4D3E).withValues(alpha: 0.3),
                         blurRadius: 6,
                         offset: const Offset(0, 2),
                       ),
@@ -2590,7 +2594,7 @@ class _BillingPageState extends State<BillingPage> {
                     color: Colors.grey[50],
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(
-                      color: const Color(0xFF1B4D3E).withOpacity(0.2),
+                      color: const Color(0xFF1B4D3E).withValues(alpha: 0.2),
                     ),
                   ),
                   child: Row(
@@ -2644,7 +2648,9 @@ class _BillingPageState extends State<BillingPage> {
                         child: Container(
                           padding: const EdgeInsets.all(6),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                            color: const Color(
+                              0xFF1B4D3E,
+                            ).withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: const Icon(
@@ -3360,7 +3366,7 @@ class _BillingPageState extends State<BillingPage> {
                     ),
                     const SizedBox(width: 3),
                     Text(
-                      isCustomValue ? '${currentInSubUnit}$subUnit' : subUnit,
+                      isCustomValue ? '$currentInSubUnit$subUnit' : subUnit,
                       style: TextStyle(
                         fontFamily: 'Literata',
                         fontSize: 10,
@@ -3464,7 +3470,7 @@ class _BillingPageState extends State<BillingPage> {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'Max: ${maxStock * 1000}$subUnit (${maxStock}${isKg ? 'kg' : 'ltr'})',
+                  'Max: ${maxStock * 1000}$subUnit ($maxStock${isKg ? 'kg' : 'ltr'})',
                   style: TextStyle(
                     fontFamily: 'Literata',
                     fontSize: 11,
@@ -4405,10 +4411,10 @@ class _BillingPageState extends State<BillingPage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.withOpacity(0.1)),
+        border: Border.all(color: Colors.grey.withValues(alpha: 0.1)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 12,
             offset: const Offset(0, 3),
           ),
@@ -4423,8 +4429,8 @@ class _BillingPageState extends State<BillingPage> {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  Colors.green.withOpacity(0.1),
-                  Colors.green.withOpacity(0.05),
+                  Colors.green.withValues(alpha: 0.1),
+                  Colors.green.withValues(alpha: 0.05),
                 ],
               ),
               borderRadius: const BorderRadius.only(
@@ -4444,7 +4450,7 @@ class _BillingPageState extends State<BillingPage> {
                     borderRadius: BorderRadius.circular(10),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.green.withOpacity(0.3),
+                        color: Colors.green.withValues(alpha: 0.3),
                         blurRadius: 6,
                         offset: const Offset(0, 2),
                       ),
@@ -4627,12 +4633,14 @@ class _BillingPageState extends State<BillingPage> {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            const Color(0xFF1B4D3E).withOpacity(0.08),
-            const Color(0xFF1B4D3E).withOpacity(0.04),
+            const Color(0xFF1B4D3E).withValues(alpha: 0.08),
+            const Color(0xFF1B4D3E).withValues(alpha: 0.04),
           ],
         ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF1B4D3E).withOpacity(0.15)),
+        border: Border.all(
+          color: const Color(0xFF1B4D3E).withValues(alpha: 0.15),
+        ),
       ),
       child: Column(
         children: [
@@ -4807,10 +4815,10 @@ class _BillingPageState extends State<BillingPage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.grey.withOpacity(0.1)),
+        border: Border.all(color: Colors.grey.withValues(alpha: 0.1)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 15,
             offset: const Offset(0, 4),
           ),
@@ -4825,8 +4833,8 @@ class _BillingPageState extends State<BillingPage> {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  Colors.orange.withOpacity(0.1),
-                  Colors.orange.withOpacity(0.05),
+                  Colors.orange.withValues(alpha: 0.1),
+                  Colors.orange.withValues(alpha: 0.05),
                 ],
               ),
               borderRadius: const BorderRadius.only(
@@ -4846,7 +4854,7 @@ class _BillingPageState extends State<BillingPage> {
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.orange.withOpacity(0.3),
+                        color: Colors.orange.withValues(alpha: 0.3),
                         blurRadius: 8,
                         offset: const Offset(0, 3),
                       ),
@@ -4972,7 +4980,7 @@ class _BillingPageState extends State<BillingPage> {
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: Colors.orange.withOpacity(0.3),
+                    color: Colors.orange.withValues(alpha: 0.3),
                     blurRadius: 8,
                     offset: const Offset(0, 3),
                   ),
@@ -4987,7 +4995,7 @@ class _BillingPageState extends State<BillingPage> {
               height: 24,
               decoration: BoxDecoration(
                 color: isSelected
-                    ? Colors.white.withOpacity(0.2)
+                    ? Colors.white.withValues(alpha: 0.2)
                     : Colors.grey[200],
                 borderRadius: BorderRadius.circular(8),
               ),
@@ -5019,10 +5027,10 @@ class _BillingPageState extends State<BillingPage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.withOpacity(0.1)),
+        border: Border.all(color: Colors.grey.withValues(alpha: 0.1)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 12,
             offset: const Offset(0, 3),
           ),
@@ -5037,8 +5045,8 @@ class _BillingPageState extends State<BillingPage> {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  const Color(0xFF1B4D3E).withOpacity(0.1),
-                  const Color(0xFF1B4D3E).withOpacity(0.05),
+                  const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+                  const Color(0xFF1B4D3E).withValues(alpha: 0.05),
                 ],
               ),
               borderRadius: const BorderRadius.only(
@@ -5058,7 +5066,7 @@ class _BillingPageState extends State<BillingPage> {
                     borderRadius: BorderRadius.circular(10),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFF1B4D3E).withOpacity(0.3),
+                        color: const Color(0xFF1B4D3E).withValues(alpha: 0.3),
                         blurRadius: 6,
                         offset: const Offset(0, 2),
                       ),
@@ -5295,11 +5303,15 @@ class _BillingPageState extends State<BillingPage> {
                                   colors: _pendingAmount > 0
                                       ? [
                                           Colors.orange[50]!,
-                                          Colors.orange[100]!.withOpacity(0.5),
+                                          Colors.orange[100]!.withValues(
+                                            alpha: 0.5,
+                                          ),
                                         ]
                                       : [
                                           Colors.green[50]!,
-                                          Colors.green[100]!.withOpacity(0.5),
+                                          Colors.green[100]!.withValues(
+                                            alpha: 0.5,
+                                          ),
                                         ],
                                 ),
                                 borderRadius: BorderRadius.circular(10),
@@ -5360,7 +5372,7 @@ class _BillingPageState extends State<BillingPage> {
                         gradient: LinearGradient(
                           colors: [
                             Colors.red[50]!,
-                            Colors.red[100]!.withOpacity(0.5),
+                            Colors.red[100]!.withValues(alpha: 0.5),
                           ],
                         ),
                         borderRadius: BorderRadius.circular(12),
@@ -5412,13 +5424,13 @@ class _BillingPageState extends State<BillingPage> {
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
-                          const Color(0xFF1B4D3E).withOpacity(0.08),
-                          const Color(0xFF1B4D3E).withOpacity(0.04),
+                          const Color(0xFF1B4D3E).withValues(alpha: 0.08),
+                          const Color(0xFF1B4D3E).withValues(alpha: 0.04),
                         ],
                       ),
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                        color: const Color(0xFF1B4D3E).withOpacity(0.15),
+                        color: const Color(0xFF1B4D3E).withValues(alpha: 0.15),
                       ),
                     ),
                     child: Column(
@@ -5478,7 +5490,7 @@ class _BillingPageState extends State<BillingPage> {
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: const Color(0xFF1B4D3E).withOpacity(0.3),
+                    color: const Color(0xFF1B4D3E).withValues(alpha: 0.3),
                     blurRadius: 4,
                     offset: const Offset(0, 2),
                   ),
@@ -5688,7 +5700,7 @@ class _BillingPageState extends State<BillingPage> {
       child: GestureDetector(
         onTap: _toggleQuickStats, // Tap outside to close
         child: Container(
-          color: Colors.black.withOpacity(0.3),
+          color: Colors.black.withValues(alpha: 0.3),
           child: SafeArea(
             bottom: false,
             child: Column(
@@ -5812,7 +5824,7 @@ class _BillingPageState extends State<BillingPage> {
             borderRadius: BorderRadius.circular(10),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFF1B4D3E).withOpacity(0.4),
+                color: const Color(0xFF1B4D3E).withValues(alpha: 0.4),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
@@ -5844,10 +5856,10 @@ class _BillingPageState extends State<BillingPage> {
             width: 32,
             height: 32,
             decoration: BoxDecoration(
-              color: const Color(0xFF1B4D3E).withOpacity(0.08),
+              color: const Color(0xFF1B4D3E).withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
-                color: const Color(0xFF1B4D3E).withOpacity(0.15),
+                color: const Color(0xFF1B4D3E).withValues(alpha: 0.15),
               ),
             ),
             child: const Icon(
@@ -6014,24 +6026,24 @@ class _BillingPageState extends State<BillingPage> {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    Colors.white.withOpacity(0.7),
-                    Colors.white.withOpacity(0.4),
-                    stat.color.withOpacity(0.15),
+                    Colors.white.withValues(alpha: 0.7),
+                    Colors.white.withValues(alpha: 0.4),
+                    stat.color.withValues(alpha: 0.15),
                   ],
                   stops: const [0.0, 0.5, 1.0],
                 ),
                 border: Border.all(
-                  color: Colors.white.withOpacity(0.5),
+                  color: Colors.white.withValues(alpha: 0.5),
                   width: 1.5,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: stat.color.withOpacity(0.15),
+                    color: stat.color.withValues(alpha: 0.15),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),
                   BoxShadow(
-                    color: Colors.white.withOpacity(0.6),
+                    color: Colors.white.withValues(alpha: 0.6),
                     blurRadius: 6,
                     spreadRadius: -2,
                     offset: const Offset(-2, -2),
@@ -6054,7 +6066,7 @@ class _BillingPageState extends State<BillingPage> {
                       borderRadius: BorderRadius.circular(10),
                       boxShadow: [
                         BoxShadow(
-                          color: stat.color.withOpacity(0.4),
+                          color: stat.color.withValues(alpha: 0.4),
                           blurRadius: 8,
                           offset: const Offset(0, 3),
                         ),
@@ -6133,7 +6145,7 @@ class _BillingPageState extends State<BillingPage> {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 25,
             offset: const Offset(0, -8),
           ),
@@ -6154,7 +6166,7 @@ class _BillingPageState extends State<BillingPage> {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                        color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
@@ -6275,7 +6287,9 @@ class _BillingPageState extends State<BillingPage> {
                     ? null
                     : [
                         BoxShadow(
-                          color: const Color(0xFF1B4D3E).withOpacity(0.35),
+                          color: const Color(
+                            0xFF1B4D3E,
+                          ).withValues(alpha: 0.35),
                           blurRadius: 12,
                           offset: const Offset(0, 5),
                         ),
@@ -7180,7 +7194,7 @@ class _AddItemsBottomSheetState extends State<_AddItemsBottomSheet> {
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                      color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Icon(
@@ -7506,7 +7520,7 @@ class _AddItemsBottomSheetState extends State<_AddItemsBottomSheet> {
                                               ? Colors.blue[50]
                                               : const Color(
                                                   0xFF1B4D3E,
-                                                ).withOpacity(0.1),
+                                                ).withValues(alpha: 0.1),
                                           borderRadius: BorderRadius.circular(
                                             8,
                                           ),
@@ -7542,7 +7556,7 @@ class _AddItemsBottomSheetState extends State<_AddItemsBottomSheet> {
                 color: Colors.white,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: Colors.black.withValues(alpha: 0.05),
                     blurRadius: 10,
                     offset: const Offset(0, -2),
                   ),
@@ -7667,7 +7681,7 @@ class _CustomerPickerBottomSheetState
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                      color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Icon(
@@ -7755,7 +7769,7 @@ class _CustomerPickerBottomSheetState
                         width: 1.5,
                       ),
                       borderRadius: BorderRadius.circular(12),
-                      color: const Color(0xFF1B4D3E).withOpacity(0.05),
+                      color: const Color(0xFF1B4D3E).withValues(alpha: 0.05),
                     ),
                     child: const Row(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -8755,7 +8769,9 @@ class _BatchSelectionSheetState extends State<_BatchSelectionSheet> {
                             boxShadow: isSelected
                                 ? [
                                     BoxShadow(
-                                      color: Colors.blue.withOpacity(0.15),
+                                      color: Colors.blue.withValues(
+                                        alpha: 0.15,
+                                      ),
                                       blurRadius: 8,
                                       offset: const Offset(0, 2),
                                     ),
@@ -8822,7 +8838,7 @@ class _BatchSelectionSheetState extends State<_BatchSelectionSheet> {
                                           decoration: BoxDecoration(
                                             color: const Color(
                                               0xFF1B4D3E,
-                                            ).withOpacity(0.1),
+                                            ).withValues(alpha: 0.1),
                                             borderRadius: BorderRadius.circular(
                                               8,
                                             ),
@@ -9133,9 +9149,9 @@ class _BatchSelectionSheetState extends State<_BatchSelectionSheet> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.05),
+          color: color.withValues(alpha: 0.05),
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: color.withOpacity(0.2)),
+          border: Border.all(color: color.withValues(alpha: 0.2)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -9224,7 +9240,7 @@ class _BillingHeaderDelegate extends SliverPersistentHeaderDelegate {
           colors: [
             const Color(0xFF1B4D3E),
             const Color(0xFF2D6A4F),
-            const Color(0xFF1B4D3E).withOpacity(0.9),
+            const Color(0xFF1B4D3E).withValues(alpha: 0.9),
           ],
         ),
         borderRadius: const BorderRadius.only(
@@ -9233,7 +9249,7 @@ class _BillingHeaderDelegate extends SliverPersistentHeaderDelegate {
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF1B4D3E).withOpacity(0.3),
+            color: const Color(0xFF1B4D3E).withValues(alpha: 0.3),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -9260,10 +9276,10 @@ class _BillingHeaderDelegate extends SliverPersistentHeaderDelegate {
                         width: 48,
                         height: 48,
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.15),
+                          color: Colors.white.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(
-                            color: Colors.white.withOpacity(0.2),
+                            color: Colors.white.withValues(alpha: 0.2),
                           ),
                         ),
                         child: const Icon(
@@ -9296,7 +9312,7 @@ class _BillingHeaderDelegate extends SliverPersistentHeaderDelegate {
                                 style: TextStyle(
                                   fontSize: 13,
                                   fontFamily: 'Literata',
-                                  color: Colors.white.withOpacity(0.8),
+                                  color: Colors.white.withValues(alpha: 0.8),
                                 ),
                               ),
                             ],
@@ -9342,10 +9358,10 @@ class _BillingHeaderDelegate extends SliverPersistentHeaderDelegate {
                           width: 44,
                           height: 44,
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.15),
+                            color: Colors.white.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(14),
                             border: Border.all(
-                              color: Colors.white.withOpacity(0.2),
+                              color: Colors.white.withValues(alpha: 0.2),
                             ),
                           ),
                           child: const Icon(
@@ -9378,7 +9394,7 @@ class _BillingHeaderDelegate extends SliverPersistentHeaderDelegate {
                                   decoration: BoxDecoration(
                                     color: const Color(
                                       0xFF1B4D3E,
-                                    ).withOpacity(0.1),
+                                    ).withValues(alpha: 0.1),
                                     borderRadius: BorderRadius.circular(10),
                                   ),
                                   child: const Icon(
@@ -9409,7 +9425,7 @@ class _BillingHeaderDelegate extends SliverPersistentHeaderDelegate {
                                   decoration: BoxDecoration(
                                     color: const Color(
                                       0xFF2196F3,
-                                    ).withOpacity(0.1),
+                                    ).withValues(alpha: 0.1),
                                     borderRadius: BorderRadius.circular(10),
                                   ),
                                   child: const Icon(

@@ -86,7 +86,7 @@ class _ProductSettingsPageState extends State<ProductSettingsPage> {
             child: Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: const Icon(
@@ -136,7 +136,7 @@ class _ProductSettingsPageState extends State<ProductSettingsPage> {
             width: 80,
             height: 80,
             decoration: BoxDecoration(
-              color: const Color(0xFF1B4D3E).withOpacity(0.1),
+              color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(20),
             ),
             child: const Icon(
@@ -203,8 +203,8 @@ class _ProductSettingsPageState extends State<ProductSettingsPage> {
         borderRadius: BorderRadius.circular(16),
         side: BorderSide(
           color: column.isActive
-              ? const Color(0xFF1B4D3E).withOpacity(0.2)
-              : Colors.grey.withOpacity(0.2),
+              ? const Color(0xFF1B4D3E).withValues(alpha: 0.2)
+              : Colors.grey.withValues(alpha: 0.2),
           width: 1,
         ),
       ),
@@ -235,7 +235,7 @@ class _ProductSettingsPageState extends State<ProductSettingsPage> {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: typeColor.withOpacity(0.15),
+                  color: typeColor.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(typeIcon, color: typeColor, size: 22),
@@ -265,7 +265,7 @@ class _ProductSettingsPageState extends State<ProductSettingsPage> {
                               vertical: 2,
                             ),
                             decoration: BoxDecoration(
-                              color: Colors.red.withOpacity(0.1),
+                              color: Colors.red.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: const Text(

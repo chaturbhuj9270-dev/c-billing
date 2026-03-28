@@ -221,7 +221,7 @@ class _CustomerFinancePageState extends State<CustomerFinancePage>
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF1B4D3E).withOpacity(0.3),
+            color: const Color(0xFF1B4D3E).withValues(alpha: 0.3),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -242,7 +242,7 @@ class _CustomerFinancePageState extends State<CustomerFinancePage>
                     icon: Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.15),
+                        color: Colors.white.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Icon(
@@ -270,7 +270,7 @@ class _CustomerFinancePageState extends State<CustomerFinancePage>
                     icon: Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.15),
+                        color: Colors.white.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Icon(
@@ -292,10 +292,10 @@ class _CustomerFinancePageState extends State<CustomerFinancePage>
             child: Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.1),
+                color: Colors.white.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: Colors.white.withOpacity(0.15),
+                  color: Colors.white.withValues(alpha: 0.15),
                   width: 1,
                 ),
               ),
@@ -312,13 +312,13 @@ class _CustomerFinancePageState extends State<CustomerFinancePage>
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                           colors: [
-                            Colors.white.withOpacity(0.25),
-                            Colors.white.withOpacity(0.1),
+                            Colors.white.withValues(alpha: 0.25),
+                            Colors.white.withValues(alpha: 0.1),
                           ],
                         ),
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: Colors.white.withOpacity(0.3),
+                          color: Colors.white.withValues(alpha: 0.3),
                           width: 2,
                         ),
                       ),
@@ -358,13 +358,13 @@ class _CustomerFinancePageState extends State<CustomerFinancePage>
                             Icon(
                               Icons.phone_rounded,
                               size: 13,
-                              color: Colors.white.withOpacity(0.7),
+                              color: Colors.white.withValues(alpha: 0.7),
                             ),
                             const SizedBox(width: 5),
                             Text(
                               widget.customerContact,
                               style: TextStyle(
-                                color: Colors.white.withOpacity(0.85),
+                                color: Colors.white.withValues(alpha: 0.85),
                                 fontSize: 13,
                                 fontFamily: 'Literata',
                               ),
@@ -382,10 +382,10 @@ class _CustomerFinancePageState extends State<CustomerFinancePage>
                         vertical: 8,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.red.withOpacity(0.2),
+                        color: Colors.red.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(
-                          color: Colors.red.withOpacity(0.3),
+                          color: Colors.red.withValues(alpha: 0.3),
                           width: 1,
                         ),
                       ),
@@ -404,7 +404,7 @@ class _CustomerFinancePageState extends State<CustomerFinancePage>
                           Text(
                             'pending',
                             style: TextStyle(
-                              color: Colors.white.withOpacity(0.7),
+                              color: Colors.white.withValues(alpha: 0.7),
                               fontSize: 10,
                               fontWeight: FontWeight.w500,
                               fontFamily: 'Literata',
@@ -420,10 +420,10 @@ class _CustomerFinancePageState extends State<CustomerFinancePage>
                         vertical: 8,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.green.withOpacity(0.2),
+                        color: Colors.green.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(
-                          color: Colors.green.withOpacity(0.3),
+                          color: Colors.green.withValues(alpha: 0.3),
                           width: 1,
                         ),
                       ),
@@ -466,7 +466,7 @@ class _CustomerFinancePageState extends State<CustomerFinancePage>
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -616,13 +616,13 @@ class _CustomerFinancePageState extends State<CustomerFinancePage>
               width: 80,
               height: 80,
               decoration: BoxDecoration(
-                color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 icon,
                 size: 40,
-                color: const Color(0xFF1B4D3E).withOpacity(0.5),
+                color: const Color(0xFF1B4D3E).withValues(alpha: 0.5),
               ),
             ),
             const SizedBox(height: 20),
@@ -675,7 +675,7 @@ class _StatCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
-            color: color.withOpacity(0.08),
+            color: color.withValues(alpha: 0.08),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -687,7 +687,7 @@ class _StatCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(icon, color: color, size: 18),
@@ -754,7 +754,7 @@ class _BillCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -771,7 +771,7 @@ class _BillCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                    color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: const Icon(
@@ -813,7 +813,7 @@ class _BillCard extends StatelessWidget {
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: statusColor.withOpacity(0.1),
+                    color: statusColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Row(
@@ -973,7 +973,7 @@ class _EventOrderCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -990,8 +990,8 @@ class _EventOrderCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: (isEvent ? Colors.purple : Colors.blue).withOpacity(
-                      0.1,
+                    color: (isEvent ? Colors.purple : Colors.blue).withValues(
+                      alpha: 0.1,
                     ),
                     borderRadius: BorderRadius.circular(10),
                   ),
@@ -1048,8 +1048,8 @@ class _EventOrderCard extends StatelessWidget {
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: (isEvent ? Colors.purple : Colors.blue).withOpacity(
-                      0.1,
+                    color: (isEvent ? Colors.purple : Colors.blue).withValues(
+                      alpha: 0.1,
                     ),
                     borderRadius: BorderRadius.circular(6),
                   ),
@@ -1079,7 +1079,7 @@ class _EventOrderCard extends StatelessWidget {
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: statusColor.withOpacity(0.1),
+                    color: statusColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(

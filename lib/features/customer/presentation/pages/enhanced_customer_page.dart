@@ -448,7 +448,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
       builder: (ctx) => BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
         child: AlertDialog(
-          backgroundColor: Colors.white.withOpacity(0.95),
+          backgroundColor: Colors.white.withValues(alpha: 0.95),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
@@ -476,9 +476,9 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.red.withOpacity(0.05),
+                  color: Colors.red.withValues(alpha: 0.05),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.red.withOpacity(0.2)),
+                  border: Border.all(color: Colors.red.withValues(alpha: 0.2)),
                 ),
                 child: Row(
                   children: [
@@ -487,7 +487,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
                       height: 40,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                        color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
                       ),
                       child: Center(
                         child: Text(
@@ -762,7 +762,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF1B4D3E).withOpacity(0.3),
+            color: const Color(0xFF1B4D3E).withValues(alpha: 0.3),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -777,7 +777,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
               child: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.15),
+                  color: Colors.white.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: const Icon(
@@ -805,7 +805,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
                   Text(
                     '${_customers.length} ${_localizations.customers.toLowerCase()}',
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.7),
+                      color: Colors.white.withValues(alpha: 0.7),
                       fontSize: 11,
                       fontFamily: 'Literata',
                       height: 1.2,
@@ -833,7 +833,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF1B4D3E).withOpacity(0.4),
+            color: const Color(0xFF1B4D3E).withValues(alpha: 0.4),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -996,7 +996,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
           filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
           child: Container(
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.95),
+              color: Colors.white.withValues(alpha: 0.95),
               borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(20),
               ),
@@ -1391,7 +1391,7 @@ class _CustomerDetailsSheet extends StatelessWidget {
             maxHeight: MediaQuery.of(context).size.height * 0.7,
           ),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.98),
+            color: Colors.white.withValues(alpha: 0.98),
             borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
           ),
           child: SingleChildScrollView(
@@ -1428,12 +1428,12 @@ class _CustomerDetailsSheet extends StatelessWidget {
                               end: Alignment.bottomRight,
                               colors: [
                                 accentColor,
-                                accentColor.withOpacity(0.7),
+                                accentColor.withValues(alpha: 0.7),
                               ],
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: accentColor.withOpacity(0.3),
+                                color: accentColor.withValues(alpha: 0.3),
                                 blurRadius: 12,
                                 offset: const Offset(0, 4),
                               ),
@@ -1662,7 +1662,7 @@ class _CustomerDetailsSheet extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: const Color(0xFF1B4D3E).withOpacity(0.1),
+              color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(icon, size: 18, color: const Color(0xFF1B4D3E)),

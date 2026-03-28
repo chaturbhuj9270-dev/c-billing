@@ -334,7 +334,7 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
           color: Colors.white,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.15),
+              color: Colors.black.withValues(alpha: 0.15),
               blurRadius: 30,
               offset: const Offset(5, 0),
             ),
@@ -396,7 +396,7 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF1B4D3E).withOpacity(0.3),
+            color: const Color(0xFF1B4D3E).withValues(alpha: 0.3),
             blurRadius: 20,
             offset: const Offset(0, 4),
           ),
@@ -424,7 +424,7 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF4CAF50).withOpacity(0.4),
+                      color: const Color(0xFF4CAF50).withValues(alpha: 0.4),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),
@@ -482,7 +482,7 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.15),
+                        color: Colors.white.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Row(
@@ -532,10 +532,12 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
         margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: isSelected ? item.color.withOpacity(0.1) : Colors.transparent,
+          color: isSelected
+              ? item.color.withValues(alpha: 0.1)
+              : Colors.transparent,
           borderRadius: BorderRadius.circular(14),
           border: isSelected
-              ? Border.all(color: item.color.withOpacity(0.3))
+              ? Border.all(color: item.color.withValues(alpha: 0.3))
               : null,
         ),
         child: Row(
@@ -548,15 +550,15 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
               decoration: BoxDecoration(
                 gradient: isSelected
                     ? LinearGradient(
-                        colors: [item.color, item.color.withOpacity(0.7)],
+                        colors: [item.color, item.color.withValues(alpha: 0.7)],
                       )
                     : null,
-                color: isSelected ? null : item.color.withOpacity(0.1),
+                color: isSelected ? null : item.color.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(14),
                 boxShadow: isSelected
                     ? [
                         BoxShadow(
-                          color: item.color.withOpacity(0.3),
+                          color: item.color.withValues(alpha: 0.3),
                           blurRadius: 10,
                           offset: const Offset(0, 4),
                         ),
@@ -590,7 +592,7 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
                 width: 32,
                 height: 32,
                 decoration: BoxDecoration(
-                  color: item.color.withOpacity(0.1),
+                  color: item.color.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
@@ -613,11 +615,11 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
         color: _biometricLockEnabled
-            ? biometricColor.withOpacity(0.1)
+            ? biometricColor.withValues(alpha: 0.1)
             : Colors.transparent,
         borderRadius: BorderRadius.circular(14),
         border: _biometricLockEnabled
-            ? Border.all(color: biometricColor.withOpacity(0.3))
+            ? Border.all(color: biometricColor.withValues(alpha: 0.3))
             : null,
       ),
       child: Row(
@@ -629,17 +631,20 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
             decoration: BoxDecoration(
               gradient: _biometricLockEnabled
                   ? LinearGradient(
-                      colors: [biometricColor, biometricColor.withOpacity(0.7)],
+                      colors: [
+                        biometricColor,
+                        biometricColor.withValues(alpha: 0.7),
+                      ],
                     )
                   : null,
               color: _biometricLockEnabled
                   ? null
-                  : biometricColor.withOpacity(0.1),
+                  : biometricColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
               boxShadow: _biometricLockEnabled
                   ? [
                       BoxShadow(
-                        color: biometricColor.withOpacity(0.3),
+                        color: biometricColor.withValues(alpha: 0.3),
                         blurRadius: 8,
                         offset: const Offset(0, 2),
                       ),
@@ -677,7 +682,7 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
               child: Switch(
                 value: _biometricLockEnabled,
                 onChanged: (value) => _toggleBiometricLock(value),
-                activeTrackColor: biometricColor.withOpacity(0.5),
+                activeTrackColor: biometricColor.withValues(alpha: 0.5),
                 activeThumbColor: biometricColor,
                 inactiveTrackColor: Colors.grey[300],
                 inactiveThumbColor: Colors.grey[400],
@@ -696,7 +701,7 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, -5),
           ),
@@ -717,7 +722,7 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
                     child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 10),
                       decoration: BoxDecoration(
-                        color: Colors.grey.withOpacity(0.1),
+                        color: Colors.grey.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Row(
@@ -755,13 +760,13 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
-                            const Color(0xFFD32F2F).withOpacity(0.1),
-                            const Color(0xFFD32F2F).withOpacity(0.05),
+                            const Color(0xFFD32F2F).withValues(alpha: 0.1),
+                            const Color(0xFFD32F2F).withValues(alpha: 0.05),
                           ],
                         ),
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(
-                          color: const Color(0xFFD32F2F).withOpacity(0.2),
+                          color: const Color(0xFFD32F2F).withValues(alpha: 0.2),
                         ),
                       ),
                       child: const Row(
@@ -840,7 +845,7 @@ class _LanguageDialog extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: const Color(0xFFFF6F00).withOpacity(0.1),
+              color: const Color(0xFFFF6F00).withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(
@@ -901,13 +906,13 @@ class _LanguageDialog extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
           color: isSelected
-              ? const Color(0xFFFF6F00).withOpacity(0.1)
-              : Colors.grey.withOpacity(0.05),
+              ? const Color(0xFFFF6F00).withValues(alpha: 0.1)
+              : Colors.grey.withValues(alpha: 0.05),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected
                 ? const Color(0xFFFF6F00)
-                : Colors.grey.withOpacity(0.2),
+                : Colors.grey.withValues(alpha: 0.2),
             width: isSelected ? 2 : 1,
           ),
         ),
@@ -992,7 +997,7 @@ class _SettingsDialogState extends State<_SettingsDialog> {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: const Color(0xFF78909C).withOpacity(0.1),
+              color: const Color(0xFF78909C).withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(
@@ -1021,14 +1026,14 @@ class _SettingsDialogState extends State<_SettingsDialog> {
             decoration: BoxDecoration(
               color: widget.canUseBiometrics
                   ? (_biometricEnabled
-                        ? const Color(0xFF2E7D32).withOpacity(0.1)
-                        : Colors.grey.withOpacity(0.05))
-                  : Colors.grey.withOpacity(0.1),
+                        ? const Color(0xFF2E7D32).withValues(alpha: 0.1)
+                        : Colors.grey.withValues(alpha: 0.05))
+                  : Colors.grey.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: widget.canUseBiometrics && _biometricEnabled
                     ? const Color(0xFF2E7D32)
-                    : Colors.grey.withOpacity(0.2),
+                    : Colors.grey.withValues(alpha: 0.2),
                 width: _biometricEnabled ? 2 : 1,
               ),
             ),
@@ -1038,8 +1043,8 @@ class _SettingsDialogState extends State<_SettingsDialog> {
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
                     color: widget.canUseBiometrics
-                        ? const Color(0xFF2E7D32).withOpacity(0.1)
-                        : Colors.grey.withOpacity(0.1),
+                        ? const Color(0xFF2E7D32).withValues(alpha: 0.1)
+                        : Colors.grey.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(

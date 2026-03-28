@@ -144,7 +144,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
         icon: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: _primaryColor.withOpacity(0.1),
+            color: _primaryColor.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(10),
           ),
           child: const Icon(
@@ -218,7 +218,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
               icon: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: _primaryColor.withOpacity(0.1),
+                  color: _primaryColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
@@ -243,7 +243,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
               icon: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: _primaryColor.withOpacity(0.1),
+                  color: _primaryColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: const Icon(
@@ -261,7 +261,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
           icon: Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: _primaryColor.withOpacity(0.1),
+              color: _primaryColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(
@@ -280,8 +280,8 @@ class _EventOrderListPageState extends State<EventOrderListPage>
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                _primaryColor.withOpacity(0.08),
-                _primaryDark.withOpacity(0.04),
+                _primaryColor.withValues(alpha: 0.08),
+                _primaryDark.withValues(alpha: 0.04),
               ],
             ),
           ),
@@ -299,9 +299,15 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             colors: _selectedType == OrderType.salesOrder
-                                ? [_salesColor, _salesColor.withOpacity(0.7)]
+                                ? [
+                                    _salesColor,
+                                    _salesColor.withValues(alpha: 0.7),
+                                  ]
                                 : _selectedType == OrderType.event
-                                ? [_eventColor, _eventColor.withOpacity(0.7)]
+                                ? [
+                                    _eventColor,
+                                    _eventColor.withValues(alpha: 0.7),
+                                  ]
                                 : [_primaryColor, _primaryDark],
                           ),
                           borderRadius: BorderRadius.circular(12),
@@ -313,7 +319,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                                           : _selectedType == OrderType.event
                                           ? _eventColor
                                           : _primaryColor)
-                                      .withOpacity(0.3),
+                                      .withValues(alpha: 0.3),
                               blurRadius: 8,
                               offset: const Offset(0, 4),
                             ),
@@ -418,7 +424,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.04),
+                color: Colors.black.withValues(alpha: 0.04),
                 blurRadius: 12,
                 offset: const Offset(0, 4),
               ),
@@ -518,13 +524,15 @@ class _EventOrderListPageState extends State<EventOrderListPage>
           color: isActive ? null : Colors.grey[50],
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: isActive ? Colors.transparent : gradient[0].withOpacity(0.2),
+            color: isActive
+                ? Colors.transparent
+                : gradient[0].withValues(alpha: 0.2),
             width: 1.5,
           ),
           boxShadow: isActive
               ? [
                   BoxShadow(
-                    color: gradient[0].withOpacity(0.3),
+                    color: gradient[0].withValues(alpha: 0.3),
                     blurRadius: 8,
                     offset: const Offset(0, 4),
                   ),
@@ -550,7 +558,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
               style: TextStyle(
                 fontSize: 9,
                 color: isActive
-                    ? Colors.white.withOpacity(0.85)
+                    ? Colors.white.withValues(alpha: 0.85)
                     : Colors.grey[600],
                 fontFamily: 'Literata',
                 fontWeight: FontWeight.w600,
@@ -577,7 +585,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
               borderRadius: BorderRadius.circular(14),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.04),
+                  color: Colors.black.withValues(alpha: 0.04),
                   blurRadius: 10,
                   offset: const Offset(0, 2),
                 ),
@@ -650,7 +658,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
                       borderSide: BorderSide(
-                        color: Colors.grey.withOpacity(0.1),
+                        color: Colors.grey.withValues(alpha: 0.1),
                       ),
                     ),
                     focusedBorder: OutlineInputBorder(
@@ -685,7 +693,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: _primaryColor.withOpacity(0.08),
+                      color: _primaryColor.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Row(
@@ -802,7 +810,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
           Container(
             padding: const EdgeInsets.all(28),
             decoration: BoxDecoration(
-              color: _primaryColor.withOpacity(0.08),
+              color: _primaryColor.withValues(alpha: 0.08),
               shape: BoxShape.circle,
             ),
             child: Icon(
@@ -812,7 +820,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                   ? Icons.shopping_bag_rounded
                   : Icons.event_note_rounded,
               size: 64,
-              color: _primaryColor.withOpacity(0.5),
+              color: _primaryColor.withValues(alpha: 0.5),
             ),
           ),
           const SizedBox(height: 24),
@@ -860,7 +868,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: Colors.red.withOpacity(0.1),
+              color: Colors.red.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: const Icon(
@@ -929,13 +937,13 @@ class _EventOrderListPageState extends State<EventOrderListPage>
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
           color: order.status == OrderStatus.pending
-              ? Colors.orange.withOpacity(0.2)
+              ? Colors.orange.withValues(alpha: 0.2)
               : Colors.transparent,
           width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -962,12 +970,12 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                         gradient: LinearGradient(
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
-                          colors: [typeColor, typeColor.withOpacity(0.7)],
+                          colors: [typeColor, typeColor.withValues(alpha: 0.7)],
                         ),
                         borderRadius: BorderRadius.circular(14),
                         boxShadow: [
                           BoxShadow(
-                            color: typeColor.withOpacity(0.3),
+                            color: typeColor.withValues(alpha: 0.3),
                             blurRadius: 8,
                             offset: const Offset(0, 3),
                           ),
@@ -1142,8 +1150,8 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                       colors: [
-                        _primaryColor.withOpacity(0.06),
-                        _primaryColor.withOpacity(0.02),
+                        _primaryColor.withValues(alpha: 0.06),
+                        _primaryColor.withValues(alpha: 0.02),
                       ],
                     ),
                     borderRadius: BorderRadius.circular(12),
@@ -1160,7 +1168,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                       Container(
                         width: 1,
                         height: 36,
-                        color: Colors.grey.withOpacity(0.15),
+                        color: Colors.grey.withValues(alpha: 0.15),
                       ),
                       Expanded(
                         child: _buildAmountColumn(
@@ -1172,7 +1180,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                       Container(
                         width: 1,
                         height: 36,
-                        color: Colors.grey.withOpacity(0.15),
+                        color: Colors.grey.withValues(alpha: 0.15),
                       ),
                       Expanded(
                         child: _buildAmountColumn(
@@ -1244,7 +1252,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
     bool isLoading = false,
   }) {
     return Material(
-      color: color.withOpacity(0.1),
+      color: color.withValues(alpha: 0.1),
       borderRadius: BorderRadius.circular(8),
       child: InkWell(
         onTap: isLoading ? null : onTap,
@@ -1286,7 +1294,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.08),
+        color: color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
@@ -1465,12 +1473,14 @@ class _EventOrderListPageState extends State<EventOrderListPage>
           color: isSelected ? _primaryColor : Colors.white,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isSelected ? _primaryColor : Colors.grey.withOpacity(0.2),
+            color: isSelected
+                ? _primaryColor
+                : Colors.grey.withValues(alpha: 0.2),
           ),
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: _primaryColor.withOpacity(0.3),
+                    color: _primaryColor.withValues(alpha: 0.3),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -2161,7 +2171,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: _primaryColor.withOpacity(0.1),
+                      color: _primaryColor.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Icon(
@@ -2208,9 +2218,9 @@ class _EventOrderListPageState extends State<EventOrderListPage>
               margin: const EdgeInsets.all(16),
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: _primaryColor.withOpacity(0.08),
+                color: _primaryColor.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: _primaryColor.withOpacity(0.2)),
+                border: Border.all(color: _primaryColor.withValues(alpha: 0.2)),
               ),
               child: Row(
                 children: [

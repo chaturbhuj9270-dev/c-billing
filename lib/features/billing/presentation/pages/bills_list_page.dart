@@ -910,7 +910,7 @@ class _BillsListPageState extends State<BillsListPage>
             ),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFF1B4D3E).withOpacity(0.2),
+                color: const Color(0xFF1B4D3E).withValues(alpha: 0.2),
                 blurRadius: 12,
                 offset: const Offset(0, 4),
               ),
@@ -928,7 +928,7 @@ class _BillsListPageState extends State<BillsListPage>
                       width: 40,
                       height: 40,
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
+                        color: Colors.white.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: const Icon(
@@ -957,7 +957,7 @@ class _BillsListPageState extends State<BillsListPage>
                         Text(
                           _localizations.viewAllTransactions,
                           style: TextStyle(
-                            color: Colors.white.withOpacity(0.7),
+                            color: Colors.white.withValues(alpha: 0.7),
                             fontSize: 11,
                             fontFamily: 'Literata',
                             height: 1.2,
@@ -973,7 +973,7 @@ class _BillsListPageState extends State<BillsListPage>
                       width: 40,
                       height: 40,
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
+                        color: Colors.white.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: const Icon(
@@ -991,7 +991,7 @@ class _BillsListPageState extends State<BillsListPage>
                       width: 40,
                       height: 40,
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
+                        color: Colors.white.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: const Icon(
@@ -1008,7 +1008,7 @@ class _BillsListPageState extends State<BillsListPage>
                       width: 40,
                       height: 40,
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
+                        color: Colors.white.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: const Icon(
@@ -1151,13 +1151,13 @@ class _BillsListPageState extends State<BillsListPage>
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    const Color(0xFF2196F3).withOpacity(0.15),
-                    const Color(0xFF1976D2).withOpacity(0.08),
+                    const Color(0xFF2196F3).withValues(alpha: 0.15),
+                    const Color(0xFF1976D2).withValues(alpha: 0.08),
                   ],
                 ),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: const Color(0xFF2196F3).withOpacity(0.3),
+                  color: const Color(0xFF2196F3).withValues(alpha: 0.3),
                   width: 1,
                 ),
               ),
@@ -1287,7 +1287,7 @@ class _BillsListPageState extends State<BillsListPage>
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: gradient[0].withOpacity(0.35),
+            color: gradient[0].withValues(alpha: 0.35),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -1302,14 +1302,14 @@ class _BillsListPageState extends State<BillsListPage>
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
+                  color: Colors.white.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(icon, color: Colors.white, size: 22),
               ),
               Icon(
                 Icons.trending_up_rounded,
-                color: Colors.white.withOpacity(0.6),
+                color: Colors.white.withValues(alpha: 0.6),
                 size: 28,
               ),
             ],
@@ -1332,7 +1332,7 @@ class _BillsListPageState extends State<BillsListPage>
               fontFamily: 'Literata',
               fontSize: 12,
               fontWeight: FontWeight.w500,
-              color: Colors.white.withOpacity(0.8),
+              color: Colors.white.withValues(alpha: 0.8),
             ),
           ),
         ],
@@ -1351,10 +1351,10 @@ class _BillsListPageState extends State<BillsListPage>
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: color.withOpacity(0.15), width: 1),
+        border: Border.all(color: color.withValues(alpha: 0.15), width: 1),
         boxShadow: [
           BoxShadow(
-            color: color.withOpacity(0.1),
+            color: color.withValues(alpha: 0.1),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -1365,7 +1365,7 @@ class _BillsListPageState extends State<BillsListPage>
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(icon, color: color, size: 16),
@@ -1425,19 +1425,19 @@ class _BillsListPageState extends State<BillsListPage>
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Colors.white, Colors.white.withOpacity(0.95)],
+          colors: [Colors.white, Colors.white.withValues(alpha: 0.95)],
         ),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: color.withOpacity(0.15), width: 1.5),
+        border: Border.all(color: color.withValues(alpha: 0.15), width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: color.withOpacity(0.12),
+            color: color.withValues(alpha: 0.12),
             blurRadius: 16,
             offset: const Offset(0, 6),
             spreadRadius: 2,
           ),
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -1453,10 +1453,16 @@ class _BillsListPageState extends State<BillsListPage>
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [color.withOpacity(0.2), color.withOpacity(0.08)],
+                colors: [
+                  color.withValues(alpha: 0.2),
+                  color.withValues(alpha: 0.08),
+                ],
               ),
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: color.withOpacity(0.25), width: 1),
+              border: Border.all(
+                color: color.withValues(alpha: 0.25),
+                width: 1,
+              ),
             ),
             child: Icon(icon, color: color, size: 18),
           ),
@@ -1514,18 +1520,18 @@ class _BillsListPageState extends State<BillsListPage>
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
-                      Colors.white.withOpacity(0.9),
-                      Colors.white.withOpacity(0.8),
+                      Colors.white.withValues(alpha: 0.9),
+                      Colors.white.withValues(alpha: 0.8),
                     ],
                   ),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: Colors.white.withOpacity(0.5),
+                    color: Colors.white.withValues(alpha: 0.5),
                     width: 1.5,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF1B4D3E).withOpacity(0.08),
+                      color: const Color(0xFF1B4D3E).withValues(alpha: 0.08),
                       blurRadius: 20,
                       offset: const Offset(0, 4),
                     ),
@@ -1778,14 +1784,14 @@ class _BillsListPageState extends State<BillsListPage>
           boxShadow: isActive
               ? [
                   BoxShadow(
-                    color: const Color(0xFF1B4D3E).withOpacity(0.3),
+                    color: const Color(0xFF1B4D3E).withValues(alpha: 0.3),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),
                 ]
               : [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.04),
+                    color: Colors.black.withValues(alpha: 0.04),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -1816,7 +1822,7 @@ class _BillsListPageState extends State<BillsListPage>
                 child: Container(
                   padding: const EdgeInsets.all(3),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.25),
+                    color: Colors.white.withValues(alpha: 0.25),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
@@ -1847,7 +1853,7 @@ class _BillsListPageState extends State<BillsListPage>
         padding: const EdgeInsets.symmetric(horizontal: 12),
         decoration: BoxDecoration(
           color: isActive
-              ? const Color(0xFF1B4D3E).withOpacity(0.12)
+              ? const Color(0xFF1B4D3E).withValues(alpha: 0.12)
               : Colors.white,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
@@ -1856,7 +1862,7 @@ class _BillsListPageState extends State<BillsListPage>
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.03),
+              color: Colors.black.withValues(alpha: 0.03),
               blurRadius: 4,
               offset: const Offset(0, 1),
             ),
@@ -1951,27 +1957,27 @@ class _BillsListPageState extends State<BillsListPage>
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: isFullyReturned
-                ? [Colors.red.withOpacity(0.03), Colors.white]
+                ? [Colors.red.withValues(alpha: 0.03), Colors.white]
                 : hasPartialReturn
-                ? [Colors.orange.withOpacity(0.03), Colors.white]
+                ? [Colors.orange.withValues(alpha: 0.03), Colors.white]
                 : [Colors.white, Colors.grey.shade50],
           ),
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
             color: isFullyReturned
-                ? Colors.red.withOpacity(0.4)
+                ? Colors.red.withValues(alpha: 0.4)
                 : hasPartialReturn
-                ? Colors.orange.withOpacity(0.4)
-                : Colors.grey.withOpacity(0.12),
+                ? Colors.orange.withValues(alpha: 0.4)
+                : Colors.grey.withValues(alpha: 0.12),
             width: 1.5,
           ),
           boxShadow: [
             BoxShadow(
               color: isFullyReturned
-                  ? Colors.red.withOpacity(0.12)
+                  ? Colors.red.withValues(alpha: 0.12)
                   : hasPartialReturn
-                  ? Colors.orange.withOpacity(0.12)
-                  : Colors.black.withOpacity(0.06),
+                  ? Colors.orange.withValues(alpha: 0.12)
+                  : Colors.black.withValues(alpha: 0.06),
               blurRadius: 16,
               offset: const Offset(0, 4),
               spreadRadius: hasAnyReturn ? 2 : 0,
@@ -2022,34 +2028,36 @@ class _BillsListPageState extends State<BillsListPage>
                               gradient: isFullyReturned
                                   ? LinearGradient(
                                       colors: [
-                                        Colors.red.withOpacity(0.2),
-                                        Colors.red.withOpacity(0.1),
+                                        Colors.red.withValues(alpha: 0.2),
+                                        Colors.red.withValues(alpha: 0.1),
                                       ],
                                     )
                                   : hasPartialReturn
                                   ? LinearGradient(
                                       colors: [
-                                        Colors.orange.withOpacity(0.2),
-                                        Colors.orange.withOpacity(0.1),
+                                        Colors.orange.withValues(alpha: 0.2),
+                                        Colors.orange.withValues(alpha: 0.1),
                                       ],
                                     )
                                   : LinearGradient(
                                       colors: [
                                         const Color(
                                           0xFF1B4D3E,
-                                        ).withOpacity(0.15),
+                                        ).withValues(alpha: 0.15),
                                         const Color(
                                           0xFF1B4D3E,
-                                        ).withOpacity(0.08),
+                                        ).withValues(alpha: 0.08),
                                       ],
                                     ),
                               borderRadius: BorderRadius.circular(8),
                               border: Border.all(
                                 color: isFullyReturned
-                                    ? Colors.red.withOpacity(0.3)
+                                    ? Colors.red.withValues(alpha: 0.3)
                                     : hasPartialReturn
-                                    ? Colors.orange.withOpacity(0.3)
-                                    : const Color(0xFF1B4D3E).withOpacity(0.2),
+                                    ? Colors.orange.withValues(alpha: 0.3)
+                                    : const Color(
+                                        0xFF1B4D3E,
+                                      ).withValues(alpha: 0.2),
                                 width: 1,
                               ),
                             ),
@@ -2116,8 +2124,8 @@ class _BillsListPageState extends State<BillsListPage>
                               boxShadow: [
                                 BoxShadow(
                                   color: isFullyReturned
-                                      ? Colors.red.withOpacity(0.3)
-                                      : Colors.orange.withOpacity(0.3),
+                                      ? Colors.red.withValues(alpha: 0.3)
+                                      : Colors.orange.withValues(alpha: 0.3),
                                   blurRadius: 6,
                                   offset: const Offset(0, 2),
                                 ),
@@ -2155,7 +2163,9 @@ class _BillsListPageState extends State<BillsListPage>
                               vertical: 3,
                             ),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF2196F3).withOpacity(0.15),
+                              color: const Color(
+                                0xFF2196F3,
+                              ).withValues(alpha: 0.15),
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
@@ -2233,7 +2243,7 @@ class _BillsListPageState extends State<BillsListPage>
                           color: Colors.grey[50],
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
-                            color: Colors.grey.withOpacity(0.1),
+                            color: Colors.grey.withValues(alpha: 0.1),
                           ),
                         ),
                         child: Row(
@@ -2241,7 +2251,9 @@ class _BillsListPageState extends State<BillsListPage>
                             Container(
                               padding: const EdgeInsets.all(6),
                               decoration: BoxDecoration(
-                                color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                                color: const Color(
+                                  0xFF1B4D3E,
+                                ).withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(6),
                               ),
                               child: Icon(
@@ -2364,13 +2376,13 @@ class _BillsListPageState extends State<BillsListPage>
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
                                 colors: [
-                                  Colors.green.withOpacity(0.15),
-                                  Colors.green.withOpacity(0.08),
+                                  Colors.green.withValues(alpha: 0.15),
+                                  Colors.green.withValues(alpha: 0.08),
                                 ],
                               ),
                               borderRadius: BorderRadius.circular(6),
                               border: Border.all(
-                                color: Colors.green.withOpacity(0.2),
+                                color: Colors.green.withValues(alpha: 0.2),
                               ),
                             ),
                             child: Text(
@@ -2395,26 +2407,32 @@ class _BillsListPageState extends State<BillsListPage>
                             gradient: LinearGradient(
                               colors: isFullyReturned
                                   ? [
-                                      Colors.red.withOpacity(0.15),
-                                      Colors.red.withOpacity(0.08),
+                                      Colors.red.withValues(alpha: 0.15),
+                                      Colors.red.withValues(alpha: 0.08),
                                     ]
                                   : hasPartialReturn
                                   ? [
-                                      Colors.orange.withOpacity(0.15),
-                                      Colors.orange.withOpacity(0.08),
+                                      Colors.orange.withValues(alpha: 0.15),
+                                      Colors.orange.withValues(alpha: 0.08),
                                     ]
                                   : [
-                                      const Color(0xFF1B4D3E).withOpacity(0.12),
-                                      const Color(0xFF1B4D3E).withOpacity(0.06),
+                                      const Color(
+                                        0xFF1B4D3E,
+                                      ).withValues(alpha: 0.12),
+                                      const Color(
+                                        0xFF1B4D3E,
+                                      ).withValues(alpha: 0.06),
                                     ],
                             ),
                             borderRadius: BorderRadius.circular(10),
                             border: Border.all(
                               color: isFullyReturned
-                                  ? Colors.red.withOpacity(0.2)
+                                  ? Colors.red.withValues(alpha: 0.2)
                                   : hasPartialReturn
-                                  ? Colors.orange.withOpacity(0.2)
-                                  : const Color(0xFF1B4D3E).withOpacity(0.15),
+                                  ? Colors.orange.withValues(alpha: 0.2)
+                                  : const Color(
+                                      0xFF1B4D3E,
+                                    ).withValues(alpha: 0.15),
                             ),
                           ),
                           child: Text(

@@ -526,7 +526,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
         icon: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: const Color(0xFF1B4D3E).withOpacity(0.1),
+            color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(10),
           ),
           child: const Icon(
@@ -566,7 +566,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
             icon: Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: _isPdfLoading
@@ -590,7 +590,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
             icon: Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: Colors.orange.withOpacity(0.1),
+                color: Colors.orange.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: const Icon(
@@ -626,7 +626,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -641,7 +641,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
           borderRadius: BorderRadius.circular(10),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF1B4D3E).withOpacity(0.3),
+              color: const Color(0xFF1B4D3E).withValues(alpha: 0.3),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -716,7 +716,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
         ),
         style: TextButton.styleFrom(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          backgroundColor: const Color(0xFF1B4D3E).withOpacity(0.1),
+          backgroundColor: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
       ),
@@ -743,10 +743,10 @@ class _EventOrderScreenState extends State<EventOrderScreen>
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.grey.withOpacity(0.15)),
+                border: Border.all(color: Colors.grey.withValues(alpha: 0.15)),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.08),
+                    color: Colors.black.withValues(alpha: 0.08),
                     blurRadius: 8,
                     offset: const Offset(0, 4),
                   ),
@@ -773,7 +773,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                             radius: 16,
                             backgroundColor: const Color(
                               0xFF1B4D3E,
-                            ).withOpacity(0.15),
+                            ).withValues(alpha: 0.15),
                             child: Text(
                               customer.name.isNotEmpty
                                   ? customer.name[0].toUpperCase()
@@ -949,7 +949,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
         decoration: BoxDecoration(
           color: const Color(0xFFF8F9FC),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey.withOpacity(0.15)),
+          border: Border.all(color: Colors.grey.withValues(alpha: 0.15)),
         ),
         child: Row(
           children: [
@@ -1021,7 +1021,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
         decoration: BoxDecoration(
           color: const Color(0xFFF8F9FC),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey.withOpacity(0.15)),
+          border: Border.all(color: Colors.grey.withValues(alpha: 0.15)),
         ),
         child: Row(
           children: [
@@ -1079,7 +1079,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                   Icon(
                     Icons.event_note,
                     size: 48,
-                    color: Colors.grey.withOpacity(0.3),
+                    color: Colors.grey.withValues(alpha: 0.3),
                   ),
                   const SizedBox(height: 12),
                   Text(
@@ -1117,14 +1117,14 @@ class _EventOrderScreenState extends State<EventOrderScreen>
       decoration: BoxDecoration(
         color: const Color(0xFFF8F9FC),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.withOpacity(0.1)),
+        border: Border.all(color: Colors.grey.withValues(alpha: 0.1)),
       ),
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         leading: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: const Color(0xFF1B4D3E).withOpacity(0.1),
+            color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(8),
           ),
           child: const Icon(Icons.celebration, color: Color(0xFF1B4D3E)),
@@ -1249,14 +1249,16 @@ class _EventOrderScreenState extends State<EventOrderScreen>
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            const Color(0xFF1B4D3E).withOpacity(0.08),
-            const Color(0xFF1B4D3E).withOpacity(0.03),
+            const Color(0xFF1B4D3E).withValues(alpha: 0.08),
+            const Color(0xFF1B4D3E).withValues(alpha: 0.03),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFF1B4D3E).withOpacity(0.15)),
+        border: Border.all(
+          color: const Color(0xFF1B4D3E).withValues(alpha: 0.15),
+        ),
       ),
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -1267,7 +1269,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1B4D3E).withOpacity(0.15),
+                  color: const Color(0xFF1B4D3E).withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: const Icon(
@@ -1314,7 +1316,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
             Container(
               height: 1,
               margin: const EdgeInsets.symmetric(vertical: 8),
-              color: const Color(0xFF1B4D3E).withOpacity(0.2),
+              color: const Color(0xFF1B4D3E).withValues(alpha: 0.2),
             ),
           ],
           // Grand total
@@ -1336,7 +1338,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                   vertical: 6,
                 ),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF4CAF50).withOpacity(0.15),
+                  color: const Color(0xFF4CAF50).withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
@@ -1413,10 +1415,10 @@ class _EventOrderScreenState extends State<EventOrderScreen>
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.withOpacity(0.1)),
+        border: Border.all(color: Colors.grey.withValues(alpha: 0.1)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 12,
             offset: const Offset(0, 3),
           ),
@@ -1430,8 +1432,8 @@ class _EventOrderScreenState extends State<EventOrderScreen>
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  const Color(0xFF1B4D3E).withOpacity(0.1),
-                  const Color(0xFF1B4D3E).withOpacity(0.05),
+                  const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+                  const Color(0xFF1B4D3E).withValues(alpha: 0.05),
                 ],
               ),
               borderRadius: const BorderRadius.only(
@@ -1448,13 +1450,13 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                     gradient: LinearGradient(
                       colors: [
                         const Color(0xFF1B4D3E),
-                        const Color(0xFF1B4D3E).withOpacity(0.8),
+                        const Color(0xFF1B4D3E).withValues(alpha: 0.8),
                       ],
                     ),
                     borderRadius: BorderRadius.circular(10),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFF1B4D3E).withOpacity(0.3),
+                        color: const Color(0xFF1B4D3E).withValues(alpha: 0.3),
                         blurRadius: 6,
                         offset: const Offset(0, 2),
                       ),
@@ -1499,7 +1501,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                 color: Colors.grey[50],
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(
-                  color: const Color(0xFF1B4D3E).withOpacity(0.2),
+                  color: const Color(0xFF1B4D3E).withValues(alpha: 0.2),
                 ),
               ),
               child: Row(
@@ -1554,7 +1556,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                     child: Container(
                       padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                        color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: const Icon(
@@ -1598,7 +1600,11 @@ class _EventOrderScreenState extends State<EventOrderScreen>
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
               child: Column(
                 children: [
-                  Icon(icon, size: 40, color: Colors.grey.withOpacity(0.3)),
+                  Icon(
+                    icon,
+                    size: 40,
+                    color: Colors.grey.withValues(alpha: 0.3),
+                  ),
                   const SizedBox(height: 8),
                   Text(
                     emptyHint,
@@ -1617,10 +1623,10 @@ class _EventOrderScreenState extends State<EventOrderScreen>
               physics: const NeverScrollableScrollPhysics(),
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               itemCount: _orderItems.length,
-              separatorBuilder: (_, __) => Divider(
+              separatorBuilder: (_, _) => Divider(
                 height: 1,
                 thickness: 0.5,
-                color: Colors.grey.withOpacity(0.12),
+                color: Colors.grey.withValues(alpha: 0.12),
               ),
               itemBuilder: (context, index) {
                 final item = _orderItems[index];
@@ -1634,9 +1640,11 @@ class _EventOrderScreenState extends State<EventOrderScreen>
               child: Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: Colors.blue.withOpacity(0.08),
+                  color: Colors.blue.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.blue.withOpacity(0.15)),
+                  border: Border.all(
+                    color: Colors.blue.withValues(alpha: 0.15),
+                  ),
                 ),
                 child: Row(
                   children: [
@@ -1736,7 +1744,9 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                             fontFamily: 'Literata',
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
-                            color: const Color(0xFF1B4D3E).withOpacity(0.8),
+                            color: const Color(
+                              0xFF1B4D3E,
+                            ).withValues(alpha: 0.8),
                           ),
                         ),
                         const SizedBox(width: 3),
@@ -1780,7 +1790,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
               decoration: BoxDecoration(
                 color: Colors.grey[50],
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.grey.withOpacity(0.15)),
+                border: Border.all(color: Colors.grey.withValues(alpha: 0.15)),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -1802,7 +1812,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                       width: 28,
                       height: 30,
                       decoration: BoxDecoration(
-                        color: const Color(0xFF1B4D3E).withOpacity(0.08),
+                        color: const Color(0xFF1B4D3E).withValues(alpha: 0.08),
                         borderRadius: const BorderRadius.only(
                           topLeft: Radius.circular(7),
                           bottomLeft: Radius.circular(7),
@@ -1842,7 +1852,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                       width: 28,
                       height: 30,
                       decoration: BoxDecoration(
-                        color: const Color(0xFF1B4D3E).withOpacity(0.08),
+                        color: const Color(0xFF1B4D3E).withValues(alpha: 0.08),
                         borderRadius: const BorderRadius.only(
                           topRight: Radius.circular(7),
                           bottomRight: Radius.circular(7),
@@ -1885,14 +1895,14 @@ class _EventOrderScreenState extends State<EventOrderScreen>
       decoration: BoxDecoration(
         color: const Color(0xFFF8F9FC),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.withOpacity(0.1)),
+        border: Border.all(color: Colors.grey.withValues(alpha: 0.1)),
       ),
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         leading: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: Colors.green.withOpacity(0.1),
+            color: Colors.green.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(8),
           ),
           child: const Icon(Icons.inventory, color: Colors.green),
@@ -2193,7 +2203,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: Colors.black.withValues(alpha: 0.08),
             blurRadius: 15,
             offset: const Offset(0, -5),
           ),
@@ -2310,7 +2320,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -2326,7 +2336,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                    color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(icon, color: const Color(0xFF1B4D3E), size: 20),
@@ -2368,7 +2378,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
       decoration: BoxDecoration(
         color: const Color(0xFFF8F9FC),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.withOpacity(0.15)),
+        border: Border.all(color: Colors.grey.withValues(alpha: 0.15)),
       ),
       child: TextFormField(
         controller: controller,
@@ -3331,7 +3341,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                               selected: isSelected,
                               selectedTileColor: const Color(
                                 0xFF1B4D3E,
-                              ).withOpacity(0.1),
+                              ).withValues(alpha: 0.1),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8),
                               ),
@@ -3373,7 +3383,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                          color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Row(
@@ -3745,7 +3755,7 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                      color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Icon(
@@ -4144,7 +4154,7 @@ class _ProductSelectionSheetState extends State<_ProductSelectionSheet> {
                     gradient: LinearGradient(
                       colors: [
                         const Color(0xFF1B4D3E),
-                        const Color(0xFF1B4D3E).withOpacity(0.8),
+                        const Color(0xFF1B4D3E).withValues(alpha: 0.8),
                       ],
                     ),
                     borderRadius: BorderRadius.circular(12),
@@ -4197,7 +4207,7 @@ class _ProductSelectionSheetState extends State<_ProductSelectionSheet> {
                 color: Colors.grey[50],
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: const Color(0xFF1B4D3E).withOpacity(0.2),
+                  color: const Color(0xFF1B4D3E).withValues(alpha: 0.2),
                 ),
               ),
               child: Row(
@@ -4260,7 +4270,7 @@ class _ProductSelectionSheetState extends State<_ProductSelectionSheet> {
                     child: Container(
                       padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                        color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: const Icon(
@@ -4483,7 +4493,7 @@ class _ProductSelectionSheetState extends State<_ProductSelectionSheet> {
         borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 10,
             offset: const Offset(0, -4),
           ),
@@ -4498,10 +4508,10 @@ class _ProductSelectionSheetState extends State<_ProductSelectionSheet> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: const Color(0xFF1B4D3E).withOpacity(0.3),
+                  color: const Color(0xFF1B4D3E).withValues(alpha: 0.3),
                 ),
               ),
               child: Row(

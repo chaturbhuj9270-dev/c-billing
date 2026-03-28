@@ -301,7 +301,7 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -315,7 +315,7 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
             icon: Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: const Icon(
@@ -348,14 +348,14 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
                           ? Icons.picture_as_pdf_rounded
                           : Icons.table_chart_rounded,
                       size: 14,
-                      color: const Color(0xFF1B4D3E).withOpacity(0.6),
+                      color: const Color(0xFF1B4D3E).withValues(alpha: 0.6),
                     ),
                     const SizedBox(width: 4),
                     Expanded(
                       child: Text(
                         widget.reportTitle,
                         style: TextStyle(
-                          color: const Color(0xFF1B4D3E).withOpacity(0.7),
+                          color: const Color(0xFF1B4D3E).withValues(alpha: 0.7),
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
                           fontFamily: 'Literata',
@@ -384,7 +384,7 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
                       (widget.selectedFormat == ReportFormat.pdf
                               ? Colors.red
                               : Colors.green)
-                          .withOpacity(0.3),
+                          .withValues(alpha: 0.3),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
@@ -416,12 +416,14 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            const Color(0xFF1B4D3E).withOpacity(0.08),
-            const Color(0xFF1B4D3E).withOpacity(0.04),
+            const Color(0xFF1B4D3E).withValues(alpha: 0.08),
+            const Color(0xFF1B4D3E).withValues(alpha: 0.04),
           ],
         ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF1B4D3E).withOpacity(0.15)),
+        border: Border.all(
+          color: const Color(0xFF1B4D3E).withValues(alpha: 0.15),
+        ),
       ),
       child: Row(
         children: [
@@ -437,7 +439,7 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
                 border: Border.all(
                   color: _allSelected
                       ? const Color(0xFF1B4D3E)
-                      : const Color(0xFF1B4D3E).withOpacity(0.3),
+                      : const Color(0xFF1B4D3E).withValues(alpha: 0.3),
                   width: 2,
                 ),
               ),
@@ -476,7 +478,7 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
                   style: TextStyle(
                     fontFamily: 'Literata',
                     fontSize: 11,
-                    color: const Color(0xFF1B4D3E).withOpacity(0.6),
+                    color: const Color(0xFF1B4D3E).withValues(alpha: 0.6),
                   ),
                 ),
               ],
@@ -516,13 +518,13 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: const Color(0xFF1B4D3E).withOpacity(0.1),
+              color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(
               Icons.inventory_2_outlined,
               size: 48,
-              color: const Color(0xFF1B4D3E).withOpacity(0.5),
+              color: const Color(0xFF1B4D3E).withValues(alpha: 0.5),
             ),
           ),
           const SizedBox(height: 16),
@@ -609,15 +611,15 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isSelected
-                ? const Color(0xFF1B4D3E).withOpacity(0.4)
-                : Colors.grey.withOpacity(0.15),
+                ? const Color(0xFF1B4D3E).withValues(alpha: 0.4)
+                : Colors.grey.withValues(alpha: 0.15),
             width: isSelected ? 2 : 1,
           ),
           boxShadow: [
             BoxShadow(
               color: isSelected
-                  ? const Color(0xFF1B4D3E).withOpacity(0.08)
-                  : Colors.black.withOpacity(0.03),
+                  ? const Color(0xFF1B4D3E).withValues(alpha: 0.08)
+                  : Colors.black.withValues(alpha: 0.03),
               blurRadius: isSelected ? 12 : 6,
               offset: const Offset(0, 3),
             ),
@@ -633,8 +635,8 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
                   color: isSelected
-                      ? const Color(0xFF1B4D3E).withOpacity(0.04)
-                      : Colors.grey.withOpacity(0.02),
+                      ? const Color(0xFF1B4D3E).withValues(alpha: 0.04)
+                      : Colors.grey.withValues(alpha: 0.02),
                   borderRadius: const BorderRadius.vertical(
                     top: Radius.circular(15),
                   ),
@@ -653,7 +655,7 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
                         border: Border.all(
                           color: isSelected
                               ? const Color(0xFF1B4D3E)
-                              : Colors.grey.withOpacity(0.3),
+                              : Colors.grey.withValues(alpha: 0.3),
                           width: 2,
                         ),
                       ),
@@ -674,7 +676,7 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                          color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
@@ -731,12 +733,12 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
                         decoration: BoxDecoration(
                           color: _getStockColor(
                             item.availableQuantity,
-                          ).withOpacity(0.12),
+                          ).withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
                             color: _getStockColor(
                               item.availableQuantity,
-                            ).withOpacity(0.3),
+                            ).withValues(alpha: 0.3),
                           ),
                         ),
                         child: Row(
@@ -881,7 +883,7 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.grey.withOpacity(0.08),
+        color: Colors.grey.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
@@ -918,9 +920,9 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
+        color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -949,7 +951,7 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.08),
+        color: color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
@@ -960,7 +962,7 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
             style: TextStyle(
               fontFamily: 'Literata',
               fontSize: 11,
-              color: color.withOpacity(0.7),
+              color: color.withValues(alpha: 0.7),
             ),
           ),
           Text(
@@ -986,16 +988,18 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFF1B4D3E).withOpacity(0.04),
+        color: const Color(0xFF1B4D3E).withValues(alpha: 0.04),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFF1B4D3E).withOpacity(0.15)),
+        border: Border.all(
+          color: const Color(0xFF1B4D3E).withValues(alpha: 0.15),
+        ),
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: const Color(0xFF1B4D3E).withOpacity(0.1),
+              color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: const Icon(
@@ -1056,7 +1060,7 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
                   borderSide: BorderSide(
-                    color: const Color(0xFF1B4D3E).withOpacity(0.3),
+                    color: const Color(0xFF1B4D3E).withValues(alpha: 0.3),
                   ),
                 ),
                 focusedBorder: OutlineInputBorder(
@@ -1101,7 +1105,7 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: Colors.black.withValues(alpha: 0.08),
             blurRadius: 16,
             offset: const Offset(0, -4),
           ),
@@ -1124,7 +1128,7 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
-                        color: const Color(0xFF1B4D3E).withOpacity(0.3),
+                        color: const Color(0xFF1B4D3E).withValues(alpha: 0.3),
                       ),
                     ),
                     child: Row(
@@ -1178,7 +1182,9 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
                           ? null
                           : [
                               BoxShadow(
-                                color: const Color(0xFF1B4D3E).withOpacity(0.4),
+                                color: const Color(
+                                  0xFF1B4D3E,
+                                ).withValues(alpha: 0.4),
                                 blurRadius: 12,
                                 offset: const Offset(0, 4),
                               ),

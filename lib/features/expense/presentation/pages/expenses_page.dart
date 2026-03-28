@@ -195,7 +195,7 @@ class _ExpensesPageState extends State<ExpensesPage>
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF1B4D3E).withOpacity(0.3),
+            color: const Color(0xFF1B4D3E).withValues(alpha: 0.3),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -215,7 +215,7 @@ class _ExpensesPageState extends State<ExpensesPage>
                       icon: Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.15),
+                          color: Colors.white.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: const Icon(
@@ -244,7 +244,7 @@ class _ExpensesPageState extends State<ExpensesPage>
                     icon: Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.15),
+                        color: Colors.white.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Icon(
@@ -265,10 +265,10 @@ class _ExpensesPageState extends State<ExpensesPage>
             child: Container(
               height: 44,
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.15),
+                color: Colors.white.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(
-                  color: Colors.white.withOpacity(0.2),
+                  color: Colors.white.withValues(alpha: 0.2),
                   width: 1,
                 ),
               ),
@@ -286,13 +286,13 @@ class _ExpensesPageState extends State<ExpensesPage>
                 decoration: InputDecoration(
                   hintText: 'Search expenses...',
                   hintStyle: TextStyle(
-                    color: Colors.white.withOpacity(0.6),
+                    color: Colors.white.withValues(alpha: 0.6),
                     fontSize: 14,
                     fontFamily: 'Literata',
                   ),
                   prefixIcon: Icon(
                     Icons.search_rounded,
-                    color: Colors.white.withOpacity(0.6),
+                    color: Colors.white.withValues(alpha: 0.6),
                     size: 20,
                   ),
                   border: InputBorder.none,
@@ -324,13 +324,13 @@ class _ExpensesPageState extends State<ExpensesPage>
                 end: Alignment.bottomRight,
                 colors: [
                   const Color(0xFF1B4D3E),
-                  const Color(0xFF1B4D3E).withOpacity(0.85),
+                  const Color(0xFF1B4D3E).withValues(alpha: 0.85),
                 ],
               ),
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF1B4D3E).withOpacity(0.3),
+                  color: const Color(0xFF1B4D3E).withValues(alpha: 0.3),
                   blurRadius: 16,
                   offset: const Offset(0, 6),
                 ),
@@ -345,7 +345,7 @@ class _ExpensesPageState extends State<ExpensesPage>
                       width: 44,
                       height: 44,
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
+                        color: Colors.white.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Icon(
@@ -362,7 +362,7 @@ class _ExpensesPageState extends State<ExpensesPage>
                           'Total Expenses',
                           style: TextStyle(
                             fontSize: 13,
-                            color: Colors.white.withOpacity(0.8),
+                            color: Colors.white.withValues(alpha: 0.8),
                             fontFamily: 'Literata',
                           ),
                         ),
@@ -370,7 +370,7 @@ class _ExpensesPageState extends State<ExpensesPage>
                           _getDateFilterLabel(),
                           style: TextStyle(
                             fontSize: 11,
-                            color: Colors.white.withOpacity(0.6),
+                            color: Colors.white.withValues(alpha: 0.6),
                             fontFamily: 'Literata',
                           ),
                         ),
@@ -393,7 +393,7 @@ class _ExpensesPageState extends State<ExpensesPage>
                   '${_expenses.length} transactions',
                   style: TextStyle(
                     fontSize: 12,
-                    color: Colors.white.withOpacity(0.7),
+                    color: Colors.white.withValues(alpha: 0.7),
                     fontFamily: 'Literata',
                   ),
                 ),
@@ -434,7 +434,7 @@ class _ExpensesPageState extends State<ExpensesPage>
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: sortedCategories.length.clamp(0, 5),
-        separatorBuilder: (_, __) => const SizedBox(width: 10),
+        separatorBuilder: (_, _) => const SizedBox(width: 10),
         itemBuilder: (context, index) {
           final entry = sortedCategories[index];
           final category = entry.key;
@@ -457,7 +457,7 @@ class _ExpensesPageState extends State<ExpensesPage>
               padding: EdgeInsets.all(cardPadding),
               decoration: BoxDecoration(
                 color: _selectedCategory == category
-                    ? const Color(0xFF1B4D3E).withOpacity(0.1)
+                    ? const Color(0xFF1B4D3E).withValues(alpha: 0.1)
                     : Colors.white,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
@@ -468,7 +468,7 @@ class _ExpensesPageState extends State<ExpensesPage>
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.03),
+                    color: Colors.black.withValues(alpha: 0.03),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -489,7 +489,7 @@ class _ExpensesPageState extends State<ExpensesPage>
                           vertical: 1,
                         ),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                          color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
@@ -719,7 +719,7 @@ class _ExpensesPageState extends State<ExpensesPage>
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                      color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Text(
@@ -761,13 +761,13 @@ class _ExpensesPageState extends State<ExpensesPage>
               width: 100,
               height: 100,
               decoration: BoxDecoration(
-                color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 Icons.receipt_long_rounded,
                 size: 48,
-                color: const Color(0xFF1B4D3E).withOpacity(0.5),
+                color: const Color(0xFF1B4D3E).withValues(alpha: 0.5),
               ),
             ),
             const SizedBox(height: 24),
@@ -1008,7 +1008,7 @@ class _DateFilterChip extends StatelessWidget {
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: const Color(0xFF1B4D3E).withOpacity(0.3),
+                    color: const Color(0xFF1B4D3E).withValues(alpha: 0.3),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -1052,7 +1052,7 @@ class _CategoryFilterChip extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
           color: isSelected
-              ? const Color(0xFF1B4D3E).withOpacity(0.1)
+              ? const Color(0xFF1B4D3E).withValues(alpha: 0.1)
               : Colors.grey[100],
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
@@ -1124,7 +1124,7 @@ class _ExpenseCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.03),
+                color: Colors.black.withValues(alpha: 0.03),
                 blurRadius: 8,
                 offset: const Offset(0, 2),
               ),
@@ -1139,7 +1139,7 @@ class _ExpenseCard extends StatelessWidget {
                   width: 48,
                   height: 48,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                    color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Center(
@@ -1580,7 +1580,7 @@ class _AddExpenseSheetState extends State<_AddExpenseSheet> {
                         Switch(
                           value: _isRecurring,
                           onChanged: (v) => setState(() => _isRecurring = v),
-                          activeColor: const Color(0xFF1B4D3E),
+                          activeThumbColor: const Color(0xFF1B4D3E),
                         ),
                       ],
                     ),
@@ -1747,7 +1747,7 @@ class _ExpenseDetailsSheet extends StatelessWidget {
                   width: 56,
                   height: 56,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                    color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Center(

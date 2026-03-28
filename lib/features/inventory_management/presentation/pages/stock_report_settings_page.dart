@@ -130,7 +130,7 @@ class _StockReportSettingsPageState extends State<StockReportSettingsPage> {
             child: Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.8),
+                color: Colors.white.withValues(alpha: 0.8),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: const Icon(
@@ -194,7 +194,7 @@ class _StockReportSettingsPageState extends State<StockReportSettingsPage> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: const Color(0xFF1B4D3E).withOpacity(0.1),
+              color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(16),
             ),
             child: Row(
@@ -322,14 +322,14 @@ class _StockReportSettingsPageState extends State<StockReportSettingsPage> {
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: column.isVisible
-              ? const Color(0xFF1B4D3E).withOpacity(0.3)
+              ? const Color(0xFF1B4D3E).withValues(alpha: 0.3)
               : Colors.grey[200]!,
           width: column.isVisible ? 1.5 : 1,
         ),
         boxShadow: column.isVisible
             ? [
                 BoxShadow(
-                  color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                  color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
@@ -343,7 +343,7 @@ class _StockReportSettingsPageState extends State<StockReportSettingsPage> {
           height: 40,
           decoration: BoxDecoration(
             color: column.isVisible
-                ? const Color(0xFF1B4D3E).withOpacity(0.1)
+                ? const Color(0xFF1B4D3E).withValues(alpha: 0.1)
                 : Colors.grey[100],
             borderRadius: BorderRadius.circular(10),
           ),
@@ -376,7 +376,7 @@ class _StockReportSettingsPageState extends State<StockReportSettingsPage> {
           value: column.isVisible,
           onChanged: (value) => _toggleColumn(column.id, value),
           activeThumbColor: const Color(0xFF1B4D3E),
-          activeTrackColor: const Color(0xFF1B4D3E).withOpacity(0.3),
+          activeTrackColor: const Color(0xFF1B4D3E).withValues(alpha: 0.3),
         ),
       ),
     );

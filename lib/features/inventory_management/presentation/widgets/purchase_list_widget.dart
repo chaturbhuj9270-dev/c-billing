@@ -206,7 +206,7 @@ class _PurchaseListWidgetState extends State<PurchaseListWidget> {
                   width: 120,
                   height: 120,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1B4D3E).withOpacity(0.08),
+                    color: const Color(0xFF1B4D3E).withValues(alpha: 0.08),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
@@ -214,7 +214,7 @@ class _PurchaseListWidgetState extends State<PurchaseListWidget> {
                         ? Icons.filter_alt_off_rounded
                         : Icons.shopping_cart_outlined,
                     size: 56,
-                    color: const Color(0xFF1B4D3E).withOpacity(0.5),
+                    color: const Color(0xFF1B4D3E).withValues(alpha: 0.5),
                   ),
                 ),
               ),
@@ -284,10 +284,10 @@ class _PurchaseListWidgetState extends State<PurchaseListWidget> {
                       vertical: 10,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF1B4D3E).withOpacity(0.06),
+                      color: const Color(0xFF1B4D3E).withValues(alpha: 0.06),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: const Color(0xFF1B4D3E).withOpacity(0.2),
+                        color: const Color(0xFF1B4D3E).withValues(alpha: 0.2),
                         width: 1,
                       ),
                     ),
@@ -297,7 +297,7 @@ class _PurchaseListWidgetState extends State<PurchaseListWidget> {
                         Icon(
                           Icons.add_circle_outline_rounded,
                           size: 20,
-                          color: const Color(0xFF1B4D3E).withOpacity(0.7),
+                          color: const Color(0xFF1B4D3E).withValues(alpha: 0.7),
                         ),
                         const SizedBox(width: 8),
                         Text(
@@ -306,7 +306,9 @@ class _PurchaseListWidgetState extends State<PurchaseListWidget> {
                             fontFamily: 'Literata',
                             fontWeight: FontWeight.w500,
                             fontSize: 13,
-                            color: const Color(0xFF1B4D3E).withOpacity(0.8),
+                            color: const Color(
+                              0xFF1B4D3E,
+                            ).withValues(alpha: 0.8),
                           ),
                         ),
                       ],
@@ -394,7 +396,7 @@ class PurchaseSummaryWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final _localizations = AppLocalizations.of(
+    final localizations = AppLocalizations.of(
       LanguageService.instance.currentLanguage,
     );
     final filtered = _filteredPurchases;
@@ -415,13 +417,13 @@ class PurchaseSummaryWidget extends StatelessWidget {
           end: Alignment.bottomRight,
           colors: [
             const Color(0xFF1B4D3E),
-            const Color(0xFF1B4D3E).withOpacity(0.85),
+            const Color(0xFF1B4D3E).withValues(alpha: 0.85),
           ],
         ),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF1B4D3E).withOpacity(0.3),
+            color: const Color(0xFF1B4D3E).withValues(alpha: 0.3),
             blurRadius: 12,
             offset: const Offset(0, 6),
           ),
@@ -431,20 +433,20 @@ class PurchaseSummaryWidget extends StatelessWidget {
         children: [
           _buildStatItem(
             icon: Icons.receipt_long_rounded,
-            label: _localizations.purchases,
+            label: localizations.purchases,
             value: '${filtered.length}',
           ),
           _buildDivider(),
           _buildStatItem(
             icon: Icons.inventory_2_rounded,
-            label: _localizations.totalQty,
+            label: localizations.totalQty,
             value: '$totalQuantity',
           ),
           _buildDivider(),
           Expanded(
             child: _buildStatItem(
               icon: Icons.currency_rupee_rounded,
-              label: _localizations.totalValue,
+              label: localizations.totalValue,
               value: '₹${totalAmount.toStringAsFixed(0)}',
               isExpanded: true,
             ),
@@ -465,7 +467,7 @@ class PurchaseSummaryWidget extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, color: Colors.white.withOpacity(0.8), size: 20),
+          Icon(icon, color: Colors.white.withValues(alpha: 0.8), size: 20),
           const SizedBox(height: 6),
           Text(
             value,
@@ -483,7 +485,7 @@ class PurchaseSummaryWidget extends StatelessWidget {
               fontFamily: 'Literata',
               fontWeight: FontWeight.w400,
               fontSize: 11,
-              color: Colors.white.withOpacity(0.7),
+              color: Colors.white.withValues(alpha: 0.7),
             ),
           ),
         ],
@@ -495,7 +497,7 @@ class PurchaseSummaryWidget extends StatelessWidget {
     return Container(
       width: 1,
       height: 40,
-      color: Colors.white.withOpacity(0.2),
+      color: Colors.white.withValues(alpha: 0.2),
     );
   }
 }

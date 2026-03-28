@@ -311,7 +311,7 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF1B4D3E).withOpacity(0.3),
+            color: const Color(0xFF1B4D3E).withValues(alpha: 0.3),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -330,7 +330,7 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
                     icon: Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.15),
+                        color: Colors.white.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Icon(
@@ -356,7 +356,7 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
                     icon: Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.15),
+                        color: Colors.white.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Icon(
@@ -377,10 +377,10 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
             child: Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.1),
+                color: Colors.white.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(
-                  color: Colors.white.withOpacity(0.15),
+                  color: Colors.white.withValues(alpha: 0.15),
                   width: 1,
                 ),
               ),
@@ -394,8 +394,8 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                         colors: [
-                          Colors.white.withOpacity(0.25),
-                          Colors.white.withOpacity(0.1),
+                          Colors.white.withValues(alpha: 0.25),
+                          Colors.white.withValues(alpha: 0.1),
                         ],
                       ),
                       shape: BoxShape.circle,
@@ -434,13 +434,13 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
                             Icon(
                               Icons.phone_rounded,
                               size: 12,
-                              color: Colors.white.withOpacity(0.7),
+                              color: Colors.white.withValues(alpha: 0.7),
                             ),
                             const SizedBox(width: 4),
                             Text(
                               widget.customerContact,
                               style: TextStyle(
-                                color: Colors.white.withOpacity(0.8),
+                                color: Colors.white.withValues(alpha: 0.8),
                                 fontSize: 12,
                                 fontFamily: 'Literata',
                               ),
@@ -470,7 +470,7 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
               label: 'Received',
               value: '₹${_formatAmount(_totalReceived)}',
               color: Colors.green,
-              iconBackground: Colors.green.withOpacity(0.1),
+              iconBackground: Colors.green.withValues(alpha: 0.1),
             ),
           ),
           const SizedBox(width: 12),
@@ -481,7 +481,7 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
               value: '₹${_formatAmount(_currentPending)}',
               color: _currentPending > 0 ? Colors.red : Colors.green,
               iconBackground: (_currentPending > 0 ? Colors.red : Colors.green)
-                  .withOpacity(0.1),
+                  .withValues(alpha: 0.1),
             ),
           ),
         ],
@@ -617,13 +617,13 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
               width: 80,
               height: 80,
               decoration: BoxDecoration(
-                color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 Icons.receipt_long_rounded,
                 size: 40,
-                color: const Color(0xFF1B4D3E).withOpacity(0.5),
+                color: const Color(0xFF1B4D3E).withValues(alpha: 0.5),
               ),
             ),
             const SizedBox(height: 20),
@@ -805,7 +805,7 @@ class _SummaryCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: color.withOpacity(0.08),
+            color: color.withValues(alpha: 0.08),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -883,7 +883,7 @@ class _FilterChip extends StatelessWidget {
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: const Color(0xFF1B4D3E).withOpacity(0.3),
+                    color: const Color(0xFF1B4D3E).withValues(alpha: 0.3),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -967,7 +967,7 @@ class _TransactionCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.03),
+              color: Colors.black.withValues(alpha: 0.03),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -983,7 +983,7 @@ class _TransactionCard extends StatelessWidget {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
+                  color: color.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(icon, color: color, size: 22),
@@ -1033,7 +1033,7 @@ class _TransactionCard extends StatelessWidget {
                                   vertical: 3,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: color.withOpacity(0.1),
+                                  color: color.withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(6),
                                 ),
                                 child: Text(
@@ -1202,7 +1202,7 @@ class _ReceivePaymentSheetState extends State<_ReceivePaymentSheet> {
                     vertical: 8,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.red.withOpacity(0.1),
+                    color: Colors.red.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Row(
@@ -1412,7 +1412,7 @@ class _EventOrderCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -1429,7 +1429,7 @@ class _EventOrderCard extends StatelessWidget {
                   width: 44,
                   height: 44,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                    color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
@@ -1452,8 +1452,8 @@ class _EventOrderCard extends StatelessWidget {
                             ),
                             decoration: BoxDecoration(
                               color: isEvent
-                                  ? Colors.purple.withOpacity(0.1)
-                                  : Colors.blue.withOpacity(0.1),
+                                  ? Colors.purple.withValues(alpha: 0.1)
+                                  : Colors.blue.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
@@ -1473,7 +1473,7 @@ class _EventOrderCard extends StatelessWidget {
                               vertical: 2,
                             ),
                             decoration: BoxDecoration(
-                              color: statusColor.withOpacity(0.1),
+                              color: statusColor.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(

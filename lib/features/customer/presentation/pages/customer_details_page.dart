@@ -299,7 +299,7 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -312,7 +312,7 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
             children: [
               CircleAvatar(
                 radius: 24,
-                backgroundColor: const Color(0xFF1B4D3E).withOpacity(0.1),
+                backgroundColor: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
                 child: Text(
                   _customer!.firstName.isNotEmpty
                       ? _customer!.firstName[0].toUpperCase()
@@ -404,7 +404,7 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
                 (_customer!.hasPendingBalance
                         ? const Color(0xFFFF6B6B)
                         : const Color(0xFF1B4D3E))
-                    .withOpacity(0.3),
+                    .withValues(alpha: 0.3),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -421,7 +421,7 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
                 style: TextStyle(
                   fontFamily: 'Literata',
                   fontSize: 14,
-                  color: Colors.white.withOpacity(0.8),
+                  color: Colors.white.withValues(alpha: 0.8),
                 ),
               ),
               Icon(
@@ -454,7 +454,7 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
               Container(
                 width: 1,
                 height: 30,
-                color: Colors.white.withOpacity(0.3),
+                color: Colors.white.withValues(alpha: 0.3),
               ),
               Expanded(
                 child: _buildStatItem(
@@ -487,7 +487,7 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
           style: TextStyle(
             fontFamily: 'Literata',
             fontSize: 11,
-            color: Colors.white.withOpacity(0.7),
+            color: Colors.white.withValues(alpha: 0.7),
           ),
         ),
       ],
@@ -541,8 +541,8 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
             height: 40,
             decoration: BoxDecoration(
               color: isPayment
-                  ? Colors.green.withOpacity(0.1)
-                  : Colors.orange.withOpacity(0.1),
+                  ? Colors.green.withValues(alpha: 0.1)
+                  : Colors.orange.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(
@@ -593,7 +593,7 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
                       vertical: 2,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                      color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
@@ -656,10 +656,12 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFF1B4D3E).withOpacity(0.2)),
+        border: Border.all(
+          color: const Color(0xFF1B4D3E).withValues(alpha: 0.2),
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -673,7 +675,7 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                  color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Icon(
@@ -742,7 +744,7 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: Colors.orange.withOpacity(0.1),
+                color: Colors.orange.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
@@ -815,7 +817,9 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFF1B4D3E).withOpacity(0.15)),
+        border: Border.all(
+          color: const Color(0xFF1B4D3E).withValues(alpha: 0.15),
+        ),
       ),
       child: Row(
         children: [
@@ -824,7 +828,7 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: const Color(0xFF1B4D3E).withOpacity(0.1),
+              color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(
@@ -859,7 +863,7 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
                         vertical: 2,
                       ),
                       decoration: BoxDecoration(
-                        color: statusColor.withOpacity(0.1),
+                        color: statusColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
@@ -891,8 +895,8 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
                   ),
                   decoration: BoxDecoration(
                     color: isEvent
-                        ? Colors.purple.withOpacity(0.1)
-                        : Colors.blue.withOpacity(0.1),
+                        ? Colors.purple.withValues(alpha: 0.1)
+                        : Colors.blue.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
@@ -1114,10 +1118,10 @@ class _ReceivePaymentSheetState extends State<ReceivePaymentSheet> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: const Color(0xFFFF6B6B).withOpacity(0.1),
+                color: const Color(0xFFFF6B6B).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: const Color(0xFFFF6B6B).withOpacity(0.3),
+                  color: const Color(0xFFFF6B6B).withValues(alpha: 0.3),
                 ),
               ),
               child: Row(
@@ -1265,9 +1269,11 @@ class _ReceivePaymentSheetState extends State<ReceivePaymentSheet> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.green.withOpacity(0.1),
+                  color: Colors.green.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.green.withOpacity(0.3)),
+                  border: Border.all(
+                    color: Colors.green.withValues(alpha: 0.3),
+                  ),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,

@@ -288,7 +288,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
           filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
           child: Container(
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.95),
+              color: Colors.white.withValues(alpha: 0.95),
               borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(20),
               ),
@@ -425,11 +425,11 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
         builder: (context, setDialogState) => BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
           child: AlertDialog(
-            backgroundColor: Colors.white.withOpacity(0.95),
+            backgroundColor: Colors.white.withValues(alpha: 0.95),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20),
               side: BorderSide(
-                color: Colors.white.withOpacity(0.3),
+                color: Colors.white.withValues(alpha: 0.3),
                 width: 1.5,
               ),
             ),
@@ -438,7 +438,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                    color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: const Icon(
@@ -1177,7 +1177,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
       builder: (context) => BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
         child: AlertDialog(
-          backgroundColor: Colors.white.withOpacity(0.95),
+          backgroundColor: Colors.white.withValues(alpha: 0.95),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
@@ -1206,9 +1206,9 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.red.withOpacity(0.05),
+                  color: Colors.red.withValues(alpha: 0.05),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.red.withOpacity(0.2)),
+                  border: Border.all(color: Colors.red.withValues(alpha: 0.2)),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -1643,7 +1643,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                 child: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                    color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: const Icon(
@@ -1698,7 +1698,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                   child: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                      color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: const Icon(
@@ -1724,7 +1724,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                   child: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                      color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: const Icon(
@@ -1741,7 +1741,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                 icon: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                    color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: const Icon(
@@ -1837,12 +1837,12 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
               end: Alignment.bottomRight,
               colors: [
                 const Color(0xFF1B4D3E),
-                const Color(0xFF1B4D3E).withOpacity(0.85),
+                const Color(0xFF1B4D3E).withValues(alpha: 0.85),
               ],
             ),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFF1B4D3E).withOpacity(0.35),
+                color: const Color(0xFF1B4D3E).withValues(alpha: 0.35),
                 blurRadius: 20,
                 offset: const Offset(0, 8),
               ),
@@ -1852,8 +1852,8 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
             color: Colors.transparent,
             child: InkWell(
               onTap: _navigateToAddPurchase,
-              splashColor: Colors.white.withOpacity(0.2),
-              highlightColor: Colors.white.withOpacity(0.1),
+              splashColor: Colors.white.withValues(alpha: 0.2),
+              highlightColor: Colors.white.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(22),
               child: const Center(
                 child: Icon(Icons.add_rounded, size: 32, color: Colors.white),
@@ -1915,7 +1915,7 @@ class _PurchaseDetailsSheetState extends State<_PurchaseDetailsSheet> {
         filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
         child: Container(
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.98),
+            color: Colors.white.withValues(alpha: 0.98),
             borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
           ),
           child: SafeArea(
@@ -1944,7 +1944,7 @@ class _PurchaseDetailsSheetState extends State<_PurchaseDetailsSheet> {
                         width: 56,
                         height: 56,
                         decoration: BoxDecoration(
-                          color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                          color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: const Icon(

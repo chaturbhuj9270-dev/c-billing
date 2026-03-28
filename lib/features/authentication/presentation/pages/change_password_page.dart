@@ -9,10 +9,7 @@ class ChangePasswordPage extends StatefulWidget {
   /// If false, navigates to login after success (for flyout flow)
   final bool showBackButton;
 
-  const ChangePasswordPage({
-    super.key,
-    this.showBackButton = true,
-  });
+  const ChangePasswordPage({super.key, this.showBackButton = true});
 
   @override
   State<ChangePasswordPage> createState() => _ChangePasswordPageState();
@@ -23,7 +20,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
   final _oldPasswordController = TextEditingController();
   final _newPasswordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  
+
   bool _obscureOld = true;
   bool _obscureNew = true;
   bool _obscureConfirm = true;
@@ -125,10 +122,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
       }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(message),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text(message), backgroundColor: Colors.red),
         );
       }
     } catch (e) {
@@ -192,7 +186,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                       width: 80,
                       height: 80,
                       decoration: BoxDecoration(
-                        color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                        color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
@@ -236,15 +230,15 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                       child: Container(
                         padding: const EdgeInsets.all(24),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.9),
+                          color: Colors.white.withValues(alpha: 0.9),
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
-                            color: Colors.white.withOpacity(0.3),
+                            color: Colors.white.withValues(alpha: 0.3),
                             width: 1.5,
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.08),
+                              color: Colors.black.withValues(alpha: 0.08),
                               blurRadius: 20,
                               offset: const Offset(0, 8),
                             ),
@@ -258,7 +252,8 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                               label: _localizations.oldPassword,
                               hint: _localizations.enterOldPassword,
                               obscure: _obscureOld,
-                              onToggle: () => setState(() => _obscureOld = !_obscureOld),
+                              onToggle: () =>
+                                  setState(() => _obscureOld = !_obscureOld),
                               validator: (value) {
                                 if (value == null || value.isEmpty) {
                                   return _localizations.pleaseEnterOldPassword;
@@ -274,7 +269,8 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                               label: _localizations.newPassword,
                               hint: _localizations.enterNewPassword,
                               obscure: _obscureNew,
-                              onToggle: () => setState(() => _obscureNew = !_obscureNew),
+                              onToggle: () =>
+                                  setState(() => _obscureNew = !_obscureNew),
                               validator: (value) {
                                 if (value == null || value.isEmpty) {
                                   return _localizations.pleaseEnterNewPassword;
@@ -293,10 +289,13 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                               label: _localizations.confirmPassword,
                               hint: _localizations.reenterNewPassword,
                               obscure: _obscureConfirm,
-                              onToggle: () => setState(() => _obscureConfirm = !_obscureConfirm),
+                              onToggle: () => setState(
+                                () => _obscureConfirm = !_obscureConfirm,
+                              ),
                               validator: (value) {
                                 if (value == null || value.isEmpty) {
-                                  return _localizations.pleaseConfirmNewPassword;
+                                  return _localizations
+                                      .pleaseConfirmNewPassword;
                                 }
                                 if (value != _newPasswordController.text) {
                                   return _localizations.passwordsDoNotMatch;
@@ -314,7 +313,9 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: const Color(0xFF1B4D3E),
                                   disabledBackgroundColor: Colors.grey[400],
-                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 16,
+                                  ),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(14),
                                   ),
@@ -325,7 +326,10 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                                         height: 20,
                                         width: 20,
                                         child: CircularProgressIndicator(
-                                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                          valueColor:
+                                              AlwaysStoppedAnimation<Color>(
+                                                Colors.white,
+                                              ),
                                           strokeWidth: 2,
                                         ),
                                       )
@@ -351,10 +355,10 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF1B4D3E).withOpacity(0.05),
+                      color: const Color(0xFF1B4D3E).withValues(alpha: 0.05),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                        color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
                       ),
                     ),
                     child: Column(
@@ -365,7 +369,9 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                             Icon(
                               Icons.info_outline,
                               size: 18,
-                              color: const Color(0xFF1B4D3E).withOpacity(0.7),
+                              color: const Color(
+                                0xFF1B4D3E,
+                              ).withValues(alpha: 0.7),
                             ),
                             const SizedBox(width: 8),
                             Text(
@@ -373,7 +379,9 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
-                                color: const Color(0xFF1B4D3E).withOpacity(0.8),
+                                color: const Color(
+                                  0xFF1B4D3E,
+                                ).withValues(alpha: 0.8),
                                 fontFamily: 'Literata',
                               ),
                             ),
@@ -435,7 +443,9 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
             ),
             suffixIcon: IconButton(
               icon: Icon(
-                obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                obscure
+                    ? Icons.visibility_off_outlined
+                    : Icons.visibility_outlined,
                 color: const Color(0xFF1B4D3E),
                 size: 20,
               ),
@@ -453,18 +463,21 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFF1B4D3E), width: 1.5),
+              borderSide: const BorderSide(
+                color: Color(0xFF1B4D3E),
+                width: 1.5,
+              ),
             ),
             errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: const BorderSide(color: Colors.red),
             ),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 14,
+            ),
           ),
-          style: const TextStyle(
-            fontSize: 15,
-            fontFamily: 'Literata',
-          ),
+          style: const TextStyle(fontSize: 15, fontFamily: 'Literata'),
         ),
       ],
     );
@@ -479,7 +492,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
             width: 4,
             height: 4,
             decoration: BoxDecoration(
-              color: const Color(0xFF1B4D3E).withOpacity(0.5),
+              color: const Color(0xFF1B4D3E).withValues(alpha: 0.5),
               shape: BoxShape.circle,
             ),
           ),

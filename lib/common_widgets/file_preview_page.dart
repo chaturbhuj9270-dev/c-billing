@@ -549,7 +549,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
               decoration: BoxDecoration(
-                color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Row(
@@ -619,8 +619,8 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
             color: isEnabled
-                ? const Color(0xFF1B4D3E).withOpacity(0.1)
-                : Colors.grey.withOpacity(0.1),
+                ? const Color(0xFF1B4D3E).withValues(alpha: 0.1)
+                : Colors.grey.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Icon(
@@ -640,7 +640,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -656,7 +656,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
             icon: Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: const Icon(
@@ -701,8 +701,8 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
                         ),
                         decoration: BoxDecoration(
                           color: widget.fileType == FilePreviewType.pdf
-                              ? Colors.red.withOpacity(0.1)
-                              : Colors.green.withOpacity(0.1),
+                              ? Colors.red.withValues(alpha: 0.1)
+                              : Colors.green.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
@@ -757,7 +757,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: const Color(0xFF1B4D3E).withOpacity(0.1),
+              color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(20),
             ),
             child: const CircularProgressIndicator(
@@ -799,7 +799,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Colors.red.withOpacity(0.1),
+                color: Colors.red.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: const Icon(
@@ -872,7 +872,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Colors.orange.withOpacity(0.1),
+                color: Colors.orange.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Icon(
@@ -948,7 +948,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
                   vertical: 4,
                 ),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                  color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Row(
@@ -1009,7 +1009,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.08),
+              color: Colors.black.withValues(alpha: 0.08),
               blurRadius: 20,
               offset: const Offset(0, 4),
             ),
@@ -1024,8 +1024,8 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    const Color(0xFF1B4D3E).withOpacity(0.1),
-                    const Color(0xFF2D6A4F).withOpacity(0.1),
+                    const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+                    const Color(0xFF2D6A4F).withValues(alpha: 0.1),
                   ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
@@ -1093,7 +1093,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
         borderRadius: BorderRadius.circular(8),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -1169,7 +1169,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
         borderRadius: BorderRadius.circular(8),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -1584,7 +1584,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
+            color: Colors.black.withValues(alpha: 0.06),
             blurRadius: 12,
             offset: const Offset(0, -4),
           ),

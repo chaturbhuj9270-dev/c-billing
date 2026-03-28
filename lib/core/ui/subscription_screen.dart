@@ -153,15 +153,15 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.7),
+              color: Colors.white.withValues(alpha: 0.7),
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: const Color(0xFF1B4D3E).withOpacity(0.2),
+                color: const Color(0xFF1B4D3E).withValues(alpha: 0.2),
                 width: 1,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                  color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
@@ -174,7 +174,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
                 icon: Icon(
                   Icons.language,
                   size: 18,
-                  color: const Color(0xFF1B4D3E).withOpacity(0.7),
+                  color: const Color(0xFF1B4D3E).withValues(alpha: 0.7),
                 ),
                 style: const TextStyle(
                   color: Color(0xFF1B4D3E),
@@ -212,7 +212,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF1B4D3E).withOpacity(0.2),
+            color: const Color(0xFF1B4D3E).withValues(alpha: 0.2),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -242,7 +242,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
         Text(
           _localizations.premiumFinancialSolutions,
           style: TextStyle(
-            color: const Color(0xFF1B4D3E).withOpacity(0.5),
+            color: const Color(0xFF1B4D3E).withValues(alpha: 0.5),
             fontSize: 10,
             fontWeight: FontWeight.w600,
             fontFamily: 'Literata',
@@ -257,9 +257,9 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
       decoration: BoxDecoration(
-        color: Colors.red.withOpacity(0.1),
+        color: Colors.red.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(30),
-        border: Border.all(color: Colors.red.withOpacity(0.3), width: 1),
+        border: Border.all(color: Colors.red.withValues(alpha: 0.3), width: 1),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -306,18 +306,18 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  const Color(0xFF1B4D3E).withOpacity(0.15),
-                  const Color(0xFF2E7D32).withOpacity(0.08),
+                  const Color(0xFF1B4D3E).withValues(alpha: 0.15),
+                  const Color(0xFF2E7D32).withValues(alpha: 0.08),
                 ],
               ),
               borderRadius: BorderRadius.circular(24),
               border: Border.all(
-                color: Colors.white.withOpacity(0.5),
+                color: Colors.white.withValues(alpha: 0.5),
                 width: 1.5,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                  color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
                   blurRadius: 20,
                   offset: const Offset(0, 10),
                 ),
@@ -359,7 +359,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
                         style: TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.w600,
-                          color: const Color(0xFF1B4D3E).withOpacity(0.8),
+                          color: const Color(0xFF1B4D3E).withValues(alpha: 0.8),
                           fontFamily: 'Literata',
                         ),
                       ),
@@ -381,7 +381,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
                   _localizations.perYear,
                   style: TextStyle(
                     fontSize: 14,
-                    color: const Color(0xFF1B4D3E).withOpacity(0.6),
+                    color: const Color(0xFF1B4D3E).withValues(alpha: 0.6),
                     fontFamily: 'Literata',
                     letterSpacing: 1,
                   ),
@@ -394,10 +394,10 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.red.withOpacity(0.15),
+                    color: Colors.red.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: Colors.red.withOpacity(0.4),
+                      color: Colors.red.withValues(alpha: 0.4),
                       width: 1,
                     ),
                   ),
@@ -435,9 +435,9 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
-                        const Color(0xFF1B4D3E).withOpacity(0.1),
+                        const Color(0xFF1B4D3E).withValues(alpha: 0.1),
                         const Color(0xFF1B4D3E),
-                        const Color(0xFF1B4D3E).withOpacity(0.1),
+                        const Color(0xFF1B4D3E).withValues(alpha: 0.1),
                       ],
                     ),
                   ),
@@ -450,7 +450,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
                     vertical: 8,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.5),
+                    color: Colors.white.withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
@@ -458,7 +458,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: const Color(0xFF1B4D3E).withOpacity(0.8),
+                      color: const Color(0xFF1B4D3E).withValues(alpha: 0.8),
                       fontFamily: 'Literata',
                     ),
                   ),
@@ -476,9 +476,12 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.6),
+        color: Colors.white.withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white.withOpacity(0.8), width: 1),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.8),
+          width: 1,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -488,7 +491,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w700,
-              color: const Color(0xFF1B4D3E).withOpacity(0.7),
+              color: const Color(0xFF1B4D3E).withValues(alpha: 0.7),
               fontFamily: 'Literata',
               letterSpacing: 1,
             ),
@@ -514,7 +517,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
             width: 22,
             height: 22,
             decoration: BoxDecoration(
-              color: const Color(0xFF1B4D3E).withOpacity(0.1),
+              color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: const Icon(Icons.check, color: Color(0xFF1B4D3E), size: 14),
@@ -525,7 +528,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
               text,
               style: TextStyle(
                 fontSize: 13,
-                color: const Color(0xFF1B4D3E).withOpacity(0.8),
+                color: const Color(0xFF1B4D3E).withValues(alpha: 0.8),
                 fontFamily: 'Literata',
               ),
             ),
@@ -548,18 +551,18 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  const Color(0xFF1B4D3E).withOpacity(0.9),
-                  const Color(0xFF2E7D32).withOpacity(0.85),
+                  const Color(0xFF1B4D3E).withValues(alpha: 0.9),
+                  const Color(0xFF2E7D32).withValues(alpha: 0.85),
                 ],
               ),
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: Colors.white.withOpacity(0.3),
+                color: Colors.white.withValues(alpha: 0.3),
                 width: 1.5,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF1B4D3E).withOpacity(0.3),
+                  color: const Color(0xFF1B4D3E).withValues(alpha: 0.3),
                   blurRadius: 16,
                   offset: const Offset(0, 6),
                 ),
@@ -578,7 +581,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
                       Icon(
                         Icons.diamond_outlined,
                         size: 22,
-                        color: Colors.white.withOpacity(0.95),
+                        color: Colors.white.withValues(alpha: 0.95),
                       ),
                       const SizedBox(width: 10),
                       Text(
@@ -609,7 +612,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
           _localizations.needHelpContactUs,
           style: TextStyle(
             fontSize: 12,
-            color: const Color(0xFF1B4D3E).withOpacity(0.5),
+            color: const Color(0xFF1B4D3E).withValues(alpha: 0.5),
             fontFamily: 'Literata',
           ),
         ),
@@ -619,10 +622,10 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.6),
+              color: Colors.white.withValues(alpha: 0.6),
               borderRadius: BorderRadius.circular(30),
               border: Border.all(
-                color: const Color(0xFF1B4D3E).withOpacity(0.2),
+                color: const Color(0xFF1B4D3E).withValues(alpha: 0.2),
               ),
             ),
             child: Row(
@@ -631,7 +634,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
                 Icon(
                   Icons.phone_outlined,
                   size: 18,
-                  color: const Color(0xFF1B4D3E).withOpacity(0.7),
+                  color: const Color(0xFF1B4D3E).withValues(alpha: 0.7),
                 ),
                 const SizedBox(width: 8),
                 const Text(
@@ -661,9 +664,9 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                const Color(0xFF1B4D3E).withOpacity(0.05),
+                const Color(0xFF1B4D3E).withValues(alpha: 0.05),
                 const Color(0xFF1B4D3E),
-                const Color(0xFF1B4D3E).withOpacity(0.05),
+                const Color(0xFF1B4D3E).withValues(alpha: 0.05),
               ],
             ),
           ),
@@ -675,7 +678,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
               TextSpan(
                 text: _localizations.poweredBy,
                 style: TextStyle(
-                  color: const Color(0xFF1B4D3E).withOpacity(0.35),
+                  color: const Color(0xFF1B4D3E).withValues(alpha: 0.35),
                   fontSize: 9.5,
                   fontWeight: FontWeight.w400,
                   fontFamily: 'Literata',

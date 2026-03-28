@@ -191,15 +191,19 @@ class ReportService {
 
         // ── Apply advanced filters ──
         if (filter.expiredOnly && !isExpired) continue;
-        if (filter.expiringThisWeek && !isExpiringThisWeek && !isExpired)
+        if (filter.expiringThisWeek && !isExpiringThisWeek && !isExpired) {
           continue;
+        }
         if (filter.returnedOnly && !returnedProductIds.contains(pid)) continue;
-        if (filter.lowStockOnly && currentStock > filter.lowStockThreshold)
+        if (filter.lowStockOnly && currentStock > filter.lowStockThreshold) {
           continue;
-        if (filter.minPrice != null && purchasePrice < filter.minPrice!)
+        }
+        if (filter.minPrice != null && purchasePrice < filter.minPrice!) {
           continue;
-        if (filter.maxPrice != null && purchasePrice > filter.maxPrice!)
+        }
+        if (filter.maxPrice != null && purchasePrice > filter.maxPrice!) {
           continue;
+        }
 
         rows.add(
           ReportProductRow(

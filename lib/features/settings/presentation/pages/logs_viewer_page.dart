@@ -29,7 +29,7 @@ class _LogsViewerPageState extends State<LogsViewerPage> {
     super.initState();
     _localizations = AppLocalizations(LanguageService.instance.currentLanguage);
     _displayedLogs = _logger.logs;
-    
+
     // Listen to new logs
     _logger.logStream.listen((_) {
       if (mounted) {
@@ -60,21 +60,21 @@ class _LogsViewerPageState extends State<LogsViewerPage> {
 
   void _applyFilters() {
     var logs = _logger.logs;
-    
+
     // Filter by level
     if (_filterLevel != null) {
       logs = logs.where((log) => log.level == _filterLevel).toList();
     }
-    
+
     // Filter by search
     final query = _searchController.text.toLowerCase();
     if (query.isNotEmpty) {
       logs = logs.where((log) {
         return log.tag.toLowerCase().contains(query) ||
-               log.message.toLowerCase().contains(query);
+            log.message.toLowerCase().contains(query);
       }).toList();
     }
-    
+
     setState(() {
       _displayedLogs = logs;
     });
@@ -84,10 +84,11 @@ class _LogsViewerPageState extends State<LogsViewerPage> {
     try {
       final logsText = _logger.exportLogs();
       final tempDir = await getTemporaryDirectory();
-      final fileName = 'c_billing_logs_${DateFormat('yyyyMMdd_HHmmss').format(DateTime.now())}.txt';
+      final fileName =
+          'c_billing_logs_${DateFormat('yyyyMMdd_HHmmss').format(DateTime.now())}.txt';
       final file = File('${tempDir.path}/$fileName');
       await file.writeAsString(logsText);
-      
+
       await Share.shareXFiles(
         [XFile(file.path)],
         subject: _localizations.cBillingAppLogs,
@@ -120,7 +121,10 @@ class _LogsViewerPageState extends State<LogsViewerPage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(_localizations.clearLogsConfirm, style: TextStyle(fontFamily: 'Literata')),
+        title: Text(
+          _localizations.clearLogsConfirm,
+          style: TextStyle(fontFamily: 'Literata'),
+        ),
         content: Text(
           _localizations.clearLogsMessage,
           style: TextStyle(fontFamily: 'Literata'),
@@ -128,7 +132,10 @@ class _LogsViewerPageState extends State<LogsViewerPage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text(_localizations.cancel, style: TextStyle(fontFamily: 'Literata')),
+            child: Text(
+              _localizations.cancel,
+              style: TextStyle(fontFamily: 'Literata'),
+            ),
           ),
           ElevatedButton(
             onPressed: () {
@@ -142,7 +149,10 @@ class _LogsViewerPageState extends State<LogsViewerPage> {
               backgroundColor: Colors.red,
               foregroundColor: Colors.white,
             ),
-            child: Text(_localizations.clear, style: TextStyle(fontFamily: 'Literata')),
+            child: Text(
+              _localizations.clear,
+              style: TextStyle(fontFamily: 'Literata'),
+            ),
           ),
         ],
       ),
@@ -177,8 +187,14 @@ class _LogsViewerPageState extends State<LogsViewerPage> {
         actions: [
           // Auto-scroll toggle
           IconButton(
-            icon: Icon(_autoScroll ? Icons.arrow_downward : Icons.arrow_downward_outlined),
-            tooltip: _autoScroll ? _localizations.disableAutoScroll : _localizations.enableAutoScroll,
+            icon: Icon(
+              _autoScroll
+                  ? Icons.arrow_downward
+                  : Icons.arrow_downward_outlined,
+            ),
+            tooltip: _autoScroll
+                ? _localizations.disableAutoScroll
+                : _localizations.enableAutoScroll,
             onPressed: () {
               setState(() {
                 _autoScroll = !_autoScroll;
@@ -214,7 +230,7 @@ class _LogsViewerPageState extends State<LogsViewerPage> {
               color: Colors.white,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: Colors.black.withValues(alpha: 0.05),
                   blurRadius: 4,
                   offset: const Offset(0, 2),
                 ),
@@ -225,15 +241,35 @@ class _LogsViewerPageState extends State<LogsViewerPage> {
                 // Stats
                 Row(
                   children: [
-                    _buildStatChip(_localizations.total, _logger.logs.length, Colors.grey),
+                    _buildStatChip(
+                      _localizations.total,
+                      _logger.logs.length,
+                      Colors.grey,
+                    ),
                     const SizedBox(width: 8),
-                    _buildStatChip(_localizations.debug, _logger.getLogsByLevel(LogLevel.debug).length, Colors.grey),
+                    _buildStatChip(
+                      _localizations.debug,
+                      _logger.getLogsByLevel(LogLevel.debug).length,
+                      Colors.grey,
+                    ),
                     const SizedBox(width: 8),
-                    _buildStatChip(_localizations.info, _logger.getLogsByLevel(LogLevel.info).length, Colors.blue),
+                    _buildStatChip(
+                      _localizations.info,
+                      _logger.getLogsByLevel(LogLevel.info).length,
+                      Colors.blue,
+                    ),
                     const SizedBox(width: 8),
-                    _buildStatChip(_localizations.warn, _logger.getLogsByLevel(LogLevel.warning).length, Colors.orange),
+                    _buildStatChip(
+                      _localizations.warn,
+                      _logger.getLogsByLevel(LogLevel.warning).length,
+                      Colors.orange,
+                    ),
                     const SizedBox(width: 8),
-                    _buildStatChip(_localizations.error, _logger.getLogsByLevel(LogLevel.error).length, Colors.red),
+                    _buildStatChip(
+                      _localizations.error,
+                      _logger.getLogsByLevel(LogLevel.error).length,
+                      Colors.red,
+                    ),
                   ],
                 ),
                 const SizedBox(height: 12),
@@ -244,7 +280,10 @@ class _LogsViewerPageState extends State<LogsViewerPage> {
                       child: TextField(
                         controller: _searchController,
                         onChanged: (_) => _applyFilters(),
-                        style: const TextStyle(fontFamily: 'Literata', fontSize: 14),
+                        style: const TextStyle(
+                          fontFamily: 'Literata',
+                          fontSize: 14,
+                        ),
                         decoration: InputDecoration(
                           hintText: _localizations.searchLogs,
                           hintStyle: TextStyle(color: Colors.grey[500]),
@@ -260,7 +299,10 @@ class _LogsViewerPageState extends State<LogsViewerPage> {
                               : null,
                           filled: true,
                           fillColor: const Color(0xFFF5F5F5),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 10,
+                          ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
                             borderSide: BorderSide.none,
@@ -278,14 +320,37 @@ class _LogsViewerPageState extends State<LogsViewerPage> {
                       ),
                       child: DropdownButton<LogLevel?>(
                         value: _filterLevel,
-                        hint: Text(_localizations.level, style: TextStyle(fontFamily: 'Literata', fontSize: 13)),
+                        hint: Text(
+                          _localizations.level,
+                          style: TextStyle(
+                            fontFamily: 'Literata',
+                            fontSize: 13,
+                          ),
+                        ),
                         underline: const SizedBox(),
                         items: [
-                          DropdownMenuItem(value: null, child: Text(_localizations.all, style: TextStyle(fontFamily: 'Literata', fontSize: 13))),
-                          ...LogLevel.values.map((level) => DropdownMenuItem(
-                            value: level,
-                            child: Text(level.name.toUpperCase(), style: const TextStyle(fontFamily: 'Literata', fontSize: 13)),
-                          )),
+                          DropdownMenuItem(
+                            value: null,
+                            child: Text(
+                              _localizations.all,
+                              style: TextStyle(
+                                fontFamily: 'Literata',
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
+                          ...LogLevel.values.map(
+                            (level) => DropdownMenuItem(
+                              value: level,
+                              child: Text(
+                                level.name.toUpperCase(),
+                                style: const TextStyle(
+                                  fontFamily: 'Literata',
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
+                          ),
                         ],
                         onChanged: (value) {
                           setState(() {
@@ -307,7 +372,11 @@ class _LogsViewerPageState extends State<LogsViewerPage> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.description_outlined, size: 64, color: Colors.grey[400]),
+                        Icon(
+                          Icons.description_outlined,
+                          size: 64,
+                          color: Colors.grey[400],
+                        ),
                         const SizedBox(height: 16),
                         Text(
                           _localizations.noLogsToDisplay,
@@ -339,9 +408,9 @@ class _LogsViewerPageState extends State<LogsViewerPage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -377,10 +446,10 @@ class _LogsViewerPageState extends State<LogsViewerPage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withOpacity(0.2)),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 4,
             offset: const Offset(0, 1),
           ),
@@ -393,14 +462,11 @@ class _LogsViewerPageState extends State<LogsViewerPage> {
           width: 32,
           height: 32,
           decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
+            color: color.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(6),
           ),
           child: Center(
-            child: Text(
-              log.levelIcon,
-              style: const TextStyle(fontSize: 16),
-            ),
+            child: Text(log.levelIcon, style: const TextStyle(fontSize: 16)),
           ),
         ),
         title: Text(
@@ -449,10 +515,7 @@ class _LogsViewerPageState extends State<LogsViewerPage> {
               children: [
                 SelectableText(
                   log.message,
-                  style: const TextStyle(
-                    fontFamily: 'Literata',
-                    fontSize: 12,
-                  ),
+                  style: const TextStyle(fontFamily: 'Literata', fontSize: 12),
                 ),
                 if (log.error != null) ...[
                   const SizedBox(height: 8),

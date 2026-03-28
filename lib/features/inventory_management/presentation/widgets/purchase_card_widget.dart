@@ -25,7 +25,7 @@ class PurchaseCardWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final dateFormat = DateFormat('dd MMM yyyy');
     final timeFormat = DateFormat('hh:mm a');
-    
+
     return GestureDetector(
       onTap: onTap,
       onLongPress: onLongPress,
@@ -36,12 +36,12 @@ class PurchaseCardWidget extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: Colors.black.withValues(alpha: 0.04),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
             BoxShadow(
-              color: Colors.black.withOpacity(0.02),
+              color: Colors.black.withValues(alpha: 0.02),
               blurRadius: 4,
               offset: const Offset(0, 2),
             ),
@@ -54,8 +54,8 @@ class PurchaseCardWidget extends StatelessWidget {
             child: InkWell(
               onTap: onTap,
               onLongPress: onLongPress,
-              splashColor: const Color(0xFF1B4D3E).withOpacity(0.1),
-              highlightColor: const Color(0xFF1B4D3E).withOpacity(0.05),
+              splashColor: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+              highlightColor: const Color(0xFF1B4D3E).withValues(alpha: 0.05),
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
@@ -70,7 +70,9 @@ class PurchaseCardWidget extends StatelessWidget {
                           width: 44,
                           height: 44,
                           decoration: BoxDecoration(
-                            color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                            color: const Color(
+                              0xFF1B4D3E,
+                            ).withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: const Icon(
@@ -138,49 +140,48 @@ class PurchaseCardWidget extends StatelessWidget {
                                 color: Color(0xFF1B4D3E),
                               ),
                             ),
-                            if (showSyncStatus)
-                              _buildSyncBadge(),
+                            if (showSyncStatus) _buildSyncBadge(),
                           ],
                         ),
                       ],
                     ),
-                    
+
                     const SizedBox(height: 14),
-                    
+
                     // Divider
-                    Container(
-                      height: 1,
-                      color: Colors.grey[200],
-                    ),
-                    
+                    Container(height: 1, color: Colors.grey[200]),
+
                     const SizedBox(height: 14),
-                    
+
                     // Details row
                     Row(
                       children: [
                         // Quantity
                         _buildDetailChip(
                           icon: Icons.layers_rounded,
-                          label: '${purchase.quantityPurchased} ${purchase.unit}',
+                          label:
+                              '${purchase.quantityPurchased} ${purchase.unit}',
                           color: Colors.blue,
                         ),
                         const SizedBox(width: 10),
                         // Price per unit
                         _buildDetailChip(
                           icon: Icons.currency_rupee_rounded,
-                          label: '${purchase.purchasePrice.toStringAsFixed(2)}/unit',
+                          label:
+                              '${purchase.purchasePrice.toStringAsFixed(2)}/unit',
                           color: Colors.orange,
                         ),
                       ],
                     ),
-                    
+
                     const SizedBox(height: 12),
-                    
+
                     // Bottom row: Supplier + Date
                     Row(
                       children: [
                         // Supplier
-                        if (purchase.supplierName != null && purchase.supplierName!.isNotEmpty) ...[
+                        if (purchase.supplierName != null &&
+                            purchase.supplierName!.isNotEmpty) ...[
                           Icon(
                             Icons.person_outline_rounded,
                             size: 14,
@@ -202,10 +203,13 @@ class PurchaseCardWidget extends StatelessWidget {
                           ),
                         ] else
                           const Spacer(),
-                        
+
                         // Date and time
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.grey[100],
                             borderRadius: BorderRadius.circular(8),
@@ -261,17 +265,13 @@ class PurchaseCardWidget extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            icon,
-            size: 14,
-            color: color.withOpacity(0.8),
-          ),
+          Icon(icon, size: 14, color: color.withValues(alpha: 0.8)),
           const SizedBox(width: 6),
           Text(
             label,
@@ -279,7 +279,7 @@ class PurchaseCardWidget extends StatelessWidget {
               fontFamily: 'Literata',
               fontWeight: FontWeight.w600,
               fontSize: 12,
-              color: color.withOpacity(0.9),
+              color: color.withValues(alpha: 0.9),
             ),
           ),
         ],
@@ -290,7 +290,7 @@ class PurchaseCardWidget extends StatelessWidget {
   Widget _buildSyncBadge() {
     Color badgeColor;
     IconData badgeIcon;
-    
+
     switch (purchase.syncStatus) {
       case BatchSyncStatus.synced:
         badgeColor = Colors.green;
@@ -306,14 +306,10 @@ class PurchaseCardWidget extends StatelessWidget {
         badgeIcon = Icons.delete_outline_rounded;
         break;
     }
-    
+
     return Padding(
       padding: const EdgeInsets.only(top: 4),
-      child: Icon(
-        badgeIcon,
-        size: 14,
-        color: badgeColor,
-      ),
+      child: Icon(badgeIcon, size: 14, color: badgeColor),
     );
   }
 }
@@ -332,7 +328,7 @@ class PurchaseCardShimmer extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),

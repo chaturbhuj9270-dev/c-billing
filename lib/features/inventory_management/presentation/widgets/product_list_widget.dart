@@ -167,13 +167,13 @@ class ProductListWidget extends StatelessWidget {
               width: 100,
               height: 100,
               decoration: BoxDecoration(
-                color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(24),
               ),
               child: Icon(
                 icon,
                 size: 48,
-                color: const Color(0xFF1B4D3E).withOpacity(0.4),
+                color: const Color(0xFF1B4D3E).withValues(alpha: 0.4),
               ),
             ),
             const SizedBox(height: 24),
@@ -244,12 +244,12 @@ class _ProductCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.03),
+              color: Colors.black.withValues(alpha: 0.03),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
             BoxShadow(
-              color: accentColor.withOpacity(0.08),
+              color: accentColor.withValues(alpha: 0.08),
               blurRadius: 16,
               offset: const Offset(0, 6),
             ),
@@ -279,15 +279,18 @@ class _ProductCard extends StatelessWidget {
                                 ? [Colors.red[400]!, Colors.red[300]!]
                                 : isLowStock
                                 ? [Colors.orange[400]!, Colors.orange[300]!]
-                                : [accentColor, accentColor.withOpacity(0.7)],
+                                : [
+                                    accentColor,
+                                    accentColor.withValues(alpha: 0.7),
+                                  ],
                           ),
                           boxShadow: [
                             BoxShadow(
                               color: isOutOfStock
-                                  ? Colors.red.withOpacity(0.3)
+                                  ? Colors.red.withValues(alpha: 0.3)
                                   : isLowStock
-                                  ? Colors.orange.withOpacity(0.3)
-                                  : accentColor.withOpacity(0.3),
+                                  ? Colors.orange.withValues(alpha: 0.3)
+                                  : accentColor.withValues(alpha: 0.3),
                               blurRadius: 12,
                               offset: const Offset(0, 4),
                             ),
@@ -370,13 +373,13 @@ class _ProductCard extends StatelessWidget {
                                 gradient: LinearGradient(
                                   colors: [
                                     accentColor,
-                                    accentColor.withOpacity(0.8),
+                                    accentColor.withValues(alpha: 0.8),
                                   ],
                                 ),
                                 borderRadius: BorderRadius.circular(6),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: accentColor.withOpacity(0.2),
+                                    color: accentColor.withValues(alpha: 0.2),
                                     blurRadius: 4,
                                     offset: const Offset(0, 2),
                                   ),
@@ -453,7 +456,9 @@ class _ProductCard extends StatelessWidget {
                               vertical: 2,
                             ),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF1B4D3E).withOpacity(0.1),
+                              color: const Color(
+                                0xFF1B4D3E,
+                              ).withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text(
@@ -675,7 +680,7 @@ class _ShimmerCardState extends State<_ShimmerCard>
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.03),
+                color: Colors.black.withValues(alpha: 0.03),
                 blurRadius: 8,
                 offset: const Offset(0, 2),
               ),
