@@ -40,6 +40,9 @@ class _CustomerFinancePageState extends State<CustomerFinancePage>
   double _totalBillAmount = 0;
   double _totalPaidAmount = 0;
   double _totalPendingAmount = 0;
+  double _totalEventAmount = 0;
+  double _totalAdvanceAmount = 0;
+  double _totalEventPending = 0;
   int _totalBillCount = 0;
   int _totalEventCount = 0;
 
@@ -47,6 +50,11 @@ class _CustomerFinancePageState extends State<CustomerFinancePage>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _tabController.addListener(() {
+      if (!_tabController.indexIsChanging) {
+        setState(() {});
+      }
+    });
     _loadData();
   }
 
@@ -138,7 +146,7 @@ class _CustomerFinancePageState extends State<CustomerFinancePage>
       // Combine: upcoming first, then passed
       final sortedEventOrders = [...upcomingEvents, ...passedEvents];
 
-      // Calculate stats
+      // Calculate bill stats
       double totalBill = 0;
       double totalPaid = 0;
       double totalPending = 0;
@@ -149,12 +157,26 @@ class _CustomerFinancePageState extends State<CustomerFinancePage>
         totalPending += bill.pendingAmount;
       }
 
+      // Calculate event stats
+      double totalEvent = 0;
+      double totalAdvance = 0;
+      double totalEventPending = 0;
+
+      for (final order in sortedEventOrders) {
+        totalEvent += order.totalAmount;
+        totalAdvance += order.advanceAmount;
+        totalEventPending += order.remainingAmount;
+      }
+
       setState(() {
         _bills = bills;
         _eventOrders = sortedEventOrders;
         _totalBillAmount = totalBill;
         _totalPaidAmount = totalPaid;
         _totalPendingAmount = totalPending;
+        _totalEventAmount = totalEvent;
+        _totalAdvanceAmount = totalAdvance;
+        _totalEventPending = totalEventPending;
         _totalBillCount = bills.length;
         _totalEventCount = eventOrders.length;
         _isLoading = false;
@@ -519,15 +541,19 @@ class _CustomerFinancePageState extends State<CustomerFinancePage>
   }
 
   Widget _buildStatsSection() {
+    final isEventTab = _tabController.index == 1;
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Row(
         children: [
           Expanded(
             child: _StatCard(
-              icon: Icons.receipt_long_rounded,
-              label: 'Total Billed',
-              value: '₹${_formatAmount(_totalBillAmount)}',
+              icon: isEventTab
+                  ? Icons.event_rounded
+                  : Icons.receipt_long_rounded,
+              label: isEventTab ? 'Total Orders' : 'Total Billed',
+              value:
+                  '₹${_formatAmount(isEventTab ? _totalEventAmount : _totalBillAmount)}',
               color: const Color(0xFF1B4D3E),
             ),
           ),
@@ -535,8 +561,9 @@ class _CustomerFinancePageState extends State<CustomerFinancePage>
           Expanded(
             child: _StatCard(
               icon: Icons.check_circle_rounded,
-              label: 'Received',
-              value: '₹${_formatAmount(_totalPaidAmount)}',
+              label: isEventTab ? 'Advance' : 'Received',
+              value:
+                  '₹${_formatAmount(isEventTab ? _totalAdvanceAmount : _totalPaidAmount)}',
               color: Colors.green,
             ),
           ),
@@ -544,8 +571,9 @@ class _CustomerFinancePageState extends State<CustomerFinancePage>
           Expanded(
             child: _StatCard(
               icon: Icons.schedule_rounded,
-              label: 'Pending',
-              value: '₹${_formatAmount(_totalPendingAmount)}',
+              label: isEventTab ? 'Remaining' : 'Pending',
+              value:
+                  '₹${_formatAmount(isEventTab ? _totalEventPending : _totalPendingAmount)}',
               color: Colors.red,
             ),
           ),
@@ -555,11 +583,6 @@ class _CustomerFinancePageState extends State<CustomerFinancePage>
   }
 
   String _formatAmount(double amount) {
-    if (amount >= 100000) {
-      return '${(amount / 100000).toStringAsFixed(1)}L';
-    } else if (amount >= 1000) {
-      return '${(amount / 1000).toStringAsFixed(1)}K';
-    }
     return amount.toStringAsFixed(0);
   }
 
