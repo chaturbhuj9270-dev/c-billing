@@ -104,14 +104,6 @@ class _CustomerFilterWidgetState extends State<CustomerFilterWidget> {
                 ),
                 const SizedBox(width: 8),
                 _buildSortChip(
-                  label: widget.sortByDateLabel,
-                  isSelected: widget.sortField == CustomerSortField.createdDate,
-                  onTap: () =>
-                      widget.onSortFieldChanged(CustomerSortField.createdDate),
-                  icon: Icons.calendar_today_rounded,
-                ),
-                const SizedBox(width: 8),
-                _buildSortChip(
                   label: widget.sortByPendingLabel,
                   isSelected:
                       widget.sortField == CustomerSortField.pendingAmount,
@@ -119,6 +111,14 @@ class _CustomerFilterWidgetState extends State<CustomerFilterWidget> {
                     CustomerSortField.pendingAmount,
                   ),
                   icon: Icons.account_balance_wallet_outlined,
+                ),
+                const SizedBox(width: 8),
+                _buildSortChip(
+                  label: widget.sortByDateLabel,
+                  isSelected: widget.sortField == CustomerSortField.createdDate,
+                  onTap: () =>
+                      widget.onSortFieldChanged(CustomerSortField.createdDate),
+                  icon: Icons.calendar_today_rounded,
                 ),
               ],
             ),
