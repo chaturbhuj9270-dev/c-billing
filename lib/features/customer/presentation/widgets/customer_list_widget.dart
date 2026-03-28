@@ -60,6 +60,15 @@ class CustomerListWidget extends StatelessWidget {
       }).toList();
     }
 
+    // When pending amount filter is active, show only customers with pending balance
+    if (sortField == CustomerSortField.pendingAmount) {
+      filtered = filtered.where((c) {
+        final pending =
+            (c['currentPendingAmount'] as num?)?.toDouble() ?? 0.0;
+        return pending != 0.0;
+      }).toList();
+    }
+
     // Apply sort
     filtered.sort((a, b) {
       int result;
