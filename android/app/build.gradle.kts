@@ -41,16 +41,10 @@ android {
         }
     }
 
-    packagingOptions {
-        // 16 KB page size support
-        doNotStrip += listOf(
-            "**/libisar.so",
-            "**/libdatastore_shared_counter.so",
-            "**/libflutter.so",
-            "**/libimage_processing_util_ini.so",
-            "**/libvkLayer_khronos_validation.so",
-            "**/libbarhopper_v3.so"
-        )
+    packaging {
+        jniLibs {
+            useLegacyPackaging = true
+        }
     }
 }
 
