@@ -11,7 +11,7 @@ plugins {
 android {
     namespace = "com.example.c_billing"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    ndkVersion = "27.0.12077973"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -31,9 +31,6 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
-
-        // 16 KB page size alignment support
-        ndkVersion = "26.1.10909125"
     }
 
     buildTypes {
