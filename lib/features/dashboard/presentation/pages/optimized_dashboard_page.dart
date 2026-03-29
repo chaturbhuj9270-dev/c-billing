@@ -1600,10 +1600,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
               ],
             ),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: color.withValues(alpha: 0.3),
-              width: 1.5,
-            ),
+            border: Border.all(color: color.withValues(alpha: 0.3), width: 1.5),
           ),
           child: Row(
             children: [
