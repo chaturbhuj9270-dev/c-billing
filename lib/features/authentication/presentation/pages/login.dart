@@ -234,11 +234,22 @@ class _LoginPageV2State extends State<LoginPageV2>
           ),
         ),
         child: SafeArea(
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0),
-              child: Column(
-                children: [
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final isTablet = constraints.maxWidth > 600;
+              final maxFormWidth = isTablet ? 480.0 : double.infinity;
+              return SingleChildScrollView(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    minHeight: constraints.maxHeight,
+                  ),
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isTablet ? constraints.maxWidth * 0.1 : 24.0,
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
                   SlideTransition(
                     position: _offsetAnimation,
                     child: FadeTransition(
@@ -291,7 +302,10 @@ class _LoginPageV2State extends State<LoginPageV2>
                   ),
                   const SizedBox(height: 40),
                   // Login Card with Glassmorphism
-                  SlideTransition(
+                  Center(
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(maxWidth: maxFormWidth),
+                      child: SlideTransition(
                     position: _offsetAnimation,
                     child: FadeTransition(
                       opacity: _opacityAnimation,
@@ -521,6 +535,8 @@ class _LoginPageV2State extends State<LoginPageV2>
                       ),
                     ),
                   ),
+                    ),
+                  ),
                   const SizedBox(height: 30),
                   const SizedBox(height: 40),
                   // Sign up link
@@ -564,6 +580,9 @@ class _LoginPageV2State extends State<LoginPageV2>
                 ],
               ),
             ),
+          ),
+        );
+            },
           ),
         ),
       ),

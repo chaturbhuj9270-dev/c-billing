@@ -457,7 +457,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
     return BlocProvider(
       create: (_) => EventOrderCubit(),
       child: Scaffold(
-        backgroundColor: const Color(0xFFF8F9FC),
+        backgroundColor: const Color(0xFFF2F4F7),
         appBar: _buildAppBar(),
         body: Form(
           key: _formKey,
@@ -517,150 +517,219 @@ class _EventOrderScreenState extends State<EventOrderScreen>
   }
 
   PreferredSizeWidget _buildAppBar() {
-    return AppBar(
-      backgroundColor: Colors.white,
-      elevation: 0,
-      surfaceTintColor: Colors.transparent,
-      leading: IconButton(
-        onPressed: () => Navigator.of(context).pop(),
-        icon: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(10),
+    final titleText = _isEditing
+        ? (_orderType == OrderType.event
+              ? AppLocalizations.of(
+                  LanguageService.instance.currentLanguage,
+                ).editEvent
+              : AppLocalizations.of(
+                  LanguageService.instance.currentLanguage,
+                ).editOrder)
+        : (_orderType == OrderType.event
+              ? AppLocalizations.of(
+                  LanguageService.instance.currentLanguage,
+                ).newEvent
+              : AppLocalizations.of(
+                  LanguageService.instance.currentLanguage,
+                ).newOrder);
+    return PreferredSize(
+      preferredSize: const Size.fromHeight(72),
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFF1B4D3E), Color(0xFF2D6B5A), Color(0xFF3A8B6E)],
           ),
-          child: const Icon(
-            Icons.arrow_back_ios_new,
-            color: Color(0xFF1B4D3E),
-            size: 18,
-          ),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF1B4D3E).withValues(alpha: 0.3),
+              blurRadius: 20,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
-      ),
-      title: Text(
-        _isEditing
-            ? (_orderType == OrderType.event
-                  ? AppLocalizations.of(
-                      LanguageService.instance.currentLanguage,
-                    ).editEvent
-                  : AppLocalizations.of(
-                      LanguageService.instance.currentLanguage,
-                    ).editOrder)
-            : (_orderType == OrderType.event
-                  ? AppLocalizations.of(
-                      LanguageService.instance.currentLanguage,
-                    ).newEvent
-                  : AppLocalizations.of(
-                      LanguageService.instance.currentLanguage,
-                    ).newOrder),
-        style: const TextStyle(
-          fontFamily: 'Literata',
-          color: Color(0xFF1A1A2E),
-          fontSize: 20,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
-      actions: [
-        if (_isEditing && widget.existingOrder != null) ...[
-          IconButton(
-            onPressed: _isPdfLoading ? null : _shareOrder,
-            icon: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: _isPdfLoading
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
+        child: SafeArea(
+          bottom: false,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+            child: Row(
+              children: [
+                // Back button
+                IconButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  icon: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.18),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.25),
+                      ),
+                    ),
+                    child: const Icon(
+                      Icons.arrow_back_ios_new,
+                      color: Colors.white,
+                      size: 16,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 4),
+                // Title & subtitle
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        titleText,
+                        style: const TextStyle(
+                          fontFamily: 'Literata',
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.3,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        _isEditing
+                            ? 'Modify your order details'
+                            : 'Fill in the details below',
+                        style: TextStyle(
+                          fontFamily: 'Literata',
+                          color: Colors.white.withValues(alpha: 0.7),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w400,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                // Action buttons
+                if (_isEditing && widget.existingOrder != null) ...[
+                  _buildAppBarAction(
+                    onTap: _isPdfLoading ? null : _shareOrder,
+                    icon: Icons.share_rounded,
+                    isLoading: _isPdfLoading,
+                  ),
+                  const SizedBox(width: 6),
+                  _buildAppBarAction(
+                    onTap: _isPdfLoading ? null : _printOrder,
+                    icon: Icons.print_rounded,
+                    color: Colors.amber[300]!,
+                  ),
+                ],
+                if (_isLoading)
+                  Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: SizedBox(
+                      width: 20,
+                      height: 20,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: Color(0xFF1B4D3E),
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          Colors.white.withValues(alpha: 0.9),
+                        ),
                       ),
-                    )
-                  : const Icon(
-                      Icons.share_rounded,
-                      color: Color(0xFF1B4D3E),
-                      size: 18,
                     ),
+                  ),
+              ],
             ),
           ),
-          IconButton(
-            onPressed: _isPdfLoading ? null : _printOrder,
-            icon: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.orange.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Icon(
-                Icons.print_rounded,
-                color: Colors.orange,
-                size: 18,
-              ),
-            ),
-          ),
-        ],
-        if (_isLoading)
-          const Padding(
-            padding: EdgeInsets.all(16),
-            child: SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF1B4D3E)),
-              ),
-            ),
-          ),
-      ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAppBarAction({
+    required VoidCallback? onTap,
+    required IconData icon,
+    Color color = Colors.white,
+    bool isLoading = false,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.15),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+        ),
+        child: isLoading
+            ? SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white.withValues(alpha: 0.9),
+                ),
+              )
+            : Icon(icon, color: color, size: 18),
+      ),
     );
   }
 
   Widget _buildModeToggle() {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      padding: const EdgeInsets.all(4),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.all(5),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
+            color: const Color(0xFF1B4D3E).withValues(alpha: 0.08),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 4,
+            offset: const Offset(0, 1),
           ),
         ],
+        border: Border.all(
+          color: const Color(0xFF1B4D3E).withValues(alpha: 0.06),
+        ),
       ),
       child: TabBar(
         controller: _tabController,
         indicator: BoxDecoration(
           gradient: const LinearGradient(
-            colors: [Color(0xFF1B4D3E), Color(0xFF2D6B5A)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFF1B4D3E), Color(0xFF2D7B5E)],
           ),
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF1B4D3E).withValues(alpha: 0.3),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
+              color: const Color(0xFF1B4D3E).withValues(alpha: 0.35),
+              blurRadius: 12,
+              offset: const Offset(0, 3),
             ),
           ],
         ),
         indicatorPadding: EdgeInsets.zero,
         labelColor: Colors.white,
-        unselectedLabelColor: Colors.grey[600],
+        unselectedLabelColor: const Color(0xFF5A6A72),
         labelStyle: const TextStyle(
-          fontWeight: FontWeight.w600,
+          fontWeight: FontWeight.w700,
           fontFamily: 'Literata',
+          fontSize: 13,
+          letterSpacing: 0.3,
         ),
         unselectedLabelStyle: const TextStyle(
           fontWeight: FontWeight.w500,
           fontFamily: 'Literata',
+          fontSize: 13,
         ),
         dividerColor: Colors.transparent,
+        overlayColor: WidgetStateProperty.all(Colors.transparent),
         tabs: [
           Tab(
+            height: 44,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -675,6 +744,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
             ),
           ),
           Tab(
+            height: 44,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -698,26 +768,49 @@ class _EventOrderScreenState extends State<EventOrderScreen>
     return _buildSectionCard(
       title: l10n.customerDetails,
       icon: Icons.person_outline,
-      trailing: TextButton.icon(
-        onPressed: _showCustomerPickerSheet,
-        icon: const Icon(
-          Icons.person_search,
-          size: 18,
-          color: Color(0xFF1B4D3E),
-        ),
-        label: Text(
-          l10n.selectText,
-          style: const TextStyle(
-            fontFamily: 'Literata',
-            color: Color(0xFF1B4D3E),
-            fontWeight: FontWeight.w600,
-            fontSize: 13,
+      trailing: Container(
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFF1B4D3E), Color(0xFF2D7B5E)],
           ),
+          borderRadius: BorderRadius.circular(10),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF1B4D3E).withValues(alpha: 0.25),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
-        style: TextButton.styleFrom(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          backgroundColor: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: _showCustomerPickerSheet,
+            borderRadius: BorderRadius.circular(10),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.person_search_rounded,
+                    size: 16,
+                    color: Colors.white,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    l10n.selectText,
+                    style: const TextStyle(
+                      fontFamily: 'Literata',
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
       ),
       child: Column(
@@ -944,23 +1037,42 @@ class _EventOrderScreenState extends State<EventOrderScreen>
           setState(() => _eventDate = picked);
         }
       },
+      borderRadius: BorderRadius.circular(14),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         decoration: BoxDecoration(
-          color: const Color(0xFFF8F9FC),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey.withValues(alpha: 0.15)),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              const Color(0xFF1B4D3E).withValues(alpha: 0.04),
+              const Color(0xFFF8F9FC),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: const Color(0xFF1B4D3E).withValues(alpha: 0.12),
+          ),
         ),
         child: Row(
           children: [
-            Icon(
-              _orderType == OrderType.event
-                  ? Icons.calendar_today
-                  : Icons.local_shipping,
-              color: Colors.grey[500],
-              size: 20,
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF1B4D3E), Color(0xFF2D7B5E)],
+                ),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(
+                _orderType == OrderType.event
+                    ? Icons.calendar_today_rounded
+                    : Icons.local_shipping_rounded,
+                color: Colors.white,
+                size: 16,
+              ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 10),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -970,21 +1082,27 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                     style: TextStyle(
                       fontFamily: 'Literata',
                       color: Colors.grey[500],
-                      fontSize: 11,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 3),
                   Text(
                     DateFormat('dd MMM yyyy').format(_eventDate),
                     style: const TextStyle(
                       fontFamily: 'Literata',
                       color: Color(0xFF1A1A2E),
                       fontSize: 14,
-                      fontWeight: FontWeight.w500,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ],
               ),
+            ),
+            Icon(
+              Icons.keyboard_arrow_down_rounded,
+              color: Colors.grey[400],
+              size: 20,
             ),
           ],
         ),
@@ -1016,17 +1134,38 @@ class _EventOrderScreenState extends State<EventOrderScreen>
           setState(() => _eventTime = picked);
         }
       },
+      borderRadius: BorderRadius.circular(14),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         decoration: BoxDecoration(
-          color: const Color(0xFFF8F9FC),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey.withValues(alpha: 0.15)),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Colors.orange.withValues(alpha: 0.04),
+              const Color(0xFFF8F9FC),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: Colors.orange.withValues(alpha: 0.12)),
         ),
         child: Row(
           children: [
-            Icon(Icons.access_time, color: Colors.grey[500], size: 20),
-            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Colors.orange[700]!, Colors.orange[500]!],
+                ),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(
+                Icons.access_time_rounded,
+                color: Colors.white,
+                size: 16,
+              ),
+            ),
+            const SizedBox(width: 10),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -1038,21 +1177,27 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                     style: TextStyle(
                       fontFamily: 'Literata',
                       color: Colors.grey[500],
-                      fontSize: 11,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 3),
                   Text(
                     _eventTime.format(context),
                     style: const TextStyle(
                       fontFamily: 'Literata',
                       color: Color(0xFF1A1A2E),
                       fontSize: 14,
-                      fontWeight: FontWeight.w500,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ],
               ),
+            ),
+            Icon(
+              Icons.keyboard_arrow_down_rounded,
+              color: Colors.grey[400],
+              size: 20,
             ),
           ],
         ),
@@ -1073,23 +1218,41 @@ class _EventOrderScreenState extends State<EventOrderScreen>
         children: [
           if (_subEvents.isEmpty)
             Container(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 20),
+              margin: const EdgeInsets.symmetric(horizontal: 4),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFAFBFC),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: const Color(0xFF1B4D3E).withValues(alpha: 0.12),
+                  style: BorderStyle.solid,
+                ),
+              ),
               child: Column(
                 children: [
-                  Icon(
-                    Icons.event_note,
-                    size: 48,
-                    color: Colors.grey.withValues(alpha: 0.3),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    l10n.noSubEventsAdded,
-                    style: TextStyle(
-                      fontFamily: 'Literata',
-                      color: Colors.grey[600],
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1B4D3E).withValues(alpha: 0.06),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.event_note_rounded,
+                      size: 36,
+                      color: const Color(0xFF1B4D3E).withValues(alpha: 0.35),
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 14),
+                  Text(
+                    l10n.noSubEventsAdded,
+                    style: const TextStyle(
+                      fontFamily: 'Literata',
+                      color: Color(0xFF4A5568),
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
                   Text(
                     l10n.tapToAddSubEvents,
                     style: TextStyle(
@@ -1112,118 +1275,293 @@ class _EventOrderScreenState extends State<EventOrderScreen>
   }
 
   Widget _buildSubEventCard(SubEvent subEvent, int index) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF8F9FC),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.withValues(alpha: 0.1)),
-      ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-        leading: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: const Icon(Icons.celebration, color: Color(0xFF1B4D3E)),
-        ),
-        title: Text(
-          subEvent.name,
-          style: const TextStyle(
-            fontFamily: 'Literata',
-            color: Color(0xFF1A1A2E),
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              DateFormat('dd MMM yyyy').format(subEvent.date),
-              style: TextStyle(
-                fontFamily: 'Literata',
-                color: Colors.grey[600],
-                fontSize: 12,
-              ),
-            ),
-            if (subEvent.notes?.isNotEmpty == true)
-              Text(
-                subEvent.notes!,
-                style: TextStyle(
-                  fontFamily: 'Literata',
-                  color: Colors.grey[500],
-                  fontSize: 11,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-          ],
-        ),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              '₹${subEvent.charges.toStringAsFixed(0)}',
-              style: const TextStyle(
-                fontFamily: 'Literata',
-                color: Color(0xFF4CAF50),
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-              ),
-            ),
-            PopupMenuButton<String>(
-              icon: Icon(Icons.more_vert, color: Colors.grey[500]),
-              color: Colors.white,
-              elevation: 8,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              onSelected: (value) {
-                if (value == 'edit') {
-                  _showEditSubEventDialog(subEvent, index);
-                } else if (value == 'delete') {
-                  _deleteSubEvent(index);
-                }
-              },
-              itemBuilder: (context) => [
-                PopupMenuItem(
-                  value: 'edit',
-                  child: Row(
-                    children: [
-                      Icon(Icons.edit, color: Colors.grey[700], size: 18),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Edit',
-                        style: TextStyle(
-                          fontFamily: 'Literata',
-                          color: Colors.grey[800],
-                        ),
+    final isLast = index == _subEvents.length - 1;
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Timeline column
+          SizedBox(
+            width: 32,
+            child: Column(
+              children: [
+                // Dot
+                Container(
+                  width: 14,
+                  height: 14,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF1B4D3E), Color(0xFF3A8B6E)],
+                    ),
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF1B4D3E).withValues(alpha: 0.3),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
                       ),
                     ],
                   ),
-                ),
-                const PopupMenuItem(
-                  value: 'delete',
-                  child: Row(
-                    children: [
-                      Icon(Icons.delete, color: Colors.red, size: 18),
-                      SizedBox(width: 8),
-                      Text(
-                        'Delete',
-                        style: TextStyle(
-                          fontFamily: 'Literata',
-                          color: Colors.red,
-                        ),
+                  child: Center(
+                    child: Container(
+                      width: 5,
+                      height: 5,
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
                       ),
-                    ],
+                    ),
                   ),
                 ),
+                // Line
+                if (!isLast)
+                  Expanded(
+                    child: Container(
+                      width: 2,
+                      margin: const EdgeInsets.symmetric(vertical: 4),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            const Color(0xFF1B4D3E).withValues(alpha: 0.3),
+                            const Color(0xFF1B4D3E).withValues(alpha: 0.08),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(1),
+                      ),
+                    ),
+                  ),
               ],
             ),
-          ],
-        ),
+          ),
+          // Card content
+          Expanded(
+            child: Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [const Color(0xFFF8FBF9), Colors.white],
+                ),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.03),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Top row: name & charges & menu
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF1B4D3E), Color(0xFF2D7B5E)],
+                          ),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(
+                          Icons.celebration,
+                          color: Colors.white,
+                          size: 16,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              subEvent.name,
+                              style: const TextStyle(
+                                fontFamily: 'Literata',
+                                color: Color(0xFF1A1A2E),
+                                fontWeight: FontWeight.w700,
+                                fontSize: 14,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.calendar_today_rounded,
+                                  size: 11,
+                                  color: Colors.grey[500],
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  DateFormat(
+                                    'dd MMM yyyy',
+                                  ).format(subEvent.date),
+                                  style: TextStyle(
+                                    fontFamily: 'Literata',
+                                    color: Colors.grey[600],
+                                    fontSize: 11,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Icon(
+                                  Icons.access_time_rounded,
+                                  size: 11,
+                                  color: Colors.grey[500],
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  TimeOfDay.fromDateTime(
+                                    subEvent.date,
+                                  ).format(context),
+                                  style: TextStyle(
+                                    fontFamily: 'Literata',
+                                    color: Colors.grey[600],
+                                    fontSize: 11,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      // Price badge
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              const Color(0xFF4CAF50).withValues(alpha: 0.15),
+                              const Color(0xFF4CAF50).withValues(alpha: 0.05),
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: const Color(
+                              0xFF4CAF50,
+                            ).withValues(alpha: 0.2),
+                          ),
+                        ),
+                        child: Text(
+                          '₹${subEvent.charges.toStringAsFixed(0)}',
+                          style: const TextStyle(
+                            fontFamily: 'Literata',
+                            color: Color(0xFF2E7D32),
+                            fontWeight: FontWeight.w800,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                      PopupMenuButton<String>(
+                        icon: Icon(
+                          Icons.more_vert,
+                          color: Colors.grey[400],
+                          size: 20,
+                        ),
+                        color: Colors.white,
+                        elevation: 8,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        onSelected: (value) {
+                          if (value == 'edit') {
+                            _showEditSubEventDialog(subEvent, index);
+                          } else if (value == 'delete') {
+                            _deleteSubEvent(index);
+                          }
+                        },
+                        itemBuilder: (context) => [
+                          PopupMenuItem(
+                            value: 'edit',
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.edit,
+                                  color: Colors.grey[700],
+                                  size: 18,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Edit',
+                                  style: TextStyle(
+                                    fontFamily: 'Literata',
+                                    color: Colors.grey[800],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const PopupMenuItem(
+                            value: 'delete',
+                            child: Row(
+                              children: [
+                                Icon(Icons.delete, color: Colors.red, size: 18),
+                                SizedBox(width: 8),
+                                Text(
+                                  'Delete',
+                                  style: TextStyle(
+                                    fontFamily: 'Literata',
+                                    color: Colors.red,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  if (subEvent.notes?.isNotEmpty == true) ...[
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[50],
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.note_rounded,
+                            size: 12,
+                            color: Colors.grey[400],
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              subEvent.notes!,
+                              style: TextStyle(
+                                fontFamily: 'Literata',
+                                color: Colors.grey[600],
+                                fontSize: 11,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1247,34 +1585,38 @@ class _EventOrderScreenState extends State<EventOrderScreen>
 
     return Container(
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            const Color(0xFF1B4D3E).withValues(alpha: 0.08),
-            const Color(0xFF1B4D3E).withValues(alpha: 0.03),
-          ],
+        gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
+          colors: [Color(0xFF1A2332), Color(0xFF1B4D3E)],
         ),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: const Color(0xFF1B4D3E).withValues(alpha: 0.15),
-        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF1B4D3E).withValues(alpha: 0.25),
+            blurRadius: 20,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(18),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1B4D3E).withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(10),
+                  color: Colors.white.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.1),
+                  ),
                 ),
                 child: const Icon(
-                  Icons.receipt_long,
-                  color: Color(0xFF1B4D3E),
+                  Icons.receipt_long_rounded,
+                  color: Colors.white,
                   size: 20,
                 ),
               ),
@@ -1284,22 +1626,23 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                 style: TextStyle(
                   fontFamily: 'Literata',
                   fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF1A1A2E),
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                  letterSpacing: 0.3,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 18),
           // Sub-events total
           if (hasSubEvents) ...[
             _buildTotalRow(
               'Sub-Events (${_subEvents.length})',
               _subEventsTotal,
               Icons.celebration,
-              const Color(0xFF1B4D3E),
+              Colors.white.withValues(alpha: 0.7),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
           ],
           // Products total
           if (hasProducts) ...[
@@ -1307,16 +1650,24 @@ class _EventOrderScreenState extends State<EventOrderScreen>
               'Products (${_orderItems.length})',
               _productsTotal,
               Icons.shopping_bag,
-              Colors.green,
+              Colors.white.withValues(alpha: 0.7),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
           ],
           // Divider
           if (hasSubEvents && hasProducts) ...[
             Container(
               height: 1,
               margin: const EdgeInsets.symmetric(vertical: 8),
-              color: const Color(0xFF1B4D3E).withValues(alpha: 0.2),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Colors.white.withValues(alpha: 0.0),
+                    Colors.white.withValues(alpha: 0.2),
+                    Colors.white.withValues(alpha: 0.0),
+                  ],
+                ),
+              ),
             ),
           ],
           // Grand total
@@ -1327,27 +1678,36 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                 'Grand Total',
                 style: TextStyle(
                   fontFamily: 'Literata',
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF1A1A2E),
+                  fontSize: 17,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
                 ),
               ),
               Container(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
+                  horizontal: 16,
+                  vertical: 8,
                 ),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF4CAF50).withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(8),
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.white.withValues(alpha: 0.2),
+                      Colors.white.withValues(alpha: 0.1),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.15),
+                  ),
                 ),
                 child: Text(
                   '₹${_totalAmount.toStringAsFixed(0)}',
                   style: const TextStyle(
                     fontFamily: 'Literata',
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF4CAF50),
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                    letterSpacing: 0.5,
                   ),
                 ),
               ),
@@ -1376,7 +1736,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
               style: TextStyle(
                 fontFamily: 'Literata',
                 fontSize: 14,
-                color: Colors.grey[700],
+                color: color,
               ),
             ),
           ],
@@ -1385,9 +1745,9 @@ class _EventOrderScreenState extends State<EventOrderScreen>
           '₹${amount.toStringAsFixed(0)}',
           style: TextStyle(
             fontFamily: 'Literata',
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: Colors.grey[800],
+            fontSize: 15,
+            fontWeight: FontWeight.w700,
+            color: Colors.white.withValues(alpha: 0.9),
           ),
         ),
       ],
@@ -1414,261 +1774,313 @@ class _EventOrderScreenState extends State<EventOrderScreen>
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.withValues(alpha: 0.1)),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.grey.withValues(alpha: 0.08)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 12,
-            offset: const Offset(0, 3),
+            color: Colors.green.withValues(alpha: 0.06),
+            blurRadius: 20,
+            offset: const Offset(0, 6),
+          ),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
-      child: Column(
-        children: [
-          // Section Header with inline search
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  const Color(0xFF1B4D3E).withValues(alpha: 0.1),
-                  const Color(0xFF1B4D3E).withValues(alpha: 0.05),
-                ],
-              ),
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(16),
-                topRight: Radius.circular(16),
-              ),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 34,
-                  height: 34,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        const Color(0xFF1B4D3E),
-                        const Color(0xFF1B4D3E).withValues(alpha: 0.8),
-                      ],
-                    ),
-                    borderRadius: BorderRadius.circular(10),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFF1B4D3E).withValues(alpha: 0.3),
-                        blurRadius: 6,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Icon(icon, color: Colors.white, size: 18),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: const TextStyle(
-                          fontFamily: 'Literata',
-                          fontWeight: FontWeight.w700,
-                          fontSize: 14,
-                          color: Color(0xFF1B4D3E),
-                        ),
-                      ),
-                      Text(
-                        'Quick add by code or search',
-                        style: TextStyle(
-                          fontFamily: 'Literata',
-                          fontSize: 11,
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          decoration: const BoxDecoration(
+            border: Border(
+              left: BorderSide(color: Color(0xFF43A047), width: 4),
             ),
           ),
-          // Combined search bar: Product code + Search + Barcode
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.grey[50],
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: const Color(0xFF1B4D3E).withValues(alpha: 0.2),
+          child: Column(
+            children: [
+              // Section Header with inline search
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 12,
                 ),
-              ),
-              child: Row(
-                children: [
-                  // Flash icon for quick add
-                  Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [Colors.amber[700]!, Colors.amber[600]!],
-                      ),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: const Icon(
-                      Icons.flash_on_rounded,
-                      color: Colors.white,
-                      size: 14,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  // Text input for product code
-                  Expanded(
-                    child: TextField(
-                      controller: _productCodeController,
-                      focusNode: _productCodeFocusNode,
-                      keyboardType: TextInputType.number,
-                      textInputAction: TextInputAction.go,
-                      style: const TextStyle(
-                        fontFamily: 'Literata',
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                      ),
-                      decoration: InputDecoration(
-                        hintText: 'Enter product code',
-                        hintStyle: TextStyle(
-                          color: Colors.grey[500],
-                          fontWeight: FontWeight.w400,
-                          fontSize: 13,
-                        ),
-                        border: InputBorder.none,
-                        isDense: true,
-                        contentPadding: EdgeInsets.zero,
-                      ),
-                      onChanged: (_) => _onProductCodeChanged(),
-                      onSubmitted: (_) => _lookupProductByCode(),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  // Search icon - opens search product bottom sheet
-                  GestureDetector(
-                    onTap: _showProductSelectionSheet,
-                    child: Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: const Icon(
-                        Icons.search_rounded,
-                        color: Color(0xFF1B4D3E),
-                        size: 18,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  // Barcode scan icon
-                  GestureDetector(
-                    onTap: () {
-                      BarcodeScannerSheet.show(
-                        context,
-                        onProductScanned: _addScannedProductToOrder,
-                      );
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFF1B4D3E), Color(0xFF2D6A4F)],
-                        ),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: const Icon(
-                        Icons.qr_code_scanner,
-                        color: Colors.white,
-                        size: 18,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          // Products list
-          if (_orderItems.isEmpty)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
-              child: Column(
-                children: [
-                  Icon(
-                    icon,
-                    size: 40,
-                    color: Colors.grey.withValues(alpha: 0.3),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    emptyHint,
-                    style: TextStyle(
-                      fontFamily: 'Literata',
-                      color: Colors.grey[500],
-                      fontSize: 13,
-                    ),
-                  ),
-                ],
-              ),
-            )
-          else
-            ListView.separated(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              itemCount: _orderItems.length,
-              separatorBuilder: (_, _) => Divider(
-                height: 1,
-                thickness: 0.5,
-                color: Colors.grey.withValues(alpha: 0.12),
-              ),
-              itemBuilder: (context, index) {
-                final item = _orderItems[index];
-                return _buildInlineOrderItemRow(item, index);
-              },
-            ),
-          // Stock info
-          if (showStockInfo && _orderItems.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-              child: Container(
-                padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: Colors.blue.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: Colors.blue.withValues(alpha: 0.15),
+                  gradient: LinearGradient(
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                    colors: [
+                      const Color(0xFF43A047).withValues(alpha: 0.08),
+                      const Color(0xFF43A047).withValues(alpha: 0.03),
+                      Colors.transparent,
+                    ],
+                  ),
+                  borderRadius: const BorderRadius.only(
+                    topRight: Radius.circular(20),
                   ),
                 ),
                 child: Row(
                   children: [
-                    Icon(
-                      Icons.info_outline,
-                      color: Colors.blue.shade600,
-                      size: 14,
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Stock deducted when converted to bill',
-                        style: TextStyle(
-                          fontFamily: 'Literata',
-                          color: Colors.blue.shade700,
-                          fontSize: 11,
+                    Container(
+                      width: 34,
+                      height: 34,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            const Color(0xFF1B4D3E),
+                            const Color(0xFF1B4D3E).withValues(alpha: 0.8),
+                          ],
                         ),
+                        borderRadius: BorderRadius.circular(10),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(
+                              0xFF1B4D3E,
+                            ).withValues(alpha: 0.3),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Icon(icon, color: Colors.white, size: 18),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            title,
+                            style: const TextStyle(
+                              fontFamily: 'Literata',
+                              fontWeight: FontWeight.w700,
+                              fontSize: 14,
+                              color: Color(0xFF1B4D3E),
+                            ),
+                          ),
+                          Text(
+                            'Quick add by code or search',
+                            style: TextStyle(
+                              fontFamily: 'Literata',
+                              fontSize: 11,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
               ),
-            ),
-        ],
+              // Combined search bar: Product code + Search + Barcode
+              Padding(
+                padding: const EdgeInsets.all(12),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[50],
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: const Color(0xFF1B4D3E).withValues(alpha: 0.2),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      // Flash icon for quick add
+                      Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [Colors.amber[700]!, Colors.amber[600]!],
+                          ),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: const Icon(
+                          Icons.flash_on_rounded,
+                          color: Colors.white,
+                          size: 14,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      // Text input for product code
+                      Expanded(
+                        child: TextField(
+                          controller: _productCodeController,
+                          focusNode: _productCodeFocusNode,
+                          keyboardType: TextInputType.number,
+                          textInputAction: TextInputAction.go,
+                          style: const TextStyle(
+                            fontFamily: 'Literata',
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          decoration: InputDecoration(
+                            hintText: 'Enter product code',
+                            hintStyle: TextStyle(
+                              color: Colors.grey[500],
+                              fontWeight: FontWeight.w400,
+                              fontSize: 13,
+                            ),
+                            border: InputBorder.none,
+                            isDense: true,
+                            contentPadding: EdgeInsets.zero,
+                          ),
+                          onChanged: (_) => _onProductCodeChanged(),
+                          onSubmitted: (_) => _lookupProductByCode(),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      // Search icon - opens search product bottom sheet
+                      GestureDetector(
+                        onTap: _showProductSelectionSheet,
+                        child: Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: const Color(
+                              0xFF1B4D3E,
+                            ).withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: const Icon(
+                            Icons.search_rounded,
+                            color: Color(0xFF1B4D3E),
+                            size: 18,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      // Barcode scan icon
+                      GestureDetector(
+                        onTap: () {
+                          BarcodeScannerSheet.show(
+                            context,
+                            onProductScanned: _addScannedProductToOrder,
+                          );
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFF1B4D3E), Color(0xFF2D6A4F)],
+                            ),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: const Icon(
+                            Icons.qr_code_scanner,
+                            color: Colors.white,
+                            size: 18,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              // Products list
+              if (_orderItems.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 24,
+                      horizontal: 16,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFAFBFC),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: Colors.green.withValues(alpha: 0.1),
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: Colors.green.withValues(alpha: 0.06),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            icon,
+                            size: 32,
+                            color: Colors.green.withValues(alpha: 0.3),
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Text(
+                          emptyHint,
+                          style: const TextStyle(
+                            fontFamily: 'Literata',
+                            color: Color(0xFF4A5568),
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              else
+                ListView.separated(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  itemCount: _orderItems.length,
+                  separatorBuilder: (_, _) => Divider(
+                    height: 1,
+                    thickness: 0.5,
+                    color: Colors.grey.withValues(alpha: 0.12),
+                  ),
+                  itemBuilder: (context, index) {
+                    final item = _orderItems[index];
+                    return _buildInlineOrderItemRow(item, index);
+                  },
+                ),
+              // Stock info
+              if (showStockInfo && _orderItems.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                  child: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: Colors.blue.withValues(alpha: 0.15),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.info_outline,
+                          color: Colors.blue.shade600,
+                          size: 14,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Stock deducted when converted to bill',
+                            style: TextStyle(
+                              fontFamily: 'Literata',
+                              color: Colors.blue.shade700,
+                              fontSize: 11,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -2008,6 +2420,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
     return _buildSectionCard(
       title: 'Event Charges',
       icon: Icons.event_note,
+      accentColor: Colors.purple,
       child: _buildTextField(
         controller: _eventChargesController,
         label: 'Additional Event Charges',
@@ -2022,6 +2435,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
     return _buildSectionCard(
       title: 'Advance Payment',
       icon: Icons.account_balance_wallet,
+      accentColor: const Color(0xFF2196F3),
       child: _buildTextField(
         controller: _advanceController,
         label: 'Advance Amount Received',
@@ -2035,7 +2449,8 @@ class _EventOrderScreenState extends State<EventOrderScreen>
   Widget _buildNotesSection() {
     return _buildSectionCard(
       title: 'Notes',
-      icon: Icons.note,
+      icon: Icons.note_alt_outlined,
+      accentColor: Colors.amber.shade700,
       child: _buildTextField(
         controller: _notesController,
         label: 'Additional Notes (Optional)',
@@ -2198,83 +2613,202 @@ class _EventOrderScreenState extends State<EventOrderScreen>
 
   Widget _buildSummaryBar() {
     return Container(
-      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF1A2332), Color(0xFF1B4D3E), Color(0xFF1A3A30)],
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
-            blurRadius: 15,
-            offset: const Offset(0, -5),
+            color: const Color(0xFF1B4D3E).withValues(alpha: 0.3),
+            blurRadius: 24,
+            offset: const Offset(0, -8),
           ),
         ],
       ),
       child: SafeArea(
-        child: Row(
-          children: [
-            // Summary info
-            Expanded(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Financial summary row
+              Row(
                 children: [
-                  Row(
-                    children: [
-                      _buildSummaryItem('Total', _totalAmount),
-                      const SizedBox(width: 16),
-                      _buildSummaryItem(
-                        'Advance',
-                        _advanceAmount,
-                        color: const Color(0xFF4CAF50),
-                      ),
-                    ],
+                  // Total
+                  _buildSummaryChip(
+                    label: 'Total',
+                    amount: _totalAmount,
+                    icon: Icons.receipt_long_rounded,
+                    color: Colors.white,
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Remaining: ₹${_remainingAmount.toStringAsFixed(0)}',
-                    style: TextStyle(
-                      fontFamily: 'Literata',
-                      color: _remainingAmount > 0
-                          ? Colors.orange.shade700
-                          : const Color(0xFF4CAF50),
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
+                  const SizedBox(width: 12),
+                  // Advance
+                  _buildSummaryChip(
+                    label: 'Advance',
+                    amount: _advanceAmount,
+                    icon: Icons.account_balance_wallet_rounded,
+                    color: const Color(0xFF66BB6A),
+                  ),
+                  const SizedBox(width: 12),
+                  // Remaining
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: _remainingAmount > 0
+                            ? [
+                                Colors.orange.withValues(alpha: 0.2),
+                                Colors.orange.withValues(alpha: 0.1),
+                              ]
+                            : [
+                                Colors.green.withValues(alpha: 0.2),
+                                Colors.green.withValues(alpha: 0.1),
+                              ],
+                      ),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: _remainingAmount > 0
+                            ? Colors.orange.withValues(alpha: 0.3)
+                            : Colors.green.withValues(alpha: 0.3),
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Due',
+                          style: TextStyle(
+                            fontFamily: 'Literata',
+                            color: Colors.white.withValues(alpha: 0.6),
+                            fontSize: 10,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        Text(
+                          '₹${_remainingAmount.toStringAsFixed(0)}',
+                          style: TextStyle(
+                            fontFamily: 'Literata',
+                            color: _remainingAmount > 0
+                                ? Colors.orange[300]
+                                : Colors.green[300],
+                            fontWeight: FontWeight.w800,
+                            fontSize: 15,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ),
-            ),
-            // Save button
-            ElevatedButton.icon(
-              onPressed: _isLoading ? null : _saveOrder,
-              icon: _isLoading
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                      ),
-                    )
-                  : const Icon(Icons.save),
-              label: Text(
-                _isEditing ? 'Update' : 'Save',
-                style: const TextStyle(
-                  fontFamily: 'Literata',
-                  fontWeight: FontWeight.w600,
+              const SizedBox(height: 14),
+              // Save button - full width
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton(
+                  onPressed: _isLoading ? null : _saveOrder,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: const Color(0xFF1B4D3E),
+                    disabledBackgroundColor: Colors.white.withValues(
+                      alpha: 0.5,
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: _isLoading
+                      ? const SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.5,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Color(0xFF1B4D3E),
+                            ),
+                          ),
+                        )
+                      : Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              _isEditing
+                                  ? Icons.check_circle_rounded
+                                  : Icons.save_rounded,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 10),
+                            Text(
+                              _isEditing ? 'Update Order' : 'Save Order',
+                              style: const TextStyle(
+                                fontFamily: 'Literata',
+                                fontWeight: FontWeight.w700,
+                                fontSize: 15,
+                                letterSpacing: 0.3,
+                              ),
+                            ),
+                          ],
+                        ),
                 ),
               ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF1B4D3E),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 12,
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSummaryChip({
+    required String label,
+    required double amount,
+    required IconData icon,
+    required Color color,
+  }) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  icon,
+                  color: Colors.white.withValues(alpha: 0.5),
+                  size: 12,
                 ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                const SizedBox(width: 4),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontFamily: 'Literata',
+                    color: Colors.white.withValues(alpha: 0.6),
+                    fontSize: 10,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
-                elevation: 0,
+              ],
+            ),
+            const SizedBox(height: 2),
+            Text(
+              '₹${amount.toStringAsFixed(0)}',
+              style: TextStyle(
+                fontFamily: 'Literata',
+                color: color,
+                fontWeight: FontWeight.w800,
+                fontSize: 15,
               ),
             ),
           ],
@@ -2283,83 +2817,106 @@ class _EventOrderScreenState extends State<EventOrderScreen>
     );
   }
 
-  Widget _buildSummaryItem(String label, double amount, {Color? color}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontFamily: 'Literata',
-            color: Colors.grey[500],
-            fontSize: 11,
-          ),
-        ),
-        Text(
-          '₹${amount.toStringAsFixed(0)}',
-          style: TextStyle(
-            fontFamily: 'Literata',
-            color: color ?? const Color(0xFF1A1A2E),
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
-          ),
-        ),
-      ],
-    );
-  }
-
   Widget _buildSectionCard({
     required String title,
     required IconData icon,
     required Widget child,
     Widget? trailing,
+    Color accentColor = const Color(0xFF1B4D3E),
   }) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
+            color: accentColor.withValues(alpha: 0.06),
+            blurRadius: 20,
+            offset: const Offset(0, 6),
+          ),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Icon(icon, color: const Color(0xFF1B4D3E), size: 20),
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontFamily: 'Literata',
-                    color: Color(0xFF1A1A2E),
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                if (trailing != null) ...[const Spacer(), trailing],
-              ],
-            ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          decoration: BoxDecoration(
+            border: Border(left: BorderSide(color: accentColor, width: 4)),
           ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-            child: child,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header with gradient strip
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                    colors: [
+                      accentColor.withValues(alpha: 0.06),
+                      accentColor.withValues(alpha: 0.02),
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            accentColor.withValues(alpha: 0.15),
+                            accentColor.withValues(alpha: 0.08),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: accentColor.withValues(alpha: 0.1),
+                        ),
+                      ),
+                      child: Icon(icon, color: accentColor, size: 20),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: TextStyle(
+                          fontFamily: 'Literata',
+                          color: const Color(0xFF1A1A2E),
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.2,
+                        ),
+                      ),
+                    ),
+                    if (trailing != null) trailing,
+                  ],
+                ),
+              ),
+              // Subtle divider
+              Container(
+                height: 0.5,
+                margin: const EdgeInsets.symmetric(horizontal: 16),
+                color: accentColor.withValues(alpha: 0.08),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 18),
+                child: child,
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -2376,9 +2933,16 @@ class _EventOrderScreenState extends State<EventOrderScreen>
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFFF8F9FC),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.withValues(alpha: 0.15)),
+        color: const Color(0xFFF7F8FB),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE8ECF0)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: TextFormField(
         controller: controller,
@@ -2394,17 +2958,44 @@ class _EventOrderScreenState extends State<EventOrderScreen>
           fontFamily: 'Literata',
           color: Color(0xFF1A1A2E),
           fontSize: 14,
+          fontWeight: FontWeight.w500,
         ),
         decoration: InputDecoration(
           labelText: label,
           labelStyle: TextStyle(
             fontFamily: 'Literata',
             color: Colors.grey[500],
+            fontSize: 13,
           ),
-          prefixIcon: Icon(icon, color: Colors.grey[500]),
+          floatingLabelStyle: const TextStyle(
+            fontFamily: 'Literata',
+            color: Color(0xFF1B4D3E),
+            fontWeight: FontWeight.w600,
+          ),
+          prefixIcon: Padding(
+            padding: const EdgeInsets.only(left: 12, right: 8),
+            child: Icon(icon, color: const Color(0xFF9CA3AF), size: 20),
+          ),
+          prefixIconConstraints: const BoxConstraints(minWidth: 44),
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.all(16),
-          errorStyle: TextStyle(color: Colors.red.shade600),
+          enabledBorder: InputBorder.none,
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: const BorderSide(color: Color(0xFF1B4D3E), width: 1.5),
+          ),
+          errorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide(color: Colors.red.shade400, width: 1.5),
+          ),
+          focusedErrorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide(color: Colors.red.shade400, width: 1.5),
+          ),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 16,
+          ),
+          errorStyle: TextStyle(color: Colors.red.shade600, fontSize: 11),
         ),
       ),
     );
