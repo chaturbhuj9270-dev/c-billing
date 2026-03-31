@@ -430,69 +430,82 @@ class _EventOrderListPageState extends State<EventOrderListPage>
               ),
             ],
           ),
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                _buildStatCard(
-                  title: AppLocalizations.of(
-                    LanguageService.instance.currentLanguage,
-                  ).all,
-                  value: totalOrders,
-                  icon: Icons.all_inbox_rounded,
-                  gradient: [_primaryColor, _primaryDark],
-                  isActive: _selectedType == null,
-                  onTap: () => _onTypeFilterChanged(context, null),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              return SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minWidth: constraints.maxWidth),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _buildStatCard(
+                        title: AppLocalizations.of(
+                          LanguageService.instance.currentLanguage,
+                        ).all,
+                        value: totalOrders,
+                        icon: Icons.all_inbox_rounded,
+                        gradient: [_primaryColor, _primaryDark],
+                        isActive: _selectedType == null,
+                        onTap: () => _onTypeFilterChanged(context, null),
+                      ),
+                      const SizedBox(width: 10),
+                      _buildStatCard(
+                        title: AppLocalizations.of(
+                          LanguageService.instance.currentLanguage,
+                        ).events,
+                        value: eventCount,
+                        icon: Icons.celebration_rounded,
+                        gradient: [_eventColor, const Color(0xFFBA68C8)],
+                        isActive: _selectedType == OrderType.event,
+                        onTap: () =>
+                            _onTypeFilterChanged(context, OrderType.event),
+                      ),
+                      const SizedBox(width: 10),
+                      _buildStatCard(
+                        title: AppLocalizations.of(
+                          LanguageService.instance.currentLanguage,
+                        ).sales,
+                        value: salesCount,
+                        icon: Icons.shopping_bag_rounded,
+                        gradient: [_salesColor, const Color(0xFF64B5F6)],
+                        isActive: _selectedType == OrderType.salesOrder,
+                        onTap: () =>
+                            _onTypeFilterChanged(context, OrderType.salesOrder),
+                      ),
+                      const SizedBox(width: 10),
+                      _buildStatCard(
+                        title: AppLocalizations.of(
+                          LanguageService.instance.currentLanguage,
+                        ).pending,
+                        value: pendingCount,
+                        icon: Icons.schedule_rounded,
+                        gradient: [Colors.orange, Colors.orangeAccent],
+                        isActive: _selectedStatus == OrderStatus.pending,
+                        onTap: () => _onStatusFilterChanged(
+                          context,
+                          OrderStatus.pending,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      _buildStatCard(
+                        title: AppLocalizations.of(
+                          LanguageService.instance.currentLanguage,
+                        ).confirmed,
+                        value: confirmedCount,
+                        icon: Icons.check_circle_rounded,
+                        gradient: [Colors.green, Colors.lightGreen],
+                        isActive: _selectedStatus == OrderStatus.confirmed,
+                        onTap: () => _onStatusFilterChanged(
+                          context,
+                          OrderStatus.confirmed,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                const SizedBox(width: 10),
-                _buildStatCard(
-                  title: AppLocalizations.of(
-                    LanguageService.instance.currentLanguage,
-                  ).events,
-                  value: eventCount,
-                  icon: Icons.celebration_rounded,
-                  gradient: [_eventColor, const Color(0xFFBA68C8)],
-                  isActive: _selectedType == OrderType.event,
-                  onTap: () => _onTypeFilterChanged(context, OrderType.event),
-                ),
-                const SizedBox(width: 10),
-                _buildStatCard(
-                  title: AppLocalizations.of(
-                    LanguageService.instance.currentLanguage,
-                  ).sales,
-                  value: salesCount,
-                  icon: Icons.shopping_bag_rounded,
-                  gradient: [_salesColor, const Color(0xFF64B5F6)],
-                  isActive: _selectedType == OrderType.salesOrder,
-                  onTap: () =>
-                      _onTypeFilterChanged(context, OrderType.salesOrder),
-                ),
-                const SizedBox(width: 10),
-                _buildStatCard(
-                  title: AppLocalizations.of(
-                    LanguageService.instance.currentLanguage,
-                  ).pending,
-                  value: pendingCount,
-                  icon: Icons.schedule_rounded,
-                  gradient: [Colors.orange, Colors.orangeAccent],
-                  isActive: _selectedStatus == OrderStatus.pending,
-                  onTap: () =>
-                      _onStatusFilterChanged(context, OrderStatus.pending),
-                ),
-                const SizedBox(width: 10),
-                _buildStatCard(
-                  title: AppLocalizations.of(
-                    LanguageService.instance.currentLanguage,
-                  ).confirmed,
-                  value: confirmedCount,
-                  icon: Icons.check_circle_rounded,
-                  gradient: [Colors.green, Colors.lightGreen],
-                  isActive: _selectedStatus == OrderStatus.confirmed,
-                  onTap: () =>
-                      _onStatusFilterChanged(context, OrderStatus.confirmed),
-                ),
-              ],
-            ),
+              );
+            },
           ),
         );
       },
