@@ -659,56 +659,64 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
           ),
         ],
       ),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(
-          children: [
-            _buildModernStatCard(
-              title: _localizations.totalProducts,
-              value: totalProducts,
-              icon: Icons.inventory_2_rounded,
-              gradient: const [Color(0xFF1B4D3E), Color(0xFF2D6B5A)],
-              isActive: _stockFilter == 'all',
-              onTap: () => _onStockFilterChanged('all'),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minWidth: constraints.maxWidth),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  _buildModernStatCard(
+                    title: _localizations.totalProducts,
+                    value: totalProducts,
+                    icon: Icons.inventory_2_rounded,
+                    gradient: const [Color(0xFF1B4D3E), Color(0xFF2D6B5A)],
+                    isActive: _stockFilter == 'all',
+                    onTap: () => _onStockFilterChanged('all'),
+                  ),
+                  const SizedBox(width: 10),
+                  _buildModernStatCard(
+                    title: _localizations.inStock,
+                    value: inStock,
+                    icon: Icons.check_circle_rounded,
+                    gradient: const [Color(0xFF4CAF50), Color(0xFF66BB6A)],
+                    isActive: _stockFilter == 'in_stock',
+                    onTap: () => _onStockFilterChanged('in_stock'),
+                  ),
+                  const SizedBox(width: 10),
+                  _buildModernStatCard(
+                    title: _localizations.lowStock,
+                    value: lowStock,
+                    icon: Icons.warning_rounded,
+                    gradient: const [Color(0xFFFF9800), Color(0xFFFFB74D)],
+                    isActive: _stockFilter == 'low_stock',
+                    onTap: () => _onStockFilterChanged('low_stock'),
+                  ),
+                  const SizedBox(width: 10),
+                  _buildModernStatCard(
+                    title: _localizations.outOfStock,
+                    value: outOfStock,
+                    icon: Icons.error_rounded,
+                    gradient: const [Color(0xFFF44336), Color(0xFFEF5350)],
+                    isActive: _stockFilter == 'out_of_stock',
+                    onTap: () => _onStockFilterChanged('out_of_stock'),
+                  ),
+                  const SizedBox(width: 10),
+                  _buildModernStatCard(
+                    title: _localizations.expiredProducts,
+                    value: expired,
+                    icon: Icons.event_busy_rounded,
+                    gradient: const [Color(0xFF9C27B0), Color(0xFFBA68C8)],
+                    isActive: _stockFilter == 'expired',
+                    onTap: () => _onStockFilterChanged('expired'),
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(width: 10),
-            _buildModernStatCard(
-              title: _localizations.inStock,
-              value: inStock,
-              icon: Icons.check_circle_rounded,
-              gradient: const [Color(0xFF4CAF50), Color(0xFF66BB6A)],
-              isActive: _stockFilter == 'in_stock',
-              onTap: () => _onStockFilterChanged('in_stock'),
-            ),
-            const SizedBox(width: 10),
-            _buildModernStatCard(
-              title: _localizations.lowStock,
-              value: lowStock,
-              icon: Icons.warning_rounded,
-              gradient: const [Color(0xFFFF9800), Color(0xFFFFB74D)],
-              isActive: _stockFilter == 'low_stock',
-              onTap: () => _onStockFilterChanged('low_stock'),
-            ),
-            const SizedBox(width: 10),
-            _buildModernStatCard(
-              title: _localizations.outOfStock,
-              value: outOfStock,
-              icon: Icons.error_rounded,
-              gradient: const [Color(0xFFF44336), Color(0xFFEF5350)],
-              isActive: _stockFilter == 'out_of_stock',
-              onTap: () => _onStockFilterChanged('out_of_stock'),
-            ),
-            const SizedBox(width: 10),
-            _buildModernStatCard(
-              title: _localizations.expiredProducts,
-              value: expired,
-              icon: Icons.event_busy_rounded,
-              gradient: const [Color(0xFF9C27B0), Color(0xFFBA68C8)],
-              isActive: _stockFilter == 'expired',
-              onTap: () => _onStockFilterChanged('expired'),
-            ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }

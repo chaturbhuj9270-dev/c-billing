@@ -157,7 +157,7 @@ class Shop {
   /// Default empty shop for fallback
   static const Shop empty = Shop(
     id: 'main',
-    shopName: 'My Shop',
+    shopName: 'C-BIlling',
     address: '',
     phone: '',
   );
