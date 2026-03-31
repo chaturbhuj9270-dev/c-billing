@@ -255,6 +255,14 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
         _currentPending = transactions.first.balanceAfter;
       }
 
+      // Add event order remaining amounts (non-cancelled, non-converted)
+      for (final order in eventOrders) {
+        if (order.status != OrderStatus.cancelled.index &&
+            order.status != OrderStatus.convertedToBill.index) {
+          _currentPending += order.remainingAmount;
+        }
+      }
+
       setState(() {
         _transactions = transactions;
         _eventOrders = eventOrders;
@@ -490,12 +498,10 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
   }
 
   String _formatAmount(double amount) {
-    if (amount.abs() >= 100000) {
-      return '${(amount / 100000).toStringAsFixed(1)}L';
-    } else if (amount.abs() >= 1000) {
-      return '${(amount / 1000).toStringAsFixed(1)}K';
+    if (amount == amount.roundToDouble()) {
+      return NumberFormat('#,##,##0', 'en_IN').format(amount.round());
     }
-    return amount.toStringAsFixed(0);
+    return NumberFormat('#,##,##0.00', 'en_IN').format(amount);
   }
 
   Widget _buildFilterChips() {
