@@ -5,19 +5,14 @@ import 'dart:ui';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import '../../../customer/presentation/pages/enhanced_customer_page.dart';
-import '../../../supplier/presentation/pages/enhanced_supplier_page.dart';
-import '../../../company/presentation/pages/enhanced_company_page.dart';
 import '../../../inventory_management/presentation/pages/enhanced_purchase_screen.dart';
 import '../../../inventory_management/presentation/pages/purchase_settings_page.dart';
 import '../../../inventory_management/presentation/pages/purchase_report_settings_page.dart';
 import '../../../inventory_management/presentation/pages/stock_report_settings_page.dart';
-import '../../../inventory_management/presentation/pages/enhanced_product_page.dart';
 import '../../../billing/presentation/pages/billing_page.dart';
 import '../../../billing/presentation/pages/bill_settings_page.dart';
 import '../../../billing/presentation/pages/bill_report_settings_page.dart';
-import '../../../billing/presentation/pages/bills_list_page.dart';
 import '../../../availability/presentation/pages/availability_page.dart';
-import '../../../event_order/presentation/pages/event_order_list_page.dart';
 import '../../../../core/services/session_manager.dart';
 import '../../../../core/services/language_service.dart';
 import '../../../../core/services/dashboard_refresh_service.dart';
@@ -30,8 +25,8 @@ import '../cubit/optimized_dashboard_state.dart';
 import '../widgets/shimmer_widgets.dart';
 import 'flyout_menu.dart';
 import '../../../settings/presentation/pages/logs_viewer_page.dart';
-import '../../../purchase_return/presentation/pages/purchase_return_screen.dart';
 import '../../../../common_widgets/action_menu.dart';
+import '../../../../common_widgets/quick_actions_overlay.dart';
 
 /// High-performance dashboard page with cache-first loading
 /// Renders instantly with cached data, updates smoothly when fresh data arrives
@@ -239,45 +234,54 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
       },
       child: Scaffold(
         backgroundColor: const Color(0xFFF8FAFB),
-        body: Column(
+        body: Stack(
           children: [
-            // Common header for all tabs
-            _buildCommonHeader(),
-            // Tab content
-            Expanded(
-              child: IndexedStack(
-                index: _selectedIndex,
-                children: [
-                  // Dashboard tab (index 0)
-                  BlocBuilder<OptimizedDashboardCubit, OptimizedDashboardState>(
-                    builder: (context, state) {
-                      return FadeTransition(
-                        opacity: _fadeAnimation,
-                        child: RefreshIndicator(
-                          onRefresh: () async {
-                            // Refresh both main stats and Quick Insights
-                            await context
-                                .read<OptimizedDashboardCubit>()
-                                .refresh();
-                            await _loadExpandableSectionData();
-                          },
-                          color: const Color(0xFF1B4D3E),
-                          child: _buildContent(state),
-                        ),
-                      );
-                    },
+            Column(
+              children: [
+                // Common header for all tabs
+                _buildCommonHeader(),
+                // Tab content
+                Expanded(
+                  child: IndexedStack(
+                    index: _selectedIndex,
+                    children: [
+                      // Dashboard tab (index 0)
+                      BlocBuilder<
+                        OptimizedDashboardCubit,
+                        OptimizedDashboardState
+                      >(
+                        builder: (context, state) {
+                          return FadeTransition(
+                            opacity: _fadeAnimation,
+                            child: RefreshIndicator(
+                              onRefresh: () async {
+                                // Refresh both main stats and Quick Insights
+                                await context
+                                    .read<OptimizedDashboardCubit>()
+                                    .refresh();
+                                await _loadExpandableSectionData();
+                              },
+                              color: const Color(0xFF1B4D3E),
+                              child: _buildContent(state),
+                            ),
+                          );
+                        },
+                      ),
+                      // Customers tab (index 1)
+                      const EnhancedCustomerPage(isEmbedded: true),
+                      // Billing tab (primary - center - index 2)
+                      const BillingPage(isEmbedded: true),
+                      // Available tab (index 3)
+                      const AvailabilityPage(isEmbedded: true),
+                      // Purchase tab (index 4)
+                      const EnhancedPurchaseScreen(isEmbedded: true),
+                    ],
                   ),
-                  // Customers tab (index 1)
-                  const EnhancedCustomerPage(isEmbedded: true),
-                  // Billing tab (primary - center - index 2)
-                  const BillingPage(isEmbedded: true),
-                  // Available tab (index 3)
-                  const AvailabilityPage(isEmbedded: true),
-                  // Purchase tab (index 4)
-                  const EnhancedPurchaseScreen(isEmbedded: true),
-                ],
-              ),
+                ),
+              ],
             ),
+            // Global Quick Actions FAB overlay
+            const Positioned.fill(child: GlobalQuickActionsFAB()),
           ],
         ),
         bottomNavigationBar: _buildBottomNavBar(),
@@ -690,8 +694,6 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildQuickStatsSection(data, isRefreshing),
-          const SizedBox(height: 20),
           _buildFilterSection(state),
           const SizedBox(height: 28),
           _buildSectionHeader(
@@ -885,171 +887,6 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
           ),
         );
       },
-    );
-  }
-
-  Widget _buildQuickStatsSection(DashboardSummary data, bool isLoading) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      physics: const BouncingScrollPhysics(),
-      child: Row(
-        children: [
-          _buildQuickStatItem(
-            icon: Icons.receipt_long_outlined,
-            value: '${data.invoicesCount}',
-            label: _localizations.invoices,
-            color: const Color(0xFF667eea),
-            isLoading: isLoading,
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const BillsListPage()),
-            ).then((_) => _onDataChanged()),
-          ),
-          const SizedBox(width: 12),
-          _buildQuickStatItem(
-            icon: Icons.inventory_2_outlined,
-            value: '${data.productsCount}',
-            label: _localizations.products,
-            color: const Color(0xFFf093fb),
-            isLoading: isLoading,
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const EnhancedProductPage()),
-            ).then((_) => _onDataChanged()),
-          ),
-          const SizedBox(width: 12),
-          _buildQuickStatItem(
-            icon: Icons.local_shipping_outlined,
-            value: '${data.suppliersCount}',
-            label: _localizations.suppliers,
-            color: const Color(0xFFFF6B6B),
-            isLoading: isLoading,
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const EnhancedSupplierPage()),
-            ).then((_) => _onDataChanged()),
-          ),
-          const SizedBox(width: 12),
-          _buildQuickStatItem(
-            icon: Icons.business_outlined,
-            value: '${data.companiesCount}',
-            label: _localizations.companies,
-            color: const Color(0xFF9C27B0),
-            isLoading: isLoading,
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const EnhancedCompanyPage()),
-            ).then((_) => _onDataChanged()),
-          ),
-          const SizedBox(width: 12),
-          _buildQuickStatItem(
-            icon: Icons.celebration_rounded,
-            value: '${data.totalEventOrders}',
-            label: '${data.upcomingEvents} ${_localizations.upcoming}',
-            color: const Color(0xFFE91E63),
-            isLoading: isLoading,
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const EventOrderListPage()),
-            ).then((_) => _onDataChanged()),
-          ),
-          const SizedBox(width: 12),
-          _buildQuickStatItem(
-            icon: Icons.keyboard_return_rounded,
-            value: '${data.totalReturnedItems}',
-            label: _localizations.purchaseReturnShort,
-            color: const Color(0xFFE65100),
-            isLoading: isLoading,
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const PurchaseReturnScreen()),
-            ).then((_) => _onDataChanged()),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildQuickStatItem({
-    required IconData icon,
-    required String value,
-    required String label,
-    required Color color,
-    required bool isLoading,
-    VoidCallback? onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(12),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-          child: Container(
-            width: 90,
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  color.withValues(alpha: 0.15),
-                  color.withValues(alpha: 0.05),
-                ],
-              ),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: Colors.white.withValues(alpha: 0.2),
-                width: 1,
-              ),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                      color: color.withValues(alpha: 0.3),
-                      width: 1,
-                    ),
-                  ),
-                  child: Icon(icon, color: color, size: 18),
-                ),
-                const SizedBox(height: 6),
-                AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 200),
-                  child: Text(
-                    value,
-                    key: ValueKey(value),
-                    style: TextStyle(
-                      color: const Color(0xFF1B4D3E),
-                      fontSize: 14,
-                      fontWeight: FontWeight.w800,
-                      fontFamily: 'Literata',
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  label,
-                  textAlign: TextAlign.center,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: const Color(0xFF1B4D3E).withValues(alpha: 0.7),
-                    fontSize: 9,
-                    fontFamily: 'Literata',
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
     );
   }
 

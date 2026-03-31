@@ -240,9 +240,7 @@ class _LoginPageV2State extends State<LoginPageV2>
               final maxFormWidth = isTablet ? 480.0 : double.infinity;
               return SingleChildScrollView(
                 child: ConstrainedBox(
-                  constraints: BoxConstraints(
-                    minHeight: constraints.maxHeight,
-                  ),
+                  constraints: BoxConstraints(minHeight: constraints.maxHeight),
                   child: Padding(
                     padding: EdgeInsets.symmetric(
                       horizontal: isTablet ? constraints.maxWidth * 0.1 : 24.0,
@@ -250,281 +248,358 @@ class _LoginPageV2State extends State<LoginPageV2>
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                  SlideTransition(
-                    position: _offsetAnimation,
-                    child: FadeTransition(
-                      opacity: _opacityAnimation,
-                      child: Column(
-                        children: [
-                          Container(
-                            decoration: BoxDecoration(
-                              boxShadow: [
-                                BoxShadow(
-                                  color: const Color(
-                                    0xFF1B4D3E,
-                                  ).withValues(alpha: 0.25),
-                                  blurRadius: 24,
-                                  offset: const Offset(0, 12),
-                                ),
-                              ],
-                            ),
-                            child: Image.asset(
-                              'assets/images/logo.png',
-                              width: 80,
-                              height: 80,
-                            ),
-                          ),
-                          const SizedBox(height: 5),
-                          Text(
-                            _localizations.appName,
-                            style: TextStyle(
-                              fontFamily: 'Literata',
-                              fontSize: 36,
-                              fontWeight: FontWeight.w900,
-                              color: Color(0xFF1B4D3E),
-                              letterSpacing: 2,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            _localizations.backboneOfBusiness,
-                            style: TextStyle(
-                              fontFamily: 'Literata',
-                              fontSize: 14,
-                              fontWeight: FontWeight.w400,
-                              fontStyle: FontStyle.italic,
-                              color: Color(0xFF5D6D68),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 40),
-                  // Login Card with Glassmorphism
-                  Center(
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(maxWidth: maxFormWidth),
-                      child: SlideTransition(
-                    position: _offsetAnimation,
-                    child: FadeTransition(
-                      opacity: _opacityAnimation,
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(28),
-                        child: BackdropFilter(
-                          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                          child: Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.all(28.0),
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                                colors: [
-                                  Colors.white.withValues(alpha: 0.15),
-                                  Colors.white.withValues(alpha: 0.05),
-                                ],
-                              ),
-                              borderRadius: BorderRadius.circular(28),
-                              border: Border.all(
-                                color: Colors.white.withValues(alpha: 0.2),
-                                width: 1.5,
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.1),
-                                  blurRadius: 30,
-                                  offset: const Offset(0, 10),
-                                ),
-                              ],
-                            ),
+                        SlideTransition(
+                          position: _offsetAnimation,
+                          child: FadeTransition(
+                            opacity: _opacityAnimation,
                             child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                // Welcome Back Header
-                                Text(
-                                  _localizations.welcomeBack,
-                                  style: TextStyle(
-                                    fontSize: 28,
-                                    fontWeight: FontWeight.w800,
-                                    color: Color(0xFF1A1A1A),
-                                    fontFamily: 'Literata',
+                                Container(
+                                  decoration: BoxDecoration(
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: const Color(
+                                          0xFF1B4D3E,
+                                        ).withValues(alpha: 0.25),
+                                        blurRadius: 24,
+                                        offset: const Offset(0, 12),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Image.asset(
+                                    'assets/images/logo.png',
+                                    width: 80,
+                                    height: 80,
                                   ),
                                 ),
-                                const SizedBox(height: 6),
+                                const SizedBox(height: 5),
                                 Text(
-                                  _localizations.signInToAccount,
+                                  _localizations.appName,
                                   style: TextStyle(
+                                    fontFamily: 'Literata',
+                                    fontSize: 36,
+                                    fontWeight: FontWeight.w900,
+                                    color: Color(0xFF1B4D3E),
+                                    letterSpacing: 2,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  _localizations.backboneOfBusiness,
+                                  style: TextStyle(
+                                    fontFamily: 'Literata',
                                     fontSize: 14,
                                     fontWeight: FontWeight.w400,
-                                    color: Colors.grey[700],
-                                    fontFamily: 'Literata',
+                                    fontStyle: FontStyle.italic,
+                                    color: Color(0xFF5D6D68),
                                   ),
                                 ),
-                                const SizedBox(height: 28),
-                                // Email field with animation
-                                SlideTransition(
-                                  position: _fieldAnimations[0],
-                                  child: FadeTransition(
-                                    opacity: _fieldFadeAnimations[0],
-                                    child: _buildAnimatedInputField(
-                                      controller: _emailOrPhoneController,
-                                      hintText: _localizations.emailAddress,
-                                      icon: Icons.mail_outline,
-                                      keyboardType: TextInputType.emailAddress,
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 40),
+                        // Login Card with Glassmorphism
+                        Center(
+                          child: ConstrainedBox(
+                            constraints: BoxConstraints(maxWidth: maxFormWidth),
+                            child: SlideTransition(
+                              position: _offsetAnimation,
+                              child: FadeTransition(
+                                opacity: _opacityAnimation,
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(28),
+                                  child: BackdropFilter(
+                                    filter: ImageFilter.blur(
+                                      sigmaX: 10,
+                                      sigmaY: 10,
                                     ),
-                                  ),
-                                ),
-                                const SizedBox(height: 16),
-                                // Password field with animation
-                                SlideTransition(
-                                  position: _fieldAnimations[1],
-                                  child: FadeTransition(
-                                    opacity: _fieldFadeAnimations[1],
-                                    child: _buildAnimatedPasswordField(),
-                                  ),
-                                ),
-                                const SizedBox(height: 12),
-                                // Forgot password with animation
-                                SlideTransition(
-                                  position: _fieldAnimations[2],
-                                  child: FadeTransition(
-                                    opacity: _fieldFadeAnimations[2],
-                                    child: Align(
-                                      alignment: Alignment.centerRight,
-                                      child: TextButton(
-                                        onPressed: () {
-                                          Navigator.of(context).push(
-                                            MaterialPageRoute(
-                                              builder: (_) =>
-                                                  const ChangePasswordPage(),
+                                    child: Container(
+                                      width: double.infinity,
+                                      padding: const EdgeInsets.all(28.0),
+                                      decoration: BoxDecoration(
+                                        gradient: LinearGradient(
+                                          begin: Alignment.topLeft,
+                                          end: Alignment.bottomRight,
+                                          colors: [
+                                            Colors.white.withValues(
+                                              alpha: 0.15,
                                             ),
-                                          );
-                                        },
-                                        style: TextButton.styleFrom(
-                                          padding: EdgeInsets.zero,
-                                          minimumSize: Size.zero,
-                                          tapTargetSize:
-                                              MaterialTapTargetSize.shrinkWrap,
+                                            Colors.white.withValues(
+                                              alpha: 0.05,
+                                            ),
+                                          ],
                                         ),
-                                        child: Text(
-                                          _localizations.forgotPasswordQuestion,
-                                          style: TextStyle(
-                                            color: Color(0xFF1B4D3E),
-                                            fontWeight: FontWeight.w600,
-                                            fontSize: 13,
-                                            fontFamily: 'Literata',
+                                        borderRadius: BorderRadius.circular(28),
+                                        border: Border.all(
+                                          color: Colors.white.withValues(
+                                            alpha: 0.2,
                                           ),
+                                          width: 1.5,
                                         ),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.black.withValues(
+                                              alpha: 0.1,
+                                            ),
+                                            blurRadius: 30,
+                                            offset: const Offset(0, 10),
+                                          ),
+                                        ],
                                       ),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(height: 24),
-                                // Sign In Button with animation
-                                SlideTransition(
-                                  position: _fieldAnimations[3],
-                                  child: FadeTransition(
-                                    opacity: _fieldFadeAnimations[3],
-                                    child: _buildSignInButton(),
-                                  ),
-                                ),
-                                const SizedBox(height: 24),
-                                // OR Divider
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: Divider(
-                                        color: Colors.grey[300],
-                                        thickness: 1,
-                                      ),
-                                    ),
-                                    Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 16,
-                                      ),
-                                      child: Text(
-                                        _localizations.orDivider,
-                                        style: TextStyle(
-                                          color: Colors.grey[600],
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w600,
-                                          letterSpacing: 1,
-                                          fontFamily: 'Literata',
-                                        ),
-                                      ),
-                                    ),
-                                    Expanded(
-                                      child: Divider(
-                                        color: Colors.grey[300],
-                                        thickness: 1,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 24),
-                                // Google Sign In Button
-                                SizedBox(
-                                  width: double.infinity,
-                                  child: OutlinedButton(
-                                    onPressed: () {},
-                                    style: OutlinedButton.styleFrom(
-                                      padding: const EdgeInsets.symmetric(
-                                        vertical: 14,
-                                      ),
-                                      side: BorderSide(
-                                        color: Colors.grey[300]!,
-                                        width: 1,
-                                      ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(16),
-                                      ),
-                                    ),
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Image.asset(
-                                          'assets/images/google.png',
-                                          width: 22,
-                                          height: 22,
-                                          errorBuilder:
-                                              (context, error, stackTrace) {
-                                                return Container(
-                                                  width: 22,
-                                                  height: 22,
-                                                  decoration: BoxDecoration(
-                                                    color: Colors.white,
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                          4,
-                                                        ),
-                                                  ),
-                                                  child: const Center(
-                                                    child: Text(
-                                                      'G',
-                                                      style: TextStyle(
-                                                        fontSize: 14,
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                        color: Colors.red,
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          // Welcome Back Header
+                                          Text(
+                                            _localizations.welcomeBack,
+                                            style: TextStyle(
+                                              fontSize: 28,
+                                              fontWeight: FontWeight.w800,
+                                              color: Color(0xFF1A1A1A),
+                                              fontFamily: 'Literata',
+                                            ),
+                                          ),
+                                          const SizedBox(height: 6),
+                                          Text(
+                                            _localizations.signInToAccount,
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w400,
+                                              color: Colors.grey[700],
+                                              fontFamily: 'Literata',
+                                            ),
+                                          ),
+                                          const SizedBox(height: 28),
+                                          // Email field with animation
+                                          SlideTransition(
+                                            position: _fieldAnimations[0],
+                                            child: FadeTransition(
+                                              opacity: _fieldFadeAnimations[0],
+                                              child: _buildAnimatedInputField(
+                                                controller:
+                                                    _emailOrPhoneController,
+                                                hintText:
+                                                    _localizations.emailAddress,
+                                                icon: Icons.mail_outline,
+                                                keyboardType:
+                                                    TextInputType.emailAddress,
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(height: 16),
+                                          // Password field with animation
+                                          SlideTransition(
+                                            position: _fieldAnimations[1],
+                                            child: FadeTransition(
+                                              opacity: _fieldFadeAnimations[1],
+                                              child:
+                                                  _buildAnimatedPasswordField(),
+                                            ),
+                                          ),
+                                          const SizedBox(height: 12),
+                                          // Forgot password with animation
+                                          SlideTransition(
+                                            position: _fieldAnimations[2],
+                                            child: FadeTransition(
+                                              opacity: _fieldFadeAnimations[2],
+                                              child: Align(
+                                                alignment:
+                                                    Alignment.centerRight,
+                                                child: TextButton(
+                                                  onPressed: () {
+                                                    Navigator.of(context).push(
+                                                      MaterialPageRoute(
+                                                        builder: (_) =>
+                                                            const ChangePasswordPage(),
                                                       ),
+                                                    );
+                                                  },
+                                                  style: TextButton.styleFrom(
+                                                    padding: EdgeInsets.zero,
+                                                    minimumSize: Size.zero,
+                                                    tapTargetSize:
+                                                        MaterialTapTargetSize
+                                                            .shrinkWrap,
+                                                  ),
+                                                  child: Text(
+                                                    _localizations
+                                                        .forgotPasswordQuestion,
+                                                    style: TextStyle(
+                                                      color: Color(0xFF1B4D3E),
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                      fontSize: 13,
+                                                      fontFamily: 'Literata',
                                                     ),
                                                   ),
-                                                );
-                                              },
-                                        ),
-                                        const SizedBox(width: 12),
-                                        Text(
-                                          _localizations.continueWithGoogle,
-                                          style: TextStyle(
-                                            color: Color(0xFF1A1A1A),
-                                            fontSize: 15,
-                                            fontWeight: FontWeight.w500,
-                                            fontFamily: 'Literata',
+                                                ),
+                                              ),
+                                            ),
                                           ),
-                                        ),
-                                      ],
+                                          const SizedBox(height: 24),
+                                          // Sign In Button with animation
+                                          SlideTransition(
+                                            position: _fieldAnimations[3],
+                                            child: FadeTransition(
+                                              opacity: _fieldFadeAnimations[3],
+                                              child: _buildSignInButton(),
+                                            ),
+                                          ),
+                                          const SizedBox(height: 24),
+                                          // OR Divider
+                                          Row(
+                                            children: [
+                                              Expanded(
+                                                child: Divider(
+                                                  color: Colors.grey[300],
+                                                  thickness: 1,
+                                                ),
+                                              ),
+                                              Padding(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 16,
+                                                    ),
+                                                child: Text(
+                                                  _localizations.orDivider,
+                                                  style: TextStyle(
+                                                    color: Colors.grey[600],
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.w600,
+                                                    letterSpacing: 1,
+                                                    fontFamily: 'Literata',
+                                                  ),
+                                                ),
+                                              ),
+                                              Expanded(
+                                                child: Divider(
+                                                  color: Colors.grey[300],
+                                                  thickness: 1,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 24),
+                                          // Google Sign In Button
+                                          SizedBox(
+                                            width: double.infinity,
+                                            child: OutlinedButton(
+                                              onPressed: () {},
+                                              style: OutlinedButton.styleFrom(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      vertical: 14,
+                                                    ),
+                                                side: BorderSide(
+                                                  color: Colors.grey[300]!,
+                                                  width: 1,
+                                                ),
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(16),
+                                                ),
+                                              ),
+                                              child: Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.center,
+                                                children: [
+                                                  Image.asset(
+                                                    'assets/images/google.png',
+                                                    width: 22,
+                                                    height: 22,
+                                                    errorBuilder:
+                                                        (
+                                                          context,
+                                                          error,
+                                                          stackTrace,
+                                                        ) {
+                                                          return Container(
+                                                            width: 22,
+                                                            height: 22,
+                                                            decoration:
+                                                                BoxDecoration(
+                                                                  color: Colors
+                                                                      .white,
+                                                                  borderRadius:
+                                                                      BorderRadius.circular(
+                                                                        4,
+                                                                      ),
+                                                                ),
+                                                            child: const Center(
+                                                              child: Text(
+                                                                'G',
+                                                                style: TextStyle(
+                                                                  fontSize: 14,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .bold,
+                                                                  color: Colors
+                                                                      .red,
+                                                                ),
+                                                              ),
+                                                            ),
+                                                          );
+                                                        },
+                                                  ),
+                                                  const SizedBox(width: 12),
+                                                  Text(
+                                                    _localizations
+                                                        .continueWithGoogle,
+                                                    style: TextStyle(
+                                                      color: Color(0xFF1A1A1A),
+                                                      fontSize: 15,
+                                                      fontWeight:
+                                                          FontWeight.w500,
+                                                      fontFamily: 'Literata',
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 30),
+                        const SizedBox(height: 40),
+                        // Sign up link
+                        SlideTransition(
+                          position: _offsetAnimation,
+                          child: FadeTransition(
+                            opacity: _opacityAnimation,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  _localizations.dontHaveAccount,
+                                  style: TextStyle(
+                                    color: Colors.grey[600],
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w400,
+                                  ),
+                                ),
+                                GestureDetector(
+                                  onTap: () {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (_) => const SignupPage(),
+                                      ),
+                                    );
+                                  },
+                                  child: Text(
+                                    _localizations.signUp,
+                                    style: TextStyle(
+                                      color: Color(0xFF1B4D3E),
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w700,
                                     ),
                                   ),
                                 ),
@@ -532,56 +607,12 @@ class _LoginPageV2State extends State<LoginPageV2>
                             ),
                           ),
                         ),
-                      ),
+                        const SizedBox(height: 40),
+                      ],
                     ),
                   ),
-                    ),
-                  ),
-                  const SizedBox(height: 30),
-                  const SizedBox(height: 40),
-                  // Sign up link
-                  SlideTransition(
-                    position: _offsetAnimation,
-                    child: FadeTransition(
-                      opacity: _opacityAnimation,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            _localizations.dontHaveAccount,
-                            style: TextStyle(
-                              color: Colors.grey[600],
-                              fontSize: 14,
-                              fontWeight: FontWeight.w400,
-                            ),
-                          ),
-                          GestureDetector(
-                            onTap: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) => const SignupPage(),
-                                ),
-                              );
-                            },
-                            child: Text(
-                              _localizations.signUp,
-                              style: TextStyle(
-                                color: Color(0xFF1B4D3E),
-                                fontSize: 14,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 40),
-                ],
-              ),
-            ),
-          ),
-        );
+                ),
+              );
             },
           ),
         ),
