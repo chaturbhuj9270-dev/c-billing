@@ -247,7 +247,7 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
         );
       }
 
-      // Sort by date descending
+      // Sort by date descending (newest first)
       combined.sort((a, b) => b.date.compareTo(a.date));
 
       // Get latest pending amount from last transaction
@@ -260,6 +260,44 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
         if (order.status != OrderStatus.cancelled.index &&
             order.status != OrderStatus.convertedToBill.index) {
           _currentPending += order.remainingAmount;
+        }
+      }
+
+      // Compute running balance for each item (bank-statement style)
+      // Walk from newest to oldest, undoing each item's effect
+      double balance = _currentPending;
+      for (int i = 0; i < combined.length; i++) {
+        combined[i].runningBalance = balance;
+        final item = combined[i];
+        if (item.type == _CombinedItemType.transaction &&
+            item.transaction != null) {
+          final tx = item.transaction!;
+          switch (tx.transactionType) {
+            case TransactionType.payment:
+              // Payment reduced balance, undo → add back
+              balance += tx.amount;
+              break;
+            case TransactionType.billCreated:
+              // Bill increased balance, undo → subtract
+              balance -= tx.amount;
+              break;
+            case TransactionType.billReturn:
+              // Return reduced balance, undo → add back
+              balance += tx.amount;
+              break;
+            case TransactionType.adjustment:
+              // Adjustment: amount could be +/-, undo it
+              balance -= tx.amount;
+              break;
+          }
+        } else if (item.type == _CombinedItemType.eventOrder &&
+            item.eventOrder != null) {
+          final order = item.eventOrder!;
+          if (order.status != OrderStatus.cancelled.index &&
+              order.status != OrderStatus.convertedToBill.index) {
+            // Event added remaining to balance, undo → subtract
+            balance -= order.remainingAmount;
+          }
         }
       }
 
@@ -601,11 +639,15 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
             item.transaction != null) {
           return _TransactionCard(
             transaction: item.transaction!,
+            runningBalance: item.runningBalance,
             onDelete: () => _deleteTransaction(item.transaction!),
           );
         } else if (item.type == _CombinedItemType.eventOrder &&
             item.eventOrder != null) {
-          return _EventOrderCard(eventOrder: item.eventOrder!);
+          return _EventOrderCard(
+            eventOrder: item.eventOrder!,
+            runningBalance: item.runningBalance,
+          );
         }
         return const SizedBox.shrink();
       },
@@ -913,9 +955,14 @@ class _FilterChip extends StatelessWidget {
 /// Transaction Card Widget
 class _TransactionCard extends StatelessWidget {
   final CustomerTransactionEntity transaction;
+  final double runningBalance;
   final VoidCallback onDelete;
 
-  const _TransactionCard({required this.transaction, required this.onDelete});
+  const _TransactionCard({
+    required this.transaction,
+    required this.runningBalance,
+    required this.onDelete,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1089,11 +1136,11 @@ class _TransactionCard extends StatelessWidget {
                         ),
                         const Spacer(),
                         Text(
-                          'Balance: ₹${transaction.balanceAfter.toStringAsFixed(0)}',
+                          'Bal: ₹${NumberFormat('#,##,##0', 'en_IN').format(runningBalance.round())}',
                           style: TextStyle(
                             fontSize: 11,
-                            fontWeight: FontWeight.w500,
-                            color: transaction.balanceAfter > 0
+                            fontWeight: FontWeight.w600,
+                            color: runningBalance > 0
                                 ? Colors.red[400]
                                 : Colors.green[400],
                             fontFamily: 'Literata',
@@ -1401,8 +1448,12 @@ class _ReceivePaymentSheetState extends State<_ReceivePaymentSheet> {
 /// Event order card widget for transaction list
 class _EventOrderCard extends StatelessWidget {
   final EventOrderEntity eventOrder;
+  final double runningBalance;
 
-  const _EventOrderCard({required this.eventOrder});
+  const _EventOrderCard({
+    required this.eventOrder,
+    required this.runningBalance,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1557,6 +1608,18 @@ class _EventOrderCard extends StatelessWidget {
                     color: Colors.grey[600],
                   ),
                 ),
+                const Spacer(),
+                Text(
+                  'Bal: ₹${NumberFormat('#,##,##0', 'en_IN').format(runningBalance.round())}',
+                  style: TextStyle(
+                    fontFamily: 'Literata',
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: runningBalance > 0
+                        ? Colors.red[400]
+                        : Colors.green[400],
+                  ),
+                ),
               ],
             ),
           ],
@@ -1617,11 +1680,13 @@ class _CombinedItem {
   final DateTime date;
   final CustomerTransactionEntity? transaction;
   final EventOrderEntity? eventOrder;
+  double runningBalance;
 
   _CombinedItem({
     required this.type,
     required this.date,
     this.transaction,
     this.eventOrder,
+    this.runningBalance = 0,
   });
 }
