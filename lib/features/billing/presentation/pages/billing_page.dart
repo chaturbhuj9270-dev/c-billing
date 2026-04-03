@@ -86,6 +86,8 @@ class _BillingPageState extends State<BillingPage> {
 
   final List<BillItem> _billItems = [];
   List<Product> _products = [];
+  List<Product> _allProducts =
+      []; // All products including zero-stock (for code lookup)
   bool _isLoading = false;
   bool _isSavingBill = false;
 
@@ -297,9 +299,13 @@ class _BillingPageState extends State<BillingPage> {
         debugPrint('[BillingPage] After sync: ${allProducts.length} products');
       }
 
-      // Filter products with available stock
-      final availableProducts = allProducts
+      // Map all products (including zero-stock) for product code lookup
+      final allMappedProducts = allProducts
           .map((entity) => Product.fromProductEntity(entity))
+          .toList();
+
+      // Filter products with available stock for display
+      final availableProducts = allMappedProducts
           .where((p) => p.currentStock > 0)
           .toList();
 
@@ -313,14 +319,16 @@ class _BillingPageState extends State<BillingPage> {
 
       if (mounted) {
         setState(() {
+          _allProducts = allMappedProducts;
           _products = availableProducts;
           _availableBatches =
               batches.where((b) => b.quantityRemaining > 0).toList()..sort(
                 (a, b) => a.purchaseDate.compareTo(b.purchaseDate),
               ); // FIFO order
-          // Build index lookup map for fast product search
+          // Build index lookup map from ALL products (not just in-stock)
+          // so product code search works even when currentStock=0 but batches have stock
           _productByIndexNo = {
-            for (final product in _products)
+            for (final product in allMappedProducts)
               if (product.indexNo > 0) product.indexNo: product,
           };
           if (showLoader) _isLoading = false;
@@ -839,6 +847,7 @@ class _BillingPageState extends State<BillingPage> {
       backgroundColor: Colors.transparent,
       builder: (ctx) => _AddItemsBottomSheet(
         products: _products,
+        allProducts: _allProducts,
         billItems: _billItems,
         availableBatches: _availableBatches,
         localizations: _localizations,
@@ -6382,6 +6391,8 @@ class _BillingPageState extends State<BillingPage> {
 /// Step 2: When tapping a product, shows batch selection for specific stock entry
 class _AddItemsBottomSheet extends StatefulWidget {
   final List<Product> products;
+  final List<Product>
+  allProducts; // All products including zero-stock (for code lookup)
   final List<BillItem> billItems;
   final List<PurchaseBatchEntity> availableBatches;
   final Function(
@@ -6406,6 +6417,7 @@ class _AddItemsBottomSheet extends StatefulWidget {
 
   const _AddItemsBottomSheet({
     required this.products,
+    required this.allProducts,
     required this.billItems,
     required this.availableBatches,
     required this.onBatchItemAdded,
@@ -6443,8 +6455,8 @@ class _AddItemsBottomSheetState extends State<_AddItemsBottomSheet> {
       if (groups.containsKey(normalizedName)) {
         groups[normalizedName]!.batches.add(batch);
       } else {
-        // Find matching product for indexNo
-        final product = widget.products.cast<Product?>().firstWhere(
+        // Find matching product for indexNo (search all products including zero-stock)
+        final product = widget.allProducts.cast<Product?>().firstWhere(
           (p) => p!.id == batch.productId,
           orElse: () => null,
         );
