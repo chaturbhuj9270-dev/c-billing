@@ -173,9 +173,7 @@ class _LoginPageV2State extends State<LoginPageV2>
               });
 
           setState(() => _loading = false);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(_localizations.loginSuccessful)),
-          );
+          _showGlassySuccessToast(_localizations.loginSuccessful);
           print('[DEBUG] Session timeout set for 2 hours');
 
           // Check subscription status before navigating
@@ -218,6 +216,151 @@ class _LoginPageV2State extends State<LoginPageV2>
         );
       }
     }
+  }
+
+  void _showGlassySuccessToast(String message) {
+    final overlay = Overlay.of(context);
+    late OverlayEntry entry;
+    final animController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    );
+    final slideAnim = Tween<Offset>(
+      begin: const Offset(0, -1.2),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: animController,
+      curve: Curves.easeOutBack,
+    ));
+    final fadeAnim = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: animController, curve: Curves.easeOut),
+    );
+
+    entry = OverlayEntry(
+      builder: (_) => Positioned(
+        top: MediaQuery.of(context).padding.top + 24,
+        left: 24,
+        right: 24,
+        child: SlideTransition(
+          position: slideAnim,
+          child: FadeTransition(
+            opacity: fadeAnim,
+            child: Material(
+              color: Colors.transparent,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(20),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 16,
+                    ),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(20),
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          Colors.white.withValues(alpha: 0.55),
+                          Colors.white.withValues(alpha: 0.30),
+                        ],
+                      ),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.6),
+                        width: 1.5,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF1B4D3E).withValues(alpha: 0.18),
+                          blurRadius: 32,
+                          offset: const Offset(0, 8),
+                          spreadRadius: -4,
+                        ),
+                        BoxShadow(
+                          color: Colors.white.withValues(alpha: 0.7),
+                          blurRadius: 1,
+                          offset: const Offset(0, -1),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: const LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [Color(0xFF2D6A4F), Color(0xFF1B4D3E)],
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFF1B4D3E)
+                                    .withValues(alpha: 0.35),
+                                blurRadius: 12,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: const Icon(
+                            Icons.check_rounded,
+                            color: Colors.white,
+                            size: 24,
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                message,
+                                style: const TextStyle(
+                                  fontFamily: 'Literata',
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFF1B4D3E),
+                                  letterSpacing: 0.3,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                _localizations.backboneOfBusiness,
+                                style: TextStyle(
+                                  fontFamily: 'Literata',
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w400,
+                                  color: const Color(0xFF1B4D3E)
+                                      .withValues(alpha: 0.6),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    overlay.insert(entry);
+    animController.forward();
+
+    Future.delayed(const Duration(milliseconds: 2200), () {
+      animController.reverse().then((_) {
+        entry.remove();
+        animController.dispose();
+      });
+    });
   }
 
   @override
