@@ -18,6 +18,7 @@ import '../../../shop/domain/entities/shop.dart';
 import '../../../../common_widgets/file_preview_page.dart';
 import 'event_order_screen.dart';
 import 'event_order_settings_page.dart';
+import 'package:c_billing/core/ui/glassy_toast.dart';
 
 /// Date filter options for event/order list
 enum DateFilter {
@@ -162,31 +163,11 @@ class _EventOrderListPageState extends State<EventOrderListPage>
             child: GestureDetector(
               onTap: () {
                 EventOrderSyncService.instance.syncNow();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Row(
-                      children: [
-                        const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Text(
-                          AppLocalizations.of(
-                            LanguageService.instance.currentLanguage,
-                          ).syncing,
-                          style: const TextStyle(fontFamily: 'Literata'),
-                        ),
-                      ],
-                    ),
-                    backgroundColor: _primaryColor,
-                    behavior: SnackBarBehavior.floating,
-                    duration: const Duration(seconds: 2),
-                  ),
+                GlassyToast.show(
+                  context,
+                  AppLocalizations.of(
+                    LanguageService.instance.currentLanguage,
+                  ).syncing,
                 );
               },
               child: Chip(
@@ -1770,7 +1751,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
     setState(() => _processingOrderId = order.id);
 
     // Clear any existing snackbars first
-    ScaffoldMessenger.of(context).clearSnackBars();
+    GlassyToast.dismiss();
 
     debugPrint(
       '[EventOrderList] Starting invoice preview for: ${order.orderName}',
@@ -1929,12 +1910,9 @@ class _EventOrderListPageState extends State<EventOrderListPage>
       _pdfService.resetGeneratingState();
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to generate invoice: ${e.toString()}'),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 4),
-          ),
+        GlassyToast.show(
+          context,
+          'Failed to generate invoice: ${e.toString()}',
         );
       }
     } finally {
@@ -1957,30 +1935,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
     setState(() => _processingOrderId = order.id);
 
     // Show loading indicator
-    ScaffoldMessenger.of(context).clearSnackBars();
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Row(
-          children: [
-            SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: Colors.white,
-              ),
-            ),
-            SizedBox(width: 12),
-            Text(
-              'Preparing to share...',
-              style: TextStyle(fontFamily: 'Literata'),
-            ),
-          ],
-        ),
-        duration: Duration(seconds: 30),
-        backgroundColor: _primaryColor,
-      ),
-    );
+    GlassyToast.show(context, 'Preparing to share...');
 
     try {
       final shop = await ShopRepository().getShopDetails().timeout(
@@ -1996,18 +1951,17 @@ class _EventOrderListPageState extends State<EventOrderListPage>
 
       // Clear loading snackbar on success
       if (mounted) {
-        ScaffoldMessenger.of(context).clearSnackBars();
+        GlassyToast.dismiss();
       }
     } catch (e) {
       debugPrint('[EventOrderList] Share error: $e');
       _pdfService.resetGeneratingState();
       if (mounted) {
-        ScaffoldMessenger.of(context).clearSnackBars();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to share: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
+        GlassyToast.dismiss();
+        GlassyToast.show(
+          context,
+          'Failed to share: ${e.toString()}',
+          isError: true,
         );
       }
     } finally {
@@ -2027,30 +1981,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
     setState(() => _processingOrderId = order.id);
 
     // Show loading indicator
-    ScaffoldMessenger.of(context).clearSnackBars();
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Row(
-          children: [
-            SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: Colors.white,
-              ),
-            ),
-            SizedBox(width: 12),
-            Text(
-              'Preparing to print...',
-              style: TextStyle(fontFamily: 'Literata'),
-            ),
-          ],
-        ),
-        duration: Duration(seconds: 30),
-        backgroundColor: _primaryColor,
-      ),
-    );
+    GlassyToast.show(context, 'Preparing to print...');
 
     try {
       final shop = await ShopRepository().getShopDetails().timeout(
@@ -2066,18 +1997,17 @@ class _EventOrderListPageState extends State<EventOrderListPage>
 
       // Clear loading snackbar on success
       if (mounted) {
-        ScaffoldMessenger.of(context).clearSnackBars();
+        GlassyToast.dismiss();
       }
     } catch (e) {
       debugPrint('[EventOrderList] Print error: $e');
       _pdfService.resetGeneratingState();
       if (mounted) {
-        ScaffoldMessenger.of(context).clearSnackBars();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to print: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
+        GlassyToast.dismiss();
+        GlassyToast.show(
+          context,
+          'Failed to print: ${e.toString()}',
+          isError: true,
         );
       }
     } finally {
@@ -2431,30 +2361,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
   Future<void> _generateReport(List<EventOrder> orders) async {
     try {
       // Show loading
-      ScaffoldMessenger.of(context).clearSnackBars();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Row(
-            children: [
-              SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: Colors.white,
-                ),
-              ),
-              SizedBox(width: 12),
-              Text(
-                'Generating report...',
-                style: TextStyle(fontFamily: 'Literata'),
-              ),
-            ],
-          ),
-          duration: Duration(seconds: 60),
-          backgroundColor: _primaryColor,
-        ),
-      );
+      GlassyToast.show(context, 'Generating report...');
 
       final isEvent = _selectedType == OrderType.event;
       final filterDesc = _getDateFilterLabel();
@@ -2505,7 +2412,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
 
       // Clear snackbar
       if (mounted) {
-        ScaffoldMessenger.of(context).clearSnackBars();
+        GlassyToast.dismiss();
       }
 
       if (!mounted) return;
@@ -2525,14 +2432,8 @@ class _EventOrderListPageState extends State<EventOrderListPage>
     } catch (e) {
       debugPrint('[EventOrderList] Report generation error: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).clearSnackBars();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to generate report: ${e.toString()}'),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 5),
-          ),
-        );
+        GlassyToast.dismiss();
+        GlassyToast.show(context, 'Failed to generate report: ${e.toString()}');
       }
     }
   }

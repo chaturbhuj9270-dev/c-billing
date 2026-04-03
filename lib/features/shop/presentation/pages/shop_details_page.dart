@@ -10,6 +10,7 @@ import '../../../../core/services/language_service.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../../offline/controllers/shop_image_cache_controller.dart';
 import '../../data/repositories/shop_repository.dart';
+import 'package:c_billing/core/ui/glassy_toast.dart';
 
 class ShopDetailsPage extends StatefulWidget {
   const ShopDetailsPage({super.key});
@@ -203,22 +204,12 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
       }, SetOptions(merge: true));
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(_localizations.shopDetailsSaved),
-            backgroundColor: const Color(0xFF4CAF50),
-          ),
-        );
+        GlassyToast.show(context, _localizations.shopDetailsSaved);
       }
     } catch (e) {
       print('[ERROR] Failed to save shop details: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        GlassyToast.show(context, 'Error: ${e.toString()}', isError: true);
       }
     } finally {
       setState(() => _isLoading = false);
@@ -273,25 +264,13 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
       });
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(_localizations.qrCodeUploaded),
-            backgroundColor: const Color(0xFF4CAF50),
-          ),
-        );
+        GlassyToast.show(context, _localizations.qrCodeUploaded);
       }
     } catch (e) {
       print('[ERROR] Failed to save QR code: $e');
       setState(() => _isUploadingQr = false);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              '${_localizations.errorUploadingQrCode}: ${e.toString()}',
-            ),
-            backgroundColor: Colors.red,
-          ),
-        );
+        GlassyToast.show(context, '${_localizations.errorUploadingQrCode}: ${e.toString()}', isError: true);
       }
     }
   }
@@ -324,12 +303,7 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
       });
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(_localizations.qrCodeRemoved),
-            backgroundColor: const Color(0xFF4CAF50),
-          ),
-        );
+        GlassyToast.show(context, _localizations.qrCodeRemoved);
       }
     } catch (e) {
       print('[ERROR] Failed to remove QR code: $e');
@@ -389,25 +363,13 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
       });
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(_localizations.logoUploaded),
-            backgroundColor: const Color(0xFF4CAF50),
-          ),
-        );
+        GlassyToast.show(context, _localizations.logoUploaded);
       }
     } catch (e) {
       print('[ERROR] Failed to save logo: $e');
       setState(() => _isUploadingLogo = false);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              '${_localizations.errorUploadingLogo}: ${e.toString()}',
-            ),
-            backgroundColor: Colors.red,
-          ),
-        );
+        GlassyToast.show(context, '${_localizations.errorUploadingLogo}: ${e.toString()}', isError: true);
       }
     }
   }
@@ -440,12 +402,7 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
       });
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(_localizations.logoRemoved),
-            backgroundColor: const Color(0xFF4CAF50),
-          ),
-        );
+        GlassyToast.show(context, _localizations.logoRemoved);
       }
     } catch (e) {
       print('[ERROR] Failed to remove logo: $e');
@@ -515,12 +472,7 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
             ElevatedButton(
               onPressed: () async {
                 if (signatureController.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Please draw your signature'),
-                      backgroundColor: Colors.orange,
-                    ),
-                  );
+                  GlassyToast.show(context, 'Please draw your signature');
                   return;
                 }
                 Navigator.of(context).pop(true);
@@ -583,25 +535,13 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
       });
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(_localizations.signatureUploaded),
-            backgroundColor: const Color(0xFF4CAF50),
-          ),
-        );
+        GlassyToast.show(context, _localizations.signatureUploaded);
       }
     } catch (e) {
       print('[ERROR] Failed to save signature: $e');
       setState(() => _isUploadingSignature = false);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              '${_localizations.errorUploadingSignature}: ${e.toString()}',
-            ),
-            backgroundColor: Colors.red,
-          ),
-        );
+        GlassyToast.show(context, '${_localizations.errorUploadingSignature}: ${e.toString()}', isError: true);
       }
     }
   }
@@ -634,12 +574,7 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
       });
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(_localizations.signatureRemoved),
-            backgroundColor: const Color(0xFF4CAF50),
-          ),
-        );
+        GlassyToast.show(context, _localizations.signatureRemoved);
       }
     } catch (e) {
       print('[ERROR] Failed to remove signature: $e');

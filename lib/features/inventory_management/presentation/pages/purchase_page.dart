@@ -28,6 +28,7 @@ import '../../../product/offline/entities/product_entity.dart';
 import '../../../../core/services/inventory_integration_service.dart';
 import 'purchase_settings_page.dart';
 import 'invoice_scanner_page.dart';
+import 'package:c_billing/core/ui/glassy_toast.dart';
 
 class PurchasePage extends StatefulWidget {
   final bool isEmbedded;
@@ -655,14 +656,10 @@ class _PurchasePageState extends State<PurchasePage>
       final sgstVal = double.tryParse(sgstController.text) ?? 0.0;
       final hsnVal = hsnController.text.trim();
       if ((cgstVal > 0 || sgstVal > 0) && hsnVal.isEmpty) {
-        ScaffoldMessenger.of(sheetContext).showSnackBar(
-          SnackBar(
-            content: Text(
-              _localizations.hsnCodeRequired,
-              style: const TextStyle(fontFamily: 'Literata'),
-            ),
-            backgroundColor: Colors.red,
-          ),
+        GlassyToast.show(
+          sheetContext,
+          _localizations.hsnCodeRequired,
+          isError: true,
         );
         return;
       }
@@ -742,50 +739,15 @@ class _PurchasePageState extends State<PurchasePage>
           });
         }
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      '#${newProduct.indexNo}',
-                      style: const TextStyle(
-                        fontFamily: 'Literata',
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      '${_localizations.productAddedSuccessfully} - ${newProduct.name}',
-                      style: const TextStyle(fontFamily: 'Literata'),
-                    ),
-                  ),
-                ],
-              ),
-              backgroundColor: Colors.green,
-              duration: const Duration(seconds: 4),
-            ),
-          );
+          GlassyToast.show(context, '#${newProduct.indexNo}');
         }
       }
     } catch (e) {
       if (mounted && sheetContext.mounted) {
-        ScaffoldMessenger.of(sheetContext).showSnackBar(
-          SnackBar(
-            content: Text('${_localizations.error}: $e'),
-            backgroundColor: Colors.red,
-          ),
+        GlassyToast.show(
+          sheetContext,
+          '${_localizations.error}: $e',
+          isError: true,
         );
       }
     }
@@ -2232,16 +2194,12 @@ class _PurchasePageState extends State<PurchasePage>
 
   Future<void> _processPurchase() async {
     if (_selectedProduct == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_localizations.pleaseSelectProduct)),
-      );
+      GlassyToast.show(context, _localizations.pleaseSelectProduct);
       return;
     }
 
     if (_selectedSupplier == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_localizations.pleaseSelectSupplier)),
-      );
+      GlassyToast.show(context, _localizations.pleaseSelectSupplier);
       return;
     }
 
@@ -2251,9 +2209,7 @@ class _PurchasePageState extends State<PurchasePage>
     if (_productionDate != null &&
         _expiryDate != null &&
         _expiryDate!.isBefore(_productionDate!)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_localizations.expiryDateAfterProduction)),
-      );
+      GlassyToast.show(context, _localizations.expiryDateAfterProduction);
       return;
     }
 
@@ -2262,23 +2218,17 @@ class _PurchasePageState extends State<PurchasePage>
     final salesPrice = double.tryParse(_salesPriceController.text);
 
     if (quantity == null || quantity <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_localizations.pleaseEnterValidQuantity)),
-      );
+      GlassyToast.show(context, _localizations.pleaseEnterValidQuantity);
       return;
     }
 
     if (price == null || price < 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_localizations.pleaseEnterValidPurchasePrice)),
-      );
+      GlassyToast.show(context, _localizations.pleaseEnterValidPurchasePrice);
       return;
     }
 
     if (salesPrice == null || salesPrice < 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_localizations.pleaseEnterValidSalesPrice)),
-      );
+      GlassyToast.show(context, _localizations.pleaseEnterValidSalesPrice);
       return;
     }
 
@@ -2353,12 +2303,7 @@ class _PurchasePageState extends State<PurchasePage>
       PurchaseBatchSyncService.instance.syncNow();
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(_localizations.purchaseRecorded),
-            backgroundColor: Colors.green,
-          ),
-        );
+        GlassyToast.show(context, _localizations.purchaseRecorded);
 
         // Notify dashboard to refresh (purchase affects product stock)
         DashboardRefreshService.instance.notifyDataChanged(
@@ -2390,9 +2335,7 @@ class _PurchasePageState extends State<PurchasePage>
     } catch (e) {
       print('[ERROR] Failed to process purchase: $e');
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('${_localizations.error}: $e')));
+        GlassyToast.show(context, '${_localizations.error}: $e');
       }
     } finally {
       setState(() => _isLoading = false);
@@ -2826,8 +2769,10 @@ class _PurchasePageState extends State<PurchasePage>
 
     if (firstName.isEmpty || lastName.isEmpty) {
       if (dialogContext.mounted) {
-        ScaffoldMessenger.of(dialogContext).showSnackBar(
-          SnackBar(content: Text(_localizations.firstLastNameRequired)),
+        GlassyToast.show(
+          dialogContext,
+          _localizations.firstLastNameRequired,
+          isError: true,
         );
       }
       return;
@@ -2858,18 +2803,11 @@ class _PurchasePageState extends State<PurchasePage>
       );
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(_localizations.supplierAddedSuccessfully),
-            backgroundColor: Colors.green,
-          ),
-        );
+        GlassyToast.show(context, _localizations.supplierAddedSuccessfully);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${_localizations.errorAddingSupplier}: $e')),
-        );
+        GlassyToast.show(context, '${_localizations.errorAddingSupplier}: $e');
       }
     }
   }
@@ -3091,8 +3029,10 @@ class _PurchasePageState extends State<PurchasePage>
 
     if (companyName.isEmpty) {
       if (dialogContext.mounted) {
-        ScaffoldMessenger.of(dialogContext).showSnackBar(
-          SnackBar(content: Text(_localizations.companyNameIsRequired)),
+        GlassyToast.show(
+          dialogContext,
+          _localizations.companyNameIsRequired,
+          isError: true,
         );
       }
       return;
@@ -3124,18 +3064,11 @@ class _PurchasePageState extends State<PurchasePage>
       );
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(_localizations.companyAddedSuccessfully),
-            backgroundColor: Colors.green,
-          ),
-        );
+        GlassyToast.show(context, _localizations.companyAddedSuccessfully);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error adding company: $e')));
+        GlassyToast.show(context, 'Error adding company: $e');
       }
     }
   }

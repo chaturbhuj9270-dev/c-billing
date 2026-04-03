@@ -8,6 +8,7 @@ import 'package:c_billing/features/customer/data/repositories/customer_transacti
 import 'package:c_billing/core/services/customer_transaction_service.dart';
 import 'package:c_billing/features/event_order/offline/controllers/event_order_offline_controller.dart';
 import 'package:c_billing/features/event_order/domain/entities/event_order.dart';
+import 'package:c_billing/core/ui/glassy_toast.dart';
 
 /// Page to display customer details, pending balance, and transaction history
 /// Also provides functionality to receive payments
@@ -1039,25 +1040,16 @@ class _ReceivePaymentSheetState extends State<ReceivePaymentSheet> {
 
       if (result.success) {
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Payment of ₹${_enteredAmount.toStringAsFixed(2)} received successfully',
-              style: const TextStyle(fontFamily: 'Literata'),
-            ),
-            backgroundColor: Colors.green,
-          ),
+        GlassyToast.show(
+          context,
+          'Payment of ₹${_enteredAmount.toStringAsFixed(2)} recorded',
         );
         widget.onPaymentReceived();
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              result.errorMessage ?? 'Failed to process payment',
-              style: const TextStyle(fontFamily: 'Literata'),
-            ),
-            backgroundColor: Colors.red,
-          ),
+        GlassyToast.show(
+          context,
+          result.errorMessage ?? 'Failed to process payment',
+          isError: true,
         );
       }
     } finally {

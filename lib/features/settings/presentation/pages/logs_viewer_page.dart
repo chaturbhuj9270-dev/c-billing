@@ -7,6 +7,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:c_billing/core/services/app_logger.dart';
 import 'package:c_billing/core/localization/app_localizations.dart';
 import 'package:c_billing/core/services/language_service.dart';
+import 'package:c_billing/core/ui/glassy_toast.dart';
 
 class LogsViewerPage extends StatefulWidget {
   const LogsViewerPage({super.key});
@@ -96,12 +97,7 @@ class _LogsViewerPageState extends State<LogsViewerPage> {
       );
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('${_localizations.errorSharingLogs}: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        GlassyToast.show(context, '${_localizations.errorSharingLogs}: $e', isError: true);
       }
     }
   }
@@ -109,12 +105,7 @@ class _LogsViewerPageState extends State<LogsViewerPage> {
   void _copyToClipboard() {
     final logsText = _logger.exportLogs();
     Clipboard.setData(ClipboardData(text: logsText));
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(_localizations.logsCopied),
-        duration: Duration(seconds: 2),
-      ),
-    );
+    GlassyToast.show(context, _localizations.logsCopied);
   }
 
   void _clearLogs() {

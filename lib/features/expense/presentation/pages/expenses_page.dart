@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../offline/controllers/expense_offline_controller.dart';
 import '../../offline/entities/expense_entity.dart';
 import '../../data/services/expense_sync_service.dart';
+import 'package:c_billing/core/ui/glassy_toast.dart';
 
 /// Date filter options for expenses
 enum ExpenseDateFilter { all, thisMonth, thisYear, lastYear, custom }
@@ -893,13 +894,7 @@ class _ExpensesPageState extends State<ExpensesPage>
       _loadExpenses();
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Expense added successfully'),
-            backgroundColor: Colors.green.shade600,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
+        GlassyToast.show(context, 'Expense added successfully');
       }
     }
   }
@@ -967,13 +962,7 @@ class _ExpensesPageState extends State<ExpensesPage>
       _loadExpenses();
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Expense deleted'),
-            backgroundColor: Colors.red.shade600,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
+        GlassyToast.show(context, 'Expense deleted', isError: true);
       }
     }
   }

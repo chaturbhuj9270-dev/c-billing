@@ -9,6 +9,7 @@ import 'package:c_billing/core/localization/app_localizations.dart';
 import 'package:c_billing/core/services/language_service.dart';
 import 'package:c_billing/common_widgets/file_preview_page.dart';
 import 'package:intl/intl.dart';
+import 'package:c_billing/core/ui/glassy_toast.dart';
 
 class ReportPreviewScreen extends StatefulWidget {
   final List<ReportItem> reportItems;
@@ -155,29 +156,11 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
     final selected = _editableItems.where((e) => e.isSelected).toList();
 
     if (selected.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              const Icon(
-                Icons.warning_amber_rounded,
-                color: Colors.white,
-                size: 20,
-              ),
-              const SizedBox(width: 12),
-              Text(
-                _localizations.pleaseSelectAtLeastOneItem,
-                style: const TextStyle(fontFamily: 'Literata'),
-              ),
-            ],
-          ),
-          backgroundColor: Colors.orange[700],
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          margin: const EdgeInsets.all(16),
-        ),
+      GlassyToast.show(
+        context,
+        _localizations.pleaseSelectAtLeastOneItem,
+        isError: true,
+        icon: Icons.warning_amber_rounded,
       );
       return;
     }
@@ -228,28 +211,7 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.error_outline, color: Colors.white, size: 20),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    'Error: $e',
-                    style: const TextStyle(fontFamily: 'Literata'),
-                  ),
-                ),
-              ],
-            ),
-            backgroundColor: Colors.red[700],
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            margin: const EdgeInsets.all(16),
-          ),
-        );
+        GlassyToast.show(context, 'Error: $e', isError: true);
       }
     } finally {
       if (mounted) {

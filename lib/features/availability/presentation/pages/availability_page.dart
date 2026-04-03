@@ -12,6 +12,7 @@ import 'package:c_billing/features/inventory_management/domain/entities/grouped_
 import 'package:c_billing/features/inventory_management/offline/controllers/purchase_batch_offline_controller.dart';
 import 'package:c_billing/features/inventory_management/offline/entities/purchase_batch_entity.dart';
 import 'package:c_billing/features/availability/presentation/pages/report_preview_screen.dart';
+import 'package:c_billing/core/ui/glassy_toast.dart';
 
 class AvailabilityPage extends StatefulWidget {
   final bool isEmbedded;
@@ -444,12 +445,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
   Future<void> _openPreviewScreen(ReportFormat format) async {
     try {
       if (_filteredGroupedProducts.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(_localizations.noProductsForFilter),
-            backgroundColor: Colors.orange,
-          ),
-        );
+        GlassyToast.show(context, _localizations.noProductsForFilter);
         return;
       }
 
@@ -514,12 +510,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
       );
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('${_localizations.errorOpeningPreview}: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        GlassyToast.show(context, '${_localizations.errorOpeningPreview}: $e', isError: true);
       }
     }
   }
@@ -578,9 +569,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error loading products: $e')));
+        GlassyToast.show(context, 'Error loading products: $e');
       }
     }
   }

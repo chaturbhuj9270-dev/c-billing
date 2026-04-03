@@ -50,6 +50,7 @@ import 'package:c_billing/features/customer/presentation/pages/enhanced_customer
 import 'package:c_billing/features/billing/presentation/widgets/barcode_scanner_sheet.dart';
 import 'package:c_billing/features/customer/offline/controllers/customer_transaction_offline_controller.dart';
 import 'package:c_billing/features/customer/domain/entities/customer_transaction.dart';
+import 'package:c_billing/core/ui/glassy_toast.dart';
 
 class BillingPage extends StatefulWidget {
   final bool isEmbedded;
@@ -1356,30 +1357,12 @@ class _BillingPageState extends State<BillingPage> {
       );
       _pdfGenerationInProgress = true;
 
-      // Show loading snackbar (non-blocking like purchase page)
+      // Show loading toast (non-blocking like purchase page)
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  _localizations.preparingPdf,
-                  style: const TextStyle(fontFamily: 'Literata'),
-                ),
-              ],
-            ),
-            duration: const Duration(seconds: 60),
-            backgroundColor: const Color(0xFF1B4D3E),
-          ),
+        GlassyToast.show(
+          context,
+          _localizations.preparingPdf,
+          icon: Icons.hourglass_top_rounded,
         );
       }
 
@@ -1423,7 +1406,7 @@ class _BillingPageState extends State<BillingPage> {
 
       // Hide loading snackbar
       if (mounted) {
-        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        GlassyToast.dismiss();
       }
 
       if (!mounted) {
@@ -1452,7 +1435,7 @@ class _BillingPageState extends State<BillingPage> {
 
       // Hide loading snackbar
       if (mounted) {
-        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        GlassyToast.dismiss();
       }
 
       // Small delay before showing error
@@ -1481,17 +1464,7 @@ class _BillingPageState extends State<BillingPage> {
     SnackBarAction? action,
   }) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message, style: const TextStyle(fontFamily: 'Literata')),
-        backgroundColor: isError ? Colors.red[600] : Colors.green[600],
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        margin: const EdgeInsets.all(16),
-        duration: Duration(seconds: isError ? 6 : 4),
-        action: action,
-      ),
-    );
+    GlassyToast.show(context, message, isError: isError);
   }
 
   @override
@@ -8373,15 +8346,9 @@ class _BatchSelectionSheetState extends State<_BatchSelectionSheet> {
                   widget.onItemRemoved(uniqueKey);
                   setState(() {});
                   Navigator.pop(ctx);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        '${batch.productName} ${widget.localizations.delete}d',
-                        style: const TextStyle(fontFamily: 'Literata'),
-                      ),
-                      backgroundColor: Colors.green[600],
-                      behavior: SnackBarBehavior.floating,
-                    ),
+                  GlassyToast.show(
+                    context,
+                    '${batch.productName} ${widget.localizations.delete}d',
                   );
                 },
                 icon: Icon(
@@ -8421,15 +8388,9 @@ class _BatchSelectionSheetState extends State<_BatchSelectionSheet> {
                           widget.onItemRemoved(uniqueKey);
                           setState(() {});
                           Navigator.pop(ctx);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                '${batch.productName} ${widget.localizations.delete}d',
-                                style: const TextStyle(fontFamily: 'Literata'),
-                              ),
-                              backgroundColor: Colors.green[600],
-                              behavior: SnackBarBehavior.floating,
-                            ),
+                          GlassyToast.show(
+                            context,
+                            '${batch.productName} ${widget.localizations.delete}d',
                           );
                         } else {
                           // Update quantity
@@ -8821,17 +8782,10 @@ class _BatchSelectionSheetState extends State<_BatchSelectionSheet> {
                                     _selectedSellUnit,
                                   );
                                 } else {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        '${widget.localizations.quantityExceedsStock} (0)',
-                                        style: const TextStyle(
-                                          fontFamily: 'Literata',
-                                        ),
-                                      ),
-                                      backgroundColor: Colors.red[600],
-                                      behavior: SnackBarBehavior.floating,
-                                    ),
+                                  GlassyToast.show(
+                                    context,
+                                    '${widget.localizations.quantityExceedsStock} (${maxAvailable > 0 ? maxAvailable : 0} $_selectedSellUnit)',
+                                    isError: true,
                                   );
                                 }
                               },

@@ -26,6 +26,7 @@ import 'purchase_page.dart';
 import 'purchase_settings_page.dart';
 import 'purchase_report_settings_page.dart';
 import 'invoice_scanner_page.dart';
+import 'package:c_billing/core/ui/glassy_toast.dart';
 
 /// Enhanced Purchase Screen with purchase list as default view
 /// Features: Modern UI, filters, FAB for adding purchases, real-time updates
@@ -782,14 +783,10 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
 
                     // Validate: quantity cannot be less than already consumed
                     if (newQuantity < consumed) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            'Quantity cannot be less than $consumed (already sold)',
-                            style: const TextStyle(fontFamily: 'Literata'),
-                          ),
-                          backgroundColor: Colors.red,
-                        ),
+                      GlassyToast.show(
+                        context,
+                        'Quantity cannot be less than $consumed (already sold)',
+                        isError: true,
                       );
                       return;
                     }
@@ -824,25 +821,16 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
 
                     if (mounted) {
                       Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            _localizations.purchaseUpdatedSuccessfully,
-                            style: const TextStyle(fontFamily: 'Literata'),
-                          ),
-                          backgroundColor: const Color(0xFF1B4D3E),
-                        ),
+                      GlassyToast.show(
+                        context,
+                        _localizations.purchaseUpdatedSuccessfully,
                       );
                     }
                   } catch (e) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          '${_localizations.errorUpdatingPurchase}: $e',
-                          style: const TextStyle(fontFamily: 'Literata'),
-                        ),
-                        backgroundColor: Colors.red,
-                      ),
+                    GlassyToast.show(
+                      context,
+                      '${_localizations.errorUpdatingPurchase}: $e',
+                      isError: true,
                     );
                   }
                 },
@@ -1288,25 +1276,16 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
 
                   if (mounted) {
                     Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          _localizations.purchaseDeletedSuccessfully,
-                          style: const TextStyle(fontFamily: 'Literata'),
-                        ),
-                        backgroundColor: const Color(0xFF1B4D3E),
-                      ),
+                    GlassyToast.show(
+                      context,
+                      _localizations.purchaseDeletedSuccessfully,
                     );
                   }
                 } catch (e) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        '${_localizations.errorDeletingPurchase}: $e',
-                        style: const TextStyle(fontFamily: 'Literata'),
-                      ),
-                      backgroundColor: Colors.red,
-                    ),
+                  GlassyToast.show(
+                    context,
+                    '${_localizations.errorDeletingPurchase}: $e',
+                    isError: true,
                   );
                 }
               },
@@ -1533,12 +1512,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
     if (filtered.isEmpty) {
       debugPrint('[PurchaseReport] No data - showing snackbar');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('No purchase data to generate report'),
-            duration: Duration(seconds: 2),
-          ),
-        );
+        GlassyToast.show(context, 'No purchase data to generate report');
       }
       return;
     }
@@ -1547,25 +1521,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
 
     // Show loading indicator
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Row(
-            children: [
-              SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: Colors.white,
-                ),
-              ),
-              SizedBox(width: 12),
-              Text('Generating PDF report...'),
-            ],
-          ),
-          duration: Duration(seconds: 30),
-        ),
-      );
+      GlassyToast.show(context, 'Generating PDF report...');
     }
 
     try {
@@ -1588,7 +1544,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
 
       // Dismiss loading snackbar
       if (mounted) {
-        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        GlassyToast.dismiss();
       }
 
       if (!mounted) {
@@ -1615,14 +1571,8 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
       debugPrint('[PurchaseReport] Error: $e');
       debugPrint('[PurchaseReport] Stack: $stack');
       if (mounted) {
-        ScaffoldMessenger.of(context).hideCurrentSnackBar();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to generate report: $e'),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 4),
-          ),
-        );
+        GlassyToast.dismiss();
+        GlassyToast.show(context, 'Failed to generate report: $e');
       }
     } finally {
       _isGeneratingReport = false;

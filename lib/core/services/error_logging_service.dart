@@ -5,6 +5,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:async';
 import 'dart:io';
+import 'package:c_billing/core/ui/glassy_toast.dart';
 
 /// Service for logging and collecting UI/Flutter errors
 class ErrorLoggingService {
@@ -213,12 +214,7 @@ class ErrorLoggingService {
             onPressed: () {
               ErrorLoggingService.instance.clearLogs();
               Navigator.of(dialogContext).pop();
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Logs cleared'),
-                  backgroundColor: Colors.green,
-                ),
-              );
+              GlassyToast.show(context, 'Logs cleared');
             },
             child: const Text(
               'Clear',
@@ -253,12 +249,7 @@ class ErrorLoggingService {
                     Navigator.of(dialogContext).pop();
                   }
                   if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Logs copied to clipboard'),
-                        backgroundColor: Color(0xFF2E7D32),
-                      ),
-                    );
+                    GlassyToast.show(context, 'Logs copied to clipboard');
                   }
                 },
                 icon: const Icon(

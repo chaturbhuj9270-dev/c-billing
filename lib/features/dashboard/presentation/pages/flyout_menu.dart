@@ -14,6 +14,7 @@ import '../../../inventory_management/presentation/pages/enhanced_purchase_scree
 import '../../../inventory_management/presentation/pages/enhanced_product_page.dart';
 import '../../../shop/presentation/pages/shop_details_page.dart';
 import '../../../expense/presentation/pages/expenses_page.dart';
+import 'package:c_billing/core/ui/glassy_toast.dart';
 
 class FlyoutMenu extends StatefulWidget {
   const FlyoutMenu({super.key});
@@ -187,21 +188,9 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
       setState(() {
         _biometricLockEnabled = enabled;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            enabled
+      GlassyToast.show(context, enabled
                 ? _localizations.biometricEnabled
-                : _localizations.biometricDisabled,
-          ),
-          backgroundColor: const Color(0xFF2E7D32),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-          duration: const Duration(seconds: 2),
-        ),
-      );
+                : _localizations.biometricDisabled);
     }
   }
 
@@ -221,9 +210,7 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
         case 'Home':
           break;
         case 'Invoices':
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Invoices page coming soon')),
-          );
+          GlassyToast.show(context, 'Invoices page coming soon');
           break;
         case 'Clients':
           Navigator.of(context).push(
@@ -251,9 +238,7 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
           );
           break;
         case 'Reports':
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Reports page coming soon')),
-          );
+          GlassyToast.show(context, 'Reports page coming soon');
           break;
         case 'Profile':
           Navigator.of(
@@ -307,17 +292,7 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
             setState(() {
               _selectedLanguage = language;
             });
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('${_localizations.languageChangedTo} $language'),
-                backgroundColor: const Color(0xFF2E7D32),
-                behavior: SnackBarBehavior.floating,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                duration: const Duration(seconds: 2),
-              ),
-            );
+            GlassyToast.show(context, '${_localizations.languageChangedTo} $language');
           }
         },
       ),

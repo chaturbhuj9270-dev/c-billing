@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
 import '../../../../core/services/barcode_service.dart';
+import 'package:c_billing/core/ui/glassy_toast.dart';
 
 /// A beautiful bottom sheet for scanning barcodes for fast billing
 /// Features:
@@ -182,35 +183,8 @@ class _BarcodeScannerSheetState extends State<BarcodeScannerSheet>
 
   void _showScanFeedback(bool success, String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).hideCurrentSnackBar();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            Icon(
-              success ? Icons.check_circle_rounded : Icons.error_rounded,
-              color: Colors.white,
-              size: 20,
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                success ? 'Added: $message' : 'Product not found: $message',
-                style: const TextStyle(
-                  fontFamily: 'Literata',
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ],
-        ),
-        backgroundColor: success ? const Color(0xFF1B4D3E) : Colors.red[700],
-        behavior: SnackBarBehavior.floating,
-        margin: const EdgeInsets.fromLTRB(16, 0, 16, 100),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        duration: const Duration(seconds: 2),
-      ),
-    );
+    GlassyToast.dismiss();
+    GlassyToast.show(context, success ? 'Added: $message' : 'Product not found: $message', isError: true);
   }
 
   void _toggleFlash() async {
@@ -391,7 +365,7 @@ class _BarcodeScannerSheetState extends State<BarcodeScannerSheet>
             child: InkWell(
               borderRadius: BorderRadius.circular(10),
               onTap: () {
-                ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                GlassyToast.dismiss();
                 if (widget.onClose != null) {
                   widget.onClose!();
                 } else {
@@ -877,37 +851,8 @@ class _BarcodeScannerSheetState extends State<BarcodeScannerSheet>
 
     // Show feedback only if still mounted
     if (mounted) {
-      ScaffoldMessenger.of(context).hideCurrentSnackBar();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              const Icon(
-                Icons.remove_circle_rounded,
-                color: Colors.white,
-                size: 20,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  'Removed: ${item.productName}',
-                  style: const TextStyle(
-                    fontFamily: 'Literata',
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          backgroundColor: Colors.orange[700],
-          behavior: SnackBarBehavior.floating,
-          margin: const EdgeInsets.fromLTRB(16, 0, 16, 100),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          duration: const Duration(seconds: 1),
-        ),
-      );
+      GlassyToast.dismiss();
+      GlassyToast.show(context, 'Removed: ${item.productName}');
     }
   }
 
@@ -969,7 +914,7 @@ class _BarcodeScannerSheetState extends State<BarcodeScannerSheet>
                 borderRadius: BorderRadius.circular(12),
                 onTap: () {
                   // Dismiss any active snackbars before closing
-                  ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                  GlassyToast.dismiss();
                   if (widget.onClose != null) {
                     widget.onClose!();
                   } else {

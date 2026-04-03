@@ -9,6 +9,7 @@ import '../../../../core/services/session_manager.dart';
 import '../../../../core/services/dashboard_refresh_service.dart';
 import '../../data/services/purchase_return_service.dart';
 import '../../domain/entities/purchase_return.dart';
+import 'package:c_billing/core/ui/glassy_toast.dart';
 
 // ──────────────────────────────────────────────────────────
 // A premium Purchase Return screen with:
@@ -346,15 +347,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen>
 
   void _showSnackbar(String msg, bool isError) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(msg, style: const TextStyle(fontFamily: 'Literata')),
-        backgroundColor: isError ? Colors.red : const Color(0xFF1B4D3E),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        margin: const EdgeInsets.all(16),
-      ),
-    );
+    GlassyToast.show(context, msg);
   }
 
   // ━━━━━━━━━━━━ BUILD ━━━━━━━━━━━━

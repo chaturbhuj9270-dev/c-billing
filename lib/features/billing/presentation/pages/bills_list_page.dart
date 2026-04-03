@@ -27,6 +27,7 @@ import 'package:c_billing/features/billing/data/services/bill_sync_service.dart'
 import 'package:c_billing/features/billing/data/services/bill_report_pdf_generator.dart';
 import 'package:c_billing/common_widgets/file_preview_page.dart';
 import 'package:c_billing/features/billing/presentation/pages/bill_report_settings_page.dart';
+import 'package:c_billing/core/ui/glassy_toast.dart';
 
 /// Quick date filter options for bill history
 enum _BillDateFilter { none, today, thisWeek, thisMonth, thisYear, custom }
@@ -291,12 +292,7 @@ class _BillsListPageState extends State<BillsListPage>
       debugPrint('[BillsListPage] ERROR generating PDF preview: $e');
       debugPrint('[BillsListPage] Stack trace: $stack');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('${_localizations.errorGeneratingPdf}: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        GlassyToast.show(context, '${_localizations.errorGeneratingPdf}: $e', isError: true);
       }
     } finally {
       debugPrint('[BillsListPage] Finally block - resetting state');
@@ -329,12 +325,7 @@ class _BillsListPageState extends State<BillsListPage>
     } catch (e) {
       debugPrint('[BillsListPage] ERROR in _shareBillAsPdf: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('${_localizations.errorSharingBillGeneric}: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        GlassyToast.show(context, '${_localizations.errorSharingBillGeneric}: $e', isError: true);
       }
     } finally {
       if (mounted) setState(() => _isProcessingPdf = false);
@@ -358,34 +349,12 @@ class _BillsListPageState extends State<BillsListPage>
       );
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              '${_localizations.pdfSaved}: ${file.path.split('/').last}',
-            ),
-            backgroundColor: const Color(0xFF1B4D3E),
-            duration: const Duration(seconds: 3),
-            action: SnackBarAction(
-              label: _localizations.share,
-              textColor: Colors.white,
-              onPressed: () async {
-                await Share.shareXFiles([
-                  XFile(file.path),
-                ], text: 'Bill ${bill.billNumber}');
-              },
-            ),
-          ),
-        );
+        GlassyToast.show(context, '${_localizations.pdfSaved}: ${file.path.split('/').last}');
       }
     } catch (e) {
       debugPrint('[BillsListPage] ERROR in _saveBillAsPdf: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('${_localizations.errorSavingPdfGeneric}: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        GlassyToast.show(context, '${_localizations.errorSavingPdfGeneric}: $e', isError: true);
       }
     } finally {
       if (mounted) setState(() => _isProcessingPdf = false);
@@ -409,12 +378,7 @@ class _BillsListPageState extends State<BillsListPage>
     if (filtered.isEmpty) {
       debugPrint('[BillReport] No data - showing snackbar');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(_localizations.noBillDataForReport),
-            duration: const Duration(seconds: 2),
-          ),
-        );
+        GlassyToast.show(context, _localizations.noBillDataForReport);
       }
       return;
     }
@@ -423,25 +387,7 @@ class _BillsListPageState extends State<BillsListPage>
 
     // Show loading indicator
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              const SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: Colors.white,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Text(_localizations.generatingBillReport),
-            ],
-          ),
-          duration: const Duration(seconds: 30),
-        ),
-      );
+      GlassyToast.show(context, _localizations.generatingBillReport);
     }
 
     try {
@@ -470,7 +416,7 @@ class _BillsListPageState extends State<BillsListPage>
 
       // Dismiss loading snackbar
       if (mounted) {
-        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        GlassyToast.dismiss();
       }
 
       if (!mounted) {
@@ -497,14 +443,8 @@ class _BillsListPageState extends State<BillsListPage>
       debugPrint('[BillReport] Error: $e');
       debugPrint('[BillReport] Stack: $stack');
       if (mounted) {
-        ScaffoldMessenger.of(context).hideCurrentSnackBar();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('${_localizations.failedToGenerateReport}: $e'),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 4),
-          ),
-        );
+        GlassyToast.dismiss();
+        GlassyToast.show(context, '${_localizations.failedToGenerateReport}: $e');
       }
     } finally {
       _isGeneratingReport = false;
@@ -583,9 +523,7 @@ class _BillsListPageState extends State<BillsListPage>
     } catch (e) {
       setState(() => _isLoading = false);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${_localizations.errorLoadingBills}: $e')),
-        );
+        GlassyToast.show(context, '${_localizations.errorLoadingBills}: $e');
       }
     }
   }
@@ -804,12 +742,7 @@ class _BillsListPageState extends State<BillsListPage>
     } catch (e) {
       debugPrint('[BillsListPage] ERROR in _shareBillAsPdfWithData: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('${_localizations.errorSharingBillGeneric}: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        GlassyToast.show(context, '${_localizations.errorSharingBillGeneric}: $e', isError: true);
       }
     } finally {
       if (mounted) setState(() => _isProcessingPdf = false);
@@ -833,34 +766,12 @@ class _BillsListPageState extends State<BillsListPage>
       );
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              '${_localizations.pdfSaved}: ${file.path.split('/').last}',
-            ),
-            backgroundColor: const Color(0xFF1B4D3E),
-            duration: const Duration(seconds: 3),
-            action: SnackBarAction(
-              label: _localizations.share,
-              textColor: Colors.white,
-              onPressed: () async {
-                await Share.shareXFiles([
-                  XFile(file.path),
-                ], text: 'Bill ${printData.billNumber}');
-              },
-            ),
-          ),
-        );
+        GlassyToast.show(context, '${_localizations.pdfSaved}: ${file.path.split('/').last}');
       }
     } catch (e) {
       debugPrint('[BillsListPage] ERROR in _saveBillAsPdfWithData: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('${_localizations.errorSavingPdfGeneric}: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        GlassyToast.show(context, '${_localizations.errorSavingPdfGeneric}: $e', isError: true);
       }
     } finally {
       if (mounted) setState(() => _isProcessingPdf = false);
@@ -883,12 +794,7 @@ class _BillsListPageState extends State<BillsListPage>
     } catch (e) {
       debugPrint('[BillsListPage] ERROR in _printBillWithData: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('${_localizations.errorPrintingBill}: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        GlassyToast.show(context, '${_localizations.errorPrintingBill}: $e', isError: true);
       }
     } finally {
       if (mounted) setState(() => _isProcessingPdf = false);
@@ -3631,20 +3537,7 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
       debugPrint('[BillDetailsDialog] Stack trace: $stack');
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              '${_localizations.failedToGeneratePdf}: ${e.toString()}',
-            ),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 6),
-            action: SnackBarAction(
-              label: _localizations.retry,
-              textColor: Colors.white,
-              onPressed: () => _showPdfPreview(),
-            ),
-          ),
-        );
+        GlassyToast.show(context, '${_localizations.failedToGeneratePdf}: ${e.toString()}');
       }
     } finally {
       debugPrint('[BillDetailsDialog] Finally block - resetting state');

@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:c_billing/core/services/purchase_settings_service.dart';
+import 'package:c_billing/core/ui/glassy_toast.dart';
 
 class PurchaseSettingsPage extends StatefulWidget {
   const PurchaseSettingsPage({super.key});
@@ -567,20 +568,11 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
   // Handle unit selection
   void _handleUnitSelection(String unit, bool selected, bool isDefault) async {
     if (!selected && (_availableUnits.length <= 1 || isDefault)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            isDefault
-                ? 'Cannot remove the default unit. Change the default first.'
-                : 'At least one unit must be selected.',
-            style: const TextStyle(fontFamily: 'Literata'),
-          ),
-          backgroundColor: const Color(0xFFFF6B6B),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-        ),
+      GlassyToast.show(
+        context,
+        isDefault
+            ? 'Cannot remove the default unit. Change the default first.'
+            : 'At least one unit must be selected.',
       );
       return;
     }
@@ -765,20 +757,11 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
     bool isDefault,
   ) async {
     if (!selected && (_warrantyOptions.length <= 1 || isDefault)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            isDefault
-                ? 'Cannot remove the default warranty. Change the default first.'
-                : 'At least one warranty option must be selected.',
-            style: const TextStyle(fontFamily: 'Literata'),
-          ),
-          backgroundColor: const Color(0xFFFF6B6B),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-        ),
+      GlassyToast.show(
+        context,
+        isDefault
+            ? 'Cannot remove the default warranty. Change the default first.'
+            : 'At least one warranty option must be selected.',
       );
       return;
     }
@@ -934,18 +917,10 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
             onPressed: () async {
               final unitName = controller.text.trim();
               if (unitName.isEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: const Text(
-                      'Please enter a unit name',
-                      style: TextStyle(fontFamily: 'Literata'),
-                    ),
-                    backgroundColor: const Color(0xFFFF6B6B),
-                    behavior: SnackBarBehavior.floating,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
+                GlassyToast.show(
+                  context,
+                  'Please enter a unit name',
+                  isError: true,
                 );
                 return;
               }
@@ -953,18 +928,10 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
               if (PurchaseSettingsService.instance.allUnits.contains(
                 unitName,
               )) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: const Text(
-                      'This unit already exists',
-                      style: TextStyle(fontFamily: 'Literata'),
-                    ),
-                    backgroundColor: const Color(0xFFFF6B6B),
-                    behavior: SnackBarBehavior.floating,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
+                GlassyToast.show(
+                  context,
+                  'This unit already exists',
+                  isError: true,
                 );
                 return;
               }
@@ -976,19 +943,7 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
                 );
               });
               Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    '"$unitName" added successfully',
-                    style: const TextStyle(fontFamily: 'Literata'),
-                  ),
-                  backgroundColor: const Color(0xFF4CAF50),
-                  behavior: SnackBarBehavior.floating,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-              );
+              GlassyToast.show(context, '"$unitName" added successfully');
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF1B4D3E),
@@ -1092,35 +1047,19 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
             onPressed: () async {
               final months = int.tryParse(controller.text.trim());
               if (months == null || months <= 0) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: const Text(
-                      'Please enter a valid number',
-                      style: TextStyle(fontFamily: 'Literata'),
-                    ),
-                    backgroundColor: const Color(0xFFFF6B6B),
-                    behavior: SnackBarBehavior.floating,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
+                GlassyToast.show(
+                  context,
+                  'Please enter a valid number',
+                  isError: true,
                 );
                 return;
               }
 
               if (_warrantyOptions.contains(months)) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: const Text(
-                      'This warranty period already exists',
-                      style: TextStyle(fontFamily: 'Literata'),
-                    ),
-                    backgroundColor: const Color(0xFFFF6B6B),
-                    behavior: SnackBarBehavior.floating,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
+                GlassyToast.show(
+                  context,
+                  'This warranty period already exists',
+                  isError: true,
                 );
                 return;
               }
@@ -1133,18 +1072,9 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
                 _warrantyOptions,
               );
               Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    '${PurchaseSettingsService.instance.getWarrantyLabel(months)} added successfully',
-                    style: const TextStyle(fontFamily: 'Literata'),
-                  ),
-                  backgroundColor: const Color(0xFF4CAF50),
-                  behavior: SnackBarBehavior.floating,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
+              GlassyToast.show(
+                context,
+                '${PurchaseSettingsService.instance.getWarrantyLabel(months)} added successfully',
               );
             },
             style: ElevatedButton.styleFrom(

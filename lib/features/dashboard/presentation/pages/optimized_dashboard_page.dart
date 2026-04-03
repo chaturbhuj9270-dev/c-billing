@@ -27,6 +27,7 @@ import 'flyout_menu.dart';
 import '../../../settings/presentation/pages/logs_viewer_page.dart';
 import '../../../../common_widgets/action_menu.dart';
 import '../../../../common_widgets/quick_actions_overlay.dart';
+import 'package:c_billing/core/ui/glassy_toast.dart';
 
 /// High-performance dashboard page with cache-first loading
 /// Renders instantly with cached data, updates smoothly when fresh data arrives
@@ -603,17 +604,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
         Navigator.of(context).pop();
         await LanguageService.instance.setLanguage(language);
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('${_localizations.languageChangedTo} $language'),
-              backgroundColor: const Color(0xFF2E7D32),
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-              duration: const Duration(seconds: 2),
-            ),
-          );
+          GlassyToast.show(context, '${_localizations.languageChangedTo} $language');
         }
       },
       borderRadius: BorderRadius.circular(12),

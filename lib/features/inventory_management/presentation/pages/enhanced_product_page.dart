@@ -22,6 +22,7 @@ import '../widgets/product_filter_widget.dart';
 import '../widgets/product_list_widget.dart';
 import 'product_settings_page.dart';
 import 'barcode_generator_page.dart';
+import 'package:c_billing/core/ui/glassy_toast.dart';
 
 class EnhancedProductPage extends StatefulWidget {
   final bool isEmbedded;
@@ -1482,27 +1483,11 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
       ProductSyncService.instance.syncNow();
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              _localizations.productDeletedSuccessfully,
-              style: const TextStyle(fontFamily: 'Literata'),
-            ),
-            backgroundColor: Colors.red,
-          ),
-        );
+        GlassyToast.show(context, _localizations.productDeletedSuccessfully, isError: true);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              '${_localizations.error}: $e',
-              style: const TextStyle(fontFamily: 'Literata'),
-            ),
-            backgroundColor: Colors.red,
-          ),
-        );
+        GlassyToast.show(context, '${_localizations.error}: $e', isError: true);
       }
     }
   }
@@ -1886,15 +1871,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
     // Validate
     final name = nameController.text.trim();
     if (name.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Product name is required',
-            style: TextStyle(fontFamily: 'Literata'),
-          ),
-          backgroundColor: Colors.red,
-        ),
-      );
+      GlassyToast.show(context, 'Product name is required', isError: true);
       return;
     }
 
@@ -1907,15 +1884,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
 
     // Validate HSN: required if CGST or SGST > 0
     if ((cgstVal > 0 || sgstVal > 0) && hsnVal.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'HSN Code is required when GST is applied',
-            style: TextStyle(fontFamily: 'Literata'),
-          ),
-          backgroundColor: Colors.red,
-        ),
-      );
+      GlassyToast.show(context, 'HSN Code is required when GST is applied', isError: true);
       return;
     }
 
@@ -1966,53 +1935,11 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
 
       if (mounted) {
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    '#${newProduct.indexNo}',
-                    style: const TextStyle(
-                      fontFamily: 'Literata',
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    '${_localizations.productAddedSuccessfully} - $name',
-                    style: const TextStyle(fontFamily: 'Literata'),
-                  ),
-                ),
-              ],
-            ),
-            backgroundColor: const Color(0xFF1B4D3E),
-            duration: const Duration(seconds: 4),
-          ),
-        );
+        GlassyToast.show(context, '#${newProduct.indexNo}');
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              '${_localizations.error}: $e',
-              style: const TextStyle(fontFamily: 'Literata'),
-            ),
-            backgroundColor: Colors.red,
-          ),
-        );
+        GlassyToast.show(context, '${_localizations.error}: $e', isError: true);
       }
     }
   }
@@ -2387,15 +2314,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
     // Validate
     final name = nameController.text.trim();
     if (name.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Product name is required',
-            style: TextStyle(fontFamily: 'Literata'),
-          ),
-          backgroundColor: Colors.red,
-        ),
-      );
+      GlassyToast.show(context, 'Product name is required', isError: true);
       return;
     }
 
@@ -2407,15 +2326,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
 
     // Validate HSN
     if ((cgstVal > 0 || sgstVal > 0) && hsnVal.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'HSN Code is required when GST is applied',
-            style: TextStyle(fontFamily: 'Literata'),
-          ),
-          backgroundColor: Colors.red,
-        ),
-      );
+      GlassyToast.show(context, 'HSN Code is required when GST is applied', isError: true);
       return;
     }
 
@@ -2464,27 +2375,11 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
 
       if (mounted) {
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              _localizations.productUpdatedSuccessfully,
-              style: const TextStyle(fontFamily: 'Literata'),
-            ),
-            backgroundColor: const Color(0xFF1B4D3E),
-          ),
-        );
+        GlassyToast.show(context, _localizations.productUpdatedSuccessfully);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              '${_localizations.error}: $e',
-              style: const TextStyle(fontFamily: 'Literata'),
-            ),
-            backgroundColor: Colors.red,
-          ),
-        );
+        GlassyToast.show(context, '${_localizations.error}: $e', isError: true);
       }
     }
   }

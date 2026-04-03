@@ -6,6 +6,7 @@ import 'package:c_billing/core/services/language_service.dart';
 import 'package:c_billing/core/localization/app_localizations.dart';
 import 'package:c_billing/features/billing/domain/entities/bill_tax_settings.dart';
 import 'package:c_billing/features/billing/presentation/pages/bill_report_settings_page.dart';
+import 'package:c_billing/core/ui/glassy_toast.dart';
 
 /// Bill settings page for configuring billing preferences
 class BillSettingsPage extends StatefulWidget {
@@ -99,19 +100,7 @@ class _BillSettingsPageState extends State<BillSettingsPage>
     );
 
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            _localizations.settingsSaved,
-            style: const TextStyle(fontFamily: 'Literata'),
-          ),
-          backgroundColor: const Color(0xFF1B4D3E),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-        ),
-      );
+      GlassyToast.show(context, _localizations.settingsSaved);
     }
   }
 

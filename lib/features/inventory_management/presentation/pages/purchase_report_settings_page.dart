@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:c_billing/core/services/purchase_report_settings_service.dart';
+import 'package:c_billing/core/ui/glassy_toast.dart';
 
 /// Page for managing which columns appear in purchase reports
 class PurchaseReportSettingsPage extends StatefulWidget {
@@ -85,15 +86,7 @@ class _PurchaseReportSettingsPageState
       await PurchaseReportSettingsService.instance.resetToDefaults();
       await _loadColumns();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Settings reset to defaults',
-              style: TextStyle(fontFamily: 'Literata'),
-            ),
-            backgroundColor: Color(0xFF1B4D3E),
-          ),
-        );
+        GlassyToast.show(context, 'Settings reset to defaults');
       }
     }
   }

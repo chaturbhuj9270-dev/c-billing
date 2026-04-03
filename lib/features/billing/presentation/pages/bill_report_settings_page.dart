@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:c_billing/core/services/bill_report_settings_service.dart';
 import 'package:c_billing/core/services/language_service.dart';
 import 'package:c_billing/core/localization/app_localizations.dart';
+import 'package:c_billing/core/ui/glassy_toast.dart';
 
 /// Page for managing which columns appear in bill prints/reports
 class BillReportSettingsPage extends StatefulWidget {
@@ -125,19 +126,7 @@ class _BillReportSettingsPageState extends State<BillReportSettingsPage>
       await BillReportSettingsService.instance.resetToDefaults();
       await _loadColumns();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              _localizations.settingsResetToDefaults,
-              style: const TextStyle(fontFamily: 'Literata'),
-            ),
-            backgroundColor: const Color(0xFF1B4D3E),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-          ),
-        );
+        GlassyToast.show(context, _localizations.settingsResetToDefaults);
       }
     }
   }

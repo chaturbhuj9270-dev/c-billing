@@ -18,6 +18,7 @@ import '../../../customer/offline/entities/customer_entity.dart';
 import '../../../product/offline/controllers/product_offline_controller.dart';
 import '../../../product/offline/entities/product_entity.dart';
 import '../../../billing/presentation/widgets/barcode_scanner_sheet.dart';
+import 'package:c_billing/core/ui/glassy_toast.dart';
 
 /// Event Management + Sales Order Screen
 /// Supports two modes: Event Mode (with sub-events) and Sales Order Mode (with products)
@@ -420,13 +421,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
         final l10n = AppLocalizations.of(
           LanguageService.instance.currentLanguage,
         );
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(_isEditing ? l10n.orderUpdated : l10n.orderSaved),
-            backgroundColor: Colors.green.shade600,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
+        GlassyToast.show(context, _isEditing ? l10n.orderUpdated : l10n.orderSaved);
       }
     } catch (e) {
       debugPrint('[EventOrderScreen] Error saving order: $e');
@@ -443,13 +438,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
   }
 
   void _showErrorSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.red.shade600,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    GlassyToast.show(context, message, isError: true);
   }
 
   @override
@@ -3329,9 +3318,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                       double.tryParse(chargesController.text) ?? 0.0;
 
                   if (name.isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Please enter event name')),
-                    );
+                    GlassyToast.show(context, 'Please enter event name');
                     return;
                   }
 
@@ -3709,27 +3696,8 @@ class _EventOrderScreenState extends State<EventOrderScreen>
     });
 
     // Show feedback
-    ScaffoldMessenger.of(context).hideCurrentSnackBar();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const Icon(Icons.check_circle, color: Colors.white, size: 20),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                'Added: $productName',
-                style: const TextStyle(fontFamily: 'Literata'),
-              ),
-            ),
-          ],
-        ),
-        backgroundColor: const Color(0xFF1B4D3E),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        duration: const Duration(seconds: 2),
-      ),
-    );
+    GlassyToast.dismiss();
+    GlassyToast.show(context, 'Added: $productName');
   }
 
   /// Called when product code field changes - auto-submit on valid code
@@ -3756,26 +3724,14 @@ class _EventOrderScreenState extends State<EventOrderScreen>
 
     final code = int.tryParse(codeText);
     if (code == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Invalid product code'),
-          backgroundColor: Colors.red,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      GlassyToast.show(context, 'Invalid product code', isError: true);
       _productCodeController.clear();
       return;
     }
 
     final product = _productByIndexNo[code];
     if (product == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Product #$code not found'),
-          backgroundColor: Colors.red,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      GlassyToast.show(context, 'Product #$code not found', isError: true);
       _productCodeController.clear();
       return;
     }
@@ -3809,21 +3765,8 @@ class _EventOrderScreenState extends State<EventOrderScreen>
     HapticFeedback.mediumImpact();
 
     // Show feedback
-    ScaffoldMessenger.of(context).hideCurrentSnackBar();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const Icon(Icons.check_circle, color: Colors.white, size: 18),
-            const SizedBox(width: 8),
-            Expanded(child: Text('Added: ${product.name}')),
-          ],
-        ),
-        backgroundColor: const Color(0xFF1B4D3E),
-        behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 1),
-      ),
-    );
+    GlassyToast.dismiss();
+    GlassyToast.show(context, 'Added: ${product.name}');
   }
 
   void _showProductDialog({OrderItem? item, int? editIndex}) {
@@ -4094,9 +4037,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
               ElevatedButton(
                 onPressed: () {
                   if (editIndex == null && selectedProduct == null) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Please select a product')),
-                    );
+                    GlassyToast.show(context, 'Please select a product');
                     return;
                   }
 
@@ -4106,9 +4047,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                       double.tryParse(discountController.text) ?? 0.0;
 
                   if (rate <= 0) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Please enter valid rate')),
-                    );
+                    GlassyToast.show(context, 'Please enter valid rate');
                     return;
                   }
 
@@ -4226,12 +4165,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
       );
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to share: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        GlassyToast.show(context, 'Failed to share: $e', isError: true);
       }
     } finally {
       if (mounted) {
@@ -4252,12 +4186,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
       );
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to print: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        GlassyToast.show(context, 'Failed to print: $e', isError: true);
       }
     } finally {
       if (mounted) {
@@ -4622,21 +4551,8 @@ class _ProductSelectionSheetState extends State<_ProductSelectionSheet> {
       _rateController.text = product.salesPrice.toStringAsFixed(0);
     });
     // Show snackbar feedback
-    ScaffoldMessenger.of(context).hideCurrentSnackBar();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const Icon(Icons.check_circle, color: Colors.white, size: 18),
-            const SizedBox(width: 8),
-            Expanded(child: Text('Selected: ${product.name}')),
-          ],
-        ),
-        backgroundColor: const Color(0xFF1B4D3E),
-        behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 1),
-      ),
-    );
+    GlassyToast.dismiss();
+    GlassyToast.show(context, 'Selected: ${product.name}');
   }
 
   void _lookupByCode() {
@@ -4645,24 +4561,14 @@ class _ProductSelectionSheetState extends State<_ProductSelectionSheet> {
 
     final code = int.tryParse(codeText);
     if (code == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Invalid code'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      GlassyToast.show(context, 'Invalid code', isError: true);
       _codeController.clear();
       return;
     }
 
     final product = widget.productByIndexNo[code];
     if (product == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Product not found #$code'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      GlassyToast.show(context, 'Product not found #$code', isError: true);
       _codeController.clear();
       return;
     }
@@ -4682,9 +4588,7 @@ class _ProductSelectionSheetState extends State<_ProductSelectionSheet> {
 
   void _addProduct() {
     if (_selectedProduct == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Please select a product')));
+      GlassyToast.show(context, 'Please select a product');
       return;
     }
 
@@ -4693,9 +4597,7 @@ class _ProductSelectionSheetState extends State<_ProductSelectionSheet> {
     final discount = double.tryParse(_discountController.text) ?? 0.0;
 
     if (rate <= 0) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Please enter valid rate')));
+      GlassyToast.show(context, 'Please enter valid rate');
       return;
     }
 

@@ -15,6 +15,7 @@ import '../services/language_service.dart';
 import '../services/subscription_service.dart';
 import '../localization/app_localizations.dart';
 import 'subscription_screen.dart';
+import 'package:c_billing/core/ui/glassy_toast.dart';
 
 class SplashPage extends StatefulWidget {
   final Duration duration;
@@ -218,26 +219,14 @@ class _SplashPageState extends State<SplashPage> {
         print('[DEBUG] Fingerprint authentication cancelled/failed');
         // Stay on splash screen - user can tap unlock again
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                'Authentication cancelled. Tap "Unlock Now" to try again.',
-              ),
-              backgroundColor: Colors.orange,
-            ),
-          );
+          GlassyToast.show(context, 'Authentication cancelled. Tap "Unlock Now" to try again.');
         }
       }
     } catch (e) {
       print('[ERROR] Error during fingerprint authentication: $e');
       // Show error but stay on splash screen
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Authentication error: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        GlassyToast.show(context, 'Authentication error: ${e.toString()}', isError: true);
       }
     }
   }
@@ -288,12 +277,7 @@ class _SplashPageState extends State<SplashPage> {
       _showFingerprintDialog(currentUser.uid);
     } else {
       print('[ERROR] No current user found');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please log in first'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      GlassyToast.show(context, 'Please log in first', isError: true);
     }
   }
 

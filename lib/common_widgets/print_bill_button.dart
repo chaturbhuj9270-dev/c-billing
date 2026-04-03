@@ -4,6 +4,7 @@ import '../core/printing/services/pos_printer_service.dart';
 import '../features/shop/domain/entities/shop.dart';
 import '../features/shop/data/repositories/shop_repository.dart';
 import 'printer_selection_widget.dart';
+import 'package:c_billing/core/ui/glassy_toast.dart';
 
 /// Reusable widget for printing bills with printer selection and status display
 class PrintBillButton extends StatefulWidget {
@@ -98,37 +99,11 @@ class _PrintBillButtonState extends State<PrintBillButton> {
   }
 
   void _showSuccessSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const Icon(Icons.check_circle, color: Colors.white),
-            const SizedBox(width: 8),
-            Expanded(child: Text(message)),
-          ],
-        ),
-        backgroundColor: Colors.green,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      ),
-    );
+    GlassyToast.show(context, message);
   }
 
   void _showErrorSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const Icon(Icons.error_outline, color: Colors.white),
-            const SizedBox(width: 8),
-            Expanded(child: Text(message)),
-          ],
-        ),
-        backgroundColor: Colors.red,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      ),
-    );
+    GlassyToast.show(context, message, isError: true);
   }
 
   @override
@@ -296,39 +271,12 @@ class _PrintActionWidgetState extends State<PrintActionWidget> {
       if (mounted) {
         setState(() => _isPrinting = false);
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                Icon(
-                  result.success ? Icons.check_circle : Icons.error_outline,
-                  color: Colors.white,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    result.message ??
-                        (result.success
-                            ? 'Printed successfully'
-                            : 'Print failed'),
-                  ),
-                ),
-              ],
-            ),
-            backgroundColor: result.success ? Colors.green : Colors.red,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-          ),
-        );
+        GlassyToast.show(context, result.message ?? 'Error', isError: true);
       }
     } catch (e) {
       if (mounted) {
         setState(() => _isPrinting = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
-        );
+        GlassyToast.show(context, 'Error: $e', isError: true);
       }
     }
   }

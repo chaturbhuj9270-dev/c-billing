@@ -13,6 +13,7 @@ import '../../data/services/company_sync_service.dart';
 import '../widgets/company_summary_widget.dart';
 import '../widgets/company_filter_widget.dart';
 import '../widgets/company_list_widget.dart';
+import 'package:c_billing/core/ui/glassy_toast.dart';
 
 class EnhancedCompanyPage extends StatefulWidget {
   final bool isEmbedded;
@@ -608,24 +609,15 @@ class _EnhancedCompanyPageState extends State<EnhancedCompanyPage>
 
       if (mounted && ctx.mounted) {
         Navigator.pop(ctx);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              _isEditing
+        GlassyToast.show(context, _isEditing
                   ? _localizations.companyUpdatedSuccessfully
-                  : _localizations.companyAddedSuccessfully,
-            ),
-            backgroundColor: Colors.green,
-          ),
-        );
+                  : _localizations.companyAddedSuccessfully);
       }
 
       _clearForm();
     } catch (e) {
       if (mounted && ctx.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
-        );
+        GlassyToast.show(context, 'Error: $e', isError: true);
       }
     } finally {
       if (mounted) {
@@ -686,20 +678,13 @@ class _EnhancedCompanyPageState extends State<EnhancedCompanyPage>
 
       if (mounted && ctx.mounted) {
         Navigator.pop(ctx);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(_localizations.companyDeletedSuccessfully),
-            backgroundColor: Colors.green,
-          ),
-        );
+        GlassyToast.show(context, _localizations.companyDeletedSuccessfully);
       }
 
       _clearForm();
     } catch (e) {
       if (mounted && ctx.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
-        );
+        GlassyToast.show(context, 'Error: $e', isError: true);
       }
     } finally {
       if (mounted) {

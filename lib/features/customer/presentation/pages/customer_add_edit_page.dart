@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../domain/repositories/customer_repository.dart';
+import 'package:c_billing/core/ui/glassy_toast.dart';
 
 /// Add/Edit Customer Page for offline-first architecture
 class CustomerAddEditPage extends StatefulWidget {
@@ -69,15 +70,7 @@ class _CustomerAddEditPageState extends State<CustomerAddEditPage> {
       if (mobileExists) {
         debugPrint('[CustomerAddEdit] Mobile already exists');
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text(
-                'A customer with this mobile number already exists',
-              ),
-              backgroundColor: Colors.red.shade600,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
+          GlassyToast.show(context, 'A customer with this mobile number already exists', isError: true);
         }
         setState(() => _isLoading = false);
         return;
@@ -120,29 +113,14 @@ class _CustomerAddEditPageState extends State<CustomerAddEditPage> {
 
       if (mounted) {
         debugPrint('[CustomerAddEdit] Navigating back...');
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              _isEditing ? 'Customer updated' : 'Customer saved offline',
-            ),
-            backgroundColor: Colors.green.shade600,
-            behavior: SnackBarBehavior.floating,
-            duration: const Duration(seconds: 2),
-          ),
-        );
+        GlassyToast.show(context, _isEditing ? 'Customer updated' : 'Customer saved offline');
         Navigator.of(context).pop(true);
       }
     } catch (e, stackTrace) {
       debugPrint('[CustomerAddEdit] Error: $e');
       debugPrint('[CustomerAddEdit] Stack: $stackTrace');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error saving customer: ${e.toString()}'),
-            backgroundColor: Colors.red.shade600,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
+        GlassyToast.show(context, 'Error saving customer: ${e.toString()}', isError: true);
       }
     } finally {
       if (mounted) {

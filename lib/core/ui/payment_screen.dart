@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../localization/app_localizations.dart';
 import '../services/language_service.dart';
+import 'package:c_billing/core/ui/glassy_toast.dart';
 
 /// Payment screen with QR code for subscription payment
 /// Premium UI matching the app's elegant design language
@@ -61,12 +62,7 @@ class _PaymentScreenState extends State<PaymentScreen>
       await launchUrl(whatsappUrl, mode: LaunchMode.externalApplication);
     } else {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(_localizations.couldNotOpenWhatsApp),
-            backgroundColor: Colors.red,
-          ),
-        );
+        GlassyToast.show(context, _localizations.couldNotOpenWhatsApp, isError: true);
       }
     }
   }
@@ -80,21 +76,7 @@ class _PaymentScreenState extends State<PaymentScreen>
 
   void _copyNumber() {
     Clipboard.setData(const ClipboardData(text: contactNumber));
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const Icon(Icons.check_circle, color: Colors.white, size: 18),
-            const SizedBox(width: 10),
-            Text(_localizations.phoneNumberCopied),
-          ],
-        ),
-        backgroundColor: const Color(0xFF1B4D3E),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        duration: const Duration(seconds: 2),
-      ),
-    );
+    GlassyToast.show(context, _localizations.phoneNumberCopied);
   }
 
   @override

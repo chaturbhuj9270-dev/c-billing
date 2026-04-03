@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import '../../../../core/services/language_service.dart';
 import '../../../../core/localization/app_localizations.dart';
+import 'package:c_billing/core/ui/glassy_toast.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -96,18 +97,14 @@ class _ProfilePageState extends State<ProfilePage> {
     } catch (e) {
       print('[ERROR] Error picking image: $e');
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Failed to pick image')));
+        GlassyToast.show(context, 'Failed to pick image');
       }
     }
   }
 
   Future<void> _saveProfile() async {
     if (_nameController.text.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(_localizations.pleaseEnterName)));
+      GlassyToast.show(context, _localizations.pleaseEnterName);
       return;
     }
 
@@ -127,14 +124,10 @@ class _ProfilePageState extends State<ProfilePage> {
       }, SetOptions(merge: true));
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_localizations.profileUpdatedSuccessfully)),
-      );
+      GlassyToast.show(context, _localizations.profileUpdatedSuccessfully);
     } catch (e) {
       print('[ERROR] Error saving profile: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${_localizations.errorSavingProfile}: $e')),
-      );
+      GlassyToast.show(context, '${_localizations.errorSavingProfile}: $e');
     } finally {
       setState(() => _isSaving = false);
     }

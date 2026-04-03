@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../../../core/services/event_order_settings_service.dart';
+import 'package:c_billing/core/ui/glassy_toast.dart';
 
 /// Settings page for managing custom columns for Events and Sub-Events
 class EventOrderCustomColumnsPage extends StatefulWidget {
@@ -545,12 +546,7 @@ class _EventOrderCustomColumnsPageState
             onPressed: () {
               EventOrderSettingsService.instance.deleteColumn(column.id);
               Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('${column.name} deleted'),
-                  backgroundColor: const Color(0xFF1B4D3E),
-                ),
-              );
+              GlassyToast.show(context, '${column.name} deleted');
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,
@@ -859,12 +855,7 @@ class _EventOrderCustomColumnsPageState
                 onPressed: () {
                   final name = nameController.text.trim();
                   if (name.isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Please enter a column name'),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
+                    GlassyToast.show(context, 'Please enter a column name', isError: true);
                     return;
                   }
 
@@ -873,12 +864,7 @@ class _EventOrderCustomColumnsPageState
                   if (selectedType == EventCustomColumnType.dropdown) {
                     final optionsText = dropdownOptionsController.text.trim();
                     if (optionsText.isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Please enter dropdown options'),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
+                      GlassyToast.show(context, 'Please enter dropdown options', isError: true);
                       return;
                     }
                     dropdownOptions = optionsText
@@ -916,16 +902,9 @@ class _EventOrderCustomColumnsPageState
                   }
 
                   Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        existingColumn != null
+                  GlassyToast.show(context, existingColumn != null
                             ? 'Column updated'
-                            : 'Column added',
-                      ),
-                      backgroundColor: const Color(0xFF1B4D3E),
-                    ),
-                  );
+                            : 'Column added');
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF1B4D3E),

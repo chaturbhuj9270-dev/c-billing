@@ -18,6 +18,7 @@ import 'package:c_billing/features/billing/offline/entities/bill_entity.dart';
 import 'package:c_billing/core/services/inventory_integration_service.dart';
 import 'package:c_billing/core/services/language_service.dart';
 import 'package:c_billing/core/localization/app_localizations.dart';
+import 'package:c_billing/core/ui/glassy_toast.dart';
 
 /// Return Bill Page for processing bill returns
 /// Allows searching by bill number or customer mobile and processing returns
@@ -192,15 +193,9 @@ class _ReturnBillPageState extends State<ReturnBillPage>
       final displayMax = maxReturnableQty == maxReturnableQty.roundToDouble()
           ? maxReturnableQty.toInt().toString()
           : maxReturnableQty.toStringAsFixed(2);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Cannot return more than $displayMax units (sold qty: ${item.quantity.toStringAsFixed(item.quantity == item.quantity.roundToDouble() ? 0 : 2)}, already returned: ${item.returnedQuantity.toStringAsFixed(item.returnedQuantity == item.returnedQuantity.roundToDouble() ? 0 : 2)})',
-          ),
-          backgroundColor: Colors.orange,
-          duration: const Duration(seconds: 2),
-          behavior: SnackBarBehavior.floating,
-        ),
+      GlassyToast.show(
+        context,
+        'Cannot return more than $displayMax units (sold qty: ${item.quantity.toStringAsFixed(item.quantity == item.quantity.roundToDouble() ? 0 : 2)})',
       );
     }
 
@@ -263,13 +258,7 @@ class _ReturnBillPageState extends State<ReturnBillPage>
               'Sold: ${item.quantity.toStringAsFixed(item.quantity == item.quantity.roundToDouble() ? 0 : 2)}, Already returned: ${item.returnedQuantity.toStringAsFixed(item.returnedQuantity == item.returnedQuantity.roundToDouble() ? 0 : 2)}, '
               'Max returnable: ${item.remainingQuantity.toStringAsFixed(item.remainingQuantity == item.remainingQuantity.roundToDouble() ? 0 : 2)}';
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(_errorMessage!),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 4),
-          ),
-        );
+        GlassyToast.show(context, _errorMessage!);
         return;
       }
       if (returnQty < 0) {
@@ -402,26 +391,9 @@ class _ReturnBillPageState extends State<ReturnBillPage>
           });
 
           // Show success snackbar
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Row(
-                children: [
-                  const Icon(Icons.check_circle, color: Colors.white),
-                  const SizedBox(width: 8),
-                  const Expanded(
-                    child: Text(
-                      'Return processed! Print or share the receipt before leaving.',
-                    ),
-                  ),
-                ],
-              ),
-              backgroundColor: Colors.green,
-              behavior: SnackBarBehavior.floating,
-              duration: const Duration(seconds: 4),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
+          GlassyToast.show(
+            context,
+            'Return processed! Print or share the receipt before leaving.',
           );
         } else {
           setState(() {
@@ -481,53 +453,15 @@ class _ReturnBillPageState extends State<ReturnBillPage>
       if (mounted) {
         setState(() => _isPrinting = false);
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                Icon(
-                  result.success ? Icons.check_circle : Icons.error_outline,
-                  color: Colors.white,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    result.message ??
-                        (result.success
-                            ? _localizations.billPrintedSuccessfully
-                            : _localizations.errorPrintingBill),
-                  ),
-                ),
-              ],
-            ),
-            backgroundColor: result.success ? Colors.green : Colors.red,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-          ),
-        );
+        GlassyToast.show(context, result.message ?? 'Error', isError: true);
       }
     } catch (e) {
       if (mounted) {
         setState(() => _isPrinting = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.error_outline, color: Colors.white),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text('${_localizations.errorPrintingBill}: $e'),
-                ),
-              ],
-            ),
-            backgroundColor: Colors.red,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-          ),
+        GlassyToast.show(
+          context,
+          '${_localizations.errorPrintingBill}: $e',
+          isError: true,
         );
       }
     }
@@ -575,21 +509,10 @@ class _ReturnBillPageState extends State<ReturnBillPage>
     } catch (e) {
       // Close loading indicator only if still showing
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.error_outline, color: Colors.white),
-                const SizedBox(width: 8),
-                Expanded(child: Text('${_localizations.shareErrorLabel}: $e')),
-              ],
-            ),
-            backgroundColor: Colors.red,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-          ),
+        GlassyToast.show(
+          context,
+          '${_localizations.shareErrorLabel}: $e',
+          isError: true,
         );
       }
     }

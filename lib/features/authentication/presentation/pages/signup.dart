@@ -6,6 +6,7 @@ import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/services/language_service.dart';
 import '../../../../core/services/session_manager.dart';
 import '../../../../core/services/logout_service.dart';
+import 'package:c_billing/core/ui/glassy_toast.dart';
 
 class SignupPage extends StatefulWidget {
   const SignupPage({super.key});
@@ -123,24 +124,18 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
 
     // Validate all required fields
     if (email.isEmpty || contact.isEmpty || pw.isEmpty || cpw.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_localizations.pleaseFillAllFields)),
-      );
+      GlassyToast.show(context, _localizations.pleaseFillAllFields);
       return;
     }
 
     if (pw != cpw) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(_localizations.passwordsDoNotMatch)));
+      GlassyToast.show(context, _localizations.passwordsDoNotMatch);
       return;
     }
 
     // Validate phone number format
     if (!RegExp(r'^[6-9]\d{9}$').hasMatch(contact)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_localizations.enterValid10DigitPhone)),
-      );
+      GlassyToast.show(context, _localizations.enterValid10DigitPhone);
       return;
     }
 
@@ -150,9 +145,7 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
         .then((userCredential) async {
           final currentUser = userCredential.user;
           if (currentUser == null) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(_localizations.accountCreationFailed)),
-            );
+            GlassyToast.show(context, _localizations.accountCreationFailed);
             return;
           }
 
@@ -184,31 +177,20 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
               print('[CRITICAL] Session expired - clearing data and logging out');
               // Use LogoutService to ensure all local data is cleared on session expiry
               if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(_localizations.sessionExpired),
-                  ),
-                );
+                GlassyToast.show(context, _localizations.sessionExpired);
                 LogoutService.instance.onSessionExpired(context);
               }
             });
             print('[DEBUG] Session initialized with 2-hour timeout');
 
             if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(_localizations.accountCreated),
-                  backgroundColor: Colors.green,
-                ),
-              );
+              GlassyToast.show(context, _localizations.accountCreated);
               Navigator.of(context).pop();
             }
           } catch (e) {
             print('[ERROR] Account setup error: $e');
             if (mounted) {
-              ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
+              GlassyToast.show(context, 'Error: ${e.toString()}');
             }
           }
         })
@@ -218,9 +200,7 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
             final msg = e is FirebaseAuthException
                 ? e.message ?? 'Account creation failed'
                 : e.toString();
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(SnackBar(content: Text(msg)));
+            GlassyToast.show(context, msg);
           }
         });
   }

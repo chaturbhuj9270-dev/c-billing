@@ -10,6 +10,7 @@ import '../../data/services/report_service.dart';
 import '../../data/services/report_pdf_generator.dart';
 import '../../domain/models/report_filter_model.dart';
 import '../../domain/models/report_result_model.dart';
+import 'package:c_billing/core/ui/glassy_toast.dart';
 
 // ──────────────────────────────────────────────────────────
 // Premium Report Page — v2
@@ -321,15 +322,7 @@ class _ReportPageState extends State<ReportPage>
 
   void _showSnackbar(String msg, bool isError) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(msg, style: const TextStyle(fontFamily: 'Literata')),
-        backgroundColor: isError ? Colors.red : _kGreen,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        margin: const EdgeInsets.all(16),
-      ),
-    );
+    GlassyToast.show(context, msg);
   }
 
   // ━━━━━━━━━━━━ BUILD ━━━━━━━━━━━━

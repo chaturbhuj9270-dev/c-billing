@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:ui';
 import '../../../../core/services/language_service.dart';
 import '../../../../core/localization/app_localizations.dart';
+import 'package:c_billing/core/ui/glassy_toast.dart';
 
 class ChangePasswordPage extends StatefulWidget {
   /// If true, shows back button to return to previous screen
@@ -50,23 +51,13 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
 
     // Validate passwords match
     if (newPassword != confirmPassword) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(_localizations.newPasswordDoNotMatch),
-          backgroundColor: Colors.red,
-        ),
-      );
+      GlassyToast.show(context, _localizations.newPasswordDoNotMatch, isError: true);
       return;
     }
 
     // Validate new password is different from old
     if (oldPassword == newPassword) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(_localizations.newPasswordMustDiffer),
-          backgroundColor: Colors.orange,
-        ),
-      );
+      GlassyToast.show(context, _localizations.newPasswordMustDiffer);
       return;
     }
 
@@ -94,12 +85,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
       setState(() => _loading = false);
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(_localizations.passwordUpdated),
-            backgroundColor: Color(0xFF2E7D32),
-          ),
-        );
+        GlassyToast.show(context, _localizations.passwordUpdated);
 
         // Go back to previous screen
         Navigator.of(context).pop();
@@ -121,20 +107,13 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
           message = e.message ?? _localizations.failedToUpdatePassword;
       }
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(message), backgroundColor: Colors.red),
-        );
+        GlassyToast.show(context, message, isError: true);
       }
     } catch (e) {
       setState(() => _loading = false);
       print('[ERROR] Password update failed: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        GlassyToast.show(context, 'Error: ${e.toString()}', isError: true);
       }
     }
   }

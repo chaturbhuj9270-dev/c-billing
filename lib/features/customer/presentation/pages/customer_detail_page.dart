@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../domain/repositories/customer_repository.dart';
 import '../../data/services/customer_sync_service.dart';
 import 'customer_add_edit_page.dart';
+import 'package:c_billing/core/ui/glassy_toast.dart';
 
 /// Customer detail page for offline-first architecture
 class CustomerDetailPage extends StatefulWidget {
@@ -90,23 +91,11 @@ class _CustomerDetailPageState extends State<CustomerDetailPage> {
         // Trigger sync
         _syncService.syncNow();
         
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Customer deleted'),
-            backgroundColor: Colors.green.shade600,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
+        GlassyToast.show(context, 'Customer deleted');
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error deleting customer: ${e.toString()}'),
-            backgroundColor: Colors.red.shade600,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
+        GlassyToast.show(context, 'Error deleting customer: ${e.toString()}', isError: true);
       }
     } finally {
       if (mounted) {

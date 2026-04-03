@@ -18,6 +18,7 @@ import '../../../product/offline/controllers/product_offline_controller.dart';
 import '../../../product/offline/entities/product_entity.dart';
 import '../../offline/controllers/purchase_batch_offline_controller.dart';
 import '../../offline/entities/purchase_batch_entity.dart';
+import 'package:c_billing/core/ui/glassy_toast.dart';
 
 class BarcodeGeneratorPage extends StatefulWidget {
   const BarcodeGeneratorPage({super.key});
@@ -668,24 +669,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
   }
 
   void _showSnackBar(String message, {required bool isError}) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            Icon(
-              isError ? Icons.error_outline : Icons.check_circle_outline,
-              color: Colors.white,
-            ),
-            const SizedBox(width: 12),
-            Expanded(child: Text(message)),
-          ],
-        ),
-        backgroundColor: isError ? Colors.red.shade600 : _successColor,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        margin: const EdgeInsets.all(16),
-      ),
-    );
+    GlassyToast.show(context, message, isError: true);
   }
 
   @override

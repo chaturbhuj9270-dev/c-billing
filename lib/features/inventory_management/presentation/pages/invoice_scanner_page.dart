@@ -14,6 +14,7 @@ import '../../../product/offline/controllers/product_offline_controller.dart';
 import '../../../product/offline/entities/product_entity.dart';
 import '../../data/services/purchase_sync_service.dart';
 import '../../data/services/purchase_batch_sync_service.dart';
+import 'package:c_billing/core/ui/glassy_toast.dart';
 
 class InvoiceScannerPage extends StatefulWidget {
   const InvoiceScannerPage({super.key});
@@ -199,9 +200,7 @@ class _InvoiceScannerPageState extends State<InvoiceScannerPage> {
   Future<void> _saveApiKey() async {
     final apiKey = _apiKeyController.text.trim();
     if (apiKey.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a valid API key')),
-      );
+      GlassyToast.show(context, 'Please enter a valid API key');
       return;
     }
 
@@ -210,9 +209,7 @@ class _InvoiceScannerPageState extends State<InvoiceScannerPage> {
       _showApiKeyInput = false;
     });
 
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('API key saved successfully')));
+    GlassyToast.show(context, 'API key saved successfully');
 
     // If we have an image, try scanning again
     if (_selectedImage != null) {
@@ -222,16 +219,12 @@ class _InvoiceScannerPageState extends State<InvoiceScannerPage> {
 
   Future<void> _saveTourchaseRecords() async {
     if (_scannedData == null || _scannedData!.items.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('No items to save')));
+      GlassyToast.show(context, 'No items to save');
       return;
     }
 
     if (_selectedSupplier == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Please select a supplier')));
+      GlassyToast.show(context, 'Please select a supplier');
       return;
     }
 
@@ -239,9 +232,7 @@ class _InvoiceScannerPageState extends State<InvoiceScannerPage> {
         .where((item) => item.isSelected)
         .toList();
     if (selectedItems.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('No items selected')));
+      GlassyToast.show(context, 'No items selected');
       return;
     }
 
@@ -331,15 +322,11 @@ class _InvoiceScannerPageState extends State<InvoiceScannerPage> {
           _isSaving = false;
         });
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              failCount == 0
-                  ? 'Successfully saved $successCount items to purchase records'
-                  : 'Saved $successCount items, failed $failCount items',
-            ),
-            backgroundColor: failCount == 0 ? Colors.green : Colors.orange,
-          ),
+        GlassyToast.show(
+          context,
+          failCount == 0
+              ? 'Successfully saved $successCount items to purchase records'
+              : 'Saved $successCount items, $failCount failed',
         );
 
         if (failCount == 0) {
@@ -351,12 +338,7 @@ class _InvoiceScannerPageState extends State<InvoiceScannerPage> {
         setState(() {
           _isSaving = false;
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error saving purchases: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        GlassyToast.show(context, 'Error saving purchases: $e', isError: true);
       }
     }
   }

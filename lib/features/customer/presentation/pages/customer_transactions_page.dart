@@ -12,6 +12,7 @@ import '../../data/services/customer_transaction_sync_service.dart';
 import '../../../event_order/offline/controllers/event_order_offline_controller.dart';
 import '../../../event_order/offline/entities/event_order_entity.dart';
 import '../../../event_order/domain/entities/event_order.dart';
+import 'package:c_billing/core/ui/glassy_toast.dart';
 
 /// Date filter options for transactions
 enum TransactionDateFilter { thisMonth, thisYear, lastYear, custom, all }
@@ -770,12 +771,9 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
       _loadTransactions();
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Payment of ₹${amount.toStringAsFixed(0)} recorded'),
-            backgroundColor: Colors.green.shade600,
-            behavior: SnackBarBehavior.floating,
-          ),
+        GlassyToast.show(
+          context,
+          'Payment of ₹${amount.toStringAsFixed(0)} recorded',
         );
       }
     }

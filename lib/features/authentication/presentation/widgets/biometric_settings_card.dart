@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../cubit/biometric_cubit.dart';
 import '../cubit/biometric_state.dart';
 import '../../../../../../core/services/biometric_service.dart';
+import 'package:c_billing/core/ui/glassy_toast.dart';
 
 /// Settings card for enabling/disabling biometric authentication
 class BiometricSettingsCard extends StatefulWidget {
@@ -73,25 +74,11 @@ class _BiometricSettingsCardState extends State<BiometricSettingsCard> {
             });
             widget.onChanged?.call();
 
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: const Text('Biometric authentication enabled'),
-                backgroundColor: Colors.green,
-                duration: const Duration(seconds: 2),
-              ),
-            );
+            GlassyToast.show(context, 'Biometric authentication enabled');
           }
         } else {
           if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: const Text(
-                  'Biometric authentication is not available on this device',
-                ),
-                backgroundColor: Colors.red,
-                duration: const Duration(seconds: 2),
-              ),
-            );
+            GlassyToast.show(context, 'Biometric authentication is not available on this device', isError: true);
           }
         }
       } else {
@@ -104,25 +91,13 @@ class _BiometricSettingsCardState extends State<BiometricSettingsCard> {
           });
           widget.onChanged?.call();
 
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text('Biometric authentication disabled'),
-              backgroundColor: Colors.orange,
-              duration: const Duration(seconds: 2),
-            ),
-          );
+          GlassyToast.show(context, 'Biometric authentication disabled');
         }
       }
     } catch (e) {
       print('[ERROR] Error toggling biometric: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: $e'),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 2),
-          ),
-        );
+        GlassyToast.show(context, 'Error: $e');
       }
     }
   }

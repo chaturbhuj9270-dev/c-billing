@@ -6,6 +6,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:printing/printing.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:pdf/pdf.dart';
+import 'package:c_billing/core/ui/glassy_toast.dart';
 
 /// A reusable page for previewing PDF and CSV files with share and print functionality.
 ///
@@ -475,30 +476,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
   }
 
   void _showSnackBar(String message, {bool isError = false}) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            Icon(
-              isError ? Icons.error_outline : Icons.check_circle,
-              color: Colors.white,
-              size: 20,
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                message,
-                style: const TextStyle(fontFamily: 'Literata'),
-              ),
-            ),
-          ],
-        ),
-        backgroundColor: isError ? Colors.red[700] : const Color(0xFF1B4D3E),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        margin: const EdgeInsets.all(16),
-      ),
-    );
+    GlassyToast.show(context, message, isError: true);
   }
 
   @override

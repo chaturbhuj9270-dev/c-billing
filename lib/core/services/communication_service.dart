@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:c_billing/core/ui/glassy_toast.dart';
 
 /// Singleton service for handling communication actions
 /// Provides call, SMS, and WhatsApp functionality
@@ -154,15 +155,7 @@ class CommunicationService {
   /// Show error snackbar if context is available
   void _showError(BuildContext? context, String message) {
     if (context != null && context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(message),
-          backgroundColor: Colors.red[700],
-          behavior: SnackBarBehavior.floating,
-          margin: const EdgeInsets.all(16),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        ),
-      );
+      GlassyToast.show(context, message);
     }
   }
 }

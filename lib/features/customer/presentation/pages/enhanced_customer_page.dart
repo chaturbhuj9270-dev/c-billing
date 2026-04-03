@@ -19,6 +19,7 @@ import '../widgets/customer_list_widget.dart';
 import 'customer_details_page.dart';
 import 'customer_finance_page.dart';
 import 'customer_transactions_page.dart';
+import 'package:c_billing/core/ui/glassy_toast.dart';
 
 class EnhancedCustomerPage extends StatefulWidget {
   final bool isEmbedded;
@@ -291,12 +292,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
     } catch (e) {
       debugPrint('[EnhancedCustomer] Firebase fetch error: $e');
       if (mounted && _customers.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('${_localizations.errorLoadingCustomers}: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        GlassyToast.show(context, '${_localizations.errorLoadingCustomers}: $e', isError: true);
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -692,15 +688,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
   // ━━━ SNACKBAR ━━━
 
   void _showSnackbar(String message, bool isError) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message, style: const TextStyle(fontFamily: 'Literata')),
-        backgroundColor: isError ? Colors.red : const Color(0xFF1B4D3E),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        margin: const EdgeInsets.all(16),
-      ),
-    );
+    GlassyToast.show(context, message);
   }
 
   // ━━━ BUILD ━━━
