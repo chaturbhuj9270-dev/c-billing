@@ -188,9 +188,12 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
       setState(() {
         _biometricLockEnabled = enabled;
       });
-      GlassyToast.show(context, enabled
-                ? _localizations.biometricEnabled
-                : _localizations.biometricDisabled);
+      GlassyToast.show(
+        context,
+        enabled
+            ? _localizations.biometricEnabled
+            : _localizations.biometricDisabled,
+      );
     }
   }
 
@@ -292,7 +295,10 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
             setState(() {
               _selectedLanguage = language;
             });
-            GlassyToast.show(context, '${_localizations.languageChangedTo} $language');
+            GlassyToast.show(
+              context,
+              '${_localizations.languageChangedTo} $language',
+            );
           }
         },
       ),
@@ -301,10 +307,14 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final menuWidth = screenWidth >= 800
+        ? (screenWidth * 0.35).clamp(350.0, 480.0)
+        : screenWidth * 0.95;
     return SlideTransition(
       position: _slideAnimation,
       child: Container(
-        width: MediaQuery.of(context).size.width * 0.95,
+        width: menuWidth,
         decoration: BoxDecoration(
           color: Colors.white,
           boxShadow: [

@@ -230,7 +230,137 @@ class _LoginPageV2State extends State<LoginPageV2>
           child: LayoutBuilder(
             builder: (context, constraints) {
               final isTablet = constraints.maxWidth > 600;
+              final isDesktop = constraints.maxWidth >= 1000;
               final maxFormWidth = isTablet ? 480.0 : double.infinity;
+
+              // Desktop: side-by-side layout with branding left, form right
+              if (isDesktop) {
+                return Row(
+                  children: [
+                    // Left panel — branding
+                    Expanded(
+                      flex: 5,
+                      child: Container(
+                        decoration: const BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              Color(0xFF1B4D3E),
+                              Color(0xFF134E3A),
+                              Color(0xFF0F3B2F),
+                            ],
+                          ),
+                        ),
+                        child: Center(
+                          child: SlideTransition(
+                            position: _offsetAnimation,
+                            child: FadeTransition(
+                              opacity: _opacityAnimation,
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Container(
+                                    decoration: BoxDecoration(
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withValues(
+                                            alpha: 0.3,
+                                          ),
+                                          blurRadius: 32,
+                                          offset: const Offset(0, 16),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Image.asset(
+                                      'assets/images/logo.png',
+                                      width: 120,
+                                      height: 120,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 24),
+                                  Text(
+                                    _localizations.appName,
+                                    style: const TextStyle(
+                                      fontFamily: 'Literata',
+                                      fontSize: 48,
+                                      fontWeight: FontWeight.w900,
+                                      color: Colors.white,
+                                      letterSpacing: 3,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Text(
+                                    _localizations.backboneOfBusiness,
+                                    style: TextStyle(
+                                      fontFamily: 'Literata',
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w400,
+                                      fontStyle: FontStyle.italic,
+                                      color: Colors.white.withValues(
+                                        alpha: 0.7,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 48),
+                                  // Feature highlights
+                                  ...[
+                                    '📊 ${_localizations.salesProfitAnalysis}',
+                                    '📦 ${_localizations.trackPurchases}',
+                                    '👥 ${_localizations.manageCustomers}',
+                                  ].map(
+                                    (text) => Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 6,
+                                      ),
+                                      child: Text(
+                                        text,
+                                        style: TextStyle(
+                                          fontFamily: 'Literata',
+                                          fontSize: 14,
+                                          color: Colors.white.withValues(
+                                            alpha: 0.8,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    // Right panel — form
+                    Expanded(
+                      flex: 4,
+                      child: SingleChildScrollView(
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            minHeight: constraints.maxHeight,
+                          ),
+                          child: Center(
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 48.0,
+                              ),
+                              child: ConstrainedBox(
+                                constraints: const BoxConstraints(
+                                  maxWidth: 420,
+                                ),
+                                child: _buildLoginForm(),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              }
+
+              // Mobile/Tablet: existing layout (unchanged)
               return SingleChildScrollView(
                 child: ConstrainedBox(
                   constraints: BoxConstraints(minHeight: constraints.maxHeight),
@@ -610,6 +740,199 @@ class _LoginPageV2State extends State<LoginPageV2>
           ),
         ),
       ),
+    );
+  }
+
+  /// Reusable login form widget used by both desktop and mobile layouts.
+  Widget _buildLoginForm() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Welcome Back Header
+        Text(
+          _localizations.welcomeBack,
+          style: const TextStyle(
+            fontSize: 28,
+            fontWeight: FontWeight.w800,
+            color: Color(0xFF1A1A1A),
+            fontFamily: 'Literata',
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          _localizations.signInToAccount,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w400,
+            color: Colors.grey[700],
+            fontFamily: 'Literata',
+          ),
+        ),
+        const SizedBox(height: 28),
+        SlideTransition(
+          position: _fieldAnimations[0],
+          child: FadeTransition(
+            opacity: _fieldFadeAnimations[0],
+            child: _buildAnimatedInputField(
+              controller: _emailOrPhoneController,
+              hintText: _localizations.emailAddress,
+              icon: Icons.mail_outline,
+              keyboardType: TextInputType.emailAddress,
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        SlideTransition(
+          position: _fieldAnimations[1],
+          child: FadeTransition(
+            opacity: _fieldFadeAnimations[1],
+            child: _buildAnimatedPasswordField(),
+          ),
+        ),
+        const SizedBox(height: 12),
+        SlideTransition(
+          position: _fieldAnimations[2],
+          child: FadeTransition(
+            opacity: _fieldFadeAnimations[2],
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const ChangePasswordPage(),
+                    ),
+                  );
+                },
+                style: TextButton.styleFrom(
+                  padding: EdgeInsets.zero,
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                child: Text(
+                  _localizations.forgotPasswordQuestion,
+                  style: const TextStyle(
+                    color: Color(0xFF1B4D3E),
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                    fontFamily: 'Literata',
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 24),
+        SlideTransition(
+          position: _fieldAnimations[3],
+          child: FadeTransition(
+            opacity: _fieldFadeAnimations[3],
+            child: _buildSignInButton(),
+          ),
+        ),
+        const SizedBox(height: 24),
+        Row(
+          children: [
+            Expanded(child: Divider(color: Colors.grey[300], thickness: 1)),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Text(
+                _localizations.orDivider,
+                style: TextStyle(
+                  color: Colors.grey[600],
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 1,
+                  fontFamily: 'Literata',
+                ),
+              ),
+            ),
+            Expanded(child: Divider(color: Colors.grey[300], thickness: 1)),
+          ],
+        ),
+        const SizedBox(height: 24),
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton(
+            onPressed: () {},
+            style: OutlinedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              side: BorderSide(color: Colors.grey[300]!, width: 1),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Image.asset(
+                  'assets/images/google.png',
+                  width: 22,
+                  height: 22,
+                  errorBuilder: (_, _, _) => Container(
+                    width: 22,
+                    height: 22,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: const Center(
+                      child: Text(
+                        'G',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.red,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  _localizations.continueWithGoogle,
+                  style: const TextStyle(
+                    color: Color(0xFF1A1A1A),
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                    fontFamily: 'Literata',
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 30),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              _localizations.dontHaveAccount,
+              style: TextStyle(
+                color: Colors.grey[600],
+                fontSize: 14,
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+            GestureDetector(
+              onTap: () {
+                Navigator.of(
+                  context,
+                ).push(MaterialPageRoute(builder: (_) => const SignupPage()));
+              },
+              child: Text(
+                _localizations.signUp,
+                style: const TextStyle(
+                  color: Color(0xFF1B4D3E),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 

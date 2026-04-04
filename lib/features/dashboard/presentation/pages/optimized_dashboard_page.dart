@@ -226,6 +226,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
   @override
   Widget build(BuildContext context) {
     _resetSessionTimer();
+    final isWide = MediaQuery.of(context).size.width >= 800;
 
     return PopScope(
       canPop: false,
@@ -241,43 +242,16 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
               children: [
                 // Common header for all tabs
                 _buildCommonHeader(),
-                // Tab content
+                // Tab content with optional side nav
                 Expanded(
-                  child: IndexedStack(
-                    index: _selectedIndex,
-                    children: [
-                      // Dashboard tab (index 0)
-                      BlocBuilder<
-                        OptimizedDashboardCubit,
-                        OptimizedDashboardState
-                      >(
-                        builder: (context, state) {
-                          return FadeTransition(
-                            opacity: _fadeAnimation,
-                            child: RefreshIndicator(
-                              onRefresh: () async {
-                                // Refresh both main stats and Quick Insights
-                                await context
-                                    .read<OptimizedDashboardCubit>()
-                                    .refresh();
-                                await _loadExpandableSectionData();
-                              },
-                              color: const Color(0xFF1B4D3E),
-                              child: _buildContent(state),
-                            ),
-                          );
-                        },
-                      ),
-                      // Customers tab (index 1)
-                      const EnhancedCustomerPage(isEmbedded: true),
-                      // Billing tab (primary - center - index 2)
-                      const BillingPage(isEmbedded: true),
-                      // Available tab (index 3)
-                      const AvailabilityPage(isEmbedded: true),
-                      // Purchase tab (index 4)
-                      const EnhancedPurchaseScreen(isEmbedded: true),
-                    ],
-                  ),
+                  child: isWide
+                      ? Row(
+                          children: [
+                            _buildDesktopSideNav(),
+                            Expanded(child: _buildTabContent()),
+                          ],
+                        )
+                      : _buildTabContent(),
                 ),
               ],
             ),
@@ -285,7 +259,185 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
             const Positioned.fill(child: GlobalQuickActionsFAB()),
           ],
         ),
-        bottomNavigationBar: _buildBottomNavBar(),
+        bottomNavigationBar: isWide ? null : _buildBottomNavBar(),
+      ),
+    );
+  }
+
+  Widget _buildTabContent() {
+    return IndexedStack(
+      index: _selectedIndex,
+      children: [
+        // Dashboard tab (index 0)
+        BlocBuilder<OptimizedDashboardCubit, OptimizedDashboardState>(
+          builder: (context, state) {
+            return FadeTransition(
+              opacity: _fadeAnimation,
+              child: RefreshIndicator(
+                onRefresh: () async {
+                  await context.read<OptimizedDashboardCubit>().refresh();
+                  await _loadExpandableSectionData();
+                },
+                color: const Color(0xFF1B4D3E),
+                child: _buildContent(state),
+              ),
+            );
+          },
+        ),
+        // Customers tab (index 1)
+        const EnhancedCustomerPage(isEmbedded: true),
+        // Billing tab (primary - center - index 2)
+        const BillingPage(isEmbedded: true),
+        // Available tab (index 3)
+        const AvailabilityPage(isEmbedded: true),
+        // Purchase tab (index 4)
+        const EnhancedPurchaseScreen(isEmbedded: true),
+      ],
+    );
+  }
+
+  /// Desktop/tablet side navigation rail
+  Widget _buildDesktopSideNav() {
+    final isExpanded = MediaQuery.of(context).size.width >= 1100;
+    return Container(
+      width: isExpanded ? 220 : 72,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 10,
+            offset: const Offset(2, 0),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          const SizedBox(height: 8),
+          _buildSideNavItem(
+            0,
+            Icons.dashboard_rounded,
+            _localizations.dashboard,
+            isExpanded,
+          ),
+          _buildSideNavItem(
+            1,
+            Icons.people_rounded,
+            _localizations.customers,
+            isExpanded,
+          ),
+          _buildSideNavItem(
+            2,
+            Icons.receipt_long_rounded,
+            _localizations.billing,
+            isExpanded,
+          ),
+          _buildSideNavItem(
+            3,
+            Icons.event_available_rounded,
+            _localizations.availability,
+            isExpanded,
+          ),
+          _buildSideNavItem(
+            4,
+            Icons.shopping_cart_rounded,
+            _localizations.purchase,
+            isExpanded,
+          ),
+          const Spacer(),
+          // Flyout menu trigger at bottom
+          _buildSideNavItem(
+            -1,
+            Icons.menu_rounded,
+            'Menu',
+            isExpanded,
+            onTap: _openFlyoutMenu,
+          ),
+          const SizedBox(height: 12),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSideNavItem(
+    int index,
+    IconData icon,
+    String label,
+    bool isExpanded, {
+    VoidCallback? onTap,
+  }) {
+    final isSelected = index >= 0 && _selectedIndex == index;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap ?? () => _navigateToPage(index),
+          borderRadius: BorderRadius.circular(12),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: EdgeInsets.symmetric(
+              horizontal: isExpanded ? 16 : 0,
+              vertical: 12,
+            ),
+            decoration: BoxDecoration(
+              gradient: isSelected
+                  ? const LinearGradient(
+                      colors: [Color(0xFF1B4D3E), Color(0xFF2E7D5B)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    )
+                  : null,
+              color: isSelected ? null : Colors.transparent,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: isSelected
+                  ? [
+                      BoxShadow(
+                        color: const Color(0xFF1B4D3E).withValues(alpha: 0.25),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ]
+                  : null,
+            ),
+            child: isExpanded
+                ? Row(
+                    children: [
+                      Icon(
+                        icon,
+                        color: isSelected ? Colors.white : Colors.grey[600],
+                        size: 22,
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Text(
+                          label,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: isSelected ? Colors.white : Colors.grey[700],
+                            fontSize: 13,
+                            fontWeight: isSelected
+                                ? FontWeight.w700
+                                : FontWeight.w500,
+                            fontFamily: 'Literata',
+                          ),
+                        ),
+                      ),
+                    ],
+                  )
+                : Center(
+                    child: Tooltip(
+                      message: label,
+                      child: Icon(
+                        icon,
+                        color: isSelected ? Colors.white : Colors.grey[600],
+                        size: 24,
+                      ),
+                    ),
+                  ),
+          ),
+        ),
       ),
     );
   }
@@ -685,88 +837,188 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(),
       padding: const EdgeInsets.all(20.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildFilterSection(state),
-          const SizedBox(height: 28),
-          _buildSectionHeader(
-            title: _localizations.salesProfitAnalysis,
-            subtitle: _getFilterLabel(state.params),
-            icon: Icons.analytics_outlined,
+      child: Center(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: MediaQuery.of(context).size.width >= 800
+                ? 1000
+                : double.infinity,
           ),
-          const SizedBox(height: 20),
-          _buildMetricsRow(data, isRefreshing),
-          const SizedBox(height: 16),
-          _buildProfitCard(data, isRefreshing),
-          const SizedBox(height: 12),
-          _buildMarginCard(data, isRefreshing),
-          const SizedBox(height: 28),
-          _buildSectionHeader(
-            title: _localizations.inventoryPayments,
-            subtitle: _localizations.liveStatus,
-            icon: Icons.inventory_2_outlined,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildFilterSection(state),
+              const SizedBox(height: 28),
+              _buildSectionHeader(
+                title: _localizations.salesProfitAnalysis,
+                subtitle: _getFilterLabel(state.params),
+                icon: Icons.analytics_outlined,
+              ),
+              const SizedBox(height: 20),
+              _buildMetricsRow(data, isRefreshing),
+              const SizedBox(height: 16),
+              // Profit + Margin: side by side on desktop, stacked on mobile
+              if (MediaQuery.of(context).size.width >= 800) ...[
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(child: _buildProfitCard(data, isRefreshing)),
+                    const SizedBox(width: 16),
+                    Expanded(child: _buildMarginCard(data, isRefreshing)),
+                  ],
+                ),
+              ] else ...[
+                _buildProfitCard(data, isRefreshing),
+                const SizedBox(height: 12),
+                _buildMarginCard(data, isRefreshing),
+              ],
+              const SizedBox(height: 28),
+              _buildSectionHeader(
+                title: _localizations.inventoryPayments,
+                subtitle: _localizations.liveStatus,
+                icon: Icons.inventory_2_outlined,
+              ),
+              const SizedBox(height: 20),
+              _buildInventoryCard(data, isRefreshing),
+              const SizedBox(height: 28),
+              // Quick Insights Section - Glassy Stats
+              _buildSectionHeader(
+                title: _localizations.quickInsights,
+                subtitle: _localizations.atAGlance,
+                icon: Icons.insights_outlined,
+              ),
+              const SizedBox(height: 16),
+              // Quick Insights: 2x2 grid on desktop, stacked on mobile
+              if (MediaQuery.of(context).size.width >= 800) ...[
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildGlassyStatRow(
+                        title: _localizations.topProducts,
+                        count: _topProducts.length,
+                        icon: Icons.star_rounded,
+                        gradientColors: const [
+                          Color(0xFFFFB74D),
+                          Color(0xFFFF9800),
+                        ],
+                        onTap: () => _showQuickInsightDetail(
+                          _localizations.topProducts,
+                          _topProducts,
+                          'products',
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _buildGlassyStatRow(
+                        title: _localizations.pendingPayments,
+                        count: _pendingPayments.length,
+                        icon: Icons.pending_actions_rounded,
+                        gradientColors: const [
+                          Color(0xFFEF5350),
+                          Color(0xFFE53935),
+                        ],
+                        onTap: () => _showQuickInsightDetail(
+                          _localizations.pendingPayments,
+                          _pendingPayments,
+                          'pending',
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildGlassyStatRow(
+                        title: _localizations.lowStockItems,
+                        count: _lowStockItems.length,
+                        icon: Icons.shopping_cart_rounded,
+                        gradientColors: const [
+                          Color(0xFF26A69A),
+                          Color(0xFF00897B),
+                        ],
+                        onTap: () => _showQuickInsightDetail(
+                          _localizations.lowStockItems,
+                          _lowStockItems,
+                          'lowstock',
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _buildGlassyStatRow(
+                        title: _localizations.upcomingEvents,
+                        count: _upcomingEvents.length,
+                        icon: Icons.event_rounded,
+                        gradientColors: const [
+                          Color(0xFF00BCD4),
+                          Color(0xFF0097A7),
+                        ],
+                        onTap: () => _showQuickInsightDetail(
+                          _localizations.upcomingEvents,
+                          _upcomingEvents,
+                          'events',
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ] else ...[
+                _buildGlassyStatRow(
+                  title: _localizations.topProducts,
+                  count: _topProducts.length,
+                  icon: Icons.star_rounded,
+                  gradientColors: const [Color(0xFFFFB74D), Color(0xFFFF9800)],
+                  onTap: () => _showQuickInsightDetail(
+                    _localizations.topProducts,
+                    _topProducts,
+                    'products',
+                  ),
+                ),
+                const SizedBox(height: 10),
+                _buildGlassyStatRow(
+                  title: _localizations.pendingPayments,
+                  count: _pendingPayments.length,
+                  icon: Icons.pending_actions_rounded,
+                  gradientColors: const [Color(0xFFEF5350), Color(0xFFE53935)],
+                  onTap: () => _showQuickInsightDetail(
+                    _localizations.pendingPayments,
+                    _pendingPayments,
+                    'pending',
+                  ),
+                ),
+                const SizedBox(height: 10),
+                _buildGlassyStatRow(
+                  title: _localizations.lowStockItems,
+                  count: _lowStockItems.length,
+                  icon: Icons.shopping_cart_rounded,
+                  gradientColors: const [Color(0xFF26A69A), Color(0xFF00897B)],
+                  onTap: () => _showQuickInsightDetail(
+                    _localizations.lowStockItems,
+                    _lowStockItems,
+                    'lowstock',
+                  ),
+                ),
+                const SizedBox(height: 10),
+                _buildGlassyStatRow(
+                  title: _localizations.upcomingEvents,
+                  count: _upcomingEvents.length,
+                  icon: Icons.event_rounded,
+                  gradientColors: const [Color(0xFF00BCD4), Color(0xFF0097A7)],
+                  onTap: () => _showQuickInsightDetail(
+                    _localizations.upcomingEvents,
+                    _upcomingEvents,
+                    'events',
+                  ),
+                ),
+              ],
+              const SizedBox(height: 24),
+              if (state is DashboardErrorState) _buildErrorBanner(state),
+            ],
           ),
-          const SizedBox(height: 20),
-          _buildInventoryCard(data, isRefreshing),
-          const SizedBox(height: 28),
-          // Quick Insights Section - Glassy Stats
-          _buildSectionHeader(
-            title: _localizations.quickInsights,
-            subtitle: _localizations.atAGlance,
-            icon: Icons.insights_outlined,
-          ),
-          const SizedBox(height: 16),
-          _buildGlassyStatRow(
-            title: _localizations.topProducts,
-            count: _topProducts.length,
-            icon: Icons.star_rounded,
-            gradientColors: const [Color(0xFFFFB74D), Color(0xFFFF9800)],
-            onTap: () => _showQuickInsightDetail(
-              _localizations.topProducts,
-              _topProducts,
-              'products',
-            ),
-          ),
-          const SizedBox(height: 10),
-          _buildGlassyStatRow(
-            title: _localizations.pendingPayments,
-            count: _pendingPayments.length,
-            icon: Icons.pending_actions_rounded,
-            gradientColors: const [Color(0xFFEF5350), Color(0xFFE53935)],
-            onTap: () => _showQuickInsightDetail(
-              _localizations.pendingPayments,
-              _pendingPayments,
-              'pending',
-            ),
-          ),
-          const SizedBox(height: 10),
-          _buildGlassyStatRow(
-            title: _localizations.lowStockItems,
-            count: _lowStockItems.length,
-            icon: Icons.shopping_cart_rounded,
-            gradientColors: const [Color(0xFF26A69A), Color(0xFF00897B)],
-            onTap: () => _showQuickInsightDetail(
-              _localizations.lowStockItems,
-              _lowStockItems,
-              'lowstock',
-            ),
-          ),
-          const SizedBox(height: 10),
-          _buildGlassyStatRow(
-            title: _localizations.upcomingEvents,
-            count: _upcomingEvents.length,
-            icon: Icons.event_rounded,
-            gradientColors: const [Color(0xFF00BCD4), Color(0xFF0097A7)],
-            onTap: () => _showQuickInsightDetail(
-              _localizations.upcomingEvents,
-              _upcomingEvents,
-              'events',
-            ),
-          ),
-          const SizedBox(height: 24),
-          if (state is DashboardErrorState) _buildErrorBanner(state),
-        ],
+        ),
       ),
     );
   }
@@ -1098,77 +1350,91 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
   }
 
   Widget _buildMetricsRow(DashboardSummary data, bool isLoading) {
+    final isWide = MediaQuery.of(context).size.width >= 800;
+
+    final salesCard = _buildGradientMetricCard(
+      title: _localizations.totalSales,
+      amount: _formatAmount(data.totalSales),
+      subtitle:
+          '${_localizations.bills}: ${data.totalBillsCount} • ${_localizations.items}: ${data.totalItemsSold}',
+      gradient: const LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [Color(0xFF667eea), Color(0xFF764ba2)],
+      ),
+      icon: Icons.trending_up_rounded,
+      isLoading: isLoading,
+    );
+    final purchaseCard = _buildGradientMetricCard(
+      title: _localizations.totalPurchase,
+      amount: _formatAmount(data.totalPurchases),
+      subtitle:
+          '${_localizations.orders}: ${data.purchaseOrders} • ${_localizations.qty}: ${data.purchaseQty}',
+      gradient: const LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [Color(0xFF757575), Color(0xFF424242)],
+      ),
+      icon: Icons.shopping_bag_rounded,
+      isLoading: isLoading,
+    );
+    final returnsCard = _buildGradientMetricCard(
+      title: _localizations.returns,
+      amount: _formatAmount(data.totalReturns),
+      subtitle: '${data.totalReturnedItems} ${_localizations.itemsReturned}',
+      gradient: const LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [Color(0xFFEF5350), Color(0xFFC62828)],
+      ),
+      icon: Icons.assignment_return_rounded,
+      isLoading: isLoading,
+    );
+    final netSalesCard = _buildGradientMetricCard(
+      title: _localizations.netSales,
+      amount: _formatAmount(data.netSales),
+      subtitle: _localizations.afterReturnsDeducted,
+      gradient: const LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [Color(0xFF2E7D32), Color(0xFF1B5E20)],
+      ),
+      icon: Icons.account_balance_wallet_rounded,
+      isLoading: isLoading,
+    );
+
+    // Desktop: single row of 4 cards
+    if (isWide) {
+      return Row(
+        children: [
+          Expanded(child: salesCard),
+          const SizedBox(width: 16),
+          Expanded(child: purchaseCard),
+          const SizedBox(width: 16),
+          Expanded(child: returnsCard),
+          const SizedBox(width: 16),
+          Expanded(child: netSalesCard),
+        ],
+      );
+    }
+
+    // Mobile: 2x2 grid (original layout)
     return Column(
       children: [
         Row(
           children: [
-            Expanded(
-              child: _buildGradientMetricCard(
-                title: _localizations.totalSales,
-                amount: _formatAmount(data.totalSales),
-                subtitle:
-                    '${_localizations.bills}: ${data.totalBillsCount} • ${_localizations.items}: ${data.totalItemsSold}',
-                gradient: const LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [Color(0xFF667eea), Color(0xFF764ba2)],
-                ),
-                icon: Icons.trending_up_rounded,
-                isLoading: isLoading,
-              ),
-            ),
+            Expanded(child: salesCard),
             const SizedBox(width: 16),
-            Expanded(
-              child: _buildGradientMetricCard(
-                title: _localizations.totalPurchase,
-                amount: _formatAmount(data.totalPurchases),
-                subtitle:
-                    '${_localizations.orders}: ${data.purchaseOrders} • ${_localizations.qty}: ${data.purchaseQty}',
-                gradient: const LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [Color(0xFF757575), Color(0xFF424242)],
-                ),
-                icon: Icons.shopping_bag_rounded,
-                isLoading: isLoading,
-              ),
-            ),
+            Expanded(child: purchaseCard),
           ],
         ),
         const SizedBox(height: 16),
         // Returns & Net Sales row
         Row(
           children: [
-            Expanded(
-              child: _buildGradientMetricCard(
-                title: _localizations.returns,
-                amount: _formatAmount(data.totalReturns),
-                subtitle:
-                    '${data.totalReturnedItems} ${_localizations.itemsReturned}',
-                gradient: const LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [Color(0xFFEF5350), Color(0xFFC62828)],
-                ),
-                icon: Icons.assignment_return_rounded,
-                isLoading: isLoading,
-              ),
-            ),
+            Expanded(child: returnsCard),
             const SizedBox(width: 16),
-            Expanded(
-              child: _buildGradientMetricCard(
-                title: _localizations.netSales,
-                amount: _formatAmount(data.netSales),
-                subtitle: _localizations.afterReturnsDeducted,
-                gradient: const LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [Color(0xFF2E7D32), Color(0xFF1B5E20)],
-                ),
-                icon: Icons.account_balance_wallet_rounded,
-                isLoading: isLoading,
-              ),
-            ),
+            Expanded(child: netSalesCard),
           ],
         ),
       ],

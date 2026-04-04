@@ -11,6 +11,9 @@ class DefaultFirebaseOptions {
     if (identical(defaultTargetPlatform, TargetPlatform.iOS)) {
       return ios;
     }
+    if (identical(defaultTargetPlatform, TargetPlatform.macOS)) {
+      return macos;
+    }
     throw UnsupportedError(
       'DefaultFirebaseOptions are not supported for this platform.',
     );
@@ -30,5 +33,14 @@ class DefaultFirebaseOptions {
     messagingSenderId: '101710107051',
     projectId: 'c-billing-4744a',
     storageBucket: 'c-billing-4744a.firebasestorage.app',
+  );
+
+  static const FirebaseOptions macos = FirebaseOptions(
+    apiKey: 'AIzaSyBx6NEyMZJOhPTjt9lGav26BtE_q2h1-kc',
+    appId: '1:101710107051:ios:04892d75d50610af46c2ee',
+    messagingSenderId: '101710107051',
+    projectId: 'c-billing-4744a',
+    storageBucket: 'c-billing-4744a.firebasestorage.app',
+    iosBundleId: 'com.example.cBilling',
   );
 }
