@@ -604,7 +604,10 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
         Navigator.of(context).pop();
         await LanguageService.instance.setLanguage(language);
         if (mounted) {
-          GlassyToast.show(context, '${_localizations.languageChangedTo} $language');
+          GlassyToast.show(
+            context,
+            '${_localizations.languageChangedTo} $language',
+          );
         }
       },
       borderRadius: BorderRadius.circular(12),
@@ -714,18 +717,6 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
             icon: Icons.insights_outlined,
           ),
           const SizedBox(height: 16),
-          _buildGlassyStatRow(
-            title: _localizations.upcomingPayments,
-            count: _upcomingPayments.length,
-            icon: Icons.schedule_rounded,
-            gradientColors: const [Color(0xFF4A90E2), Color(0xFF7B68EE)],
-            onTap: () => _showQuickInsightDetail(
-              _localizations.upcomingPayments,
-              _upcomingPayments,
-              'upcoming',
-            ),
-          ),
-          const SizedBox(height: 10),
           _buildGlassyStatRow(
             title: _localizations.topProducts,
             count: _topProducts.length,
