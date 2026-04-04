@@ -402,7 +402,8 @@ class DashboardIsarDataSource {
       final custId = order.customerId;
       if (custId == null || custId.isEmpty) continue;
       if (order.status == OrderStatus.cancelled.index ||
-          order.status == OrderStatus.convertedToBill.index) continue;
+          order.status == OrderStatus.convertedToBill.index)
+        continue;
       eventPendingByCustomer[custId] =
           (eventPendingByCustomer[custId] ?? 0.0) + order.remainingAmount;
     }
@@ -410,7 +411,8 @@ class DashboardIsarDataSource {
     // 3. Sum per-customer pending (same formula as _entityToMap)
     double total = 0;
     for (final customer in customers) {
-      final customerPending = customer.currentPendingAmount +
+      final customerPending =
+          customer.currentPendingAmount +
           (eventPendingByCustomer[customer.serverId] ?? 0.0) +
           (eventPendingByCustomer['local_${customer.id}'] ?? 0.0);
       if (customerPending > 0) {
