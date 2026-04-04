@@ -742,18 +742,6 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
           ),
           const SizedBox(height: 10),
           _buildGlassyStatRow(
-            title: _localizations.lastDues,
-            count: _lastDues.length,
-            icon: Icons.receipt_long_rounded,
-            gradientColors: const [Color(0xFF9575CD), Color(0xFF7E57C2)],
-            onTap: () => _showQuickInsightDetail(
-              _localizations.lastDues,
-              _lastDues,
-              'dues',
-            ),
-          ),
-          const SizedBox(height: 10),
-          _buildGlassyStatRow(
             title: _localizations.lowStockItems,
             count: _lowStockItems.length,
             icon: Icons.shopping_cart_rounded,
