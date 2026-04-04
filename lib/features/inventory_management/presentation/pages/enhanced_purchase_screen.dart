@@ -1773,40 +1773,43 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
   }
 
   Widget _buildFAB() {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(22),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: Container(
-          width: 64,
-          height: 64,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(22),
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                const Color(0xFF1B4D3E),
-                const Color(0xFF1B4D3E).withValues(alpha: 0.85),
+    return Padding(
+      padding: EdgeInsets.only(bottom: widget.isEmbedded ? 72 : 0),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(22),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Container(
+            width: 64,
+            height: 64,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(22),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  const Color(0xFF1B4D3E),
+                  const Color(0xFF1B4D3E).withValues(alpha: 0.85),
+                ],
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF1B4D3E).withValues(alpha: 0.35),
+                  blurRadius: 20,
+                  offset: const Offset(0, 8),
+                ),
               ],
             ),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFF1B4D3E).withValues(alpha: 0.35),
-                blurRadius: 20,
-                offset: const Offset(0, 8),
-              ),
-            ],
-          ),
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: _navigateToAddPurchase,
-              splashColor: Colors.white.withValues(alpha: 0.2),
-              highlightColor: Colors.white.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(22),
-              child: const Center(
-                child: Icon(Icons.add_rounded, size: 32, color: Colors.white),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: _navigateToAddPurchase,
+                splashColor: Colors.white.withValues(alpha: 0.2),
+                highlightColor: Colors.white.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(22),
+                child: const Center(
+                  child: Icon(Icons.add_rounded, size: 32, color: Colors.white),
+                ),
               ),
             ),
           ),
