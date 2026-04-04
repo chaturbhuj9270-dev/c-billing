@@ -2291,7 +2291,8 @@ class _PurchasePageState extends State<PurchasePage>
               .doc(currentUser.uid)
               .collection('products')
               .doc(productId)
-              .update(updateData);
+              .update(updateData)
+              .timeout(const Duration(seconds: 1));
           print('[DEBUG] Updated product in Firestore');
         } catch (e) {
           print('[DEBUG] Failed to update Firestore (will sync later): $e');
