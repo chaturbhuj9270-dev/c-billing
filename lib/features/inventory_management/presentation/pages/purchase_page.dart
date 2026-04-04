@@ -2779,6 +2779,9 @@ class _PurchasePageState extends State<PurchasePage>
       return;
     }
 
+    // Capture navigator before async gap to avoid context issues
+    final navigator = Navigator.of(dialogContext);
+
     try {
       // Use offline controller — saves to Isar (stream auto-updates UI) + syncs to Firestore in background
       // Supplier code is optional, so we don't pass it - avoids duplicate code issues
@@ -2790,22 +2793,21 @@ class _PurchasePageState extends State<PurchasePage>
         address: _newSupplierAddressController.text.trim(),
       );
 
-      // Trigger sync to upload to server immediately and wait for it
-      final supplierSyncResult = await SupplierSyncService.instance.syncNow();
-      debugPrint('Supplier sync result: $supplierSyncResult');
+      // Close bottom sheet immediately after local save
+      navigator.pop();
 
-      if (dialogContext.mounted) {
-        Navigator.pop(dialogContext);
+      // Show success toast
+      if (mounted) {
+        GlassyToast.show(context, _localizations.supplierAddedSuccessfully);
       }
+
+      // Sync to server in background (don't block UI)
+      SupplierSyncService.instance.syncNow();
 
       // Notify dashboard to refresh
       DashboardRefreshService.instance.notifyDataChanged(
         DataChangeType.supplier,
       );
-
-      if (mounted) {
-        GlassyToast.show(context, _localizations.supplierAddedSuccessfully);
-      }
     } catch (e) {
       if (mounted) {
         GlassyToast.show(context, '${_localizations.errorAddingSupplier}: $e');
