@@ -363,6 +363,7 @@ class _CompactActionIcon extends StatelessWidget {
       child: Container(
         width: containerSize,
         height: containerSize,
+        alignment: Alignment.center,
         decoration: BoxDecoration(
           color: color.withOpacity(0.1),
           borderRadius: BorderRadius.circular(8),

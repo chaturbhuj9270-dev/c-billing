@@ -2808,7 +2808,11 @@ class _PurchasePageState extends State<PurchasePage>
       );
     } catch (e) {
       if (mounted) {
-        GlassyToast.show(context, '${_localizations.errorAddingSupplier}: $e', isError: true);
+        GlassyToast.show(
+          context,
+          '${_localizations.errorAddingSupplier}: $e',
+          isError: true,
+        );
       }
     }
   }
