@@ -426,23 +426,52 @@ class DashboardOfflineRepository {
   }
 
   /// Get customers with pending payments
+  /// Mirrors enhanced_customer_page._entityToMap: bill pending + event order remaining
   Future<List<Map<String, dynamic>>> getCustomersWithPendingBalance({
     int limit = 5,
   }) async {
-    final customers = await CustomerOfflineController.instance
-        .getCustomersWithPendingBalance();
+    final allCustomers = await CustomerOfflineController.instance
+        .getAllCustomers();
 
-    return customers
-        .take(limit)
-        .map(
-          (c) => {
-            'id': c.serverId ?? c.id.toString(),
-            'name': c.name,
-            'currentPendingAmount': c.currentPendingAmount,
-            'mobile': c.mobile,
-          },
-        )
-        .toList();
+    // Build event pending map per customer (same as enhanced_customer_page)
+    final allOrders = await EventOrderOfflineController.instance
+        .getAllEventOrders();
+    final eventPendingMap = <String, double>{};
+    for (final order in allOrders) {
+      final custId = order.customerId;
+      if (custId == null || custId.isEmpty) continue;
+      if (order.status == OrderStatus.cancelled.index ||
+          order.status == OrderStatus.convertedToBill.index)
+        continue;
+      eventPendingMap[custId] =
+          (eventPendingMap[custId] ?? 0.0) + order.remainingAmount;
+    }
+
+    // Build list with combined pending (same formula as _entityToMap)
+    final customersWithPending = <Map<String, dynamic>>[];
+    for (final c in allCustomers) {
+      final totalPending =
+          c.currentPendingAmount +
+          (eventPendingMap[c.serverId] ?? 0.0) +
+          (eventPendingMap['local_${c.id}'] ?? 0.0);
+      if (totalPending > 0) {
+        customersWithPending.add({
+          'id': c.serverId ?? c.id.toString(),
+          'name': c.name,
+          'currentPendingAmount': totalPending,
+          'mobile': c.mobile,
+        });
+      }
+    }
+
+    // Sort by pending amount descending
+    customersWithPending.sort(
+      (a, b) => ((b['currentPendingAmount'] as double)).compareTo(
+        a['currentPendingAmount'] as double,
+      ),
+    );
+
+    return customersWithPending.take(limit).toList();
   }
 
   /// Get recent bills with pending amount
