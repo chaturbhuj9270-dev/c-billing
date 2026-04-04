@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:isar_community/isar.dart';
 import '../../../../core/services/isar_service.dart';
+import '../../../../core/services/dashboard_refresh_service.dart';
 import '../entities/customer_transaction_entity.dart';
 import '../entities/customer_entity.dart';
 
@@ -68,6 +69,7 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
 
     debugPrint('[TransactionOffline] Payment saved. New pending: $newPending');
     notifyListeners();
+    DashboardRefreshService.instance.notifyDataChanged(DataChangeType.customer);
     return transaction;
   }
 
@@ -113,6 +115,7 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
       '[TransactionOffline] Bill transaction saved. New pending: $newPending',
     );
     notifyListeners();
+    DashboardRefreshService.instance.notifyDataChanged(DataChangeType.customer);
     return transaction;
   }
 
@@ -156,6 +159,7 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
     });
 
     notifyListeners();
+    DashboardRefreshService.instance.notifyDataChanged(DataChangeType.customer);
     return transaction;
   }
 
@@ -338,6 +342,7 @@ class CustomerTransactionOfflineController extends ChangeNotifier {
     });
 
     notifyListeners();
+    DashboardRefreshService.instance.notifyDataChanged(DataChangeType.customer);
   }
 
   // ==================== HELPERS ====================

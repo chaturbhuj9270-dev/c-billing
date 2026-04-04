@@ -9,6 +9,7 @@ import 'package:c_billing/core/services/customer_transaction_service.dart';
 import 'package:c_billing/features/event_order/offline/controllers/event_order_offline_controller.dart';
 import 'package:c_billing/features/event_order/domain/entities/event_order.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
+import 'package:c_billing/features/customer/offline/controllers/customer_transaction_offline_controller.dart';
 
 /// Page to display customer details, pending balance, and transaction history
 /// Also provides functionality to receive payments
@@ -1034,6 +1035,17 @@ class _ReceivePaymentSheetState extends State<ReceivePaymentSheet> {
         referenceNumber: _referenceController.text.trim().isNotEmpty
             ? _referenceController.text.trim()
             : null,
+      );
+
+      // Also update local Isar so dashboard refreshes
+      await CustomerTransactionOfflineController.instance.addPaymentTransaction(
+        customerId: widget.customer.id,
+        customerName: widget.customer.fullName,
+        amount: _enteredAmount,
+        description: _notesController.text.trim().isNotEmpty
+            ? _notesController.text.trim()
+            : 'Payment received',
+        paymentMethod: _selectedPaymentMode.name,
       );
 
       if (!mounted) return;
