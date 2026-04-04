@@ -380,24 +380,44 @@ class DashboardIsarDataSource {
 
   // ==================== PENDING AMOUNTS ====================
 
-  /// Sum of pendingAmount from all bills with pending/partiallyPaid status
+  /// Total pending = exact sum of what customer list page shows per customer.
+  /// Per customer: entity.currentPendingAmount + event order remaining for that customer.
+  /// This mirrors enhanced_customer_page._entityToMap() logic exactly.
   Future<double> _getTotalPendingAmount() async {
-    final pendingBills = await _isar.billEntitys
+    // 1. Get all customers
+    final customers = await _isar.customerEntitys
         .filter()
-        .not()
-        .syncStatusEqualTo(BillSyncStatus.deleted)
-        .group(
-          (q) => q
-              .paymentStatusEqualTo(BillPaymentStatus.pending)
-              .or()
-              .paymentStatusEqualTo(BillPaymentStatus.partiallyPaid),
-        )
+        .isDeletedEqualTo(false)
         .findAll();
 
-    double total = 0;
-    for (final bill in pendingBills) {
-      total += bill.pendingAmount;
+    // 2. Build event pending map per customer (same as enhanced_customer_page)
+    final allOrders = await _isar.eventOrderEntitys
+        .filter()
+        .not()
+        .syncStatusEqualTo(EventOrderSyncStatus.deleted)
+        .findAll();
+
+    final eventPendingByCustomer = <String, double>{};
+    for (final order in allOrders) {
+      final custId = order.customerId;
+      if (custId == null || custId.isEmpty) continue;
+      if (order.status == OrderStatus.cancelled.index ||
+          order.status == OrderStatus.convertedToBill.index) continue;
+      eventPendingByCustomer[custId] =
+          (eventPendingByCustomer[custId] ?? 0.0) + order.remainingAmount;
     }
+
+    // 3. Sum per-customer pending (same formula as _entityToMap)
+    double total = 0;
+    for (final customer in customers) {
+      final customerPending = customer.currentPendingAmount +
+          (eventPendingByCustomer[customer.serverId] ?? 0.0) +
+          (eventPendingByCustomer['local_${customer.id}'] ?? 0.0);
+      if (customerPending > 0) {
+        total += customerPending;
+      }
+    }
+
     return total;
   }
 
