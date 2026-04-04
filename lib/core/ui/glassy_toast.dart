@@ -10,7 +10,7 @@ import 'package:flutter/material.dart';
 class GlassyToast {
   static OverlayEntry? _currentEntry;
 
-  /// Show a glassy toast overlay at the bottom of the screen.
+  /// Show a glassy toast overlay at the top of the screen, below the status bar.
   ///
   /// [context] - BuildContext (needs Overlay ancestor)
   /// [message] - The message to display
@@ -37,7 +37,7 @@ class GlassyToast {
         isError: isError,
         icon: icon,
         duration: duration,
-        bottomPadding: mediaQuery.padding.bottom,
+        topPadding: mediaQuery.padding.top,
         onDismiss: () {
           entry.remove();
           if (_currentEntry == entry) _currentEntry = null;
@@ -61,7 +61,7 @@ class _GlassyToastWidget extends StatefulWidget {
   final bool isError;
   final IconData? icon;
   final Duration duration;
-  final double bottomPadding;
+  final double topPadding;
   final VoidCallback onDismiss;
 
   const _GlassyToastWidget({
@@ -69,7 +69,7 @@ class _GlassyToastWidget extends StatefulWidget {
     required this.isError,
     this.icon,
     required this.duration,
-    required this.bottomPadding,
+    required this.topPadding,
     required this.onDismiss,
   });
 
@@ -92,7 +92,7 @@ class _GlassyToastWidgetState extends State<_GlassyToastWidget>
       duration: const Duration(milliseconds: 500),
     );
     _slideAnim = Tween<Offset>(
-      begin: const Offset(0, 1.2),
+      begin: const Offset(0, -1.2),
       end: Offset.zero,
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutBack));
     _fadeAnim = Tween<double>(
@@ -133,7 +133,7 @@ class _GlassyToastWidgetState extends State<_GlassyToastWidget>
         (isError ? Icons.error_outline_rounded : Icons.check_rounded);
 
     return Positioned(
-      bottom: widget.bottomPadding + 24,
+      top: widget.topPadding + 8,
       left: 20,
       right: 20,
       child: SlideTransition(
@@ -142,7 +142,7 @@ class _GlassyToastWidgetState extends State<_GlassyToastWidget>
           opacity: _fadeAnim,
           child: GestureDetector(
             onVerticalDragUpdate: (details) {
-              if (details.primaryDelta != null && details.primaryDelta! > 4) {
+              if (details.primaryDelta != null && details.primaryDelta! < -4) {
                 _autoDismiss();
               }
             },
