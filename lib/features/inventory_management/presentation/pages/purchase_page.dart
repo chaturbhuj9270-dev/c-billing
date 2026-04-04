@@ -2779,22 +2779,20 @@ class _PurchasePageState extends State<PurchasePage>
       return;
     }
 
-    // Capture navigator before async gap to avoid context issues
-    final navigator = Navigator.of(dialogContext);
+    // Capture values before closing sheet
+    final address = _newSupplierAddressController.text.trim();
+
+    // Close bottom sheet first before any async work
+    Navigator.of(dialogContext).pop();
 
     try {
-      // Use offline controller — saves to Isar (stream auto-updates UI) + syncs to Firestore in background
-      // Supplier code is optional, so we don't pass it - avoids duplicate code issues
       await SupplierOfflineController.instance.addSupplier(
         firstName: firstName,
         lastName: lastName,
         supplierCode: '', // Optional - leave empty
         contact: contact,
-        address: _newSupplierAddressController.text.trim(),
+        address: address,
       );
-
-      // Close bottom sheet immediately after local save
-      navigator.pop();
 
       // Show success toast
       if (mounted) {
@@ -2810,7 +2808,7 @@ class _PurchasePageState extends State<PurchasePage>
       );
     } catch (e) {
       if (mounted) {
-        GlassyToast.show(context, '${_localizations.errorAddingSupplier}: $e');
+        GlassyToast.show(context, '${_localizations.errorAddingSupplier}: $e', isError: true);
       }
     }
   }
@@ -3041,37 +3039,37 @@ class _PurchasePageState extends State<PurchasePage>
       return;
     }
 
+    // Capture values before async gap
+    final gstCode = _newCompanyGstCodeController.text.trim();
+    final contact = _newCompanyContactController.text.trim();
+    final address = _newCompanyAddressController.text.trim();
+
+    // Close bottom sheet first before any async work
+    Navigator.of(dialogContext).pop();
+
     try {
-      // Use offline controller — saves to Isar (stream auto-updates UI) + syncs to Firestore in background
-      // Company code is optional, so we don't pass it - avoids duplicate code issues
       await CompanyOfflineController.instance.addCompany(
         companyName: companyName,
-        gstCode: _newCompanyGstCodeController.text.trim(),
-        contact: _newCompanyContactController.text.trim(),
-        address: _newCompanyAddressController.text.trim(),
+        gstCode: gstCode,
+        contact: contact,
+        address: address,
       );
 
-      // Trigger sync to upload to server immediately and await result
-      final syncResult = await CompanySyncService.instance.syncNow();
-      debugPrint(
-        '[PurchasePage] Company sync result: ${syncResult.success}, created: ${syncResult.createdCount}, error: ${syncResult.errorMessage}',
-      );
-
-      if (dialogContext.mounted) {
-        Navigator.pop(dialogContext);
+      // Show success toast
+      if (mounted) {
+        GlassyToast.show(context, _localizations.companyAddedSuccessfully);
       }
+
+      // Sync to server in background (don't block UI)
+      CompanySyncService.instance.syncNow();
 
       // Notify dashboard to refresh
       DashboardRefreshService.instance.notifyDataChanged(
         DataChangeType.company,
       );
-
-      if (mounted) {
-        GlassyToast.show(context, _localizations.companyAddedSuccessfully);
-      }
     } catch (e) {
       if (mounted) {
-        GlassyToast.show(context, 'Error adding company: $e');
+        GlassyToast.show(context, 'Error adding company: $e', isError: true);
       }
     }
   }
