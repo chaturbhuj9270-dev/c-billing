@@ -292,7 +292,11 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
     } catch (e) {
       debugPrint('[EnhancedCustomer] Firebase fetch error: $e');
       if (mounted && _customers.isEmpty) {
-        GlassyToast.show(context, '${_localizations.errorLoadingCustomers}: $e', isError: true);
+        GlassyToast.show(
+          context,
+          '${_localizations.errorLoadingCustomers}: $e',
+          isError: true,
+        );
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -865,27 +869,30 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
   // ━━━ FAB ━━━
 
   Widget _buildFAB() {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFF1B4D3E), Color(0xFF0F3B2F)],
-        ),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF1B4D3E).withValues(alpha: 0.4),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
+    return Padding(
+      padding: EdgeInsets.only(bottom: widget.isEmbedded ? 72 : 0),
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFF1B4D3E), Color(0xFF0F3B2F)],
           ),
-        ],
-      ),
-      child: FloatingActionButton(
-        onPressed: _showAddCustomerSheet,
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        child: const Icon(Icons.person_add_rounded, color: Colors.white),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF1B4D3E).withValues(alpha: 0.4),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: FloatingActionButton(
+          onPressed: _showAddCustomerSheet,
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          child: const Icon(Icons.person_add_rounded, color: Colors.white),
+        ),
       ),
     );
   }
