@@ -5,21 +5,34 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "c-billing",
-            "request": "launch",
-            "type": "dart"
-        },
-        {
-            "name": "c-billing (profile mode)",
+            "name": "Retail (debug)",
             "request": "launch",
             "type": "dart",
-            "flutterMode": "profile"
+            "program": "lib/main_retail.dart",
+            "args": ["--flavor", "retail"]
         },
         {
-            "name": "c-billing (release mode)",
+            "name": "Retail (release)",
             "request": "launch",
             "type": "dart",
-            "flutterMode": "release"
+            "program": "lib/main_retail.dart",
+            "flutterMode": "release",
+            "args": ["--flavor", "retail"]
+        },
+        {
+            "name": "Hotel (debug)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main_hotel.dart",
+            "args": ["--flavor", "hotel"]
+        },
+        {
+            "name": "Hotel (release)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main_hotel.dart",
+            "flutterMode": "release",
+            "args": ["--flavor", "hotel"]
         }
     ]
 }
