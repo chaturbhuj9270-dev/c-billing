@@ -6,13 +6,13 @@ import '../datasources/dashboard_cache_datasource.dart';
 import '../datasources/dashboard_isar_datasource.dart';
 
 /// Repository implementation with Isar-first reactive strategy
-/// 
+///
 /// Loading strategy:
 /// 1. Return cached data immediately if available (instant)
 /// 2. Fetch fresh data from LOCAL Isar DB (< 5ms)
 /// 3. Update cache and notify listeners
 /// 4. Reactive: Isar watchLazy() auto-triggers recalculation on any data change
-/// 
+///
 /// Key changes from old Firebase-based approach:
 /// - Primary datasource is now Isar (local, instant, offline-capable)
 /// - Reactive streams via Isar collection watchers (bills, purchases, batches)
@@ -24,15 +24,15 @@ class DashboardRepositoryImpl implements DashboardRepositoryInterface {
 
   /// Stream controllers for each filter type (for manual refresh triggers)
   final Map<String, StreamController<DashboardSummary>> _controllers = {};
-  
+
   /// Active Isar watch subscriptions per filter
   final Map<String, StreamSubscription<DashboardSummary>> _isarWatchSubs = {};
 
   DashboardRepositoryImpl({
     DashboardCacheDataSource? cacheDataSource,
     DashboardIsarDataSource? isarDataSource,
-  })  : _cacheDataSource = cacheDataSource ?? DashboardCacheDataSource(),
-        _isarDataSource = isarDataSource ?? DashboardIsarDataSource.instance;
+  }) : _cacheDataSource = cacheDataSource ?? DashboardCacheDataSource(),
+       _isarDataSource = isarDataSource ?? DashboardIsarDataSource.instance;
 
   /// Initialize repository and cache
   Future<void> init() async {
@@ -51,24 +51,20 @@ class DashboardRepositoryImpl implements DashboardRepositoryInterface {
   }) async {
     final stopwatch = Stopwatch()..start();
 
-    // Try cached data first (unless force refresh)
-    if (!forceRefresh) {
-      final cached = await _cacheDataSource.getCached(params);
-      if (cached != null && !cached.isStale(threshold: const Duration(seconds: 10))) {
-        debugPrint('[DashboardRepo] Cache hit in ${stopwatch.elapsedMilliseconds}ms');
-        return cached;
-      }
-    }
-
     // Fetch fresh data from local Isar DB (instant, < 5ms)
+    // Always go to Isar for live calculations — cache is only for pre-render
     try {
-      final freshData = await _isarDataSource.fetchDashboardSummary(params: params);
+      final freshData = await _isarDataSource.fetchDashboardSummary(
+        params: params,
+      );
 
       // Save to cache
       await _cacheDataSource.saveToCache(params, freshData);
 
       stopwatch.stop();
-      debugPrint('[DashboardRepo] Isar data loaded in ${stopwatch.elapsedMilliseconds}ms');
+      debugPrint(
+        '[DashboardRepo] Isar data loaded in ${stopwatch.elapsedMilliseconds}ms',
+      );
 
       return freshData;
     } catch (e) {
@@ -88,10 +84,11 @@ class DashboardRepositoryImpl implements DashboardRepositoryInterface {
   }) async* {
     final cacheKey = params.cacheKey;
 
-    // Get or create broadcast stream controller
-    if (!_controllers.containsKey(cacheKey)) {
-      _controllers[cacheKey] = StreamController<DashboardSummary>.broadcast();
-    }
+    // Clean up any existing watcher for this cacheKey to prevent stale streams
+    await _cleanupWatcher(cacheKey);
+
+    // Create fresh broadcast controller
+    _controllers[cacheKey] = StreamController<DashboardSummary>.broadcast();
 
     // 1. Emit cached data immediately if available
     final cached = await _cacheDataSource.getCached(params);
@@ -101,29 +98,29 @@ class DashboardRepositoryImpl implements DashboardRepositoryInterface {
 
     // 2. Fetch fresh data from Isar
     try {
-      final freshData = await _isarDataSource.fetchDashboardSummary(params: params);
+      final freshData = await _isarDataSource.fetchDashboardSummary(
+        params: params,
+      );
       await _cacheDataSource.saveToCache(params, freshData);
       yield freshData;
     } catch (e) {
       if (cached == null) rethrow;
     }
 
-    // 3. Start reactive Isar watcher if not already active
-    if (!_isarWatchSubs.containsKey(cacheKey)) {
-      final isarStream = _isarDataSource.watchDashboardSummary(params: params);
-      _isarWatchSubs[cacheKey] = isarStream.listen(
-        (summary) async {
-          await _cacheDataSource.saveToCache(params, summary);
-          final controller = _controllers[cacheKey];
-          if (controller != null && !controller.isClosed) {
-            controller.add(summary);
-          }
-        },
-        onError: (e) {
-          debugPrint('[DashboardRepo] Isar watch error: $e');
-        },
-      );
-    }
+    // 3. Start reactive Isar watcher
+    final isarStream = _isarDataSource.watchDashboardSummary(params: params);
+    _isarWatchSubs[cacheKey] = isarStream.listen(
+      (summary) async {
+        await _cacheDataSource.saveToCache(params, summary);
+        final controller = _controllers[cacheKey];
+        if (controller != null && !controller.isClosed) {
+          controller.add(summary);
+        }
+      },
+      onError: (e) {
+        debugPrint('[DashboardRepo] Isar watch error: $e');
+      },
+    );
 
     // 4. Continue listening for updates from the controller
     await for (final update in _controllers[cacheKey]!.stream) {
@@ -131,10 +128,23 @@ class DashboardRepositoryImpl implements DashboardRepositoryInterface {
     }
   }
 
+  /// Clean up watcher and controller for a given cache key
+  Future<void> _cleanupWatcher(String cacheKey) async {
+    final oldSub = _isarWatchSubs.remove(cacheKey);
+    await oldSub?.cancel();
+
+    final oldController = _controllers.remove(cacheKey);
+    if (oldController != null && !oldController.isClosed) {
+      oldController.close();
+    }
+  }
+
   /// Force refresh from Isar and push to stream listeners
   Future<void> refreshAndNotify(DashboardParams params) async {
     try {
-      final freshData = await _isarDataSource.fetchDashboardSummary(params: params);
+      final freshData = await _isarDataSource.fetchDashboardSummary(
+        params: params,
+      );
       await _cacheDataSource.saveToCache(params, freshData);
 
       final controller = _controllers[params.cacheKey];
@@ -162,13 +172,12 @@ class DashboardRepositoryImpl implements DashboardRepositoryInterface {
       sub.cancel();
     }
     _isarWatchSubs.clear();
-    
+
     for (final controller in _controllers.values) {
       controller.close();
     }
     _controllers.clear();
-    
+
     _isarDataSource.dispose();
   }
 }
-

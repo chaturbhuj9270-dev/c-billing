@@ -115,9 +115,8 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
   /// Called when data changes in other pages (customers, suppliers, etc.)
   void _onDataChanged() {
     if (mounted) {
-      // Refresh the dashboard cubit
-      context.read<OptimizedDashboardCubit>().refresh();
-      // Also reload expandable section data
+      // Cubit handles its own refresh via DashboardRefreshService subscription.
+      // Here we only reload expandable section data (quick insights).
       _loadExpandableSectionData();
     }
   }

@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:isar_community/isar.dart';
 import '../../../../core/services/isar_service.dart';
-import '../../../../core/services/dashboard_refresh_service.dart';
 import '../../../billing/offline/controllers/bill_offline_controller.dart';
 import '../../../billing/offline/entities/bill_entity.dart';
 import '../../../customer/offline/controllers/customer_offline_controller.dart';
@@ -41,12 +40,6 @@ class DashboardIsarDataSource {
     _instance ??= DashboardIsarDataSource._();
     return _instance!;
   }
-
-  /// Debounce timer for reactive updates
-  Timer? _debounceTimer;
-
-  /// Active stream subscriptions for Isar watchers
-  final List<StreamSubscription> _watchSubscriptions = [];
 
   /// Fetch dashboard summary from local Isar DB
   /// All calculations are local — typically completes in < 5ms
@@ -151,10 +144,16 @@ class DashboardIsarDataSource {
   /// Create a reactive stream that emits new DashboardSummary whenever
   /// bills, purchases, or batches change in the local Isar DB.
   /// Uses Isar's watchLazy() + debounce to avoid excessive recalculations.
+  ///
+  /// Each stream manages its OWN debounce timer and subscriptions to prevent
+  /// race conditions when multiple streams are active (e.g., filter changes).
   Stream<DashboardSummary> watchDashboardSummary({
     required DashboardParams params,
   }) {
     late StreamController<DashboardSummary> controller;
+    // Per-stream state to avoid shared-singleton race conditions
+    Timer? localDebounceTimer;
+    final localSubs = <StreamSubscription>[];
 
     controller = StreamController<DashboardSummary>(
       onListen: () async {
@@ -168,72 +167,69 @@ class DashboardIsarDataSource {
           debugPrint('[DashboardIsarDS] Error fetching initial data: $e');
         }
 
-        // Watch Isar collections for changes
+        // Watch Isar collections for changes — uses local timer
         void onCollectionChanged() {
-          _debounceTimer?.cancel();
-          _debounceTimer = Timer(const Duration(milliseconds: 150), () async {
-            try {
-              final updated = await fetchDashboardSummary(params: params);
-              if (!controller.isClosed) {
-                controller.add(updated);
+          localDebounceTimer?.cancel();
+          localDebounceTimer = Timer(
+            const Duration(milliseconds: 150),
+            () async {
+              try {
+                final updated = await fetchDashboardSummary(params: params);
+                if (!controller.isClosed) {
+                  controller.add(updated);
+                }
+              } catch (e) {
+                debugPrint('[DashboardIsarDS] Error in watch update: $e');
               }
-            } catch (e) {
-              debugPrint('[DashboardIsarDS] Error in watch update: $e');
-            }
-          });
+            },
+          );
         }
 
         // Watch ALL relevant collections for complete real-time updates
         // Bills, purchases, and batches for financial data
-        _watchSubscriptions.add(
+        localSubs.add(
           _isar.billEntitys.watchLazy().listen((_) => onCollectionChanged()),
         );
-        _watchSubscriptions.add(
+        localSubs.add(
           _isar.purchaseEntitys.watchLazy().listen(
             (_) => onCollectionChanged(),
           ),
         );
-        _watchSubscriptions.add(
+        localSubs.add(
           _isar.purchaseBatchEntitys.watchLazy().listen(
             (_) => onCollectionChanged(),
           ),
         );
         // Customers, products, suppliers, companies for count stats
-        _watchSubscriptions.add(
+        localSubs.add(
           _isar.customerEntitys.watchLazy().listen(
             (_) => onCollectionChanged(),
           ),
         );
-        _watchSubscriptions.add(
+        localSubs.add(
           _isar.productEntitys.watchLazy().listen((_) => onCollectionChanged()),
         );
-        _watchSubscriptions.add(
+        localSubs.add(
           _isar.supplierEntitys.watchLazy().listen(
             (_) => onCollectionChanged(),
           ),
         );
-        _watchSubscriptions.add(
+        localSubs.add(
           _isar.companyEntitys.watchLazy().listen((_) => onCollectionChanged()),
         );
         // Event orders for real-time event/order updates
-        _watchSubscriptions.add(
+        localSubs.add(
           _isar.eventOrderEntitys.watchLazy().listen(
-            (_) => onCollectionChanged(),
-          ),
-        );
-        // Also listen to DashboardRefreshService for external refresh requests
-        _watchSubscriptions.add(
-          DashboardRefreshService.instance.onRefreshNeeded.listen(
             (_) => onCollectionChanged(),
           ),
         );
       },
       onCancel: () {
-        _debounceTimer?.cancel();
-        for (final sub in _watchSubscriptions) {
+        localDebounceTimer?.cancel();
+        for (final sub in localSubs) {
           sub.cancel();
         }
-        _watchSubscriptions.clear();
+        localSubs.clear();
         controller.close();
       },
     );
@@ -475,13 +471,9 @@ class DashboardIsarDataSource {
     );
   }
 
-  /// Dispose resources
+  /// Dispose resources — no-op since streams manage their own lifecycle
   void dispose() {
-    _debounceTimer?.cancel();
-    for (final sub in _watchSubscriptions) {
-      sub.cancel();
-    }
-    _watchSubscriptions.clear();
+    // Each stream's onCancel handles its own cleanup
   }
 }
 
