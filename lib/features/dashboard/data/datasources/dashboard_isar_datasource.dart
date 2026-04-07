@@ -18,6 +18,7 @@ import '../../../company/offline/controllers/company_offline_controller.dart';
 import '../../../company/offline/entities/company_entity.dart';
 import '../../../event_order/offline/entities/event_order_entity.dart';
 import '../../../event_order/domain/entities/event_order.dart';
+import '../../../inventory_management/offline/entities/stock_ledger_entity.dart';
 import '../../domain/entities/dashboard_summary.dart';
 import '../../domain/repositories/dashboard_repository_interface.dart';
 
@@ -66,6 +67,8 @@ class DashboardIsarDataSource {
       _getTotalPendingAmount(),
       // Event/Order data (10)
       _getEventOrderData(),
+      // Purchase returns from stock ledger (11)
+      _getPurchaseReturnData(startDate, endDate),
     ]);
 
     // Extract counts
@@ -90,6 +93,9 @@ class DashboardIsarDataSource {
 
     // Extract event/order data
     final eventOrderData = results[10] as _EventOrderResult;
+
+    // Extract purchase return data from stock ledger
+    final purchaseReturnData = results[11] as _PurchaseReturnResult;
 
     // Net Sales = Gross Sales - Returns
     final netSales = salesData.grossSales - salesData.totalReturns;
@@ -125,6 +131,8 @@ class DashboardIsarDataSource {
       totalPurchases: purchaseData.totalAmount,
       purchaseOrders: purchaseData.orderCount,
       purchaseQty: purchaseData.totalQty,
+      totalPurchaseReturns: purchaseReturnData.totalAmount,
+      purchaseReturnCount: purchaseReturnData.returnCount,
       profit: profit,
       profitPercentage: profitPercentage,
       stockValue: stockData.stockValue,
@@ -220,6 +228,12 @@ class DashboardIsarDataSource {
         // Event orders for real-time event/order updates
         localSubs.add(
           _isar.eventOrderEntitys.watchLazy().listen(
+            (_) => onCollectionChanged(),
+          ),
+        );
+        // Stock ledger for purchase return updates
+        localSubs.add(
+          _isar.stockLedgerEntitys.watchLazy().listen(
             (_) => onCollectionChanged(),
           ),
         );
@@ -333,6 +347,55 @@ class DashboardIsarDataSource {
       totalAmount: totalAmount,
       orderCount: batches.length,
       totalQty: totalQty,
+    );
+  }
+
+  // ==================== PURCHASE RETURN CALCULATION ====================
+
+  /// Calculate purchase return totals from stock ledger PURCHASE_RETURN entries.
+  /// These entries are created by PurchaseReturnService when returning stock to suppliers.
+  Future<_PurchaseReturnResult> _getPurchaseReturnData(
+    DateTime? startDate,
+    DateTime? endDate,
+  ) async {
+    final start = startDate ?? DateTime(2000);
+    final end = endDate ?? DateTime.now().add(const Duration(days: 1));
+
+    // Query all PURCHASE_RETURN entries, then filter by date in-memory
+    // to avoid complex Isar filter chain issues
+    final allReturnEntries = await _isar.stockLedgerEntitys
+        .filter()
+        .ledgerTypeEqualTo(LedgerTransactionType.PURCHASE_RETURN)
+        .not()
+        .syncStatusEqualTo(LedgerSyncStatus.deleted)
+        .findAll();
+
+    double totalAmount = 0;
+    int totalQty = 0;
+    final returnIds = <String>{};
+
+    for (final entry in allReturnEntries) {
+      // Apply date filter in-memory for reliability
+      if (entry.transactionDate.isBefore(start) ||
+          entry.transactionDate.isAfter(end)) {
+        continue;
+      }
+      totalAmount += entry.totalCost;
+      totalQty += entry.quantity;
+      if (entry.referenceId.isNotEmpty) {
+        returnIds.add(entry.referenceId);
+      }
+    }
+
+    debugPrint(
+      '[DashboardIsarDS] PurchaseReturns: ${allReturnEntries.length} total entries, '
+      '${returnIds.length} in period, amount: ${totalAmount.toStringAsFixed(0)}, qty: $totalQty',
+    );
+
+    return _PurchaseReturnResult(
+      totalAmount: totalAmount,
+      totalQty: totalQty,
+      returnCount: returnIds.length,
     );
   }
 
@@ -506,6 +569,18 @@ class _PurchaseResult {
     required this.totalAmount,
     required this.orderCount,
     required this.totalQty,
+  });
+}
+
+class _PurchaseReturnResult {
+  final double totalAmount;
+  final int totalQty;
+  final int returnCount;
+
+  const _PurchaseReturnResult({
+    required this.totalAmount,
+    required this.totalQty,
+    required this.returnCount,
   });
 }
 

@@ -1366,9 +1366,10 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
     );
     final purchaseCard = _buildGradientMetricCard(
       title: _localizations.totalPurchase,
-      amount: _formatAmount(data.totalPurchases),
-      subtitle:
-          '${_localizations.orders}: ${data.purchaseOrders} • ${_localizations.qty}: ${data.purchaseQty}',
+      amount: _formatAmount(data.totalPurchases - data.totalPurchaseReturns),
+      subtitle: data.totalPurchaseReturns > 0
+          ? '${_localizations.purchaseReturnShort}: ${_formatAmount(data.totalPurchaseReturns)} • ${_localizations.qty}: ${data.purchaseQty}'
+          : '${_localizations.orders}: ${data.purchaseOrders} • ${_localizations.qty}: ${data.purchaseQty}',
       gradient: const LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
@@ -1377,10 +1378,13 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
       icon: Icons.shopping_bag_rounded,
       isLoading: isLoading,
     );
+    final totalAllReturns = data.totalReturns + data.totalPurchaseReturns;
     final returnsCard = _buildGradientMetricCard(
       title: _localizations.returns,
-      amount: _formatAmount(data.totalReturns),
-      subtitle: '${data.totalReturnedItems} ${_localizations.itemsReturned}',
+      amount: _formatAmount(totalAllReturns),
+      subtitle: data.totalPurchaseReturns > 0
+          ? '${_localizations.sales}: ${_formatAmount(data.totalReturns)} • ${_localizations.purchaseReturn}: ${_formatAmount(data.totalPurchaseReturns)}'
+          : '${data.totalReturnedItems} ${_localizations.itemsReturned}',
       gradient: const LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,

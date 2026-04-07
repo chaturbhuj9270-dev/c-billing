@@ -2,7 +2,7 @@ import 'package:equatable/equatable.dart';
 
 /// Domain entity representing dashboard summary data
 /// This is the core business model for dashboard metrics
-/// 
+///
 /// Key formulas:
 ///   Net Sales = Total Sales (finalAmount) - Total Returns
 ///   Profit = Net Sales - Purchase Cost of sold (non-returned) items
@@ -14,50 +14,61 @@ class DashboardSummary extends Equatable {
   final int suppliersCount;
   final int purchasesCount;
   final int companiesCount;
-  
+
   /// Gross sales amount (sum of finalAmount from all bills in period)
   final double totalSales;
   final int totalBillsCount;
   final int totalItemsSold;
-  
+
   /// Total returned amount (returnedQty × sellingPrice, proportional discount applied)
   final double totalReturns;
-  
+
   /// Total returned item count
   final int totalReturnedItems;
-  
+
   /// Net Sales = totalSales - totalReturns
   final double netSales;
-  
+
   final double totalPurchases;
   final int purchaseOrders;
   final int purchaseQty;
-  
+
+  /// Total purchase return amount (sum of quantity × purchasePrice from PURCHASE_RETURN ledger entries)
+  final double totalPurchaseReturns;
+
+  /// Count of purchase return transactions
+  final int purchaseReturnCount;
+
   /// Profit = Net Sales - Purchase Cost of sold (non-returned) items
   final double profit;
   final double profitPercentage;
-  
+
   /// Stock value computed from batch quantityRemaining × purchasePrice
   final double stockValue;
   final int lowStockCount;
-  
+
   /// Total pending amount across all bills (unpaid / partially paid)
   final double totalPendingAmount;
-  
+
   // Event/Order tracking fields
   /// Total count of all events and orders
   final int totalEventOrders;
+
   /// Count of upcoming events (event date in future)
   final int upcomingEvents;
+
   /// Count of pending orders (not delivered/cancelled)
   final int pendingOrders;
+
   /// Total amount from all events/orders
   final double eventOrdersAmount;
+
   /// Total advance collected
   final double eventOrdersAdvance;
+
   /// Total pending/remaining amount
   final double eventOrdersPending;
-  
+
   final DateTime lastUpdated;
   final bool isFromCache;
 
@@ -77,6 +88,8 @@ class DashboardSummary extends Equatable {
     this.totalPurchases = 0,
     this.purchaseOrders = 0,
     this.purchaseQty = 0,
+    this.totalPurchaseReturns = 0,
+    this.purchaseReturnCount = 0,
     this.profit = 0,
     this.profitPercentage = 0,
     this.stockValue = 0,
@@ -93,10 +106,8 @@ class DashboardSummary extends Equatable {
   });
 
   /// Empty dashboard summary for initial state
-  static DashboardSummary get empty => DashboardSummary(
-        lastUpdated: DateTime.now(),
-        isFromCache: false,
-      );
+  static DashboardSummary get empty =>
+      DashboardSummary(lastUpdated: DateTime.now(), isFromCache: false);
 
   /// Check if data is stale (older than threshold)
   bool isStale({Duration threshold = const Duration(minutes: 5)}) {
@@ -119,6 +130,8 @@ class DashboardSummary extends Equatable {
     double? totalPurchases,
     int? purchaseOrders,
     int? purchaseQty,
+    double? totalPurchaseReturns,
+    int? purchaseReturnCount,
     double? profit,
     double? profitPercentage,
     double? stockValue,
@@ -149,6 +162,8 @@ class DashboardSummary extends Equatable {
       totalPurchases: totalPurchases ?? this.totalPurchases,
       purchaseOrders: purchaseOrders ?? this.purchaseOrders,
       purchaseQty: purchaseQty ?? this.purchaseQty,
+      totalPurchaseReturns: totalPurchaseReturns ?? this.totalPurchaseReturns,
+      purchaseReturnCount: purchaseReturnCount ?? this.purchaseReturnCount,
       profit: profit ?? this.profit,
       profitPercentage: profitPercentage ?? this.profitPercentage,
       stockValue: stockValue ?? this.stockValue,
@@ -183,6 +198,8 @@ class DashboardSummary extends Equatable {
       'totalPurchases': totalPurchases,
       'purchaseOrders': purchaseOrders,
       'purchaseQty': purchaseQty,
+      'totalPurchaseReturns': totalPurchaseReturns,
+      'purchaseReturnCount': purchaseReturnCount,
       'profit': profit,
       'profitPercentage': profitPercentage,
       'stockValue': stockValue,
@@ -216,6 +233,9 @@ class DashboardSummary extends Equatable {
       totalPurchases: (json['totalPurchases'] as num?)?.toDouble() ?? 0,
       purchaseOrders: json['purchaseOrders'] as int? ?? 0,
       purchaseQty: json['purchaseQty'] as int? ?? 0,
+      totalPurchaseReturns:
+          (json['totalPurchaseReturns'] as num?)?.toDouble() ?? 0,
+      purchaseReturnCount: json['purchaseReturnCount'] as int? ?? 0,
       profit: (json['profit'] as num?)?.toDouble() ?? 0,
       profitPercentage: (json['profitPercentage'] as num?)?.toDouble() ?? 0,
       stockValue: (json['stockValue'] as num?)?.toDouble() ?? 0,
@@ -236,33 +256,35 @@ class DashboardSummary extends Equatable {
 
   @override
   List<Object?> get props => [
-        invoicesCount,
-        clientsCount,
-        productsCount,
-        suppliersCount,
-        purchasesCount,
-        companiesCount,
-        totalSales,
-        totalBillsCount,
-        totalItemsSold,
-        totalReturns,
-        totalReturnedItems,
-        netSales,
-        totalPurchases,
-        purchaseOrders,
-        purchaseQty,
-        profit,
-        profitPercentage,
-        stockValue,
-        lowStockCount,
-        totalPendingAmount,
-        totalEventOrders,
-        upcomingEvents,
-        pendingOrders,
-        eventOrdersAmount,
-        eventOrdersAdvance,
-        eventOrdersPending,
-        lastUpdated,
-        isFromCache,
-      ];
+    invoicesCount,
+    clientsCount,
+    productsCount,
+    suppliersCount,
+    purchasesCount,
+    companiesCount,
+    totalSales,
+    totalBillsCount,
+    totalItemsSold,
+    totalReturns,
+    totalReturnedItems,
+    netSales,
+    totalPurchases,
+    purchaseOrders,
+    purchaseQty,
+    totalPurchaseReturns,
+    purchaseReturnCount,
+    profit,
+    profitPercentage,
+    stockValue,
+    lowStockCount,
+    totalPendingAmount,
+    totalEventOrders,
+    upcomingEvents,
+    pendingOrders,
+    eventOrdersAmount,
+    eventOrdersAdvance,
+    eventOrdersPending,
+    lastUpdated,
+    isFromCache,
+  ];
 }
