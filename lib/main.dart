@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 
 import 'core/di/injection.dart' as di;
+import 'core/flavor/app_flavor.dart';
 import 'core/ui/splash_page.dart';
 import 'core/services/credentials_manager.dart';
 import 'core/services/language_service.dart';
@@ -27,6 +28,11 @@ import 'firebase_options.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Default to retail if not initialized by flavor entry point
+  if (!_isFlavorInitialized()) {
+    FlavorConfig.initialize(flavor: AppFlavor.retail);
+  }
+
   // Initialize error logging service early to capture all errors
   ErrorLoggingService.initialize();
 
@@ -42,6 +48,15 @@ Future<void> main() async {
 
   // Run app — splash screen renders while remaining services init
   runApp(const MyApp());
+}
+
+bool _isFlavorInitialized() {
+  try {
+    FlavorConfig.instance;
+    return true;
+  } catch (_) {
+    return false;
+  }
 }
 
 /// Initialize non-Firebase services. Called from SplashPage so the UI is visible.
@@ -111,7 +126,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'C-Billing',
+      title: FlavorConfig.instance.appName,
       theme: ThemeData(useMaterial3: true, fontFamily: 'Literata'),
       home: const SplashPage(),
       debugShowCheckedModeBanner: false,

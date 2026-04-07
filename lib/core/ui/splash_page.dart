@@ -7,6 +7,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../main.dart' show initializeServices, initializeSyncServices;
 import '../../features/authentication/presentation/pages/login.dart';
 import '../../features/dashboard/presentation/pages/optimized_dashboard_page.dart';
+import '../../features/hotel/presentation/pages/hotel_user_select_page.dart';
+import '../flavor/app_flavor.dart';
 import '../services/bill_report_settings_service.dart';
 import '../services/stock_report_settings_service.dart';
 import '../../core/services/biometric_service.dart';
@@ -219,14 +221,21 @@ class _SplashPageState extends State<SplashPage> {
         print('[DEBUG] Fingerprint authentication cancelled/failed');
         // Stay on splash screen - user can tap unlock again
         if (mounted) {
-          GlassyToast.show(context, 'Authentication cancelled. Tap "Unlock Now" to try again.');
+          GlassyToast.show(
+            context,
+            'Authentication cancelled. Tap "Unlock Now" to try again.',
+          );
         }
       }
     } catch (e) {
       print('[ERROR] Error during fingerprint authentication: $e');
       // Show error but stay on splash screen
       if (mounted) {
-        GlassyToast.show(context, 'Authentication error: ${e.toString()}', isError: true);
+        GlassyToast.show(
+          context,
+          'Authentication error: ${e.toString()}',
+          isError: true,
+        );
       }
     }
   }
@@ -255,17 +264,23 @@ class _SplashPageState extends State<SplashPage> {
 
       print('[DEBUG] Subscription valid, navigating to dashboard');
       if (mounted) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const OptimizedDashboardPage()),
-        );
+        final Widget destination = FlavorConfig.instance.isHotel
+            ? const HotelUserSelectPage()
+            : const OptimizedDashboardPage();
+        Navigator.of(
+          context,
+        ).pushReplacement(MaterialPageRoute(builder: (_) => destination));
       }
     } catch (e) {
       print('[ERROR] Error checking subscription: $e');
       // If error checking subscription, still allow access
       if (mounted) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const OptimizedDashboardPage()),
-        );
+        final Widget destination = FlavorConfig.instance.isHotel
+            ? const HotelUserSelectPage()
+            : const OptimizedDashboardPage();
+        Navigator.of(
+          context,
+        ).pushReplacement(MaterialPageRoute(builder: (_) => destination));
       }
     }
   }

@@ -49,6 +49,11 @@ service cloud.firestore {
       match /profile/{document=**} {
         allow read, write: if request.auth.uid == userId;
       }
+      
+      // User's hotel sub-users subcollection
+      match /hotelSubUsers/{document=**} {
+        allow read, write: if request.auth.uid == userId;
+      }
     }
     
     // Deny all other access
