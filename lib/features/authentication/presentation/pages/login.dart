@@ -10,6 +10,8 @@ import '../../../../core/services/bill_report_settings_service.dart';
 import '../../../../core/services/stock_report_settings_service.dart';
 import '../../../../main.dart' show initializeSyncServices;
 import '../../../dashboard/presentation/pages/optimized_dashboard_page.dart';
+import '../../../hotel/presentation/pages/hotel_user_select_page.dart';
+import '../../../../core/flavor/app_flavor.dart';
 import '../../../../core/services/session_manager.dart';
 import '../../../../core/services/credentials_manager.dart';
 import '../../../../core/services/subscription_service.dart';
@@ -194,9 +196,12 @@ class _LoginPageV2State extends State<LoginPageV2>
       if (!mounted) return;
 
       if (isValid) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const OptimizedDashboardPage()),
-        );
+        final Widget destination = FlavorConfig.instance.isHotel
+            ? const HotelUserSelectPage()
+            : const OptimizedDashboardPage();
+        Navigator.of(
+          context,
+        ).pushReplacement(MaterialPageRoute(builder: (_) => destination));
       } else {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (_) => const SubscriptionScreen()),
@@ -206,9 +211,12 @@ class _LoginPageV2State extends State<LoginPageV2>
       print('[ERROR] Error checking subscription: $e');
       // If error, navigate to dashboard anyway
       if (mounted) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const OptimizedDashboardPage()),
-        );
+        final Widget destination = FlavorConfig.instance.isHotel
+            ? const HotelUserSelectPage()
+            : const OptimizedDashboardPage();
+        Navigator.of(
+          context,
+        ).pushReplacement(MaterialPageRoute(builder: (_) => destination));
       }
     }
   }

@@ -42,9 +42,7 @@ android {
         }
         create("hotel") {
             dimension = "app"
-            // Uses the same Firebase project; change applicationIdSuffix when
-            // a separate Firebase app is registered for the hotel flavor.
-            applicationIdSuffix = ""
+            applicationIdSuffix = ".hotel"
             resValue("string", "app_name", "C-Hotel")
         }
     }
