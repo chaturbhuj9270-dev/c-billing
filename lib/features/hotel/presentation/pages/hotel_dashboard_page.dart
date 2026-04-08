@@ -480,60 +480,76 @@ class _HotelDashboardPageState extends State<HotelDashboardPage>
   // ─── LIVE STATS ───────────────────────────────────────────────
 
   Widget _buildLiveStatsSection() {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final cardWidth = (screenWidth - 40) * 0.40; // 40 = horizontal padding
-    final cardHeight = cardWidth * 0.72;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final screenWidth = constraints.maxWidth;
+        // Responsive: show 2 cards per screen on small, 3 on medium, 4 on large
+        int cardsPerScreen = 2;
+        if (screenWidth > 900) {
+          cardsPerScreen = 4;
+        } else if (screenWidth > 600) {
+          cardsPerScreen = 3;
+        }
+        final cardWidth =
+            (screenWidth - 40 - (cardsPerScreen - 1) * 12) / cardsPerScreen;
+        final cardHeight = cardWidth * 0.72;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildSectionHeader(
-          'Live Status',
-          Icons.monitor_heart_rounded,
-          'Real-time overview',
-        ),
-        const SizedBox(height: 16),
-        SizedBox(
-          height: cardHeight,
-          child: ListView(
-            scrollDirection: Axis.horizontal,
-            physics: const BouncingScrollPhysics(),
-            children: [
-              _buildGlassyStatCard(
-                'Active Tables',
-                '0',
-                Icons.table_restaurant_rounded,
-                const [Color(0xFF43A047), Color(0xFF2E7D32)],
-                cardWidth,
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildSectionHeader(
+              'Live Status',
+              Icons.monitor_heart_rounded,
+              'Real-time overview',
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              height: cardHeight,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                children: [
+                  _buildGlassyStatCard(
+                    'Active Tables',
+                    '0',
+                    Icons.table_restaurant_rounded,
+                    const [Color(0xFF43A047), Color(0xFF2E7D32)],
+                    cardWidth,
+                    cardHeight,
+                  ),
+                  const SizedBox(width: 12),
+                  _buildGlassyStatCard(
+                    'Pending Orders',
+                    '0',
+                    Icons.receipt_long_rounded,
+                    const [Color(0xFFEF6C00), Color(0xFFE65100)],
+                    cardWidth,
+                    cardHeight,
+                  ),
+                  const SizedBox(width: 12),
+                  _buildGlassyStatCard(
+                    'Kitchen Queue',
+                    '0',
+                    Icons.soup_kitchen_rounded,
+                    const [Color(0xFF8E24AA), Color(0xFF6A1B9A)],
+                    cardWidth,
+                    cardHeight,
+                  ),
+                  const SizedBox(width: 12),
+                  _buildGlassyStatCard(
+                    'Today\'s Revenue',
+                    '₹0',
+                    Icons.trending_up_rounded,
+                    const [Color(0xFF1B4D3E), Color(0xFF0F3B2F)],
+                    cardWidth,
+                    cardHeight,
+                  ),
+                ],
               ),
-              const SizedBox(width: 12),
-              _buildGlassyStatCard(
-                'Pending Orders',
-                '0',
-                Icons.receipt_long_rounded,
-                const [Color(0xFFEF6C00), Color(0xFFE65100)],
-                cardWidth,
-              ),
-              const SizedBox(width: 12),
-              _buildGlassyStatCard(
-                'Kitchen Queue',
-                '0',
-                Icons.soup_kitchen_rounded,
-                const [Color(0xFF8E24AA), Color(0xFF6A1B9A)],
-                cardWidth,
-              ),
-              const SizedBox(width: 12),
-              _buildGlassyStatCard(
-                'Today\'s Revenue',
-                '₹0',
-                Icons.trending_up_rounded,
-                const [Color(0xFF1B4D3E), Color(0xFF0F3B2F)],
-                cardWidth,
-              ),
-            ],
-          ),
-        ),
-      ],
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -543,9 +559,11 @@ class _HotelDashboardPageState extends State<HotelDashboardPage>
     IconData icon,
     List<Color> gradientColors,
     double cardWidth,
+    double cardHeight,
   ) {
     return Container(
       width: cardWidth,
+      height: cardHeight,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
@@ -699,87 +717,82 @@ class _HotelDashboardPageState extends State<HotelDashboardPage>
                       ),
                     ],
                   ),
-                  const Spacer(),
-                  FittedBox(
-                    fit: BoxFit.scaleDown,
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      value,
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 22,
-                        fontWeight: FontWeight.w800,
-                        fontFamily: 'Literata',
-                        letterSpacing: -0.5,
-                        shadows: [
-                          Shadow(
-                            color: Colors.black.withOpacity(0.13),
-                            blurRadius: 4,
-                            offset: const Offset(0, 1),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Stack(
-                    children: [
-                      // 3D shadowed label
-                      Text(
-                        label,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.96),
-                          fontSize: 13,
-                          fontWeight: FontWeight.w800,
-                          fontFamily: 'Literata',
-                          letterSpacing: 0.2,
-                          shadows: [
-                            Shadow(
-                              color: Colors.black.withOpacity(0.22),
-                              blurRadius: 4,
-                              offset: const Offset(0, 2),
-                            ),
-                            Shadow(
-                              color: Colors.black.withOpacity(0.10),
-                              blurRadius: 8,
-                              offset: const Offset(0, 4),
-                            ),
-                            Shadow(
-                              color: Colors.white.withOpacity(0.45),
-                              blurRadius: 0.5,
-                              offset: const Offset(0, -1),
-                            ),
-                          ],
-                        ),
-                      ),
-                      // Subtle highlight overlay for 3D effect
-                      Positioned(
-                        left: 0,
-                        right: 0,
-                        top: 2,
-                        child: IgnorePointer(
-                          child: Opacity(
-                            opacity: 0.18,
-                            child: Container(
-                              height: 6,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(4),
-                                gradient: LinearGradient(
-                                  begin: Alignment.topCenter,
-                                  end: Alignment.bottomCenter,
-                                  colors: [
-                                    Colors.white,
-                                    Colors.transparent,
-                                  ],
+                  const SizedBox(height: 6),
+                  Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            value,
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 22,
+                              fontWeight: FontWeight.w800,
+                              fontFamily: 'Literata',
+                              letterSpacing: -0.5,
+                              shadows: [
+                                Shadow(
+                                  color: Colors.black.withOpacity(0.13),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 1),
                                 ),
-                              ),
+                              ],
                             ),
                           ),
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 2),
+                        ShaderMask(
+                          shaderCallback: (Rect bounds) {
+                            return LinearGradient(
+                              colors: [
+                                gradientColors.first.withOpacity(0.95),
+                                gradientColors.last.withOpacity(0.95),
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ).createShader(bounds);
+                          },
+                          child: Text(
+                            label,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 15.5,
+                              fontWeight: FontWeight.w900,
+                              fontFamily: 'Literata',
+                              letterSpacing: 0.3,
+                              color: Colors.white,
+                              shadows: [
+                                Shadow(
+                                  color: gradientColors.first.withOpacity(0.38),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                                Shadow(
+                                  color: gradientColors.last.withOpacity(0.22),
+                                  blurRadius: 16,
+                                  offset: const Offset(0, 6),
+                                ),
+                                Shadow(
+                                  color: Colors.black.withOpacity(0.18),
+                                  blurRadius: 2,
+                                  offset: const Offset(0, 2),
+                                ),
+                                Shadow(
+                                  color: Colors.white.withOpacity(0.25),
+                                  blurRadius: 0.5,
+                                  offset: const Offset(0, -1),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
