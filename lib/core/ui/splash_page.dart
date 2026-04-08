@@ -7,7 +7,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../main.dart' show initializeServices, initializeSyncServices;
 import '../../features/authentication/presentation/pages/login.dart';
 import '../../features/dashboard/presentation/pages/optimized_dashboard_page.dart';
-import '../../features/hotel/presentation/pages/hotel_user_select_page.dart';
+import '../../features/hotel/presentation/pages/hotel_dashboard_page.dart';
+import '../auth/hotel_auth_service.dart';
 import '../flavor/app_flavor.dart';
 import '../services/bill_report_settings_service.dart';
 import '../services/stock_report_settings_service.dart';
@@ -264,8 +265,11 @@ class _SplashPageState extends State<SplashPage> {
 
       print('[DEBUG] Subscription valid, navigating to dashboard');
       if (mounted) {
+        if (FlavorConfig.instance.isHotel) {
+          await HotelAuthService.instance.resolveSessionAfterLogin();
+        }
         final Widget destination = FlavorConfig.instance.isHotel
-            ? const HotelUserSelectPage()
+            ? const HotelDashboardPage()
             : const OptimizedDashboardPage();
         Navigator.of(
           context,
@@ -275,8 +279,11 @@ class _SplashPageState extends State<SplashPage> {
       print('[ERROR] Error checking subscription: $e');
       // If error checking subscription, still allow access
       if (mounted) {
+        if (FlavorConfig.instance.isHotel) {
+          await HotelAuthService.instance.resolveSessionAfterLogin();
+        }
         final Widget destination = FlavorConfig.instance.isHotel
-            ? const HotelUserSelectPage()
+            ? const HotelDashboardPage()
             : const OptimizedDashboardPage();
         Navigator.of(
           context,

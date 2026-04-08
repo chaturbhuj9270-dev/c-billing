@@ -214,7 +214,7 @@ class _StaffManagementPageState extends State<StaffManagementPage> {
   Color _roleColor(HotelUserRole role) {
     switch (role) {
       case HotelUserRole.admin:
-        return const Color(0xFF1E88E5);
+        return const Color(0xFF1B4D3E);
       case HotelUserRole.waiter:
         return const Color(0xFF43A047);
       case HotelUserRole.cook:
@@ -224,7 +224,7 @@ class _StaffManagementPageState extends State<StaffManagementPage> {
       case HotelUserRole.receptionist:
         return const Color(0xFF00897B);
       case HotelUserRole.manager:
-        return const Color(0xFF3949AB);
+        return const Color(0xFF2E7D5B);
       case HotelUserRole.housekeeping:
         return const Color(0xFF5D4037);
       case HotelUserRole.custom:
@@ -287,8 +287,9 @@ class _StaffManagementPageState extends State<StaffManagementPage> {
     final nameCtrl = TextEditingController(text: existing?.name ?? '');
     final emailCtrl = TextEditingController(text: existing?.email ?? '');
     final phoneCtrl = TextEditingController(text: existing?.phone ?? '');
-    final pinCtrl = TextEditingController(text: existing?.pin ?? '');
+    final passwordCtrl = TextEditingController();
     var selectedRole = existing?.role ?? HotelUserRole.waiter;
+    bool obscurePassword = true;
 
     final result = await showDialog<bool>(
       context: context,
@@ -310,12 +311,36 @@ class _StaffManagementPageState extends State<StaffManagementPage> {
                   const SizedBox(height: 12),
                   TextField(
                     controller: emailCtrl,
-                    decoration: const InputDecoration(
-                      labelText: 'Email',
-                      prefixIcon: Icon(Icons.email),
+                    decoration: InputDecoration(
+                      labelText: 'Email *',
+                      prefixIcon: const Icon(Icons.email),
+                      helperText: isEdit ? 'Cannot change email' : null,
                     ),
                     keyboardType: TextInputType.emailAddress,
+                    readOnly: isEdit,
                   ),
+                  if (!isEdit) ...[
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: passwordCtrl,
+                      decoration: InputDecoration(
+                        labelText: 'Password *',
+                        prefixIcon: const Icon(Icons.lock),
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            obscurePassword
+                                ? Icons.visibility_off
+                                : Icons.visibility,
+                          ),
+                          onPressed: () => setDialogState(
+                            () => obscurePassword = !obscurePassword,
+                          ),
+                        ),
+                        helperText: 'Min 6 characters',
+                      ),
+                      obscureText: obscurePassword,
+                    ),
+                  ],
                   const SizedBox(height: 12),
                   TextField(
                     controller: phoneCtrl,
@@ -324,17 +349,6 @@ class _StaffManagementPageState extends State<StaffManagementPage> {
                       prefixIcon: Icon(Icons.phone),
                     ),
                     keyboardType: TextInputType.phone,
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: pinCtrl,
-                    decoration: const InputDecoration(
-                      labelText: 'PIN (4 digits) *',
-                      prefixIcon: Icon(Icons.pin),
-                    ),
-                    keyboardType: TextInputType.number,
-                    maxLength: 4,
-                    obscureText: true,
                   ),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<HotelUserRole>(
@@ -377,37 +391,65 @@ class _StaffManagementPageState extends State<StaffManagementPage> {
     if (result != true) return;
 
     final name = nameCtrl.text.trim();
-    final pin = pinCtrl.text.trim();
-    if (name.isEmpty || pin.length != 4) {
+    final email = emailCtrl.text.trim();
+    final password = passwordCtrl.text.trim();
+
+    if (name.isEmpty || email.isEmpty) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Name and 4-digit PIN are required')),
+          const SnackBar(content: Text('Name and Email are required')),
         );
       }
       return;
     }
 
-    if (isEdit) {
-      await _authService.updateSubUser(
-        existing.copyWith(
+    if (!isEdit && password.length < 6) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Password must be at least 6 characters'),
+          ),
+        );
+      }
+      return;
+    }
+
+    try {
+      if (isEdit) {
+        await _authService.updateSubUser(
+          existing.copyWith(
+            name: name,
+            phone: phoneCtrl.text.trim(),
+            role: selectedRole,
+          ),
+        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Staff updated successfully')),
+          );
+        }
+      } else {
+        final defaultModules = _defaultModulesForRole(selectedRole);
+        await _authService.createSubUserWithCredentials(
           name: name,
-          email: emailCtrl.text.trim(),
+          email: email,
+          password: password,
           phone: phoneCtrl.text.trim(),
-          pin: pin,
           role: selectedRole,
-        ),
-      );
-    } else {
-      // Default modules based on role
-      final defaultModules = _defaultModulesForRole(selectedRole);
-      await _authService.createSubUser(
-        name: name,
-        email: emailCtrl.text.trim(),
-        phone: phoneCtrl.text.trim(),
-        pin: pin,
-        role: selectedRole,
-        allowedModules: defaultModules,
-      );
+          allowedModules: defaultModules,
+        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Staff "$name" created with email: $email')),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+        );
+      }
     }
   }
 

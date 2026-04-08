@@ -8,6 +8,7 @@ class HotelSubUser {
   final String email;
   final String phone;
   final String pin; // 4-digit PIN for quick login
+  final String firebaseUid; // Firebase Auth UID for this sub-user
   final HotelUserRole role;
   final List<HotelModule> allowedModules;
   final bool isActive;
@@ -21,6 +22,7 @@ class HotelSubUser {
     required this.email,
     this.phone = '',
     this.pin = '',
+    this.firebaseUid = '',
     required this.role,
     required this.allowedModules,
     this.isActive = true,
@@ -42,6 +44,7 @@ class HotelSubUser {
     String? email,
     String? phone,
     String? pin,
+    String? firebaseUid,
     HotelUserRole? role,
     List<HotelModule>? allowedModules,
     bool? isActive,
@@ -55,6 +58,7 @@ class HotelSubUser {
       email: email ?? this.email,
       phone: phone ?? this.phone,
       pin: pin ?? this.pin,
+      firebaseUid: firebaseUid ?? this.firebaseUid,
       role: role ?? this.role,
       allowedModules: allowedModules ?? this.allowedModules,
       isActive: isActive ?? this.isActive,
@@ -71,6 +75,7 @@ class HotelSubUser {
       'email': email,
       'phone': phone,
       'pin': pin,
+      'firebaseUid': firebaseUid,
       'role': role.name,
       'allowedModules': allowedModules.map((m) => m.name).toList(),
       'isActive': isActive,
@@ -87,6 +92,7 @@ class HotelSubUser {
       email: json['email'] as String? ?? '',
       phone: json['phone'] as String? ?? '',
       pin: json['pin'] as String? ?? '',
+      firebaseUid: json['firebaseUid'] as String? ?? '',
       role: HotelUserRoleX.fromString(json['role'] as String? ?? 'custom'),
       allowedModules:
           (json['allowedModules'] as List<dynamic>?)

@@ -10,7 +10,8 @@ import '../../../../core/services/bill_report_settings_service.dart';
 import '../../../../core/services/stock_report_settings_service.dart';
 import '../../../../main.dart' show initializeSyncServices;
 import '../../../dashboard/presentation/pages/optimized_dashboard_page.dart';
-import '../../../hotel/presentation/pages/hotel_user_select_page.dart';
+import '../../../hotel/presentation/pages/hotel_dashboard_page.dart';
+import '../../../../core/auth/hotel_auth_service.dart';
 import '../../../../core/flavor/app_flavor.dart';
 import '../../../../core/services/session_manager.dart';
 import '../../../../core/services/credentials_manager.dart';
@@ -196,8 +197,11 @@ class _LoginPageV2State extends State<LoginPageV2>
       if (!mounted) return;
 
       if (isValid) {
+        if (FlavorConfig.instance.isHotel) {
+          await HotelAuthService.instance.resolveSessionAfterLogin();
+        }
         final Widget destination = FlavorConfig.instance.isHotel
-            ? const HotelUserSelectPage()
+            ? const HotelDashboardPage()
             : const OptimizedDashboardPage();
         Navigator.of(
           context,
@@ -211,8 +215,11 @@ class _LoginPageV2State extends State<LoginPageV2>
       print('[ERROR] Error checking subscription: $e');
       // If error, navigate to dashboard anyway
       if (mounted) {
+        if (FlavorConfig.instance.isHotel) {
+          await HotelAuthService.instance.resolveSessionAfterLogin();
+        }
         final Widget destination = FlavorConfig.instance.isHotel
-            ? const HotelUserSelectPage()
+            ? const HotelDashboardPage()
             : const OptimizedDashboardPage();
         Navigator.of(
           context,

@@ -72,7 +72,7 @@ class _HotelDashboardPageState extends State<HotelDashboardPage> {
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [Color(0xFF1A237E), Color(0xFF283593)],
+              colors: [Color(0xFF1B4D3E), Color(0xFF0F3B2F), Color(0xFF134E3A)],
             ),
           ),
           child: SafeArea(
@@ -165,7 +165,7 @@ class _HotelDashboardPageState extends State<HotelDashboardPage> {
           "Today's Revenue",
           '₹0',
           Icons.currency_rupee,
-          const Color(0xFF1E88E5),
+          const Color(0xFF1B4D3E),
         ),
       ],
     );
@@ -318,7 +318,7 @@ class _HotelDashboardPageState extends State<HotelDashboardPage> {
   Color _moduleColor(HotelModule module) {
     switch (module) {
       case HotelModule.dashboard:
-        return const Color(0xFF1E88E5);
+        return const Color(0xFF1B4D3E);
       case HotelModule.tableManagement:
         return const Color(0xFF43A047);
       case HotelModule.orderManagement:
@@ -332,7 +332,7 @@ class _HotelDashboardPageState extends State<HotelDashboardPage> {
       case HotelModule.inventory:
         return const Color(0xFF5D4037);
       case HotelModule.roomManagement:
-        return const Color(0xFF3949AB);
+        return const Color(0xFF2E7D5B);
       case HotelModule.guestManagement:
         return const Color(0xFF00ACC1);
       case HotelModule.staffManagement:

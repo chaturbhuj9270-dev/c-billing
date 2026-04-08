@@ -33,7 +33,7 @@ class _HotelUserSelectPageState extends State<HotelUserSelectPage> {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Color(0xFF1A237E), Color(0xFF283593), Color(0xFF303F9F)],
+            colors: [Color(0xFF1B4D3E), Color(0xFF0F3B2F), Color(0xFF134E3A)],
           ),
         ),
         child: SafeArea(
@@ -76,7 +76,7 @@ class _HotelUserSelectPageState extends State<HotelUserSelectPage> {
                       style: FilledButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         backgroundColor: Colors.white,
-                        foregroundColor: const Color(0xFF1A237E),
+                        foregroundColor: const Color(0xFF1B4D3E),
                         textStyle: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
