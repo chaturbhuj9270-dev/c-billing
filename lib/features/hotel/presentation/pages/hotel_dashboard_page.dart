@@ -565,7 +565,7 @@ class _HotelDashboardPageState extends State<HotelDashboardPage>
       width: cardWidth,
       height: cardHeight,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(20), // revert to previous shape
         boxShadow: [
           BoxShadow(
             color: gradientColors.first.withOpacity(0.22),
@@ -584,7 +584,7 @@ class _HotelDashboardPageState extends State<HotelDashboardPage>
         borderRadius: BorderRadius.circular(20),
         child: Stack(
           children: [
-            // Frosted glass effect
+            // Frosted glass effect with even darker classy look
             BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
               child: Container(
@@ -594,16 +594,16 @@ class _HotelDashboardPageState extends State<HotelDashboardPage>
                     end: Alignment.bottomRight,
                     stops: const [0.0, 0.25, 0.65, 1.0],
                     colors: [
-                      Colors.white.withOpacity(0.32),
-                      gradientColors.first.withOpacity(0.18),
-                      gradientColors.last.withOpacity(0.18),
-                      Colors.white.withOpacity(0.18),
+                      Colors.black.withOpacity(0.54),
+                      gradientColors.first.withOpacity(0.42),
+                      gradientColors.last.withOpacity(0.42),
+                      Colors.black.withOpacity(0.38),
                     ],
                   ),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
                     width: 2.2,
-                    color: Colors.white.withOpacity(0.55),
+                    color: Colors.white.withOpacity(0.13),
                   ),
                 ),
                 child: const SizedBox.expand(),
@@ -745,50 +745,17 @@ class _HotelDashboardPageState extends State<HotelDashboardPage>
                           ),
                         ),
                         const SizedBox(height: 2),
-                        ShaderMask(
-                          shaderCallback: (Rect bounds) {
-                            return LinearGradient(
-                              colors: [
-                                gradientColors.first.withOpacity(0.95),
-                                gradientColors.last.withOpacity(0.95),
-                              ],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ).createShader(bounds);
-                          },
-                          child: Text(
-                            label,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 15.5,
-                              fontWeight: FontWeight.w900,
-                              fontFamily: 'Literata',
-                              letterSpacing: 0.3,
-                              color: Colors.white,
-                              shadows: [
-                                Shadow(
-                                  color: gradientColors.first.withOpacity(0.38),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 2),
-                                ),
-                                Shadow(
-                                  color: gradientColors.last.withOpacity(0.22),
-                                  blurRadius: 16,
-                                  offset: const Offset(0, 6),
-                                ),
-                                Shadow(
-                                  color: Colors.black.withOpacity(0.18),
-                                  blurRadius: 2,
-                                  offset: const Offset(0, 2),
-                                ),
-                                Shadow(
-                                  color: Colors.white.withOpacity(0.25),
-                                  blurRadius: 0.5,
-                                  offset: const Offset(0, -1),
-                                ),
-                              ],
-                            ),
+                        Text(
+                          label,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 15.5,
+                            fontWeight: FontWeight.w900,
+                            fontFamily: 'Literata',
+                            letterSpacing: 0.3,
+                            color: Colors.white,
+                            // No shadows for flat look
                           ),
                         ),
                       ],
