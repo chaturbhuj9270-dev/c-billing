@@ -50,7 +50,10 @@ class _SplashPageState extends State<SplashPage> {
     // Precache logo for instant display
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        precacheImage(const AssetImage('assets/images/logo.png'), context);
+        final logo = FlavorConfig.instance.isHotel
+            ? 'assets/images/hotel_logo.png'
+            : 'assets/images/logo.png';
+        precacheImage(AssetImage(logo), context);
       }
     });
 
@@ -366,7 +369,9 @@ class _SplashPageState extends State<SplashPage> {
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(32),
                           child: Image.asset(
-                            'assets/images/logo.png',
+                            FlavorConfig.instance.isHotel
+                                ? 'assets/images/hotel_logo.png'
+                                : 'assets/images/logo.png',
                             fit: BoxFit.cover,
                             gaplessPlayback: true,
                             cacheWidth: 360, // 3x for high DPI screens

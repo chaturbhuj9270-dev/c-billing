@@ -376,7 +376,7 @@ class _HotelDashboardPageState extends State<HotelDashboardPage>
                 // Top row: avatar + actions
                 Row(
                   children: [
-                    // Avatar
+                    // Hotel logo
                     Container(
                       width: 44,
                       height: 44,
@@ -387,14 +387,21 @@ class _HotelDashboardPageState extends State<HotelDashboardPage>
                           color: Colors.white.withValues(alpha: 0.25),
                         ),
                       ),
-                      child: Center(
-                        child: Text(
-                          userName.isNotEmpty ? userName[0].toUpperCase() : 'H',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 20,
-                            fontWeight: FontWeight.w700,
-                            fontFamily: 'Literata',
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Image.asset(
+                          'assets/images/hotel_logo.png',
+                          width: 32,
+                          height: 32,
+                          fit: BoxFit.contain,
+                          errorBuilder: (_, _, _) => const Text(
+                            'H',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.w700,
+                              fontFamily: 'Literata',
+                            ),
                           ),
                         ),
                       ),
