@@ -682,21 +682,29 @@ class _TableDetailSheetState extends State<TableDetailSheet> {
                 ),
               ),
               const Spacer(),
-              // Edit items (only when open/active)
-              if (_activeOrder!.status == TableOrderStatus.open)
+              // Edit / add items (allowed until billed)
+              if (_activeOrder!.status != TableOrderStatus.billed &&
+                  _activeOrder!.status != TableOrderStatus.cancelled)
                 GestureDetector(
                   onTap: _openAddOrEditOrder,
-                  child: const Row(
+                  child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.edit_rounded, color: Colors.white54, size: 14),
-                      SizedBox(width: 4),
+                      const Icon(
+                        Icons.add_circle_outline_rounded,
+                        color: Color(0xFF4ADE80),
+                        size: 15,
+                      ),
+                      const SizedBox(width: 4),
                       Text(
-                        'Edit',
-                        style: TextStyle(
-                          color: Colors.white54,
+                        _activeOrder!.status == TableOrderStatus.open
+                            ? 'Edit'
+                            : 'Add Items',
+                        style: const TextStyle(
+                          color: Color(0xFF4ADE80),
                           fontSize: 12,
                           fontFamily: 'Literata',
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ],

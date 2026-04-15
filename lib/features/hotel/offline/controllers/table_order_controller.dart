@@ -85,13 +85,31 @@ class TableOrderController extends ChangeNotifier {
     final order = await _isar.tableOrderEntitys.get(orderId);
     if (order == null) return;
 
+    final hadExtraItems =
+        order.status == TableOrderStatus.sentToKitchen ||
+        order.status == TableOrderStatus.served;
+
     order.itemsJson = encodeOrderItems(items);
     order.totalAmount = calcOrderTotal(items);
     order.updatedAt = DateTime.now();
 
+    // If items are added after kitchen/served, restart the flow
+    if (hadExtraItems) {
+      order.status = TableOrderStatus.open;
+    }
+
     await _isar.writeTxn(() async {
       await _isar.tableOrderEntitys.put(order);
     });
+
+    // Revert table to active so new items go through kitchen flow
+    if (hadExtraItems) {
+      await _tableCtrl.setStatus(order.localTableId, TableStatus.active);
+      debugPrint(
+        '[TableOrder] Extra items added — order ${order.id} reset to open',
+      );
+    }
+
     notifyListeners();
   }
 
