@@ -84,6 +84,11 @@ class _HotelDashboardPageState extends State<HotelDashboardPage>
 
     _fadeController.forward();
     _slideController.forward();
+
+    // Backfill staffMapping for existing staff (runs once, admin only)
+    if (_auth.isAdmin) {
+      _auth.backfillStaffMappings();
+    }
   }
 
   @override

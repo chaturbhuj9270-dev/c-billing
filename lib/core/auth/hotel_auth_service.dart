@@ -150,11 +150,10 @@ class HotelAuthService extends ChangeNotifier {
   /// After Firebase login, detect whether the logged-in user is an admin
   /// or a sub-user.
   ///
-  /// Fast path: admins always have a `users/{uid}` document. If it exists →
-  /// admin. Only falls back to the slower collectionGroup query when the
-  /// doc is missing (i.e. the user is a sub-user).
-  ///
-  /// Results are cached in SharedPreferences so subsequent logins are instant.
+  /// 1. Check SharedPreferences cache (instant).
+  /// 2. Check if `users/{uid}` doc exists → admin.
+  /// 3. Check `staffMapping/{uid}` for a direct sub-user pointer (fast).
+  /// 4. Never default to admin when the user clearly has no admin doc.
   Future<void> resolveSessionAfterLogin() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
@@ -162,72 +161,98 @@ class HotelAuthService extends ChangeNotifier {
       return;
     }
 
-    try {
-      // ── 1. Check cache first (instant) ──
-      final prefs = await SharedPreferences.getInstance();
-      final cacheKey = 'hotel_role_${user.uid}';
-      final cached = prefs.getString(cacheKey);
+    final prefs = await SharedPreferences.getInstance();
+    final cacheKey = 'hotel_role_${user.uid}';
 
-      if (cached == 'admin') {
-        setAdminSession();
-        debugPrint('[HotelAuth] Cached → admin');
+    // ── 1. Check cache (instant) ──
+    final cached = prefs.getString(cacheKey);
+
+    if (cached == 'sub_user') {
+      final subUser = await _loadCachedSubUser(user.uid);
+      if (subUser != null) {
+        setSubUserSession(subUser);
+        debugPrint('[HotelAuth] Cached → sub-user: ${subUser.name}');
         return;
       }
+      // Cache stale — fall through to fresh check
+    }
 
-      if (cached == 'sub_user') {
-        // Load sub-user details from Firestore (still faster than collectionGroup)
-        final subUser = await _loadCachedSubUser(user.uid);
-        if (subUser != null) {
-          setSubUserSession(subUser);
-          debugPrint('[HotelAuth] Cached → sub-user: ${subUser.name}');
-          return;
-        }
-        // Cache stale — fall through to fresh check
-      }
-
-      // ── 2. Fast check: does users/{uid} doc exist? ──
+    // ── 2. Check if admin doc exists ──
+    bool adminDocExists = false;
+    try {
       final userDoc = await FirebaseFirestore.instance
           .collection('users')
           .doc(user.uid)
           .get();
-
-      if (userDoc.exists) {
-        // Admin — cache and return
-        await prefs.setString(cacheKey, 'admin');
+      adminDocExists = userDoc.exists;
+    } catch (e) {
+      debugPrint('[HotelAuth] Admin doc check error: $e');
+      // If we can't even read our own doc, respect cached admin
+      if (cached == 'admin') {
         setAdminSession();
-        debugPrint('[HotelAuth] Admin (doc exists): ${user.uid}');
         return;
       }
+    }
 
-      // ── 3. Not an admin doc → must be a sub-user ──
-      final result = await FirebaseFirestore.instance
-          .collectionGroup('hotelSubUsers')
-          .where('firebaseUid', isEqualTo: user.uid)
-          .where('isActive', isEqualTo: true)
-          .limit(1)
-          .get()
-          .timeout(const Duration(seconds: 4));
+    if (adminDocExists) {
+      await prefs.setString(cacheKey, 'admin');
+      setAdminSession();
+      debugPrint('[HotelAuth] Admin (doc exists): ${user.uid}');
+      return;
+    }
 
-      if (result.docs.isNotEmpty) {
-        final subUser = HotelSubUser.fromJson(result.docs.first.data());
-        await prefs.setString(cacheKey, 'sub_user');
-        // Cache the admin UID so we can reload sub-user data quickly
-        await prefs.setString('hotel_sub_admin_${user.uid}', subUser.adminUid);
-        await prefs.setString('hotel_sub_id_${user.uid}', subUser.id);
-        setSubUserSession(subUser);
-        debugPrint(
-          '[HotelAuth] Sub-user: ${subUser.name} (${subUser.role.label})',
-        );
-      } else {
-        // No admin doc AND no sub-user doc — treat as admin (new user)
-        await prefs.setString(cacheKey, 'admin');
-        setAdminSession();
-        debugPrint('[HotelAuth] No records found, defaulting to admin');
+    // ── 3. Not an admin — look up staffMapping/{uid} (fast, direct path) ──
+    try {
+      final mappingDoc = await FirebaseFirestore.instance
+          .collection('staffMapping')
+          .doc(user.uid)
+          .get();
+
+      if (mappingDoc.exists && mappingDoc.data() != null) {
+        final data = mappingDoc.data()!;
+        final adminUid = data['adminUid'] as String? ?? '';
+        final subId = data['subUserId'] as String? ?? '';
+
+        if (adminUid.isNotEmpty && subId.isNotEmpty) {
+          final subDoc = await FirebaseFirestore.instance
+              .collection('users')
+              .doc(adminUid)
+              .collection('hotelSubUsers')
+              .doc(subId)
+              .get();
+
+          if (subDoc.exists && subDoc.data() != null) {
+            final subUser = HotelSubUser.fromJson(subDoc.data()!);
+            if (subUser.isActive) {
+              await prefs.setString(cacheKey, 'sub_user');
+              await prefs.setString('hotel_sub_admin_${user.uid}', adminUid);
+              await prefs.setString('hotel_sub_id_${user.uid}', subId);
+              setSubUserSession(subUser);
+              debugPrint(
+                '[HotelAuth] Sub-user via mapping: ${subUser.name} '
+                '(${subUser.role.label})',
+              );
+              return;
+            }
+          }
+        }
       }
     } catch (e) {
-      debugPrint('[HotelAuth] resolveSession error: $e — defaulting to admin');
-      setAdminSession();
+      debugPrint('[HotelAuth] staffMapping lookup error: $e');
+      // Not critical — continue to check if it's a new admin account
     }
+
+    // ── 4. No admin doc AND no staff mapping — new admin account ──
+    // Only default to admin if there truly is no mapping at all.
+    // This handles first-time admin signup where the user doc may not
+    // yet exist (rare race condition).
+    debugPrint(
+      '[HotelAuth] No admin doc and no staffMapping for ${user.uid}, '
+      'treating as restricted.',
+    );
+    _isAdmin = false;
+    _currentSubUser = null;
+    notifyListeners();
   }
 
   /// Reload a cached sub-user's data using stored admin UID + sub-user ID.
@@ -320,6 +345,16 @@ class HotelAuthService extends ChangeNotifier {
     );
 
     await docRef.set(subUser.toJson());
+
+    // Write a mapping doc so staff login can resolve without collectionGroup.
+    // Path: staffMapping/{staffFirebaseUid} → { adminUid, subUserId }
+    if (subUid.isNotEmpty) {
+      await FirebaseFirestore.instance
+          .collection('staffMapping')
+          .doc(subUid)
+          .set({'adminUid': adminUid, 'subUserId': docRef.id});
+    }
+
     return subUser;
   }
 
@@ -366,8 +401,44 @@ class HotelAuthService extends ChangeNotifier {
     return chars.join();
   }
 
-  /// Permanently delete a sub-user document (hard delete).
+  /// Permanently delete a sub-user document and its staff mapping.
   Future<void> deleteSubUser(String id) async {
+    // Read the sub-user doc first to get the firebaseUid for mapping cleanup
+    final doc = await _subUsersCollection().doc(id).get();
+    if (doc.exists) {
+      final fbUid = doc.data()?['firebaseUid'] as String? ?? '';
+      if (fbUid.isNotEmpty) {
+        await FirebaseFirestore.instance
+            .collection('staffMapping')
+            .doc(fbUid)
+            .delete();
+      }
+    }
     await _subUsersCollection().doc(id).delete();
+  }
+
+  /// Backfill staffMapping docs for all existing sub-users that have a
+  /// firebaseUid. Call once from admin context to migrate old data.
+  Future<void> backfillStaffMappings() async {
+    try {
+      final adminUid = FirebaseAuth.instance.currentUser?.uid;
+      if (adminUid == null) return;
+      final snapshot = await _subUsersCollection().get();
+      for (final doc in snapshot.docs) {
+        final data = doc.data();
+        final fbUid = data['firebaseUid'] as String? ?? '';
+        if (fbUid.isNotEmpty) {
+          await FirebaseFirestore.instance
+              .collection('staffMapping')
+              .doc(fbUid)
+              .set({'adminUid': adminUid, 'subUserId': doc.id});
+        }
+      }
+      debugPrint(
+        '[HotelAuth] Backfilled staffMapping for ${snapshot.docs.length} users',
+      );
+    } catch (e) {
+      debugPrint('[HotelAuth] backfillStaffMappings error: $e');
+    }
   }
 }
