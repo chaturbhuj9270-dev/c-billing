@@ -122,13 +122,55 @@ class _TableManagementPageState extends State<TableManagementPage>
     return Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [Color(0xFFECFDF5), Color(0xFFF0FDF8), Color(0xFFF8FAFB)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFFD1FAE5),
+            Color(0xFFECFDF5),
+            Color(0xFFF0FDF4),
+            Color(0xFFF8FAFC),
+          ],
+          stops: [0.0, 0.3, 0.6, 1.0],
         ),
       ),
       child: Stack(
         children: [
+          // Ambient glow — top right
+          Positioned(
+            top: -50,
+            right: -50,
+            child: Container(
+              width: 180,
+              height: 180,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    const Color(0xFF16A34A).withValues(alpha: 0.10),
+                    const Color(0xFF16A34A).withValues(alpha: 0.0),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          // Ambient glow — bottom left
+          Positioned(
+            bottom: -70,
+            left: -70,
+            child: Container(
+              width: 220,
+              height: 220,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    const Color(0xFF16A34A).withValues(alpha: 0.07),
+                    const Color(0xFF16A34A).withValues(alpha: 0.0),
+                  ],
+                ),
+              ),
+            ),
+          ),
           Column(
             children: [
               _buildStatsStrip(),
@@ -156,127 +198,163 @@ class _TableManagementPageState extends State<TableManagementPage>
   // ── STATS STRIP ──────────────────────────────────────────────────
 
   Widget _buildStatsStrip() {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
-      decoration: BoxDecoration(
-        color: const Color(0xFF0F2A1E).withValues(alpha: 0.85),
-        border: Border(
-          bottom: BorderSide(
-            color: const Color(0xFF16A34A).withValues(alpha: 0.15),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(22),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(8, 14, 8, 14),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Colors.white.withValues(alpha: 0.82),
+                  Colors.white.withValues(alpha: 0.60),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(22),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.7),
+                width: 1.2,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF0F172A).withValues(alpha: 0.06),
+                  blurRadius: 24,
+                  offset: const Offset(0, 8),
+                ),
+                BoxShadow(
+                  color: const Color(0xFF16A34A).withValues(alpha: 0.04),
+                  blurRadius: 40,
+                  spreadRadius: -5,
+                  offset: const Offset(0, 12),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                _buildStatTile(
+                  'Empty',
+                  _emptyCount,
+                  kTableEmpty,
+                  Icons.chair_outlined,
+                ),
+                const SizedBox(width: 6),
+                _buildStatTile(
+                  'Active',
+                  _activeCount,
+                  kTableActive,
+                  Icons.people_rounded,
+                ),
+                const SizedBox(width: 6),
+                _buildStatTile(
+                  'Waiting',
+                  _waitingCount,
+                  kTableWaiting,
+                  Icons.access_time_rounded,
+                ),
+                const SizedBox(width: 6),
+                _buildStatTile(
+                  'Served',
+                  _servedCount,
+                  kTableServed,
+                  Icons.check_circle_rounded,
+                ),
+                if (_reservedCount > 0) ...[
+                  const SizedBox(width: 6),
+                  _buildStatTile(
+                    'Reserved',
+                    _reservedCount,
+                    kTableReserved,
+                    Icons.bookmark_rounded,
+                  ),
+                ],
+              ],
+            ),
           ),
         ),
-      ),
-      child: Row(
-        children: [
-          _buildStatTile(
-            'Empty',
-            _emptyCount,
-            kTableEmpty,
-            Icons.chair_outlined,
-          ),
-          const SizedBox(width: 8),
-          _buildStatTile(
-            'Active',
-            _activeCount,
-            kTableActive,
-            Icons.people_rounded,
-          ),
-          const SizedBox(width: 8),
-          _buildStatTile(
-            'Waiting',
-            _waitingCount,
-            kTableWaiting,
-            Icons.access_time_rounded,
-          ),
-          const SizedBox(width: 8),
-          _buildStatTile(
-            'Served',
-            _servedCount,
-            kTableServed,
-            Icons.check_circle_rounded,
-          ),
-          if (_reservedCount > 0) ...[
-            const SizedBox(width: 8),
-            _buildStatTile(
-              'Reserved',
-              _reservedCount,
-              kTableReserved,
-              Icons.bookmark_rounded,
-            ),
-          ],
-        ],
       ),
     );
   }
 
   Widget _buildStatTile(String label, int count, Color color, IconData icon) {
+    final isSelected = _filterStatus == _labelToStatus(label);
     return Expanded(
       child: GestureDetector(
         onTap: () {
-          final status = _labelToStatus(
-            label,
-          ); // ignore: no_leading_underscores_for_local_identifiers
+          final status = _labelToStatus(label);
           setState(() {
             _filterStatus = _filterStatus == status ? null : status;
           });
         },
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeOutCubic,
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: _filterStatus == _labelToStatus(label)
-                  ? [
-                      color.withValues(alpha: 0.25),
-                      color.withValues(alpha: 0.12),
-                    ]
-                  : [
-                      Colors.white.withValues(alpha: 0.12),
-                      Colors.white.withValues(alpha: 0.05),
-                    ],
-            ),
-            borderRadius: BorderRadius.circular(14),
+            color: isSelected
+                ? color.withValues(alpha: 0.10)
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: _filterStatus == _labelToStatus(label)
-                  ? color.withValues(alpha: 0.6)
-                  : Colors.white.withValues(alpha: 0.12),
-              width: 1.2,
+              color: isSelected
+                  ? color.withValues(alpha: 0.30)
+                  : Colors.transparent,
+              width: 1.5,
             ),
-            boxShadow: [
-              BoxShadow(
-                color: color.withValues(alpha: 0.12),
-                blurRadius: 10,
-                offset: const Offset(0, 3),
-              ),
-              BoxShadow(
-                color: Colors.white.withValues(alpha: 0.06),
-                blurRadius: 1,
-                offset: const Offset(-0.5, -0.5),
-              ),
-            ],
           ),
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, color: color, size: 16),
-              const SizedBox(height: 4),
+              // Circular icon badge
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 250),
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      color.withValues(alpha: isSelected ? 0.25 : 0.14),
+                      color.withValues(alpha: isSelected ? 0.12 : 0.05),
+                    ],
+                  ),
+                  border: Border.all(color: color.withValues(alpha: 0.18)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: color.withValues(alpha: isSelected ? 0.25 : 0.10),
+                      blurRadius: 10,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: Icon(icon, color: color, size: 17),
+              ),
+              const SizedBox(height: 8),
               Text(
                 '$count',
                 style: TextStyle(
-                  color: color,
-                  fontSize: 18,
+                  color: isSelected ? color : const Color(0xFF1E293B),
+                  fontSize: 20,
                   fontWeight: FontWeight.w800,
                   fontFamily: 'Literata',
                 ),
               ),
+              const SizedBox(height: 1),
               Text(
                 label,
-                style: const TextStyle(
-                  color: Color(0xFF94A3B8),
-                  fontSize: 9,
+                style: TextStyle(
+                  color: isSelected
+                      ? color.withValues(alpha: 0.8)
+                      : const Color(0xFF94A3B8),
+                  fontSize: 10,
                   fontFamily: 'Literata',
-                  fontWeight: FontWeight.w500,
+                  fontWeight: FontWeight.w600,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -308,9 +386,8 @@ class _TableManagementPageState extends State<TableManagementPage>
 
   Widget _buildStatusFilterBar() {
     final statuses = [null, ...TableStatus.values];
-    return Container(
+    return SizedBox(
       height: 44,
-      color: Colors.white,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
@@ -318,7 +395,9 @@ class _TableManagementPageState extends State<TableManagementPage>
         itemBuilder: (_, i) {
           final s = statuses[i];
           final selected = _filterStatus == s;
-          final color = s == null ? Colors.white : tableStatusColor(s);
+          final color = s == null
+              ? const Color(0xFF16A34A)
+              : tableStatusColor(s);
           final label = s == null ? 'All' : tableStatusLabel(s);
           return Padding(
             padding: const EdgeInsets.only(right: 8),
@@ -328,18 +407,35 @@ class _TableManagementPageState extends State<TableManagementPage>
                 duration: const Duration(milliseconds: 180),
                 padding: const EdgeInsets.symmetric(
                   horizontal: 14,
-                  vertical: 4,
+                  vertical: 6,
                 ),
                 decoration: BoxDecoration(
                   color: selected
-                      ? color.withValues(alpha: 0.1)
-                      : Colors.transparent,
+                      ? color.withValues(alpha: 0.12)
+                      : Colors.white.withValues(alpha: 0.55),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
                     color: selected
-                        ? color.withValues(alpha: 0.5)
-                        : const Color(0xFFE2E8F0),
+                        ? color.withValues(alpha: 0.4)
+                        : Colors.white.withValues(alpha: 0.7),
                   ),
+                  boxShadow: selected
+                      ? [
+                          BoxShadow(
+                            color: color.withValues(alpha: 0.15),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ]
+                      : [
+                          BoxShadow(
+                            color: const Color(
+                              0xFF0F172A,
+                            ).withValues(alpha: 0.04),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -351,6 +447,12 @@ class _TableManagementPageState extends State<TableManagementPage>
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           color: color,
+                          boxShadow: [
+                            BoxShadow(
+                              color: color.withValues(alpha: 0.4),
+                              blurRadius: 4,
+                            ),
+                          ],
                         ),
                       ),
                       const SizedBox(width: 6),
@@ -358,12 +460,12 @@ class _TableManagementPageState extends State<TableManagementPage>
                     Text(
                       label,
                       style: TextStyle(
-                        color: selected ? color : const Color(0xFF94A3B8),
+                        color: selected ? color : const Color(0xFF64748B),
                         fontSize: 12,
                         fontFamily: 'Literata',
                         fontWeight: selected
                             ? FontWeight.w700
-                            : FontWeight.w400,
+                            : FontWeight.w500,
                       ),
                     ),
                   ],
@@ -379,9 +481,8 @@ class _TableManagementPageState extends State<TableManagementPage>
   // ── SECTION CHIPS ────────────────────────────────────────────────
 
   Widget _buildSectionChips() {
-    return Container(
+    return SizedBox(
       height: 40,
-      color: Colors.white,
       child: ListView(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.only(left: 16, bottom: 4),
@@ -405,23 +506,30 @@ class _TableManagementPageState extends State<TableManagementPage>
           decoration: BoxDecoration(
             color: selected
                 ? const Color(0xFF16A34A).withValues(alpha: 0.1)
-                : const Color(0xFFF8FAFC),
+                : Colors.white.withValues(alpha: 0.55),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
               color: selected
                   ? const Color(0xFF16A34A).withValues(alpha: 0.4)
-                  : const Color(0xFFE2E8F0),
+                  : Colors.white.withValues(alpha: 0.7),
             ),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF0F172A).withValues(alpha: 0.03),
+                blurRadius: 4,
+                offset: const Offset(0, 1),
+              ),
+            ],
           ),
           child: Text(
             label,
             style: TextStyle(
               color: selected
                   ? const Color(0xFF16A34A)
-                  : const Color(0xFF94A3B8),
+                  : const Color(0xFF64748B),
               fontSize: 11,
               fontFamily: 'Literata',
-              fontWeight: selected ? FontWeight.w700 : FontWeight.w400,
+              fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
             ),
           ),
         ),
@@ -460,45 +568,70 @@ class _TableManagementPageState extends State<TableManagementPage>
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.only(top: 18, bottom: 12),
+          padding: const EdgeInsets.only(top: 20, bottom: 14),
           child: Row(
             children: [
               Container(
                 width: 4,
-                height: 18,
+                height: 22,
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                    colors: [Color(0xFF16A34A), Color(0xFF15803D)],
+                    colors: [Color(0xFF16A34A), Color(0xFF22C55E)],
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                   ),
                   borderRadius: BorderRadius.circular(2),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF16A34A).withValues(alpha: 0.3),
+                      blurRadius: 6,
+                      offset: const Offset(0, 1),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(width: 10),
               Text(
                 section.toUpperCase(),
                 style: const TextStyle(
-                  color: Color(0xFF64748B),
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF1E293B),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
                   fontFamily: 'Literata',
-                  letterSpacing: 1.4,
+                  letterSpacing: 1.2,
                 ),
               ),
               const SizedBox(width: 10),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF1F5F9),
-                  borderRadius: BorderRadius.circular(8),
+                  color: const Color(0xFF16A34A).withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: const Color(0xFF16A34A).withValues(alpha: 0.15),
+                  ),
                 ),
                 child: Text(
                   '${tables.length}',
                   style: const TextStyle(
-                    color: Color(0xFF94A3B8),
+                    color: Color(0xFF16A34A),
                     fontSize: 11,
+                    fontWeight: FontWeight.w700,
                     fontFamily: 'Literata',
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Container(
+                  height: 1,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        const Color(0xFF16A34A).withValues(alpha: 0.15),
+                        const Color(0xFF16A34A).withValues(alpha: 0.0),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -577,14 +710,36 @@ class _TableManagementPageState extends State<TableManagementPage>
   // ── FAB ──────────────────────────────────────────────────────────
 
   Widget _buildFab() {
-    return FloatingActionButton.extended(
-      onPressed: _openAddForm,
-      backgroundColor: const Color(0xFF16A34A),
-      foregroundColor: Colors.white,
-      icon: const Icon(Icons.add_rounded),
-      label: const Text(
-        'Add Table',
-        style: TextStyle(fontFamily: 'Literata', fontWeight: FontWeight.w700),
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF16A34A).withValues(alpha: 0.40),
+            blurRadius: 24,
+            offset: const Offset(0, 8),
+          ),
+          BoxShadow(
+            color: const Color(0xFF16A34A).withValues(alpha: 0.20),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: FloatingActionButton.extended(
+        onPressed: _openAddForm,
+        backgroundColor: const Color(0xFF16A34A),
+        foregroundColor: Colors.white,
+        elevation: 0,
+        icon: const Icon(Icons.add_rounded, size: 22),
+        label: const Text(
+          'Add Table',
+          style: TextStyle(
+            fontFamily: 'Literata',
+            fontWeight: FontWeight.w700,
+            fontSize: 14,
+          ),
+        ),
       ),
     );
   }
