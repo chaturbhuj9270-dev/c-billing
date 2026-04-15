@@ -19,7 +19,6 @@ class _StaffManagementPageState extends State<StaffManagementPage>
   final _searchController = TextEditingController();
   HotelUserRole? _filterRole;
   String _searchQuery = '';
-  bool _isSyncing = false;
 
   late final AnimationController _fabAnimController;
   late final Animation<double> _fabScaleAnim;
@@ -46,16 +45,6 @@ class _StaffManagementPageState extends State<StaffManagementPage>
     _fabAnimController.dispose();
     _searchController.dispose();
     super.dispose();
-  }
-
-  Future<void> _syncStaffData() async {
-    if (_isSyncing) return;
-    setState(() => _isSyncing = true);
-    try {
-      // Force refresh from Firestore by re-fetching sub users
-      await _authService.getSubUsers();
-    } catch (_) {}
-    if (mounted) setState(() => _isSyncing = false);
   }
 
   List<HotelSubUser> _applyFilters(List<HotelSubUser> users) {
@@ -90,97 +79,84 @@ class _StaffManagementPageState extends State<StaffManagementPage>
           final allUsers = snapshot.data ?? [];
           final filtered = _applyFilters(allUsers);
 
+          final activeCount = allUsers.where((u) => u.isActive).length;
+
           return CustomScrollView(
             slivers: [
-              // ─── APP BAR ───
-              SliverAppBar(
-                expandedHeight: 130,
-                pinned: true,
-                backgroundColor: const Color(0xFF1B4D3E),
-                leading: Navigator.canPop(context)
-                    ? IconButton(
-                        onPressed: () => Navigator.pop(context),
-                        icon: const Icon(
-                          Icons.arrow_back_ios_new,
-                          size: 20,
-                          color: Colors.white,
-                        ),
-                      )
-                    : null,
-                actions: [
-                  IconButton(
-                    onPressed: _isSyncing ? null : _syncStaffData,
-                    tooltip: 'Sync Staff Data',
-                    icon: _isSyncing
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : const Icon(
-                            Icons.cloud_sync_rounded,
-                            color: Colors.white,
-                            size: 22,
-                          ),
-                  ),
-                  const SizedBox(width: 4),
-                ],
-                flexibleSpace: FlexibleSpaceBar(
-                  background: Container(
-                    decoration: const BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          Color(0xFF1B4D3E),
-                          Color(0xFF134E3A),
-                          Color(0xFF0F3B2F),
-                        ],
-                      ),
+              // ─── HEADER ───
+              SliverToBoxAdapter(
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [Color(0xFF1B4D3E), Color(0xFF0F3B2F)],
                     ),
-                    child: SafeArea(
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            Row(
-                              children: [
-                                const Icon(
-                                  Icons.people_alt_rounded,
-                                  color: Colors.white,
-                                  size: 28,
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF1B4D3E).withOpacity(0.3),
+                        blurRadius: 20,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
+                  ),
+                  child: SafeArea(
+                    bottom: false,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 16, 16, 20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // ── Top row: back + title + actions
+                          Row(
+                            children: [
+                              if (Navigator.canPop(context))
+                                GestureDetector(
+                                  onTap: () => Navigator.pop(context),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withOpacity(0.15),
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: const Icon(
+                                      Icons.arrow_back_rounded,
+                                      color: Colors.white,
+                                      size: 20,
+                                    ),
+                                  ),
                                 ),
-                                const SizedBox(width: 12),
-                                Column(
+                              if (Navigator.canPop(context))
+                                const SizedBox(width: 14),
+                              Expanded(
+                                child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     const Text(
                                       'Staff Management',
                                       style: TextStyle(
-                                        fontSize: 22,
-                                        fontWeight: FontWeight.w800,
                                         color: Colors.white,
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w700,
+                                        fontFamily: 'Literata',
+                                        letterSpacing: -0.3,
                                       ),
                                     ),
                                     Text(
-                                      'Manage credentials & permissions',
+                                      '$activeCount active · ${allUsers.length} total members',
                                       style: TextStyle(
-                                        fontSize: 13,
                                         color: Colors.white.withOpacity(0.7),
+                                        fontSize: 11,
+                                        fontFamily: 'Literata',
+                                        height: 1.3,
                                       ),
                                     ),
                                   ],
                                 ),
-                              ],
-                            ),
-                            const SizedBox(height: 16),
-                          ],
-                        ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
                     ),
                   ),
@@ -226,10 +202,7 @@ class _StaffManagementPageState extends State<StaffManagementPage>
           icon: const Icon(Icons.person_add_alt_1, color: Colors.white),
           label: const Text(
             'Add Staff',
-            style: TextStyle(
-              fontWeight: FontWeight.w700,
-              color: Colors.white,
-            ),
+            style: TextStyle(fontWeight: FontWeight.w700, color: Colors.white),
           ),
         ),
       ),
@@ -441,8 +414,22 @@ class _StaffManagementPageState extends State<StaffManagementPage>
                             style: theme.textTheme.titleSmall?.copyWith(
                               fontWeight: FontWeight.w700,
                               color: const Color(0xFF1A1A1A),
+                              fontFamily: 'Literata',
                             ),
                             overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        // Sync status icon (green=synced, orange=pending)
+                        Padding(
+                          padding: const EdgeInsets.only(left: 6),
+                          child: Icon(
+                            user.firebaseUid.isNotEmpty
+                                ? Icons.cloud_done_rounded
+                                : Icons.cloud_upload_rounded,
+                            size: 16,
+                            color: user.firebaseUid.isNotEmpty
+                                ? Colors.green
+                                : Colors.orange,
                           ),
                         ),
                         if (!user.isActive)
