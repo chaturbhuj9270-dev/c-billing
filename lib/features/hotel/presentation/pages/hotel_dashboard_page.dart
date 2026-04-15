@@ -1,7 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
 import '../../data/auth/hotel_auth_service.dart';
 import '../../data/auth/hotel_roles.dart';
@@ -9,6 +8,7 @@ import '../pages/staff_management_page.dart';
 import '../pages/hotel_flyout_menu.dart';
 import '../pages/menu_management_page.dart';
 import '../pages/table_management_page.dart';
+import '../pages/kitchen_display_page.dart';
 
 class HotelDashboardPage extends StatefulWidget {
   const HotelDashboardPage({super.key});
@@ -141,7 +141,7 @@ class _HotelDashboardPageState extends State<HotelDashboardPage>
       case 2:
         return _buildPlaceholderTab('Orders', Icons.receipt_long_rounded);
       case 3:
-        return _buildPlaceholderTab('Kitchen', Icons.soup_kitchen_rounded);
+        return const KitchenDisplayPage();
       case 4:
         return _buildPlaceholderTab('Billing', Icons.point_of_sale_rounded);
       default:
@@ -354,7 +354,6 @@ class _HotelDashboardPageState extends State<HotelDashboardPage>
   // ─── HEADER ───────────────────────────────────────────────────
 
   Widget _buildHeader(String userName) {
-    final user = FirebaseAuth.instance.currentUser;
     final isAdmin = _auth.isAdmin;
     final role = isAdmin ? null : _auth.currentSubUser?.role;
 
@@ -437,6 +436,15 @@ class _HotelDashboardPageState extends State<HotelDashboardPage>
                         ],
                       ),
                     ),
+                    _buildHeaderButton(
+                      Icons.soup_kitchen_rounded,
+                      'Kitchen',
+                      () {
+                        final idx = _navItems.indexWhere((e) => e.id == 3);
+                        if (idx >= 0) setState(() => _selectedIndex = idx);
+                      },
+                    ),
+                    const SizedBox(width: 6),
                     if (isAdmin)
                       _buildHeaderButton(
                         Icons.people_outline_rounded,
@@ -451,7 +459,7 @@ class _HotelDashboardPageState extends State<HotelDashboardPage>
                     const SizedBox(width: 8),
                   ],
                 ),
-                // Role badge + email
+                // Role badge
                 const SizedBox(height: 12),
                 Row(
                   children: [
@@ -475,18 +483,6 @@ class _HotelDashboardPageState extends State<HotelDashboardPage>
                           ),
                         ),
                       ),
-                    if (role != null) const SizedBox(width: 8),
-                    Flexible(
-                      child: Text(
-                        user?.email ?? '',
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.6),
-                          fontSize: 12,
-                          fontFamily: 'Literata',
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
                   ],
                 ),
               ],
@@ -1101,6 +1097,14 @@ class _HotelDashboardPageState extends State<HotelDashboardPage>
       Navigator.push(
         context,
         MaterialPageRoute(builder: (_) => const TableManagementPage()),
+      );
+      return;
+    }
+
+    if (module == HotelModule.kitchenDisplay) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const KitchenDisplayPage()),
       );
       return;
     }

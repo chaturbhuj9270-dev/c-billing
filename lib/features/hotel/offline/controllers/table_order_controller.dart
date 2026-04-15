@@ -177,6 +177,64 @@ class TableOrderController extends ChangeNotifier {
     return billNumber;
   }
 
+  // ── KITCHEN DISPLAY ──────────────────────────────────────────────
+
+  /// Returns all orders currently in the kitchen (sentToKitchen status).
+  Future<List<TableOrderEntity>> getKitchenOrders() async {
+    return _isar.tableOrderEntitys
+        .filter()
+        .statusEqualTo(TableOrderStatus.sentToKitchen)
+        .sortBySentToKitchenAt()
+        .findAll();
+  }
+
+  /// Marks a single item as ready in an order.
+  Future<void> markItemReady(int orderId, int menuItemLocalId) async {
+    final order = await _isar.tableOrderEntitys.get(orderId);
+    if (order == null) return;
+
+    final items = decodeOrderItems(order.itemsJson);
+    for (final item in items) {
+      if (item.menuItemLocalId == menuItemLocalId) {
+        item.isReady = true;
+        break;
+      }
+    }
+
+    order.itemsJson = encodeOrderItems(items);
+    order.updatedAt = DateTime.now();
+
+    await _isar.writeTxn(() async {
+      await _isar.tableOrderEntitys.put(order);
+    });
+    notifyListeners();
+  }
+
+  /// Marks all items in an order as ready.
+  Future<void> markAllItemsReady(int orderId) async {
+    final order = await _isar.tableOrderEntitys.get(orderId);
+    if (order == null) return;
+
+    final items = decodeOrderItems(order.itemsJson);
+    for (final item in items) {
+      item.isReady = true;
+    }
+
+    order.itemsJson = encodeOrderItems(items);
+    order.updatedAt = DateTime.now();
+
+    await _isar.writeTxn(() async {
+      await _isar.tableOrderEntitys.put(order);
+    });
+    notifyListeners();
+  }
+
+  /// Marks entire order as ready to serve (all items ready + status → served).
+  Future<void> markReadyToServe(int orderId, int tableId) async {
+    await markAllItemsReady(orderId);
+    await markServed(orderId, tableId);
+  }
+
   // ── HELPERS ─────────────────────────────────────────────────────
 
   String _generateBillNumber() {

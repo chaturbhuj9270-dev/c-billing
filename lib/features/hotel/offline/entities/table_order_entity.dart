@@ -13,6 +13,7 @@ class OrderItem {
   final double price;
   final String category;
   int quantity;
+  bool isReady;
 
   OrderItem({
     required this.menuItemLocalId,
@@ -22,6 +23,7 @@ class OrderItem {
     required this.price,
     required this.category,
     this.quantity = 1,
+    this.isReady = false,
   });
 
   double get lineTotal => price * quantity;
@@ -34,6 +36,7 @@ class OrderItem {
     'p': price,
     'c': category,
     'q': quantity,
+    'r': isReady,
   };
 
   factory OrderItem.fromMap(Map<String, dynamic> map) => OrderItem(
@@ -44,6 +47,7 @@ class OrderItem {
     price: (map['p'] as num?)?.toDouble() ?? 0.0,
     category: map['c'] as String? ?? '',
     quantity: (map['q'] as num?)?.toInt() ?? 1,
+    isReady: map['r'] as bool? ?? false,
   );
 }
 
