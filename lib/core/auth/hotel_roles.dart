@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 /// Predefined hotel staff roles.
 enum HotelUserRole {
   admin,
@@ -7,6 +9,18 @@ enum HotelUserRole {
   receptionist,
   manager,
   housekeeping,
+  custom,
+}
+
+/// Departments available for staff assignment.
+enum HotelDepartment {
+  kitchen,
+  service,
+  frontDesk,
+  housekeeping,
+  management,
+  security,
+  maintenance,
   custom,
 }
 
@@ -118,5 +132,56 @@ extension HotelModuleX on HotelModule {
       case HotelModule.expenses:
         return 'account_balance_wallet';
     }
+  }
+}
+
+extension HotelDepartmentX on HotelDepartment {
+  String get label {
+    switch (this) {
+      case HotelDepartment.kitchen:
+        return 'Kitchen';
+      case HotelDepartment.service:
+        return 'Service';
+      case HotelDepartment.frontDesk:
+        return 'Front Desk';
+      case HotelDepartment.housekeeping:
+        return 'Housekeeping';
+      case HotelDepartment.management:
+        return 'Management';
+      case HotelDepartment.security:
+        return 'Security';
+      case HotelDepartment.maintenance:
+        return 'Maintenance';
+      case HotelDepartment.custom:
+        return 'Custom';
+    }
+  }
+
+  IconData get icon {
+    switch (this) {
+      case HotelDepartment.kitchen:
+        return Icons.restaurant;
+      case HotelDepartment.service:
+        return Icons.room_service;
+      case HotelDepartment.frontDesk:
+        return Icons.desk;
+      case HotelDepartment.housekeeping:
+        return Icons.cleaning_services;
+      case HotelDepartment.management:
+        return Icons.business_center;
+      case HotelDepartment.security:
+        return Icons.security;
+      case HotelDepartment.maintenance:
+        return Icons.build;
+      case HotelDepartment.custom:
+        return Icons.category;
+    }
+  }
+
+  static HotelDepartment fromString(String value) {
+    return HotelDepartment.values.firstWhere(
+      (d) => d.name == value,
+      orElse: () => HotelDepartment.custom,
+    );
   }
 }

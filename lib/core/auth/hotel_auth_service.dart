@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -261,10 +263,15 @@ class HotelAuthService extends ChangeNotifier {
     required String phone,
     required HotelUserRole role,
     required List<HotelModule> allowedModules,
+    HotelDepartment department = HotelDepartment.custom,
+    String? staffId,
   }) async {
     final adminUser = FirebaseAuth.instance.currentUser;
     if (adminUser == null) throw StateError('No authenticated admin');
     final adminUid = adminUser.uid;
+
+    // Generate Staff ID if not provided
+    final generatedStaffId = staffId ?? await generateStaffId();
 
     // Create Firebase Auth account for the sub-user
     // This will sign out the admin temporarily
@@ -296,12 +303,14 @@ class HotelAuthService extends ChangeNotifier {
     final subUser = HotelSubUser(
       id: docRef.id,
       adminUid: adminUid,
+      staffId: generatedStaffId,
       name: name,
       email: email,
       phone: phone,
       pin: '',
       firebaseUid: subUid,
       role: role,
+      department: department,
       allowedModules: role == HotelUserRole.admin
           ? HotelModule.values
           : allowedModules,
@@ -320,5 +329,45 @@ class HotelAuthService extends ChangeNotifier {
       'email': prefs.getString('user_email') ?? '',
       'password': prefs.getString('user_password') ?? '',
     };
+  }
+
+  // ==================== STAFF ID & PASSWORD GENERATION ====================
+
+  /// Generate the next sequential Staff ID (e.g. STF-001, STF-002).
+  Future<String> generateStaffId() async {
+    final snapshot = await _subUsersCollection()
+        .orderBy('createdAt', descending: true)
+        .get();
+    final count = snapshot.docs.length;
+    return 'STF-${(count + 1).toString().padLeft(3, '0')}';
+  }
+
+  /// Generate a secure random password of given length.
+  static String generateSecurePassword({int length = 12}) {
+    const upper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const lower = 'abcdefghijklmnopqrstuvwxyz';
+    const digits = '0123456789';
+    const special = '@#\$%&*!?';
+    const all = upper + lower + digits + special;
+    final rand = Random.secure();
+
+    // Ensure at least one of each type
+    final mandatory = [
+      upper[rand.nextInt(upper.length)],
+      lower[rand.nextInt(lower.length)],
+      digits[rand.nextInt(digits.length)],
+      special[rand.nextInt(special.length)],
+    ];
+    final remaining = List.generate(
+      length - mandatory.length,
+      (_) => all[rand.nextInt(all.length)],
+    );
+    final chars = [...mandatory, ...remaining]..shuffle(rand);
+    return chars.join();
+  }
+
+  /// Permanently delete a sub-user document (hard delete).
+  Future<void> deleteSubUser(String id) async {
+    await _subUsersCollection().doc(id).delete();
   }
 }

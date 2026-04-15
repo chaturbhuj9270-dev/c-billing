@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../../../../core/auth/hotel_auth_service.dart';
 import '../../../../core/auth/hotel_sub_user.dart';
 import '../../../../core/auth/hotel_roles.dart';
+import 'staff_credential_form_page.dart';
+import 'staff_detail_page.dart';
 
 class StaffManagementPage extends StatefulWidget {
   const StaffManagementPage({super.key});
@@ -11,64 +13,353 @@ class StaffManagementPage extends StatefulWidget {
   State<StaffManagementPage> createState() => _StaffManagementPageState();
 }
 
-class _StaffManagementPageState extends State<StaffManagementPage> {
+class _StaffManagementPageState extends State<StaffManagementPage>
+    with SingleTickerProviderStateMixin {
   final _authService = HotelAuthService.instance;
+  final _searchController = TextEditingController();
+  HotelUserRole? _filterRole;
+  String _searchQuery = '';
+  bool _isSyncing = false;
+
+  late final AnimationController _fabAnimController;
+  late final Animation<double> _fabScaleAnim;
+
+  @override
+  void initState() {
+    super.initState();
+    _fabAnimController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    );
+    _fabScaleAnim = CurvedAnimation(
+      parent: _fabAnimController,
+      curve: Curves.elasticOut,
+    );
+    Future.delayed(
+      const Duration(milliseconds: 400),
+      () => _fabAnimController.forward(),
+    );
+  }
+
+  @override
+  void dispose() {
+    _fabAnimController.dispose();
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _syncStaffData() async {
+    if (_isSyncing) return;
+    setState(() => _isSyncing = true);
+    try {
+      // Force refresh from Firestore by re-fetching sub users
+      await _authService.getSubUsers();
+    } catch (_) {}
+    if (mounted) setState(() => _isSyncing = false);
+  }
+
+  List<HotelSubUser> _applyFilters(List<HotelSubUser> users) {
+    var filtered = users;
+    if (_filterRole != null) {
+      filtered = filtered.where((u) => u.role == _filterRole).toList();
+    }
+    if (_searchQuery.isNotEmpty) {
+      final q = _searchQuery.toLowerCase();
+      filtered = filtered
+          .where(
+            (u) =>
+                u.name.toLowerCase().contains(q) ||
+                u.email.toLowerCase().contains(q) ||
+                u.staffId.toLowerCase().contains(q) ||
+                u.role.label.toLowerCase().contains(q),
+          )
+          .toList();
+    }
+    return filtered;
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Staff Management'), centerTitle: true),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _showAddEditDialog(context),
-        icon: const Icon(Icons.person_add),
-        label: const Text('Add Staff'),
-      ),
+      backgroundColor: const Color(0xFFF5F7F6),
       body: StreamBuilder<List<HotelSubUser>>(
         stream: _authService.watchSubUsers(),
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          }
+          final allUsers = snapshot.data ?? [];
+          final filtered = _applyFilters(allUsers);
 
-          final users = snapshot.data ?? [];
-          if (users.isEmpty) {
-            return _buildEmptyState(theme);
-          }
+          return CustomScrollView(
+            slivers: [
+              // ─── APP BAR ───
+              SliverAppBar(
+                expandedHeight: 130,
+                pinned: true,
+                backgroundColor: const Color(0xFF1B4D3E),
+                leading: Navigator.canPop(context)
+                    ? IconButton(
+                        onPressed: () => Navigator.pop(context),
+                        icon: const Icon(
+                          Icons.arrow_back_ios_new,
+                          size: 20,
+                          color: Colors.white,
+                        ),
+                      )
+                    : null,
+                actions: [
+                  IconButton(
+                    onPressed: _isSyncing ? null : _syncStaffData,
+                    tooltip: 'Sync Staff Data',
+                    icon: _isSyncing
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Icon(
+                            Icons.cloud_sync_rounded,
+                            color: Colors.white,
+                            size: 22,
+                          ),
+                  ),
+                  const SizedBox(width: 4),
+                ],
+                flexibleSpace: FlexibleSpaceBar(
+                  background: Container(
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          Color(0xFF1B4D3E),
+                          Color(0xFF134E3A),
+                          Color(0xFF0F3B2F),
+                        ],
+                      ),
+                    ),
+                    child: SafeArea(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            Row(
+                              children: [
+                                const Icon(
+                                  Icons.people_alt_rounded,
+                                  color: Colors.white,
+                                  size: 28,
+                                ),
+                                const SizedBox(width: 12),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      'Staff Management',
+                                      style: TextStyle(
+                                        fontSize: 22,
+                                        fontWeight: FontWeight.w800,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    Text(
+                                      'Manage credentials & permissions',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        color: Colors.white.withOpacity(0.7),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
 
-          return ListView.builder(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
-            itemCount: users.length,
-            itemBuilder: (context, index) =>
-                _buildStaffCard(theme, users[index]),
+              // ─── STATS HEADER ───
+              SliverToBoxAdapter(child: _buildStatsRow(allUsers)),
+
+              // ─── SEARCH & FILTER ───
+              SliverToBoxAdapter(child: _buildSearchFilter(theme)),
+
+              // ─── CONTENT ───
+              if (snapshot.connectionState == ConnectionState.waiting)
+                const SliverFillRemaining(
+                  child: Center(child: CircularProgressIndicator()),
+                )
+              else if (allUsers.isEmpty)
+                SliverFillRemaining(child: _buildEmptyState(theme))
+              else if (filtered.isEmpty)
+                SliverFillRemaining(child: _buildNoResultsState(theme))
+              else
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+                  sliver: SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) =>
+                          _buildStaffCard(theme, filtered[index], index),
+                      childCount: filtered.length,
+                    ),
+                  ),
+                ),
+            ],
           );
         },
+      ),
+      floatingActionButton: ScaleTransition(
+        scale: _fabScaleAnim,
+        child: FloatingActionButton.extended(
+          onPressed: _navigateToCreate,
+          backgroundColor: const Color(0xFF1B4D3E),
+          elevation: 6,
+          icon: const Icon(Icons.person_add_alt_1, color: Colors.white),
+          label: const Text(
+            'Add Staff',
+            style: TextStyle(
+              fontWeight: FontWeight.w700,
+              color: Colors.white,
+            ),
+          ),
+        ),
       ),
     );
   }
 
-  Widget _buildEmptyState(ThemeData theme) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
+  // ═══════════════════════════════════════════════════════════════
+  //  STATS ROW
+  // ═══════════════════════════════════════════════════════════════
+  Widget _buildStatsRow(List<HotelSubUser> users) {
+    final active = users.where((u) => u.isActive).length;
+    final inactive = users.length - active;
+    final departments = users.map((u) => u.department).toSet().length;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+      child: Row(
         children: [
-          Icon(Icons.people_outline, size: 80, color: Colors.grey.shade300),
-          const SizedBox(height: 16),
-          Text(
-            'No staff members yet',
-            style: theme.textTheme.titleMedium?.copyWith(
-              color: Colors.grey.shade600,
+          _StatCard(
+            icon: Icons.people,
+            label: 'Total',
+            value: '${users.length}',
+            color: const Color(0xFF1B4D3E),
+          ),
+          const SizedBox(width: 10),
+          _StatCard(
+            icon: Icons.check_circle,
+            label: 'Active',
+            value: '$active',
+            color: const Color(0xFF43A047),
+          ),
+          const SizedBox(width: 10),
+          _StatCard(
+            icon: Icons.person_off,
+            label: 'Inactive',
+            value: '$inactive',
+            color: Colors.orange.shade700,
+          ),
+          const SizedBox(width: 10),
+          _StatCard(
+            icon: Icons.business,
+            label: 'Depts',
+            value: '$departments',
+            color: const Color(0xFF8E24AA),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  //  SEARCH & FILTER BAR
+  // ═══════════════════════════════════════════════════════════════
+  Widget _buildSearchFilter(ThemeData theme) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+      child: Column(
+        children: [
+          // Search
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(14),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.04),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: TextField(
+              controller: _searchController,
+              onChanged: (v) => setState(() => _searchQuery = v),
+              decoration: InputDecoration(
+                hintText: 'Search by name, email, or staff ID...',
+                hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
+                prefixIcon: const Icon(Icons.search, color: Color(0xFF1B4D3E)),
+                suffixIcon: _searchQuery.isNotEmpty
+                    ? IconButton(
+                        icon: Icon(
+                          Icons.close,
+                          size: 18,
+                          color: Colors.grey.shade400,
+                        ),
+                        onPressed: () {
+                          _searchController.clear();
+                          setState(() => _searchQuery = '');
+                        },
+                      )
+                    : null,
+                border: InputBorder.none,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
+              ),
             ),
           ),
-          const SizedBox(height: 8),
-          Text(
-            'Tap + to add your first staff member',
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: Colors.grey.shade500,
+          const SizedBox(height: 10),
+
+          // Role filter chips
+          SizedBox(
+            height: 36,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              children: [
+                _FilterChip(
+                  label: 'All',
+                  isSelected: _filterRole == null,
+                  onTap: () => setState(() => _filterRole = null),
+                ),
+                const SizedBox(width: 6),
+                ...HotelUserRole.values
+                    .where((r) => r != HotelUserRole.admin)
+                    .map(
+                      (role) => Padding(
+                        padding: const EdgeInsets.only(right: 6),
+                        child: _FilterChip(
+                          label: role.label,
+                          isSelected: _filterRole == role,
+                          color: _roleColor(role),
+                          onTap: () => setState(
+                            () =>
+                                _filterRole = _filterRole == role ? null : role,
+                          ),
+                        ),
+                      ),
+                    ),
+              ],
             ),
           ),
         ],
@@ -76,138 +367,294 @@ class _StaffManagementPageState extends State<StaffManagementPage> {
     );
   }
 
-  Widget _buildStaffCard(ThemeData theme, HotelSubUser user) {
+  // ═══════════════════════════════════════════════════════════════
+  //  STAFF CARD
+  // ═══════════════════════════════════════════════════════════════
+  Widget _buildStaffCard(ThemeData theme, HotelSubUser user, int index) {
     final roleColor = _roleColor(user.role);
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                CircleAvatar(
-                  backgroundColor: roleColor.withOpacity(0.15),
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0.0, end: 1.0),
+      duration: Duration(milliseconds: 300 + (index * 60)),
+      curve: Curves.easeOutCubic,
+      builder: (context, value, child) {
+        return Opacity(
+          opacity: value,
+          child: Transform.translate(
+            offset: Offset(0, 20 * (1 - value)),
+            child: child,
+          ),
+        );
+      },
+      child: GestureDetector(
+        onTap: () => _navigateToDetail(user),
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 10),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: !user.isActive
+                ? Border.all(color: Colors.red.shade200, width: 1)
+                : null,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.04),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              // Avatar
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: roleColor.withOpacity(0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: Center(
                   child: Text(
                     user.name.isNotEmpty ? user.name[0].toUpperCase() : '?',
                     style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
                       color: roleColor,
-                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        user.name,
-                        style: theme.textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
+              ),
+              const SizedBox(width: 14),
+
+              // Info
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            user.name,
+                            style: theme.textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF1A1A1A),
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
+                        if (!user.isActive)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.red.shade50,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              'INACTIVE',
+                              style: TextStyle(
+                                fontSize: 9,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.red.shade400,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      user.email.isNotEmpty ? user.email : user.phone,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey.shade500,
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        user.email.isNotEmpty ? user.email : user.phone,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: Colors.grey.shade600,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        // Role badge
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
+                          decoration: BoxDecoration(
+                            color: roleColor.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            user.role.label,
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              color: roleColor,
+                            ),
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: roleColor.withOpacity(0.12),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    user.role.label,
-                    style: TextStyle(
-                      color: roleColor,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 4),
-                PopupMenuButton<String>(
-                  onSelected: (val) => _onMenuAction(val, user),
-                  itemBuilder: (_) => [
-                    const PopupMenuItem(
-                      value: 'edit',
-                      child: ListTile(
-                        leading: Icon(Icons.edit),
-                        title: Text('Edit'),
-                        dense: true,
-                        contentPadding: EdgeInsets.zero,
-                      ),
-                    ),
-                    const PopupMenuItem(
-                      value: 'permissions',
-                      child: ListTile(
-                        leading: Icon(Icons.security),
-                        title: Text('Permissions'),
-                        dense: true,
-                        contentPadding: EdgeInsets.zero,
-                      ),
-                    ),
-                    PopupMenuItem(
-                      value: user.isActive ? 'deactivate' : 'activate',
-                      child: ListTile(
-                        leading: Icon(
-                          user.isActive ? Icons.person_off : Icons.person,
-                          color: user.isActive ? Colors.red : Colors.green,
+                        const SizedBox(width: 6),
+                        // Department badge
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade100,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                user.department.icon,
+                                size: 10,
+                                color: Colors.grey.shade600,
+                              ),
+                              const SizedBox(width: 3),
+                              Text(
+                                user.department.label,
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.grey.shade600,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                        title: Text(user.isActive ? 'Deactivate' : 'Activate'),
-                        dense: true,
-                        contentPadding: EdgeInsets.zero,
-                      ),
+                        if (user.staffId.isNotEmpty) ...[
+                          const SizedBox(width: 6),
+                          Text(
+                            user.staffId,
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.grey.shade400,
+                              fontFamily: 'monospace',
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                   ],
                 ),
-              ],
-            ),
-            if (user.allowedModules.isNotEmpty &&
-                user.role != HotelUserRole.admin) ...[
-              const SizedBox(height: 10),
-              Wrap(
-                spacing: 6,
-                runSpacing: 4,
-                children: user.allowedModules.map((m) {
-                  return Chip(
-                    label: Text(m.label, style: const TextStyle(fontSize: 10)),
-                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    visualDensity: VisualDensity.compact,
-                    padding: EdgeInsets.zero,
-                    labelPadding: const EdgeInsets.symmetric(horizontal: 6),
-                  );
-                }).toList(),
+              ),
+
+              // Arrow
+              Icon(
+                Icons.chevron_right_rounded,
+                color: Colors.grey.shade300,
+                size: 22,
               ),
             ],
-            if (!user.isActive)
-              Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: Text(
-                  'INACTIVE',
-                  style: TextStyle(
-                    color: Colors.red.shade400,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 11,
-                  ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  //  EMPTY STATES
+  // ═══════════════════════════════════════════════════════════════
+  Widget _buildEmptyState(ThemeData theme) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1B4D3E).withOpacity(0.06),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.people_outline_rounded,
+                size: 64,
+                color: const Color(0xFF1B4D3E).withOpacity(0.4),
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'No Staff Members Yet',
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFF1A1A1A),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Create your first staff member with\nsecure credentials and permissions',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey.shade500,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 24),
+            FilledButton.icon(
+              onPressed: _navigateToCreate,
+              icon: const Icon(Icons.person_add_alt_1, size: 18),
+              label: const Text('Add First Staff'),
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFF1B4D3E),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
                 ),
               ),
+            ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildNoResultsState(ThemeData theme) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.search_off, size: 48, color: Colors.grey.shade300),
+          const SizedBox(height: 12),
+          Text(
+            'No matches found',
+            style: theme.textTheme.titleSmall?.copyWith(
+              color: Colors.grey.shade600,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Try a different search or filter',
+            style: TextStyle(fontSize: 13, color: Colors.grey.shade400),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  //  NAVIGATION
+  // ═══════════════════════════════════════════════════════════════
+  Future<void> _navigateToCreate() async {
+    await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(builder: (_) => const StaffCredentialFormPage()),
+    );
+  }
+
+  Future<void> _navigateToDetail(HotelSubUser user) async {
+    await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(builder: (_) => StaffDetailPage(user: user)),
     );
   }
 
@@ -231,328 +678,120 @@ class _StaffManagementPageState extends State<StaffManagementPage> {
         return const Color(0xFF757575);
     }
   }
+}
 
-  void _onMenuAction(String action, HotelSubUser user) {
-    switch (action) {
-      case 'edit':
-        _showAddEditDialog(context, existing: user);
-        break;
-      case 'permissions':
-        _showPermissionsDialog(context, user);
-        break;
-      case 'deactivate':
-        _confirmDeactivate(user);
-        break;
-      case 'activate':
-        _activateUser(user);
-        break;
-    }
-  }
+// ═══════════════════════════════════════════════════════════════
+//  SUPPORTING WIDGETS
+// ═══════════════════════════════════════════════════════════════
 
-  Future<void> _confirmDeactivate(HotelSubUser user) async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Deactivate Staff'),
-        content: Text('Deactivate ${user.name}? They will lose access.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Deactivate'),
-          ),
-        ],
-      ),
-    );
-    if (confirm == true) {
-      await _authService.deactivateSubUser(user.id);
-    }
-  }
+class _StatCard extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+  final Color color;
 
-  Future<void> _activateUser(HotelSubUser user) async {
-    await _authService.updateSubUser(user.copyWith(isActive: true));
-  }
+  const _StatCard({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.color,
+  });
 
-  // ==================== ADD/EDIT DIALOG ====================
-
-  Future<void> _showAddEditDialog(
-    BuildContext context, {
-    HotelSubUser? existing,
-  }) async {
-    final isEdit = existing != null;
-    final nameCtrl = TextEditingController(text: existing?.name ?? '');
-    final emailCtrl = TextEditingController(text: existing?.email ?? '');
-    final phoneCtrl = TextEditingController(text: existing?.phone ?? '');
-    final passwordCtrl = TextEditingController();
-    var selectedRole = existing?.role ?? HotelUserRole.waiter;
-    bool obscurePassword = true;
-
-    final result = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDialogState) {
-          return AlertDialog(
-            title: Text(isEdit ? 'Edit Staff' : 'Add Staff'),
-            content: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextField(
-                    controller: nameCtrl,
-                    decoration: const InputDecoration(
-                      labelText: 'Name *',
-                      prefixIcon: Icon(Icons.person),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: emailCtrl,
-                    decoration: InputDecoration(
-                      labelText: 'Email *',
-                      prefixIcon: const Icon(Icons.email),
-                      helperText: isEdit ? 'Cannot change email' : null,
-                    ),
-                    keyboardType: TextInputType.emailAddress,
-                    readOnly: isEdit,
-                  ),
-                  if (!isEdit) ...[
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: passwordCtrl,
-                      decoration: InputDecoration(
-                        labelText: 'Password *',
-                        prefixIcon: const Icon(Icons.lock),
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            obscurePassword
-                                ? Icons.visibility_off
-                                : Icons.visibility,
-                          ),
-                          onPressed: () => setDialogState(
-                            () => obscurePassword = !obscurePassword,
-                          ),
-                        ),
-                        helperText: 'Min 6 characters',
-                      ),
-                      obscureText: obscurePassword,
-                    ),
-                  ],
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: phoneCtrl,
-                    decoration: const InputDecoration(
-                      labelText: 'Phone',
-                      prefixIcon: Icon(Icons.phone),
-                    ),
-                    keyboardType: TextInputType.phone,
-                  ),
-                  const SizedBox(height: 12),
-                  DropdownButtonFormField<HotelUserRole>(
-                    value: selectedRole,
-                    decoration: const InputDecoration(
-                      labelText: 'Role',
-                      prefixIcon: Icon(Icons.badge),
-                    ),
-                    items: HotelUserRole.values
-                        .where((r) => r != HotelUserRole.admin)
-                        .map(
-                          (r) =>
-                              DropdownMenuItem(value: r, child: Text(r.label)),
-                        )
-                        .toList(),
-                    onChanged: (val) {
-                      if (val != null) {
-                        setDialogState(() => selectedRole = val);
-                      }
-                    },
-                  ),
-                ],
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, size: 16, color: color),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: color,
               ),
             ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx, false),
-                child: const Text('Cancel'),
-              ),
-              FilledButton(
-                onPressed: () => Navigator.pop(ctx, true),
-                child: Text(isEdit ? 'Update' : 'Add'),
-              ),
-            ],
-          );
-        },
-      ),
-    );
-
-    if (result != true) return;
-
-    final name = nameCtrl.text.trim();
-    final email = emailCtrl.text.trim();
-    final password = passwordCtrl.text.trim();
-
-    if (name.isEmpty || email.isEmpty) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Name and Email are required')),
-        );
-      }
-      return;
-    }
-
-    if (!isEdit && password.length < 6) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Password must be at least 6 characters'),
-          ),
-        );
-      }
-      return;
-    }
-
-    try {
-      if (isEdit) {
-        await _authService.updateSubUser(
-          existing.copyWith(
-            name: name,
-            phone: phoneCtrl.text.trim(),
-            role: selectedRole,
-          ),
-        );
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Staff updated successfully')),
-          );
-        }
-      } else {
-        final defaultModules = _defaultModulesForRole(selectedRole);
-        await _authService.createSubUserWithCredentials(
-          name: name,
-          email: email,
-          password: password,
-          phone: phoneCtrl.text.trim(),
-          role: selectedRole,
-          allowedModules: defaultModules,
-        );
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Staff "$name" created with email: $email')),
-          );
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
-        );
-      }
-    }
-  }
-
-  List<HotelModule> _defaultModulesForRole(HotelUserRole role) {
-    switch (role) {
-      case HotelUserRole.admin:
-        return HotelModule.values;
-      case HotelUserRole.waiter:
-        return [
-          HotelModule.dashboard,
-          HotelModule.tableManagement,
-          HotelModule.orderManagement,
-        ];
-      case HotelUserRole.cook:
-        return [HotelModule.kitchenDisplay, HotelModule.orderManagement];
-      case HotelUserRole.captain:
-        return [
-          HotelModule.dashboard,
-          HotelModule.tableManagement,
-          HotelModule.orderManagement,
-          HotelModule.menuManagement,
-          HotelModule.billing,
-        ];
-      case HotelUserRole.receptionist:
-        return [
-          HotelModule.dashboard,
-          HotelModule.roomManagement,
-          HotelModule.guestManagement,
-          HotelModule.billing,
-        ];
-      case HotelUserRole.manager:
-        return [
-          HotelModule.dashboard,
-          HotelModule.tableManagement,
-          HotelModule.orderManagement,
-          HotelModule.billing,
-          HotelModule.reports,
-          HotelModule.staffManagement,
-          HotelModule.expenses,
-        ];
-      case HotelUserRole.housekeeping:
-        return [HotelModule.roomManagement];
-      case HotelUserRole.custom:
-        return [HotelModule.dashboard];
-    }
-  }
-
-  // ==================== PERMISSIONS DIALOG ====================
-
-  Future<void> _showPermissionsDialog(
-    BuildContext context,
-    HotelSubUser user,
-  ) async {
-    var selectedModules = List<HotelModule>.from(user.allowedModules);
-
-    final result = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDialogState) {
-          return AlertDialog(
-            title: Text('Permissions: ${user.name}'),
-            content: SizedBox(
-              width: double.maxFinite,
-              child: ListView(
-                shrinkWrap: true,
-                children: HotelModule.values.map((module) {
-                  final isSelected = selectedModules.contains(module);
-                  return CheckboxListTile(
-                    title: Text(module.label),
-                    value: isSelected,
-                    dense: true,
-                    onChanged: (val) {
-                      setDialogState(() {
-                        if (val == true) {
-                          selectedModules.add(module);
-                        } else {
-                          selectedModules.remove(module);
-                        }
-                      });
-                    },
-                  );
-                }).toList(),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w500,
+                color: Colors.grey.shade500,
               ),
             ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx, false),
-                child: const Text('Cancel'),
-              ),
-              FilledButton(
-                onPressed: () => Navigator.pop(ctx, true),
-                child: const Text('Save'),
-              ),
-            ],
-          );
-        },
+          ],
+        ),
       ),
     );
+  }
+}
 
-    if (result == true) {
-      await _authService.updateSubUser(
-        user.copyWith(allowedModules: selectedModules),
-      );
-    }
+class _FilterChip extends StatelessWidget {
+  final String label;
+  final bool isSelected;
+  final Color? color;
+  final VoidCallback onTap;
+
+  const _FilterChip({
+    required this.label,
+    required this.isSelected,
+    this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final c = color ?? const Color(0xFF1B4D3E);
+
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? c : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: isSelected ? c : Colors.grey.shade300),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: c.withOpacity(0.25),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: isSelected ? Colors.white : Colors.grey.shade600,
+          ),
+        ),
+      ),
+    );
   }
 }
