@@ -13,6 +13,8 @@ import '../../features/event_order/offline/entities/event_order_entity.dart';
 import '../../features/expense/offline/entities/expense_entity.dart';
 import '../../features/shop/offline/entities/shop_image_cache_entity.dart';
 import '../../features/hotel/offline/entities/menu_item_entity.dart';
+import '../../features/hotel/offline/entities/table_entity.dart';
+import '../../features/hotel/offline/entities/table_order_entity.dart';
 
 /// Singleton service for managing Isar database instance
 /// Handles initialization, instance access, and database cleanup
@@ -64,6 +66,8 @@ class IsarService {
         ExpenseEntitySchema,
         ShopImageCacheEntitySchema,
         MenuItemEntitySchema,
+        TableEntitySchema,
+        TableOrderEntitySchema,
       ],
       directory: dir.path,
       name: 'c_billing_db',

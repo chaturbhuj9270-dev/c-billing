@@ -8,6 +8,7 @@ import '../../data/auth/hotel_roles.dart';
 import '../pages/staff_management_page.dart';
 import '../pages/hotel_flyout_menu.dart';
 import '../pages/menu_management_page.dart';
+import '../pages/table_management_page.dart';
 
 class HotelDashboardPage extends StatefulWidget {
   const HotelDashboardPage({super.key});
@@ -1092,6 +1093,14 @@ class _HotelDashboardPageState extends State<HotelDashboardPage>
       Navigator.push(
         context,
         MaterialPageRoute(builder: (_) => const MenuManagementPage()),
+      );
+      return;
+    }
+
+    if (module == HotelModule.tableManagement) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const TableManagementPage()),
       );
       return;
     }
