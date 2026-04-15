@@ -57,8 +57,8 @@ class _TableManagementPageState extends State<TableManagementPage>
 
     _load();
 
-    // Tick every 30 s so "occupied for X min" stays fresh
-    _clockTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+    // Tick every second for live timers
+    _clockTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (mounted) setState(() => _now = DateTime.now());
     });
   }
@@ -631,7 +631,10 @@ class _TableCard extends StatelessWidget {
     final mins = table.occupiedAt != null
         ? now.difference(table.occupiedAt!).inMinutes
         : 0;
-    final isLong = table.status == TableStatus.active && mins > 60;
+    final isLong =
+        table.status != TableStatus.empty &&
+        table.status != TableStatus.reserved &&
+        mins > 60;
 
     return GestureDetector(
       onTap: () {
@@ -674,8 +677,9 @@ class _TableCard extends StatelessWidget {
                   child: Container(color: Colors.transparent),
                 ),
               ),
-              // Pulsing dot for active
-              if (table.status == TableStatus.active)
+              // Pulsing dot for occupied tables
+              if (table.status != TableStatus.empty &&
+                  table.status != TableStatus.reserved)
                 Positioned(top: 10, right: 10, child: _PulseDot(color: color)),
               // Pending sync dot
               if (table.needsSync)
@@ -754,20 +758,19 @@ class _TableCard extends StatelessWidget {
                             fontFamily: 'Literata',
                           ),
                         ),
-                        if (table.status == TableStatus.active &&
+                        if (table.status != TableStatus.empty &&
+                            table.status != TableStatus.reserved &&
                             table.occupiedAt != null) ...[
                           const Spacer(),
                           Text(
-                            _formatMins(mins),
+                            _formatTime(mins),
                             style: TextStyle(
                               color: isLong
                                   ? const Color(0xFFF87171)
-                                  : Colors.white38,
+                                  : color.withValues(alpha: 0.85),
                               fontSize: 10,
                               fontFamily: 'Literata',
-                              fontWeight: isLong
-                                  ? FontWeight.w700
-                                  : FontWeight.w400,
+                              fontWeight: FontWeight.w700,
                             ),
                           ),
                         ],
@@ -798,9 +801,11 @@ class _TableCard extends StatelessWidget {
     );
   }
 
-  String _formatMins(int mins) {
-    if (mins < 60) return '${mins}m';
-    return '${mins ~/ 60}h ${mins % 60}m';
+  String _formatTime(int mins) {
+    final h = mins ~/ 60;
+    final m = mins % 60;
+    if (h > 0) return '${h}h ${m}m';
+    return '${m}m';
   }
 }
 
