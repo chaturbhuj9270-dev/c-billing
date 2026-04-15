@@ -49,7 +49,7 @@ dependencies:
   barcode: ^2.2.8
   barcode_widget: ^2.0.4
   # Barcode Scanning
-  mobile_scanner: ^5.2.3
+  mobile_scanner: ^7.0.0
   # Signature Pad
   signature: ^5.4.1
 
