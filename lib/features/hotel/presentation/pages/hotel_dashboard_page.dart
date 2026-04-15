@@ -7,6 +7,7 @@ import '../../../../core/auth/hotel_auth_service.dart';
 import '../../../../core/auth/hotel_roles.dart';
 import '../../../authentication/presentation/pages/login.dart';
 import '../pages/staff_management_page.dart';
+import '../pages/hotel_flyout_menu.dart';
 
 class HotelDashboardPage extends StatefulWidget {
   const HotelDashboardPage({super.key});
@@ -376,31 +377,34 @@ class _HotelDashboardPageState extends State<HotelDashboardPage>
                 // Top row: avatar + actions
                 Row(
                   children: [
-                    // Hotel logo
-                    Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(14),
-                        color: Colors.white.withValues(alpha: 0.15),
-                        border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.25),
+                    // Hotel logo — tap to open flyout
+                    GestureDetector(
+                      onTap: _openFlyoutMenu,
+                      child: Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(14),
+                          color: Colors.white.withValues(alpha: 0.15),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.25),
+                          ),
                         ),
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: Image.asset(
-                          'assets/images/hotel_logo.png',
-                          width: 32,
-                          height: 32,
-                          fit: BoxFit.contain,
-                          errorBuilder: (_, _, _) => const Text(
-                            'H',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 20,
-                              fontWeight: FontWeight.w700,
-                              fontFamily: 'Literata',
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Image.asset(
+                            'assets/images/hotel_logo.png',
+                            width: 32,
+                            height: 32,
+                            fit: BoxFit.contain,
+                            errorBuilder: (_, _, _) => const Text(
+                              'H',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 20,
+                                fontWeight: FontWeight.w700,
+                                fontFamily: 'Literata',
+                              ),
                             ),
                           ),
                         ),
@@ -444,7 +448,6 @@ class _HotelDashboardPageState extends State<HotelDashboardPage>
                         ),
                       ),
                     const SizedBox(width: 8),
-                    _buildHeaderButton(Icons.logout_rounded, 'Logout', _logout),
                   ],
                 ),
                 // Role badge + email
@@ -1100,6 +1103,32 @@ class _HotelDashboardPageState extends State<HotelDashboardPage>
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         duration: const Duration(seconds: 1),
       ),
+    );
+  }
+
+  void _openFlyoutMenu() {
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierColor: Colors.black54,
+      barrierLabel: 'Flyout Menu',
+      transitionDuration: const Duration(milliseconds: 300),
+      pageBuilder: (_, _, _) => const SizedBox.expand(child: HotelFlyoutMenu()),
+      transitionBuilder: (context, animation, _, child) {
+        return SlideTransition(
+          position: Tween<Offset>(begin: const Offset(-1, 0), end: Offset.zero)
+              .animate(
+                CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
+              ),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: SizedBox(
+              width: MediaQuery.of(context).size.width * 0.75,
+              child: child,
+            ),
+          ),
+        );
+      },
     );
   }
 
