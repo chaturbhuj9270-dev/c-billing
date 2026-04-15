@@ -26,9 +26,6 @@ class _TableManagementPageState extends State<TableManagementPage>
   TableStatus? _filterStatus;
   bool _isLoading = true;
 
-  late AnimationController _headerAnim;
-  late Animation<double> _headerFade;
-
   // Live-clock for "occupied since" countdown
   Timer? _clockTimer;
   DateTime _now = DateTime.now();
@@ -48,13 +45,6 @@ class _TableManagementPageState extends State<TableManagementPage>
   @override
   void initState() {
     super.initState();
-
-    _headerAnim = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 700),
-    )..forward();
-    _headerFade = CurvedAnimation(parent: _headerAnim, curve: Curves.easeOut);
-
     _load();
 
     // Tick every second for live timers
@@ -65,7 +55,6 @@ class _TableManagementPageState extends State<TableManagementPage>
 
   @override
   void dispose() {
-    _headerAnim.dispose();
     _clockTimer?.cancel();
     super.dispose();
   }
@@ -130,127 +119,92 @@ class _TableManagementPageState extends State<TableManagementPage>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF0E1C17),
-      body: Column(
-        children: [
-          _buildHeaderArea(),
-          _buildStatusFilterBar(),
-          if (_sections.length > 1) _buildSectionChips(),
-          Expanded(
-            child: _isLoading
-                ? const Center(
-                    child: CircularProgressIndicator(color: Color(0xFF4ADE80)),
-                  )
-                : _filtered.isEmpty
-                ? _buildEmptyState()
-                : _buildTableGrid(),
-          ),
-        ],
-      ),
-      floatingActionButton: _buildFab(),
-    );
-  }
-
-  // ── HEADER ───────────────────────────────────────────────────────
-
-  Widget _buildHeaderArea() {
-    return FadeTransition(
-      opacity: _headerFade,
-      child: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFF0A1F16), Color(0xFF0E2A1C), Color(0xFF0A1A12)],
-          ),
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0xFFECFDF5), Color(0xFFF0FDF8), Color(0xFFF8FAFB)],
         ),
-        child: SafeArea(
-          bottom: false,
-          child: Column(
+      ),
+      child: Stack(
+        children: [
+          Column(
             children: [
-              // Top bar
-              Padding(
-                padding: const EdgeInsets.fromLTRB(6, 8, 16, 0),
-                child: Row(
-                  children: [
-                    IconButton(
-                      onPressed: () => Navigator.pop(context),
-                      icon: const Icon(
-                        Icons.arrow_back_rounded,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const Expanded(
-                      child: Text(
-                        'Tables',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 22,
-                          fontWeight: FontWeight.w800,
-                          fontFamily: 'Literata',
-                          letterSpacing: -0.3,
+              _buildStatsStrip(),
+              _buildStatusFilterBar(),
+              if (_sections.length > 1) _buildSectionChips(),
+              Expanded(
+                child: _isLoading
+                    ? const Center(
+                        child: CircularProgressIndicator(
+                          color: Color(0xFF16A34A),
                         ),
-                      ),
-                    ),
-                    // Refresh
-                    IconButton(
-                      onPressed: _load,
-                      icon: const Icon(
-                        Icons.refresh_rounded,
-                        color: Colors.white60,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              // Stats strip
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 10, 16, 20),
-                child: Row(
-                  children: [
-                    _buildStatTile(
-                      'Empty',
-                      _emptyCount,
-                      kTableEmpty,
-                      Icons.chair_outlined,
-                    ),
-                    const SizedBox(width: 8),
-                    _buildStatTile(
-                      'Active',
-                      _activeCount,
-                      kTableActive,
-                      Icons.people_rounded,
-                    ),
-                    const SizedBox(width: 8),
-                    _buildStatTile(
-                      'Waiting',
-                      _waitingCount,
-                      kTableWaiting,
-                      Icons.access_time_rounded,
-                    ),
-                    const SizedBox(width: 8),
-                    _buildStatTile(
-                      'Served',
-                      _servedCount,
-                      kTableServed,
-                      Icons.check_circle_rounded,
-                    ),
-                    if (_reservedCount > 0) ...[
-                      const SizedBox(width: 8),
-                      _buildStatTile(
-                        'Reserved',
-                        _reservedCount,
-                        kTableReserved,
-                        Icons.bookmark_rounded,
-                      ),
-                    ],
-                  ],
-                ),
+                      )
+                    : _filtered.isEmpty
+                    ? _buildEmptyState()
+                    : _buildTableGrid(),
               ),
             ],
           ),
+          Positioned(right: 16, bottom: 16, child: _buildFab()),
+        ],
+      ),
+    );
+  }
+
+  // ── STATS STRIP ──────────────────────────────────────────────────
+
+  Widget _buildStatsStrip() {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0F2A1E).withValues(alpha: 0.85),
+        border: Border(
+          bottom: BorderSide(
+            color: const Color(0xFF16A34A).withValues(alpha: 0.15),
+          ),
         ),
+      ),
+      child: Row(
+        children: [
+          _buildStatTile(
+            'Empty',
+            _emptyCount,
+            kTableEmpty,
+            Icons.chair_outlined,
+          ),
+          const SizedBox(width: 8),
+          _buildStatTile(
+            'Active',
+            _activeCount,
+            kTableActive,
+            Icons.people_rounded,
+          ),
+          const SizedBox(width: 8),
+          _buildStatTile(
+            'Waiting',
+            _waitingCount,
+            kTableWaiting,
+            Icons.access_time_rounded,
+          ),
+          const SizedBox(width: 8),
+          _buildStatTile(
+            'Served',
+            _servedCount,
+            kTableServed,
+            Icons.check_circle_rounded,
+          ),
+          if (_reservedCount > 0) ...[
+            const SizedBox(width: 8),
+            _buildStatTile(
+              'Reserved',
+              _reservedCount,
+              kTableReserved,
+              Icons.bookmark_rounded,
+            ),
+          ],
+        ],
       ),
     );
   }
@@ -270,16 +224,38 @@ class _TableManagementPageState extends State<TableManagementPage>
           duration: const Duration(milliseconds: 200),
           padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
           decoration: BoxDecoration(
-            color: _filterStatus == _labelToStatus(label)
-                ? color.withValues(alpha: 0.25)
-                : Colors.white.withValues(alpha: 0.05),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: _filterStatus == _labelToStatus(label)
+                  ? [
+                      color.withValues(alpha: 0.25),
+                      color.withValues(alpha: 0.12),
+                    ]
+                  : [
+                      Colors.white.withValues(alpha: 0.12),
+                      Colors.white.withValues(alpha: 0.05),
+                    ],
+            ),
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
               color: _filterStatus == _labelToStatus(label)
                   ? color.withValues(alpha: 0.6)
-                  : Colors.white.withValues(alpha: 0.08),
+                  : Colors.white.withValues(alpha: 0.12),
               width: 1.2,
             ),
+            boxShadow: [
+              BoxShadow(
+                color: color.withValues(alpha: 0.12),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
+              ),
+              BoxShadow(
+                color: Colors.white.withValues(alpha: 0.06),
+                blurRadius: 1,
+                offset: const Offset(-0.5, -0.5),
+              ),
+            ],
           ),
           child: Column(
             children: [
@@ -296,8 +272,8 @@ class _TableManagementPageState extends State<TableManagementPage>
               ),
               Text(
                 label,
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.5),
+                style: const TextStyle(
+                  color: Color(0xFF94A3B8),
                   fontSize: 9,
                   fontFamily: 'Literata',
                   fontWeight: FontWeight.w500,
@@ -334,7 +310,7 @@ class _TableManagementPageState extends State<TableManagementPage>
     final statuses = [null, ...TableStatus.values];
     return Container(
       height: 44,
-      color: const Color(0xFF0E1C17),
+      color: Colors.white,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
@@ -356,13 +332,13 @@ class _TableManagementPageState extends State<TableManagementPage>
                 ),
                 decoration: BoxDecoration(
                   color: selected
-                      ? color.withValues(alpha: 0.2)
+                      ? color.withValues(alpha: 0.1)
                       : Colors.transparent,
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
                     color: selected
-                        ? color.withValues(alpha: 0.7)
-                        : Colors.white.withValues(alpha: 0.12),
+                        ? color.withValues(alpha: 0.5)
+                        : const Color(0xFFE2E8F0),
                   ),
                 ),
                 child: Row(
@@ -382,7 +358,7 @@ class _TableManagementPageState extends State<TableManagementPage>
                     Text(
                       label,
                       style: TextStyle(
-                        color: selected ? color : Colors.white60,
+                        color: selected ? color : const Color(0xFF94A3B8),
                         fontSize: 12,
                         fontFamily: 'Literata',
                         fontWeight: selected
@@ -405,7 +381,7 @@ class _TableManagementPageState extends State<TableManagementPage>
   Widget _buildSectionChips() {
     return Container(
       height: 40,
-      color: const Color(0xFF0E1C17),
+      color: Colors.white,
       child: ListView(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.only(left: 16, bottom: 4),
@@ -428,19 +404,21 @@ class _TableManagementPageState extends State<TableManagementPage>
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
           decoration: BoxDecoration(
             color: selected
-                ? const Color(0xFF4ADE80).withValues(alpha: 0.15)
-                : Colors.white.withValues(alpha: 0.05),
+                ? const Color(0xFF16A34A).withValues(alpha: 0.1)
+                : const Color(0xFFF8FAFC),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
               color: selected
-                  ? const Color(0xFF4ADE80).withValues(alpha: 0.5)
-                  : Colors.white.withValues(alpha: 0.1),
+                  ? const Color(0xFF16A34A).withValues(alpha: 0.4)
+                  : const Color(0xFFE2E8F0),
             ),
           ),
           child: Text(
             label,
             style: TextStyle(
-              color: selected ? const Color(0xFF4ADE80) : Colors.white54,
+              color: selected
+                  ? const Color(0xFF16A34A)
+                  : const Color(0xFF94A3B8),
               fontSize: 11,
               fontFamily: 'Literata',
               fontWeight: selected ? FontWeight.w700 : FontWeight.w400,
@@ -463,8 +441,8 @@ class _TableManagementPageState extends State<TableManagementPage>
 
     return RefreshIndicator(
       onRefresh: _load,
-      color: const Color(0xFF4ADE80),
-      backgroundColor: const Color(0xFF0E1C17),
+      color: const Color(0xFF16A34A),
+      backgroundColor: Colors.white,
       child: ListView.builder(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
         itemCount: sortedSections.length,
@@ -490,7 +468,7 @@ class _TableManagementPageState extends State<TableManagementPage>
                 height: 18,
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                    colors: [Color(0xFF4ADE80), Color(0xFF22C55E)],
+                    colors: [Color(0xFF16A34A), Color(0xFF15803D)],
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                   ),
@@ -501,7 +479,7 @@ class _TableManagementPageState extends State<TableManagementPage>
               Text(
                 section.toUpperCase(),
                 style: const TextStyle(
-                  color: Colors.white60,
+                  color: Color(0xFF64748B),
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
                   fontFamily: 'Literata',
@@ -512,13 +490,13 @@ class _TableManagementPageState extends State<TableManagementPage>
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.06),
+                  color: const Color(0xFFF1F5F9),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
                   '${tables.length}',
                   style: const TextStyle(
-                    color: Colors.white38,
+                    color: Color(0xFF94A3B8),
                     fontSize: 11,
                     fontFamily: 'Literata',
                   ),
@@ -558,21 +536,23 @@ class _TableManagementPageState extends State<TableManagementPage>
             width: 96,
             height: 96,
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.04),
+              color: const Color(0xFF16A34A).withValues(alpha: 0.06),
               borderRadius: BorderRadius.circular(28),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+              border: Border.all(
+                color: const Color(0xFF16A34A).withValues(alpha: 0.12),
+              ),
             ),
             child: const Icon(
               Icons.table_restaurant_rounded,
               size: 46,
-              color: Color(0xFF4ADE80),
+              color: Color(0xFF16A34A),
             ),
           ),
           const SizedBox(height: 20),
           const Text(
             'No Tables',
             style: TextStyle(
-              color: Colors.white,
+              color: Color(0xFF1E293B),
               fontSize: 20,
               fontWeight: FontWeight.w700,
               fontFamily: 'Literata',
@@ -584,7 +564,7 @@ class _TableManagementPageState extends State<TableManagementPage>
                 ? 'No ${tableStatusLabel(_filterStatus!)} tables'
                 : 'Tap + to add your first table',
             style: const TextStyle(
-              color: Colors.white38,
+              color: Color(0xFF94A3B8),
               fontSize: 13,
               fontFamily: 'Literata',
             ),
@@ -599,7 +579,7 @@ class _TableManagementPageState extends State<TableManagementPage>
   Widget _buildFab() {
     return FloatingActionButton.extended(
       onPressed: _openAddForm,
-      backgroundColor: const Color(0xFF22C55E),
+      backgroundColor: const Color(0xFF16A34A),
       foregroundColor: Colors.white,
       icon: const Icon(Icons.add_rounded),
       label: const Text(
@@ -645,157 +625,231 @@ class _TableCard extends StatelessWidget {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 300),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(20),
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              color.withValues(alpha: 0.18),
-              color.withValues(alpha: 0.06),
+              color.withValues(alpha: 0.12),
+              color.withValues(alpha: 0.04),
+              Colors.white.withValues(alpha: 0.9),
             ],
+            stops: const [0.0, 0.4, 1.0],
           ),
           border: Border.all(
-            color: color.withValues(alpha: isLong ? 0.9 : 0.35),
+            color: isLong
+                ? const Color(0xFFFCA5A5).withValues(alpha: 0.8)
+                : color.withValues(alpha: 0.22),
             width: isLong ? 1.8 : 1.2,
           ),
           boxShadow: [
+            // Main colored glow
             BoxShadow(
-              color: color.withValues(alpha: 0.12),
-              blurRadius: 16,
-              spreadRadius: 0,
+              color: color.withValues(alpha: 0.18),
+              blurRadius: 20,
+              spreadRadius: -2,
+              offset: const Offset(0, 8),
+            ),
+            // Soft lift shadow
+            BoxShadow(
+              color: const Color(0xFF0F172A).withValues(alpha: 0.06),
+              blurRadius: 12,
               offset: const Offset(0, 4),
+            ),
+            // Inner highlight (top-left)
+            BoxShadow(
+              color: Colors.white.withValues(alpha: 0.7),
+              blurRadius: 1,
+              spreadRadius: 0,
+              offset: const Offset(-1, -1),
             ),
           ],
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(18),
-          child: Stack(
-            children: [
-              // Glassmorphic noise texture
-              Positioned.fill(
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 0.5, sigmaY: 0.5),
-                  child: Container(color: Colors.transparent),
-                ),
-              ),
-              // Pulsing dot for occupied tables
-              if (table.status != TableStatus.empty &&
-                  table.status != TableStatus.reserved)
-                Positioned(top: 10, right: 10, child: _PulseDot(color: color)),
-              // Pending sync dot
-              if (table.needsSync)
+          borderRadius: BorderRadius.circular(20),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+            child: Stack(
+              children: [
+                // Top-left glass highlight arc
                 Positioned(
-                  top: 10,
-                  left: 10,
+                  top: -20,
+                  left: -20,
                   child: Container(
-                    width: 7,
-                    height: 7,
-                    decoration: const BoxDecoration(
+                    width: 80,
+                    height: 80,
+                    decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: Color(0xFFF59E0B),
+                      gradient: RadialGradient(
+                        colors: [
+                          Colors.white.withValues(alpha: 0.35),
+                          Colors.white.withValues(alpha: 0.0),
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              // Main content
-              Padding(
-                padding: const EdgeInsets.fromLTRB(12, 14, 12, 10),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Table icon
-                    Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: color.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: color.withValues(alpha: 0.3)),
-                      ),
-                      child: Icon(
-                        tableStatusIcon(table.status),
-                        color: color,
-                        size: 20,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    // Table number
-                    Text(
-                      table.tableNumber,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
-                        fontFamily: 'Literata',
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 2),
-                    // Status label
-                    Text(
-                      tableStatusLabel(table.status),
-                      style: TextStyle(
-                        color: color,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        fontFamily: 'Literata',
-                      ),
-                    ),
-                    const Spacer(),
-                    // Capacity / time row
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.people_outline_rounded,
-                          color: Colors.white38,
-                          size: 12,
-                        ),
-                        const SizedBox(width: 3),
-                        Text(
-                          '${table.occupiedSeats}/${table.capacity}',
-                          style: const TextStyle(
-                            color: Colors.white38,
-                            fontSize: 10,
-                            fontFamily: 'Literata',
-                          ),
-                        ),
-                        if (table.status != TableStatus.empty &&
-                            table.status != TableStatus.reserved &&
-                            table.occupiedAt != null) ...[
-                          const Spacer(),
-                          Text(
-                            _formatTime(elapsed),
-                            style: TextStyle(
-                              color: isLong
-                                  ? const Color(0xFFF87171)
-                                  : color.withValues(alpha: 0.85),
-                              fontSize: 10,
-                              fontFamily: 'Literata',
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
+                // Bottom-right status glow
+                Positioned(
+                  bottom: -30,
+                  right: -30,
+                  child: Container(
+                    width: 90,
+                    height: 90,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: RadialGradient(
+                        colors: [
+                          color.withValues(alpha: 0.15),
+                          color.withValues(alpha: 0.0),
                         ],
-                      ],
+                      ),
                     ),
-                    // Guest name if present
-                    if (table.guestName != null &&
-                        table.guestName!.isNotEmpty) ...[
-                      const SizedBox(height: 4),
+                  ),
+                ),
+                // Pulsing dot for occupied tables
+                if (table.status != TableStatus.empty &&
+                    table.status != TableStatus.reserved)
+                  Positioned(
+                    top: 10,
+                    right: 10,
+                    child: _PulseDot(color: color),
+                  ),
+                // Pending sync dot
+                if (table.needsSync)
+                  Positioned(
+                    top: 10,
+                    left: 10,
+                    child: Container(
+                      width: 7,
+                      height: 7,
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Color(0xFFF59E0B),
+                      ),
+                    ),
+                  ),
+                // Main content
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 14, 12, 10),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Table icon with glass pill
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: color.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: color.withValues(alpha: 0.25),
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: color.withValues(alpha: 0.15),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Icon(
+                          tableStatusIcon(table.status),
+                          color: color,
+                          size: 20,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      // Table number
                       Text(
-                        table.guestName!,
+                        table.tableNumber,
                         style: const TextStyle(
-                          color: Colors.white54,
-                          fontSize: 9,
+                          color: Color(0xFF1E293B),
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
                           fontFamily: 'Literata',
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
+                      const SizedBox(height: 2),
+                      // Status label
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 7,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: color.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(
+                            color: color.withValues(alpha: 0.2),
+                          ),
+                        ),
+                        child: Text(
+                          tableStatusLabel(table.status),
+                          style: TextStyle(
+                            color: color,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            fontFamily: 'Literata',
+                          ),
+                        ),
+                      ),
+                      const Spacer(),
+                      // Capacity / time row
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.people_outline_rounded,
+                            color: const Color(0xFF94A3B8),
+                            size: 12,
+                          ),
+                          const SizedBox(width: 3),
+                          Text(
+                            '${table.occupiedSeats}/${table.capacity}',
+                            style: const TextStyle(
+                              color: Color(0xFF94A3B8),
+                              fontSize: 10,
+                              fontFamily: 'Literata',
+                            ),
+                          ),
+                          if (table.status != TableStatus.empty &&
+                              table.status != TableStatus.reserved &&
+                              table.occupiedAt != null) ...[
+                            const Spacer(),
+                            Text(
+                              _formatTime(elapsed),
+                              style: TextStyle(
+                                color: isLong ? const Color(0xFFDC2626) : color,
+                                fontSize: 10,
+                                fontFamily: 'Literata',
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                      // Guest name if present
+                      if (table.guestName != null &&
+                          table.guestName!.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          table.guestName!,
+                          style: const TextStyle(
+                            color: Color(0xFF94A3B8),
+                            fontSize: 9,
+                            fontFamily: 'Literata',
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

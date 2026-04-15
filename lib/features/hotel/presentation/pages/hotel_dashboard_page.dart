@@ -137,7 +137,7 @@ class _HotelDashboardPageState extends State<HotelDashboardPage>
       case 0:
         return _buildDashboardTab();
       case 1:
-        return _buildPlaceholderTab('Tables', Icons.table_restaurant_rounded);
+        return const TableManagementPage();
       case 2:
         return _buildPlaceholderTab('Orders', Icons.receipt_long_rounded);
       case 3:
@@ -1094,18 +1094,14 @@ class _HotelDashboardPageState extends State<HotelDashboardPage>
     }
 
     if (module == HotelModule.tableManagement) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => const TableManagementPage()),
-      );
+      final idx = _navItems.indexWhere((e) => e.id == 1);
+      if (idx >= 0) setState(() => _selectedIndex = idx);
       return;
     }
 
     if (module == HotelModule.kitchenDisplay) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => const KitchenDisplayPage()),
-      );
+      final idx = _navItems.indexWhere((e) => e.id == 3);
+      if (idx >= 0) setState(() => _selectedIndex = idx);
       return;
     }
 
