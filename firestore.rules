@@ -50,6 +50,11 @@ service cloud.firestore {
         allow read, write: if request.auth.uid == userId;
       }
       
+      // User's menu items subcollection (hotel menu management)
+      match /menuItems/{document=**} {
+        allow read, write: if request.auth.uid == userId;
+      }
+      
       // User's hotel sub-users subcollection
       match /hotelSubUsers/{subUserId} {
         // Admin can read/write their own sub-users
