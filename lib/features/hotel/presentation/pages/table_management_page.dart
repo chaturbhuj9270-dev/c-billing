@@ -628,9 +628,10 @@ class _TableCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = tableStatusColor(table.status);
-    final mins = table.occupiedAt != null
-        ? now.difference(table.occupiedAt!).inMinutes
-        : 0;
+    final elapsed = table.occupiedAt != null
+        ? now.difference(table.occupiedAt!)
+        : Duration.zero;
+    final mins = elapsed.inMinutes;
     final isLong =
         table.status != TableStatus.empty &&
         table.status != TableStatus.reserved &&
@@ -763,7 +764,7 @@ class _TableCard extends StatelessWidget {
                             table.occupiedAt != null) ...[
                           const Spacer(),
                           Text(
-                            _formatTime(mins),
+                            _formatTime(elapsed),
                             style: TextStyle(
                               color: isLong
                                   ? const Color(0xFFF87171)
@@ -801,11 +802,13 @@ class _TableCard extends StatelessWidget {
     );
   }
 
-  String _formatTime(int mins) {
-    final h = mins ~/ 60;
-    final m = mins % 60;
-    if (h > 0) return '${h}h ${m}m';
-    return '${m}m';
+  String _formatTime(Duration d) {
+    final h = d.inHours;
+    final m = d.inMinutes % 60;
+    final s = d.inSeconds % 60;
+    final ss = s.toString().padLeft(2, '0');
+    if (h > 0) return '${h}h ${m}m ${ss}s';
+    return '${m}m ${ss}s';
   }
 }
 

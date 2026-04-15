@@ -449,6 +449,12 @@ class _TableDetailSheetState extends State<TableDetailSheet> {
               ),
               const SizedBox(height: 24),
 
+              // ── Order timeline (top) ──────────────────────────
+              if (!_orderLoading && _activeOrder != null) ...[
+                _buildOrderProgressBar(),
+                const SizedBox(height: 16),
+              ],
+
               // ── Info cards ────────────────────────────────────
               Row(
                 children: [
@@ -586,6 +592,167 @@ class _TableDetailSheetState extends State<TableDetailSheet> {
           ),
         );
       },
+    );
+  }
+
+  // ── Order progress bar ────────────────────────────────────────
+
+  Widget _buildOrderProgressBar() {
+    final order = _activeOrder!;
+
+    // 4 stages: Active → Waiting → Served → Completed
+    final stages = <_ProgressStage>[
+      _ProgressStage(
+        label: 'Active',
+        icon: Icons.restaurant_rounded,
+        time: order.createdAt,
+        reached: true, // always reached if order exists
+        color: const Color(0xFF22C55E),
+      ),
+      _ProgressStage(
+        label: 'Kitchen',
+        icon: Icons.kitchen_rounded,
+        time: order.sentToKitchenAt,
+        reached: order.sentToKitchenAt != null,
+        color: const Color(0xFF60A5FA),
+      ),
+      _ProgressStage(
+        label: 'Served',
+        icon: Icons.done_all_rounded,
+        time: order.servedAt,
+        reached: order.servedAt != null,
+        color: const Color(0xFFA78BFA),
+      ),
+      _ProgressStage(
+        label: 'Completed',
+        icon: Icons.check_circle_rounded,
+        time: order.billedAt,
+        reached: order.billedAt != null,
+        color: const Color(0xFFF59E0B),
+      ),
+    ];
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 14),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.03),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.07)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Padding(
+            padding: EdgeInsets.only(left: 4, bottom: 12),
+            child: Text(
+              'ORDER TIMELINE',
+              style: TextStyle(
+                color: Colors.white38,
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                fontFamily: 'Literata',
+                letterSpacing: 1.2,
+              ),
+            ),
+          ),
+          // Progress line + nodes
+          Row(
+            children: [
+              for (int i = 0; i < stages.length; i++) ...[
+                Expanded(child: _buildStageNode(stages[i], i, stages.length)),
+                if (i < stages.length - 1)
+                  _buildConnector(stages[i + 1].reached),
+              ],
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStageNode(_ProgressStage stage, int index, int total) {
+    final isActive = stage.reached;
+    final color = isActive ? stage.color : Colors.white.withValues(alpha: 0.15);
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Circle node
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          width: 32,
+          height: 32,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: isActive
+                ? color.withValues(alpha: 0.2)
+                : Colors.white.withValues(alpha: 0.04),
+            border: Border.all(
+              color: isActive ? color : Colors.white.withValues(alpha: 0.1),
+              width: isActive ? 2 : 1,
+            ),
+            boxShadow: isActive
+                ? [
+                    BoxShadow(
+                      color: color.withValues(alpha: 0.3),
+                      blurRadius: 8,
+                    ),
+                  ]
+                : [],
+          ),
+          child: Icon(
+            stage.icon,
+            size: 14,
+            color: isActive ? color : Colors.white.withValues(alpha: 0.2),
+          ),
+        ),
+        const SizedBox(height: 6),
+        // Label
+        Text(
+          stage.label,
+          style: TextStyle(
+            color: isActive ? Colors.white70 : Colors.white24,
+            fontSize: 9,
+            fontWeight: isActive ? FontWeight.w700 : FontWeight.w400,
+            fontFamily: 'Literata',
+          ),
+        ),
+        const SizedBox(height: 2),
+        // Time
+        Text(
+          stage.time != null
+              ? '${stage.time!.hour.toString().padLeft(2, '0')}:${stage.time!.minute.toString().padLeft(2, '0')}:${stage.time!.second.toString().padLeft(2, '0')}'
+              : '—',
+          style: TextStyle(
+            color: isActive
+                ? stage.color.withValues(alpha: 0.8)
+                : Colors.white.withValues(alpha: 0.12),
+            fontSize: 9,
+            fontFamily: 'Literata',
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildConnector(bool nextReached) {
+    return Expanded(
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 28),
+        child: Container(
+          height: 2,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(1),
+            gradient: nextReached
+                ? const LinearGradient(
+                    colors: [Color(0xFF22C55E), Color(0xFF60A5FA)],
+                  )
+                : null,
+            color: nextReached ? null : Colors.white.withValues(alpha: 0.08),
+          ),
+        ),
+      ),
     );
   }
 
@@ -956,4 +1123,21 @@ class _TableDetailSheetState extends State<TableDetailSheet> {
     if (mins < 60) return '${mins}m';
     return '${mins ~/ 60}h ${mins % 60}m';
   }
+}
+
+// Helper data class for progress bar stages
+class _ProgressStage {
+  final String label;
+  final IconData icon;
+  final DateTime? time;
+  final bool reached;
+  final Color color;
+
+  const _ProgressStage({
+    required this.label,
+    required this.icon,
+    required this.time,
+    required this.reached,
+    required this.color,
+  });
 }
