@@ -8,7 +8,7 @@ import '../../main.dart' show initializeServices, initializeSyncServices;
 import '../../features/authentication/presentation/pages/login.dart';
 import '../../features/dashboard/presentation/pages/optimized_dashboard_page.dart';
 import '../../features/hotel/presentation/pages/hotel_dashboard_page.dart';
-import '../auth/hotel_auth_service.dart';
+import '../../features/hotel/data/auth/hotel_auth_service.dart';
 import '../flavor/app_flavor.dart';
 import '../services/bill_report_settings_service.dart';
 import '../services/stock_report_settings_service.dart';
