@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../../../../core/auth/hotel_auth_service.dart';
-import '../../../../core/auth/hotel_roles.dart';
-import '../../../../core/auth/hotel_sub_user.dart';
+import '../../data/auth/hotel_auth_service.dart';
+import '../../data/auth/hotel_roles.dart';
+import '../../data/auth/hotel_sub_user.dart';
 import '../../../../core/ui/glassy_toast.dart';
 import 'staff_credential_form_page.dart';
 

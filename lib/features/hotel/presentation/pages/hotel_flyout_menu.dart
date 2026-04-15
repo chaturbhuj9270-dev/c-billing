@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-import '../../../../core/auth/hotel_auth_service.dart';
+import '../../data/auth/hotel_auth_service.dart';
 import '../../../../core/services/biometric_service.dart';
 import '../../../../core/services/language_service.dart';
 import '../../../../core/localization/app_localizations.dart';

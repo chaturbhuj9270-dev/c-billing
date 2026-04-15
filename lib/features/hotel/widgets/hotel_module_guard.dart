@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../../core/auth/hotel_auth_service.dart';
-import '../../../core/auth/hotel_roles.dart';
+import '../data/auth/hotel_auth_service.dart';
+import '../data/auth/hotel_roles.dart';
 
 /// Access-control wrapper. Shows the child if access is granted,
 /// otherwise shows an "Access Denied" message.

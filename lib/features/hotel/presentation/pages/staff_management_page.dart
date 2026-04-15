@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/auth/hotel_auth_service.dart';
-import '../../../../core/auth/hotel_sub_user.dart';
-import '../../../../core/auth/hotel_roles.dart';
+import '../../data/auth/hotel_auth_service.dart';
+import '../../data/auth/hotel_sub_user.dart';
+import '../../data/auth/hotel_roles.dart';
 import 'staff_credential_form_page.dart';
 import 'staff_detail_page.dart';
 

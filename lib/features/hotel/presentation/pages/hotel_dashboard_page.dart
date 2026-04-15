@@ -3,9 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-import '../../../../core/auth/hotel_auth_service.dart';
-import '../../../../core/auth/hotel_roles.dart';
-import '../../../authentication/presentation/pages/login.dart';
+import '../../data/auth/hotel_auth_service.dart';
+import '../../data/auth/hotel_roles.dart';
 import '../pages/staff_management_page.dart';
 import '../pages/hotel_flyout_menu.dart';
 
@@ -1129,15 +1128,6 @@ class _HotelDashboardPageState extends State<HotelDashboardPage>
           ),
         );
       },
-    );
-  }
-
-  void _logout() {
-    _auth.clearSession();
-    FirebaseAuth.instance.signOut();
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => const LoginPageV2()),
-      (route) => false,
     );
   }
 

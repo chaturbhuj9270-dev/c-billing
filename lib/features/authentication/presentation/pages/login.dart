@@ -11,7 +11,7 @@ import '../../../../core/services/stock_report_settings_service.dart';
 import '../../../../main.dart' show initializeSyncServices;
 import '../../../dashboard/presentation/pages/optimized_dashboard_page.dart';
 import '../../../hotel/presentation/pages/hotel_dashboard_page.dart';
-import '../../../../core/auth/hotel_auth_service.dart';
+import '../../../hotel/data/auth/hotel_auth_service.dart';
 import '../../../../core/flavor/app_flavor.dart';
 import '../../../../core/services/session_manager.dart';
 import '../../../../core/services/credentials_manager.dart';

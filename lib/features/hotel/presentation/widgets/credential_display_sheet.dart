@@ -2,8 +2,8 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../../../../core/auth/hotel_sub_user.dart';
-import '../../../../core/auth/hotel_roles.dart';
+import '../../data/auth/hotel_sub_user.dart';
+import '../../data/auth/hotel_roles.dart';
 import '../../../../core/ui/glassy_toast.dart';
 
 /// Bottom sheet displayed after creating a staff member,
