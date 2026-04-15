@@ -20,6 +20,42 @@ class _HotelDashboardPageState extends State<HotelDashboardPage>
   final _auth = HotelAuthService.instance;
   int _selectedIndex = 0;
 
+  /// Bottom nav items filtered by user permissions.
+  List<_BottomNavEntry> get _navItems {
+    final all = [
+      _BottomNavEntry(0, Icons.dashboard_rounded, 'Dashboard', null),
+      if (_auth.isAdmin || _auth.hasAccess(HotelModule.tableManagement))
+        _BottomNavEntry(
+          1,
+          Icons.table_restaurant_rounded,
+          'Tables',
+          HotelModule.tableManagement,
+        ),
+      if (_auth.isAdmin || _auth.hasAccess(HotelModule.orderManagement))
+        _BottomNavEntry(
+          2,
+          Icons.receipt_long_rounded,
+          'Orders',
+          HotelModule.orderManagement,
+        ),
+      if (_auth.isAdmin || _auth.hasAccess(HotelModule.kitchenDisplay))
+        _BottomNavEntry(
+          3,
+          Icons.soup_kitchen_rounded,
+          'Kitchen',
+          HotelModule.kitchenDisplay,
+        ),
+      if (_auth.isAdmin || _auth.hasAccess(HotelModule.billing))
+        _BottomNavEntry(
+          4,
+          Icons.point_of_sale_rounded,
+          'Billing',
+          HotelModule.billing,
+        ),
+    ];
+    return all;
+  }
+
   late AnimationController _fadeController;
   late AnimationController _slideController;
   late Animation<double> _fadeAnimation;
@@ -87,7 +123,10 @@ class _HotelDashboardPageState extends State<HotelDashboardPage>
   // ─── TAB CONTENT ──────────────────────────────────────────────
 
   Widget _buildTabContent() {
-    switch (_selectedIndex) {
+    final items = _navItems;
+    if (_selectedIndex >= items.length) return _buildDashboardTab();
+    final entry = items[_selectedIndex];
+    switch (entry.id) {
       case 0:
         return _buildDashboardTab();
       case 1:
@@ -174,24 +213,15 @@ class _HotelDashboardPageState extends State<HotelDashboardPage>
   // ─── BOTTOM NAV BAR ───────────────────────────────────────────
 
   String _getPageTitle() {
-    switch (_selectedIndex) {
-      case 0:
-        return 'Dashboard';
-      case 1:
-        return 'Tables';
-      case 2:
-        return 'Orders';
-      case 3:
-        return 'Kitchen';
-      case 4:
-        return 'Billing';
-      default:
-        return 'Hotel';
-    }
+    final items = _navItems;
+    if (_selectedIndex >= items.length) return 'Hotel';
+    return items[_selectedIndex].label;
   }
 
   String _getPageSubtitle() {
-    switch (_selectedIndex) {
+    final items = _navItems;
+    if (_selectedIndex >= items.length) return '';
+    switch (items[_selectedIndex].id) {
       case 0:
         return 'Hotel overview';
       case 1:
@@ -208,6 +238,7 @@ class _HotelDashboardPageState extends State<HotelDashboardPage>
   }
 
   Widget _buildBottomNavBar() {
+    final items = _navItems;
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -225,16 +256,13 @@ class _HotelDashboardPageState extends State<HotelDashboardPage>
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              _buildNavItem(0, Icons.dashboard_rounded, 'Dashboard'),
-              _buildNavItem(1, Icons.table_restaurant_rounded, 'Tables'),
-              _buildNavItem(
-                2,
-                Icons.receipt_long_rounded,
-                'Orders',
-                isPrimary: true,
-              ),
-              _buildNavItem(3, Icons.soup_kitchen_rounded, 'Kitchen'),
-              _buildNavItem(4, Icons.point_of_sale_rounded, 'Billing'),
+              for (int i = 0; i < items.length; i++)
+                _buildNavItem(
+                  i,
+                  items[i].icon,
+                  items[i].label,
+                  isPrimary: items[i].id == 2,
+                ),
             ],
           ),
         ),
@@ -1011,11 +1039,45 @@ class _HotelDashboardPageState extends State<HotelDashboardPage>
   }
 
   void _onModuleTap(HotelModule module) {
+    // Check permission for non-admin users
+    if (!_auth.isAdmin && !_auth.hasAccess(module)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.lock_rounded, color: Colors.white, size: 18),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'You don\'t have access to ${module.label}. Contact your admin.',
+                ),
+              ),
+            ],
+          ),
+          backgroundColor: Colors.red.shade700,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+
     if (module == HotelModule.staffManagement && _auth.isAdmin) {
       Navigator.push(
         context,
         MaterialPageRoute(builder: (_) => const StaffManagementPage()),
       );
+      return;
+    }
+
+    // Navigate to matching bottom nav tab if it exists
+    final items = _navItems;
+    final navIndex = items.indexWhere((e) => e.module == module);
+    if (navIndex != -1) {
+      setState(() => _selectedIndex = navIndex);
       return;
     }
 
@@ -1255,4 +1317,13 @@ class _QuickAction {
   final HotelModule module;
 
   const _QuickAction(this.label, this.icon, this.color, this.module);
+}
+
+class _BottomNavEntry {
+  final int id;
+  final IconData icon;
+  final String label;
+  final HotelModule? module;
+
+  const _BottomNavEntry(this.id, this.icon, this.label, this.module);
 }
