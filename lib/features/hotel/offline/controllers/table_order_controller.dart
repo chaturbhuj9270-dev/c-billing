@@ -235,6 +235,61 @@ class TableOrderController extends ChangeNotifier {
     await markServed(orderId, tableId);
   }
 
+  // ── ORDER LISTING / FILTERING ──────────────────────────────────
+
+  /// Returns all orders, optionally filtered by status.
+  Future<List<TableOrderEntity>> getAllOrders({
+    TableOrderStatus? status,
+  }) async {
+    if (status != null) {
+      return _isar.tableOrderEntitys
+          .filter()
+          .statusEqualTo(status)
+          .sortByCreatedAtDesc()
+          .findAll();
+    }
+    return _isar.tableOrderEntitys.where().sortByCreatedAtDesc().findAll();
+  }
+
+  /// Returns orders created today.
+  Future<List<TableOrderEntity>> getTodayOrders() async {
+    final now = DateTime.now();
+    final startOfDay = DateTime(now.year, now.month, now.day);
+    return _isar.tableOrderEntitys
+        .filter()
+        .createdAtGreaterThan(startOfDay)
+        .sortByCreatedAtDesc()
+        .findAll();
+  }
+
+  /// Returns today's revenue (sum of billed orders).
+  Future<double> getTodayRevenue() async {
+    final orders = await getTodayOrders();
+    double total = 0.0;
+    for (final o in orders) {
+      if (o.status == TableOrderStatus.billed) total += o.totalAmount;
+    }
+    return total;
+  }
+
+  /// Cancels an open/kitchen order.
+  Future<void> cancelOrder(int orderId, int tableId) async {
+    final order = await _isar.tableOrderEntitys.get(orderId);
+    if (order == null) return;
+
+    order.status = TableOrderStatus.cancelled;
+    order.updatedAt = DateTime.now();
+
+    await _isar.writeTxn(() async {
+      await _isar.tableOrderEntitys.put(order);
+    });
+
+    await _tableCtrl.clearTable(tableId);
+
+    debugPrint('[TableOrder] Cancelled order ${order.id}');
+    notifyListeners();
+  }
+
   // ── HELPERS ─────────────────────────────────────────────────────
 
   String _generateBillNumber() {

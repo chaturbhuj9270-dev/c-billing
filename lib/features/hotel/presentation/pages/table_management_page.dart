@@ -638,21 +638,28 @@ class _TableManagementPageState extends State<TableManagementPage>
             ],
           ),
         ),
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 3,
-            mainAxisSpacing: 12,
-            crossAxisSpacing: 12,
-            childAspectRatio: 0.85,
-          ),
-          itemCount: tables.length,
-          itemBuilder: (_, i) => _TableCard(
-            table: tables[i],
-            now: _now,
-            onTap: () => _onTableTap(tables[i]),
-          ),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final width = constraints.maxWidth;
+            final crossAxisCount = width > 600 ? 4 : 3;
+            final aspect = width > 600 ? 0.75 : 0.78;
+            return GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: crossAxisCount,
+                mainAxisSpacing: 12,
+                crossAxisSpacing: 12,
+                childAspectRatio: aspect,
+              ),
+              itemCount: tables.length,
+              itemBuilder: (_, i) => _TableCard(
+                table: tables[i],
+                now: _now,
+                onTap: () => _onTableTap(tables[i]),
+              ),
+            );
+          },
         ),
       ],
     );
@@ -726,20 +733,13 @@ class _TableManagementPageState extends State<TableManagementPage>
           ),
         ],
       ),
-      child: FloatingActionButton.extended(
+      child: FloatingActionButton(
         onPressed: _openAddForm,
         backgroundColor: const Color(0xFF16A34A),
         foregroundColor: Colors.white,
         elevation: 0,
-        icon: const Icon(Icons.add_rounded, size: 22),
-        label: const Text(
-          'Add Table',
-          style: TextStyle(
-            fontFamily: 'Literata',
-            fontWeight: FontWeight.w700,
-            fontSize: 14,
-          ),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: const Icon(Icons.add_rounded, size: 28),
       ),
     );
   }
@@ -886,14 +886,14 @@ class _TableCard extends StatelessWidget {
                   ),
                 // Main content
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 14, 12, 10),
+                  padding: const EdgeInsets.fromLTRB(10, 10, 10, 8),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // Table icon with glass pill
                       Container(
-                        width: 40,
-                        height: 40,
+                        width: 34,
+                        height: 34,
                         decoration: BoxDecoration(
                           color: color.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(12),
@@ -911,16 +911,16 @@ class _TableCard extends StatelessWidget {
                         child: Icon(
                           tableStatusIcon(table.status),
                           color: color,
-                          size: 20,
+                          size: 17,
                         ),
                       ),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 6),
                       // Table number
                       Text(
                         table.tableNumber,
                         style: const TextStyle(
                           color: Color(0xFF1E293B),
-                          fontSize: 16,
+                          fontSize: 14,
                           fontWeight: FontWeight.w800,
                           fontFamily: 'Literata',
                         ),
@@ -951,55 +951,71 @@ class _TableCard extends StatelessWidget {
                           ),
                         ),
                       ),
-                      const Spacer(),
-                      // Capacity / time row
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.people_outline_rounded,
-                            color: const Color(0xFF94A3B8),
-                            size: 12,
-                          ),
-                          const SizedBox(width: 3),
-                          Text(
-                            '${table.occupiedSeats}/${table.capacity}',
-                            style: const TextStyle(
-                              color: Color(0xFF94A3B8),
-                              fontSize: 10,
-                              fontFamily: 'Literata',
+                      // Bottom section — fills remaining space
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            // Capacity / time row
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.people_outline_rounded,
+                                  color: const Color(0xFF94A3B8),
+                                  size: 12,
+                                ),
+                                const SizedBox(width: 3),
+                                Text(
+                                  '${table.occupiedSeats}/${table.capacity}',
+                                  style: const TextStyle(
+                                    color: Color(0xFF94A3B8),
+                                    fontSize: 10,
+                                    fontFamily: 'Literata',
+                                  ),
+                                ),
+                                if (table.status != TableStatus.empty &&
+                                    table.status != TableStatus.reserved &&
+                                    table.occupiedAt != null) ...[
+                                  const Spacer(),
+                                  Text(
+                                    _formatTime(elapsed),
+                                    style: TextStyle(
+                                      color: isLong
+                                          ? const Color(0xFFDC2626)
+                                          : color,
+                                      fontSize: 10,
+                                      fontFamily: 'Literata',
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ],
+                              ],
                             ),
-                          ),
-                          if (table.status != TableStatus.empty &&
-                              table.status != TableStatus.reserved &&
-                              table.occupiedAt != null) ...[
-                            const Spacer(),
-                            Text(
-                              _formatTime(elapsed),
-                              style: TextStyle(
-                                color: isLong ? const Color(0xFFDC2626) : color,
-                                fontSize: 10,
-                                fontFamily: 'Literata',
-                                fontWeight: FontWeight.w700,
+                            // Guest name if present
+                            if (table.guestName != null &&
+                                table.guestName!.isNotEmpty) ...[
+                              const SizedBox(height: 2),
+                              Text(
+                                table.guestName!,
+                                style: const TextStyle(
+                                  color: Color(0xFF94A3B8),
+                                  fontSize: 9,
+                                  fontFamily: 'Literata',
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
-                            ),
+                            ],
+                            // Order progress bar
+                            if (table.status != TableStatus.empty &&
+                                table.status != TableStatus.reserved) ...[
+                              const SizedBox(height: 4),
+                              _buildProgressBar(color),
+                            ],
                           ],
-                        ],
-                      ),
-                      // Guest name if present
-                      if (table.guestName != null &&
-                          table.guestName!.isNotEmpty) ...[
-                        const SizedBox(height: 4),
-                        Text(
-                          table.guestName!,
-                          style: const TextStyle(
-                            color: Color(0xFF94A3B8),
-                            fontSize: 9,
-                            fontFamily: 'Literata',
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
                         ),
-                      ],
+                      ),
                     ],
                   ),
                 ),
@@ -1007,6 +1023,93 @@ class _TableCard extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildProgressBar(Color color) {
+    // Stages: Active(0) → Kitchen(1) → Served(2) → Done(3)
+    final int stage;
+    switch (table.status) {
+      case TableStatus.active:
+        stage = 0;
+      case TableStatus.waiting:
+        stage = 1;
+      case TableStatus.served:
+        stage = 2;
+      default:
+        stage = 0;
+    }
+
+    const stageLabels = ['Order', 'Kitchen', 'Served', 'Done'];
+    const stageColors = [
+      Color(0xFF3B82F6), // blue
+      Color(0xFFF59E0B), // amber
+      Color(0xFF22C55E), // green
+      Color(0xFF8B5CF6), // violet
+    ];
+
+    return Column(
+      children: [
+        // Progress dots + lines
+        Row(
+          children: [
+            for (int i = 0; i < 4; i++) ...[
+              _progressDot(i <= stage, stageColors[i <= stage ? i : 0]),
+              if (i < 3)
+                Expanded(
+                  child: Container(
+                    height: 1.5,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(1),
+                      color: i < stage
+                          ? stageColors[i + 1].withValues(alpha: 0.6)
+                          : const Color(0xFFE2E8F0),
+                    ),
+                  ),
+                ),
+            ],
+          ],
+        ),
+        const SizedBox(height: 3),
+        // Labels
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            for (int i = 0; i < 4; i++)
+              Text(
+                stageLabels[i],
+                style: TextStyle(
+                  color: i <= stage
+                      ? stageColors[i].withValues(alpha: 0.9)
+                      : const Color(0xFFCBD5E1),
+                  fontSize: 6.5,
+                  fontWeight: i <= stage ? FontWeight.w700 : FontWeight.w500,
+                  fontFamily: 'Literata',
+                ),
+              ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _progressDot(bool reached, Color color) {
+    return Container(
+      width: 8,
+      height: 8,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: reached ? color : const Color(0xFFE2E8F0),
+        border: Border.all(
+          color: reached
+              ? color.withValues(alpha: 0.6)
+              : const Color(0xFFE2E8F0),
+          width: 1,
+        ),
+        boxShadow: reached
+            ? [BoxShadow(color: color.withValues(alpha: 0.4), blurRadius: 4)]
+            : null,
       ),
     );
   }

@@ -9,6 +9,7 @@ import '../pages/hotel_flyout_menu.dart';
 import '../pages/menu_management_page.dart';
 import '../pages/table_management_page.dart';
 import '../pages/kitchen_display_page.dart';
+import '../pages/order_management_page.dart';
 
 class HotelDashboardPage extends StatefulWidget {
   const HotelDashboardPage({super.key});
@@ -139,7 +140,7 @@ class _HotelDashboardPageState extends State<HotelDashboardPage>
       case 1:
         return const TableManagementPage();
       case 2:
-        return _buildPlaceholderTab('Orders', Icons.receipt_long_rounded);
+        return const OrderManagementPage();
       case 3:
         return const KitchenDisplayPage();
       case 4:
