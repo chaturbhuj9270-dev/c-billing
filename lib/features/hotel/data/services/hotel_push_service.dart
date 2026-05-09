@@ -113,6 +113,8 @@ class HotelPushService {
     required String tableNumber,
     String? billNumber,
     int? orderId,
+    /// Short text like "2× Roti" for add-on orders; kitchen notification only.
+    String? kitchenSummary,
   }) async {
     if (!FlavorConfig.instance.isHotel) return;
 
@@ -137,6 +139,8 @@ class HotelPushService {
         'tableNumber': tableNumber,
         if (billNumber != null && billNumber.isNotEmpty) 'billNumber': billNumber,
         if (orderId != null) 'orderId': orderId,
+        if (kitchenSummary != null && kitchenSummary.trim().isNotEmpty)
+          'kitchenSummary': kitchenSummary.trim(),
       });
     } catch (e) {
       debugPrint('[HotelPush] sendOrderEvent failed: $e');

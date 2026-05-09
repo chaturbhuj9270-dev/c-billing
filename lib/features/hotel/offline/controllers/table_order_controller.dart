@@ -131,6 +131,16 @@ class TableOrderController extends ChangeNotifier {
         order.status == TableOrderStatus.served;
     final wasServed = order.status == TableOrderStatus.served;
 
+    final oldPending = oldItems.fold<int>(
+      0,
+      (s, i) => s + i.pendingKitchenQty,
+    );
+    final newPending = items.fold<int>(
+      0,
+      (s, i) => s + i.pendingKitchenQty,
+    );
+    final kitchenMoreWork = newPending > oldPending;
+
     order.itemsJson = encodeOrderItems(items);
     order.totalAmount = calcOrderTotal(items);
     order.updatedAt = DateTime.now();
@@ -142,7 +152,7 @@ class TableOrderController extends ChangeNotifier {
       order.notes = notes;
     }
 
-    if (wasInKitchenFlow) {
+    if (wasInKitchenFlow && kitchenMoreWork) {
       order.status = TableOrderStatus.sentToKitchen;
       order.sentToKitchenAt = DateTime.now();
       if (wasServed) {
@@ -154,7 +164,7 @@ class TableOrderController extends ChangeNotifier {
       await _isar.tableOrderEntitys.put(order);
     });
 
-    if (wasInKitchenFlow) {
+    if (wasInKitchenFlow && kitchenMoreWork) {
       await _tableCtrl.setStatus(
         order.localTableId,
         TableStatus.waiting,
@@ -163,18 +173,31 @@ class TableOrderController extends ChangeNotifier {
         notes: order.notes,
         occupiedSeats: order.occupiedSeats,
       );
+      final summary = _describeAddedQtyOnly(oldItems, items);
       debugPrint(
-        '[TableOrder] Order ${order.id} updated — (re)sent to kitchen, '
-        '${items.length} lines',
+        '[TableOrder] Order ${order.id} — more kitchen work '
+        '(pending $oldPending → $newPending): ${summary ?? "items"}',
       );
       unawaited(
         HotelPushService.sendOrderEvent(
           event: HotelOrderPushEvent.orderToKitchen,
           tableNumber: order.tableNumber,
           orderId: order.id,
+          kitchenSummary: summary,
         ),
       );
-    } else if (syncGuestFields) {
+    } else if (wasInKitchenFlow && syncGuestFields && !kitchenMoreWork) {
+      await _tableCtrl.setStatus(
+        order.localTableId,
+        order.status == TableOrderStatus.served
+            ? TableStatus.served
+            : TableStatus.waiting,
+        guestName: order.guestName,
+        guestPhone: order.guestPhone,
+        notes: order.notes,
+        occupiedSeats: order.occupiedSeats,
+      );
+    } else if (!wasInKitchenFlow && syncGuestFields) {
       await _tableCtrl.setStatus(
         order.localTableId,
         TableStatus.active,
@@ -392,6 +415,25 @@ class TableOrderController extends ChangeNotifier {
   }
 
   // ── HELPERS ─────────────────────────────────────────────────────
+
+  /// Human-readable list of **only added** quantities (for kitchen push).
+  static String? _describeAddedQtyOnly(
+    List<OrderItem> oldItems,
+    List<OrderItem> newItems,
+  ) {
+    final oldMap = {for (final o in oldItems) o.menuItemLocalId: o};
+    final parts = <String>[];
+    for (final n in newItems) {
+      final o = oldMap[n.menuItemLocalId];
+      final added = o == null ? n.quantity : n.quantity - o.quantity;
+      if (added > 0) {
+        parts.add('$added× ${n.name}');
+      }
+    }
+    if (parts.isEmpty) return null;
+    if (parts.length <= 4) return parts.join(', ');
+    return '${parts.take(4).join(', ')}…';
+  }
 
   String _generateBillNumber() {
     final now = DateTime.now();

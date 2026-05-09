@@ -27,13 +27,14 @@ async function assertCallerBelongsToHotel(callerUid, adminUid) {
   }
 }
 
-function messageForEvent(event, tableNumber, billNumber) {
+function messageForEvent(event, tableNumber, billNumber, kitchenSummary) {
   const table = tableNumber || "Table";
+  const sum = (kitchenSummary || "").trim();
   switch (event) {
     case EVENTS.ORDER_TO_KITCHEN:
       return {
-        title: "New kitchen order",
-        body: `Order received for ${table}.`,
+        title: sum ? "Add-on to kitchen" : "New kitchen order",
+        body: sum ? `${table}: ${sum}` : `Order received for ${table}.`,
       };
     case EVENTS.ORDER_READY:
       return {
@@ -78,6 +79,8 @@ exports.sendHotelOrderPush = onCall(
     const event = String(data.event || "").trim();
     const tableNumber = String(data.tableNumber || "").trim();
     const billNumber = data.billNumber != null ? String(data.billNumber) : "";
+    const kitchenSummary =
+      data.kitchenSummary != null ? String(data.kitchenSummary) : "";
 
     if (!adminUid || !event) {
       throw new HttpsError("invalid-argument", "adminUid and event are required");
@@ -90,10 +93,17 @@ exports.sendHotelOrderPush = onCall(
     }
 
     const tokensSnap = await db
-      .collection(`users/${adminUid}/hotelPushTokens`)
+      .collection("users")
+      .doc(adminUid)
+      .collection("hotelPushTokens")
       .get();
 
-    const { title, body } = messageForEvent(event, tableNumber, billNumber);
+    const { title, body } = messageForEvent(
+      event,
+      tableNumber,
+      billNumber,
+      kitchenSummary,
+    );
     const tokens = [];
     for (const doc of tokensSnap.docs) {
       const t = doc.data();
@@ -117,6 +127,7 @@ exports.sendHotelOrderPush = onCall(
         event,
         tableNumber,
         billNumber,
+        kitchenSummary,
         click_action: "FLUTTER_NOTIFICATION_CLICK",
       },
     });
