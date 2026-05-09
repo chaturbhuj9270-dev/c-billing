@@ -39,6 +39,45 @@ class _AddOrderSheetState extends State<AddOrderSheet> {
 
   bool get _isEdit => widget.existingOrder != null;
 
+  String get _headerTitle {
+    if (!_isEdit) return 'New order';
+    switch (widget.existingOrder!.status) {
+      case TableOrderStatus.open:
+        return 'Edit order';
+      case TableOrderStatus.sentToKitchen:
+      case TableOrderStatus.served:
+        return 'Add to order';
+      default:
+        return 'Order';
+    }
+  }
+
+  String get _headerSubtitle {
+    final base =
+        'Table ${widget.table.tableNumber} · ${widget.table.section}';
+    if (!_isEdit) return base;
+    if (widget.existingOrder!.status == TableOrderStatus.sentToKitchen) {
+      return '$base · items go to kitchen';
+    }
+    if (widget.existingOrder!.status == TableOrderStatus.served) {
+      return '$base · new items go to kitchen first';
+    }
+    return base;
+  }
+
+  String get _placeOrderLabel {
+    if (!_isEdit) return 'Place order';
+    switch (widget.existingOrder!.status) {
+      case TableOrderStatus.open:
+        return 'Update order';
+      case TableOrderStatus.sentToKitchen:
+      case TableOrderStatus.served:
+        return 'Save & send to kitchen';
+      default:
+        return 'Save order';
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -150,7 +189,21 @@ class _AddOrderSheetState extends State<AddOrderSheet> {
 
     try {
       if (_isEdit) {
-        await _orderCtrl.updateOrderItems(widget.existingOrder!.id, items);
+        await _orderCtrl.updateOrderItems(
+          widget.existingOrder!.id,
+          items,
+          syncGuestFields: true,
+          guestName: _guestNameCtrl.text.trim().isEmpty
+              ? null
+              : _guestNameCtrl.text.trim(),
+          guestPhone: _guestPhoneCtrl.text.trim().isEmpty
+              ? null
+              : _guestPhoneCtrl.text.trim(),
+          occupiedSeats: _seats,
+          notes: _notesCtrl.text.trim().isEmpty
+              ? null
+              : _notesCtrl.text.trim(),
+        );
       } else {
         await _orderCtrl.createOrder(
           localTableId: widget.table.id,
@@ -190,7 +243,7 @@ class _AddOrderSheetState extends State<AddOrderSheet> {
       body: Column(
         children: [
           _buildHeader(),
-          if (!_isEdit) _buildGuestInfo(),
+          _buildGuestInfo(),
           _buildSearchAndFilter(),
           Expanded(
             child: _isLoading
@@ -234,7 +287,7 @@ class _AddOrderSheetState extends State<AddOrderSheet> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      _isEdit ? 'Edit Order' : 'New Order',
+                      _headerTitle,
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 20,
@@ -243,7 +296,7 @@ class _AddOrderSheetState extends State<AddOrderSheet> {
                       ),
                     ),
                     Text(
-                      'Table ${widget.table.tableNumber} · ${widget.table.section}',
+                      _headerSubtitle,
                       style: const TextStyle(
                         color: Colors.white54,
                         fontSize: 12,
@@ -848,9 +901,7 @@ class _AddOrderSheetState extends State<AddOrderSheet> {
                     : Text(
                         count == 0
                             ? 'Select items to order'
-                            : _isEdit
-                            ? 'Update Order'
-                            : 'Place Order',
+                            : _placeOrderLabel,
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w700,

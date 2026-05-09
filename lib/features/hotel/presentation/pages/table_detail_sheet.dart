@@ -57,6 +57,8 @@ class _TableDetailSheetState extends State<TableDetailSheet> {
     );
     if (changed == true && mounted) {
       await _loadOrder();
+      final t = await _ctrl.getTableById(_table.id);
+      if (t != null) _table = t;
       setState(() {});
     }
   }

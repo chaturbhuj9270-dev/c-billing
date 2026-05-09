@@ -65,6 +65,10 @@ class TableOfflineController extends ChangeNotifier {
         .findAll();
   }
 
+  Future<TableEntity?> getTableById(Id id) async {
+    return _isar.tableEntitys.get(id);
+  }
+
   Future<List<String>> getAllSections() async {
     final tables = await getAllTables();
     return tables.map((t) => t.section).toSet().toList()..sort();

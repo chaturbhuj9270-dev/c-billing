@@ -92,34 +92,96 @@ class TableOrderController extends ChangeNotifier {
         .findFirst();
   }
 
+  Future<TableOrderEntity?> getOrderById(Id id) async {
+    return _isar.tableOrderEntitys.get(id);
+  }
+
   // ── UPDATE ITEMS ────────────────────────────────────────────────
 
-  Future<void> updateOrderItems(int orderId, List<OrderItem> items) async {
+  /// Updates line items. When the order was already in kitchen or served,
+  /// new/changed lines are marked not ready, order returns to [sentToKitchen],
+  /// table becomes [waiting], and kitchen is notified.
+  Future<void> updateOrderItems(
+    int orderId,
+    List<OrderItem> items, {
+    bool syncGuestFields = false,
+    String? guestName,
+    String? guestPhone,
+    int? occupiedSeats,
+    String? notes,
+  }) async {
     final order = await _isar.tableOrderEntitys.get(orderId);
     if (order == null) return;
 
-    final hadExtraItems =
+    final oldItems = decodeOrderItems(order.itemsJson);
+    final oldById = {for (final o in oldItems) o.menuItemLocalId: o};
+
+    for (final ni in items) {
+      final old = oldById[ni.menuItemLocalId];
+      if (old == null) {
+        ni.kitchenDoneQty = 0;
+      } else {
+        // Keep already-prepared units when the guest orders more of the same item.
+        ni.kitchenDoneQty = old.kitchenDoneQty.clamp(0, ni.quantity);
+      }
+    }
+
+    final wasInKitchenFlow =
         order.status == TableOrderStatus.sentToKitchen ||
         order.status == TableOrderStatus.served;
+    final wasServed = order.status == TableOrderStatus.served;
 
     order.itemsJson = encodeOrderItems(items);
     order.totalAmount = calcOrderTotal(items);
     order.updatedAt = DateTime.now();
 
-    // If items are added after kitchen/served, restart the flow
-    if (hadExtraItems) {
-      order.status = TableOrderStatus.open;
+    if (syncGuestFields) {
+      order.guestName = guestName;
+      order.guestPhone = guestPhone;
+      if (occupiedSeats != null) order.occupiedSeats = occupiedSeats;
+      order.notes = notes;
+    }
+
+    if (wasInKitchenFlow) {
+      order.status = TableOrderStatus.sentToKitchen;
+      order.sentToKitchenAt = DateTime.now();
+      if (wasServed) {
+        order.servedAt = null;
+      }
     }
 
     await _isar.writeTxn(() async {
       await _isar.tableOrderEntitys.put(order);
     });
 
-    // Revert table to active so new items go through kitchen flow
-    if (hadExtraItems) {
-      await _tableCtrl.setStatus(order.localTableId, TableStatus.active);
+    if (wasInKitchenFlow) {
+      await _tableCtrl.setStatus(
+        order.localTableId,
+        TableStatus.waiting,
+        guestName: order.guestName,
+        guestPhone: order.guestPhone,
+        notes: order.notes,
+        occupiedSeats: order.occupiedSeats,
+      );
       debugPrint(
-        '[TableOrder] Extra items added — order ${order.id} reset to open',
+        '[TableOrder] Order ${order.id} updated — (re)sent to kitchen, '
+        '${items.length} lines',
+      );
+      unawaited(
+        HotelPushService.sendOrderEvent(
+          event: HotelOrderPushEvent.orderToKitchen,
+          tableNumber: order.tableNumber,
+          orderId: order.id,
+        ),
+      );
+    } else if (syncGuestFields) {
+      await _tableCtrl.setStatus(
+        order.localTableId,
+        TableStatus.active,
+        guestName: order.guestName,
+        guestPhone: order.guestPhone,
+        notes: order.notes,
+        occupiedSeats: order.occupiedSeats,
       );
     }
 
@@ -235,7 +297,7 @@ class TableOrderController extends ChangeNotifier {
     final items = decodeOrderItems(order.itemsJson);
     for (final item in items) {
       if (item.menuItemLocalId == menuItemLocalId) {
-        item.isReady = true;
+        item.kitchenDoneQty = item.quantity;
         break;
       }
     }
@@ -256,7 +318,7 @@ class TableOrderController extends ChangeNotifier {
 
     final items = decodeOrderItems(order.itemsJson);
     for (final item in items) {
-      item.isReady = true;
+      item.kitchenDoneQty = item.quantity;
     }
 
     order.itemsJson = encodeOrderItems(items);

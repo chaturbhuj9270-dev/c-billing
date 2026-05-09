@@ -2,7 +2,9 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../offline/entities/table_order_entity.dart';
+import '../../offline/controllers/table_offline_controller.dart';
 import '../../offline/controllers/table_order_controller.dart';
+import 'add_order_sheet.dart';
 
 /// Bottom sheet showing full order details with actions.
 class OrderDetailSheet extends StatefulWidget {
@@ -48,6 +50,42 @@ class _OrderDetailSheetState extends State<OrderDetailSheet> {
     setState(() => _saving = true);
     await _ctrl.generateBill(_order.id, _order.localTableId);
     if (mounted) Navigator.pop(context, true);
+  }
+
+  Future<void> _openAddMoreItems() async {
+    final table = await TableOfflineController.instance.getTableById(
+      _order.localTableId,
+    );
+    if (!mounted) return;
+    if (table == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Table not found'),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          backgroundColor: const Color(0xFFB45309),
+        ),
+      );
+      return;
+    }
+    final latest = await _ctrl.getOrderById(_order.id);
+    if (!mounted || latest == null) return;
+
+    final changed = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (_) => AddOrderSheet(table: table, existingOrder: latest),
+      ),
+    );
+    if (changed == true && mounted) {
+      final again = await _ctrl.getOrderById(_order.id);
+      if (again != null) {
+        setState(() {
+          _order = again;
+          _items = decodeOrderItems(_order.itemsJson);
+        });
+      }
+    }
   }
 
   Future<void> _cancelOrder() async {
@@ -823,6 +861,13 @@ class _OrderDetailSheetState extends State<OrderDetailSheet> {
         return Column(
           children: [
             _actionButton(
+              'Add more items',
+              Icons.add_shopping_cart_rounded,
+              const Color(0xFF38BDF8),
+              _openAddMoreItems,
+            ),
+            const SizedBox(height: 10),
+            _actionButton(
               'Mark as Served',
               Icons.room_service_rounded,
               const Color(0xFF22C55E),
@@ -839,12 +884,23 @@ class _OrderDetailSheetState extends State<OrderDetailSheet> {
           ],
         );
       case TableOrderStatus.served:
-        return _actionButton(
-          'Generate Bill',
-          Icons.receipt_long_rounded,
-          const Color(0xFF8B5CF6),
-          _generateBill,
-          filled: true,
+        return Column(
+          children: [
+            _actionButton(
+              'Add more items',
+              Icons.add_shopping_cart_rounded,
+              const Color(0xFF38BDF8),
+              _openAddMoreItems,
+            ),
+            const SizedBox(height: 10),
+            _actionButton(
+              'Generate Bill',
+              Icons.receipt_long_rounded,
+              const Color(0xFF8B5CF6),
+              _generateBill,
+              filled: true,
+            ),
+          ],
         );
       case TableOrderStatus.billed:
       case TableOrderStatus.cancelled:

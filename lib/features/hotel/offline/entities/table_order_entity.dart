@@ -13,7 +13,9 @@ class OrderItem {
   final double price;
   final String category;
   int quantity;
-  bool isReady;
+
+  /// How many units of this line the kitchen has marked prepared (0 … [quantity]).
+  int kitchenDoneQty;
 
   OrderItem({
     required this.menuItemLocalId,
@@ -23,8 +25,22 @@ class OrderItem {
     required this.price,
     required this.category,
     this.quantity = 1,
-    this.isReady = false,
-  });
+    this.kitchenDoneQty = 0,
+  }) {
+    _normalizeKitchenDone();
+  }
+
+  void _normalizeKitchenDone() {
+    if (quantity < 0) quantity = 0;
+    if (kitchenDoneQty < 0) kitchenDoneQty = 0;
+    if (kitchenDoneQty > quantity) kitchenDoneQty = quantity;
+  }
+
+  /// True when every ordered unit of this line is done in the kitchen.
+  bool get isReady => quantity > 0 && kitchenDoneQty >= quantity;
+
+  /// Units still to prepare for this line (for kitchen display).
+  int get pendingKitchenQty => (quantity - kitchenDoneQty).clamp(0, quantity);
 
   double get lineTotal => price * quantity;
 
@@ -36,19 +52,32 @@ class OrderItem {
     'p': price,
     'c': category,
     'q': quantity,
+    'kd': kitchenDoneQty,
+    // Legacy readers / older builds
     'r': isReady,
   };
 
-  factory OrderItem.fromMap(Map<String, dynamic> map) => OrderItem(
-    menuItemLocalId: (map['m'] as num?)?.toInt() ?? 0,
-    menuItemServerId: map['s'] as String?,
-    name: map['n'] as String? ?? '',
-    isVeg: map['v'] as bool? ?? true,
-    price: (map['p'] as num?)?.toDouble() ?? 0.0,
-    category: map['c'] as String? ?? '',
-    quantity: (map['q'] as num?)?.toInt() ?? 1,
-    isReady: map['r'] as bool? ?? false,
-  );
+  factory OrderItem.fromMap(Map<String, dynamic> map) {
+    final q = (map['q'] as num?)?.toInt() ?? 1;
+    int kd;
+    if (map['kd'] != null) {
+      kd = (map['kd'] as num).toInt();
+    } else {
+      kd = (map['r'] as bool?) == true ? q : 0;
+    }
+    if (kd < 0) kd = 0;
+    if (kd > q) kd = q;
+    return OrderItem(
+      menuItemLocalId: (map['m'] as num?)?.toInt() ?? 0,
+      menuItemServerId: map['s'] as String?,
+      name: map['n'] as String? ?? '',
+      isVeg: map['v'] as bool? ?? true,
+      price: (map['p'] as num?)?.toDouble() ?? 0.0,
+      category: map['c'] as String? ?? '',
+      quantity: q,
+      kitchenDoneQty: kd,
+    );
+  }
 }
 
 /// Encodes/decodes a list of [OrderItem] to/from JSON.

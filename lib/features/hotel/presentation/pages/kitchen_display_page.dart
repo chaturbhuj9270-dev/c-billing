@@ -100,13 +100,16 @@ class _KitchenDisplayPageState extends State<KitchenDisplayPage> {
   // ── STATS BAR ─────────────────────────────────────────────────
 
   Widget _buildStatsBar() {
-    int totalItems = 0;
-    int readyItems = 0;
+    int pendingUnits = 0;
+    int orderedUnits = 0;
     for (final order in _orders) {
       final items = decodeOrderItems(order.itemsJson);
-      totalItems += items.length;
-      readyItems += items.where((i) => i.isReady).length;
+      for (final i in items) {
+        orderedUnits += i.quantity;
+        pendingUnits += i.pendingKitchenQty;
+      }
     }
+    final doneUnits = orderedUnits - pendingUnits;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
@@ -129,15 +132,15 @@ class _KitchenDisplayPageState extends State<KitchenDisplayPage> {
           const SizedBox(width: 12),
           _statChip(
             Icons.restaurant_rounded,
-            '$totalItems',
-            'Items',
+            '$pendingUnits',
+            'To prep',
             const Color(0xFFD97706),
           ),
           const SizedBox(width: 12),
           _statChip(
             Icons.check_circle_rounded,
-            '$readyItems',
-            'Ready',
+            '$doneUnits',
+            'Done',
             const Color(0xFF16A34A),
           ),
           const Spacer(),
@@ -307,13 +310,20 @@ class _KitchenOrderCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final items = decodeOrderItems(order.itemsJson);
-    final readyCount = items.where((i) => i.isReady).length;
-    final allReady = readyCount == items.length;
+    final kitchenItems = items.where((i) => i.pendingKitchenQty > 0).toList();
+    final totalUnits = items.fold<int>(0, (s, i) => s + i.quantity);
+    final doneUnits = items.fold<int>(
+      0,
+      (s, i) => s + i.kitchenDoneQty.clamp(0, i.quantity),
+    );
+    final allReady =
+        items.isNotEmpty && items.every((i) => i.kitchenDoneQty >= i.quantity);
     final elapsed = order.sentToKitchenAt != null
         ? now.difference(order.sentToKitchenAt!)
         : Duration.zero;
     final isUrgent = elapsed.inMinutes >= 15;
-    final progressPct = items.isEmpty ? 0.0 : readyCount / items.length;
+    final progressPct =
+        totalUnits <= 0 ? 0.0 : (doneUnits / totalUnits).clamp(0.0, 1.0);
 
     final accentColor = isUrgent
         ? const Color(0xFFDC2626)
@@ -451,7 +461,7 @@ class _KitchenOrderCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  '$readyCount/${items.length}',
+                  '$doneUnits/$totalUnits',
                   style: TextStyle(
                     color: allReady
                         ? const Color(0xFF16A34A)
@@ -465,14 +475,35 @@ class _KitchenOrderCard extends StatelessWidget {
             ),
           ),
 
-          // ── Items list ───────────────────────────────────
+          // ── Items list (only lines still to prepare) ───────
           Expanded(
-            child: ListView.separated(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
-              itemCount: items.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 4),
-              itemBuilder: (_, i) => _buildItemRow(items[i]),
-            ),
+            child: kitchenItems.isEmpty
+                ? Center(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      child: Text(
+                        allReady
+                            ? 'All items ready — send to table'
+                            : 'Nothing to prep',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: Color(0xFF64748B),
+                          fontSize: 13,
+                          fontFamily: 'Literata',
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  )
+                : ListView.separated(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 2,
+                    ),
+                    itemCount: kitchenItems.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 4),
+                    itemBuilder: (_, i) => _buildItemRow(kitchenItems[i]),
+                  ),
           ),
 
           // ── Action buttons ───────────────────────────────
@@ -514,48 +545,32 @@ class _KitchenOrderCard extends StatelessWidget {
   }
 
   Widget _buildItemRow(OrderItem item) {
+    final pending = item.pendingKitchenQty;
     return GestureDetector(
       onTap: () => onItemTap(item),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
         decoration: BoxDecoration(
-          color: item.isReady
-              ? const Color(0xFF16A34A).withValues(alpha: 0.06)
-              : const Color(0xFFF8FAFC),
+          color: const Color(0xFFF8FAFC),
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: item.isReady
-                ? const Color(0xFF16A34A).withValues(alpha: 0.25)
-                : const Color(0xFFE2E8F0),
-          ),
+          border: Border.all(color: const Color(0xFFE2E8F0)),
         ),
         child: Row(
           children: [
-            // Ready checkbox
+            // Ready checkbox (tap marks full line done for billing qty)
             AnimatedContainer(
               duration: const Duration(milliseconds: 200),
               width: 22,
               height: 22,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: item.isReady
-                    ? const Color(0xFF16A34A)
-                    : Colors.transparent,
+                color: Colors.transparent,
                 border: Border.all(
-                  color: item.isReady
-                      ? const Color(0xFF16A34A)
-                      : const Color(0xFFCBD5E1),
+                  color: const Color(0xFFCBD5E1),
                   width: 2,
                 ),
               ),
-              child: item.isReady
-                  ? const Icon(
-                      Icons.check_rounded,
-                      color: Colors.white,
-                      size: 14,
-                    )
-                  : null,
             ),
             const SizedBox(width: 10),
             // Veg/non-veg dot
@@ -574,35 +589,27 @@ class _KitchenOrderCard extends StatelessWidget {
             Expanded(
               child: Text(
                 item.name,
-                style: TextStyle(
-                  color: item.isReady
-                      ? const Color(0xFF94A3B8)
-                      : const Color(0xFF1E293B),
+                style: const TextStyle(
+                  color: Color(0xFF1E293B),
                   fontSize: 13,
                   fontFamily: 'Literata',
                   fontWeight: FontWeight.w500,
-                  decoration: item.isReady ? TextDecoration.lineThrough : null,
-                  decorationColor: const Color(0xFF94A3B8),
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
             ),
-            // Quantity badge
+            // Pending quantity only (already served units hidden here)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
               decoration: BoxDecoration(
-                color: item.isReady
-                    ? const Color(0xFF16A34A).withValues(alpha: 0.1)
-                    : const Color(0xFFF1F5F9),
+                color: const Color(0xFFF1F5F9),
                 borderRadius: BorderRadius.circular(6),
               ),
               child: Text(
-                '×${item.quantity}',
-                style: TextStyle(
-                  color: item.isReady
-                      ? const Color(0xFF16A34A)
-                      : const Color(0xFF64748B),
+                '×$pending',
+                style: const TextStyle(
+                  color: Color(0xFF64748B),
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
                   fontFamily: 'Literata',
