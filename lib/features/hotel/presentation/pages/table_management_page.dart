@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../offline/entities/table_entity.dart';
@@ -122,49 +121,30 @@ class _TableManagementPageState extends State<TableManagementPage>
     return Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
           colors: [
-            Color(0xFFD1FAE5),
-            Color(0xFFECFDF5),
             Color(0xFFF0FDF4),
             Color(0xFFF8FAFC),
+            Color(0xFFFFFFFF),
           ],
-          stops: [0.0, 0.3, 0.6, 1.0],
+          stops: [0.0, 0.45, 1.0],
         ),
       ),
       child: Stack(
         children: [
           // Ambient glow — top right
           Positioned(
-            top: -50,
-            right: -50,
+            top: -60,
+            right: -40,
             child: Container(
-              width: 180,
-              height: 180,
+              width: 200,
+              height: 200,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    const Color(0xFF16A34A).withValues(alpha: 0.10),
-                    const Color(0xFF16A34A).withValues(alpha: 0.0),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          // Ambient glow — bottom left
-          Positioned(
-            bottom: -70,
-            left: -70,
-            child: Container(
-              width: 220,
-              height: 220,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: [
-                    const Color(0xFF16A34A).withValues(alpha: 0.07),
+                    const Color(0xFF16A34A).withValues(alpha: 0.05),
                     const Color(0xFF16A34A).withValues(alpha: 0.0),
                   ],
                 ),
@@ -174,7 +154,6 @@ class _TableManagementPageState extends State<TableManagementPage>
           Column(
             children: [
               _buildStatsStrip(),
-              _buildStatusFilterBar(),
               if (_sections.length > 1) _buildSectionChips(),
               Expanded(
                 child: _isLoading
@@ -199,164 +178,107 @@ class _TableManagementPageState extends State<TableManagementPage>
 
   Widget _buildStatsStrip() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(22),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-          child: Container(
-            padding: const EdgeInsets.fromLTRB(8, 14, 8, 14),
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 4),
+      child: LayoutBuilder(
+        builder: (context, c) {
+          final tiles = <Widget>[
+            _buildStatTile('Empty', _emptyCount, kTableEmpty, Icons.chair_outlined),
+            _buildStatTile('Active', _activeCount, kTableActive, Icons.restaurant_rounded),
+            _buildStatTile('Waiting', _waitingCount, kTableWaiting, Icons.soup_kitchen_rounded),
+            _buildStatTile('Served', _servedCount, kTableServed, Icons.room_service_rounded),
+            if (_reservedCount > 0)
+              _buildStatTile('Reserved', _reservedCount, kTableReserved, Icons.bookmark_rounded),
+          ];
+          final useScroll = c.maxWidth < 380;
+          return Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Colors.white.withValues(alpha: 0.82),
-                  Colors.white.withValues(alpha: 0.60),
-                ],
-              ),
-              borderRadius: BorderRadius.circular(22),
-              border: Border.all(
-                color: Colors.white.withValues(alpha: 0.7),
-                width: 1.2,
-              ),
+              color: Colors.white.withValues(alpha: 0.92),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF0F172A).withValues(alpha: 0.06),
-                  blurRadius: 24,
-                  offset: const Offset(0, 8),
-                ),
-                BoxShadow(
-                  color: const Color(0xFF16A34A).withValues(alpha: 0.04),
-                  blurRadius: 40,
-                  spreadRadius: -5,
-                  offset: const Offset(0, 12),
+                  color: const Color(0xFF0F172A).withValues(alpha: 0.04),
+                  blurRadius: 16,
+                  offset: const Offset(0, 4),
                 ),
               ],
             ),
-            child: Row(
-              children: [
-                _buildStatTile(
-                  'Empty',
-                  _emptyCount,
-                  kTableEmpty,
-                  Icons.chair_outlined,
-                ),
-                const SizedBox(width: 6),
-                _buildStatTile(
-                  'Active',
-                  _activeCount,
-                  kTableActive,
-                  Icons.people_rounded,
-                ),
-                const SizedBox(width: 6),
-                _buildStatTile(
-                  'Waiting',
-                  _waitingCount,
-                  kTableWaiting,
-                  Icons.access_time_rounded,
-                ),
-                const SizedBox(width: 6),
-                _buildStatTile(
-                  'Served',
-                  _servedCount,
-                  kTableServed,
-                  Icons.check_circle_rounded,
-                ),
-                if (_reservedCount > 0) ...[
-                  const SizedBox(width: 6),
-                  _buildStatTile(
-                    'Reserved',
-                    _reservedCount,
-                    kTableReserved,
-                    Icons.bookmark_rounded,
-                  ),
-                ],
-              ],
-            ),
-          ),
-        ),
+            child: useScroll
+                ? SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
+                        for (var i = 0; i < tiles.length; i++) ...[
+                          if (i > 0) const SizedBox(width: 8),
+                          SizedBox(width: 76, child: tiles[i]),
+                        ],
+                      ],
+                    ),
+                  )
+                : Row(children: [
+                    for (var i = 0; i < tiles.length; i++) ...[
+                      if (i > 0) const SizedBox(width: 8),
+                      Expanded(child: tiles[i]),
+                    ],
+                  ]),
+          );
+        },
       ),
     );
   }
 
   Widget _buildStatTile(String label, int count, Color color, IconData icon) {
     final isSelected = _filterStatus == _labelToStatus(label);
-    return Expanded(
-      child: GestureDetector(
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
         onTap: () {
           final status = _labelToStatus(label);
           setState(() {
             _filterStatus = _filterStatus == status ? null : status;
           });
         },
+        borderRadius: BorderRadius.circular(14),
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 250),
+          duration: const Duration(milliseconds: 220),
           curve: Curves.easeOutCubic,
-          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
           decoration: BoxDecoration(
-            color: isSelected
-                ? color.withValues(alpha: 0.10)
-                : Colors.transparent,
-            borderRadius: BorderRadius.circular(16),
+            color: isSelected ? color.withValues(alpha: 0.12) : const Color(0xFFF8FAFC),
+            borderRadius: BorderRadius.circular(14),
             border: Border.all(
-              color: isSelected
-                  ? color.withValues(alpha: 0.30)
-                  : Colors.transparent,
-              width: 1.5,
+              color: isSelected ? color.withValues(alpha: 0.35) : const Color(0xFFE2E8F0),
             ),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Circular icon badge
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 250),
-                width: 38,
-                height: 38,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      color.withValues(alpha: isSelected ? 0.25 : 0.14),
-                      color.withValues(alpha: isSelected ? 0.12 : 0.05),
-                    ],
-                  ),
-                  border: Border.all(color: color.withValues(alpha: 0.18)),
-                  boxShadow: [
-                    BoxShadow(
-                      color: color.withValues(alpha: isSelected ? 0.25 : 0.10),
-                      blurRadius: 10,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
-                ),
-                child: Icon(icon, color: color, size: 17),
-              ),
-              const SizedBox(height: 8),
+              Icon(icon, color: color, size: 20),
+              const SizedBox(height: 6),
               Text(
                 '$count',
                 style: TextStyle(
-                  color: isSelected ? color : const Color(0xFF1E293B),
-                  fontSize: 20,
-                  fontWeight: FontWeight.w800,
+                  color: isSelected ? const Color(0xFF0F172A) : const Color(0xFF334155),
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
                   fontFamily: 'Literata',
+                  height: 1,
                 ),
               ),
-              const SizedBox(height: 1),
+              const SizedBox(height: 4),
               Text(
                 label,
                 style: TextStyle(
-                  color: isSelected
-                      ? color.withValues(alpha: 0.8)
-                      : const Color(0xFF94A3B8),
-                  fontSize: 10,
+                  color: isSelected ? color.withValues(alpha: 0.95) : const Color(0xFF64748B),
+                  fontSize: 11,
                   fontFamily: 'Literata',
                   fontWeight: FontWeight.w600,
+                  height: 1.1,
                 ),
                 textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),
@@ -382,112 +304,16 @@ class _TableManagementPageState extends State<TableManagementPage>
     }
   }
 
-  // ── STATUS FILTER BAR ────────────────────────────────────────────
-
-  Widget _buildStatusFilterBar() {
-    final statuses = [null, ...TableStatus.values];
-    return SizedBox(
-      height: 44,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-        itemCount: statuses.length,
-        itemBuilder: (_, i) {
-          final s = statuses[i];
-          final selected = _filterStatus == s;
-          final color = s == null
-              ? const Color(0xFF16A34A)
-              : tableStatusColor(s);
-          final label = s == null ? 'All' : tableStatusLabel(s);
-          return Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: GestureDetector(
-              onTap: () => setState(() => _filterStatus = s),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 180),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: selected
-                      ? color.withValues(alpha: 0.12)
-                      : Colors.white.withValues(alpha: 0.55),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: selected
-                        ? color.withValues(alpha: 0.4)
-                        : Colors.white.withValues(alpha: 0.7),
-                  ),
-                  boxShadow: selected
-                      ? [
-                          BoxShadow(
-                            color: color.withValues(alpha: 0.15),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ]
-                      : [
-                          BoxShadow(
-                            color: const Color(
-                              0xFF0F172A,
-                            ).withValues(alpha: 0.04),
-                            blurRadius: 6,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (s != null) ...[
-                      Container(
-                        width: 7,
-                        height: 7,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: color,
-                          boxShadow: [
-                            BoxShadow(
-                              color: color.withValues(alpha: 0.4),
-                              blurRadius: 4,
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                    ],
-                    Text(
-                      label,
-                      style: TextStyle(
-                        color: selected ? color : const Color(0xFF64748B),
-                        fontSize: 12,
-                        fontFamily: 'Literata',
-                        fontWeight: selected
-                            ? FontWeight.w700
-                            : FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
   // ── SECTION CHIPS ────────────────────────────────────────────────
 
   Widget _buildSectionChips() {
     return SizedBox(
-      height: 40,
+      height: 44,
       child: ListView(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.only(left: 16, bottom: 4),
+        padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
         children: [
-          _sectionChip(null, 'All Sections'),
+          _sectionChip(null, 'All sections'),
           ..._sections.map((s) => _sectionChip(s, s)),
         ],
       ),
@@ -498,38 +324,37 @@ class _TableManagementPageState extends State<TableManagementPage>
     final selected = _selectedSection == section;
     return Padding(
       padding: const EdgeInsets.only(right: 8),
-      child: GestureDetector(
-        onTap: () => setState(() => _selectedSection = section),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
-          decoration: BoxDecoration(
-            color: selected
-                ? const Color(0xFF16A34A).withValues(alpha: 0.1)
-                : Colors.white.withValues(alpha: 0.55),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: selected
-                  ? const Color(0xFF16A34A).withValues(alpha: 0.4)
-                  : Colors.white.withValues(alpha: 0.7),
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFF0F172A).withValues(alpha: 0.03),
-                blurRadius: 4,
-                offset: const Offset(0, 1),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => setState(() => _selectedSection = section),
+          borderRadius: BorderRadius.circular(20),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: selected ? const Color(0xFF16A34A) : Colors.white.withValues(alpha: 0.95),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: selected ? const Color(0xFF16A34A) : const Color(0xFFE2E8F0),
               ),
-            ],
-          ),
-          child: Text(
-            label,
-            style: TextStyle(
-              color: selected
-                  ? const Color(0xFF16A34A)
-                  : const Color(0xFF64748B),
-              fontSize: 11,
-              fontFamily: 'Literata',
-              fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+              boxShadow: [
+                if (!selected)
+                  BoxShadow(
+                    color: const Color(0xFF0F172A).withValues(alpha: 0.04),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+              ],
+            ),
+            child: Text(
+              label,
+              style: TextStyle(
+                color: selected ? Colors.white : const Color(0xFF475569),
+                fontSize: 13,
+                fontFamily: 'Literata',
+                fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+              ),
             ),
           ),
         ),
@@ -552,7 +377,7 @@ class _TableManagementPageState extends State<TableManagementPage>
       color: const Color(0xFF16A34A),
       backgroundColor: Colors.white,
       child: ListView.builder(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
+        padding: const EdgeInsets.fromLTRB(16, 4, 16, 100),
         itemCount: sortedSections.length,
         itemBuilder: (_, i) {
           final sec = sortedSections[i];
@@ -568,70 +393,33 @@ class _TableManagementPageState extends State<TableManagementPage>
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.only(top: 20, bottom: 14),
+          padding: const EdgeInsets.only(top: 18, bottom: 12),
           child: Row(
             children: [
-              Container(
-                width: 4,
-                height: 22,
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF16A34A), Color(0xFF22C55E)],
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                  ),
-                  borderRadius: BorderRadius.circular(2),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF16A34A).withValues(alpha: 0.3),
-                      blurRadius: 6,
-                      offset: const Offset(0, 1),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 10),
               Text(
-                section.toUpperCase(),
+                section,
                 style: const TextStyle(
-                  color: Color(0xFF1E293B),
-                  fontSize: 13,
-                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF0F172A),
+                  fontSize: 17,
+                  fontWeight: FontWeight.w700,
                   fontFamily: 'Literata',
-                  letterSpacing: 1.2,
+                  letterSpacing: -0.2,
                 ),
               ),
               const SizedBox(width: 10),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF16A34A).withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                    color: const Color(0xFF16A34A).withValues(alpha: 0.15),
-                  ),
+                  color: const Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(999),
                 ),
                 child: Text(
-                  '${tables.length}',
+                  '${tables.length} tables',
                   style: const TextStyle(
-                    color: Color(0xFF16A34A),
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF64748B),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
                     fontFamily: 'Literata',
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Container(
-                  height: 1,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        const Color(0xFF16A34A).withValues(alpha: 0.15),
-                        const Color(0xFF16A34A).withValues(alpha: 0.0),
-                      ],
-                    ),
                   ),
                 ),
               ),
@@ -641,15 +429,19 @@ class _TableManagementPageState extends State<TableManagementPage>
         LayoutBuilder(
           builder: (context, constraints) {
             final width = constraints.maxWidth;
-            final crossAxisCount = width > 600 ? 4 : 3;
-            final aspect = width > 600 ? 0.75 : 0.78;
+            final crossAxisCount = width > 720
+                ? 4
+                : width > 480
+                    ? 3
+                    : 2;
+            final aspect = crossAxisCount >= 4 ? 0.88 : (crossAxisCount == 3 ? 0.9 : 0.95);
             return GridView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: crossAxisCount,
-                mainAxisSpacing: 12,
-                crossAxisSpacing: 12,
+                mainAxisSpacing: 14,
+                crossAxisSpacing: 14,
                 childAspectRatio: aspect,
               ),
               itemCount: tables.length,
@@ -760,6 +552,9 @@ class _TableCard extends StatelessWidget {
     required this.onTap,
   });
 
+  static const _kBorder = Color(0xFFE2E8F0);
+  static const _kMuted = Color(0xFF64748B);
+
   @override
   Widget build(BuildContext context) {
     final color = tableStatusColor(table.status);
@@ -771,345 +566,186 @@ class _TableCard extends StatelessWidget {
         table.status != TableStatus.empty &&
         table.status != TableStatus.reserved &&
         mins > 60;
+    final occupied = table.status != TableStatus.empty &&
+        table.status != TableStatus.reserved;
 
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.lightImpact();
-        onTap();
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              color.withValues(alpha: 0.12),
-              color.withValues(alpha: 0.04),
-              Colors.white.withValues(alpha: 0.9),
-            ],
-            stops: const [0.0, 0.4, 1.0],
-          ),
-          border: Border.all(
-            color: isLong
-                ? const Color(0xFFFCA5A5).withValues(alpha: 0.8)
-                : color.withValues(alpha: 0.22),
-            width: isLong ? 1.8 : 1.2,
-          ),
-          boxShadow: [
-            // Main colored glow
-            BoxShadow(
-              color: color.withValues(alpha: 0.18),
-              blurRadius: 20,
-              spreadRadius: -2,
-              offset: const Offset(0, 8),
-            ),
-            // Soft lift shadow
-            BoxShadow(
-              color: const Color(0xFF0F172A).withValues(alpha: 0.06),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-            // Inner highlight (top-left)
-            BoxShadow(
-              color: Colors.white.withValues(alpha: 0.7),
-              blurRadius: 1,
-              spreadRadius: 0,
-              offset: const Offset(-1, -1),
-            ),
-          ],
+    return Material(
+      color: Colors.white,
+      elevation: 0,
+      shadowColor: Colors.transparent,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(
+          color: isLong ? const Color(0xFFFECACA) : _kBorder,
+          width: isLong ? 1.5 : 1,
         ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(20),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-            child: Stack(
-              children: [
-                // Top-left glass highlight arc
-                Positioned(
-                  top: -20,
-                  left: -20,
-                  child: Container(
-                    width: 80,
-                    height: 80,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: RadialGradient(
-                        colors: [
-                          Colors.white.withValues(alpha: 0.35),
-                          Colors.white.withValues(alpha: 0.0),
-                        ],
-                      ),
-                    ),
-                  ),
+      ),
+      child: InkWell(
+        onTap: () {
+          HapticFeedback.lightImpact();
+          onTap();
+        },
+        borderRadius: BorderRadius.circular(16),
+        splashColor: color.withValues(alpha: 0.08),
+        highlightColor: color.withValues(alpha: 0.04),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Container(
+              width: 5,
+              decoration: BoxDecoration(
+                color: color,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(15),
+                  bottomLeft: Radius.circular(15),
                 ),
-                // Bottom-right status glow
-                Positioned(
-                  bottom: -30,
-                  right: -30,
-                  child: Container(
-                    width: 90,
-                    height: 90,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: RadialGradient(
-                        colors: [
-                          color.withValues(alpha: 0.15),
-                          color.withValues(alpha: 0.0),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                // Pulsing dot for occupied tables
-                if (table.status != TableStatus.empty &&
-                    table.status != TableStatus.reserved)
-                  Positioned(
-                    top: 10,
-                    right: 10,
-                    child: _PulseDot(color: color),
-                  ),
-                // Pending sync dot
-                if (table.needsSync)
-                  Positioned(
-                    top: 10,
-                    left: 10,
-                    child: Container(
-                      width: 7,
-                      height: 7,
-                      decoration: const BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Color(0xFFF59E0B),
-                      ),
-                    ),
-                  ),
-                // Main content
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(10, 10, 10, 8),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Table icon with glass pill
-                      Container(
-                        width: 34,
-                        height: 34,
-                        decoration: BoxDecoration(
-                          color: color.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: color.withValues(alpha: 0.25),
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: color.withValues(alpha: 0.15),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Icon(
-                          tableStatusIcon(table.status),
-                          color: color,
-                          size: 17,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      // Table number
-                      Text(
-                        table.tableNumber,
-                        style: const TextStyle(
-                          color: Color(0xFF1E293B),
-                          fontSize: 14,
-                          fontWeight: FontWeight.w800,
-                          fontFamily: 'Literata',
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 2),
-                      // Status label
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 7,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: color.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(6),
-                          border: Border.all(
-                            color: color.withValues(alpha: 0.2),
-                          ),
-                        ),
-                        child: Text(
-                          tableStatusLabel(table.status),
-                          style: TextStyle(
-                            color: color,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                            fontFamily: 'Literata',
-                          ),
-                        ),
-                      ),
-                      // Bottom section — fills remaining space
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            // Capacity / time row
-                            Row(
-                              children: [
-                                Icon(
-                                  Icons.people_outline_rounded,
-                                  color: const Color(0xFF94A3B8),
-                                  size: 12,
-                                ),
-                                const SizedBox(width: 3),
-                                Text(
-                                  '${table.occupiedSeats}/${table.capacity}',
-                                  style: const TextStyle(
-                                    color: Color(0xFF94A3B8),
-                                    fontSize: 10,
-                                    fontFamily: 'Literata',
-                                  ),
-                                ),
-                                if (table.status != TableStatus.empty &&
-                                    table.status != TableStatus.reserved &&
-                                    table.occupiedAt != null) ...[
-                                  const Spacer(),
-                                  Text(
-                                    _formatTime(elapsed),
-                                    style: TextStyle(
-                                      color: isLong
-                                          ? const Color(0xFFDC2626)
-                                          : color,
-                                      fontSize: 10,
-                                      fontFamily: 'Literata',
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                                ],
-                              ],
-                            ),
-                            // Guest name if present
-                            if (table.guestName != null &&
-                                table.guestName!.isNotEmpty) ...[
-                              const SizedBox(height: 2),
+              ),
+            ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(12, 12, 12, 10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
                               Text(
-                                table.guestName!,
+                                table.tableNumber,
                                 style: const TextStyle(
-                                  color: Color(0xFF94A3B8),
-                                  fontSize: 9,
+                                  color: Color(0xFF0F172A),
+                                  fontSize: 19,
+                                  fontWeight: FontWeight.w700,
                                   fontFamily: 'Literata',
+                                  height: 1.15,
+                                  letterSpacing: -0.3,
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
+                              const SizedBox(height: 6),
+                              Wrap(
+                                spacing: 6,
+                                runSpacing: 6,
+                                crossAxisAlignment: WrapCrossAlignment.center,
+                                children: [
+                                  _StatusPill(color: color, label: tableStatusLabel(table.status)),
+                                  if (occupied)
+                                    Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Container(
+                                          width: 6,
+                                          height: 6,
+                                          decoration: BoxDecoration(
+                                            shape: BoxShape.circle,
+                                            color: color.withValues(alpha: 0.9),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          'Live',
+                                          style: TextStyle(
+                                            color: color.withValues(alpha: 0.95),
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w600,
+                                            fontFamily: 'Literata',
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  if (table.needsSync)
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFFFFBEB),
+                                        borderRadius: BorderRadius.circular(6),
+                                        border: Border.all(color: const Color(0xFFFDE68A)),
+                                      ),
+                                      child: const Text(
+                                        'Sync',
+                                        style: TextStyle(
+                                          color: Color(0xFFB45309),
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w700,
+                                          fontFamily: 'Literata',
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              ),
                             ],
-                            // Order progress bar
-                            if (table.status != TableStatus.empty &&
-                                table.status != TableStatus.reserved) ...[
-                              const SizedBox(height: 4),
-                              _buildProgressBar(color),
-                            ],
-                          ],
+                          ),
                         ),
+                        Icon(
+                          tableStatusIcon(table.status),
+                          color: color.withValues(alpha: 0.85),
+                          size: 26,
+                        ),
+                      ],
+                    ),
+                    const Spacer(),
+                    Row(
+                      children: [
+                        Icon(Icons.event_seat_outlined, size: 15, color: _kMuted.withValues(alpha: 0.9)),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${table.occupiedSeats} / ${table.capacity} seats',
+                          style: const TextStyle(
+                            color: _kMuted,
+                            fontSize: 12,
+                            fontFamily: 'Literata',
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        if (occupied && table.occupiedAt != null) ...[
+                          const Spacer(),
+                          Icon(
+                            Icons.schedule_rounded,
+                            size: 15,
+                            color: isLong ? const Color(0xFFDC2626) : _kMuted,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            _formatTime(elapsed),
+                            style: TextStyle(
+                              color: isLong ? const Color(0xFFDC2626) : const Color(0xFF0F172A),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              fontFamily: 'Literata',
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                    if (table.guestName != null && table.guestName!.trim().isNotEmpty) ...[
+                      const SizedBox(height: 6),
+                      Text(
+                        table.guestName!.trim(),
+                        style: const TextStyle(
+                          color: _kMuted,
+                          fontSize: 12,
+                          fontFamily: 'Literata',
+                          fontWeight: FontWeight.w500,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildProgressBar(Color color) {
-    // Stages: Active(0) → Kitchen(1) → Served(2) → Done(3)
-    final int stage;
-    switch (table.status) {
-      case TableStatus.active:
-        stage = 0;
-      case TableStatus.waiting:
-        stage = 1;
-      case TableStatus.served:
-        stage = 2;
-      default:
-        stage = 0;
-    }
-
-    const stageLabels = ['Order', 'Kitchen', 'Served', 'Done'];
-    const stageColors = [
-      Color(0xFF3B82F6), // blue
-      Color(0xFFF59E0B), // amber
-      Color(0xFF22C55E), // green
-      Color(0xFF8B5CF6), // violet
-    ];
-
-    return Column(
-      children: [
-        // Progress dots + lines
-        Row(
-          children: [
-            for (int i = 0; i < 4; i++) ...[
-              _progressDot(i <= stage, stageColors[i <= stage ? i : 0]),
-              if (i < 3)
-                Expanded(
-                  child: Container(
-                    height: 1.5,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(1),
-                      color: i < stage
-                          ? stageColors[i + 1].withValues(alpha: 0.6)
-                          : const Color(0xFFE2E8F0),
-                    ),
-                  ),
-                ),
-            ],
-          ],
-        ),
-        const SizedBox(height: 3),
-        // Labels
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            for (int i = 0; i < 4; i++)
-              Text(
-                stageLabels[i],
-                style: TextStyle(
-                  color: i <= stage
-                      ? stageColors[i].withValues(alpha: 0.9)
-                      : const Color(0xFFCBD5E1),
-                  fontSize: 6.5,
-                  fontWeight: i <= stage ? FontWeight.w700 : FontWeight.w500,
-                  fontFamily: 'Literata',
+                    if (occupied) ...[
+                      const SizedBox(height: 10),
+                      _ServiceJourneyBar(status: table.status),
+                    ],
+                  ],
                 ),
               ),
+            ),
           ],
         ),
-      ],
-    );
-  }
-
-  Widget _progressDot(bool reached, Color color) {
-    return Container(
-      width: 8,
-      height: 8,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: reached ? color : const Color(0xFFE2E8F0),
-        border: Border.all(
-          color: reached
-              ? color.withValues(alpha: 0.6)
-              : const Color(0xFFE2E8F0),
-          width: 1,
-        ),
-        boxShadow: reached
-            ? [BoxShadow(color: color.withValues(alpha: 0.4), blurRadius: 4)]
-            : null,
       ),
     );
   }
@@ -1117,77 +753,85 @@ class _TableCard extends StatelessWidget {
   String _formatTime(Duration d) {
     final h = d.inHours;
     final m = d.inMinutes % 60;
+    if (h > 0) return '${h}h ${m}m';
+    if (m > 0) return '${m}m';
     final s = d.inSeconds % 60;
-    final ss = s.toString().padLeft(2, '0');
-    if (h > 0) return '${h}h ${m}m ${ss}s';
-    return '${m}m ${ss}s';
+    return '${s}s';
   }
 }
 
-// ─────────────────────────────────────────────────────────────────
-// PULSE DOT (animated active indicator)
-// ─────────────────────────────────────────────────────────────────
+/// Order → Kitchen → Served (no micro-copy; colour shows progress).
+class _ServiceJourneyBar extends StatelessWidget {
+  final TableStatus status;
 
-class _PulseDot extends StatefulWidget {
-  final Color color;
-  const _PulseDot({required this.color});
+  const _ServiceJourneyBar({required this.status});
 
-  @override
-  State<_PulseDot> createState() => _PulseDotState();
-}
-
-class _PulseDotState extends State<_PulseDot>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _anim;
-  late Animation<double> _scale;
-  late Animation<double> _opacity;
-
-  @override
-  void initState() {
-    super.initState();
-    _anim = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1200),
-    )..repeat(reverse: true);
-    _scale = Tween<double>(
-      begin: 0.8,
-      end: 1.3,
-    ).animate(CurvedAnimation(parent: _anim, curve: Curves.easeInOut));
-    _opacity = Tween<double>(
-      begin: 0.5,
-      end: 1.0,
-    ).animate(CurvedAnimation(parent: _anim, curve: Curves.easeInOut));
-  }
-
-  @override
-  void dispose() {
-    _anim.dispose();
-    super.dispose();
+  int get _stage {
+    switch (status) {
+      case TableStatus.active:
+        return 0;
+      case TableStatus.waiting:
+        return 1;
+      case TableStatus.served:
+        return 2;
+      default:
+        return 0;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _anim,
-      builder: (_, __) => Transform.scale(
-        scale: _scale.value,
-        child: Opacity(
-          opacity: _opacity.value,
-          child: Container(
-            width: 9,
-            height: 9,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: widget.color,
-              boxShadow: [
-                BoxShadow(
-                  color: widget.color.withValues(alpha: 0.6),
-                  blurRadius: 6,
-                  spreadRadius: 1,
+    const fills = [
+      Color(0xFF3B82F6),
+      Color(0xFFF59E0B),
+      Color(0xFF22C55E),
+    ];
+    final stage = _stage;
+    return Row(
+      children: [
+        for (var i = 0; i < 3; i++) ...[
+          Expanded(
+            child: Tooltip(
+              message: i == 0 ? 'Ordering' : (i == 1 ? 'In kitchen' : 'Ready to serve'),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 240),
+                height: 5,
+                decoration: BoxDecoration(
+                  color: i <= stage ? fills[i] : const Color(0xFFE2E8F0),
+                  borderRadius: BorderRadius.circular(3),
                 ),
-              ],
+              ),
             ),
           ),
+          if (i < 2) const SizedBox(width: 5),
+        ],
+      ],
+    );
+  }
+}
+
+class _StatusPill extends StatelessWidget {
+  final Color color;
+  final String label;
+
+  const _StatusPill({required this.color, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withValues(alpha: 0.28)),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: color.withValues(alpha: 0.95),
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          fontFamily: 'Literata',
         ),
       ),
     );
