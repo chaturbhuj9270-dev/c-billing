@@ -45,11 +45,26 @@ service cloud.firestore {
         allow read, write: if request.auth.uid == userId;
       }
       
+      // User's customer transactions
+      match /customer_transactions/{document=**} {
+        allow read, write: if request.auth.uid == userId;
+      }
+      
+      // User's event orders
+      match /eventOrders/{document=**} {
+        allow read, write: if request.auth.uid == userId;
+      }
+
       // User's profile document
       match /profile/{document=**} {
         allow read, write: if request.auth.uid == userId;
       }
       
+      // User's shop details
+      match /shop_details/{document=**} {
+        allow read, write: if request.auth.uid == userId;
+      }
+
       // User's menu items subcollection (hotel menu management)
       match /menuItems/{document=**} {
         allow read, write: if request.auth.uid == userId;
@@ -62,6 +77,17 @@ service cloud.firestore {
         // Sub-user can read their own record (for cached lookups)
         allow read: if request.auth != null
                      && resource.data.firebaseUid == request.auth.uid;
+      }
+
+      // FCM device tokens for hotel order notifications (one doc per auth UID)
+      match /hotelPushTokens/{tokenHolderUid} {
+        allow read: if request.auth.uid == userId;
+        allow create, update: if request.auth.uid == userId
+          || (request.auth.uid == tokenHolderUid
+              && exists(/databases/$(database)/documents/staffMapping/$(tokenHolderUid))
+              && get(/databases/$(database)/documents/staffMapping/$(tokenHolderUid)).data.adminUid == userId);
+        allow delete: if request.auth.uid == userId
+          || request.auth.uid == tokenHolderUid;
       }
     }
     

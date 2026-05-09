@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:isar_community/isar.dart';
 import '../../../../core/services/isar_service.dart';
+import '../../data/services/hotel_push_service.dart';
 import '../entities/table_entity.dart';
 import '../entities/table_order_entity.dart';
 import 'table_offline_controller.dart';
@@ -22,7 +25,7 @@ class TableOrderController extends ChangeNotifier {
 
   // ── CREATE ───────────────────────────────────────────────────────
 
-  /// Creates an order for a table and moves it to [TableStatus.active].
+  /// Creates an order for a table and sends it to the kitchen immediately.
   Future<TableOrderEntity> createOrder({
     required int localTableId,
     required String tableNumber,
@@ -42,7 +45,8 @@ class TableOrderController extends ChangeNotifier {
       ..notes = notes
       ..itemsJson = encodeOrderItems(items)
       ..totalAmount = total
-      ..status = TableOrderStatus.open
+      ..status = TableOrderStatus.sentToKitchen
+      ..sentToKitchenAt = DateTime.now()
       ..createdAt = DateTime.now()
       ..updatedAt = DateTime.now();
 
@@ -52,15 +56,24 @@ class TableOrderController extends ChangeNotifier {
 
     await _tableCtrl.setStatus(
       localTableId,
-      TableStatus.active,
+      TableStatus.waiting,
       guestName: guestName,
       guestPhone: guestPhone,
       notes: notes,
       occupiedSeats: occupiedSeats,
     );
 
-    debugPrint('[TableOrder] Created order ${order.id} for table $tableNumber');
+    debugPrint(
+      '[TableOrder] Created and sent order ${order.id} for table $tableNumber',
+    );
     notifyListeners();
+    unawaited(
+      HotelPushService.sendOrderEvent(
+        event: HotelOrderPushEvent.orderToKitchen,
+        tableNumber: tableNumber,
+        orderId: order.id,
+      ),
+    );
     return order;
   }
 
@@ -131,12 +144,21 @@ class TableOrderController extends ChangeNotifier {
 
     debugPrint('[TableOrder] Sent to kitchen: order ${order.id}');
     notifyListeners();
+    unawaited(
+      HotelPushService.sendOrderEvent(
+        event: HotelOrderPushEvent.orderToKitchen,
+        tableNumber: order.tableNumber,
+        orderId: order.id,
+      ),
+    );
   }
 
   /// Marks food as served → table becomes [TableStatus.served].
   Future<void> markServed(int orderId, int tableId) async {
     final order = await _isar.tableOrderEntitys.get(orderId);
     if (order == null) return;
+
+    final wasInKitchen = order.status == TableOrderStatus.sentToKitchen;
 
     order.status = TableOrderStatus.served;
     order.servedAt = DateTime.now();
@@ -149,6 +171,15 @@ class TableOrderController extends ChangeNotifier {
 
     debugPrint('[TableOrder] Marked served: order ${order.id}');
     notifyListeners();
+    if (wasInKitchen) {
+      unawaited(
+        HotelPushService.sendOrderEvent(
+          event: HotelOrderPushEvent.orderReady,
+          tableNumber: order.tableNumber,
+          orderId: order.id,
+        ),
+      );
+    }
   }
 
   /// Generates bill, clears table → table becomes [TableStatus.empty].
@@ -174,6 +205,14 @@ class TableOrderController extends ChangeNotifier {
       '[TableOrder] Bill generated: $billNumber for order ${order.id}',
     );
     notifyListeners();
+    unawaited(
+      HotelPushService.sendOrderEvent(
+        event: HotelOrderPushEvent.billCleared,
+        tableNumber: order.tableNumber,
+        billNumber: billNumber,
+        orderId: order.id,
+      ),
+    );
     return billNumber;
   }
 
