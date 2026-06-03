@@ -814,6 +814,17 @@ class HindiLocalization {
   static const String selectPaymentMethod = 'भुगतान विधि चुनें';
   static const String quickActions = 'त्वरित कार्य';
   static const String events = 'कार्यक्रम';
+  static const String quotations = 'कोटेशन';
+  static const String quotation = 'कोटेशन';
+  static const String newQuotation = 'नया कोटेशन';
+  static const String quotationSaved = 'कोटेशन सहेजा गया';
+  static const String quotationUpdated = 'कोटेशन अपडेट किया गया';
+  static const String noQuotationsFound = 'कोई कोटेशन नहीं मिला';
+  static const String validUntil = 'वैध तिथि';
+  static const String quotationType = 'कोटेशन प्रकार';
+  static const String productsOnly = 'उत्पाद';
+  static const String eventOnly = 'कार्यक्रम';
+  static const String eventAndProducts = 'कार्यक्रम + उत्पाद';
   static const String barcode = 'बारकोड';
   static const String createAndPrintInvoices = 'बिल बनाएं और प्रिंट करें';
   static const String printColumnSettings = 'प्रिंट कॉलम सेटिंग्स';

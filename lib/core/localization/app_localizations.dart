@@ -7215,6 +7215,116 @@ class AppLocalizations {
     }
   }
 
+  String get quotations {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.quotations;
+      case 'Marathi':
+        return MarathiLocalization.quotations;
+      default:
+        return EnglishLocalization.quotations;
+    }
+  }
+
+  String get quotation {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.quotation;
+      case 'Marathi':
+        return MarathiLocalization.quotation;
+      default:
+        return EnglishLocalization.quotation;
+    }
+  }
+
+  String get newQuotation {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.newQuotation;
+      case 'Marathi':
+        return MarathiLocalization.newQuotation;
+      default:
+        return EnglishLocalization.newQuotation;
+    }
+  }
+
+  String get quotationSaved {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.quotationSaved;
+      case 'Marathi':
+        return MarathiLocalization.quotationSaved;
+      default:
+        return EnglishLocalization.quotationSaved;
+    }
+  }
+
+  String get quotationUpdated {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.quotationUpdated;
+      case 'Marathi':
+        return MarathiLocalization.quotationUpdated;
+      default:
+        return EnglishLocalization.quotationUpdated;
+    }
+  }
+
+  String get noQuotationsFound {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.noQuotationsFound;
+      case 'Marathi':
+        return MarathiLocalization.noQuotationsFound;
+      default:
+        return EnglishLocalization.noQuotationsFound;
+    }
+  }
+
+  String get validUntil {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.validUntil;
+      case 'Marathi':
+        return MarathiLocalization.validUntil;
+      default:
+        return EnglishLocalization.validUntil;
+    }
+  }
+
+  String get productsOnly {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.productsOnly;
+      case 'Marathi':
+        return MarathiLocalization.productsOnly;
+      default:
+        return EnglishLocalization.productsOnly;
+    }
+  }
+
+  String get eventOnly {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.eventOnly;
+      case 'Marathi':
+        return MarathiLocalization.eventOnly;
+      default:
+        return EnglishLocalization.eventOnly;
+    }
+  }
+
+  String get eventAndProducts {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.eventAndProducts;
+      case 'Marathi':
+        return MarathiLocalization.eventAndProducts;
+      default:
+        return EnglishLocalization.eventAndProducts;
+    }
+  }
+
   String get barcode {
     switch (languageCode) {
       case 'Hindi':

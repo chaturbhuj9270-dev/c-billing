@@ -47,6 +47,7 @@ import 'package:c_billing/features/dashboard/data/models/dashboard_data.dart';
 import 'package:c_billing/common_widgets/file_preview_page.dart';
 import 'package:c_billing/features/inventory_management/presentation/pages/barcode_generator_page.dart';
 import 'package:c_billing/features/customer/presentation/pages/enhanced_customer_page.dart';
+import 'package:c_billing/features/quotation/presentation/pages/quotation_list_page.dart';
 import 'package:c_billing/features/billing/presentation/widgets/barcode_scanner_sheet.dart';
 import 'package:c_billing/features/customer/offline/controllers/customer_transaction_offline_controller.dart';
 import 'package:c_billing/features/customer/domain/entities/customer_transaction.dart';
@@ -5939,6 +5940,20 @@ class _BillingPageState extends State<BillingPage> {
           Navigator.push(
             context,
             MaterialPageRoute(builder: (_) => const EventOrderListPage()),
+          ).then((_) => _loadQuickStats());
+        },
+      ),
+      _QuickStatItem(
+        icon: Icons.request_quote_rounded,
+        value: '',
+        label: _localizations.quotations,
+        color: const Color(0xFF1565C0),
+        gradient: [const Color(0xFF1565C0), const Color(0xFF42A5F5)],
+        onTap: () {
+          _toggleQuickStats();
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const QuotationListPage()),
           ).then((_) => _loadQuickStats());
         },
       ),

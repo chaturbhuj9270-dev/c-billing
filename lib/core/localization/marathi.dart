@@ -817,6 +817,17 @@ class MarathiLocalization {
   static const String selectPaymentMethod = 'पेमेंट पद्धत निवडा';
   static const String quickActions = 'जलद क्रिया';
   static const String events = 'कार्यक्रम';
+  static const String quotations = 'कोटेशन';
+  static const String quotation = 'कोटेशन';
+  static const String newQuotation = 'नवीन कोटेशन';
+  static const String quotationSaved = 'कोटेशन जतन केले';
+  static const String quotationUpdated = 'कोटेशन अपडेट केले';
+  static const String noQuotationsFound = 'कोटेशन सापडले नाहीत';
+  static const String validUntil = 'वैध तारीख';
+  static const String quotationType = 'कोटेशन प्रकार';
+  static const String productsOnly = 'उत्पादने';
+  static const String eventOnly = 'कार्यक्रम';
+  static const String eventAndProducts = 'कार्यक्रम + उत्पादने';
   static const String barcode = 'बारकोड';
   static const String createAndPrintInvoices = 'बिले तयार करा आणि प्रिंट करा';
   static const String printColumnSettings = 'प्रिंट कॉलम सेटिंग्ज';

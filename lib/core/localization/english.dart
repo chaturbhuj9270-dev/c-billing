@@ -812,6 +812,17 @@ class EnglishLocalization {
   static const String selectPaymentMethod = 'Select payment method';
   static const String quickActions = 'Quick Actions';
   static const String events = 'Events';
+  static const String quotations = 'Quotations';
+  static const String quotation = 'Quotation';
+  static const String newQuotation = 'New Quotation';
+  static const String quotationSaved = 'Quotation saved';
+  static const String quotationUpdated = 'Quotation updated';
+  static const String noQuotationsFound = 'No quotations found';
+  static const String validUntil = 'Valid Until';
+  static const String quotationType = 'Quotation Type';
+  static const String productsOnly = 'Products';
+  static const String eventOnly = 'Event';
+  static const String eventAndProducts = 'Event + Products';
   static const String barcode = 'Barcode';
   static const String createAndPrintInvoices = 'Create and print invoices';
   static const String printColumnSettings = 'Print Column Settings';

@@ -8,6 +8,7 @@ import '../features/supplier/presentation/pages/enhanced_supplier_page.dart';
 import '../features/company/presentation/pages/enhanced_company_page.dart';
 import '../features/purchase_return/presentation/pages/purchase_return_screen.dart';
 import '../features/event_order/presentation/pages/event_order_list_page.dart';
+import '../features/quotation/presentation/pages/quotation_list_page.dart';
 import '../features/inventory_management/presentation/pages/barcode_generator_page.dart';
 import '../features/customer/presentation/pages/enhanced_customer_page.dart';
 
@@ -155,6 +156,19 @@ class _GlobalQuickActionsFABState extends State<GlobalQuickActionsFAB>
           Navigator.push(
             context,
             MaterialPageRoute(builder: (_) => const EventOrderListPage()),
+          );
+        },
+      ),
+      QuickActionItem(
+        icon: Icons.request_quote_rounded,
+        label: l10n.quotations,
+        color: const Color(0xFF1565C0),
+        gradient: const [Color(0xFF1565C0), Color(0xFF42A5F5)],
+        onTap: () {
+          _close();
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const QuotationListPage()),
           );
         },
       ),
