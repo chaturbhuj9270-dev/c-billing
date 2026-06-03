@@ -9,10 +9,9 @@ import '../../../event_order/domain/entities/order_item.dart';
 import '../../../event_order/domain/entities/sub_event.dart';
 import '../../../customer/offline/controllers/customer_offline_controller.dart';
 import '../../../customer/offline/entities/customer_entity.dart';
-import '../../../product/offline/controllers/product_offline_controller.dart';
-import '../../../product/offline/entities/product_entity.dart';
 import '../../domain/entities/quotation.dart';
 import '../../offline/controllers/quotation_offline_controller.dart';
+import '../widgets/quotation_products_panel.dart';
 
 class QuotationScreen extends StatefulWidget {
   final Quotation? existing;
@@ -33,7 +32,6 @@ class _QuotationScreenState extends State<QuotationScreen> {
   String? _customerId;
   List<SubEvent> _subEvents = [];
   List<OrderItem> _orderItems = [];
-  List<ProductEntity> _products = [];
   List<CustomerEntity> _customerSuggestions = [];
   bool _isLoading = false;
 
@@ -63,7 +61,6 @@ class _QuotationScreenState extends State<QuotationScreen> {
     if (_isEditing) {
       _loadExisting();
     }
-    _loadProducts();
   }
 
   void _loadExisting() {
@@ -83,11 +80,6 @@ class _QuotationScreenState extends State<QuotationScreen> {
     _validUntil = q.validUntil;
     _subEvents = List.from(q.subEvents);
     _orderItems = List.from(q.items);
-  }
-
-  Future<void> _loadProducts() async {
-    final products = await ProductOfflineController.instance.getAllProducts();
-    if (mounted) setState(() => _products = products);
   }
 
   Future<void> _searchCustomers(String query) async {
@@ -206,128 +198,6 @@ class _QuotationScreenState extends State<QuotationScreen> {
         );
       });
     }
-  }
-
-  Future<void> _addProduct() async {
-    ProductEntity? selected;
-    await showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      builder: (context) => DraggableScrollableSheet(
-        expand: false,
-        initialChildSize: 0.7,
-        builder: (context, scrollController) => Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Text(
-                _l10n.selectProduct,
-                style: const TextStyle(
-                  fontFamily: 'Literata',
-                  fontWeight: FontWeight.w700,
-                  fontSize: 16,
-                ),
-              ),
-            ),
-            Expanded(
-              child: ListView.builder(
-                controller: scrollController,
-                itemCount: _products.length,
-                itemBuilder: (context, index) {
-                  final product = _products[index];
-                  return ListTile(
-                    title: Text(
-                      product.name,
-                      style: const TextStyle(fontFamily: 'Literata'),
-                    ),
-                    subtitle: Text(
-                      '₹${product.salesPrice.toStringAsFixed(2)}',
-                      style: const TextStyle(fontFamily: 'Literata'),
-                    ),
-                    onTap: () {
-                      selected = product;
-                      Navigator.pop(context);
-                    },
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-
-    if (selected == null) return;
-
-    final qtyController = TextEditingController(text: '1');
-    final rateController = TextEditingController(
-      text: selected!.salesPrice.toStringAsFixed(2),
-    );
-
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(
-          selected!.name,
-          style: const TextStyle(fontFamily: 'Literata'),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: qtyController,
-              keyboardType: TextInputType.number,
-              decoration: InputDecoration(
-                labelText: _l10n.quantity,
-                labelStyle: const TextStyle(fontFamily: 'Literata'),
-              ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: rateController,
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
-              ),
-              decoration: InputDecoration(
-                labelText: _l10n.rate,
-                labelStyle: const TextStyle(fontFamily: 'Literata'),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text(_l10n.cancel),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(backgroundColor: _primary),
-            child: Text(_l10n.add, style: const TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed != true) return;
-
-    final qty = int.tryParse(qtyController.text) ?? 1;
-    final rate = double.tryParse(rateController.text) ?? selected!.salesPrice;
-    final subtotal = qty * rate;
-
-    setState(() {
-      _orderItems.add(
-        OrderItem(
-          id: _uuid.v4(),
-          productId: selected!.serverId ?? selected!.id.toString(),
-          productName: selected!.name,
-          quantity: qty,
-          rate: rate,
-          subtotal: subtotal,
-          total: subtotal,
-        ),
-      );
-    });
   }
 
   Future<void> _save() async {
@@ -517,11 +387,14 @@ class _QuotationScreenState extends State<QuotationScreen> {
                   ),
                   if (_customerSuggestions.isNotEmpty)
                     ..._customerSuggestions.map(
-                      (c) => ListTile(
-                        dense: true,
-                        title: Text(c.name),
-                        subtitle: Text(c.mobile),
-                        onTap: () => _selectCustomer(c),
+                      (c) => Material(
+                        color: Colors.transparent,
+                        child: ListTile(
+                          dense: true,
+                          title: Text(c.name),
+                          subtitle: Text(c.mobile),
+                          onTap: () => _selectCustomer(c),
+                        ),
                       ),
                     ),
                   const SizedBox(height: 8),
@@ -565,28 +438,37 @@ class _QuotationScreenState extends State<QuotationScreen> {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: Text(
-                      'Reference: ${dateFormat.format(_referenceDate)}',
-                      style: const TextStyle(fontFamily: 'Literata'),
-                    ),
-                    trailing: const Icon(Icons.calendar_today, color: _primary),
-                    onTap: () => _pickDate(
-                      initial: _referenceDate,
-                      onPicked: (d) => setState(() => _referenceDate = d),
+                  Material(
+                    color: Colors.transparent,
+                    child: ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: Text(
+                        'Reference: ${dateFormat.format(_referenceDate)}',
+                        style: const TextStyle(fontFamily: 'Literata'),
+                      ),
+                      trailing: const Icon(
+                        Icons.calendar_today,
+                        color: _primary,
+                      ),
+                      onTap: () => _pickDate(
+                        initial: _referenceDate,
+                        onPicked: (d) => setState(() => _referenceDate = d),
+                      ),
                     ),
                   ),
-                  ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: Text(
-                      '${_l10n.validUntil}: ${dateFormat.format(_validUntil)}',
-                      style: const TextStyle(fontFamily: 'Literata'),
-                    ),
-                    trailing: const Icon(Icons.event, color: _primary),
-                    onTap: () => _pickDate(
-                      initial: _validUntil,
-                      onPicked: (d) => setState(() => _validUntil = d),
+                  Material(
+                    color: Colors.transparent,
+                    child: ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: Text(
+                        '${_l10n.validUntil}: ${dateFormat.format(_validUntil)}',
+                        style: const TextStyle(fontFamily: 'Literata'),
+                      ),
+                      trailing: const Icon(Icons.event, color: _primary),
+                      onTap: () => _pickDate(
+                        initial: _validUntil,
+                        onPicked: (d) => setState(() => _validUntil = d),
+                      ),
                     ),
                   ),
                   if (_showEvents)
@@ -633,10 +515,13 @@ class _QuotationScreenState extends State<QuotationScreen> {
                       onChanged: (_) => setState(() {}),
                     ),
                     ..._subEvents.map(
-                      (e) => ListTile(
-                        title: Text(e.name),
-                        subtitle: Text(dateFormat.format(e.date)),
-                        trailing: Text('₹${e.charges.toStringAsFixed(0)}'),
+                      (e) => Material(
+                        color: Colors.transparent,
+                        child: ListTile(
+                          title: Text(e.name),
+                          subtitle: Text(dateFormat.format(e.date)),
+                          trailing: Text('₹${e.charges.toStringAsFixed(0)}'),
+                        ),
                       ),
                     ),
                   ],
@@ -646,34 +531,12 @@ class _QuotationScreenState extends State<QuotationScreen> {
             if (_showProducts) ...[
               const SizedBox(height: 12),
               _sectionCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Text(
-                          _l10n.products,
-                          style: const TextStyle(
-                            fontFamily: 'Literata',
-                            fontWeight: FontWeight.w700,
-                            color: _primary,
-                          ),
-                        ),
-                        const Spacer(),
-                        IconButton(
-                          onPressed: _addProduct,
-                          icon: const Icon(Icons.add_circle, color: _primary),
-                        ),
-                      ],
-                    ),
-                    ..._orderItems.map(
-                      (item) => ListTile(
-                        title: Text(item.productName),
-                        subtitle: Text('${item.quantity} x ₹${item.rate}'),
-                        trailing: Text('₹${item.total.toStringAsFixed(0)}'),
-                      ),
-                    ),
-                  ],
+                child: QuotationProductsPanel(
+                  items: _orderItems,
+                  localizations: _l10n,
+                  onItemsChanged: (items) {
+                    setState(() => _orderItems = items);
+                  },
                 ),
               ),
             ],
@@ -733,21 +596,26 @@ class _QuotationScreenState extends State<QuotationScreen> {
   }
 
   Widget _sectionCard({required Widget child}) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+    return Material(
+      color: Colors.white,
+      elevation: 0,
+      shadowColor: Colors.transparent,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: child,
       ),
-      child: child,
     );
   }
 }
