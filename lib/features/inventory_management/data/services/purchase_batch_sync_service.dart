@@ -5,6 +5,7 @@ import '../../../../core/services/dashboard_refresh_service.dart';
 import '../../offline/controllers/purchase_batch_offline_controller.dart';
 import '../../offline/entities/purchase_batch_entity.dart';
 import 'purchase_batch_api_service.dart';
+import 'purchase_sync_service.dart';
 
 /// Sync status for tracking sync state
 enum PurchaseBatchSyncServiceStatus { idle, syncing, success, failed }
@@ -129,7 +130,7 @@ class PurchaseBatchSyncService extends ChangeNotifier {
   /// Perform initial sync - download all batches if local database is empty
   Future<void> _initialSync() async {
     try {
-      final localBatches = await _offlineController.getAllBatches(
+      var localBatches = await _offlineController.getAllBatches(
         includeConsumed: true,
       );
       debugPrint(
@@ -157,6 +158,18 @@ class PurchaseBatchSyncService extends ChangeNotifier {
         final results = await _connectivity.checkConnectivity();
         if (_isConnected(results) && _apiService.isAuthenticated) {
           await forceFullSync();
+        }
+
+        localBatches = await _offlineController.getAllBatches(
+          includeConsumed: true,
+        );
+
+        if (localBatches.isEmpty) {
+          debugPrint(
+            '[PurchaseBatchSync] Still empty, migrating legacy purchases...',
+          );
+          await PurchaseSyncService.instance.forceFullSync();
+          await _offlineController.ensurePurchaseHistoryAvailable();
         }
       }
     } catch (e) {

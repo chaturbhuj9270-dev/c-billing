@@ -1,7 +1,13 @@
+import 'dart:math' as math;
+
 import 'package:flutter/foundation.dart';
 import 'package:isar_community/isar.dart';
 import '../../../../core/services/isar_service.dart';
+import '../../../product/offline/controllers/product_offline_controller.dart';
+import '../../../product/offline/entities/product_entity.dart';
 import '../entities/purchase_batch_entity.dart';
+import '../entities/purchase_entity.dart';
+import 'purchase_offline_controller.dart';
 
 /// Offline-first controller for Purchase Batch CRUD operations
 /// Implements FIFO inventory management
@@ -648,6 +654,226 @@ class PurchaseBatchOfflineController extends ChangeNotifier {
     }
 
     return removedCount;
+  }
+
+  // ==================== LEGACY MIGRATION ====================
+
+  static const _legacyMigrationNotePrefix = '[legacy-purchase:';
+  static const _openingStockNote = '[opening-stock]';
+
+  /// Build purchase history from legacy PurchaseEntity records and opening stock.
+  /// The purchase list UI reads PurchaseBatchEntity only; older data lives in
+  /// PurchaseEntity (Firestore `purchases` collection) or as product opening stock.
+  Future<int> ensurePurchaseHistoryAvailable() async {
+    var batches = await getAllBatches(includeConsumed: true);
+    if (batches.isNotEmpty) return batches.length;
+
+    final migrated = await migrateLegacyPurchasesToBatches();
+    debugPrint('[BatchOffline] Legacy migration created $migrated batches');
+
+    batches = await getAllBatches(includeConsumed: true);
+    if (batches.isNotEmpty) return batches.length;
+
+    final backfilled = await backfillOpeningStockBatches();
+    debugPrint('[BatchOffline] Opening stock backfill created $backfilled batches');
+
+    return (await getAllBatches(includeConsumed: true)).length;
+  }
+
+  /// Convert legacy PurchaseEntity records into PurchaseBatchEntity records.
+  Future<int> migrateLegacyPurchasesToBatches() async {
+    final purchases =
+        await PurchaseOfflineController.instance.getAllPurchases();
+    if (purchases.isEmpty) return 0;
+
+    int migrated = 0;
+
+    await _isar.writeTxn(() async {
+      for (final purchase in purchases) {
+        if (await _hasLegacyBatchForPurchase(purchase)) continue;
+
+        final batch = PurchaseBatchEntity.create(
+          serverId: purchase.serverId,
+          productId: purchase.productId,
+          productName: purchase.productName,
+          companyName: purchase.companyName ?? '',
+          purchasePrice: purchase.purchasePrice,
+          sellingPrice: purchase.salesPrice,
+          quantity: purchase.quantity,
+          purchaseDate: purchase.createdAt,
+          supplierId: purchase.supplierId,
+          supplierName: purchase.supplierName,
+          unit: purchase.unit,
+          expiryDate: purchase.expiryDate,
+          productionDate: purchase.productionDate,
+          warrantyMonths: purchase.warrantyMonths,
+          notes: purchase.notes != null && purchase.notes!.isNotEmpty
+              ? '${purchase.notes}\n$_legacyMigrationNotePrefix${purchase.serverId ?? purchase.id}]'
+              : '$_legacyMigrationNotePrefix${purchase.serverId ?? purchase.id}]',
+          syncStatus: purchase.serverId != null
+              ? BatchSyncStatus.synced
+              : BatchSyncStatus.newRecord,
+        );
+        batch.createdAt = purchase.createdAt;
+        batch.updatedAt = purchase.updatedAt;
+
+        await _isar.purchaseBatchEntitys.put(batch);
+        migrated++;
+      }
+    });
+
+    if (migrated > 0) {
+      await _reconcileBatchStockWithProducts();
+      notifyListeners();
+    }
+
+    return migrated;
+  }
+
+  /// Create batch records for products that have stock but no purchase history.
+  Future<int> backfillOpeningStockBatches() async {
+    final products = await ProductOfflineController.instance.getAllProducts();
+    int created = 0;
+
+    await _isar.writeTxn(() async {
+      for (final product in products) {
+        if (product.currentStock <= 0) continue;
+        if (await _productHasAnyBatch(product)) continue;
+
+        final productId = _productIdForBatch(product);
+        final batch = PurchaseBatchEntity.create(
+          productId: productId,
+          productName: product.name,
+          companyName: product.companyName,
+          category: product.category,
+          purchasePrice: product.purchasePrice,
+          sellingPrice: product.salesPrice,
+          quantity: product.currentStock,
+          purchaseDate: product.createdAt,
+          supplierId: product.defaultSupplierId,
+          supplierName: product.defaultSupplierName,
+          notes: _openingStockNote,
+          syncStatus: BatchSyncStatus.synced,
+        );
+        batch.createdAt = product.createdAt;
+        batch.updatedAt = product.updatedAt;
+
+        await _isar.purchaseBatchEntitys.put(batch);
+        created++;
+      }
+    });
+
+    if (created > 0) {
+      notifyListeners();
+    }
+
+    return created;
+  }
+
+  Future<bool> _hasLegacyBatchForPurchase(PurchaseEntity purchase) async {
+    final migrationTag =
+        '$_legacyMigrationNotePrefix${purchase.serverId ?? purchase.id}]';
+
+    final byTag = await _isar.purchaseBatchEntitys
+        .filter()
+        .notesContains(migrationTag)
+        .findFirst();
+    if (byTag != null) return true;
+
+    return await _isar.purchaseBatchEntitys
+            .filter()
+            .productIdEqualTo(purchase.productId)
+            .quantityPurchasedEqualTo(purchase.quantity)
+            .purchasePriceEqualTo(purchase.purchasePrice)
+            .purchaseDateBetween(
+              purchase.createdAt.subtract(const Duration(seconds: 2)),
+              purchase.createdAt.add(const Duration(seconds: 2)),
+            )
+            .findFirst() !=
+        null;
+  }
+
+  Future<bool> _productHasAnyBatch(ProductEntity product) async {
+    for (final productId in _productIdsForLookup(product)) {
+      final count = await _isar.purchaseBatchEntitys
+          .filter()
+          .productIdEqualTo(productId)
+          .not()
+          .syncStatusEqualTo(BatchSyncStatus.deleted)
+          .count();
+      if (count > 0) return true;
+    }
+    return false;
+  }
+
+  String _productIdForBatch(ProductEntity product) {
+    return product.serverId ?? product.id.toString();
+  }
+
+  Set<String> _productIdsForLookup(ProductEntity product) {
+    return {
+      product.id.toString(),
+      if (product.serverId != null && product.serverId!.isNotEmpty)
+        product.serverId!,
+    };
+  }
+
+  /// Align batch remaining quantities with product.currentStock using FIFO.
+  Future<void> _reconcileBatchStockWithProducts() async {
+    final products = await ProductOfflineController.instance.getAllProducts();
+
+    await _isar.writeTxn(() async {
+      for (final product in products) {
+        final batches = <PurchaseBatchEntity>[];
+        for (final productId in _productIdsForLookup(product)) {
+          batches.addAll(
+            await _isar.purchaseBatchEntitys
+                .filter()
+                .productIdEqualTo(productId)
+                .not()
+                .syncStatusEqualTo(BatchSyncStatus.deleted)
+                .sortByPurchaseDate()
+                .findAll(),
+          );
+        }
+
+        if (batches.isEmpty) continue;
+
+        batches.sort((a, b) => a.purchaseDate.compareTo(b.purchaseDate));
+
+        final uniqueBatches = <Id, PurchaseBatchEntity>{};
+        for (final batch in batches) {
+          uniqueBatches[batch.id] = batch;
+        }
+        final orderedBatches = uniqueBatches.values.toList()
+          ..sort((a, b) => a.purchaseDate.compareTo(b.purchaseDate));
+
+        var totalRemaining = orderedBatches.fold<int>(
+          0,
+          (sum, batch) => sum + batch.quantityRemaining,
+        );
+        final targetStock = math.max(0, product.currentStock);
+
+        if (totalRemaining > targetStock) {
+          var excess = totalRemaining - targetStock;
+          for (final batch in orderedBatches.reversed) {
+            if (excess <= 0) break;
+            final reduce = math.min(excess, batch.quantityRemaining);
+            batch.quantityRemaining -= reduce;
+            batch.isConsumed = batch.quantityRemaining <= 0;
+            batch.updatedAt = DateTime.now();
+            excess -= reduce;
+            await _isar.purchaseBatchEntitys.put(batch);
+          }
+        } else if (totalRemaining < targetStock && orderedBatches.isNotEmpty) {
+          final newest = orderedBatches.last;
+          newest.quantityRemaining += targetStock - totalRemaining;
+          newest.isConsumed = false;
+          newest.updatedAt = DateTime.now();
+          await _isar.purchaseBatchEntitys.put(newest);
+        }
+      }
+    });
   }
 
   /// Clear all local batches (for testing or logout)

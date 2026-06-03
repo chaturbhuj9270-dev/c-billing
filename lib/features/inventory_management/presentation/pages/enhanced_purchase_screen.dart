@@ -4,11 +4,9 @@ import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:isar_community/isar.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:c_billing/core/services/language_service.dart';
 import 'package:c_billing/core/services/dashboard_refresh_service.dart';
-import 'package:c_billing/core/services/isar_service.dart';
 import 'package:c_billing/core/services/product_settings_service.dart';
 import 'package:c_billing/core/localization/app_localizations.dart';
 import 'package:c_billing/common_widgets/file_preview_page.dart';
@@ -122,47 +120,42 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
   /// Load purchases directly from Isar database
   Future<void> _loadPurchasesFromIsar() async {
     try {
-      final isar = IsarService.instance.isar;
+      final controller = PurchaseBatchOfflineController.instance;
 
-      // Query all purchase batches directly from Isar
-      var batches = await isar.purchaseBatchEntitys
-          .filter()
-          .not()
-          .syncStatusEqualTo(BatchSyncStatus.deleted)
-          .sortByPurchaseDateDesc()
-          .findAll();
-
+      var batches = await controller.getAllBatches(includeConsumed: true);
       debugPrint('[EnhancedPurchase] Isar found ${batches.length} batches');
 
-      // If Isar is empty, let the sync service handle downloading from server
-      // Do NOT do manual Firestore import here — PurchaseBatchSyncService handles it
       if (batches.isEmpty) {
         debugPrint(
           '[EnhancedPurchase] Isar empty, requesting sync service to download...',
         );
         await PurchaseBatchSyncService.instance.forceFullSync();
-
-        // Re-query Isar after sync
-        batches = await isar.purchaseBatchEntitys
-            .filter()
-            .not()
-            .syncStatusEqualTo(BatchSyncStatus.deleted)
-            .sortByPurchaseDateDesc()
-            .findAll();
-
+        batches = await controller.getAllBatches(includeConsumed: true);
         debugPrint(
-          '[EnhancedPurchase] After sync service download: ${batches.length} batches',
+          '[EnhancedPurchase] After batch sync: ${batches.length} batches',
+        );
+      }
+
+      if (batches.isEmpty) {
+        debugPrint(
+          '[EnhancedPurchase] Still empty, syncing legacy purchases and backfilling stock...',
+        );
+        await PurchaseSyncService.instance.forceFullSync();
+        final available = await controller.ensurePurchaseHistoryAvailable();
+        batches = await controller.getAllBatches(includeConsumed: true);
+        debugPrint(
+          '[EnhancedPurchase] After legacy migration/backfill: $available batches',
         );
       }
 
       if (mounted) {
         setState(() {
-          _purchases = batches;
+          _purchases = batches
+            ..sort((a, b) => b.purchaseDate.compareTo(a.purchaseDate));
           _isLoading = false;
         });
       }
 
-      // Now setup the stream for real-time updates
       _setupPurchaseStream();
     } catch (e, stack) {
       debugPrint('[EnhancedPurchase] Error loading from Isar: $e');
@@ -175,16 +168,14 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
 
   /// Setup real-time purchase stream from Isar (for updates after initial load)
   void _setupPurchaseStream() {
-    final isar = IsarService.instance.isar;
+    _purchaseStreamSubscription?.cancel();
 
-    _purchaseStreamSubscription = isar.purchaseBatchEntitys
-        .filter()
-        .not()
-        .syncStatusEqualTo(BatchSyncStatus.deleted)
-        .sortByPurchaseDateDesc()
-        .watch(
-          fireImmediately: false,
-        ) // Don't fire immediately since we already loaded
+    _purchaseStreamSubscription = PurchaseBatchOfflineController.instance
+        .watchAllBatches(includeConsumed: true)
+        .map(
+          (batches) => batches.toList()
+            ..sort((a, b) => b.purchaseDate.compareTo(a.purchaseDate)),
+        )
         .listen(
           (purchases) {
             debugPrint(
