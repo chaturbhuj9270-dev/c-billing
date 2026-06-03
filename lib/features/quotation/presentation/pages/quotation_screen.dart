@@ -13,7 +13,6 @@ import '../../data/services/quotation_print_service.dart';
 import '../../domain/entities/quotation.dart';
 import '../../offline/controllers/quotation_offline_controller.dart';
 import '../widgets/quotation_products_panel.dart';
-import 'quotation_settings_page.dart';
 
 class QuotationScreen extends StatefulWidget {
   final Quotation? existing;
@@ -49,7 +48,6 @@ class _QuotationScreenState extends State<QuotationScreen> {
   final _notesController = TextEditingController();
 
   DateTime _referenceDate = DateTime.now().add(const Duration(days: 7));
-  DateTime _validUntil = DateTime.now().add(const Duration(days: 15));
 
   bool get _isEditing => widget.existing != null;
   bool get _showProducts =>
@@ -80,7 +78,6 @@ class _QuotationScreenState extends State<QuotationScreen> {
     _discountController.text = q.discountAmount.toStringAsFixed(0);
     _notesController.text = q.notes ?? '';
     _referenceDate = q.referenceDate;
-    _validUntil = q.validUntil;
     _subEvents = List.from(q.subEvents);
     _orderItems = List.from(q.items);
   }
@@ -224,7 +221,7 @@ class _QuotationScreenState extends State<QuotationScreen> {
       eventLocation: _locationController.text.trim().isEmpty
           ? null
           : _locationController.text.trim(),
-      validUntil: _validUntil,
+      validUntil: _referenceDate,
       subEvents: List.from(_subEvents),
       items: List.from(_orderItems),
       eventCharges: _eventCharges,
@@ -290,7 +287,7 @@ class _QuotationScreenState extends State<QuotationScreen> {
           eventLocation: _locationController.text.trim().isEmpty
               ? null
               : _locationController.text.trim(),
-          validUntil: _validUntil,
+          validUntil: _referenceDate,
           subEvents: _subEvents,
           items: _orderItems,
           eventCharges: _eventCharges,
@@ -316,7 +313,7 @@ class _QuotationScreenState extends State<QuotationScreen> {
           eventLocation: _locationController.text.trim().isEmpty
               ? null
               : _locationController.text.trim(),
-          validUntil: _validUntil,
+          validUntil: _referenceDate,
           subEvents: _subEvents,
           items: _orderItems,
           eventCharges: _eventCharges,
@@ -380,29 +377,6 @@ class _QuotationScreenState extends State<QuotationScreen> {
               ),
             )
           else ...[
-            IconButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const QuotationSettingsPage(),
-                  ),
-                );
-              },
-              tooltip: _l10n.quotationSettings,
-              icon: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: _primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(
-                  Icons.settings_rounded,
-                  color: _primary,
-                  size: 20,
-                ),
-              ),
-            ),
             if (_isPrinting)
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 12),
@@ -553,31 +527,13 @@ class _QuotationScreenState extends State<QuotationScreen> {
                     child: ListTile(
                       contentPadding: EdgeInsets.zero,
                       title: Text(
-                        'Reference: ${dateFormat.format(_referenceDate)}',
-                        style: const TextStyle(fontFamily: 'Literata'),
-                      ),
-                      trailing: const Icon(
-                        Icons.calendar_today,
-                        color: _primary,
-                      ),
-                      onTap: () => _pickDate(
-                        initial: _referenceDate,
-                        onPicked: (d) => setState(() => _referenceDate = d),
-                      ),
-                    ),
-                  ),
-                  Material(
-                    color: Colors.transparent,
-                    child: ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: Text(
-                        '${_l10n.validUntil}: ${dateFormat.format(_validUntil)}',
+                        '${_l10n.eventOrderDate}: ${dateFormat.format(_referenceDate)}',
                         style: const TextStyle(fontFamily: 'Literata'),
                       ),
                       trailing: const Icon(Icons.event, color: _primary),
                       onTap: () => _pickDate(
-                        initial: _validUntil,
-                        onPicked: (d) => setState(() => _validUntil = d),
+                        initial: _referenceDate,
+                        onPicked: (d) => setState(() => _referenceDate = d),
                       ),
                     ),
                   ),

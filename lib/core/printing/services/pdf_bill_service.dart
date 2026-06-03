@@ -349,11 +349,11 @@ class PdfBillService {
                         pw.SizedBox(height: 3),
                         _buildInfoLine('Time', _formatTime(billData.dateTime)),
                         if (billData.isQuotation &&
-                            billData.validUntil != null) ...[
+                            billData.eventOrderDate != null) ...[
                           pw.SizedBox(height: 3),
                           _buildInfoLine(
-                            'Valid Until',
-                            _formatDateNormal(billData.validUntil!),
+                            'Event Date',
+                            _formatDateNormal(billData.eventOrderDate!),
                           ),
                         ],
                       ],
@@ -1483,17 +1483,18 @@ class PdfBillService {
                   ),
                 ],
               ),
-              if (billData.isQuotation && billData.validUntil != null) ...[
+              if (billData.isQuotation &&
+                  billData.eventOrderDate != null) ...[
                 pw.SizedBox(height: 2),
                 pw.Row(
                   mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                   children: [
                     pw.Text(
-                      'Valid Until:',
+                      'Event Date:',
                       style: const pw.TextStyle(fontSize: 6),
                     ),
                     pw.Text(
-                      _formatDate(billData.validUntil!),
+                      _formatDate(billData.eventOrderDate!),
                       style: const pw.TextStyle(fontSize: 6),
                     ),
                   ],

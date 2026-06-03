@@ -125,6 +125,8 @@ class PrintBillData {
   /// When true, PDF/thermal output uses Quotation labels instead of Bill/Invoice.
   final bool isQuotation;
   final DateTime? validUntil;
+  /// Event/order date for quotations (replaces valid-until on print).
+  final DateTime? eventOrderDate;
   final String? quotationTitle;
   final double? refundAmount;
 
@@ -185,6 +187,7 @@ class PrintBillData {
     this.isReturnBill = false,
     this.isQuotation = false,
     this.validUntil,
+    this.eventOrderDate,
     this.quotationTitle,
     this.refundAmount,
     this.paidAmount,

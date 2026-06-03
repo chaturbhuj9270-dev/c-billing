@@ -821,6 +821,7 @@ class HindiLocalization {
   static const String quotationUpdated = 'कोटेशन अपडेट किया गया';
   static const String noQuotationsFound = 'कोई कोटेशन नहीं मिला';
   static const String validUntil = 'वैध तिथि';
+  static const String eventOrderDate = 'इवेंट तिथि';
   static const String quotationType = 'कोटेशन प्रकार';
   static const String quotationSettings = 'कोटेशन सेटिंग्स';
   static const String quotationFormat = 'कोटेशन प्रारूप';

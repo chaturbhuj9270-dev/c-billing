@@ -287,8 +287,8 @@ class EscPosBillFormatter {
     b.addAll(_kv('Date', dateFmt.format(d.dateTime)));
     b.addAll(_kv('Time', timeFmt.format(d.dateTime)));
 
-    if (d.isQuotation && d.validUntil != null) {
-      b.addAll(_kv('Valid Until', dateFmt.format(d.validUntil!)));
+    if (d.isQuotation && d.eventOrderDate != null) {
+      b.addAll(_kv('Event Date', dateFmt.format(d.eventOrderDate!)));
     }
 
     // Customer info

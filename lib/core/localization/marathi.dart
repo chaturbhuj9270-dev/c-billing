@@ -824,6 +824,7 @@ class MarathiLocalization {
   static const String quotationUpdated = 'कोटेशन अपडेट केले';
   static const String noQuotationsFound = 'कोटेशन सापडले नाहीत';
   static const String validUntil = 'वैध तारीख';
+  static const String eventOrderDate = 'इव्हेंट तारीख';
   static const String quotationType = 'कोटेशन प्रकार';
   static const String quotationSettings = 'कोटेशन सेटिंग्ज';
   static const String quotationFormat = 'कोटेशन स्वरूप';

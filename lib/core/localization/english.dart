@@ -819,6 +819,7 @@ class EnglishLocalization {
   static const String quotationUpdated = 'Quotation updated';
   static const String noQuotationsFound = 'No quotations found';
   static const String validUntil = 'Valid Until';
+  static const String eventOrderDate = 'Event Date';
   static const String quotationType = 'Quotation Type';
   static const String quotationSettings = 'Quotation Settings';
   static const String quotationFormat = 'Quotation Format';

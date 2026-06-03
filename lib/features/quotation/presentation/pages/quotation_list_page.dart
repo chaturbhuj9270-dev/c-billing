@@ -298,7 +298,7 @@ class _QuotationListPageState extends State<QuotationListPage> {
                           ),
                           const SizedBox(height: 6),
                           Text(
-                            '${_l10n.validUntil}: ${dateFormat.format(domain.validUntil)}',
+                            '${_l10n.eventOrderDate}: ${dateFormat.format(domain.referenceDate)}',
                             style: TextStyle(
                               fontFamily: 'Literata',
                               fontSize: 11,

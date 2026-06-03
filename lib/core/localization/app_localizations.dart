@@ -7292,6 +7292,17 @@ class AppLocalizations {
     }
   }
 
+  String get eventOrderDate {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.eventOrderDate;
+      case 'Marathi':
+        return MarathiLocalization.eventOrderDate;
+      default:
+        return EnglishLocalization.eventOrderDate;
+    }
+  }
+
   String get quotationSettings {
     switch (languageCode) {
       case 'Hindi':

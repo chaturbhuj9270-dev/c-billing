@@ -56,7 +56,7 @@ class QuotationPrintService {
 
     return PrintBillData(
       billNumber: quotation.quotationNumber,
-      dateTime: quotation.referenceDate,
+      dateTime: quotation.createdAt,
       customerName: quotation.customerName,
       customerPhone: quotation.customerContact,
       items: items,
@@ -66,7 +66,7 @@ class QuotationPrintService {
       grandTotal: quotation.totalAmount,
       notes: quotation.notes,
       isQuotation: true,
-      validUntil: quotation.validUntil,
+      eventOrderDate: quotation.referenceDate,
       quotationTitle: quotation.title,
     );
   }
