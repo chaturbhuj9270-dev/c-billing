@@ -820,6 +820,14 @@ class EnglishLocalization {
   static const String noQuotationsFound = 'No quotations found';
   static const String validUntil = 'Valid Until';
   static const String quotationType = 'Quotation Type';
+  static const String quotationSettings = 'Quotation Settings';
+  static const String quotationFormat = 'Quotation Format';
+  static const String chooseQuotationFormat =
+      'Choose your default quotation format';
+  static const String customizePrintedQuotation =
+      'Customize printed quotation appearance';
+  static const String displayCustomerOnQuotation =
+      'Show customer name and phone on printed quotations';
   static const String productsOnly = 'Products';
   static const String eventOnly = 'Event';
   static const String eventAndProducts = 'Event + Products';

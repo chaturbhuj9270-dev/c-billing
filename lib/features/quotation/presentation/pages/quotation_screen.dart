@@ -13,6 +13,7 @@ import '../../data/services/quotation_print_service.dart';
 import '../../domain/entities/quotation.dart';
 import '../../offline/controllers/quotation_offline_controller.dart';
 import '../widgets/quotation_products_panel.dart';
+import 'quotation_settings_page.dart';
 
 class QuotationScreen extends StatefulWidget {
   final Quotation? existing;
@@ -379,6 +380,29 @@ class _QuotationScreenState extends State<QuotationScreen> {
               ),
             )
           else ...[
+            IconButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const QuotationSettingsPage(),
+                  ),
+                );
+              },
+              tooltip: _l10n.quotationSettings,
+              icon: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: _primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  Icons.settings_rounded,
+                  color: _primary,
+                  size: 20,
+                ),
+              ),
+            ),
             if (_isPrinting)
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 12),

@@ -8,6 +8,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:printing/printing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/print_bill_data.dart';
+import '../../../features/quotation/data/services/quotation_format_settings.dart';
 import '../../../features/shop/domain/entities/shop.dart';
 import '../../services/bill_report_settings_service.dart';
 
@@ -19,6 +20,29 @@ class PdfBillService {
 
   static final bool _isGenerating = false;
   static final Set<String> _generatingBills = <String>{};
+
+  /// POS (`pos`) or normal/tabular (`normal`) — uses quotation_type for quotations.
+  Future<String> resolvePdfFormat(PrintBillData billData) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (billData.isQuotation) {
+      return prefs.getString(QuotationFormatSettings.keyQuotationType) ?? 'pos';
+    }
+    return prefs.getString('bill_type') ?? 'pos';
+  }
+
+  Future<pw.Document> buildPdfDocument({
+    required PrintBillData billData,
+    required Shop shopDetails,
+  }) async {
+    final format = await resolvePdfFormat(billData);
+    if (format == 'normal') {
+      return generateNormalBillPdf(
+        billData: billData,
+        shopDetails: shopDetails,
+      );
+    }
+    return generateBillPdf(billData: billData, shopDetails: shopDetails);
+  }
 
   /// Generate a PDF document from bill data (POS receipt format)
   Future<pw.Document> generateBillPdf({
@@ -2161,25 +2185,14 @@ class PdfBillService {
     try {
       debugPrint('[PdfBillService] savePdfToFile started for bill: $billId');
 
-      // Check bill type setting
-      debugPrint('[PdfBillService] Getting SharedPreferences...');
-      final prefs = await SharedPreferences.getInstance();
-      final billType = prefs.getString('bill_type') ?? 'pos';
-      debugPrint('[PdfBillService] Bill type: $billType');
+      final format = await resolvePdfFormat(billData);
+      debugPrint('[PdfBillService] Document format: $format');
 
       debugPrint('[PdfBillService] Generating PDF document...');
-      final pw.Document pdf;
-      if (billType == 'normal') {
-        pdf = await generateNormalBillPdf(
-          billData: billData,
-          shopDetails: shopDetails,
-        );
-      } else {
-        pdf = await generateBillPdf(
-          billData: billData,
-          shopDetails: shopDetails,
-        );
-      }
+      final pdf = await buildPdfDocument(
+        billData: billData,
+        shopDetails: shopDetails,
+      );
       debugPrint('[PdfBillService] PDF document generated successfully');
 
       debugPrint('[PdfBillService] Saving PDF bytes...');
@@ -2244,23 +2257,13 @@ class PdfBillService {
         '[PdfBillService] Starting shareBillAsPdf for bill: ${billData.billNumber}',
       );
 
-      // Check bill type setting
-      final prefs = await SharedPreferences.getInstance();
-      final billType = prefs.getString('bill_type') ?? 'pos';
-      debugPrint('[PdfBillService] Bill type: $billType');
+      final format = await resolvePdfFormat(billData);
+      debugPrint('[PdfBillService] Document format: $format');
 
-      final pw.Document pdf;
-      if (billType == 'normal') {
-        pdf = await generateNormalBillPdf(
-          billData: billData,
-          shopDetails: shopDetails,
-        );
-      } else {
-        pdf = await generateBillPdf(
-          billData: billData,
-          shopDetails: shopDetails,
-        );
-      }
+      final pdf = await buildPdfDocument(
+        billData: billData,
+        shopDetails: shopDetails,
+      );
       debugPrint('[PdfBillService] PDF generated successfully');
 
       final bytes = await pdf.save();
@@ -2268,8 +2271,9 @@ class PdfBillService {
 
       // Write to a temp file first — XFile.fromData is unreliable on some devices
       final dir = await getTemporaryDirectory();
+      final prefix = billData.isQuotation ? 'quotation' : 'bill';
       final fileName =
-          'bill_${billData.billNumber.replaceAll('/', '_')}_${DateTime.now().millisecondsSinceEpoch}.pdf';
+          '${prefix}_${billData.billNumber.replaceAll('/', '_')}_${DateTime.now().millisecondsSinceEpoch}.pdf';
       final file = File('${dir.path}/$fileName');
       await file.writeAsBytes(bytes);
       debugPrint('[PdfBillService] PDF written to temp file: ${file.path}');
@@ -2277,8 +2281,10 @@ class PdfBillService {
       debugPrint('[PdfBillService] Calling Share.shareXFiles...');
       final result = await Share.shareXFiles(
         [XFile(file.path)],
-        text: 'Bill ${billData.billNumber} - ${shopDetails.shopName}',
-        subject: 'Bill from ${shopDetails.shopName}',
+        text:
+            '${billData.isQuotation ? 'Quotation' : 'Bill'} ${billData.billNumber} - ${shopDetails.shopName}',
+        subject:
+            '${billData.isQuotation ? 'Quotation' : 'Bill'} from ${shopDetails.shopName}',
       );
       debugPrint('[PdfBillService] Share result: ${result.status}');
     } catch (e, stackTrace) {
@@ -2293,23 +2299,15 @@ class PdfBillService {
     required PrintBillData billData,
     required Shop shopDetails,
   }) async {
-    // Check bill type setting
-    final prefs = await SharedPreferences.getInstance();
-    final billType = prefs.getString('bill_type') ?? 'pos';
+    final pdf = await buildPdfDocument(
+      billData: billData,
+      shopDetails: shopDetails,
+    );
 
-    final pw.Document pdf;
-    if (billType == 'normal') {
-      pdf = await generateNormalBillPdf(
-        billData: billData,
-        shopDetails: shopDetails,
-      );
-    } else {
-      pdf = await generateBillPdf(billData: billData, shopDetails: shopDetails);
-    }
-
+    final docLabel = billData.isQuotation ? 'Quotation' : 'Bill';
     await Printing.layoutPdf(
       onLayout: (format) => pdf.save(),
-      name: 'Bill_${billData.billNumber}',
+      name: '${docLabel}_${billData.billNumber}',
     );
   }
 
@@ -2318,23 +2316,16 @@ class PdfBillService {
     required PrintBillData billData,
     required Shop shopDetails,
   }) async {
-    // Check bill type setting
-    final prefs = await SharedPreferences.getInstance();
-    final billType = prefs.getString('bill_type') ?? 'pos';
+    final pdf = await buildPdfDocument(
+      billData: billData,
+      shopDetails: shopDetails,
+    );
 
-    final pw.Document pdf;
-    if (billType == 'normal') {
-      pdf = await generateNormalBillPdf(
-        billData: billData,
-        shopDetails: shopDetails,
-      );
-    } else {
-      pdf = await generateBillPdf(billData: billData, shopDetails: shopDetails);
-    }
-
+    final prefix = billData.isQuotation ? 'quotation' : 'bill';
     await Printing.sharePdf(
       bytes: await pdf.save(),
-      filename: 'bill_${billData.billNumber.replaceAll('/', '_')}.pdf',
+      filename:
+          '${prefix}_${billData.billNumber.replaceAll('/', '_')}.pdf',
     );
   }
 }

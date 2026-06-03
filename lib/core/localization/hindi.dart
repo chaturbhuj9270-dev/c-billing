@@ -822,6 +822,14 @@ class HindiLocalization {
   static const String noQuotationsFound = 'कोई कोटेशन नहीं मिला';
   static const String validUntil = 'वैध तिथि';
   static const String quotationType = 'कोटेशन प्रकार';
+  static const String quotationSettings = 'कोटेशन सेटिंग्स';
+  static const String quotationFormat = 'कोटेशन प्रारूप';
+  static const String chooseQuotationFormat =
+      'अपना डिफ़ॉल्ट कोटेशन प्रारूप चुनें';
+  static const String customizePrintedQuotation =
+      'मुद्रित कोटेशन की दिखावट अनुकूलित करें';
+  static const String displayCustomerOnQuotation =
+      'मुद्रित कोटेशन पर ग्राहक का नाम और फोन दिखाएं';
   static const String productsOnly = 'उत्पाद';
   static const String eventOnly = 'कार्यक्रम';
   static const String eventAndProducts = 'कार्यक्रम + उत्पाद';

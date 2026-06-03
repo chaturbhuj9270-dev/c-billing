@@ -7292,6 +7292,61 @@ class AppLocalizations {
     }
   }
 
+  String get quotationSettings {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.quotationSettings;
+      case 'Marathi':
+        return MarathiLocalization.quotationSettings;
+      default:
+        return EnglishLocalization.quotationSettings;
+    }
+  }
+
+  String get quotationFormat {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.quotationFormat;
+      case 'Marathi':
+        return MarathiLocalization.quotationFormat;
+      default:
+        return EnglishLocalization.quotationFormat;
+    }
+  }
+
+  String get chooseQuotationFormat {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.chooseQuotationFormat;
+      case 'Marathi':
+        return MarathiLocalization.chooseQuotationFormat;
+      default:
+        return EnglishLocalization.chooseQuotationFormat;
+    }
+  }
+
+  String get customizePrintedQuotation {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.customizePrintedQuotation;
+      case 'Marathi':
+        return MarathiLocalization.customizePrintedQuotation;
+      default:
+        return EnglishLocalization.customizePrintedQuotation;
+    }
+  }
+
+  String get displayCustomerOnQuotation {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.displayCustomerOnQuotation;
+      case 'Marathi':
+        return MarathiLocalization.displayCustomerOnQuotation;
+      default:
+        return EnglishLocalization.displayCustomerOnQuotation;
+    }
+  }
+
   String get productsOnly {
     switch (languageCode) {
       case 'Hindi':

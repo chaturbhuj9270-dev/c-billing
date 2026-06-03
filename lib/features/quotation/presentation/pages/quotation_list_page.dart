@@ -10,6 +10,7 @@ import '../../data/services/quotation_print_service.dart';
 import '../../offline/controllers/quotation_offline_controller.dart';
 import '../../offline/entities/quotation_entity.dart';
 import 'quotation_screen.dart';
+import 'quotation_settings_page.dart';
 
 class QuotationListPage extends StatefulWidget {
   const QuotationListPage({super.key});
@@ -135,6 +136,32 @@ class _QuotationListPageState extends State<QuotationListPage> {
             fontSize: 20,
           ),
         ),
+        actions: [
+          IconButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const QuotationSettingsPage(),
+                ),
+              );
+            },
+            tooltip: _l10n.quotationSettings,
+            icon: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: _primary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(
+                Icons.settings_rounded,
+                color: _primary,
+                size: 20,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _openQuotation(),

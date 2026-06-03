@@ -825,6 +825,14 @@ class MarathiLocalization {
   static const String noQuotationsFound = 'कोटेशन सापडले नाहीत';
   static const String validUntil = 'वैध तारीख';
   static const String quotationType = 'कोटेशन प्रकार';
+  static const String quotationSettings = 'कोटेशन सेटिंग्ज';
+  static const String quotationFormat = 'कोटेशन स्वरूप';
+  static const String chooseQuotationFormat =
+      'तुमचे डीफॉल्ट कोटेशन स्वरूप निवडा';
+  static const String customizePrintedQuotation =
+      'छापलेल्या कोटेशनचे स्वरूप सानुकूलित करा';
+  static const String displayCustomerOnQuotation =
+      'छापलेल्या कोटेशनवर ग्राहकाचे नाव आणि फोन दाखवा';
   static const String productsOnly = 'उत्पादने';
   static const String eventOnly = 'कार्यक्रम';
   static const String eventAndProducts = 'कार्यक्रम + उत्पादने';
