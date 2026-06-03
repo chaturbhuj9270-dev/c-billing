@@ -8,6 +8,7 @@ import '../../../../core/ui/glassy_toast.dart';
 import '../../../billing/domain/entities/bill_item.dart';
 import '../../../billing/presentation/widgets/barcode_scanner_sheet.dart';
 import '../../../billing/presentation/widgets/billing_add_items_widgets.dart';
+import '../../../billing/presentation/widgets/billing_line_item_widgets.dart';
 import '../../../event_order/domain/entities/order_item.dart';
 import '../../../inventory_management/domain/entities/product.dart';
 import '../../../inventory_management/offline/controllers/purchase_batch_offline_controller.dart';
@@ -16,7 +17,7 @@ import '../../../product/data/services/product_sync_service.dart';
 import '../../../product/offline/controllers/product_offline_controller.dart';
 import '../../../product/offline/entities/product_entity.dart';
 
-/// Product add UI for quotations — same flow as billing (code, search, barcode, batches).
+/// Product add UI for quotations — same flow and line editing as billing.
 class QuotationProductsPanel extends StatefulWidget {
   final List<OrderItem> items;
   final ValueChanged<List<OrderItem>> onItemsChanged;
@@ -47,12 +48,24 @@ class _QuotationProductsPanelState extends State<QuotationProductsPanel> {
   Map<int, Product> _productByIndexNo = {};
   bool _isLoadingProducts = true;
 
-  List<OrderItem> get _items => widget.items;
+  List<BillItem> _billItems = [];
+  final Map<String, String> _orderItemIdsByProductKey = {};
+  bool _syncingToParent = false;
 
   @override
   void initState() {
     super.initState();
+    _billItems = _billItemsFromOrderItems(widget.items);
     _loadProducts();
+  }
+
+  @override
+  void didUpdateWidget(QuotationProductsPanel oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (_syncingToParent) return;
+    if (oldWidget.items != widget.items) {
+      _billItems = _billItemsFromOrderItems(widget.items);
+    }
   }
 
   @override
@@ -61,6 +74,56 @@ class _QuotationProductsPanelState extends State<QuotationProductsPanel> {
     _indexNoController.dispose();
     _indexNoFocusNode.dispose();
     super.dispose();
+  }
+
+  List<BillItem> _billItemsFromOrderItems(List<OrderItem> items) {
+    for (final item in items) {
+      _orderItemIdsByProductKey[item.productId] = item.id;
+    }
+    return items
+        .map(
+          (item) => BillItem.create(
+            productId: item.productId,
+            productName: item.productName,
+            sellingPrice: item.rate,
+            purchasePrice: 0,
+            quantity: item.quantity.toDouble(),
+            hsnCode: item.hsnCode,
+            cgstPercent: item.cgstPercent,
+            sgstPercent: item.sgstPercent,
+          ),
+        )
+        .toList();
+  }
+
+  List<OrderItem> _orderItemsFromBillItems(List<BillItem> billItems) {
+    return billItems.map((billItem) {
+      final existingId = _orderItemIdsByProductKey[billItem.productId];
+      final qty = billItem.quantity < 1
+          ? 1
+          : billItem.quantity.round().clamp(1, 999999);
+      final orderItem = OrderItem.fromProductData(
+        id: existingId ?? _uuid.v4(),
+        productId: billItem.productId,
+        productName: billItem.productName,
+        hsnCode: billItem.hsnCode,
+        quantity: qty,
+        rate: billItem.sellingPrice,
+        cgstPercent: billItem.cgstPercent,
+        sgstPercent: billItem.sgstPercent,
+      );
+      _orderItemIdsByProductKey[billItem.productId] = orderItem.id;
+      return orderItem;
+    }).toList();
+  }
+
+  void _syncBillItemsToParent(List<BillItem> next) {
+    setState(() => _billItems = next);
+    _syncingToParent = true;
+    widget.onItemsChanged(_orderItemsFromBillItems(next));
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _syncingToParent = false;
+    });
   }
 
   Future<void> _loadProducts() async {
@@ -114,63 +177,28 @@ class _QuotationProductsPanelState extends State<QuotationProductsPanel> {
     );
   }
 
-  List<BillItem> _itemsAsBillItems() {
-    return _items
-        .map(
-          (item) => BillItem.create(
-            productId: item.productId,
-            productName: item.productName,
-            sellingPrice: item.rate,
-            purchasePrice: 0,
-            quantity: item.quantity.toDouble(),
-            hsnCode: item.hsnCode,
-            cgstPercent: item.cgstPercent,
-            sgstPercent: item.sgstPercent,
-          ),
-        )
-        .toList();
-  }
-
-  void _updateItems(List<OrderItem> next) {
-    widget.onItemsChanged(next);
+  void _showSnackbar(String message, {bool isError = false}) {
+    GlassyToast.show(context, message, isError: isError);
   }
 
   void _upsertFromBillItem(BillItem billItem) {
-    final items = List<OrderItem>.from(_items);
+    final items = List<BillItem>.from(_billItems);
     final existingIndex = items.indexWhere(
       (item) => item.productId == billItem.productId,
     );
-    final qty = billItem.quantity < 1
-        ? 1
-        : billItem.quantity.round().clamp(1, 999999);
-
-    final orderItem = OrderItem.fromProductData(
-      id: existingIndex != -1 ? items[existingIndex].id : _uuid.v4(),
-      productId: billItem.productId,
-      productName: billItem.productName,
-      hsnCode: billItem.hsnCode,
-      quantity: qty,
-      rate: billItem.sellingPrice,
-      cgstPercent: billItem.cgstPercent,
-      sgstPercent: billItem.sgstPercent,
-    );
 
     if (existingIndex != -1) {
-      items[existingIndex] = orderItem;
+      items[existingIndex] = billItem;
     } else {
-      items.add(orderItem);
+      items.add(billItem);
     }
-    _updateItems(items);
+    _syncBillItemsToParent(items);
   }
 
   void _removeByProductKey(String productKey) {
-    _updateItems(
-      _items.where((item) => item.productId != productKey).toList(),
+    _syncBillItemsToParent(
+      _billItems.where((item) => item.productId != productKey).toList(),
     );
-  }
-
-  void _showSnackbar(String message, {bool isError = false}) {
-    GlassyToast.show(context, message, isError: isError);
   }
 
   void _showAddItemsPopup() {
@@ -181,7 +209,7 @@ class _QuotationProductsPanelState extends State<QuotationProductsPanel> {
       builder: (ctx) => AddItemsBottomSheet(
         products: _products,
         allProducts: _allProducts,
-        billItems: _itemsAsBillItems(),
+        billItems: _billItems,
         availableBatches: _availableBatches,
         localizations: widget.localizations,
         showSnackbar: _showSnackbar,
@@ -305,7 +333,7 @@ class _QuotationProductsPanelState extends State<QuotationProductsPanel> {
           productCode: product.indexNo,
           batches: productBatches,
           localizations: widget.localizations,
-          existingBillItems: _itemsAsBillItems(),
+          existingBillItems: _billItems,
           cgstPercent: product.cgstPercent,
           sgstPercent: product.sgstPercent,
           hsnCode: product.hsnCode,
@@ -339,7 +367,7 @@ class _QuotationProductsPanelState extends State<QuotationProductsPanel> {
       return;
     }
 
-    final items = List<OrderItem>.from(_items);
+    final items = List<BillItem>.from(_billItems);
     final existingIndex = items.indexWhere(
       (item) => item.productId == product.id,
     );
@@ -347,8 +375,18 @@ class _QuotationProductsPanelState extends State<QuotationProductsPanel> {
     if (existingIndex != -1) {
       final existing = items[existingIndex];
       if (existing.quantity + 1 <= effectiveStock) {
-        items[existingIndex] = existing.copyWith(
+        items[existingIndex] = BillItem.create(
+          productId: existing.productId,
+          productName: existing.productName,
+          companyName: existing.companyName,
+          sellingPrice: existing.sellingPrice,
+          purchasePrice: existing.purchasePrice,
           quantity: existing.quantity + 1,
+          cgstPercent: existing.cgstPercent,
+          sgstPercent: existing.sgstPercent,
+          hsnCode: existing.hsnCode,
+          unit: existing.unit,
+          sellUnit: existing.sellUnit,
         );
       } else {
         _showSnackbar(
@@ -360,15 +398,21 @@ class _QuotationProductsPanelState extends State<QuotationProductsPanel> {
       }
     } else {
       items.add(
-        OrderItem.fromProduct(
-          product: product,
+        BillItem.create(
+          productId: product.id,
+          productName: product.name,
+          sellingPrice: product.salesPrice,
+          purchasePrice: product.purchasePrice,
           quantity: 1,
-          rate: product.salesPrice,
+          hsnCode: product.hsnCode,
+          unit: product.unit,
+          cgstPercent: product.cgstPercent,
+          sgstPercent: product.sgstPercent,
         ),
       );
     }
 
-    _updateItems(items);
+    _syncBillItemsToParent(items);
     _showSnackbar('${widget.localizations.added}: ${product.name}');
     _indexNoController.clear();
     _indexNoFocusNode.requestFocus();
@@ -380,11 +424,6 @@ class _QuotationProductsPanelState extends State<QuotationProductsPanel> {
     _debounceTimer = Timer(const Duration(milliseconds: 400), () {
       if (mounted) _addProductByIndexNo();
     });
-  }
-
-  void _removeItem(int index) {
-    final items = List<OrderItem>.from(_items)..removeAt(index);
-    _updateItems(items);
   }
 
   @override
@@ -404,7 +443,7 @@ class _QuotationProductsPanelState extends State<QuotationProductsPanel> {
         else ...[
           _buildAddProductBar(l10n),
           const SizedBox(height: 12),
-          if (_items.isEmpty)
+          if (_billItems.isEmpty)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 24),
               child: Center(
@@ -418,50 +457,14 @@ class _QuotationProductsPanelState extends State<QuotationProductsPanel> {
               ),
             )
           else
-            ...List.generate(_items.length, (index) {
-              final item = _items[index];
-              return Card(
-                margin: const EdgeInsets.only(bottom: 8),
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Material(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  child: ListTile(
-                    title: Text(
-                      item.productName,
-                      style: const TextStyle(
-                        fontFamily: 'Literata',
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    subtitle: Text(
-                      '${item.quantity} x ₹${item.rate.toStringAsFixed(2)}',
-                      style: const TextStyle(fontFamily: 'Literata'),
-                    ),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          '₹${item.total.toStringAsFixed(0)}',
-                          style: const TextStyle(
-                            fontFamily: 'Literata',
-                            fontWeight: FontWeight.w700,
-                            color: _primary,
-                          ),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.close, size: 20),
-                          onPressed: () => _removeItem(index),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              );
-            }),
+            BillItemsLineList(
+              items: _billItems,
+              products: _allProducts,
+              availableBatches: _availableBatches,
+              localizations: l10n,
+              onItemsChanged: _syncBillItemsToParent,
+              showSnackbar: _showSnackbar,
+            ),
         ],
       ],
     );

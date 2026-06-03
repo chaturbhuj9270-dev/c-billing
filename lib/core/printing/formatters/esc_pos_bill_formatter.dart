@@ -273,14 +273,23 @@ class EscPosBillFormatter {
       b.addAll(_lf());
     }
 
-    // Bill number
-    b.addAll(_kv('Bill No', d.billNumber, boldLabel: true));
+    if (d.isQuotation) {
+      b.addAll(_center('*** QUOTATION ***', bold: true));
+      b.addAll(_lf());
+    }
+
+    // Bill / quotation number
+    b.addAll(_kv(d.numberLabel, d.billNumber, boldLabel: true));
 
     // Date & time — always printed
     final dateFmt = DateFormat('dd/MM/yyyy');
     final timeFmt = DateFormat('hh:mm a');
     b.addAll(_kv('Date', dateFmt.format(d.dateTime)));
     b.addAll(_kv('Time', timeFmt.format(d.dateTime)));
+
+    if (d.isQuotation && d.validUntil != null) {
+      b.addAll(_kv('Valid Until', dateFmt.format(d.validUntil!)));
+    }
 
     // Customer info
     if (generateViaContact) {

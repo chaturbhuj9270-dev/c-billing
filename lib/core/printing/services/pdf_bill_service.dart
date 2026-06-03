@@ -237,7 +237,7 @@ class PdfBillService {
             color: lightBg,
             child: pw.Center(
               child: pw.Text(
-                'INVOICE',
+                billData.documentHeaderTitle,
                 style: pw.TextStyle(
                   fontSize: 14,
                   fontWeight: pw.FontWeight.bold,
@@ -313,7 +313,7 @@ class PdfBillService {
                       crossAxisAlignment: pw.CrossAxisAlignment.start,
                       children: [
                         _buildInfoLine(
-                          'Invoice No',
+                          billData.numberLabel,
                           billData.billNumber,
                           bold: true,
                         ),
@@ -324,6 +324,14 @@ class PdfBillService {
                         ),
                         pw.SizedBox(height: 3),
                         _buildInfoLine('Time', _formatTime(billData.dateTime)),
+                        if (billData.isQuotation &&
+                            billData.validUntil != null) ...[
+                          pw.SizedBox(height: 3),
+                          _buildInfoLine(
+                            'Valid Until',
+                            _formatDateNormal(billData.validUntil!),
+                          ),
+                        ],
                       ],
                     ),
                   ),
@@ -1381,6 +1389,21 @@ class PdfBillService {
         _buildDashedDivider(),
         pw.SizedBox(height: 4),
 
+        if (billData.isQuotation) ...[
+          pw.Text(
+            billData.documentHeaderTitle,
+            style: pw.TextStyle(
+              fontSize: 10,
+              fontWeight: pw.FontWeight.bold,
+              letterSpacing: 1.2,
+            ),
+            textAlign: pw.TextAlign.center,
+          ),
+          pw.SizedBox(height: 4),
+          _buildDashedDivider(),
+          pw.SizedBox(height: 4),
+        ],
+
         // ═══════════════════════════════════════════════
         // INVOICE INFO
         // ═══════════════════════════════════════════════
@@ -1391,7 +1414,10 @@ class PdfBillService {
               pw.Row(
                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                 children: [
-                  pw.Text('Bill No:', style: const pw.TextStyle(fontSize: 6)),
+                  pw.Text(
+                    '${billData.numberLabel}:',
+                    style: const pw.TextStyle(fontSize: 6),
+                  ),
                   pw.Text(
                     billData.billNumber,
                     style: pw.TextStyle(
@@ -1401,6 +1427,27 @@ class PdfBillService {
                   ),
                 ],
               ),
+              if (billData.isQuotation &&
+                  billData.quotationTitle != null &&
+                  billData.quotationTitle!.isNotEmpty) ...[
+                pw.SizedBox(height: 2),
+                pw.Row(
+                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                  children: [
+                    pw.Text('Title:', style: const pw.TextStyle(fontSize: 6)),
+                    pw.Expanded(
+                      child: pw.Text(
+                        billData.quotationTitle!,
+                        style: pw.TextStyle(
+                          fontSize: 6,
+                          fontWeight: pw.FontWeight.bold,
+                        ),
+                        textAlign: pw.TextAlign.right,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
               pw.SizedBox(height: 2),
               pw.Row(
                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
@@ -1412,6 +1459,22 @@ class PdfBillService {
                   ),
                 ],
               ),
+              if (billData.isQuotation && billData.validUntil != null) ...[
+                pw.SizedBox(height: 2),
+                pw.Row(
+                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                  children: [
+                    pw.Text(
+                      'Valid Until:',
+                      style: const pw.TextStyle(fontSize: 6),
+                    ),
+                    pw.Text(
+                      _formatDate(billData.validUntil!),
+                      style: const pw.TextStyle(fontSize: 6),
+                    ),
+                  ],
+                ),
+              ],
               // Customer Info
               if ((showCustomer &&
                       billData.customerName != null &&
@@ -2133,8 +2196,9 @@ class PdfBillService {
 
       // Create a unique filename to avoid conflicts
       final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final prefix = billData.isQuotation ? 'quotation' : 'bill';
       final fileName =
-          'bill_${billData.billNumber.replaceAll('/', '_')}_$timestamp.pdf';
+          '${prefix}_${billData.billNumber.replaceAll('/', '_')}_$timestamp.pdf';
       final file = File('${dir.path}/$fileName');
 
       debugPrint('[PdfBillService] Writing file to: ${file.path}');

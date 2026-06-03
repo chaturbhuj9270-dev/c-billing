@@ -59,6 +59,19 @@ class PrintBillItem {
     }
   }
 
+  /// Create from OrderItem (quotations / event orders).
+  factory PrintBillItem.fromOrderItem(dynamic orderItem) {
+    return PrintBillItem(
+      name: orderItem.productName as String,
+      quantity: ((orderItem.quantity as num?) ?? 0).toDouble(),
+      rate: (orderItem.rate as num).toDouble(),
+      amount: (orderItem.subtotal as num).toDouble(),
+      cgstPercent: (orderItem.cgstPercent as num?)?.toDouble() ?? 0.0,
+      sgstPercent: (orderItem.sgstPercent as num?)?.toDouble() ?? 0.0,
+      hsnCode: orderItem.hsnCode as String?,
+    );
+  }
+
   /// Create from BillItem entity
   factory PrintBillItem.fromBillItem(dynamic billItem) {
     return PrintBillItem(
@@ -109,6 +122,10 @@ class PrintBillData {
   final String? paymentMethod;
   final String? notes;
   final bool isReturnBill;
+  /// When true, PDF/thermal output uses Quotation labels instead of Bill/Invoice.
+  final bool isQuotation;
+  final DateTime? validUntil;
+  final String? quotationTitle;
   final double? refundAmount;
 
   /// Amount paid for this bill
@@ -166,6 +183,9 @@ class PrintBillData {
     this.paymentMethod,
     this.notes,
     this.isReturnBill = false,
+    this.isQuotation = false,
+    this.validUntil,
+    this.quotationTitle,
     this.refundAmount,
     this.paidAmount,
     this.pendingAmount,
@@ -181,6 +201,10 @@ class PrintBillData {
     this.otherTaxAmount = 0.0,
     this.totalTaxAmount = 0.0,
   });
+
+  String get numberLabel => isQuotation ? 'Quotation No' : 'Bill No';
+
+  String get documentHeaderTitle => isQuotation ? 'QUOTATION' : 'INVOICE';
 
   /// Create from Bill entity
   factory PrintBillData.fromBill(
@@ -252,7 +276,8 @@ class PrintBillData {
   bool get hasTax => taxAmount != null && taxAmount! > 0;
 
   /// Check if payment info is available
-  bool get hasPaymentInfo => paidAmount != null || pendingAmount != null;
+  bool get hasPaymentInfo =>
+      !isQuotation && (paidAmount != null || pendingAmount != null);
 
   /// Check if there's pending amount
   bool get hasPendingAmount => pendingAmount != null && pendingAmount! > 0;

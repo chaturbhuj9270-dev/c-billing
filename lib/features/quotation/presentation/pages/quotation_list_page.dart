@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/services/language_service.dart';
 import '../../../../core/ui/glassy_toast.dart';
+import '../../data/services/quotation_print_service.dart';
 import '../../offline/controllers/quotation_offline_controller.dart';
 import '../../offline/entities/quotation_entity.dart';
 import 'quotation_screen.dart';
@@ -23,6 +24,7 @@ class _QuotationListPageState extends State<QuotationListPage> {
   StreamSubscription<List<QuotationEntity>>? _subscription;
   List<QuotationEntity> _quotations = [];
   bool _isLoading = true;
+  String? _printingQuotationKey;
 
   @override
   void initState() {
@@ -43,6 +45,22 @@ class _QuotationListPageState extends State<QuotationListPage> {
   void dispose() {
     _subscription?.cancel();
     super.dispose();
+  }
+
+  Future<void> _printQuotation(QuotationEntity entity) async {
+    final key = '${entity.id}_${entity.quotationNumber}';
+    if (_printingQuotationKey != null) return;
+
+    setState(() => _printingQuotationKey = key);
+    try {
+      await QuotationPrintService.instance.showQuotationPdfPreview(
+        context: context,
+        quotation: entity.toDomain(),
+        localizations: _l10n,
+      );
+    } finally {
+      if (mounted) setState(() => _printingQuotationKey = null);
+    }
   }
 
   Future<void> _openQuotation({QuotationEntity? entity}) async {
@@ -171,14 +189,18 @@ class _QuotationListPageState extends State<QuotationListPage> {
                   ),
                   elevation: 0,
                   color: Colors.white,
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(16),
-                    onTap: () => _openQuotation(entity: item),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(12),
+                            onTap: () => _openQuotation(entity: item),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
                           Row(
                             children: [
                               Expanded(
@@ -256,8 +278,42 @@ class _QuotationListPageState extends State<QuotationListPage> {
                               color: Colors.grey[500],
                             ),
                           ),
-                        ],
-                      ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        _printingQuotationKey ==
+                                '${item.id}_${item.quotationNumber}'
+                            ? const Padding(
+                                padding: EdgeInsets.only(top: 4),
+                                child: SizedBox(
+                                  width: 24,
+                                  height: 24,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      _primary,
+                                    ),
+                                  ),
+                                ),
+                              )
+                            : GestureDetector(
+                                onTap: () => _printQuotation(item),
+                                child: Container(
+                                  padding: const EdgeInsets.all(6),
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey[100],
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Icon(
+                                    Icons.print_rounded,
+                                    size: 16,
+                                    color: Colors.grey[600],
+                                  ),
+                                ),
+                              ),
+                      ],
                     ),
                   ),
                 );

@@ -9,6 +9,7 @@ import '../../../event_order/domain/entities/order_item.dart';
 import '../../../event_order/domain/entities/sub_event.dart';
 import '../../../customer/offline/controllers/customer_offline_controller.dart';
 import '../../../customer/offline/entities/customer_entity.dart';
+import '../../data/services/quotation_print_service.dart';
 import '../../domain/entities/quotation.dart';
 import '../../offline/controllers/quotation_offline_controller.dart';
 import '../widgets/quotation_products_panel.dart';
@@ -34,6 +35,7 @@ class _QuotationScreenState extends State<QuotationScreen> {
   List<OrderItem> _orderItems = [];
   List<CustomerEntity> _customerSuggestions = [];
   bool _isLoading = false;
+  bool _isPrinting = false;
 
   final _customerNameController = TextEditingController();
   final _customerContactController = TextEditingController();
@@ -200,6 +202,60 @@ class _QuotationScreenState extends State<QuotationScreen> {
     }
   }
 
+  Quotation _quotationSnapshot() {
+    final now = DateTime.now();
+    final existing = widget.existing;
+    return Quotation(
+      id: existing?.id ?? 'draft',
+      quotationNumber: existing?.quotationNumber ?? 'DRAFT',
+      quotationType: _type,
+      customerId: _customerId,
+      customerName: _customerNameController.text.trim(),
+      customerContact: _customerContactController.text.trim(),
+      customerAddress: _customerAddressController.text.trim().isEmpty
+          ? null
+          : _customerAddressController.text.trim(),
+      title: _titleController.text.trim(),
+      description: _descriptionController.text.trim().isEmpty
+          ? null
+          : _descriptionController.text.trim(),
+      referenceDate: _referenceDate,
+      eventLocation: _locationController.text.trim().isEmpty
+          ? null
+          : _locationController.text.trim(),
+      validUntil: _validUntil,
+      subEvents: List.from(_subEvents),
+      items: List.from(_orderItems),
+      eventCharges: _eventCharges,
+      discountAmount: _discountAmount,
+      totalAmount: _totalAmount,
+      notes: _notesController.text.trim().isEmpty
+          ? null
+          : _notesController.text.trim(),
+      createdAt: existing?.createdAt ?? now,
+      updatedAt: now,
+    );
+  }
+
+  Future<void> _printQuotation() async {
+    if (_titleController.text.trim().isEmpty) {
+      GlassyToast.show(context, 'Please enter a title', isError: true);
+      return;
+    }
+    if (_isPrinting) return;
+
+    setState(() => _isPrinting = true);
+    try {
+      await QuotationPrintService.instance.showQuotationPdfPreview(
+        context: context,
+        quotation: _quotationSnapshot(),
+        localizations: _l10n,
+      );
+    } finally {
+      if (mounted) setState(() => _isPrinting = false);
+    }
+  }
+
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
     if (_titleController.text.trim().isEmpty) {
@@ -322,7 +378,36 @@ class _QuotationScreenState extends State<QuotationScreen> {
                 child: CircularProgressIndicator(strokeWidth: 2, color: _primary),
               ),
             )
-          else
+          else ...[
+            if (_isPrinting)
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 12),
+                child: SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: _primary,
+                  ),
+                ),
+              )
+            else
+              IconButton(
+                onPressed: _printQuotation,
+                tooltip: _l10n.quotation,
+                icon: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: _primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.print_rounded,
+                    color: _primary,
+                    size: 20,
+                  ),
+                ),
+              ),
             TextButton(
               onPressed: _save,
               child: Text(
@@ -334,6 +419,7 @@ class _QuotationScreenState extends State<QuotationScreen> {
                 ),
               ),
             ),
+          ],
         ],
       ),
       body: Form(
