@@ -40,8 +40,8 @@ dependencies:
   # Google Gemini AI for Invoice Scanning
   google_generative_ai: ^0.4.6
   # Offline-First Database (community maintained with AGP support)
-  isar_community: ^3.3.0
-  isar_community_flutter_libs: ^3.3.0
+  isar_community: ^3.3.2
+  isar_community_flutter_libs: ^3.3.2
   # Network Connectivity
   connectivity_plus: ^6.1.4
   font_awesome_flutter: ^11.0.0
@@ -49,7 +49,7 @@ dependencies:
   barcode: ^2.2.8
   barcode_widget: ^2.0.4
   # Barcode Scanning
-  mobile_scanner: ^5.2.3
+  mobile_scanner: ^7.1.3
   # Signature Pad
   signature: ^5.4.1
 
@@ -60,7 +60,7 @@ dev_dependencies:
   flutter_lints: ^6.0.0
   flutter_launcher_icons: ^0.14.3
   # Isar Generator (community maintained)
-  isar_community_generator: ^3.3.0
+  isar_community_generator: ^3.3.2
   build_runner: ^2.4.13
 
 flutter_launcher_icons:
