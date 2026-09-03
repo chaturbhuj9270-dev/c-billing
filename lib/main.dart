@@ -31,11 +31,13 @@ Future<void> main() async {
   ErrorLoggingService.initialize();
 
   // Firebase MUST be initialized before runApp because services
-  // like SubscriptionService access FirebaseFirestore.instance at construction time
+  // like SubscriptionService access FirebaseFirestore.instance at construction time.
+  // Timeout avoids an indefinite blank screen when Play Services is slow/broken
+  // (common on some Android emulators, especially 16KB page-size images).
   try {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
-    );
+    ).timeout(const Duration(seconds: 15));
   } catch (e) {
     debugPrint('Firebase init error: $e');
   }

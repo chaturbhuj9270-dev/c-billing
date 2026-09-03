@@ -47,7 +47,7 @@ class _SplashPageState extends State<SplashPage> {
     // Precache logo for instant display
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        precacheImage(const AssetImage('assets/images/logo.png'), context);
+        precacheImage(const AssetImage('assets/images/app_logo.png'), context);
       }
     });
 
@@ -344,7 +344,7 @@ class _SplashPageState extends State<SplashPage> {
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(32),
                           child: Image.asset(
-                            'assets/images/logo.png',
+                            'assets/images/app_logo.png',
                             fit: BoxFit.cover,
                             gaplessPlayback: true,
                             cacheWidth: 360, // 3x for high DPI screens

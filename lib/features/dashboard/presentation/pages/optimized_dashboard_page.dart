@@ -550,7 +550,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(10),
                     child: Image.asset(
-                      'assets/images/logo.png',
+                      'assets/images/app_logo.png',
                       width: 28,
                       height: 28,
                       fit: BoxFit.contain,

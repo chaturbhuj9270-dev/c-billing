@@ -273,7 +273,7 @@ class _LoginPageV2State extends State<LoginPageV2>
                                       ],
                                     ),
                                     child: Image.asset(
-                                      'assets/images/logo.png',
+                                      'assets/images/app_logo.png',
                                       width: 120,
                                       height: 120,
                                     ),
@@ -390,7 +390,7 @@ class _LoginPageV2State extends State<LoginPageV2>
                                     ],
                                   ),
                                   child: Image.asset(
-                                    'assets/images/logo.png',
+                                    'assets/images/app_logo.png',
                                     width: 80,
                                     height: 80,
                                   ),

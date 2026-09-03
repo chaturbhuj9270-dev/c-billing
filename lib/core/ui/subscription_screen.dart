@@ -220,7 +220,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(24),
-        child: Image.asset('assets/images/logo.png', fit: BoxFit.cover),
+        child: Image.asset('assets/images/app_logo.png', fit: BoxFit.cover),
       ),
     );
   }

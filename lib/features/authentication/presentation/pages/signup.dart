@@ -245,7 +245,7 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
                               ],
                             ),
                             child: Image.asset(
-                              'assets/images/logo.png',
+                              'assets/images/app_logo.png',
                               width: 70,
                               height: 70,
                             ),
