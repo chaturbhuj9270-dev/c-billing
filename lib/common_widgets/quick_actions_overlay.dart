@@ -34,7 +34,11 @@ class QuickActionItem {
 /// Usage: Add [GlobalQuickActionsFAB] to a Stack on top of your page content.
 /// It manages its own open/close state internally.
 class GlobalQuickActionsFAB extends StatefulWidget {
-  const GlobalQuickActionsFAB({super.key});
+  /// Distance from the bottom of the stack. Raise this when a floating
+  /// bottom nav bar overlays the body (e.g. with [Scaffold.extendBody]).
+  final double bottomOffset;
+
+  const GlobalQuickActionsFAB({super.key, this.bottomOffset = 16});
 
   @override
   State<GlobalQuickActionsFAB> createState() => _GlobalQuickActionsFABState();
@@ -209,7 +213,11 @@ class _GlobalQuickActionsFABState extends State<GlobalQuickActionsFAB>
         // Full-screen scrim + overlay when open
         if (_isOpen) _buildOverlay(context),
         // FAB button — bottom-right
-        Positioned(right: 16, bottom: 16, child: _buildFAB()),
+        Positioned(
+          right: 16,
+          bottom: widget.bottomOffset,
+          child: _buildFAB(),
+        ),
       ],
     );
   }

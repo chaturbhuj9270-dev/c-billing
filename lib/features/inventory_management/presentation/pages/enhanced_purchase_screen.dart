@@ -1765,7 +1765,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
 
   Widget _buildFAB() {
     return Padding(
-      padding: EdgeInsets.only(bottom: widget.isEmbedded ? 72 : 0),
+      padding: EdgeInsets.only(bottom: widget.isEmbedded ? 88 : 0),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(22),
         child: BackdropFilter(

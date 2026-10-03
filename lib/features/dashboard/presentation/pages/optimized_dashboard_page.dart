@@ -26,6 +26,7 @@ import '../widgets/shimmer_widgets.dart';
 import 'flyout_menu.dart';
 import '../../../settings/presentation/pages/logs_viewer_page.dart';
 import '../../../../common_widgets/action_menu.dart';
+import '../../../../common_widgets/glassy_bottom_nav_bar.dart';
 import '../../../../common_widgets/quick_actions_overlay.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
 
@@ -1951,124 +1952,32 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
   }
 
   Widget _buildBottomNavBar() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
-            blurRadius: 20,
-            offset: const Offset(0, -4),
-          ),
-        ],
-      ),
-      child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              _buildNavItem(
-                0,
-                Icons.dashboard_rounded,
-                _localizations.dashboard,
-              ),
-              _buildNavItem(1, Icons.people_rounded, _localizations.customers),
-              _buildNavItem(
-                2,
-                Icons.receipt_long_rounded,
-                _localizations.billing,
-                isPrimary: true,
-              ),
-              _buildNavItem(
-                3,
-                Icons.event_available_rounded,
-                _localizations.availability,
-              ),
-              _buildNavItem(
-                4,
-                Icons.shopping_cart_rounded,
-                _localizations.purchase,
-              ),
-            ],
-          ),
+    return GlassyBottomNavBar(
+      selectedIndex: _selectedIndex,
+      onTap: _navigateToPage,
+      items: [
+        GlassyNavItem(
+          icon: Icons.dashboard_rounded,
+          label: _localizations.dashboard,
         ),
-      ),
-    );
-  }
-
-  Widget _buildNavItem(
-    int index,
-    IconData icon,
-    String label, {
-    bool isPrimary = false,
-  }) {
-    final isSelected = _selectedIndex == index;
-
-    // All tabs now get the same elevated, highlighted design when selected
-    return Expanded(
-      child: GestureDetector(
-        onTap: () => _navigateToPage(index),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-          margin: const EdgeInsets.symmetric(horizontal: 2),
-          decoration: BoxDecoration(
-            gradient: isSelected
-                ? const LinearGradient(
-                    colors: [Color(0xFF1B4D3E), Color(0xFF2E7D5B)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  )
-                : null,
-            color: isSelected
-                ? null
-                : (isPrimary
-                      ? const Color(0xFF1B4D3E).withValues(alpha: 0.08)
-                      : Colors.transparent),
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: isSelected
-                ? [
-                    BoxShadow(
-                      color: const Color(0xFF1B4D3E).withValues(alpha: 0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ]
-                : null,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                icon,
-                color: isSelected
-                    ? Colors.white
-                    : (isPrimary ? const Color(0xFF1B4D3E) : Colors.grey[600]),
-                size: isSelected ? 22 : 20,
-              ),
-              const SizedBox(height: 3),
-              Text(
-                label,
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: isSelected
-                      ? Colors.white
-                      : (isPrimary
-                            ? const Color(0xFF1B4D3E)
-                            : Colors.grey[600]),
-                  fontSize: isSelected ? 9 : 8,
-                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                  fontFamily: 'Literata',
-                ),
-              ),
-            ],
-          ),
+        GlassyNavItem(
+          icon: Icons.people_rounded,
+          label: _localizations.customers,
         ),
-      ),
+        GlassyNavItem(
+          icon: Icons.receipt_long_rounded,
+          label: _localizations.billing,
+          isPrimary: true,
+        ),
+        GlassyNavItem(
+          icon: Icons.event_available_rounded,
+          label: _localizations.availability,
+        ),
+        GlassyNavItem(
+          icon: Icons.shopping_cart_rounded,
+          label: _localizations.purchase,
+        ),
+      ],
     );
   }
 

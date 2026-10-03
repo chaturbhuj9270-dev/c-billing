@@ -870,7 +870,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
 
   Widget _buildFAB() {
     return Padding(
-      padding: EdgeInsets.only(bottom: widget.isEmbedded ? 72 : 0),
+      padding: EdgeInsets.only(bottom: widget.isEmbedded ? 88 : 0),
       child: Container(
         decoration: BoxDecoration(
           gradient: const LinearGradient(
