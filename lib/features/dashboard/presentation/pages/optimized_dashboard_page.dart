@@ -1090,7 +1090,8 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
     showGeneralDialog(
       context: context,
       barrierDismissible: true,
-      barrierColor: Colors.black54,
+      // Softer scrim so the glassy flyout reads as translucent.
+      barrierColor: Colors.black.withValues(alpha: 0.35),
       barrierLabel: 'Flyout Menu',
       transitionDuration: const Duration(milliseconds: 300),
       pageBuilder: (_, _, _) => const SizedBox.expand(child: FlyoutMenu()),
@@ -1103,7 +1104,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
           child: Align(
             alignment: Alignment.centerLeft,
             child: SizedBox(
-              width: MediaQuery.of(context).size.width * 0.75,
+              width: MediaQuery.of(context).size.width * 0.78,
               child: child,
             ),
           ),

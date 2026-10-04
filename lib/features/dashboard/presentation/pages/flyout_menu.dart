@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../../core/services/language_service.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/services/biometric_service.dart';
-import '../../../../core/services/error_logging_service.dart';
 import '../../../../core/services/logout_service.dart';
 import '../../../../features/authentication/presentation/pages/change_password_page.dart';
+import '../../../../common_widgets/water_drop_effect.dart';
 import 'profile_page.dart';
 import '../../../supplier/presentation/pages/enhanced_supplier_page.dart';
 import '../../../customer/presentation/pages/enhanced_customer_page.dart';
@@ -35,10 +36,14 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
   // Animation controllers
   late AnimationController _slideController;
   late AnimationController _staggerController;
+  late AnimationController _dropController;
   late Animation<Offset> _slideAnimation;
   late Animation<double> _fadeAnimation;
   late List<Animation<Offset>> _menuItemAnimations;
   late List<Animation<double>> _menuItemFadeAnimations;
+  Offset? _dropOrigin;
+  final GlobalKey _panelKey = GlobalKey();
+  static const _accent = Color(0xFF1B4D3E);
 
   // Menu items with icons and colors
   final List<_MenuItem> _menuItems = [
@@ -81,7 +86,7 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
     super.initState();
     _localizations = AppLocalizations(LanguageService.instance.currentLanguage);
     _currentUser = _auth.currentUser;
-    _userName = _currentUser?.displayName ?? 'User';
+    _userName = _resolveUserName(_currentUser);
     _selectedLanguage = LanguageService.instance.currentLanguage;
     _loadBiometricStatus();
 
@@ -142,6 +147,11 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
       );
     });
 
+    _dropController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    );
+
     // Start animations
     _slideController.forward();
     Future.delayed(const Duration(milliseconds: 200), () {
@@ -155,7 +165,25 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
   void dispose() {
     _slideController.dispose();
     _staggerController.dispose();
+    _dropController.dispose();
     super.dispose();
+  }
+
+  void _triggerWaterDrop(Offset globalPosition) {
+    final box = _panelKey.currentContext?.findRenderObject() as RenderBox?;
+    if (box == null || !box.hasSize) return;
+    setState(() => _dropOrigin = box.globalToLocal(globalPosition));
+    _dropController.forward(from: 0);
+  }
+
+  String _resolveUserName(User? user) {
+    final displayName = user?.displayName?.trim();
+    if (displayName != null && displayName.isNotEmpty) return displayName;
+    final email = user?.email?.trim();
+    if (email != null && email.isNotEmpty) {
+      return email.contains('@') ? email.split('@').first : email;
+    }
+    return 'User';
   }
 
   Future<void> _loadBiometricStatus() async {
@@ -202,12 +230,18 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
     LogoutService.instance.logout(context);
   }
 
-  void _navigateToPage(String pageName, int index) {
+  void _navigateToPage(String pageName, int index, {Offset? tapPosition}) {
+    if (tapPosition != null) {
+      HapticFeedback.lightImpact();
+      _triggerWaterDrop(tapPosition);
+    }
     setState(() {
       _selectedIndex = index;
     });
 
-    Future.delayed(const Duration(milliseconds: 150), () {
+    // Slightly longer delay so the water-drop splash is visible before closing.
+    Future.delayed(const Duration(milliseconds: 280), () {
+      if (!mounted) return;
       Navigator.pop(context);
       switch (pageName) {
         case 'Home':
@@ -307,85 +341,125 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final menuWidth = screenWidth >= 800
-        ? (screenWidth * 0.35).clamp(350.0, 480.0)
-        : screenWidth * 0.95;
     return SlideTransition(
       position: _slideAnimation,
-      child: Container(
-        width: menuWidth,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.15),
-              blurRadius: 30,
-              offset: const Offset(5, 0),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(8, 10, 0, 10),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            borderRadius: const BorderRadius.horizontal(
+              right: Radius.circular(28),
             ),
-          ],
-        ),
-        child: Column(
-          children: [
-            // Gradient Header with Profile
-            _buildHeader(),
-
-            // Menu Items
-            Expanded(
-              child: FadeTransition(
-                opacity: _fadeAnimation,
-                child: ListView(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  children: [
-                    // Regular menu items
-                    ...List.generate(_menuItems.length, (index) {
-                      return SlideTransition(
-                        position: _menuItemAnimations[index],
-                        child: FadeTransition(
-                          opacity: _menuItemFadeAnimations[index],
-                          child: _buildMenuItem(
-                            item: _menuItems[index],
-                            index: index,
-                            isSelected: _selectedIndex == index,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.14),
+                blurRadius: 28,
+                offset: const Offset(6, 0),
+              ),
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.06),
+                blurRadius: 10,
+                offset: const Offset(2, 0),
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            key: _panelKey,
+            borderRadius: const BorderRadius.horizontal(
+              right: Radius.circular(28),
+            ),
+            child: SizedBox(
+              width: double.infinity,
+              child: Stack(
+                children: [
+                  Container(
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          Colors.white.withValues(alpha: 0.92),
+                          const Color(0xFFE8F0F5).withValues(alpha: 0.88),
+                          _accent.withValues(alpha: 0.14),
+                        ],
+                      ),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.8),
+                        width: 1.1,
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        _buildHeader(),
+                        Expanded(
+                          child: FadeTransition(
+                            opacity: _fadeAnimation,
+                            child: ListView(
+                              padding: const EdgeInsets.symmetric(vertical: 8),
+                              children: [
+                                ...List.generate(_menuItems.length, (index) {
+                                  return SlideTransition(
+                                    position: _menuItemAnimations[index],
+                                    child: FadeTransition(
+                                      opacity: _menuItemFadeAnimations[index],
+                                      child: _buildMenuItem(
+                                        item: _menuItems[index],
+                                        index: index,
+                                        isSelected: _selectedIndex == index,
+                                      ),
+                                    ),
+                                  );
+                                }),
+                                if (_canUseBiometrics) _buildBiometricToggle(),
+                              ],
+                            ),
                           ),
                         ),
-                      );
-                    }),
-
-                    // Biometric Lock Toggle
-                    if (_canUseBiometrics) _buildBiometricToggle(),
-                  ],
-                ),
+                        FadeTransition(
+                          opacity: _fadeAnimation,
+                          child: _buildBottomSection(),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Water-drop splash over the glass panel
+                  Positioned.fill(
+                    child: IgnorePointer(
+                      child: AnimatedBuilder(
+                        animation: _dropController,
+                        builder: (context, _) {
+                          return CustomPaint(
+                            painter: WaterDropPainter(
+                              origin: _dropOrigin,
+                              progress: _dropController.value,
+                              accentColor: _accent,
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-
-            // Bottom Section with Logout
-            FadeTransition(
-              opacity: _fadeAnimation,
-              child: _buildBottomSection(),
-            ),
-          ],
+          ),
         ),
       ),
     );
   }
 
   Widget _buildHeader() {
+    // Keep the header opaque enough that white username text stays readable
+    // on the glassy flyout panel.
     return Container(
       width: double.infinity,
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [Color(0xFF1B4D3E), Color(0xFF0F3B2F), Color(0xFF134E3A)],
         ),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF1B4D3E).withValues(alpha: 0.3),
-            blurRadius: 20,
-            offset: const Offset(0, 4),
-          ),
-        ],
       ),
       child: SafeArea(
         bottom: false,
@@ -451,15 +525,38 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
                       _userName,
                       style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 16,
+                        fontSize: 17,
                         fontWeight: FontWeight.w700,
                         fontFamily: 'Literata',
                         letterSpacing: 0.3,
                         decoration: TextDecoration.none,
+                        shadows: [
+                          Shadow(
+                            color: Color(0x66000000),
+                            blurRadius: 4,
+                            offset: Offset(0, 1),
+                          ),
+                        ],
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
+                    if (_currentUser?.email != null &&
+                        _currentUser!.email!.isNotEmpty) ...[
+                      const SizedBox(height: 3),
+                      Text(
+                        _currentUser!.email!,
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.85),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          fontFamily: 'Literata',
+                          decoration: TextDecoration.none,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
                     const SizedBox(height: 6),
                     Container(
                       padding: const EdgeInsets.symmetric(
@@ -467,7 +564,7 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.15),
+                        color: Colors.white.withValues(alpha: 0.18),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Row(
@@ -485,7 +582,7 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
                           Text(
                             _localizations.online,
                             style: const TextStyle(
-                              color: Colors.white70,
+                              color: Colors.white,
                               fontSize: 11,
                               fontWeight: FontWeight.w500,
                               fontFamily: 'Literata',
@@ -511,25 +608,50 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
     required bool isSelected,
   }) {
     return GestureDetector(
-      onTap: () => _navigateToPage(item.route, index),
+      behavior: HitTestBehavior.opaque,
+      onTapDown: (details) => _navigateToPage(
+        item.route,
+        index,
+        tapPosition: details.globalPosition,
+      ),
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
+        duration: const Duration(milliseconds: 220),
+        curve: Curves.easeOutCubic,
         margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: isSelected
-              ? item.color.withValues(alpha: 0.1)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(14),
-          border: isSelected
-              ? Border.all(color: item.color.withValues(alpha: 0.3))
+          gradient: isSelected
+              ? LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Colors.white.withValues(alpha: 0.55),
+                    item.color.withValues(alpha: 0.18),
+                  ],
+                )
+              : null,
+          color: isSelected ? null : Colors.transparent,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected
+                ? Colors.white.withValues(alpha: 0.65)
+                : Colors.transparent,
+            width: 1,
+          ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: item.color.withValues(alpha: 0.22),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ]
               : null,
         ),
         child: Row(
           children: [
-            // Icon with gradient background when selected
             AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
+              duration: const Duration(milliseconds: 220),
               width: 40,
               height: 40,
               decoration: BoxDecoration(
@@ -538,8 +660,13 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
                         colors: [item.color, item.color.withValues(alpha: 0.7)],
                       )
                     : null,
-                color: isSelected ? null : item.color.withValues(alpha: 0.1),
+                color: isSelected
+                    ? null
+                    : item.color.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: isSelected ? 0.35 : 0.2),
+                ),
                 boxShadow: isSelected
                     ? [
                         BoxShadow(
@@ -569,7 +696,6 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
                 ),
               ),
             ),
-            // Arrow indicator for selected item
             AnimatedOpacity(
               duration: const Duration(milliseconds: 200),
               opacity: isSelected ? 1.0 : 0.0,
@@ -577,8 +703,11 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
                 width: 32,
                 height: 32,
                 decoration: BoxDecoration(
-                  color: item.color.withValues(alpha: 0.1),
+                  color: item.color.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.4),
+                  ),
                 ),
                 child: Icon(
                   Icons.arrow_forward_ios_rounded,
@@ -599,13 +728,23 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
-        color: _biometricLockEnabled
-            ? biometricColor.withValues(alpha: 0.1)
-            : Colors.transparent,
-        borderRadius: BorderRadius.circular(14),
-        border: _biometricLockEnabled
-            ? Border.all(color: biometricColor.withValues(alpha: 0.3))
+        gradient: _biometricLockEnabled
+            ? LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Colors.white.withValues(alpha: 0.45),
+                  biometricColor.withValues(alpha: 0.14),
+                ],
+              )
             : null,
+        color: _biometricLockEnabled ? null : Colors.transparent,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: _biometricLockEnabled
+              ? Colors.white.withValues(alpha: 0.55)
+              : Colors.transparent,
+        ),
       ),
       child: Row(
         children: [
@@ -681,111 +820,76 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
 
   Widget _buildBottomSection() {
     return Container(
-      padding: const EdgeInsets.fromLTRB(14, 8, 14, 12),
+      padding: const EdgeInsets.fromLTRB(14, 20, 14, 8),
       decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, -5),
-          ),
-        ],
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Colors.white.withValues(alpha: 0.15),
+            Colors.white.withValues(alpha: 0.35),
+          ],
+        ),
+        border: Border(
+          top: BorderSide(color: Colors.white.withValues(alpha: 0.45)),
+        ),
       ),
       child: SafeArea(
         top: false,
+        minimum: const EdgeInsets.only(bottom: 16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Error Logs and Logout Row
-            Row(
-              children: [
-                // Error Logs Button
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () => ErrorLoggingService.showLogsDialog(context),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                      decoration: BoxDecoration(
-                        color: Colors.grey.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.bug_report_outlined,
-                            color: Colors.grey[600],
-                            size: 18,
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            _localizations.logs,
-                            style: TextStyle(
-                              color: Colors.grey[600],
-                              fontSize: 13,
-                              fontWeight: FontWeight.w500,
-                              fontFamily: 'Literata',
-                              decoration: TextDecoration.none,
-                            ),
-                          ),
-                        ],
+            const SizedBox(height: 12),
+            GestureDetector(
+              onTapDown: (details) {
+                _triggerWaterDrop(details.globalPosition);
+                Future.delayed(const Duration(milliseconds: 220), () {
+                  if (mounted) _logout();
+                });
+              },
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFD32F2F),
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFFD32F2F).withValues(alpha: 0.35),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.logout_rounded,
+                      color: Colors.white,
+                      size: 18,
+                    ),
+                    SizedBox(width: 6),
+                    Text(
+                      'Logout',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        fontFamily: 'Literata',
+                        decoration: TextDecoration.none,
                       ),
                     ),
-                  ),
+                  ],
                 ),
-                const SizedBox(width: 10),
-                // Logout Button
-                Expanded(
-                  flex: 2,
-                  child: GestureDetector(
-                    onTap: _logout,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            const Color(0xFFD32F2F).withValues(alpha: 0.1),
-                            const Color(0xFFD32F2F).withValues(alpha: 0.05),
-                          ],
-                        ),
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(
-                          color: const Color(0xFFD32F2F).withValues(alpha: 0.2),
-                        ),
-                      ),
-                      child: const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.logout_rounded,
-                            color: Color(0xFFD32F2F),
-                            size: 18,
-                          ),
-                          SizedBox(width: 6),
-                          Text(
-                            'Logout',
-                            style: TextStyle(
-                              color: Color(0xFFD32F2F),
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              fontFamily: 'Literata',
-                              decoration: TextDecoration.none,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
-            const SizedBox(height: 8),
-            // Version number only
+            const SizedBox(height: 12),
             Text(
               _localizations.version,
               style: TextStyle(
-                color: Colors.grey[400],
+                color: Colors.grey[500],
                 fontSize: 12,
                 fontFamily: 'Literata',
                 decoration: TextDecoration.none,

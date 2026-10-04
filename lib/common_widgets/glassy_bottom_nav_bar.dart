@@ -3,6 +3,8 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'water_drop_effect.dart';
+
 /// Item definition for [GlassyBottomNavBar].
 class GlassyNavItem {
   final IconData icon;
@@ -16,8 +18,8 @@ class GlassyNavItem {
   });
 }
 
-/// iOS Control Center–style glassy bottom tab bar with a water-ripple
-/// animation when switching tabs.
+/// iOS Control Center–style glassy bottom tab bar with a water-drop
+/// splash animation when switching tabs.
 class GlassyBottomNavBar extends StatefulWidget {
   final int selectedIndex;
   final ValueChanged<int> onTap;
@@ -38,38 +40,38 @@ class GlassyBottomNavBar extends StatefulWidget {
 
 class _GlassyBottomNavBarState extends State<GlassyBottomNavBar>
     with SingleTickerProviderStateMixin {
-  late final AnimationController _rippleController;
-  Offset? _rippleOrigin;
+  late final AnimationController _dropController;
+  Offset? _dropOrigin;
   final GlobalKey _barKey = GlobalKey();
 
   @override
   void initState() {
     super.initState();
-    _rippleController = AnimationController(
+    _dropController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 700),
+      duration: const Duration(milliseconds: 900),
     );
   }
 
   @override
   void dispose() {
-    _rippleController.dispose();
+    _dropController.dispose();
     super.dispose();
   }
 
-  void _triggerRipple(Offset globalPosition) {
+  void _triggerWaterDrop(Offset globalPosition) {
     final box = _barKey.currentContext?.findRenderObject() as RenderBox?;
     if (box == null || !box.hasSize) return;
 
     final local = box.globalToLocal(globalPosition);
-    setState(() => _rippleOrigin = local);
-    _rippleController.forward(from: 0);
+    setState(() => _dropOrigin = local);
+    _dropController.forward(from: 0);
   }
 
   void _onItemTap(int index, Offset globalPosition) {
-    _triggerRipple(globalPosition);
+    _triggerWaterDrop(globalPosition);
     if (index != widget.selectedIndex) {
-      HapticFeedback.selectionClick();
+      HapticFeedback.lightImpact();
     }
     // Always forward the tap so callers can keep side-effects (e.g. session reset).
     widget.onTap(index);
@@ -102,52 +104,61 @@ class _GlassyBottomNavBarState extends State<GlassyBottomNavBar>
           child: ClipRRect(
             key: _barKey,
             borderRadius: BorderRadius.circular(28),
-            child: AnimatedBuilder(
-              animation: _rippleController,
-              builder: (context, child) {
-                return CustomPaint(
-                  painter: _WaterRipplePainter(
-                    origin: _rippleOrigin,
-                    progress: _rippleController.value,
-                    accentColor: widget.accentColor,
+            child: Stack(
+              children: [
+                // Glass bar + tabs
+                Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(28),
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Colors.white.withValues(alpha: 0.82),
+                        const Color(0xFFE8F0F5).withValues(alpha: 0.72),
+                        widget.accentColor.withValues(alpha: 0.10),
+                      ],
+                    ),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.85),
+                      width: 1.1,
+                    ),
                   ),
-                  child: child,
-                );
-              },
-              child: Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(28),
-                  // Frosted glass look without BackdropFilter ( Impeller-safe ).
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      Colors.white.withValues(alpha: 0.82),
-                      const Color(0xFFE8F0F5).withValues(alpha: 0.72),
-                      widget.accentColor.withValues(alpha: 0.10),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                  child: Row(
+                    children: [
+                      for (var i = 0; i < widget.items.length; i++)
+                        Expanded(
+                          child: _GlassyNavItemButton(
+                            item: widget.items[i],
+                            selected: widget.selectedIndex == i,
+                            accentColor: widget.accentColor,
+                            onTapDown: (details) =>
+                                _onItemTap(i, details.globalPosition),
+                          ),
+                        ),
                     ],
                   ),
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.85),
-                    width: 1.1,
+                ),
+                // Water-drop splash drawn ON TOP so it is clearly visible.
+                Positioned.fill(
+                  child: IgnorePointer(
+                    child: AnimatedBuilder(
+                      animation: _dropController,
+                      builder: (context, _) {
+                        return CustomPaint(
+                          painter: WaterDropPainter(
+                            origin: _dropOrigin,
+                            progress: _dropController.value,
+                            accentColor: widget.accentColor,
+                          ),
+                        );
+                      },
+                    ),
                   ),
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-                child: Row(
-                  children: [
-                    for (var i = 0; i < widget.items.length; i++)
-                      Expanded(
-                        child: _GlassyNavItemButton(
-                          item: widget.items[i],
-                          selected: widget.selectedIndex == i,
-                          accentColor: widget.accentColor,
-                          onTapDown: (details) =>
-                              _onItemTap(i, details.globalPosition),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
+              ],
             ),
           ),
         ),
@@ -253,69 +264,5 @@ class _GlassyNavItemButton extends StatelessWidget {
         ),
       ),
     );
-  }
-}
-
-/// Expanding concentric rings that mimic a water ripple on the glass surface.
-class _WaterRipplePainter extends CustomPainter {
-  final Offset? origin;
-  final double progress;
-  final Color accentColor;
-
-  _WaterRipplePainter({
-    required this.origin,
-    required this.progress,
-    required this.accentColor,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (origin == null || progress <= 0 || progress >= 1) return;
-
-    final maxRadius = math.sqrt(
-          size.width * size.width + size.height * size.height,
-        ) *
-        0.75;
-
-    // Three staggered ripples for a water-like feel.
-    for (var i = 0; i < 3; i++) {
-      final delay = i * 0.12;
-      final localProgress = ((progress - delay) / (1.0 - delay)).clamp(0.0, 1.0);
-      if (localProgress <= 0) continue;
-
-      final radius = maxRadius * Curves.easeOut.transform(localProgress);
-      final opacity = ((1.0 - localProgress) * (0.45 - i * 0.1)).clamp(0.0, 1.0);
-
-      final paint = Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2.2 - i * 0.4
-        ..color = Color.lerp(
-          Colors.white,
-          accentColor,
-          0.35,
-        )!.withValues(alpha: opacity);
-
-      canvas.drawCircle(origin!, radius, paint);
-
-      // Soft filled wash behind the leading ring.
-      if (i == 0 && radius > 0) {
-        final fillPaint = Paint()
-          ..style = PaintingStyle.fill
-          ..shader = RadialGradient(
-            colors: [
-              Colors.white.withValues(alpha: opacity * 0.35),
-              Colors.white.withValues(alpha: 0),
-            ],
-          ).createShader(Rect.fromCircle(center: origin!, radius: radius));
-        canvas.drawCircle(origin!, radius, fillPaint);
-      }
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _WaterRipplePainter oldDelegate) {
-    return oldDelegate.progress != progress ||
-        oldDelegate.origin != origin ||
-        oldDelegate.accentColor != accentColor;
   }
 }
