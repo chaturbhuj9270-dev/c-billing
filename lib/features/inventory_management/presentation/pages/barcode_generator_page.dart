@@ -19,6 +19,7 @@ import '../../../product/offline/entities/product_entity.dart';
 import '../../offline/controllers/purchase_batch_offline_controller.dart';
 import '../../offline/entities/purchase_batch_entity.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
+import 'package:c_billing/core/theme/app_theme.dart';
 
 class BarcodeGeneratorPage extends StatefulWidget {
   const BarcodeGeneratorPage({super.key});
@@ -68,7 +69,8 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
   // Theme colors
   static const Color _primaryColor = Color(0xFF1B4D3E);
   static const Color _accentColor = Color(0xFF2E7D5A);
-  static const Color _backgroundColor = Color(0xFFF5F7F6);
+  // Prefer theme scaffold; kept as method for call sites using field style.
+  Color _backgroundColor(BuildContext context) => AppColors.scaffold(context);
   static const Color _cardColor = Colors.white;
   static const Color _successColor = Color(0xFF4CAF50);
   static const Color _warningColor = Color(0xFFFFA726);
@@ -678,7 +680,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
     final isMobile = screenWidth < 600;
 
     return Scaffold(
-      backgroundColor: _backgroundColor,
+      backgroundColor: _backgroundColor(context),
       body: SafeArea(
         child: _isLoading
             ? _buildLoadingState()
@@ -827,7 +829,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
                       )
                     : null,
                 filled: true,
-                fillColor: Colors.grey[50],
+                fillColor: AppColors.scaffold(context),
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 16,
                   vertical: 12,
@@ -1083,12 +1085,12 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
                   }
                 },
                 child: Container(
-                  padding: const EdgeInsets.symmetric(
+                  padding: EdgeInsets.symmetric(
                     horizontal: 12,
                     vertical: 8,
                   ),
                   decoration: BoxDecoration(
-                    color: isSelected ? _primaryColor : Colors.grey[100],
+                    color: isSelected ? _primaryColor : AppColors.chipFill(context),
                     borderRadius: BorderRadius.circular(8),
                     border: isSelected
                         ? null
@@ -1123,9 +1125,9 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
             ),
             const SizedBox(height: 8),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
+              padding: EdgeInsets.symmetric(horizontal: 12),
               decoration: BoxDecoration(
-                color: Colors.grey[50],
+                color: AppColors.scaffold(context),
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(color: Colors.grey.shade200),
               ),
@@ -1213,7 +1215,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
               ),
               Container(
                 decoration: BoxDecoration(
-                  color: Colors.grey[50],
+                  color: AppColors.scaffold(context),
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(color: Colors.grey.shade200),
                 ),
@@ -1289,7 +1291,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
                 Expanded(
                   child: TextField(
                     controller: _customBarcodeController,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontFamily: 'Literata',
                       fontSize: 14,
                       letterSpacing: 1,
@@ -1302,7 +1304,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
                         fontSize: 13,
                       ),
                       filled: true,
-                      fillColor: Colors.grey[50],
+                      fillColor: AppColors.scaffold(context),
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: 14,
                         vertical: 12,
@@ -1587,7 +1589,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
                           )
                         : null,
                     filled: true,
-                    fillColor: Colors.white,
+                    fillColor: AppColors.inputFill(context),
                     contentPadding: const EdgeInsets.symmetric(
                       horizontal: 16,
                       vertical: 12,
@@ -1640,9 +1642,9 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            padding: const EdgeInsets.all(20),
+            padding: EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: Colors.grey[100],
+              color: AppColors.chipFill(context),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Icon(
@@ -1690,11 +1692,11 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
           borderRadius: BorderRadius.circular(14),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
-            padding: const EdgeInsets.all(14),
+            padding: EdgeInsets.all(14),
             decoration: BoxDecoration(
               color: isSelected
                   ? _primaryColor.withValues(alpha: 0.08)
-                  : Colors.grey[50],
+                  : AppColors.scaffold(context),
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
                 color: isSelected ? _primaryColor : Colors.transparent,
@@ -1715,7 +1717,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
                             end: Alignment.bottomRight,
                           )
                         : null,
-                    color: isSelected ? null : Colors.grey[200],
+                    color: isSelected ? null : AppColors.border(context),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Center(
@@ -2074,7 +2076,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
     final topLineInfo = _buildPreviewTopLine();
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(16),
       child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -2082,10 +2084,10 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
             // Barcode Label Card
             Container(
               key: _barcodeKey,
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.all(16),
               constraints: const BoxConstraints(maxWidth: 280),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColors.card(context),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: Colors.grey.shade200),
                 boxShadow: [
@@ -2284,12 +2286,12 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
                       },
                       borderRadius: BorderRadius.circular(10),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(
+                        padding: EdgeInsets.symmetric(
                           horizontal: 14,
                           vertical: 8,
                         ),
                         decoration: BoxDecoration(
-                          color: isSelected ? _primaryColor : Colors.grey[100],
+                          color: isSelected ? _primaryColor : AppColors.chipFill(context),
                           borderRadius: BorderRadius.circular(10),
                           border: isSelected
                               ? null
@@ -2326,9 +2328,9 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
               ),
               const SizedBox(height: 8),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
+                padding: EdgeInsets.symmetric(horizontal: 12),
                 decoration: BoxDecoration(
-                  color: Colors.grey[50],
+                  color: AppColors.scaffold(context),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: Colors.grey.shade200),
                 ),
@@ -2403,7 +2405,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
                           color: _primaryColor,
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      SizedBox(height: 4),
                       Text(
                         'Number of labels to print',
                         style: TextStyle(
@@ -2418,7 +2420,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
                 Container(
                   width: 100,
                   decoration: BoxDecoration(
-                    color: Colors.grey[50],
+                    color: AppColors.scaffold(context),
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(color: Colors.grey.shade200),
                   ),
@@ -2492,7 +2494,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
                   Expanded(
                     child: TextField(
                       controller: _customBarcodeController,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'Literata',
                         fontSize: 14,
                         letterSpacing: 1,
@@ -2505,7 +2507,7 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
                           fontSize: 13,
                         ),
                         filled: true,
-                        fillColor: Colors.grey[50],
+                        fillColor: AppColors.scaffold(context),
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: 14,
                           vertical: 12,
@@ -2708,8 +2710,8 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
         constraints: BoxConstraints(
           maxHeight: MediaQuery.of(context).size.height * 0.85,
         ),
-        decoration: const BoxDecoration(
-          color: Colors.white,
+        decoration: BoxDecoration(
+          color: AppColors.card(context),
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: Column(
@@ -2771,9 +2773,9 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
                   ),
                   IconButton(
                     onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.close_rounded),
+                    icon: Icon(Icons.close_rounded),
                     style: IconButton.styleFrom(
-                      backgroundColor: Colors.grey[100],
+                      backgroundColor: AppColors.chipFill(context),
                     ),
                   ),
                 ],
@@ -2781,10 +2783,10 @@ class _BarcodeGeneratorPageState extends State<BarcodeGeneratorPage>
             ),
             // Barcode Preview Card
             Container(
-              margin: const EdgeInsets.symmetric(horizontal: 20),
-              padding: const EdgeInsets.all(20),
+              margin: EdgeInsets.symmetric(horizontal: 20),
+              padding: EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColors.card(context),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: Colors.grey.shade200),
                 boxShadow: [

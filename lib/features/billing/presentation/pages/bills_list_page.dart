@@ -28,6 +28,7 @@ import 'package:c_billing/features/billing/data/services/bill_report_pdf_generat
 import 'package:c_billing/common_widgets/file_preview_page.dart';
 import 'package:c_billing/features/billing/presentation/pages/bill_report_settings_page.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
+import 'package:c_billing/core/theme/app_theme.dart';
 
 /// Quick date filter options for bill history
 enum _BillDateFilter { none, today, thisWeek, thisMonth, thisYear, custom }
@@ -783,7 +784,7 @@ class _BillsListPageState extends State<BillsListPage>
     setState(() => _isProcessingPdf = true);
     try {
       final shop = await _shopRepository.getShopDetails().timeout(
-        const Duration(seconds: 5),
+        Duration(seconds: 5),
         onTimeout: () => Shop.empty,
       );
       if (!mounted) return;
@@ -804,19 +805,19 @@ class _BillsListPageState extends State<BillsListPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F6F8),
+      backgroundColor: AppColors.scaffold(context),
       appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(70),
+        preferredSize: Size.fromHeight(70),
         child: Container(
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
+            gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [Color(0xFF1B4D3E), Color(0xFF0F3B2F)],
+              colors: AppColors.headerGradient(context),
             ),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFF1B4D3E).withValues(alpha: 0.2),
+                color: AppColors.accentSoft(context, 0.2),
                 blurRadius: 12,
                 offset: const Offset(0, 4),
               ),
@@ -907,7 +908,7 @@ class _BillsListPageState extends State<BillsListPage>
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  SizedBox(width: 8),
                   // Settings menu
                   PopupMenuButton<String>(
                     icon: Container(
@@ -917,7 +918,7 @@ class _BillsListPageState extends State<BillsListPage>
                         color: Colors.white.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.settings_rounded,
                         color: Colors.white,
                         size: 20,
@@ -950,7 +951,7 @@ class _BillsListPageState extends State<BillsListPage>
                             const SizedBox(width: 12),
                             Text(
                               _localizations.reportSettings,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontFamily: 'Literata',
                                 fontSize: 14,
                               ),
@@ -992,12 +993,12 @@ class _BillsListPageState extends State<BillsListPage>
               color: Colors.black.withValues(alpha: 0.3),
               child: Center(
                 child: Container(
-                  padding: const EdgeInsets.symmetric(
+                  padding: EdgeInsets.symmetric(
                     horizontal: 32,
                     vertical: 24,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppColors.card(context),
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
@@ -1020,14 +1021,14 @@ class _BillsListPageState extends State<BillsListPage>
                           ),
                         ),
                       ),
-                      const SizedBox(height: 16),
+                      SizedBox(height: 16),
                       Text(
                         '${_localizations.preparingPdf}...',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontFamily: 'Literata',
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFF1B4D3E),
+                          color: AppColors.accent(context),
                         ),
                       ),
                     ],
@@ -1231,14 +1232,14 @@ class _BillsListPageState extends State<BillsListPage>
               letterSpacing: -0.5,
             ),
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: 4),
           Text(
             title,
             style: TextStyle(
               fontFamily: 'Literata',
               fontSize: 12,
               fontWeight: FontWeight.w500,
-              color: Colors.white.withValues(alpha: 0.8),
+              color: AppColors.card(context),
             ),
           ),
         ],
@@ -1253,9 +1254,9 @@ class _BillsListPageState extends State<BillsListPage>
     required Color color,
   }) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.card(context),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: color.withValues(alpha: 0.15), width: 1),
         boxShadow: [
@@ -1437,7 +1438,7 @@ class _BillsListPageState extends State<BillsListPage>
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF1B4D3E).withValues(alpha: 0.08),
+                      color: AppColors.accentSoft(context, 0.08),
                       blurRadius: 20,
                       offset: const Offset(0, 4),
                     ),
@@ -1458,8 +1459,8 @@ class _BillsListPageState extends State<BillsListPage>
                       child: Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [Color(0xFF1B4D3E), Color(0xFF2E7D5B)],
+                          gradient: LinearGradient(
+                            colors: AppColors.headerGradient(context),
                           ),
                           borderRadius: BorderRadius.circular(10),
                         ),
@@ -1547,11 +1548,11 @@ class _BillsListPageState extends State<BillsListPage>
                     },
                     child: Text(
                       _localizations.clearFilters,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'Literata',
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
-                        color: Color(0xFF1B4D3E),
+                        color: AppColors.accent(context),
                       ),
                     ),
                   ),
@@ -1674,23 +1675,23 @@ class _BillsListPageState extends State<BillsListPage>
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 250),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        padding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
           gradient: isActive
-              ? const LinearGradient(
-                  colors: [Color(0xFF1B4D3E), Color(0xFF2E7D5B)],
+              ? LinearGradient(
+                  colors: AppColors.headerGradient(context),
                 )
               : null,
           color: isActive ? null : Colors.white,
           borderRadius: BorderRadius.circular(24),
           border: Border.all(
-            color: isActive ? Colors.transparent : Colors.grey[200]!,
+            color: isActive ? Colors.transparent : AppColors.border(context)!,
             width: 1.5,
           ),
           boxShadow: isActive
               ? [
                   BoxShadow(
-                    color: const Color(0xFF1B4D3E).withValues(alpha: 0.3),
+                    color: AppColors.accentSoft(context, 0.3),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),
@@ -1828,7 +1829,7 @@ class _BillsListPageState extends State<BillsListPage>
                   _localizations.clearFilters,
                   style: TextStyle(
                     fontFamily: 'Literata',
-                    color: Color(0xFF1B4D3E),
+                    color: AppColors.accent(context),
                   ),
                 ),
               ),
@@ -1866,7 +1867,7 @@ class _BillsListPageState extends State<BillsListPage>
                 ? [Colors.red.withValues(alpha: 0.03), Colors.white]
                 : hasPartialReturn
                 ? [Colors.orange.withValues(alpha: 0.03), Colors.white]
-                : [Colors.white, Colors.grey.shade50],
+                : [AppColors.card(context), AppColors.scaffold(context)],
           ),
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
@@ -2040,7 +2041,7 @@ class _BillsListPageState extends State<BillsListPage>
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Icon(
+                                Icon(
                                   Icons.assignment_return_rounded,
                                   size: 10,
                                   color: Colors.white,
@@ -2121,9 +2122,9 @@ class _BillsListPageState extends State<BillsListPage>
                                 : GestureDetector(
                                     onTap: () => _printBill(bill),
                                     child: Container(
-                                      padding: const EdgeInsets.all(6),
+                                      padding: EdgeInsets.all(6),
                                       decoration: BoxDecoration(
-                                        color: Colors.grey[100],
+                                        color: AppColors.chipFill(context),
                                         borderRadius: BorderRadius.circular(8),
                                       ),
                                       child: Icon(
@@ -2141,12 +2142,12 @@ class _BillsListPageState extends State<BillsListPage>
                     // Customer info
                     if (bill.hasCustomerInfo) ...[
                       Container(
-                        padding: const EdgeInsets.symmetric(
+                        padding: EdgeInsets.symmetric(
                           horizontal: 10,
                           vertical: 8,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.grey[50],
+                          color: AppColors.scaffold(context),
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
                             color: Colors.grey.withValues(alpha: 0.1),
@@ -2155,9 +2156,9 @@ class _BillsListPageState extends State<BillsListPage>
                         child: Row(
                           children: [
                             Container(
-                              padding: const EdgeInsets.all(6),
+                              padding: EdgeInsets.all(6),
                               decoration: BoxDecoration(
-                                color: const Color(
+                                color: Color(
                                   0xFF1B4D3E,
                                 ).withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(6),
@@ -2165,7 +2166,7 @@ class _BillsListPageState extends State<BillsListPage>
                               child: Icon(
                                 Icons.person_rounded,
                                 size: 14,
-                                color: const Color(0xFF1B4D3E),
+                                color: AppColors.accent(context),
                               ),
                             ),
                             const SizedBox(width: 10),
@@ -2211,12 +2212,12 @@ class _BillsListPageState extends State<BillsListPage>
                       children: [
                         // Items info
                         Container(
-                          padding: const EdgeInsets.symmetric(
+                          padding: EdgeInsets.symmetric(
                             horizontal: 8,
                             vertical: 4,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.grey[100],
+                            color: AppColors.chipFill(context),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Row(
@@ -2242,12 +2243,12 @@ class _BillsListPageState extends State<BillsListPage>
                         ),
                         const SizedBox(width: 6),
                         Container(
-                          padding: const EdgeInsets.symmetric(
+                          padding: EdgeInsets.symmetric(
                             horizontal: 8,
                             vertical: 4,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.grey[100],
+                            color: AppColors.chipFill(context),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Row(
@@ -2432,16 +2433,16 @@ class _DateRangePickerDialogState extends State<_DateRangePickerDialog> {
     final dateFormat = DateFormat('dd MMM yyyy');
 
     return AlertDialog(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.card(context),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       title: Text(
         AppLocalizations(
           LanguageService.instance.currentLanguage,
         ).selectDateRange,
-        style: const TextStyle(
+        style: TextStyle(
           fontFamily: 'Literata',
           fontWeight: FontWeight.w700,
-          color: Color(0xFF1B4D3E),
+          color: AppColors.accent(context),
           fontSize: 18,
         ),
       ),
@@ -2686,7 +2687,7 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
     final dateFormat = DateFormat('dd MMM yyyy, hh:mm a');
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7F6),
+      backgroundColor: AppColors.scaffold(context),
       body: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
@@ -2757,11 +2758,11 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
             ),
             flexibleSpace: FlexibleSpaceBar(
               background: Container(
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: [Color(0xFF1B4D3E), Color(0xFF0D2B24)],
+                    colors: AppColors.headerGradient(context),
                   ),
                 ),
                 child: SafeArea(
@@ -2919,18 +2920,18 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
       children: [
         Text(
           title,
-          style: const TextStyle(
+          style: TextStyle(
             fontFamily: 'Literata',
             fontSize: 16,
             fontWeight: FontWeight.w700,
-            color: Color(0xFF1B4D3E),
+            color: AppColors.accent(context),
           ),
         ),
         if (subtitle != null)
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
-              color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+              color: AppColors.accentSoft(context, 0.1),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Text(
@@ -2939,7 +2940,7 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
                 fontFamily: 'Literata',
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
-                color: const Color(0xFF1B4D3E).withValues(alpha: 0.8),
+                color: AppColors.accentSoft(context, 0.8),
               ),
             ),
           ),
@@ -2955,9 +2956,9 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
     bool fullWidth = false,
   }) {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.card(context),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -2994,7 +2995,7 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
                 const SizedBox(height: 2),
                 Text(
                   value,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'Literata',
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
@@ -3014,13 +3015,13 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
   Widget _buildItemsCard() {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.card(context),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 12,
-            offset: const Offset(0, 4),
+            offset: Offset(0, 4),
           ),
         ],
       ),
@@ -3028,9 +3029,9 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
         children: [
           // Table Header
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: const Color(0xFF1B4D3E).withValues(alpha: 0.05),
+              color: AppColors.accentSoft(context, 0.05),
               borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(16),
               ),
@@ -3097,7 +3098,7 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
             physics: const NeverScrollableScrollPhysics(),
             itemCount: _bill.items.length,
             separatorBuilder: (_, _) =>
-                Divider(height: 1, color: Colors.grey[100]),
+                Divider(height: 1, color: AppColors.chipFill(context)),
             itemBuilder: (context, index) => _buildItemRow(_bill.items[index]),
           ),
         ],
@@ -3108,9 +3109,9 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
   Widget _buildNotesCard() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.card(context),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.amber.withValues(alpha: 0.3)),
         boxShadow: [
@@ -3132,7 +3133,7 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
             ),
             child: Icon(Icons.note_rounded, color: Colors.amber[700], size: 18),
           ),
-          const SizedBox(width: 12),
+          SizedBox(width: 12),
           Expanded(
             child: Text(
               _bill.notes!,
@@ -3152,7 +3153,7 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
   Widget _buildPaymentSummaryCard() {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.card(context),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -3197,8 +3198,8 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
                     valueColor: Colors.blue,
                   ),
                 ],
-                const SizedBox(height: 10),
-                Container(height: 1, color: Colors.grey[200]),
+                SizedBox(height: 10),
+                Container(height: 1, color: AppColors.border(context)),
                 const SizedBox(height: 10),
                 // Bill Total
                 _buildSummaryRow(
@@ -3301,8 +3302,8 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
                 ],
                 // Payment Status
                 if (_bill.paidAmount > 0 || _bill.pendingAmount > 0) ...[
-                  const SizedBox(height: 12),
-                  Container(height: 1, color: Colors.grey[200]),
+                  SizedBox(height: 12),
+                  Container(height: 1, color: AppColors.border(context)),
                   const SizedBox(height: 12),
                   _buildSummaryRow(
                     _localizations.paidAmount,
@@ -3326,9 +3327,9 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
             Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [Color(0xFF1B4D3E), Color(0xFF2E7D5B)],
+                  colors: AppColors.headerGradient(context),
                 ),
                 borderRadius: BorderRadius.vertical(
                   bottom: Radius.circular(16),
@@ -3397,9 +3398,9 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
 
   Widget _buildReturnToggleCard() {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.card(context),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.orange.withValues(alpha: 0.2)),
         boxShadow: [
@@ -3579,11 +3580,11 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
+        padding: EdgeInsets.symmetric(vertical: 14, horizontal: 20),
         decoration: BoxDecoration(
           gradient: isPrimary
-              ? const LinearGradient(
-                  colors: [Color(0xFF1B4D3E), Color(0xFF2E7D5B)],
+              ? LinearGradient(
+                  colors: AppColors.headerGradient(context),
                 )
               : null,
           color: isPrimary ? null : Colors.white,
@@ -3591,12 +3592,12 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
           border: isPrimary
               ? null
               : Border.all(
-                  color: const Color(0xFF1B4D3E).withValues(alpha: 0.3),
+                  color: AppColors.accentSoft(context, 0.3),
                 ),
           boxShadow: isPrimary
               ? [
                   BoxShadow(
-                    color: const Color(0xFF1B4D3E).withValues(alpha: 0.3),
+                    color: AppColors.accentSoft(context, 0.3),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),
@@ -3754,9 +3755,9 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
     return GestureDetector(
       onTap: _navigateToReturnBill,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
+        padding: EdgeInsets.symmetric(vertical: 14, horizontal: 20),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.card(context),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: Colors.orange.withValues(alpha: 0.5),
@@ -3795,7 +3796,7 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
                 color: Colors.orange[700],
               ),
             ),
-            const SizedBox(width: 8),
+            SizedBox(width: 8),
             Icon(
               Icons.arrow_forward_ios_rounded,
               color: Colors.orange[400],
@@ -3810,9 +3811,9 @@ class _BillDetailsDialogState extends State<_BillDetailsDialog>
   Widget _buildReturnedInfoCard() {
     final dateFormat = DateFormat('dd MMM yyyy, hh:mm a');
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.card(context),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
         boxShadow: [

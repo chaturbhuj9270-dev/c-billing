@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'company_filter_widget.dart';
+import 'package:c_billing/core/theme/app_theme.dart';
 
 /// Enhanced list widget for displaying companies
 /// Features: Shimmer loading, Enhanced cards with sync icons, Empty states
@@ -89,6 +90,7 @@ class CompanyListWidget extends StatelessWidget {
     // Empty state - no companies at all
     if (companies.isEmpty) {
       return _buildEmptyState(
+        context: context,
         icon: Icons.business_outlined,
         title: emptyTitle,
         subtitle: emptySubtitle,
@@ -100,6 +102,7 @@ class CompanyListWidget extends StatelessWidget {
     // Empty state - no search results
     if (filtered.isEmpty) {
       return _buildEmptyState(
+        context: context,
         icon: Icons.search_off_rounded,
         title: noResultsTitle,
         subtitle: noResultsSubtitle,
@@ -107,7 +110,7 @@ class CompanyListWidget extends StatelessWidget {
     }
 
     return RefreshIndicator(
-      color: const Color(0xFF1B4D3E),
+      color: AppColors.accent(context),
       onRefresh: onRefresh,
       child: ListView.builder(
         physics: const AlwaysScrollableScrollPhysics(
@@ -142,13 +145,14 @@ class CompanyListWidget extends StatelessWidget {
   }
 
   Widget _buildEmptyState({
+    required BuildContext context,
     required IconData icon,
     required String title,
     required String subtitle,
   }) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(32),
+        padding: EdgeInsets.all(32),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -156,13 +160,13 @@ class CompanyListWidget extends StatelessWidget {
               width: 100,
               height: 100,
               decoration: BoxDecoration(
-                color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+                color: AppColors.accentSoft(context, 0.1),
                 borderRadius: BorderRadius.circular(24),
               ),
               child: Icon(
                 icon,
                 size: 48,
-                color: const Color(0xFF1B4D3E).withValues(alpha: 0.4),
+                color: AppColors.accentSoft(context, 0.4),
               ),
             ),
             const SizedBox(height: 24),
@@ -172,7 +176,7 @@ class CompanyListWidget extends StatelessWidget {
                 fontFamily: 'Literata',
                 fontWeight: FontWeight.w700,
                 fontSize: 18,
-                color: Colors.grey[700],
+                color: AppColors.secondaryText(context),
               ),
               textAlign: TextAlign.center,
             ),
@@ -183,7 +187,7 @@ class CompanyListWidget extends StatelessWidget {
                 fontFamily: 'Literata',
                 fontWeight: FontWeight.w400,
                 fontSize: 14,
-                color: Colors.grey[500],
+                color: AppColors.mutedText(context),
               ),
               textAlign: TextAlign.center,
             ),
@@ -229,9 +233,9 @@ class _CompanyCard extends StatelessWidget {
       onTap: onTap,
       onLongPress: onLongPress,
       child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
+        margin: EdgeInsets.only(bottom: 12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.card(context),
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
@@ -277,7 +281,7 @@ class _CompanyCard extends StatelessWidget {
                     child: Center(
                       child: Text(
                         initials,
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: Colors.white,
                           fontSize: 20,
                           fontWeight: FontWeight.w700,
@@ -297,10 +301,10 @@ class _CompanyCard extends StatelessWidget {
                             Expanded(
                               child: Text(
                                 companyName.isNotEmpty ? companyName : '—',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.w700,
-                                  color: Color(0xFF1B4D3E),
+                                  color: AppColors.accent(context),
                                   fontFamily: 'Literata',
                                 ),
                                 maxLines: 1,
@@ -330,7 +334,7 @@ class _CompanyCard extends StatelessWidget {
                               Icon(
                                 Icons.phone_rounded,
                                 size: 13,
-                                color: Colors.grey[500],
+                                color: AppColors.mutedText(context),
                               ),
                               const SizedBox(width: 6),
                               Expanded(
@@ -338,7 +342,7 @@ class _CompanyCard extends StatelessWidget {
                                   contact,
                                   style: TextStyle(
                                     fontSize: 13,
-                                    color: Colors.grey[600],
+                                    color: AppColors.secondaryText(context),
                                     fontFamily: 'Literata',
                                   ),
                                   maxLines: 1,
@@ -359,22 +363,22 @@ class _CompanyCard extends StatelessWidget {
                               ),
                             ],
                             if (companyCode.isNotEmpty) ...[
-                              const SizedBox(width: 8),
+                              SizedBox(width: 8),
                               Container(
-                                padding: const EdgeInsets.symmetric(
+                                padding: EdgeInsets.symmetric(
                                   horizontal: 6,
                                   vertical: 2,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+                                  color: AppColors.accentSoft(context, 0.1),
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                                 child: Text(
                                   '#$companyCode',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 10,
                                     fontWeight: FontWeight.w600,
-                                    color: Color(0xFF1B4D3E),
+                                    color: AppColors.accent(context),
                                     fontFamily: 'Literata',
                                   ),
                                 ),
@@ -389,12 +393,12 @@ class _CompanyCard extends StatelessWidget {
                   // Status badge or arrow
                   if (!isActive)
                     Container(
-                      padding: const EdgeInsets.symmetric(
+                      padding: EdgeInsets.symmetric(
                         horizontal: 10,
                         vertical: 6,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.grey[100],
+                        color: AppColors.chipFill(context),
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(
                           color: Colors.grey[300]!,
@@ -406,7 +410,7 @@ class _CompanyCard extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
-                          color: Colors.grey[600],
+                          color: AppColors.secondaryText(context),
                           fontFamily: 'Literata',
                         ),
                       ),
@@ -423,9 +427,9 @@ class _CompanyCard extends StatelessWidget {
               if (address.isNotEmpty) ...[
                 const SizedBox(height: 10),
                 Container(
-                  padding: const EdgeInsets.all(10),
+                  padding: EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: Colors.grey[50],
+                    color: AppColors.scaffold(context),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Row(
@@ -433,7 +437,7 @@ class _CompanyCard extends StatelessWidget {
                       Icon(
                         Icons.location_on_rounded,
                         size: 14,
-                        color: Colors.grey[500],
+                        color: AppColors.mutedText(context),
                       ),
                       const SizedBox(width: 8),
                       Expanded(
@@ -441,7 +445,7 @@ class _CompanyCard extends StatelessWidget {
                           address,
                           style: TextStyle(
                             fontSize: 12,
-                            color: Colors.grey[600],
+                            color: AppColors.secondaryText(context),
                             fontFamily: 'Literata',
                           ),
                           maxLines: 2,
@@ -497,10 +501,10 @@ class _ShimmerCardState extends State<_ShimmerCard>
       animation: _animation,
       builder: (context, child) {
         return Container(
-          margin: const EdgeInsets.only(bottom: 12),
-          padding: const EdgeInsets.all(14),
+          margin: EdgeInsets.only(bottom: 12),
+          padding: EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.card(context),
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
@@ -546,9 +550,9 @@ class _ShimmerCardState extends State<_ShimmerCard>
           begin: Alignment.centerLeft,
           end: Alignment.centerRight,
           colors: [
-            Colors.grey[200]!,
-            Colors.grey[100]!,
-            Colors.grey[200]!,
+            AppColors.border(context)!,
+            AppColors.chipFill(context)!,
+            AppColors.border(context)!,
           ],
           stops: [
             (_animation.value - 0.3).clamp(0.0, 1.0),

@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../localization/app_localizations.dart';
 import '../services/language_service.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
+import 'package:c_billing/core/theme/app_theme.dart';
 
 /// Payment screen with QR code for subscription payment
 /// Premium UI matching the app's elegant design language
@@ -75,13 +76,14 @@ class _PaymentScreenState extends State<PaymentScreen>
   }
 
   void _copyNumber() {
-    Clipboard.setData(const ClipboardData(text: contactNumber));
+    Clipboard.setData(ClipboardData(text: contactNumber));
     GlassyToast.show(context, _localizations.phoneNumberCopied);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.scaffold(context),
       body: Container(
         width: double.infinity,
         height: double.infinity,
@@ -134,7 +136,7 @@ class _PaymentScreenState extends State<PaymentScreen>
 
   Widget _buildAppBar() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
         children: [
           GestureDetector(
@@ -146,13 +148,13 @@ class _PaymentScreenState extends State<PaymentScreen>
                 color: Colors.white.withValues(alpha: 0.6),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+                  color: AppColors.accentSoft(context, 0.1),
                 ),
               ),
               child: Icon(
                 Icons.arrow_back_ios_new,
                 size: 18,
-                color: const Color(0xFF1B4D3E).withValues(alpha: 0.8),
+                color: AppColors.accentSoft(context, 0.8),
               ),
             ),
           ),
@@ -160,10 +162,10 @@ class _PaymentScreenState extends State<PaymentScreen>
             child: Text(
               _localizations.payment,
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF1B4D3E),
+                color: AppColors.accent(context),
                 fontFamily: 'Literata',
                 letterSpacing: 1,
               ),
@@ -204,48 +206,48 @@ class _PaymentScreenState extends State<PaymentScreen>
                 _localizations.amountToPay,
                 style: TextStyle(
                   fontSize: 13,
-                  color: const Color(0xFF1B4D3E).withValues(alpha: 0.6),
+                  color: AppColors.accentSoft(context, 0.6),
                   fontFamily: 'Literata',
                   letterSpacing: 0.5,
                 ),
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: 8),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Padding(
-                    padding: const EdgeInsets.only(top: 6),
+                    padding: EdgeInsets.only(top: 6),
                     child: Text(
                       '₹',
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w600,
-                        color: const Color(0xFF1B4D3E).withValues(alpha: 0.8),
+                        color: AppColors.accentSoft(context, 0.8),
                         fontFamily: 'Literata',
                       ),
                     ),
                   ),
-                  const Text(
+                  Text(
                     '3,999',
                     style: TextStyle(
                       fontSize: 42,
                       fontWeight: FontWeight.w700,
-                      color: Color(0xFF1B4D3E),
+                      color: AppColors.accent(context),
                       fontFamily: 'Literata',
                       height: 1,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 6),
+              SizedBox(height: 6),
               Container(
-                padding: const EdgeInsets.symmetric(
+                padding: EdgeInsets.symmetric(
                   horizontal: 14,
                   vertical: 5,
                 ),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1B4D3E),
+                  color: AppColors.accent(context),
                   borderRadius: BorderRadius.circular(15),
                 ),
                 child: Text(
@@ -269,15 +271,15 @@ class _PaymentScreenState extends State<PaymentScreen>
   Widget _buildQRCard() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(24),
+      padding: EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.card(context),
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF1B4D3E).withValues(alpha: 0.08),
+            color: AppColors.accentSoft(context, 0.08),
             blurRadius: 20,
-            offset: const Offset(0, 8),
+            offset: Offset(0, 8),
           ),
         ],
       ),
@@ -288,20 +290,20 @@ class _PaymentScreenState extends State<PaymentScreen>
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
-              color: const Color(0xFF1B4D3E).withValues(alpha: 0.8),
+              color: AppColors.accentSoft(context, 0.8),
               fontFamily: 'Literata',
               letterSpacing: 0.5,
             ),
           ),
-          const SizedBox(height: 20),
+          SizedBox(height: 20),
           // QR Code
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.card(context),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+                color: AppColors.accentSoft(context, 0.1),
                 width: 2,
               ),
               boxShadow: [
@@ -324,7 +326,7 @@ class _PaymentScreenState extends State<PaymentScreen>
                     width: 220,
                     height: 220,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF5F5F5),
+                      color: AppColors.scaffold(context),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Column(
@@ -333,7 +335,7 @@ class _PaymentScreenState extends State<PaymentScreen>
                         Icon(
                           Icons.qr_code_2,
                           size: 80,
-                          color: const Color(0xFF1B4D3E).withValues(alpha: 0.3),
+                          color: AppColors.accentSoft(context, 0.3),
                         ),
                         const SizedBox(height: 12),
                         Text(
@@ -356,9 +358,9 @@ class _PaymentScreenState extends State<PaymentScreen>
           const SizedBox(height: 16),
           // UPI Badge
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             decoration: BoxDecoration(
-              color: const Color(0xFFF5F5F5),
+              color: AppColors.scaffold(context),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
@@ -367,15 +369,15 @@ class _PaymentScreenState extends State<PaymentScreen>
                 Icon(
                   Icons.account_balance_wallet_outlined,
                   size: 18,
-                  color: const Color(0xFF1B4D3E).withValues(alpha: 0.7),
+                  color: AppColors.accentSoft(context, 0.7),
                 ),
-                const SizedBox(width: 8),
+                SizedBox(width: 8),
                 Text(
                   _localizations.payViaAnyUPIApp,
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
-                    color: const Color(0xFF1B4D3E).withValues(alpha: 0.7),
+                    color: AppColors.accentSoft(context, 0.7),
                     fontFamily: 'Literata',
                   ),
                 ),
@@ -411,7 +413,7 @@ class _PaymentScreenState extends State<PaymentScreen>
                   color: const Color(0xFFFFB300).withValues(alpha: 0.2),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.info_outline,
                   size: 16,
                   color: Color(0xFFFF8F00),
@@ -429,66 +431,66 @@ class _PaymentScreenState extends State<PaymentScreen>
               ),
             ],
           ),
-          const SizedBox(height: 14),
+          SizedBox(height: 14),
           Text(
             _localizations.pleaseShareScreenshotOn,
             style: TextStyle(
               fontSize: 13,
-              color: const Color(0xFF1B4D3E).withValues(alpha: 0.8),
+              color: AppColors.accentSoft(context, 0.8),
               fontFamily: 'Literata',
               height: 1.4,
             ),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           GestureDetector(
             onTap: _copyNumber,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              padding: EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColors.card(context),
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(
-                  color: const Color(0xFF1B4D3E).withValues(alpha: 0.15),
+                  color: AppColors.accentSoft(context, 0.15),
                 ),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.phone, size: 18, color: Color(0xFF1B4D3E)),
-                  const SizedBox(width: 8),
-                  const Text(
+                  Icon(Icons.phone, size: 18, color: AppColors.accent(context)),
+                  SizedBox(width: 8),
+                  Text(
                     contactNumber,
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
-                      color: Color(0xFF1B4D3E),
+                      color: AppColors.accent(context),
                       fontFamily: 'Literata',
                       letterSpacing: 1,
                     ),
                   ),
-                  const SizedBox(width: 10),
+                  SizedBox(width: 10),
                   Container(
-                    padding: const EdgeInsets.all(4),
+                    padding: EdgeInsets.all(4),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+                      color: AppColors.accentSoft(context, 0.1),
                       borderRadius: BorderRadius.circular(6),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.copy,
                       size: 14,
-                      color: Color(0xFF1B4D3E),
+                      color: AppColors.accent(context),
                     ),
                   ),
                 ],
               ),
             ),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           Text(
             _localizations.subscriptionActivatedWithin24Hours,
             style: TextStyle(
               fontSize: 11,
-              color: const Color(0xFF1B4D3E).withValues(alpha: 0.6),
+              color: AppColors.accentSoft(context, 0.6),
               fontFamily: 'Literata',
               height: 1.4,
             ),
@@ -537,7 +539,7 @@ class _PaymentScreenState extends State<PaymentScreen>
                               color: Colors.white.withValues(alpha: 0.2),
                               shape: BoxShape.circle,
                             ),
-                            child: const Icon(
+                            child: Icon(
                               Icons.chat,
                               size: 14,
                               color: Colors.white,
@@ -562,7 +564,7 @@ class _PaymentScreenState extends State<PaymentScreen>
             ),
           ),
         ),
-        const SizedBox(height: 12),
+        SizedBox(height: 12),
         // Call Support Button - Secondary
         SizedBox(
           width: double.infinity,
@@ -571,7 +573,7 @@ class _PaymentScreenState extends State<PaymentScreen>
               color: Colors.white.withValues(alpha: 0.6),
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: const Color(0xFF1B4D3E).withValues(alpha: 0.3),
+                color: AppColors.accentSoft(context, 0.3),
                 width: 1.5,
               ),
             ),
@@ -581,20 +583,20 @@ class _PaymentScreenState extends State<PaymentScreen>
                 onTap: _callSupport,
                 borderRadius: BorderRadius.circular(14),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  padding: EdgeInsets.symmetric(vertical: 14),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(
                         Icons.call_outlined,
                         size: 20,
-                        color: const Color(0xFF1B4D3E).withValues(alpha: 0.8),
+                        color: AppColors.accentSoft(context, 0.8),
                       ),
-                      const SizedBox(width: 8),
+                      SizedBox(width: 8),
                       Text(
                         _localizations.callSupport,
                         style: TextStyle(
-                          color: const Color(0xFF1B4D3E).withValues(alpha: 0.9),
+                          color: AppColors.accentSoft(context, 0.9),
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
                           fontFamily: 'Literata',
@@ -622,26 +624,26 @@ class _PaymentScreenState extends State<PaymentScreen>
               colors: [
                 const Color(0xFF1B4D3E).withValues(alpha: 0.05),
                 const Color(0xFF1B4D3E),
-                const Color(0xFF1B4D3E).withValues(alpha: 0.05),
+                Color(0xFF1B4D3E).withValues(alpha: 0.05),
               ],
             ),
           ),
         ),
-        const SizedBox(height: 16),
+        SizedBox(height: 16),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
               Icons.security,
               size: 14,
-              color: const Color(0xFF1B4D3E).withValues(alpha: 0.4),
+              color: AppColors.accentSoft(context, 0.4),
             ),
-            const SizedBox(width: 6),
+            SizedBox(width: 6),
             Text(
               _localizations.securePayment,
               style: TextStyle(
                 fontSize: 11,
-                color: const Color(0xFF1B4D3E).withValues(alpha: 0.4),
+                color: AppColors.accentSoft(context, 0.4),
                 fontFamily: 'Literata',
               ),
             ),

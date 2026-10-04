@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../cubit/biometric_cubit.dart';
 import '../cubit/biometric_state.dart';
@@ -124,7 +125,7 @@ class _BiometricSettingsCardState extends State<BiometricSettingsCard> {
             ),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFF1B4D3E).withValues(alpha: 0.08),
+                color: AppColors.accentSoft(context, 0.08),
                 blurRadius: 16,
                 offset: const Offset(0, 4),
               ),
@@ -145,27 +146,27 @@ class _BiometricSettingsCardState extends State<BiometricSettingsCard> {
                           width: 48,
                           height: 48,
                           decoration: BoxDecoration(
-                            color: const Color(
+                            color: Color(
                               0xFF1B4D3E,
                             ).withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: const Center(
+                          child: Center(
                             child: Icon(
                               Icons.fingerprint,
-                              color: Color(0xFF1B4D3E),
+                              color: AppColors.accent(context),
                               size: 24,
                             ),
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        SizedBox(width: 12),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
+                            Text(
                               'Biometric Authentication',
                               style: TextStyle(
-                                color: Color(0xFF1B4D3E),
+                                color: AppColors.accent(context),
                                 fontSize: 16,
                                 fontWeight: FontWeight.w700,
                                 fontFamily: 'Literata',
@@ -188,18 +189,18 @@ class _BiometricSettingsCardState extends State<BiometricSettingsCard> {
                     Switch(
                       value: _isBiometricEnabled,
                       onChanged: _toggleBiometric,
-                      activeThumbColor: const Color(0xFF1B4D3E),
-                      activeTrackColor: const Color(
+                      activeThumbColor: Color(0xFF1B4D3E),
+                      activeTrackColor: Color(
                         0xFF1B4D3E,
                       ).withValues(alpha: 0.3),
                     ),
                   ],
                 ),
                 if (_isBiometricEnabled) ...[
-                  const SizedBox(height: 12),
+                  SizedBox(height: 12),
                   Container(
                     decoration: BoxDecoration(
-                      color: const Color(0xFF1B4D3E).withValues(alpha: 0.05),
+                      color: AppColors.accentSoft(context, 0.05),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     padding: const EdgeInsets.all(12),

@@ -20,6 +20,7 @@ import 'customer_details_page.dart';
 import 'customer_finance_page.dart';
 import 'customer_transactions_page.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
+import 'package:c_billing/core/theme/app_theme.dart';
 
 class EnhancedCustomerPage extends StatefulWidget {
   final bool isEmbedded;
@@ -502,13 +503,13 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
       builder: (ctx) => BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
         child: AlertDialog(
-          backgroundColor: Colors.white.withValues(alpha: 0.95),
+          backgroundColor: AppColors.card(context),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
           title: Text(
             _localizations.deleteCustomer,
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: 'Literata',
               fontWeight: FontWeight.w700,
               color: Colors.red,
@@ -541,7 +542,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
                       height: 40,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+                        color: AppColors.accentSoft(context, 0.1),
                       ),
                       child: Center(
                         child: Text(
@@ -549,11 +550,11 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
                               .toString()
                               .substring(0, 1)
                               .toUpperCase(),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontFamily: 'Literata',
                             fontWeight: FontWeight.w700,
                             fontSize: 16,
-                            color: Color(0xFF1B4D3E),
+                            color: AppColors.accent(context),
                           ),
                         ),
                       ),
@@ -700,7 +701,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7F6),
+      backgroundColor: AppColors.scaffold(context),
       floatingActionButton: _buildFAB(),
       body: SafeArea(
         top: !widget.isEmbedded,
@@ -801,14 +802,14 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
         16,
       ),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF1B4D3E), Color(0xFF0F3B2F)],
+          colors: AppColors.headerGradient(context),
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF1B4D3E).withValues(alpha: 0.3),
+            color: AppColors.accentSoft(context, 0.3),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -873,15 +874,15 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
       padding: EdgeInsets.only(bottom: widget.isEmbedded ? 88 : 0),
       child: Container(
         decoration: BoxDecoration(
-          gradient: const LinearGradient(
+          gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Color(0xFF1B4D3E), Color(0xFF0F3B2F)],
+            colors: AppColors.headerGradient(context),
           ),
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF1B4D3E).withValues(alpha: 0.4),
+              color: AppColors.accentSoft(context, 0.4),
               blurRadius: 20,
               offset: const Offset(0, 8),
             ),
@@ -1040,12 +1041,12 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
       context: context,
       backgroundColor: Colors.transparent,
       builder: (context) => ClipRRect(
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
           child: Container(
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.95),
+              color: AppColors.card(context),
               borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(20),
               ),
@@ -1064,15 +1065,15 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.all(16),
+                    padding: EdgeInsets.all(16),
                     child: Text(
                       '${customer['firstName'] ?? ''} ${customer['lastName'] ?? ''}'
                           .trim(),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'Literata',
                         fontWeight: FontWeight.w700,
                         fontSize: 16,
-                        color: Color(0xFF1B4D3E),
+                        color: AppColors.accent(context),
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -1179,8 +1180,8 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
 
   Widget _buildFormSheet() {
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(
+        color: AppColors.card(context),
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: SingleChildScrollView(
@@ -1208,7 +1209,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
                     ),
                   ),
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
                 // Title
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1217,10 +1218,10 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
                       _isEditing
                           ? _localizations.editCustomer
                           : _localizations.addNewCustomer,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
-                        color: Color(0xFF1B4D3E),
+                        color: AppColors.accent(context),
                         fontFamily: 'Literata',
                       ),
                     ),
@@ -1318,15 +1319,15 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
                                   Navigator.pop(context);
                                 },
                           style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            padding: EdgeInsets.symmetric(vertical: 14),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
                           ),
                           child: Text(
                             _localizations.cancel,
-                            style: const TextStyle(
-                              color: Color(0xFF1B4D3E),
+                            style: TextStyle(
+                              color: AppColors.accent(context),
                               fontSize: 14,
                               fontWeight: FontWeight.w700,
                               fontFamily: 'Literata',
@@ -1359,7 +1360,7 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
       keyboardType: keyboardType,
       maxLines: maxLines,
       maxLength: maxLength,
-      style: const TextStyle(fontFamily: 'Literata', fontSize: 14),
+      style: TextStyle(fontFamily: 'Literata', fontSize: 14),
       decoration: InputDecoration(
         labelText: isRequired ? '$label *' : label,
         labelStyle: TextStyle(color: Colors.grey[600], fontFamily: 'Literata'),
@@ -1374,10 +1375,10 @@ class _EnhancedCustomerPageState extends State<EnhancedCustomerPage>
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFF1B4D3E), width: 2),
+          borderSide: BorderSide(color: AppColors.accent(context), width: 2),
         ),
         filled: true,
-        fillColor: Colors.grey[50],
+        fillColor: AppColors.scaffold(context),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 12,
           vertical: 12,
@@ -1432,7 +1433,7 @@ class _CustomerDetailsSheet extends StatelessWidget {
     final initials = firstName.isNotEmpty ? firstName[0].toUpperCase() : 'C';
 
     return ClipRRect(
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
         child: Container(
@@ -1440,7 +1441,7 @@ class _CustomerDetailsSheet extends StatelessWidget {
             maxHeight: MediaQuery.of(context).size.height * 0.7,
           ),
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.98),
+            color: AppColors.card(context),
             borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
           ),
           child: SingleChildScrollView(
@@ -1491,7 +1492,7 @@ class _CustomerDetailsSheet extends StatelessWidget {
                           child: Center(
                             child: Text(
                               initials,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 color: Colors.white,
                                 fontSize: 24,
                                 fontWeight: FontWeight.w700,
@@ -1510,11 +1511,11 @@ class _CustomerDetailsSheet extends StatelessWidget {
                                   Expanded(
                                     child: Text(
                                       fullName.isNotEmpty ? fullName : '—',
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontFamily: 'Literata',
                                         fontWeight: FontWeight.w700,
                                         fontSize: 18,
-                                        color: Color(0xFF1B4D3E),
+                                        color: AppColors.accent(context),
                                       ),
                                     ),
                                   ),
@@ -1647,6 +1648,7 @@ class _CustomerDetailsSheet extends StatelessWidget {
                     if (address.isNotEmpty && address != 'N/A') ...[
                       const SizedBox(height: 16),
                       _buildDetailRow(
+                        context: context,
                         icon: Icons.location_on_outlined,
                         label: localizations.address,
                         value: address,
@@ -1662,6 +1664,7 @@ class _CustomerDetailsSheet extends StatelessWidget {
                       children: [
                         Expanded(
                           child: _buildActionButton(
+                            context: context,
                             icon: Icons.visibility_rounded,
                             label: localizations.viewBalance,
                             onTap: onViewDetails,
@@ -1670,12 +1673,14 @@ class _CustomerDetailsSheet extends StatelessWidget {
                         ),
                         const SizedBox(width: 12),
                         _buildActionButton(
+                          context: context,
                           icon: Icons.edit_rounded,
                           label: localizations.edit,
                           onTap: onEdit,
                         ),
                         const SizedBox(width: 12),
                         _buildActionButton(
+                          context: context,
                           icon: Icons.delete_outline_rounded,
                           label: localizations.delete,
                           onTap: onDelete,
@@ -1695,14 +1700,15 @@ class _CustomerDetailsSheet extends StatelessWidget {
   }
 
   Widget _buildDetailRow({
+    required BuildContext context,
     required IconData icon,
     required String label,
     required String value,
   }) {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.grey[50],
+        color: AppColors.scaffold(context),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -1711,10 +1717,18 @@ class _CustomerDetailsSheet extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+              color: AppColors.isDark(context)
+                  ? Colors.white.withValues(alpha: 0.1)
+                  : const Color(0xFF1B4D3E).withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Icon(icon, size: 18, color: const Color(0xFF1B4D3E)),
+            child: Icon(
+              icon,
+              size: 18,
+              color: AppColors.isDark(context)
+                  ? Colors.white
+                  : const Color(0xFF1B4D3E),
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -1726,17 +1740,17 @@ class _CustomerDetailsSheet extends StatelessWidget {
                   style: TextStyle(
                     fontFamily: 'Literata',
                     fontSize: 11,
-                    color: Colors.grey[500],
+                    color: AppColors.mutedText(context),
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   value,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'Literata',
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
-                    color: Color(0xFF2D2D2D),
+                    color: AppColors.primaryText(context),
                   ),
                 ),
               ],
@@ -1748,24 +1762,39 @@ class _CustomerDetailsSheet extends StatelessWidget {
   }
 
   Widget _buildActionButton({
+    required BuildContext context,
     required IconData icon,
     required String label,
     required VoidCallback onTap,
     bool isPrimary = false,
     bool isDestructive = false,
   }) {
+    final isDark = AppColors.isDark(context);
+    final primaryFill = isDark ? Colors.white : const Color(0xFF1B4D3E);
+    final onPrimary = isDark ? Colors.black : Colors.white;
+    final destructiveFill = isDark
+        ? Colors.red.withValues(alpha: 0.18)
+        : Colors.red[50]!;
+    final muted = AppColors.secondaryText(context);
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
           color: isPrimary
-              ? const Color(0xFF1B4D3E)
+              ? primaryFill
               : isDestructive
-              ? Colors.red[50]
-              : Colors.grey[100],
+              ? destructiveFill
+              : AppColors.chipFill(context),
           borderRadius: BorderRadius.circular(12),
-          border: isDestructive ? Border.all(color: Colors.red[200]!) : null,
+          border: isDestructive
+              ? Border.all(
+                  color: isDark
+                      ? Colors.red.withValues(alpha: 0.4)
+                      : Colors.red[200]!,
+                )
+              : null,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -1774,10 +1803,10 @@ class _CustomerDetailsSheet extends StatelessWidget {
               icon,
               size: 20,
               color: isPrimary
-                  ? Colors.white
+                  ? onPrimary
                   : isDestructive
-                  ? Colors.red[700]
-                  : Colors.grey[700],
+                  ? (isDark ? Colors.red[300] : Colors.red[700])
+                  : muted,
             ),
             const SizedBox(height: 4),
             Text(
@@ -1787,10 +1816,10 @@ class _CustomerDetailsSheet extends StatelessWidget {
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
                 color: isPrimary
-                    ? Colors.white
+                    ? onPrimary
                     : isDestructive
-                    ? Colors.red[700]
-                    : Colors.grey[700],
+                    ? (isDark ? Colors.red[300] : Colors.red[700])
+                    : muted,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,

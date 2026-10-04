@@ -19,6 +19,7 @@ import '../../../product/offline/controllers/product_offline_controller.dart';
 import '../../../product/offline/entities/product_entity.dart';
 import '../../../billing/presentation/widgets/barcode_scanner_sheet.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
+import 'package:c_billing/core/theme/app_theme.dart';
 
 /// Event Management + Sales Order Screen
 /// Supports two modes: Event Mode (with sub-events) and Sales Order Mode (with products)
@@ -446,7 +447,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
     return BlocProvider(
       create: (_) => EventOrderCubit(),
       child: Scaffold(
-        backgroundColor: const Color(0xFFF2F4F7),
+        backgroundColor: AppColors.scaffold(context),
         appBar: _buildAppBar(),
         body: Form(
           key: _formKey,
@@ -522,17 +523,17 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                   LanguageService.instance.currentLanguage,
                 ).newOrder);
     return PreferredSize(
-      preferredSize: const Size.fromHeight(72),
+      preferredSize: Size.fromHeight(72),
       child: Container(
         decoration: BoxDecoration(
-          gradient: const LinearGradient(
+          gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Color(0xFF1B4D3E), Color(0xFF2D6B5A), Color(0xFF3A8B6E)],
+            colors: AppColors.headerGradient(context),
           ),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF1B4D3E).withValues(alpha: 0.3),
+              color: AppColors.accentSoft(context, 0.3),
               blurRadius: 20,
               offset: const Offset(0, 4),
             ),
@@ -640,7 +641,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(10),
+        padding: EdgeInsets.all(10),
         decoration: BoxDecoration(
           color: Colors.white.withValues(alpha: 0.15),
           borderRadius: BorderRadius.circular(12),
@@ -652,7 +653,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                 height: 18,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  color: Colors.white.withValues(alpha: 0.9),
+                  color: AppColors.card(context),
                 ),
               )
             : Icon(icon, color: color, size: 18),
@@ -662,39 +663,39 @@ class _EventOrderScreenState extends State<EventOrderScreen>
 
   Widget _buildModeToggle() {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      padding: const EdgeInsets.all(5),
+      margin: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: EdgeInsets.all(5),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.card(context),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF1B4D3E).withValues(alpha: 0.08),
+            color: AppColors.accentSoft(context, 0.08),
             blurRadius: 16,
-            offset: const Offset(0, 4),
+            offset: Offset(0, 4),
           ),
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 4,
-            offset: const Offset(0, 1),
+            offset: Offset(0, 1),
           ),
         ],
         border: Border.all(
-          color: const Color(0xFF1B4D3E).withValues(alpha: 0.06),
+          color: AppColors.accentSoft(context, 0.06),
         ),
       ),
       child: TabBar(
         controller: _tabController,
         indicator: BoxDecoration(
-          gradient: const LinearGradient(
+          gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Color(0xFF1B4D3E), Color(0xFF2D7B5E)],
+            colors: AppColors.headerGradient(context),
           ),
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF1B4D3E).withValues(alpha: 0.35),
+              color: AppColors.accentSoft(context, 0.35),
               blurRadius: 12,
               offset: const Offset(0, 3),
             ),
@@ -759,13 +760,13 @@ class _EventOrderScreenState extends State<EventOrderScreen>
       icon: Icons.person_outline,
       trailing: Container(
         decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Color(0xFF1B4D3E), Color(0xFF2D7B5E)],
+          gradient: LinearGradient(
+            colors: AppColors.headerGradient(context),
           ),
           borderRadius: BorderRadius.circular(10),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF1B4D3E).withValues(alpha: 0.25),
+              color: AppColors.accentSoft(context, 0.25),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -820,27 +821,27 @@ class _EventOrderScreenState extends State<EventOrderScreen>
           // Customer suggestions
           if (_customers.isNotEmpty || _isSearchingCustomers)
             Container(
-              margin: const EdgeInsets.only(top: 4),
+              margin: EdgeInsets.only(top: 4),
               constraints: const BoxConstraints(maxHeight: 180),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColors.card(context),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: Colors.grey.withValues(alpha: 0.15)),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.08),
                     blurRadius: 8,
-                    offset: const Offset(0, 4),
+                    offset: Offset(0, 4),
                   ),
                 ],
               ),
               child: _isSearchingCustomers
-                  ? const Center(
+                  ? Center(
                       child: Padding(
                         padding: EdgeInsets.all(16),
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          color: Color(0xFF1B4D3E),
+                          color: AppColors.accent(context),
                         ),
                       ),
                     )
@@ -853,16 +854,16 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                           dense: true,
                           leading: CircleAvatar(
                             radius: 16,
-                            backgroundColor: const Color(
+                            backgroundColor: Color(
                               0xFF1B4D3E,
                             ).withValues(alpha: 0.15),
                             child: Text(
                               customer.name.isNotEmpty
                                   ? customer.name[0].toUpperCase()
                                   : '?',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontFamily: 'Literata',
-                                color: Color(0xFF1B4D3E),
+                                color: AppColors.accent(context),
                                 fontWeight: FontWeight.bold,
                                 fontSize: 14,
                               ),
@@ -1010,13 +1011,12 @@ class _EventOrderScreenState extends State<EventOrderScreen>
           lastDate: DateTime.now().add(const Duration(days: 365 * 2)),
           builder: (context, child) {
             return Theme(
-              data: ThemeData.light().copyWith(
-                colorScheme: const ColorScheme.light(
+              data: Theme.of(context).copyWith(
+                colorScheme: ColorScheme.light(
                   primary: Color(0xFF1B4D3E),
-                  surface: Colors.white,
+                  surface: AppColors.card(context),
                   onSurface: Color(0xFF1A1A2E),
                 ),
-                dialogTheme: DialogThemeData(backgroundColor: Colors.white),
               ),
               child: child!,
             );
@@ -1028,19 +1028,19 @@ class _EventOrderScreenState extends State<EventOrderScreen>
       },
       borderRadius: BorderRadius.circular(14),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        padding: EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              const Color(0xFF1B4D3E).withValues(alpha: 0.04),
-              const Color(0xFFF8F9FC),
+              Color(0xFF1B4D3E).withValues(alpha: 0.04),
+              AppColors.scaffold(context),
             ],
           ),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: const Color(0xFF1B4D3E).withValues(alpha: 0.12),
+            color: AppColors.accentSoft(context, 0.12),
           ),
         ),
         child: Row(
@@ -1048,8 +1048,8 @@ class _EventOrderScreenState extends State<EventOrderScreen>
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF1B4D3E), Color(0xFF2D7B5E)],
+                gradient: LinearGradient(
+                  colors: AppColors.headerGradient(context),
                 ),
                 borderRadius: BorderRadius.circular(10),
               ),
@@ -1107,13 +1107,12 @@ class _EventOrderScreenState extends State<EventOrderScreen>
           initialTime: _eventTime,
           builder: (context, child) {
             return Theme(
-              data: ThemeData.light().copyWith(
-                colorScheme: const ColorScheme.light(
+              data: Theme.of(context).copyWith(
+                colorScheme: ColorScheme.light(
                   primary: Color(0xFF1B4D3E),
-                  surface: Colors.white,
+                  surface: AppColors.card(context),
                   onSurface: Color(0xFF1A1A2E),
                 ),
-                dialogTheme: DialogThemeData(backgroundColor: Colors.white),
               ),
               child: child!,
             );
@@ -1125,14 +1124,14 @@ class _EventOrderScreenState extends State<EventOrderScreen>
       },
       borderRadius: BorderRadius.circular(14),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        padding: EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
               Colors.orange.withValues(alpha: 0.04),
-              const Color(0xFFF8F9FC),
+              AppColors.scaffold(context),
             ],
           ),
           borderRadius: BorderRadius.circular(14),
@@ -1200,35 +1199,35 @@ class _EventOrderScreenState extends State<EventOrderScreen>
       title: l10n.subEvents,
       icon: Icons.event_note,
       trailing: IconButton(
-        icon: const Icon(Icons.add_circle, color: Color(0xFF1B4D3E)),
+        icon: Icon(Icons.add_circle, color: AppColors.accent(context)),
         onPressed: _showAddSubEventDialog,
       ),
       child: Column(
         children: [
           if (_subEvents.isEmpty)
             Container(
-              padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 20),
-              margin: const EdgeInsets.symmetric(horizontal: 4),
+              padding: EdgeInsets.symmetric(vertical: 28, horizontal: 20),
+              margin: EdgeInsets.symmetric(horizontal: 4),
               decoration: BoxDecoration(
-                color: const Color(0xFFFAFBFC),
+                color: AppColors.scaffold(context),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: const Color(0xFF1B4D3E).withValues(alpha: 0.12),
+                  color: AppColors.accentSoft(context, 0.12),
                   style: BorderStyle.solid,
                 ),
               ),
               child: Column(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(16),
+                    padding: EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF1B4D3E).withValues(alpha: 0.06),
+                      color: AppColors.accentSoft(context, 0.06),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
                       Icons.event_note_rounded,
                       size: 36,
-                      color: const Color(0xFF1B4D3E).withValues(alpha: 0.35),
+                      color: AppColors.accentSoft(context, 0.35),
                     ),
                   ),
                   const SizedBox(height: 14),
@@ -1279,13 +1278,13 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                   width: 14,
                   height: 14,
                   decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF1B4D3E), Color(0xFF3A8B6E)],
+                    gradient: LinearGradient(
+                      colors: AppColors.headerGradient(context),
                     ),
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFF1B4D3E).withValues(alpha: 0.3),
+                        color: AppColors.accentSoft(context, 0.3),
                         blurRadius: 6,
                         offset: const Offset(0, 2),
                       ),
@@ -1327,17 +1326,17 @@ class _EventOrderScreenState extends State<EventOrderScreen>
           // Card content
           Expanded(
             child: Container(
-              margin: const EdgeInsets.only(bottom: 12),
-              padding: const EdgeInsets.all(14),
+              margin: EdgeInsets.only(bottom: 12),
+              padding: EdgeInsets.all(14),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [const Color(0xFFF8FBF9), Colors.white],
+                  colors: [AppColors.scaffold(context), AppColors.card(context)],
                 ),
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(
-                  color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+                  color: AppColors.accentSoft(context, 0.1),
                 ),
                 boxShadow: [
                   BoxShadow(
@@ -1356,8 +1355,8 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [Color(0xFF1B4D3E), Color(0xFF2D7B5E)],
+                          gradient: LinearGradient(
+                            colors: AppColors.headerGradient(context),
                           ),
                           borderRadius: BorderRadius.circular(10),
                         ),
@@ -1444,7 +1443,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                         ),
                         child: Text(
                           '₹${subEvent.charges.toStringAsFixed(0)}',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontFamily: 'Literata',
                             color: Color(0xFF2E7D32),
                             fontWeight: FontWeight.w800,
@@ -1458,7 +1457,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                           color: Colors.grey[400],
                           size: 20,
                         ),
-                        color: Colors.white,
+                        color: AppColors.card(context),
                         elevation: 8,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -1514,12 +1513,12 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                   if (subEvent.notes?.isNotEmpty == true) ...[
                     const SizedBox(height: 8),
                     Container(
-                      padding: const EdgeInsets.symmetric(
+                      padding: EdgeInsets.symmetric(
                         horizontal: 10,
                         vertical: 6,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.grey[50],
+                        color: AppColors.scaffold(context),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Row(
@@ -1570,11 +1569,11 @@ class _EventOrderScreenState extends State<EventOrderScreen>
     final hasProducts = _orderItems.isNotEmpty;
 
     // Only show breakdown if there are items to display
-    if (!hasSubEvents && !hasProducts) return const SizedBox.shrink();
+    if (!hasSubEvents && !hasProducts) return SizedBox.shrink();
 
     return Container(
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [Color(0xFF1A2332), Color(0xFF1B4D3E)],
@@ -1582,7 +1581,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF1B4D3E).withValues(alpha: 0.25),
+            color: AppColors.accentSoft(context, 0.25),
             blurRadius: 20,
             offset: const Offset(0, 6),
           ),
@@ -1719,7 +1718,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
         Row(
           children: [
             Icon(icon, size: 16, color: color),
-            const SizedBox(width: 8),
+            SizedBox(width: 8),
             Text(
               label,
               style: TextStyle(
@@ -1736,7 +1735,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
             fontFamily: 'Literata',
             fontSize: 15,
             fontWeight: FontWeight.w700,
-            color: Colors.white.withValues(alpha: 0.9),
+            color: AppColors.card(context),
           ),
         ),
       ],
@@ -1760,9 +1759,9 @@ class _EventOrderScreenState extends State<EventOrderScreen>
     bool showStockInfo = false,
   }) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.card(context),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Colors.grey.withValues(alpha: 0.08)),
         boxShadow: [
@@ -1833,18 +1832,18 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                       ),
                       child: Icon(icon, color: Colors.white, size: 18),
                     ),
-                    const SizedBox(width: 10),
+                    SizedBox(width: 10),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             title,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontFamily: 'Literata',
                               fontWeight: FontWeight.w700,
                               fontSize: 14,
-                              color: Color(0xFF1B4D3E),
+                              color: AppColors.accent(context),
                             ),
                           ),
                           Text(
@@ -1863,17 +1862,17 @@ class _EventOrderScreenState extends State<EventOrderScreen>
               ),
               // Combined search bar: Product code + Search + Barcode
               Padding(
-                padding: const EdgeInsets.all(12),
+                padding: EdgeInsets.all(12),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(
+                  padding: EdgeInsets.symmetric(
                     horizontal: 10,
                     vertical: 8,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.grey[50],
+                    color: AppColors.scaffold(context),
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(
-                      color: const Color(0xFF1B4D3E).withValues(alpha: 0.2),
+                      color: AppColors.accentSoft(context, 0.2),
                     ),
                   ),
                   child: Row(
@@ -1926,16 +1925,16 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                       GestureDetector(
                         onTap: _showProductSelectionSheet,
                         child: Container(
-                          padding: const EdgeInsets.all(6),
+                          padding: EdgeInsets.all(6),
                           decoration: BoxDecoration(
-                            color: const Color(
+                            color: Color(
                               0xFF1B4D3E,
                             ).withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(6),
                           ),
-                          child: const Icon(
+                          child: Icon(
                             Icons.search_rounded,
-                            color: Color(0xFF1B4D3E),
+                            color: AppColors.accent(context),
                             size: 18,
                           ),
                         ),
@@ -1952,8 +1951,8 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                         child: Container(
                           padding: const EdgeInsets.all(6),
                           decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFF1B4D3E), Color(0xFF2D6A4F)],
+                            gradient: LinearGradient(
+                              colors: AppColors.headerGradient(context),
                             ),
                             borderRadius: BorderRadius.circular(6),
                           ),
@@ -1978,7 +1977,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                       horizontal: 16,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFAFBFC),
+                      color: AppColors.scaffold(context),
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
                         color: Colors.green.withValues(alpha: 0.1),
@@ -2091,7 +2090,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
       ),
       onDismissed: (_) => _deleteOrderItem(index),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+        padding: EdgeInsets.symmetric(horizontal: 4, vertical: 8),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
@@ -2100,7 +2099,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
               width: 24,
               height: 24,
               decoration: BoxDecoration(
-                color: const Color(0xFF1B4D3E),
+                color: AppColors.accent(context),
                 borderRadius: BorderRadius.circular(6),
               ),
               child: Center(
@@ -2184,12 +2183,12 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                 ],
               ),
             ),
-            const SizedBox(width: 8),
+            SizedBox(width: 8),
             // Quantity stepper
             Container(
               height: 30,
               decoration: BoxDecoration(
-                color: Colors.grey[50],
+                color: AppColors.scaffold(context),
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(color: Colors.grey.withValues(alpha: 0.15)),
               ),
@@ -2213,16 +2212,16 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                       width: 28,
                       height: 30,
                       decoration: BoxDecoration(
-                        color: const Color(0xFF1B4D3E).withValues(alpha: 0.08),
-                        borderRadius: const BorderRadius.only(
+                        color: AppColors.accentSoft(context, 0.08),
+                        borderRadius: BorderRadius.only(
                           topLeft: Radius.circular(7),
                           bottomLeft: Radius.circular(7),
                         ),
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.remove,
                         size: 14,
-                        color: Color(0xFF1B4D3E),
+                        color: AppColors.accent(context),
                       ),
                     ),
                   ),
@@ -2253,34 +2252,34 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                       width: 28,
                       height: 30,
                       decoration: BoxDecoration(
-                        color: const Color(0xFF1B4D3E).withValues(alpha: 0.08),
-                        borderRadius: const BorderRadius.only(
+                        color: AppColors.accentSoft(context, 0.08),
+                        borderRadius: BorderRadius.only(
                           topRight: Radius.circular(7),
                           bottomRight: Radius.circular(7),
                         ),
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.add,
                         size: 14,
-                        color: Color(0xFF1B4D3E),
+                        color: AppColors.accent(context),
                       ),
                     ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(width: 10),
+            SizedBox(width: 10),
             // Subtotal
             SizedBox(
               width: 55,
               child: Text(
                 '₹${item.total.toStringAsFixed(0)}',
                 textAlign: TextAlign.right,
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: 'Literata',
                   fontWeight: FontWeight.w700,
                   fontSize: 13,
-                  color: Color(0xFF1B4D3E),
+                  color: AppColors.accent(context),
                 ),
               ),
             ),
@@ -2292,9 +2291,9 @@ class _EventOrderScreenState extends State<EventOrderScreen>
 
   Widget _buildOrderItemCard(OrderItem item, int index) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
+      margin: EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8F9FC),
+        color: AppColors.scaffold(context),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.grey.withValues(alpha: 0.1)),
       ),
@@ -2343,7 +2342,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
           children: [
             Text(
               '₹${item.total.toStringAsFixed(0)}',
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: 'Literata',
                 color: Color(0xFF4CAF50),
                 fontWeight: FontWeight.bold,
@@ -2352,7 +2351,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
             ),
             PopupMenuButton<String>(
               icon: Icon(Icons.more_vert, color: Colors.grey[500]),
-              color: Colors.white,
+              color: AppColors.card(context),
               elevation: 8,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -2603,14 +2602,14 @@ class _EventOrderScreenState extends State<EventOrderScreen>
   Widget _buildSummaryBar() {
     return Container(
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [Color(0xFF1A2332), Color(0xFF1B4D3E), Color(0xFF1A3A30)],
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF1B4D3E).withValues(alpha: 0.3),
+            color: AppColors.accentSoft(context, 0.3),
             blurRadius: 24,
             offset: const Offset(0, -8),
           ),
@@ -2694,7 +2693,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                   ),
                 ],
               ),
-              const SizedBox(height: 14),
+              SizedBox(height: 14),
               // Save button - full width
               SizedBox(
                 width: double.infinity,
@@ -2702,7 +2701,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                 child: ElevatedButton(
                   onPressed: _isLoading ? null : _saveOrder,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
+                    backgroundColor: AppColors.card(context),
                     foregroundColor: const Color(0xFF1B4D3E),
                     disabledBackgroundColor: Colors.white.withValues(
                       alpha: 0.5,
@@ -2815,7 +2814,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.card(context),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -2922,7 +2921,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFFF7F8FB),
+        color: AppColors.scaffold(context),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: const Color(0xFFE8ECF0)),
         boxShadow: [
@@ -2956,9 +2955,9 @@ class _EventOrderScreenState extends State<EventOrderScreen>
             color: Colors.grey[500],
             fontSize: 13,
           ),
-          floatingLabelStyle: const TextStyle(
+          floatingLabelStyle: TextStyle(
             fontFamily: 'Literata',
-            color: Color(0xFF1B4D3E),
+            color: AppColors.accent(context),
             fontWeight: FontWeight.w600,
           ),
           prefixIcon: Padding(
@@ -3046,7 +3045,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) {
           return AlertDialog(
-            backgroundColor: Colors.white,
+            backgroundColor: AppColors.card(context),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20),
             ),
@@ -3064,7 +3063,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                 children: [
                   TextField(
                     controller: nameController,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontFamily: 'Literata',
                       color: Color(0xFF1A1A2E),
                     ),
@@ -3080,7 +3079,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                         color: Colors.grey[400],
                       ),
                       filled: true,
-                      fillColor: const Color(0xFFF8F9FC),
+                      fillColor: AppColors.scaffold(context),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide.none,
@@ -3091,7 +3090,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                   TextField(
                     controller: chargesController,
                     keyboardType: TextInputType.number,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontFamily: 'Literata',
                       color: Color(0xFF1A1A2E),
                     ),
@@ -3107,7 +3106,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                         color: Colors.grey[600],
                       ),
                       filled: true,
-                      fillColor: const Color(0xFFF8F9FC),
+                      fillColor: AppColors.scaffold(context),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide.none,
@@ -3135,14 +3134,11 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                                 const Duration(days: 730),
                               ),
                               builder: (context, child) => Theme(
-                                data: ThemeData.light().copyWith(
-                                  colorScheme: const ColorScheme.light(
+                                data: Theme.of(context).copyWith(
+                                  colorScheme: ColorScheme.light(
                                     primary: Color(0xFF1B4D3E),
-                                    surface: Colors.white,
+                                    surface: AppColors.card(context),
                                     onSurface: Color(0xFF1A1A2E),
-                                  ),
-                                  dialogTheme: DialogThemeData(
-                                    backgroundColor: Colors.white,
                                   ),
                                 ),
                                 child: child!,
@@ -3153,12 +3149,12 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                             }
                           },
                           child: Container(
-                            padding: const EdgeInsets.symmetric(
+                            padding: EdgeInsets.symmetric(
                               horizontal: 12,
                               vertical: 12,
                             ),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFF8F9FC),
+                              color: AppColors.scaffold(context),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Row(
@@ -3193,14 +3189,11 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                               context: context,
                               initialTime: selectedTime,
                               builder: (context, child) => Theme(
-                                data: ThemeData.light().copyWith(
-                                  colorScheme: const ColorScheme.light(
+                                data: Theme.of(context).copyWith(
+                                  colorScheme: ColorScheme.light(
                                     primary: Color(0xFF1B4D3E),
-                                    surface: Colors.white,
+                                    surface: AppColors.card(context),
                                     onSurface: Color(0xFF1A1A2E),
-                                  ),
-                                  dialogTheme: DialogThemeData(
-                                    backgroundColor: Colors.white,
                                   ),
                                 ),
                                 child: child!,
@@ -3211,12 +3204,12 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                             }
                           },
                           child: Container(
-                            padding: const EdgeInsets.symmetric(
+                            padding: EdgeInsets.symmetric(
                               horizontal: 12,
                               vertical: 12,
                             ),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFF8F9FC),
+                              color: AppColors.scaffold(context),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Row(
@@ -3246,7 +3239,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                   TextField(
                     controller: notesController,
                     maxLines: 2,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontFamily: 'Literata',
                       color: Color(0xFF1A1A2E),
                     ),
@@ -3257,7 +3250,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                         color: Colors.grey[600],
                       ),
                       filled: true,
-                      fillColor: const Color(0xFFF8F9FC),
+                      fillColor: AppColors.scaffold(context),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide.none,
@@ -3414,7 +3407,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
       case EventCustomColumnType.text:
         return TextField(
           controller: textControllers[column.id],
-          style: const TextStyle(
+          style: TextStyle(
             fontFamily: 'Literata',
             color: Color(0xFF1A1A2E),
           ),
@@ -3425,7 +3418,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
               color: Colors.grey[600],
             ),
             filled: true,
-            fillColor: const Color(0xFFF8F9FC),
+            fillColor: AppColors.scaffold(context),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide.none,
@@ -3436,7 +3429,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
         return TextField(
           controller: textControllers[column.id],
           keyboardType: TextInputType.number,
-          style: const TextStyle(
+          style: TextStyle(
             fontFamily: 'Literata',
             color: Color(0xFF1A1A2E),
           ),
@@ -3447,7 +3440,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
               color: Colors.grey[600],
             ),
             filled: true,
-            fillColor: const Color(0xFFF8F9FC),
+            fillColor: AppColors.scaffold(context),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide.none,
@@ -3458,7 +3451,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
         return TextField(
           controller: textControllers[column.id],
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          style: const TextStyle(
+          style: TextStyle(
             fontFamily: 'Literata',
             color: Color(0xFF1A1A2E),
           ),
@@ -3469,7 +3462,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
               color: Colors.grey[600],
             ),
             filled: true,
-            fillColor: const Color(0xFFF8F9FC),
+            fillColor: AppColors.scaffold(context),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide.none,
@@ -3499,9 +3492,9 @@ class _EventOrderScreenState extends State<EventOrderScreen>
             }
           },
           child: Container(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: const Color(0xFFF8F9FC),
+              color: AppColors.scaffold(context),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
@@ -3535,7 +3528,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
               color: Colors.grey[600],
             ),
             filled: true,
-            fillColor: const Color(0xFFF8F9FC),
+            fillColor: AppColors.scaffold(context),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide.none,
@@ -3563,7 +3556,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
         return SwitchListTile(
           title: Text(
             column.name,
-            style: const TextStyle(fontFamily: 'Literata'),
+            style: TextStyle(fontFamily: 'Literata'),
           ),
           value: value,
           onChanged: (newValue) {
@@ -3581,7 +3574,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.card(context),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text(
           'Delete Sub-Event?',
@@ -3809,7 +3802,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                     .toList();
 
           return AlertDialog(
-            backgroundColor: Colors.white,
+            backgroundColor: AppColors.card(context),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20),
             ),
@@ -3833,7 +3826,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                         onChanged: (value) {
                           setDialogState(() => searchQuery = value);
                         },
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontFamily: 'Literata',
                           color: Color(0xFF1A1A2E),
                         ),
@@ -3848,19 +3841,19 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                             color: Colors.grey[600],
                           ),
                           filled: true,
-                          fillColor: const Color(0xFFF8F9FC),
+                          fillColor: AppColors.scaffold(context),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide.none,
                           ),
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      SizedBox(height: 8),
                       // Product list
                       Container(
                         height: 150,
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF8F9FC),
+                          color: AppColors.scaffold(context),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: ListView.builder(
@@ -3910,21 +3903,21 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                           },
                         ),
                       ),
-                      const SizedBox(height: 12),
+                      SizedBox(height: 12),
                     ],
                     // Selected product info (for editing)
                     if (editIndex != null && item != null)
                       Container(
-                        padding: const EdgeInsets.all(12),
+                        padding: EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+                          color: AppColors.accentSoft(context, 0.1),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Row(
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.inventory,
-                              color: Color(0xFF1B4D3E),
+                              color: AppColors.accent(context),
                             ),
                             const SizedBox(width: 12),
                             Expanded(
@@ -3945,7 +3938,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                     TextField(
                       controller: quantityController,
                       keyboardType: TextInputType.number,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'Literata',
                         color: Color(0xFF1A1A2E),
                       ),
@@ -3956,7 +3949,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                           color: Colors.grey[600],
                         ),
                         filled: true,
-                        fillColor: const Color(0xFFF8F9FC),
+                        fillColor: AppColors.scaffold(context),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: BorderSide.none,
@@ -3968,7 +3961,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                     TextField(
                       controller: rateController,
                       keyboardType: TextInputType.number,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'Literata',
                         color: Color(0xFF1A1A2E),
                       ),
@@ -3984,7 +3977,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                           color: Colors.grey[600],
                         ),
                         filled: true,
-                        fillColor: const Color(0xFFF8F9FC),
+                        fillColor: AppColors.scaffold(context),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: BorderSide.none,
@@ -3996,7 +3989,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                     TextField(
                       controller: discountController,
                       keyboardType: TextInputType.number,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'Literata',
                         color: Color(0xFF1A1A2E),
                       ),
@@ -4012,7 +4005,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                           color: Colors.grey[600],
                         ),
                         filled: true,
-                        fillColor: const Color(0xFFF8F9FC),
+                        fillColor: AppColors.scaffold(context),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: BorderSide.none,
@@ -4088,7 +4081,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
                 ),
                 child: Text(
                   editIndex != null ? 'Update' : 'Add',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'Literata',
                     fontWeight: FontWeight.w600,
                   ),
@@ -4105,7 +4098,7 @@ class _EventOrderScreenState extends State<EventOrderScreen>
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.card(context),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text(
           'Delete Product?',
@@ -4251,8 +4244,8 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
       maxChildSize: 0.9,
       minChildSize: 0.4,
       builder: (_, controller) => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
+        decoration: BoxDecoration(
+          color: AppColors.card(context),
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: Column(
@@ -4269,18 +4262,18 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
             ),
             // Header
             Padding(
-              padding: const EdgeInsets.all(20),
+              padding: EdgeInsets.all(20),
               child: Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(10),
+                    padding: EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+                      color: AppColors.accentSoft(context, 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.person_outline,
-                      color: Color(0xFF1B4D3E),
+                      color: AppColors.accent(context),
                       size: 22,
                     ),
                   ),
@@ -4314,21 +4307,21 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
             ),
             // Search bar
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
+              padding: EdgeInsets.symmetric(horizontal: 20),
               child: TextField(
                 controller: _searchController,
                 onChanged: _filterCustomers,
-                style: const TextStyle(fontFamily: 'Literata', fontSize: 14),
+                style: TextStyle(fontFamily: 'Literata', fontSize: 14),
                 decoration: InputDecoration(
                   hintText: 'Search by name, phone or address',
                   hintStyle: TextStyle(color: Colors.grey[500]),
-                  prefixIcon: const Icon(
+                  prefixIcon: Icon(
                     Icons.search,
-                    color: Color(0xFF1B4D3E),
+                    color: AppColors.accent(context),
                   ),
                   suffixIcon: _searchController.text.isNotEmpty
                       ? IconButton(
-                          icon: const Icon(Icons.clear, size: 20),
+                          icon: Icon(Icons.clear, size: 20),
                           onPressed: () {
                             _searchController.clear();
                             _filterCustomers('');
@@ -4336,7 +4329,7 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
                         )
                       : null,
                   filled: true,
-                  fillColor: const Color(0xFFF5F5F5),
+                  fillColor: AppColors.scaffold(context),
                   contentPadding: const EdgeInsets.symmetric(
                     horizontal: 16,
                     vertical: 14,
@@ -4374,17 +4367,17 @@ class _CustomerPickerSheetState extends State<_CustomerPickerSheet> {
                     )
                   : ListView.builder(
                       controller: controller,
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      padding: EdgeInsets.symmetric(horizontal: 16),
                       itemCount: _filteredCustomers.length,
                       itemBuilder: (context, index) {
                         final customer = _filteredCustomers[index];
                         return Container(
-                          margin: const EdgeInsets.only(bottom: 8),
+                          margin: EdgeInsets.only(bottom: 8),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: AppColors.card(context),
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                              color: Colors.grey[200]!,
+                              color: AppColors.border(context)!,
                               width: 1,
                             ),
                           ),
@@ -4619,8 +4612,8 @@ class _ProductSelectionSheetState extends State<_ProductSelectionSheet> {
 
     return Container(
       height: MediaQuery.of(context).size.height * 0.85,
-      decoration: const BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(
+        color: AppColors.card(context),
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(
@@ -4693,14 +4686,14 @@ class _ProductSelectionSheetState extends State<_ProductSelectionSheet> {
           ),
           // Combined search bar (like billing page)
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: EdgeInsets.symmetric(horizontal: 16),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              padding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
               decoration: BoxDecoration(
-                color: Colors.grey[50],
+                color: AppColors.scaffold(context),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: const Color(0xFF1B4D3E).withValues(alpha: 0.2),
+                  color: AppColors.accentSoft(context, 0.2),
                 ),
               ),
               child: Row(
@@ -4753,7 +4746,7 @@ class _ProductSelectionSheetState extends State<_ProductSelectionSheet> {
                       // Focus on search and trigger keyboard
                       _codeController.clear();
                       FocusScope.of(context).requestFocus(FocusNode());
-                      Future.delayed(const Duration(milliseconds: 100), () {
+                      Future.delayed(Duration(milliseconds: 100), () {
                         _searchController
                             .selection = TextSelection.fromPosition(
                           TextPosition(offset: _searchController.text.length),
@@ -4761,14 +4754,14 @@ class _ProductSelectionSheetState extends State<_ProductSelectionSheet> {
                       });
                     },
                     child: Container(
-                      padding: const EdgeInsets.all(6),
+                      padding: EdgeInsets.all(6),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+                        color: AppColors.accentSoft(context, 0.1),
                         borderRadius: BorderRadius.circular(6),
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.search_rounded,
-                        color: Color(0xFF1B4D3E),
+                        color: AppColors.accent(context),
                         size: 18,
                       ),
                     ),
@@ -4780,8 +4773,8 @@ class _ProductSelectionSheetState extends State<_ProductSelectionSheet> {
                     child: Container(
                       padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFF1B4D3E), Color(0xFF2D6A4F)],
+                        gradient: LinearGradient(
+                          colors: AppColors.headerGradient(context),
                         ),
                         borderRadius: BorderRadius.circular(6),
                       ),
@@ -4796,21 +4789,21 @@ class _ProductSelectionSheetState extends State<_ProductSelectionSheet> {
               ),
             ),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           // Search field
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: EdgeInsets.symmetric(horizontal: 16),
             child: TextField(
               controller: _searchController,
               onChanged: (value) => setState(() => _searchQuery = value),
-              style: const TextStyle(fontFamily: 'Literata', fontSize: 14),
+              style: TextStyle(fontFamily: 'Literata', fontSize: 14),
               decoration: InputDecoration(
                 hintText: 'Search products by name...',
                 hintStyle: TextStyle(color: Colors.grey[500]),
-                prefixIcon: const Icon(Icons.search, color: Color(0xFF1B4D3E)),
+                prefixIcon: Icon(Icons.search, color: AppColors.accent(context)),
                 suffixIcon: _searchQuery.isNotEmpty
                     ? IconButton(
-                        icon: const Icon(Icons.clear, size: 20),
+                        icon: Icon(Icons.clear, size: 20),
                         onPressed: () {
                           _searchController.clear();
                           setState(() => _searchQuery = '');
@@ -4818,7 +4811,7 @@ class _ProductSelectionSheetState extends State<_ProductSelectionSheet> {
                       )
                     : null,
                 filled: true,
-                fillColor: const Color(0xFFF5F5F5),
+                fillColor: AppColors.scaffold(context),
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 16,
                   vertical: 14,
@@ -4855,23 +4848,23 @@ class _ProductSelectionSheetState extends State<_ProductSelectionSheet> {
                     ),
                   )
                 : ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    padding: EdgeInsets.symmetric(horizontal: 16),
                     itemCount: filteredProducts.length,
                     itemBuilder: (context, index) {
                       final product = filteredProducts[index];
                       final isSelected = _selectedProduct?.id == product.id;
 
                       return Container(
-                        margin: const EdgeInsets.only(bottom: 8),
+                        margin: EdgeInsets.only(bottom: 8),
                         decoration: BoxDecoration(
                           color: isSelected
-                              ? const Color(0xFFE8F5E9)
+                              ? AppColors.chipFill(context)
                               : Colors.white,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
                             color: isSelected
                                 ? const Color(0xFF1B4D3E)
-                                : Colors.grey[200]!,
+                                : AppColors.border(context)!,
                             width: isSelected ? 1.5 : 1,
                           ),
                         ),
@@ -4881,7 +4874,7 @@ class _ProductSelectionSheetState extends State<_ProductSelectionSheet> {
                             borderRadius: BorderRadius.circular(12),
                             onTap: () => _selectProduct(product),
                             child: Padding(
-                              padding: const EdgeInsets.all(12),
+                              padding: EdgeInsets.all(12),
                               child: Row(
                                 children: [
                                   // Product index badge
@@ -4889,7 +4882,7 @@ class _ProductSelectionSheetState extends State<_ProductSelectionSheet> {
                                     width: 44,
                                     height: 44,
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFF1B4D3E),
+                                      color: AppColors.accent(context),
                                       borderRadius: BorderRadius.circular(10),
                                     ),
                                     child: Center(
@@ -4923,16 +4916,16 @@ class _ProductSelectionSheetState extends State<_ProductSelectionSheet> {
                                           maxLines: 1,
                                           overflow: TextOverflow.ellipsis,
                                         ),
-                                        const SizedBox(height: 3),
+                                        SizedBox(height: 3),
                                         Row(
                                           children: [
                                             Text(
                                               '₹${product.salesPrice.toStringAsFixed(0)}',
-                                              style: const TextStyle(
+                                              style: TextStyle(
                                                 fontFamily: 'Literata',
                                                 fontWeight: FontWeight.w700,
                                                 fontSize: 13,
-                                                color: Color(0xFF1B4D3E),
+                                                color: AppColors.accent(context),
                                               ),
                                             ),
                                             const SizedBox(width: 8),
@@ -4951,9 +4944,9 @@ class _ProductSelectionSheetState extends State<_ProductSelectionSheet> {
                                   ),
                                   // Selection indicator
                                   if (isSelected)
-                                    const Icon(
+                                    Icon(
                                       Icons.check_circle,
-                                      color: Color(0xFF1B4D3E),
+                                      color: AppColors.accent(context),
                                       size: 24,
                                     )
                                   else
@@ -4980,9 +4973,9 @@ class _ProductSelectionSheetState extends State<_ProductSelectionSheet> {
 
   Widget _buildSelectedProductSection() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.card(context),
         borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
         boxShadow: [
           BoxShadow(
@@ -4999,17 +4992,17 @@ class _ProductSelectionSheetState extends State<_ProductSelectionSheet> {
           children: [
             // Selected product card
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+                color: AppColors.accentSoft(context, 0.1),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: const Color(0xFF1B4D3E).withValues(alpha: 0.3),
+                  color: AppColors.accentSoft(context, 0.3),
                 ),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.check_circle, color: Color(0xFF1B4D3E)),
+                  Icon(Icons.check_circle, color: AppColors.accent(context)),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
@@ -5050,7 +5043,7 @@ class _ProductSelectionSheetState extends State<_ProductSelectionSheet> {
                   child: TextField(
                     controller: _quantityController,
                     keyboardType: TextInputType.number,
-                    style: const TextStyle(fontFamily: 'Literata'),
+                    style: TextStyle(fontFamily: 'Literata'),
                     decoration: InputDecoration(
                       labelText: 'Qty',
                       labelStyle: TextStyle(
@@ -5059,7 +5052,7 @@ class _ProductSelectionSheetState extends State<_ProductSelectionSheet> {
                         fontSize: 12,
                       ),
                       filled: true,
-                      fillColor: const Color(0xFFF8F9FC),
+                      fillColor: AppColors.scaffold(context),
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: 12,
                         vertical: 8,
@@ -5077,7 +5070,7 @@ class _ProductSelectionSheetState extends State<_ProductSelectionSheet> {
                   child: TextField(
                     controller: _rateController,
                     keyboardType: TextInputType.number,
-                    style: const TextStyle(fontFamily: 'Literata'),
+                    style: TextStyle(fontFamily: 'Literata'),
                     decoration: InputDecoration(
                       labelText: 'Rate',
                       labelStyle: TextStyle(
@@ -5087,7 +5080,7 @@ class _ProductSelectionSheetState extends State<_ProductSelectionSheet> {
                       ),
                       prefixText: '₹ ',
                       filled: true,
-                      fillColor: const Color(0xFFF8F9FC),
+                      fillColor: AppColors.scaffold(context),
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: 12,
                         vertical: 8,
@@ -5104,7 +5097,7 @@ class _ProductSelectionSheetState extends State<_ProductSelectionSheet> {
                   child: TextField(
                     controller: _discountController,
                     keyboardType: TextInputType.number,
-                    style: const TextStyle(fontFamily: 'Literata'),
+                    style: TextStyle(fontFamily: 'Literata'),
                     decoration: InputDecoration(
                       labelText: 'Disc%',
                       labelStyle: TextStyle(
@@ -5113,7 +5106,7 @@ class _ProductSelectionSheetState extends State<_ProductSelectionSheet> {
                         fontSize: 12,
                       ),
                       filled: true,
-                      fillColor: const Color(0xFFF8F9FC),
+                      fillColor: AppColors.scaffold(context),
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: 12,
                         vertical: 8,

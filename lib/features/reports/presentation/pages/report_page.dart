@@ -11,6 +11,7 @@ import '../../data/services/report_pdf_generator.dart';
 import '../../domain/models/report_filter_model.dart';
 import '../../domain/models/report_result_model.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
+import 'package:c_billing/core/theme/app_theme.dart';
 
 // ──────────────────────────────────────────────────────────
 // Premium Report Page — v2
@@ -331,7 +332,7 @@ class _ReportPageState extends State<ReportPage>
   Widget build(BuildContext context) {
     _sessionManager.resetSession();
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F6F8),
+      backgroundColor: AppColors.scaffold(context),
       body: Stack(
         children: [
           CustomScrollView(
@@ -489,12 +490,12 @@ class _ReportPageState extends State<ReportPage>
                     onTap: () => _selectPreset(i),
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 200),
-                      padding: const EdgeInsets.symmetric(
+                      padding: EdgeInsets.symmetric(
                         horizontal: 14,
                         vertical: 8,
                       ),
                       decoration: BoxDecoration(
-                        color: selected ? _kGreen : Colors.grey[100],
+                        color: selected ? _kGreen : AppColors.chipFill(context),
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
                           color: selected ? _kGreen : Colors.grey[300]!,
@@ -1253,9 +1254,9 @@ class _ReportPageState extends State<ReportPage>
       color: Colors.black.withValues(alpha: 0.3),
       child: Center(
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+          padding: EdgeInsets.symmetric(horizontal: 32, vertical: 24),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.card(context),
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
@@ -1306,9 +1307,9 @@ class _ReportPageState extends State<ReportPage>
 
   Widget _buildCard({required Widget child, EdgeInsetsGeometry? padding}) {
     return Container(
-      padding: padding ?? const EdgeInsets.all(14),
+      padding: padding ?? EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.card(context),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -1336,9 +1337,9 @@ class _ReportPageState extends State<ReportPage>
 
   Widget _buildDropdownField(String text, IconData icon, bool hasValue) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 11),
       decoration: BoxDecoration(
-        color: Colors.grey[50],
+        color: AppColors.scaffold(context),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: Colors.grey[300]!),
       ),
@@ -1373,9 +1374,9 @@ class _ReportPageState extends State<ReportPage>
       onTap: () => onChanged(!active),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 7),
         decoration: BoxDecoration(
-          color: active ? _kGreen.withValues(alpha: 0.12) : Colors.grey[100],
+          color: active ? _kGreen.withValues(alpha: 0.12) : AppColors.chipFill(context),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: active ? _kGreen.withValues(alpha: 0.4) : Colors.grey[300]!,
@@ -1407,7 +1408,7 @@ class _ReportPageState extends State<ReportPage>
       child: TextField(
         controller: ctrl,
         keyboardType: TextInputType.number,
-        style: const TextStyle(fontFamily: 'Literata', fontSize: 13),
+        style: TextStyle(fontFamily: 'Literata', fontSize: 13),
         decoration: InputDecoration(
           hintText: hint,
           hintStyle: TextStyle(color: Colors.grey[400], fontSize: 12),
@@ -1418,7 +1419,7 @@ class _ReportPageState extends State<ReportPage>
             color: Colors.grey[600],
           ),
           filled: true,
-          fillColor: Colors.grey[50],
+          fillColor: AppColors.scaffold(context),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
             borderSide: BorderSide(color: Colors.grey[300]!),
@@ -1481,8 +1482,8 @@ class _ReportPageState extends State<ReportPage>
 
         return Container(
           height: MediaQuery.of(context).size.height * 0.65,
-          decoration: const BoxDecoration(
-            color: Colors.white,
+          decoration: BoxDecoration(
+            color: AppColors.card(context),
             borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
           ),
           child: Column(
@@ -1556,7 +1557,7 @@ class _ReportPageState extends State<ReportPage>
                               size: 40,
                               color: Colors.grey[300],
                             ),
-                            const SizedBox(height: 8),
+                            SizedBox(height: 8),
                             Text(
                               'No products found',
                               style: TextStyle(
@@ -1570,19 +1571,19 @@ class _ReportPageState extends State<ReportPage>
                     : ListView.separated(
                         itemCount: filtered.length,
                         separatorBuilder: (_, _) =>
-                            Divider(height: 1, color: Colors.grey[100]),
+                            Divider(height: 1, color: AppColors.chipFill(context)),
                         itemBuilder: (_, i) {
                           final p = filtered[i];
                           final selected = _selectedProduct?.id == p.id;
                           return ListTile(
-                            contentPadding: const EdgeInsets.symmetric(
+                            contentPadding: EdgeInsets.symmetric(
                               horizontal: 16,
                               vertical: 2,
                             ),
                             leading: CircleAvatar(
                               backgroundColor: selected
                                   ? _kGreen
-                                  : Colors.grey[200],
+                                  : AppColors.border(context),
                               radius: 18,
                               child: Text(
                                 p.name.isNotEmpty
@@ -1651,8 +1652,8 @@ class _ReportPageState extends State<ReportPage>
       builder: (ctx, setSheetState) {
         return Container(
           height: MediaQuery.of(context).size.height * 0.55,
-          decoration: const BoxDecoration(
-            color: Colors.white,
+          decoration: BoxDecoration(
+            color: AppColors.card(context),
             borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
           ),
           child: Column(
@@ -1708,7 +1709,7 @@ class _ReportPageState extends State<ReportPage>
                               size: 40,
                               color: Colors.grey[300],
                             ),
-                            const SizedBox(height: 8),
+                            SizedBox(height: 8),
                             Text(
                               'No suppliers found',
                               style: TextStyle(
@@ -1722,19 +1723,19 @@ class _ReportPageState extends State<ReportPage>
                     : ListView.separated(
                         itemCount: _suppliers.length,
                         separatorBuilder: (_, _) =>
-                            Divider(height: 1, color: Colors.grey[100]),
+                            Divider(height: 1, color: AppColors.chipFill(context)),
                         itemBuilder: (_, i) {
                           final s = _suppliers[i];
                           final selected = _selectedSupplier?.id == s.id;
                           return ListTile(
-                            contentPadding: const EdgeInsets.symmetric(
+                            contentPadding: EdgeInsets.symmetric(
                               horizontal: 16,
                               vertical: 2,
                             ),
                             leading: CircleAvatar(
                               backgroundColor: selected
                                   ? _kGreen
-                                  : Colors.grey[200],
+                                  : AppColors.border(context),
                               radius: 18,
                               child: Text(
                                 s.firstName.isNotEmpty
@@ -1809,7 +1810,7 @@ class _ReportPageState extends State<ReportPage>
     return Container(
       height: 42,
       decoration: BoxDecoration(
-        color: Colors.grey[50],
+        color: AppColors.scaffold(context),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: Colors.grey[300]!),
       ),

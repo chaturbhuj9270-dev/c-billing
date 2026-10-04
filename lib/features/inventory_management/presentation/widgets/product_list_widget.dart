@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:c_billing/features/product/offline/entities/product_entity.dart';
 import 'product_filter_widget.dart';
+import 'package:c_billing/core/theme/app_theme.dart';
 
 /// Enhanced list widget for displaying products
 /// Features: Shimmer loading, Enhanced cards, Stock badges, Sync icons, Empty states
@@ -100,6 +101,7 @@ class ProductListWidget extends StatelessWidget {
     // Empty state - no products at all
     if (products.isEmpty) {
       return _buildEmptyState(
+        context: context,
         icon: Icons.inventory_2_outlined,
         title: emptyTitle,
         subtitle: emptySubtitle,
@@ -111,6 +113,7 @@ class ProductListWidget extends StatelessWidget {
     // Empty state - no search results
     if (filtered.isEmpty) {
       return _buildEmptyState(
+        context: context,
         icon: Icons.search_off_rounded,
         title: noResultsTitle,
         subtitle: noResultsSubtitle,
@@ -118,7 +121,7 @@ class ProductListWidget extends StatelessWidget {
     }
 
     return RefreshIndicator(
-      color: const Color(0xFF1B4D3E),
+      color: AppColors.accent(context),
       onRefresh: onRefresh,
       child: ListView.builder(
         physics: const AlwaysScrollableScrollPhysics(
@@ -153,13 +156,14 @@ class ProductListWidget extends StatelessWidget {
   }
 
   Widget _buildEmptyState({
+    required BuildContext context,
     required IconData icon,
     required String title,
     required String subtitle,
   }) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(32),
+        padding: EdgeInsets.all(32),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -167,13 +171,13 @@ class ProductListWidget extends StatelessWidget {
               width: 100,
               height: 100,
               decoration: BoxDecoration(
-                color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+                color: AppColors.accentSoft(context, 0.1),
                 borderRadius: BorderRadius.circular(24),
               ),
               child: Icon(
                 icon,
                 size: 48,
-                color: const Color(0xFF1B4D3E).withValues(alpha: 0.4),
+                color: AppColors.accentSoft(context, 0.4),
               ),
             ),
             const SizedBox(height: 24),
@@ -183,7 +187,7 @@ class ProductListWidget extends StatelessWidget {
                 fontFamily: 'Literata',
                 fontWeight: FontWeight.w700,
                 fontSize: 18,
-                color: Colors.grey[700],
+                color: AppColors.secondaryText(context),
               ),
               textAlign: TextAlign.center,
             ),
@@ -194,7 +198,7 @@ class ProductListWidget extends StatelessWidget {
                 fontFamily: 'Literata',
                 fontWeight: FontWeight.w400,
                 fontSize: 14,
-                color: Colors.grey[500],
+                color: AppColors.mutedText(context),
               ),
               textAlign: TextAlign.center,
             ),
@@ -238,9 +242,9 @@ class _ProductCard extends StatelessWidget {
       onTap: onTap,
       onLongPress: onLongPress,
       child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
+        margin: EdgeInsets.only(bottom: 12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.card(context),
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
@@ -308,7 +312,7 @@ class _ProductCard extends StatelessWidget {
                                     fit: BoxFit.cover,
                                     errorBuilder: (_, _, _) => Text(
                                       initials,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         color: Colors.white,
                                         fontSize: 20,
                                         fontWeight: FontWeight.w700,
@@ -398,10 +402,10 @@ class _ProductCard extends StatelessWidget {
                             Expanded(
                               child: Text(
                                 product.name,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.w700,
-                                  color: Color(0xFF1B4D3E),
+                                  color: AppColors.accent(context),
                                   fontFamily: 'Literata',
                                 ),
                                 maxLines: 1,
@@ -429,7 +433,7 @@ class _ProductCard extends StatelessWidget {
                               Icon(
                                 Icons.business_rounded,
                                 size: 13,
-                                color: Colors.grey[500],
+                                color: AppColors.mutedText(context),
                               ),
                               const SizedBox(width: 6),
                               Expanded(
@@ -437,7 +441,7 @@ class _ProductCard extends StatelessWidget {
                                   product.companyName,
                                   style: TextStyle(
                                     fontSize: 13,
-                                    color: Colors.grey[600],
+                                    color: AppColors.secondaryText(context),
                                     fontFamily: 'Literata',
                                   ),
                                   maxLines: 1,
@@ -456,17 +460,17 @@ class _ProductCard extends StatelessWidget {
                               vertical: 2,
                             ),
                             decoration: BoxDecoration(
-                              color: const Color(
+                              color: Color(
                                 0xFF1B4D3E,
                               ).withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text(
                               product.category,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w500,
-                                color: Color(0xFF1B4D3E),
+                                color: AppColors.accent(context),
                                 fontFamily: 'Literata',
                               ),
                             ),
@@ -483,9 +487,9 @@ class _ProductCard extends StatelessWidget {
               // Price row
               const SizedBox(height: 10),
               Container(
-                padding: const EdgeInsets.all(10),
+                padding: EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: Colors.grey[50],
+                  color: AppColors.scaffold(context),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Row(
@@ -493,30 +497,47 @@ class _ProductCard extends StatelessWidget {
                   children: [
                     // Purchase price
                     _buildPriceItem(
+                      context: context,
                       icon: Icons.shopping_cart_outlined,
                       label: 'Purchase',
                       value: '₹${product.purchasePrice.toStringAsFixed(0)}',
-                      color: Colors.grey[700]!,
+                      color: AppColors.secondaryText(context),
                     ),
-                    Container(width: 1, height: 28, color: Colors.grey[300]),
+                    Container(
+                      width: 1,
+                      height: 28,
+                      color: AppColors.border(context),
+                    ),
                     // Sales price
                     _buildPriceItem(
+                      context: context,
                       icon: Icons.sell_outlined,
                       label: 'Sale',
                       value: '₹${product.salesPrice.toStringAsFixed(0)}',
-                      color: Colors.green[700]!,
+                      color: AppColors.isDark(context)
+                          ? Colors.white
+                          : Colors.green[700]!,
                     ),
-                    Container(width: 1, height: 28, color: Colors.grey[300]),
+                    Container(
+                      width: 1,
+                      height: 28,
+                      color: AppColors.border(context),
+                    ),
                     // Stock
                     _buildPriceItem(
+                      context: context,
                       icon: Icons.inventory_rounded,
                       label: 'Stock',
                       value: '${product.currentStock}',
                       color: isOutOfStock
-                          ? Colors.red[700]!
+                          ? (AppColors.isDark(context)
+                              ? Colors.white70
+                              : Colors.red[700]!)
                           : isLowStock
-                          ? Colors.orange[700]!
-                          : const Color(0xFF1B4D3E),
+                          ? (AppColors.isDark(context)
+                              ? Colors.white60
+                              : Colors.orange[700]!)
+                          : AppColors.accent(context),
                     ),
                   ],
                 ),
@@ -596,6 +617,7 @@ class _ProductCard extends StatelessWidget {
   }
 
   Widget _buildPriceItem({
+    required BuildContext context,
     required IconData icon,
     required String label,
     required String value,
@@ -607,13 +629,13 @@ class _ProductCard extends StatelessWidget {
         Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 12, color: Colors.grey[500]),
+            Icon(icon, size: 12, color: AppColors.mutedText(context)),
             const SizedBox(width: 4),
             Text(
               label,
               style: TextStyle(
                 fontSize: 10,
-                color: Colors.grey[500],
+                color: AppColors.mutedText(context),
                 fontFamily: 'Literata',
               ),
             ),
@@ -673,10 +695,10 @@ class _ShimmerCardState extends State<_ShimmerCard>
       animation: _animation,
       builder: (context, child) {
         return Container(
-          margin: const EdgeInsets.only(bottom: 12),
-          padding: const EdgeInsets.all(14),
+          margin: EdgeInsets.only(bottom: 12),
+          padding: EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.card(context),
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
@@ -709,7 +731,7 @@ class _ShimmerCardState extends State<_ShimmerCard>
                   _buildShimmerBox(height: 44, width: 44),
                 ],
               ),
-              const SizedBox(height: 10),
+              SizedBox(height: 10),
               _buildShimmerBox(height: 50, width: double.infinity),
             ],
           ),
@@ -727,7 +749,7 @@ class _ShimmerCardState extends State<_ShimmerCard>
         gradient: LinearGradient(
           begin: Alignment(_animation.value - 1, 0),
           end: Alignment(_animation.value, 0),
-          colors: [Colors.grey[200]!, Colors.grey[100]!, Colors.grey[200]!],
+          colors: [AppColors.border(context)!, AppColors.chipFill(context)!, AppColors.border(context)!],
         ),
       ),
     );
@@ -742,7 +764,7 @@ class _ShimmerCardState extends State<_ShimmerCard>
         gradient: LinearGradient(
           begin: Alignment(_animation.value - 1, 0),
           end: Alignment(_animation.value, 0),
-          colors: [Colors.grey[200]!, Colors.grey[100]!, Colors.grey[200]!],
+          colors: [AppColors.border(context)!, AppColors.chipFill(context)!, AppColors.border(context)!],
         ),
       ),
     );

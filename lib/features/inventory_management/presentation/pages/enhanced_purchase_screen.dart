@@ -25,6 +25,7 @@ import 'purchase_settings_page.dart';
 import 'purchase_report_settings_page.dart';
 import 'invoice_scanner_page.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
+import 'package:c_billing/core/theme/app_theme.dart';
 
 /// Enhanced Purchase Screen with purchase list as default view
 /// Features: Modern UI, filters, FAB for adding purchases, real-time updates
@@ -275,12 +276,12 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
       context: context,
       backgroundColor: Colors.transparent,
       builder: (context) => ClipRRect(
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
           child: Container(
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.95),
+              color: AppColors.card(context),
               borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(20),
               ),
@@ -299,14 +300,14 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.all(16),
+                    padding: EdgeInsets.all(16),
                     child: Text(
                       purchase.productName,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'Literata',
                         fontWeight: FontWeight.w700,
                         fontSize: 16,
-                        color: Color(0xFF1B4D3E),
+                        color: AppColors.accent(context),
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -417,7 +418,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
         builder: (context, setDialogState) => BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
           child: AlertDialog(
-            backgroundColor: Colors.white.withValues(alpha: 0.95),
+            backgroundColor: AppColors.card(context),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20),
               side: BorderSide(
@@ -428,29 +429,29 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
             title: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(8),
+                  padding: EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+                    color: AppColors.accentSoft(context, 0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.edit_rounded,
-                    color: Color(0xFF1B4D3E),
+                    color: AppColors.accent(context),
                     size: 20,
                   ),
                 ),
-                const SizedBox(width: 12),
+                SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         _localizations.editPurchase,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontFamily: 'Literata',
                           fontWeight: FontWeight.w700,
                           fontSize: 16,
-                          color: Color(0xFF1B4D3E),
+                          color: AppColors.accent(context),
                         ),
                       ),
                       Text(
@@ -709,7 +710,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                       builder: (context, snapshot) {
                         if (snapshot.connectionState ==
                             ConnectionState.waiting) {
-                          return const Padding(
+                          return Padding(
                             padding: EdgeInsets.all(8.0),
                             child: Center(
                               child: SizedBox(
@@ -717,7 +718,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                                 height: 20,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
-                                  color: Color(0xFF1B4D3E),
+                                  color: AppColors.accent(context),
                                 ),
                               ),
                             ),
@@ -858,7 +859,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
       controller: controller,
       keyboardType: keyboardType,
       maxLines: maxLines,
-      style: const TextStyle(fontFamily: 'Literata', fontSize: 14),
+      style: TextStyle(fontFamily: 'Literata', fontSize: 14),
       decoration: InputDecoration(
         labelText: label,
         labelStyle: TextStyle(
@@ -866,7 +867,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
           fontSize: 13,
           color: Colors.grey[600],
         ),
-        prefixIcon: Icon(icon, size: 20, color: const Color(0xFF1B4D3E)),
+        prefixIcon: Icon(icon, size: 20, color: AppColors.accent(context)),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: Colors.grey[300]!),
@@ -877,7 +878,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFF1B4D3E), width: 1.5),
+          borderSide: BorderSide(color: AppColors.accent(context), width: 1.5),
         ),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 12,
@@ -896,14 +897,14 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
   }) {
     final dateFormat = DateFormat('dd MMM yyyy');
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
       decoration: BoxDecoration(
         border: Border.all(color: Colors.grey[300]!),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         children: [
-          Icon(icon, size: 18, color: const Color(0xFF1B4D3E)),
+          Icon(icon, size: 18, color: AppColors.accent(context)),
           const SizedBox(width: 8),
           Expanded(
             child: Column(
@@ -1000,11 +1001,11 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
       decoration: BoxDecoration(
         border: Border.all(color: Colors.grey[300]!),
         borderRadius: BorderRadius.circular(12),
-        color: Colors.grey[50],
+        color: AppColors.scaffold(context),
       ),
       child: Row(
         children: [
@@ -1052,16 +1053,16 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
         var filtered = _suppliers.toList();
         return StatefulBuilder(
           builder: (context, setPickerState) => AlertDialog(
-            backgroundColor: Colors.white,
+            backgroundColor: AppColors.card(context),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
             ),
             title: Text(
               _localizations.selectSupplier,
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: 'Literata',
                 fontWeight: FontWeight.w700,
-                color: Color(0xFF1B4D3E),
+                color: AppColors.accent(context),
                 fontSize: 16,
               ),
             ),
@@ -1156,7 +1157,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
       builder: (context) => BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
         child: AlertDialog(
-          backgroundColor: Colors.white.withValues(alpha: 0.95),
+          backgroundColor: AppColors.card(context),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
@@ -1300,7 +1301,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7F6),
+      backgroundColor: AppColors.scaffold(context),
       floatingActionButton: _buildFAB(),
       body: SafeArea(
         top: !widget.isEmbedded,
@@ -1576,36 +1577,36 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
       child: FadeTransition(
         opacity: _opacityAnimation,
         child: Container(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+          padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
           child: Row(
             children: [
               GestureDetector(
                 onTap: () => Navigator.pop(context),
                 child: Container(
-                  padding: const EdgeInsets.all(8),
+                  padding: EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+                    color: AppColors.accentSoft(context, 0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.arrow_back_ios_rounded,
                     size: 20,
-                    color: Color(0xFF1B4D3E),
+                    color: AppColors.accent(context),
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       _localizations.purchaseHistory,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'Literata',
                         fontWeight: FontWeight.w800,
                         fontSize: 22,
-                        color: Color(0xFF1B4D3E),
+                        color: AppColors.accent(context),
                       ),
                     ),
                     Text(
@@ -1628,7 +1629,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                     final result = await Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => const InvoiceScannerPage(),
+                        builder: (_) => InvoiceScannerPage(),
                       ),
                     );
                     if (result == true && mounted) {
@@ -1637,15 +1638,15 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                   },
                   borderRadius: BorderRadius.circular(10),
                   child: Container(
-                    padding: const EdgeInsets.all(8),
+                    padding: EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+                      color: AppColors.accentSoft(context, 0.1),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.document_scanner_rounded,
                       size: 22,
-                      color: Color(0xFF1B4D3E),
+                      color: AppColors.accent(context),
                     ),
                   ),
                 ),
@@ -1663,32 +1664,33 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                   },
                   borderRadius: BorderRadius.circular(10),
                   child: Container(
-                    padding: const EdgeInsets.all(8),
+                    padding: EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+                      color: AppColors.selectedFill(context),
                       borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: AppColors.border(context)),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.description_rounded,
                       size: 22,
-                      color: Color(0xFF1B4D3E),
+                      color: AppColors.selectedOnFill(context),
                     ),
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: 8),
               // Settings menu
               PopupMenuButton<String>(
                 icon: Container(
-                  padding: const EdgeInsets.all(8),
+                  padding: EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+                    color: AppColors.accentSoft(context, 0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.settings_rounded,
                     size: 22,
-                    color: Color(0xFF1B4D3E),
+                    color: AppColors.accent(context),
                   ),
                 ),
                 shape: RoundedRectangleBorder(
@@ -1779,13 +1781,13 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  const Color(0xFF1B4D3E),
-                  const Color(0xFF1B4D3E).withValues(alpha: 0.85),
+                  Color(0xFF1B4D3E),
+                  Color(0xFF1B4D3E).withValues(alpha: 0.85),
                 ],
               ),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF1B4D3E).withValues(alpha: 0.35),
+                  color: AppColors.accentSoft(context, 0.35),
                   blurRadius: 20,
                   offset: const Offset(0, 8),
                 ),
@@ -1854,12 +1856,12 @@ class _PurchaseDetailsSheetState extends State<_PurchaseDetailsSheet> {
     final customColumns = ProductSettingsService.instance.activeCustomColumns;
 
     return ClipRRect(
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
         child: Container(
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.98),
+            color: AppColors.card(context),
             borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
           ),
           child: SafeArea(
@@ -1879,7 +1881,7 @@ class _PurchaseDetailsSheetState extends State<_PurchaseDetailsSheet> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  SizedBox(height: 20),
 
                   // Header
                   Row(
@@ -1888,27 +1890,27 @@ class _PurchaseDetailsSheetState extends State<_PurchaseDetailsSheet> {
                         width: 56,
                         height: 56,
                         decoration: BoxDecoration(
-                          color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+                          color: AppColors.accentSoft(context, 0.1),
                           borderRadius: BorderRadius.circular(16),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.inventory_2_rounded,
-                          color: Color(0xFF1B4D3E),
+                          color: AppColors.accent(context),
                           size: 28,
                         ),
                       ),
-                      const SizedBox(width: 16),
+                      SizedBox(width: 16),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
                               widget.purchase.productName,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontFamily: 'Literata',
                                 fontWeight: FontWeight.w800,
                                 fontSize: 18,
-                                color: Color(0xFF1B4D3E),
+                                color: AppColors.accent(context),
                               ),
                             ),
                             if (widget.purchase.companyName.isNotEmpty)
@@ -1982,22 +1984,22 @@ class _PurchaseDetailsSheetState extends State<_PurchaseDetailsSheet> {
 
                   if (widget.purchase.notes != null &&
                       widget.purchase.notes!.isNotEmpty) ...[
-                    const SizedBox(height: 16),
-                    const Text(
+                    SizedBox(height: 16),
+                    Text(
                       'Notes',
                       style: TextStyle(
                         fontFamily: 'Literata',
                         fontWeight: FontWeight.w600,
                         fontSize: 14,
-                        color: Color(0xFF1B4D3E),
+                        color: AppColors.accent(context),
                       ),
                     ),
                     const SizedBox(height: 8),
                     Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.all(12),
+                      padding: EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.grey[100],
+                        color: AppColors.chipFill(context),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Text(
@@ -2040,7 +2042,7 @@ class _PurchaseDetailsSheetState extends State<_PurchaseDetailsSheet> {
                       builder: (context, snapshot) {
                         if (snapshot.connectionState ==
                             ConnectionState.waiting) {
-                          return const Padding(
+                          return Padding(
                             padding: EdgeInsets.all(8.0),
                             child: Center(
                               child: SizedBox(
@@ -2048,7 +2050,7 @@ class _PurchaseDetailsSheetState extends State<_PurchaseDetailsSheet> {
                                 height: 20,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
-                                  color: Color(0xFF1B4D3E),
+                                  color: AppColors.accent(context),
                                 ),
                               ),
                             ),
@@ -2069,7 +2071,7 @@ class _PurchaseDetailsSheetState extends State<_PurchaseDetailsSheet> {
                     ),
                   ],
 
-                  const SizedBox(height: 24),
+                  SizedBox(height: 24),
 
                   // Action buttons
                   Row(
@@ -2077,11 +2079,11 @@ class _PurchaseDetailsSheetState extends State<_PurchaseDetailsSheet> {
                       Expanded(
                         child: OutlinedButton.icon(
                           onPressed: widget.onEdit,
-                          icon: const Icon(Icons.edit_rounded, size: 18),
-                          label: const Text('Edit'),
+                          icon: Icon(Icons.edit_rounded, size: 18),
+                          label: Text('Edit'),
                           style: OutlinedButton.styleFrom(
-                            foregroundColor: const Color(0xFF1B4D3E),
-                            side: const BorderSide(color: Color(0xFF1B4D3E)),
+                            foregroundColor: Color(0xFF1B4D3E),
+                            side: BorderSide(color: AppColors.accent(context)),
                             padding: const EdgeInsets.symmetric(vertical: 12),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),

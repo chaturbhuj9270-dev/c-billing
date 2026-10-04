@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../core/theme/app_theme.dart';
 import 'water_drop_effect.dart';
 
 /// Item definition for [GlassyBottomNavBar].
@@ -80,6 +81,7 @@ class _GlassyBottomNavBarState extends State<GlassyBottomNavBar>
   @override
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.viewPaddingOf(context).bottom;
+    final isDark = AppColors.isDark(context);
 
     return Material(
       type: MaterialType.transparency,
@@ -90,12 +92,12 @@ class _GlassyBottomNavBarState extends State<GlassyBottomNavBar>
             borderRadius: BorderRadius.circular(28),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.12),
+                color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.12),
                 blurRadius: 24,
                 offset: const Offset(0, 8),
               ),
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.06),
+                color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.06),
                 blurRadius: 8,
                 offset: const Offset(0, 2),
               ),
@@ -114,13 +116,13 @@ class _GlassyBottomNavBarState extends State<GlassyBottomNavBar>
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                       colors: [
-                        Colors.white.withValues(alpha: 0.82),
-                        const Color(0xFFE8F0F5).withValues(alpha: 0.72),
-                        widget.accentColor.withValues(alpha: 0.10),
+                        AppColors.glassFill(context),
+                        AppColors.glassFillSecondary(context),
+                        widget.accentColor.withValues(alpha: isDark ? 0.28 : 0.10),
                       ],
                     ),
                     border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.85),
+                      color: AppColors.glassBorder(context),
                       width: 1.1,
                     ),
                   ),
@@ -182,11 +184,15 @@ class _GlassyNavItemButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = AppColors.isDark(context);
     final inactiveColor = item.isPrimary
-        ? accentColor.withValues(alpha: 0.85)
-        : Colors.grey[700]!;
-    final iconColor = selected ? Colors.white : inactiveColor;
-    final labelColor = selected ? Colors.white : inactiveColor;
+        ? (isDark ? Colors.white70 : accentColor.withValues(alpha: 0.85))
+        : AppColors.secondaryText(context);
+    // Dark theme: selected = white pill + black icons (clean B&W).
+    final iconColor = selected
+        ? (isDark ? Colors.black : Colors.white)
+        : inactiveColor;
+    final labelColor = iconColor;
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
@@ -199,15 +205,14 @@ class _GlassyNavItemButton extends StatelessWidget {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(18),
           gradient: selected
-              ? LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    accentColor.withValues(alpha: 0.92),
-                    const Color(0xFF2E7D5B).withValues(alpha: 0.88),
-                  ],
-                )
-              : item.isPrimary
+              ? (isDark
+                    ? null
+                    : LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: AppColors.headerGradient(context),
+                      ))
+              : (!isDark && item.isPrimary)
                   ? LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
@@ -217,16 +222,24 @@ class _GlassyNavItemButton extends StatelessWidget {
                       ],
                     )
                   : null,
+          color: selected
+              ? (isDark ? Colors.white : null)
+              : (isDark && item.isPrimary
+                    ? Colors.white.withValues(alpha: 0.06)
+                    : null),
           border: Border.all(
             color: selected
-                ? Colors.white.withValues(alpha: 0.35)
+                ? (isDark
+                      ? Colors.white
+                      : Colors.white.withValues(alpha: 0.35))
                 : Colors.transparent,
             width: 1,
           ),
           boxShadow: selected
               ? [
                   BoxShadow(
-                    color: accentColor.withValues(alpha: 0.35),
+                    color: (isDark ? Colors.white : accentColor)
+                        .withValues(alpha: isDark ? 0.12 : 0.35),
                     blurRadius: 10,
                     offset: const Offset(0, 3),
                   ),

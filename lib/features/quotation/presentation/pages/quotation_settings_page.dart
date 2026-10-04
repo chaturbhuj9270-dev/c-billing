@@ -5,6 +5,7 @@ import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/services/language_service.dart';
 import '../../../../core/ui/glassy_toast.dart';
 import '../../data/services/quotation_format_settings.dart';
+import 'package:c_billing/core/theme/app_theme.dart';
 
 /// Quotation print/PDF settings (format matches billing: POS vs normal).
 class QuotationSettingsPage extends StatefulWidget {
@@ -58,9 +59,9 @@ class _QuotationSettingsPageState extends State<QuotationSettingsPage> {
     _l10n = AppLocalizations.of(LanguageService.instance.currentLanguage);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7F6),
+      backgroundColor: AppColors.scaffold(context),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.card(context),
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
@@ -170,9 +171,9 @@ class _QuotationSettingsPageState extends State<QuotationSettingsPage> {
     required List<Widget> children,
   }) {
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.card(context),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Colors.grey.withValues(alpha: 0.1)),
         boxShadow: [
@@ -244,7 +245,7 @@ class _QuotationSettingsPageState extends State<QuotationSettingsPage> {
       },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(16),
         decoration: BoxDecoration(
           gradient: isSelected
               ? LinearGradient(
@@ -254,7 +255,7 @@ class _QuotationSettingsPageState extends State<QuotationSettingsPage> {
                   ],
                 )
               : null,
-          color: isSelected ? null : Colors.grey[50],
+          color: isSelected ? null : AppColors.scaffold(context),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isSelected ? _primary : Colors.grey[300]!,

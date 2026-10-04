@@ -23,6 +23,7 @@ import '../widgets/product_list_widget.dart';
 import 'product_settings_page.dart';
 import 'barcode_generator_page.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
+import 'package:c_billing/core/theme/app_theme.dart';
 
 class EnhancedProductPage extends StatefulWidget {
   final bool isEmbedded;
@@ -300,7 +301,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
     final isWide = size.width > 600;
 
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: AppColors.scaffold(context),
       appBar: widget.isEmbedded ? null : _buildAppBar(),
       body: SafeArea(
         child: SlideTransition(
@@ -381,7 +382,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
         icon: const Icon(Icons.add_rounded, color: Colors.white),
         label: Text(
           _localizations.addProduct,
-          style: const TextStyle(
+          style: TextStyle(
             fontFamily: 'Literata',
             fontWeight: FontWeight.w600,
             color: Colors.white,
@@ -394,14 +395,14 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
 
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: AppColors.scaffold(context),
       elevation: 0,
       title: Text(
         _localizations.products,
-        style: const TextStyle(
+        style: TextStyle(
           fontFamily: 'Literata',
           fontWeight: FontWeight.w700,
-          color: Color(0xFF1B4D3E),
+          color: AppColors.accent(context),
         ),
       ),
       actions: [
@@ -432,18 +433,18 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
           ),
         // Barcode Generator
         IconButton(
-          icon: const Icon(Icons.qr_code_2_rounded, color: Color(0xFF1B4D3E)),
+          icon: Icon(Icons.qr_code_2_rounded, color: AppColors.accent(context)),
           tooltip: 'Generate Barcode',
           onPressed: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => const BarcodeGeneratorPage()),
+              MaterialPageRoute(builder: (_) => BarcodeGeneratorPage()),
             );
           },
         ),
         // Settings
         IconButton(
-          icon: const Icon(Icons.settings_outlined, color: Color(0xFF1B4D3E)),
+          icon: Icon(Icons.settings_outlined, color: AppColors.accent(context)),
           onPressed: () {
             Navigator.push(
               context,
@@ -463,11 +464,11 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
             onTap: () => setState(() => _isGroupedView = false),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.symmetric(vertical: 10),
+              padding: EdgeInsets.symmetric(vertical: 10),
               decoration: BoxDecoration(
                 color: !_isGroupedView
                     ? const Color(0xFF1B4D3E)
-                    : Colors.grey[100],
+                    : AppColors.chipFill(context),
                 borderRadius: const BorderRadius.horizontal(
                   left: Radius.circular(10),
                 ),
@@ -505,11 +506,11 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
             onTap: () => setState(() => _isGroupedView = true),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.symmetric(vertical: 10),
+              padding: EdgeInsets.symmetric(vertical: 10),
               decoration: BoxDecoration(
                 color: _isGroupedView
                     ? const Color(0xFF1B4D3E)
-                    : Colors.grey[100],
+                    : AppColors.chipFill(context),
                 borderRadius: const BorderRadius.horizontal(
                   right: Radius.circular(10),
                 ),
@@ -606,7 +607,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
               width: 100,
               height: 100,
               decoration: BoxDecoration(
-                color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+                color: AppColors.accentSoft(context, 0.1),
                 borderRadius: BorderRadius.circular(24),
               ),
               child: Icon(
@@ -614,7 +615,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                     ? Icons.search_off_rounded
                     : Icons.inventory_2_outlined,
                 size: 48,
-                color: const Color(0xFF1B4D3E).withValues(alpha: 0.4),
+                color: AppColors.accentSoft(context, 0.4),
               ),
             ),
             const SizedBox(height: 24),
@@ -636,13 +637,13 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
     }
 
     return RefreshIndicator(
-      color: const Color(0xFF1B4D3E),
+      color: AppColors.accent(context),
       onRefresh: _onRefresh,
       child: ListView.builder(
         physics: const AlwaysScrollableScrollPhysics(
           parent: BouncingScrollPhysics(),
         ),
-        padding: const EdgeInsets.only(bottom: 100),
+        padding: EdgeInsets.only(bottom: 100),
         itemCount: filteredGroups.length,
         itemBuilder: (context, index) {
           return _buildGroupedProductCard(filteredGroups[index]);
@@ -655,9 +656,9 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
     final isLow = group.totalStock <= 5;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.card(context),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -685,7 +686,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
           ),
           title: Text(
             group.productName,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w700,
               fontFamily: 'Literata',
@@ -746,8 +747,8 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
             // Summary bar
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              color: const Color(0xFF1B4D3E).withValues(alpha: 0.06),
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              color: AppColors.accentSoft(context, 0.06),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -776,14 +777,14 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
               final isEven = i % 2 == 0;
 
               return Container(
-                padding: const EdgeInsets.symmetric(
+                padding: EdgeInsets.symmetric(
                   horizontal: 12,
                   vertical: 10,
                 ),
                 decoration: BoxDecoration(
-                  color: isEven ? Colors.white : Colors.grey[50],
+                  color: isEven ? AppColors.card(context) : AppColors.scaffold(context),
                   border: Border(
-                    bottom: BorderSide(color: Colors.grey[200]!, width: 0.5),
+                    bottom: BorderSide(color: AppColors.border(context)!, width: 0.5),
                   ),
                 ),
                 child: Row(
@@ -858,15 +859,15 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
         Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 14, color: const Color(0xFF1B4D3E)),
-            const SizedBox(width: 4),
+            Icon(icon, size: 14, color: AppColors.accent(context)),
+            SizedBox(width: 4),
             Text(
               value,
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: 'Literata',
                 fontWeight: FontWeight.w600,
                 fontSize: 12,
-                color: Color(0xFF1B4D3E),
+                color: AppColors.accent(context),
               ),
             ),
           ],
@@ -898,8 +899,8 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
         filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
         child: Container(
           height: MediaQuery.of(context).size.height * 0.75,
-          decoration: const BoxDecoration(
-            color: Colors.white,
+          decoration: BoxDecoration(
+            color: AppColors.card(context),
             borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
           ),
           child: Column(
@@ -948,7 +949,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                           product.name.isNotEmpty
                               ? product.name[0].toUpperCase()
                               : 'P',
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: Colors.white,
                             fontSize: 24,
                             fontWeight: FontWeight.w700,
@@ -957,7 +958,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                         ),
                       ),
                     ),
-                    const SizedBox(width: 16),
+                    SizedBox(width: 16),
                     // Name + Sync status
                     Expanded(
                       child: Column(
@@ -965,11 +966,11 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                         children: [
                           Text(
                             product.name,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontFamily: 'Literata',
                               fontWeight: FontWeight.w700,
                               fontSize: 20,
-                              color: Color(0xFF1B4D3E),
+                              color: AppColors.accent(context),
                             ),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
@@ -1145,9 +1146,9 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                         const SizedBox(height: 8),
                         Container(
                           width: double.infinity,
-                          padding: const EdgeInsets.all(12),
+                          padding: EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: Colors.grey[50],
+                            color: AppColors.scaffold(context),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
@@ -1172,12 +1173,12 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                                 Navigator.pop(context);
                                 _showEditProductSheet(product);
                               },
-                              icon: const Icon(Icons.edit_rounded),
+                              icon: Icon(Icons.edit_rounded),
                               label: Text(_localizations.edit),
                               style: OutlinedButton.styleFrom(
-                                foregroundColor: const Color(0xFF1B4D3E),
-                                side: const BorderSide(
-                                  color: Color(0xFF1B4D3E),
+                                foregroundColor: Color(0xFF1B4D3E),
+                                side: BorderSide(
+                                  color: AppColors.accent(context),
                                 ),
                                 padding: const EdgeInsets.symmetric(
                                   vertical: 12,
@@ -1254,17 +1255,17 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
     required String value,
   }) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: EdgeInsets.only(bottom: 12),
       child: Row(
         children: [
           Container(
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+              color: AppColors.accentSoft(context, 0.1),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(icon, color: const Color(0xFF1B4D3E), size: 20),
+            child: Icon(icon, color: AppColors.accent(context), size: 20),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -1340,8 +1341,8 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
       context: context,
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
+        decoration: BoxDecoration(
+          color: AppColors.card(context),
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
         child: SafeArea(
@@ -1358,28 +1359,28 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.all(16),
+                padding: EdgeInsets.all(16),
                 child: Text(
                   product.name,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'Literata',
                     fontWeight: FontWeight.w700,
                     fontSize: 16,
-                    color: Color(0xFF1B4D3E),
+                    color: AppColors.accent(context),
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              const Divider(height: 1),
+              Divider(height: 1),
               ListTile(
-                leading: const Icon(
+                leading: Icon(
                   Icons.visibility_rounded,
-                  color: Color(0xFF1B4D3E),
+                  color: AppColors.accent(context),
                 ),
                 title: Text(
                   'View Details',
-                  style: const TextStyle(fontFamily: 'Literata'),
+                  style: TextStyle(fontFamily: 'Literata'),
                 ),
                 onTap: () {
                   Navigator.pop(context);
@@ -1387,9 +1388,9 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                 },
               ),
               ListTile(
-                leading: const Icon(
+                leading: Icon(
                   Icons.edit_rounded,
-                  color: Color(0xFF1B4D3E),
+                  color: AppColors.accent(context),
                 ),
                 title: Text(
                   _localizations.edit,
@@ -1434,10 +1435,10 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text(
           _localizations.deleteProduct,
-          style: const TextStyle(
+          style: TextStyle(
             fontFamily: 'Literata',
             fontWeight: FontWeight.w700,
-            color: Color(0xFF1B4D3E),
+            color: AppColors.accent(context),
           ),
         ),
         content: Text(
@@ -1591,8 +1592,8 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
           filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
           child: Container(
             height: MediaQuery.of(context).size.height * 0.85,
-            decoration: const BoxDecoration(
-              color: Colors.white,
+            decoration: BoxDecoration(
+              color: AppColors.card(context),
               borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
             ),
             child: Column(
@@ -1611,16 +1612,16 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                 ),
                 // Header
                 Padding(
-                  padding: const EdgeInsets.all(16),
+                  padding: EdgeInsets.all(16),
                   child: Row(
                     children: [
                       Text(
                         _localizations.addNewProduct,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontFamily: 'Literata',
                           fontWeight: FontWeight.w700,
                           fontSize: 18,
-                          color: Color(0xFF1B4D3E),
+                          color: AppColors.accent(context),
                         ),
                       ),
                       const Spacer(),
@@ -1750,14 +1751,14 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                         ),
                         // Custom fields
                         if (customColumns.isNotEmpty) ...[
-                          const SizedBox(height: 16),
-                          const Text(
+                          SizedBox(height: 16),
+                          Text(
                             'Custom Fields',
                             style: TextStyle(
                               fontFamily: 'Literata',
                               fontWeight: FontWeight.w600,
                               fontSize: 14,
-                              color: Color(0xFF1B4D3E),
+                              color: AppColors.accent(context),
                             ),
                           ),
                           const SizedBox(height: 12),
@@ -1782,7 +1783,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppColors.card(context),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withValues(alpha: 0.05),
@@ -2030,8 +2031,8 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
           filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
           child: Container(
             height: MediaQuery.of(context).size.height * 0.85,
-            decoration: const BoxDecoration(
-              color: Colors.white,
+            decoration: BoxDecoration(
+              color: AppColors.card(context),
               borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
             ),
             child: Column(
@@ -2050,16 +2051,16 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                 ),
                 // Header
                 Padding(
-                  padding: const EdgeInsets.all(16),
+                  padding: EdgeInsets.all(16),
                   child: Row(
                     children: [
                       Text(
                         _localizations.editProduct,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontFamily: 'Literata',
                           fontWeight: FontWeight.w700,
                           fontSize: 18,
-                          color: Color(0xFF1B4D3E),
+                          color: AppColors.accent(context),
                         ),
                       ),
                       const Spacer(),
@@ -2153,9 +2154,9 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                         const SizedBox(height: 12),
                         // Current stock (read-only)
                         Container(
-                          padding: const EdgeInsets.all(14),
+                          padding: EdgeInsets.all(14),
                           decoration: BoxDecoration(
-                            color: Colors.grey[100],
+                            color: AppColors.chipFill(context),
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(color: Colors.grey[300]!),
                           ),
@@ -2181,7 +2182,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                                     ),
                                     Text(
                                       '${product.currentStock} (Read Only)',
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontFamily: 'Literata',
                                         fontWeight: FontWeight.w600,
                                         fontSize: 15,
@@ -2195,14 +2196,14 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                         ),
                         // Custom fields
                         if (customColumns.isNotEmpty) ...[
-                          const SizedBox(height: 16),
-                          const Text(
+                          SizedBox(height: 16),
+                          Text(
                             'Custom Fields',
                             style: TextStyle(
                               fontFamily: 'Literata',
                               fontWeight: FontWeight.w600,
                               fontSize: 14,
-                              color: Color(0xFF1B4D3E),
+                              color: AppColors.accent(context),
                             ),
                           ),
                           const SizedBox(height: 12),
@@ -2227,7 +2228,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppColors.card(context),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withValues(alpha: 0.05),
@@ -2402,13 +2403,13 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
         labelText: label,
         prefixText: prefix,
         prefixIcon: icon != null
-            ? Icon(icon, color: const Color(0xFF1B4D3E), size: 20)
+            ? Icon(icon, color: AppColors.accent(context), size: 20)
             : null,
         counterText: '',
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFF1B4D3E), width: 2),
+          borderSide: BorderSide(color: AppColors.accent(context), width: 2),
         ),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,
@@ -2479,10 +2480,10 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFF1B4D3E), width: 2),
+              borderSide: BorderSide(color: AppColors.accent(context), width: 2),
             ),
           ),
-          style: const TextStyle(fontFamily: 'Literata'),
+          style: TextStyle(fontFamily: 'Literata'),
         );
 
       case CustomColumnType.number:
@@ -2494,22 +2495,22 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFF1B4D3E), width: 2),
+              borderSide: BorderSide(color: AppColors.accent(context), width: 2),
             ),
           ),
-          style: const TextStyle(fontFamily: 'Literata'),
+          style: TextStyle(fontFamily: 'Literata'),
         );
 
       case CustomColumnType.decimal:
         return TextField(
           controller: textController,
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          keyboardType: TextInputType.numberWithOptions(decimal: true),
           decoration: InputDecoration(
             labelText: column.name,
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFF1B4D3E), width: 2),
+              borderSide: BorderSide(color: AppColors.accent(context), width: 2),
             ),
           ),
           style: const TextStyle(fontFamily: 'Literata'),
@@ -2545,7 +2546,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFF1B4D3E), width: 2),
+              borderSide: BorderSide(color: AppColors.accent(context), width: 2),
             ),
           ),
           items: (column.dropdownOptions ?? []).map((option) {
@@ -2605,8 +2606,8 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
       context: context,
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
+        decoration: BoxDecoration(
+          color: AppColors.card(context),
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
         child: SafeArea(
@@ -2623,14 +2624,14 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.all(16),
+                padding: EdgeInsets.all(16),
                 child: Text(
                   _localizations.selectCompany,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'Literata',
                     fontWeight: FontWeight.w700,
                     fontSize: 16,
-                    color: Color(0xFF1B4D3E),
+                    color: AppColors.accent(context),
                   ),
                 ),
               ),
@@ -2655,9 +2656,9 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                         itemBuilder: (context, index) {
                           final company = companies[index];
                           return ListTile(
-                            leading: const Icon(
+                            leading: Icon(
                               Icons.business_rounded,
-                              color: Color(0xFF1B4D3E),
+                              color: AppColors.accent(context),
                             ),
                             title: Text(
                               company['companyName'] ?? '',
@@ -2668,7 +2669,7 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                         },
                       ),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
             ],
           ),
         ),
@@ -2684,8 +2685,8 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
       context: context,
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
+        decoration: BoxDecoration(
+          color: AppColors.card(context),
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
         child: SafeArea(
@@ -2702,14 +2703,14 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.all(16),
+                padding: EdgeInsets.all(16),
                 child: Text(
                   _localizations.selectSupplier,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'Literata',
                     fontWeight: FontWeight.w700,
                     fontSize: 16,
-                    color: Color(0xFF1B4D3E),
+                    color: AppColors.accent(context),
                   ),
                 ),
               ),
@@ -2734,9 +2735,9 @@ class _EnhancedProductPageState extends State<EnhancedProductPage>
                         itemBuilder: (context, index) {
                           final supplier = suppliers[index];
                           return ListTile(
-                            leading: const Icon(
+                            leading: Icon(
                               Icons.person_rounded,
-                              color: Color(0xFF1B4D3E),
+                              color: AppColors.accent(context),
                             ),
                             title: Text(
                               supplier['fullName'] ?? '',

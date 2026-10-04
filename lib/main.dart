@@ -5,6 +5,7 @@ import 'core/di/injection.dart' as di;
 import 'core/ui/splash_page.dart';
 import 'core/services/credentials_manager.dart';
 import 'core/services/language_service.dart';
+import 'core/services/theme_service.dart';
 import 'core/services/purchase_settings_service.dart';
 import 'core/services/product_settings_service.dart';
 import 'core/services/event_order_settings_service.dart';
@@ -13,6 +14,7 @@ import 'core/services/bill_report_settings_service.dart';
 import 'core/services/stock_report_settings_service.dart';
 import 'core/services/isar_service.dart';
 import 'core/services/error_logging_service.dart';
+import 'core/theme/app_theme.dart';
 import 'features/customer/data/services/customer_sync_service.dart';
 import 'features/customer/data/services/customer_transaction_sync_service.dart';
 import 'features/product/data/services/product_sync_service.dart';
@@ -41,6 +43,9 @@ Future<void> main() async {
   } catch (e) {
     debugPrint('Firebase init error: $e');
   }
+
+  // Theme preference before first frame so the correct mode is used immediately.
+  await _safeInit(() => ThemeService.instance.init(), 'ThemeService');
 
   // Run app — splash screen renders while remaining services init
   runApp(const MyApp());
@@ -112,11 +117,18 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'C-Billing',
-      theme: ThemeData(useMaterial3: true, fontFamily: 'Literata'),
-      home: const SplashPage(),
-      debugShowCheckedModeBanner: false,
+    return ListenableBuilder(
+      listenable: ThemeService.instance,
+      builder: (context, _) {
+        return MaterialApp(
+          title: 'C-Billing',
+          theme: AppTheme.light,
+          darkTheme: AppTheme.dark,
+          themeMode: ThemeService.instance.themeMode,
+          home: const SplashPage(),
+          debugShowCheckedModeBanner: false,
+        );
+      },
     );
   }
 }

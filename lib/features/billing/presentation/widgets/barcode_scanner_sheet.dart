@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:flutter/services.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
@@ -310,19 +311,19 @@ class _BarcodeScannerSheetState extends State<BarcodeScannerSheet>
 
   Widget _buildHeader() {
     return Container(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+      padding: EdgeInsets.fromLTRB(20, 16, 20, 12),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(10),
+            padding: EdgeInsets.all(10),
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [const Color(0xFF1B4D3E), const Color(0xFF2D6A4F)],
+                colors: AppColors.headerGradient(context),
               ),
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF1B4D3E).withValues(alpha: 0.4),
+                  color: AppColors.accentSoft(context, 0.4),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
@@ -485,7 +486,7 @@ class _BarcodeScannerSheetState extends State<BarcodeScannerSheet>
                 height: scanAreaSize,
                 child: Container(
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1B4D3E).withValues(alpha: 0.3),
+                    color: AppColors.accentSoft(context, 0.3),
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: const Center(
@@ -517,17 +518,17 @@ class _BarcodeScannerSheetState extends State<BarcodeScannerSheet>
         decoration: BoxDecoration(
           border: Border(
             top: isTop
-                ? const BorderSide(color: Color(0xFF1B4D3E), width: 4)
+                ? BorderSide(color: AppColors.accent(context), width: 4)
                 : BorderSide.none,
             bottom: isTop
                 ? BorderSide.none
-                : const BorderSide(color: Color(0xFF1B4D3E), width: 4),
+                : BorderSide(color: AppColors.accent(context), width: 4),
             left: isLeft
-                ? const BorderSide(color: Color(0xFF1B4D3E), width: 4)
+                ? BorderSide(color: AppColors.accent(context), width: 4)
                 : BorderSide.none,
             right: isLeft
                 ? BorderSide.none
-                : const BorderSide(color: Color(0xFF1B4D3E), width: 4),
+                : BorderSide(color: AppColors.accent(context), width: 4),
           ),
         ),
       ),
@@ -871,26 +872,26 @@ class _BarcodeScannerSheetState extends State<BarcodeScannerSheet>
   Widget _buildBottomActions() {
     return SafeArea(
       child: Container(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+        padding: EdgeInsets.fromLTRB(16, 8, 16, 8),
         child: Row(
           children: [
             // Items count
             if (_scannedItems.isNotEmpty)
               Container(
-                padding: const EdgeInsets.symmetric(
+                padding: EdgeInsets.symmetric(
                   horizontal: 12,
                   vertical: 8,
                 ),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1B4D3E).withValues(alpha: 0.2),
+                  color: AppColors.accentSoft(context, 0.2),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.shopping_cart_rounded,
-                      color: Color(0xFF1B4D3E),
+                      color: AppColors.accent(context),
                       size: 18,
                     ),
                     const SizedBox(width: 8),
@@ -929,14 +930,14 @@ class _BarcodeScannerSheetState extends State<BarcodeScannerSheet>
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
-                        const Color(0xFF1B4D3E),
-                        const Color(0xFF2D6A4F),
+                        Color(0xFF1B4D3E),
+                        Color(0xFF2D6A4F),
                       ],
                     ),
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFF1B4D3E).withValues(alpha: 0.4),
+                        color: AppColors.accentSoft(context, 0.4),
                         blurRadius: 8,
                         offset: const Offset(0, 2),
                       ),

@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../localization/app_localizations.dart';
 import '../services/language_service.dart';
 import 'payment_screen.dart';
+import 'package:c_billing/core/theme/app_theme.dart';
 
 /// Subscription screen shown when user's subscription has expired
 /// Premium UI matching the app's elegant design language
@@ -146,24 +147,24 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
 
   Widget _buildLanguageSelector() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+      padding: EdgeInsets.symmetric(horizontal: 24),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.7),
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: const Color(0xFF1B4D3E).withValues(alpha: 0.2),
+                color: AppColors.accentSoft(context, 0.2),
                 width: 1,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+                  color: AppColors.accentSoft(context, 0.1),
                   blurRadius: 8,
-                  offset: const Offset(0, 2),
+                  offset: Offset(0, 2),
                 ),
               ],
             ),
@@ -174,15 +175,15 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
                 icon: Icon(
                   Icons.language,
                   size: 18,
-                  color: const Color(0xFF1B4D3E).withValues(alpha: 0.7),
+                  color: AppColors.accentSoft(context, 0.7),
                 ),
-                style: const TextStyle(
-                  color: Color(0xFF1B4D3E),
+                style: TextStyle(
+                  color: AppColors.accent(context),
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
                   fontFamily: 'Literata',
                 ),
-                dropdownColor: const Color(0xFFF5F5F5),
+                dropdownColor: AppColors.scaffold(context),
                 borderRadius: BorderRadius.circular(12),
                 items: const [
                   DropdownMenuItem(value: 'English', child: Text('English')),
@@ -212,7 +213,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF1B4D3E).withValues(alpha: 0.2),
+            color: AppColors.accentSoft(context, 0.2),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -228,21 +229,21 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
   Widget _buildAppName() {
     return Column(
       children: [
-        const Text(
+        Text(
           'C-BILLING',
           style: TextStyle(
-            color: Color(0xFF1B4D3E),
+            color: AppColors.accent(context),
             fontSize: 36,
             fontWeight: FontWeight.w600,
             fontFamily: 'Literata',
             letterSpacing: 3,
           ),
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: 8),
         Text(
           _localizations.premiumFinancialSolutions,
           style: TextStyle(
-            color: const Color(0xFF1B4D3E).withValues(alpha: 0.5),
+            color: AppColors.accentSoft(context, 0.5),
             fontSize: 10,
             fontWeight: FontWeight.w600,
             fontFamily: 'Literata',
@@ -306,8 +307,8 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  const Color(0xFF1B4D3E).withValues(alpha: 0.15),
-                  const Color(0xFF2E7D32).withValues(alpha: 0.08),
+                  Color(0xFF1B4D3E).withValues(alpha: 0.15),
+                  Color(0xFF2E7D32).withValues(alpha: 0.08),
                 ],
               ),
               borderRadius: BorderRadius.circular(24),
@@ -317,7 +318,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
               ),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+                  color: AppColors.accentSoft(context, 0.1),
                   blurRadius: 20,
                   offset: const Offset(0, 10),
                 ),
@@ -327,17 +328,17 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
               children: [
                 // Premium Badge
                 Container(
-                  padding: const EdgeInsets.symmetric(
+                  padding: EdgeInsets.symmetric(
                     horizontal: 16,
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1B4D3E),
+                    color: AppColors.accent(context),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
                     _localizations.premiumPlan,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
                       color: Colors.white,
@@ -353,35 +354,35 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Padding(
-                      padding: const EdgeInsets.only(top: 8),
+                      padding: EdgeInsets.only(top: 8),
                       child: Text(
                         '₹',
                         style: TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.w600,
-                          color: const Color(0xFF1B4D3E).withValues(alpha: 0.8),
+                          color: AppColors.accentSoft(context, 0.8),
                           fontFamily: 'Literata',
                         ),
                       ),
                     ),
-                    const Text(
+                    Text(
                       '3,999',
                       style: TextStyle(
                         fontSize: 52,
                         fontWeight: FontWeight.w700,
-                        color: Color(0xFF1B4D3E),
+                        color: AppColors.accent(context),
                         fontFamily: 'Literata',
                         height: 1,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: 8),
                 Text(
                   _localizations.perYear,
                   style: TextStyle(
                     fontSize: 14,
-                    color: const Color(0xFF1B4D3E).withValues(alpha: 0.6),
+                    color: AppColors.accentSoft(context, 0.6),
                     fontFamily: 'Literata',
                     letterSpacing: 1,
                   ),
@@ -458,7 +459,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: const Color(0xFF1B4D3E).withValues(alpha: 0.8),
+                      color: AppColors.accentSoft(context, 0.8),
                       fontFamily: 'Literata',
                     ),
                   ),
@@ -474,12 +475,12 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
   Widget _buildBenefitsCard() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: Colors.white.withValues(alpha: 0.8),
+          color: AppColors.card(context),
           width: 1,
         ),
       ),
@@ -491,7 +492,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w700,
-              color: const Color(0xFF1B4D3E).withValues(alpha: 0.7),
+              color: AppColors.accentSoft(context, 0.7),
               fontFamily: 'Literata',
               letterSpacing: 1,
             ),
@@ -510,25 +511,25 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
 
   Widget _buildBenefitItem(String text) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: EdgeInsets.only(bottom: 12),
       child: Row(
         children: [
           Container(
             width: 22,
             height: 22,
             decoration: BoxDecoration(
-              color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+              color: AppColors.accentSoft(context, 0.1),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.check, color: Color(0xFF1B4D3E), size: 14),
+            child: Icon(Icons.check, color: AppColors.accent(context), size: 14),
           ),
-          const SizedBox(width: 12),
+          SizedBox(width: 12),
           Expanded(
             child: Text(
               text,
               style: TextStyle(
                 fontSize: 13,
-                color: const Color(0xFF1B4D3E).withValues(alpha: 0.8),
+                color: AppColors.accentSoft(context, 0.8),
                 fontFamily: 'Literata',
               ),
             ),
@@ -551,8 +552,8 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  const Color(0xFF1B4D3E).withValues(alpha: 0.9),
-                  const Color(0xFF2E7D32).withValues(alpha: 0.85),
+                  Color(0xFF1B4D3E).withValues(alpha: 0.9),
+                  Color(0xFF2E7D32).withValues(alpha: 0.85),
                 ],
               ),
               borderRadius: BorderRadius.circular(14),
@@ -562,7 +563,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
               ),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF1B4D3E).withValues(alpha: 0.3),
+                  color: AppColors.accentSoft(context, 0.3),
                   blurRadius: 16,
                   offset: const Offset(0, 6),
                 ),
@@ -574,14 +575,14 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
                 onTap: _handleSubscribe,
                 borderRadius: BorderRadius.circular(14),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  padding: EdgeInsets.symmetric(vertical: 16),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(
                         Icons.diamond_outlined,
                         size: 22,
-                        color: Colors.white.withValues(alpha: 0.95),
+                        color: Colors.white,
                       ),
                       const SizedBox(width: 10),
                       Text(
@@ -612,20 +613,20 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
           _localizations.needHelpContactUs,
           style: TextStyle(
             fontSize: 12,
-            color: const Color(0xFF1B4D3E).withValues(alpha: 0.5),
+            color: AppColors.accentSoft(context, 0.5),
             fontFamily: 'Literata',
           ),
         ),
-        const SizedBox(height: 10),
+        SizedBox(height: 10),
         GestureDetector(
           onTap: _callSupport,
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+            padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.6),
               borderRadius: BorderRadius.circular(30),
               border: Border.all(
-                color: const Color(0xFF1B4D3E).withValues(alpha: 0.2),
+                color: AppColors.accentSoft(context, 0.2),
               ),
             ),
             child: Row(
@@ -634,15 +635,15 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
                 Icon(
                   Icons.phone_outlined,
                   size: 18,
-                  color: const Color(0xFF1B4D3E).withValues(alpha: 0.7),
+                  color: AppColors.accentSoft(context, 0.7),
                 ),
-                const SizedBox(width: 8),
-                const Text(
+                SizedBox(width: 8),
+                Text(
                   contactNumber,
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF1B4D3E),
+                    color: AppColors.accent(context),
                     fontFamily: 'Literata',
                     letterSpacing: 1,
                   ),
@@ -666,19 +667,19 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
               colors: [
                 const Color(0xFF1B4D3E).withValues(alpha: 0.05),
                 const Color(0xFF1B4D3E),
-                const Color(0xFF1B4D3E).withValues(alpha: 0.05),
+                Color(0xFF1B4D3E).withValues(alpha: 0.05),
               ],
             ),
           ),
         ),
-        const SizedBox(height: 20),
+        SizedBox(height: 20),
         RichText(
           text: TextSpan(
             children: [
               TextSpan(
                 text: _localizations.poweredBy,
                 style: TextStyle(
-                  color: const Color(0xFF1B4D3E).withValues(alpha: 0.35),
+                  color: AppColors.accentSoft(context, 0.35),
                   fontSize: 9.5,
                   fontWeight: FontWeight.w400,
                   fontFamily: 'Literata',
@@ -686,8 +687,8 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
               ),
               TextSpan(
                 text: _localizations.chaturbhujSolutions,
-                style: const TextStyle(
-                  color: Color(0xFF1B4D3E),
+                style: TextStyle(
+                  color: AppColors.accent(context),
                   fontSize: 9.5,
                   fontWeight: FontWeight.w700,
                   fontFamily: 'Literata',

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../product/offline/entities/product_entity.dart';
+import 'package:c_billing/core/theme/app_theme.dart';
 
 /// Summary widget for product statistics
 /// Displays: Total products, Total stock, Out of stock, Sync status
@@ -36,21 +37,21 @@ class ProductSummaryWidget extends StatelessWidget {
         .where((p) => p.syncStatus != SyncStatus.synced)
         .length;
 
+    final header = AppColors.headerGradient(context);
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            const Color(0xFF1B4D3E),
-            const Color(0xFF1B4D3E).withValues(alpha: 0.85),
-          ],
+          colors: [header.first, header.last],
         ),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF1B4D3E).withValues(alpha: 0.3),
+            color: Colors.black.withValues(
+              alpha: AppColors.isDark(context) ? 0.45 : 0.3,
+            ),
             blurRadius: 12,
             offset: const Offset(0, 6),
           ),
@@ -103,11 +104,11 @@ class ProductSummaryWidget extends StatelessWidget {
     bool isExpanded = false,
   }) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 6),
+      padding: EdgeInsets.symmetric(horizontal: 6),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, color: Colors.white.withValues(alpha: 0.8), size: 18),
+          Icon(icon, color: Colors.white, size: 18),
           const SizedBox(height: 6),
           Text(
             value,

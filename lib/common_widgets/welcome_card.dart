@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:c_billing/core/theme/app_theme.dart';
 
 class WelcomeCard extends StatelessWidget {
   final String greeting;
@@ -16,17 +17,17 @@ class WelcomeCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF1B4D3E), Color(0xFF2E7D32)],
+          colors: AppColors.headerGradient(context),
         ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF1B4D3E).withValues(alpha: 0.3),
+            color: AppColors.accentSoft(context, 0.3),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -59,18 +60,18 @@ class WelcomeCard extends StatelessWidget {
               children: [
                 Text(
                   greeting,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: Colors.white,
                     fontSize: 20,
                     fontWeight: FontWeight.w700,
                     fontFamily: 'Literata',
                   ),
                 ),
-                const SizedBox(height: 4),
+                SizedBox(height: 4),
                 Text(
                   subtitle,
                   style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.85),
+                    color: AppColors.card(context),
                     fontSize: 13,
                     fontFamily: 'Literata',
                   ),

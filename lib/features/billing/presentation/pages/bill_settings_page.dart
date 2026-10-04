@@ -7,6 +7,7 @@ import 'package:c_billing/core/localization/app_localizations.dart';
 import 'package:c_billing/features/billing/domain/entities/bill_tax_settings.dart';
 import 'package:c_billing/features/billing/presentation/pages/bill_report_settings_page.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
+import 'package:c_billing/core/theme/app_theme.dart';
 
 /// Bill settings page for configuring billing preferences
 class BillSettingsPage extends StatefulWidget {
@@ -115,10 +116,10 @@ class _BillSettingsPageState extends State<BillSettingsPage>
         return false;
       },
       child: Scaffold(
-        backgroundColor: const Color(0xFFF5F7F6),
+        backgroundColor: AppColors.scaffold(context),
         body: _isLoading
-            ? const Center(
-                child: CircularProgressIndicator(color: Color(0xFF1B4D3E)),
+            ? Center(
+                child: CircularProgressIndicator(color: AppColors.accent(context)),
               )
             : CustomScrollView(
                 slivers: [
@@ -415,45 +416,45 @@ class _BillSettingsPageState extends State<BillSettingsPage>
   // Info Card Widget
   Widget _buildInfoCard() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            const Color(0xFF1B4D3E).withValues(alpha: 0.05),
-            const Color(0xFF1B4D3E).withValues(alpha: 0.02),
+            Color(0xFF1B4D3E).withValues(alpha: 0.05),
+            Color(0xFF1B4D3E).withValues(alpha: 0.02),
           ],
         ),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+          color: AppColors.accentSoft(context, 0.1),
         ),
       ),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(10),
+            padding: EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+              color: AppColors.accentSoft(context, 0.1),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.lightbulb_outline_rounded,
-              color: Color(0xFF1B4D3E),
+              color: AppColors.accent(context),
               size: 22,
             ),
           ),
-          const SizedBox(width: 14),
+          SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Pro Tip',
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
                     fontFamily: 'Literata',
-                    color: Color(0xFF1B4D3E),
+                    color: AppColors.accent(context),
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -492,11 +493,11 @@ class _BillSettingsPageState extends State<BillSettingsPage>
               ? LinearGradient(
                   colors: [
                     const Color(0xFF1B4D3E).withValues(alpha: 0.1),
-                    const Color(0xFF1B4D3E).withValues(alpha: 0.05),
+                    Color(0xFF1B4D3E).withValues(alpha: 0.05),
                   ],
                 )
               : null,
-          color: isSelected ? null : Colors.grey[50],
+          color: isSelected ? null : AppColors.scaffold(context),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: isSelected ? const Color(0xFF1B4D3E) : Colors.grey[300]!,
@@ -509,7 +510,7 @@ class _BillSettingsPageState extends State<BillSettingsPage>
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: isSelected ? const Color(0xFF1B4D3E) : Colors.grey[200],
+                color: isSelected ? Color(0xFF1B4D3E) : AppColors.border(context),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
@@ -563,7 +564,7 @@ class _BillSettingsPageState extends State<BillSettingsPage>
                 ),
               ),
               child: isSelected
-                  ? const Icon(
+                  ? Icon(
                       Icons.check_rounded,
                       color: Colors.white,
                       size: 16,
@@ -585,7 +586,7 @@ class _BillSettingsPageState extends State<BillSettingsPage>
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.card(context),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -636,18 +637,18 @@ class _BillSettingsPageState extends State<BillSettingsPage>
                   ),
                   child: Icon(icon, color: Colors.white, size: 24),
                 ),
-                const SizedBox(width: 16),
+                SizedBox(width: 16),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         title,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
                           fontFamily: 'Literata',
-                          color: Color(0xFF1B4D3E),
+                          color: AppColors.accent(context),
                         ),
                       ),
                       const SizedBox(height: 2),
@@ -698,18 +699,18 @@ class _BillSettingsPageState extends State<BillSettingsPage>
           ),
           child: Icon(icon, color: iconColor, size: 22),
         ),
-        const SizedBox(width: 14),
+        SizedBox(width: 14),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 title,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
                   fontFamily: 'Literata',
-                  color: Color(0xFF1B4D3E),
+                  color: AppColors.accent(context),
                 ),
               ),
               const SizedBox(height: 2),
@@ -763,18 +764,18 @@ class _BillSettingsPageState extends State<BillSettingsPage>
               ),
               child: Icon(icon, color: iconColor, size: 22),
             ),
-            const SizedBox(width: 14),
+            SizedBox(width: 14),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
                       fontFamily: 'Literata',
-                      color: Color(0xFF1B4D3E),
+                      color: AppColors.accent(context),
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -861,20 +862,20 @@ class _BillSettingsPageState extends State<BillSettingsPage>
               ? LinearGradient(
                   colors: [
                     const Color(0xFF1B4D3E).withValues(alpha: 0.1),
-                    const Color(0xFF1B4D3E).withValues(alpha: 0.05),
+                    Color(0xFF1B4D3E).withValues(alpha: 0.05),
                   ],
                 )
               : null,
-          color: isSelected ? null : Colors.grey[50],
+          color: isSelected ? null : AppColors.scaffold(context),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isSelected ? const Color(0xFF1B4D3E) : Colors.grey[300]!,
+            color: isSelected ? Color(0xFF1B4D3E) : Colors.grey[300]!,
             width: isSelected ? 2 : 1,
           ),
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: const Color(0xFF1B4D3E).withValues(alpha: 0.15),
+                    color: AppColors.accentSoft(context, 0.15),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -884,19 +885,19 @@ class _BillSettingsPageState extends State<BillSettingsPage>
         child: Column(
           children: [
             Container(
-              padding: const EdgeInsets.all(14),
+              padding: EdgeInsets.all(14),
               decoration: BoxDecoration(
                 gradient: isSelected
-                    ? const LinearGradient(
-                        colors: [Color(0xFF1B4D3E), Color(0xFF2D6A4F)],
+                    ? LinearGradient(
+                        colors: AppColors.headerGradient(context),
                       )
                     : null,
-                color: isSelected ? null : Colors.grey[200],
+                color: isSelected ? null : AppColors.border(context),
                 shape: BoxShape.circle,
                 boxShadow: isSelected
                     ? [
                         BoxShadow(
-                          color: const Color(0xFF1B4D3E).withValues(alpha: 0.3),
+                          color: AppColors.accentSoft(context, 0.3),
                           blurRadius: 8,
                           offset: const Offset(0, 3),
                         ),
@@ -935,8 +936,8 @@ class _BillSettingsPageState extends State<BillSettingsPage>
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
                 gradient: isSelected
-                    ? const LinearGradient(
-                        colors: [Color(0xFF1B4D3E), Color(0xFF2D6A4F)],
+                    ? LinearGradient(
+                        colors: AppColors.headerGradient(context),
                       )
                     : null,
                 color: isSelected ? null : Colors.transparent,
@@ -994,26 +995,26 @@ class _BillSettingsPageState extends State<BillSettingsPage>
               ),
             ),
           ),
-          const SizedBox(width: 12),
+          SizedBox(width: 12),
           Expanded(
             flex: 1,
             child: Container(
               decoration: BoxDecoration(
-                color: const Color(0xFF1B4D3E).withValues(alpha: 0.05),
+                color: AppColors.accentSoft(context, 0.05),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.grey[200]!),
+                border: Border.all(color: AppColors.border(context)!),
               ),
               child: TextField(
                 controller: controller,
-                keyboardType: const TextInputType.numberWithOptions(
+                keyboardType: TextInputType.numberWithOptions(
                   decimal: true,
                 ),
                 textAlign: TextAlign.center,
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: 'Literata',
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
-                  color: Color(0xFF1B4D3E),
+                  color: AppColors.accent(context),
                 ),
                 decoration: InputDecoration(
                   suffixText: '%',
@@ -1046,18 +1047,18 @@ class _BillSettingsPageState extends State<BillSettingsPage>
     required ValueChanged<String> onChanged,
   }) {
     return Container(
-      margin: const EdgeInsets.only(left: 56),
+      margin: EdgeInsets.only(left: 56),
       decoration: BoxDecoration(
-        color: Colors.grey[50],
+        color: AppColors.scaffold(context),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[200]!),
+        border: Border.all(color: AppColors.border(context)!),
       ),
       child: TextField(
         controller: controller,
-        style: const TextStyle(
+        style: TextStyle(
           fontFamily: 'Literata',
           fontSize: 14,
-          color: Color(0xFF1B4D3E),
+          color: AppColors.accent(context),
         ),
         decoration: InputDecoration(
           hintText: label,
@@ -1112,18 +1113,18 @@ class _BillSettingsHeaderDelegate extends SliverPersistentHeaderDelegate {
 
     return Container(
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF1B4D3E), Color(0xFF2D6A4F)],
+        gradient: LinearGradient(
+          colors: AppColors.headerGradient(context),
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: const BorderRadius.only(
+        borderRadius: BorderRadius.only(
           bottomLeft: Radius.circular(28),
           bottomRight: Radius.circular(28),
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF1B4D3E).withValues(alpha: 0.3),
+            color: AppColors.accentSoft(context, 0.3),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
@@ -1158,7 +1159,7 @@ class _BillSettingsHeaderDelegate extends SliverPersistentHeaderDelegate {
                               color: Colors.white.withValues(alpha: 0.2),
                             ),
                           ),
-                          child: const Icon(
+                          child: Icon(
                             Icons.arrow_back_ios_new_rounded,
                             color: Colors.white,
                             size: 20,
@@ -1183,13 +1184,13 @@ class _BillSettingsHeaderDelegate extends SliverPersistentHeaderDelegate {
                               ),
                             ),
                             if (!isCollapsed) ...[
-                              const SizedBox(height: 4),
+                              SizedBox(height: 4),
                               Text(
                                 subtitle,
                                 style: TextStyle(
                                   fontSize: 13,
                                   fontFamily: 'Literata',
-                                  color: Colors.white.withValues(alpha: 0.8),
+                                  color: AppColors.card(context),
                                 ),
                               ),
                             ],
@@ -1200,28 +1201,28 @@ class _BillSettingsHeaderDelegate extends SliverPersistentHeaderDelegate {
                       GestureDetector(
                         onTap: onBack,
                         child: Container(
-                          padding: const EdgeInsets.symmetric(
+                          padding: EdgeInsets.symmetric(
                             horizontal: 16,
                             vertical: 10,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: AppColors.card(context),
                             borderRadius: BorderRadius.circular(12),
                             boxShadow: [
                               BoxShadow(
                                 color: Colors.black.withValues(alpha: 0.1),
                                 blurRadius: 8,
-                                offset: const Offset(0, 2),
+                                offset: Offset(0, 2),
                               ),
                             ],
                           ),
-                          child: const Text(
+                          child: Text(
                             'Done',
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w700,
                               fontFamily: 'Literata',
-                              color: Color(0xFF1B4D3E),
+                              color: AppColors.accent(context),
                             ),
                           ),
                         ),

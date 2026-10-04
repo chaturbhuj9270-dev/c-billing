@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'dart:ui';
 import '../cubit/biometric_cubit.dart';
 import '../cubit/biometric_state.dart';
+import 'package:c_billing/core/theme/app_theme.dart';
 
 /// Bottom sheet overlay for biometric authentication
 class BiometricAuthOverlay extends StatefulWidget {
@@ -48,13 +49,13 @@ class _BiometricAuthOverlayState extends State<BiometricAuthOverlay> {
     return BlocBuilder<BiometricCubit, BiometricState>(
       builder: (context, state) {
         return ClipRRect(
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
           child: BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
             child: Container(
               width: double.infinity,
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.95),
+                color: AppColors.card(context),
                 borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(24),
                 ),
@@ -70,7 +71,7 @@ class _BiometricAuthOverlayState extends State<BiometricAuthOverlay> {
                 maxHeight: MediaQuery.of(context).size.height * 0.7,
               ),
               child: Padding(
-                padding: const EdgeInsets.all(24),
+                padding: EdgeInsets.all(24),
                 child: SingleChildScrollView(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -80,9 +81,9 @@ class _BiometricAuthOverlayState extends State<BiometricAuthOverlay> {
                       Container(
                         width: 40,
                         height: 4,
-                        margin: const EdgeInsets.symmetric(horizontal: 0),
+                        margin: EdgeInsets.symmetric(horizontal: 0),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF1B4D3E).withValues(alpha: 0.3),
+                          color: AppColors.accentSoft(context, 0.3),
                           borderRadius: BorderRadius.circular(2),
                         ),
                       ),
@@ -118,18 +119,18 @@ class _BiometricAuthOverlayState extends State<BiometricAuthOverlay> {
           width: 80,
           height: 80,
           decoration: BoxDecoration(
-            color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+            color: AppColors.accentSoft(context, 0.1),
             borderRadius: BorderRadius.circular(20),
           ),
-          child: const Center(
-            child: Icon(Icons.fingerprint, color: Color(0xFF1B4D3E), size: 48),
+          child: Center(
+            child: Icon(Icons.fingerprint, color: AppColors.accent(context), size: 48),
           ),
         ),
-        const SizedBox(height: 20),
-        const Text(
+        SizedBox(height: 20),
+        Text(
           'Biometric Authentication',
           style: TextStyle(
-            color: Color(0xFF1B4D3E),
+            color: AppColors.accent(context),
             fontSize: 20,
             fontWeight: FontWeight.w700,
             fontFamily: 'Literata',
@@ -176,7 +177,7 @@ class _BiometricAuthOverlayState extends State<BiometricAuthOverlay> {
             ),
           ),
         ),
-        const SizedBox(height: 12),
+        SizedBox(height: 12),
         SizedBox(
           width: double.infinity,
           child: OutlinedButton(
@@ -185,8 +186,8 @@ class _BiometricAuthOverlayState extends State<BiometricAuthOverlay> {
               Navigator.pop(context);
             },
             style: OutlinedButton.styleFrom(
-              side: const BorderSide(color: Color(0xFF1B4D3E), width: 1.5),
-              padding: const EdgeInsets.symmetric(vertical: 14),
+              side: BorderSide(color: AppColors.accent(context), width: 1.5),
+              padding: EdgeInsets.symmetric(vertical: 14),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -194,7 +195,7 @@ class _BiometricAuthOverlayState extends State<BiometricAuthOverlay> {
             child: Text(
               'Skip',
               style: TextStyle(
-                color: const Color(0xFF1B4D3E),
+                color: AppColors.accent(context),
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
                 fontFamily: 'Literata',
@@ -214,7 +215,7 @@ class _BiometricAuthOverlayState extends State<BiometricAuthOverlay> {
           width: 80,
           height: 80,
           decoration: BoxDecoration(
-            color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+            color: AppColors.accentSoft(context, 0.1),
             borderRadius: BorderRadius.circular(20),
           ),
           child: const Center(
@@ -228,11 +229,11 @@ class _BiometricAuthOverlayState extends State<BiometricAuthOverlay> {
             ),
           ),
         ),
-        const SizedBox(height: 16),
-        const Text(
+        SizedBox(height: 16),
+        Text(
           'Authenticating',
           style: TextStyle(
-            color: Color(0xFF1B4D3E),
+            color: AppColors.accent(context),
             fontSize: 18,
             fontWeight: FontWeight.w700,
             fontFamily: 'Literata',
@@ -248,7 +249,7 @@ class _BiometricAuthOverlayState extends State<BiometricAuthOverlay> {
             fontFamily: 'Literata',
           ),
         ),
-        const SizedBox(height: 24),
+        SizedBox(height: 24),
         SizedBox(
           width: double.infinity,
           child: OutlinedButton(
@@ -257,8 +258,8 @@ class _BiometricAuthOverlayState extends State<BiometricAuthOverlay> {
               Navigator.pop(context);
             },
             style: OutlinedButton.styleFrom(
-              side: const BorderSide(color: Color(0xFF1B4D3E), width: 1.5),
-              padding: const EdgeInsets.symmetric(vertical: 12),
+              side: BorderSide(color: AppColors.accent(context), width: 1.5),
+              padding: EdgeInsets.symmetric(vertical: 12),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -266,7 +267,7 @@ class _BiometricAuthOverlayState extends State<BiometricAuthOverlay> {
             child: Text(
               'Skip',
               style: TextStyle(
-                color: const Color(0xFF1B4D3E),
+                color: AppColors.accent(context),
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
                 fontFamily: 'Literata',
@@ -313,7 +314,7 @@ class _BiometricAuthOverlayState extends State<BiometricAuthOverlay> {
             fontFamily: 'Literata',
           ),
         ),
-        const SizedBox(height: 20),
+        SizedBox(height: 20),
         Row(
           children: [
             Expanded(
@@ -323,8 +324,8 @@ class _BiometricAuthOverlayState extends State<BiometricAuthOverlay> {
                   Navigator.pop(context);
                 },
                 style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: Color(0xFF1B4D3E), width: 1.5),
-                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  side: BorderSide(color: AppColors.accent(context), width: 1.5),
+                  padding: EdgeInsets.symmetric(vertical: 12),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -332,7 +333,7 @@ class _BiometricAuthOverlayState extends State<BiometricAuthOverlay> {
                 child: Text(
                   'Cancel',
                   style: TextStyle(
-                    color: const Color(0xFF1B4D3E),
+                    color: AppColors.accent(context),
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                     fontFamily: 'Literata',
@@ -406,7 +407,7 @@ class _BiometricAuthOverlayState extends State<BiometricAuthOverlay> {
             fontFamily: 'Literata',
           ),
         ),
-        const SizedBox(height: 20),
+        SizedBox(height: 20),
         Row(
           children: [
             Expanded(
@@ -416,8 +417,8 @@ class _BiometricAuthOverlayState extends State<BiometricAuthOverlay> {
                   Navigator.pop(context);
                 },
                 style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: Color(0xFF1B4D3E), width: 1.5),
-                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  side: BorderSide(color: AppColors.accent(context), width: 1.5),
+                  padding: EdgeInsets.symmetric(vertical: 12),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -425,7 +426,7 @@ class _BiometricAuthOverlayState extends State<BiometricAuthOverlay> {
                 child: Text(
                   'Cancel',
                   style: TextStyle(
-                    color: const Color(0xFF1B4D3E),
+                    color: AppColors.accent(context),
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                     fontFamily: 'Literata',

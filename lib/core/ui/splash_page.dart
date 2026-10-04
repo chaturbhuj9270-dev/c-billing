@@ -16,6 +16,7 @@ import '../services/subscription_service.dart';
 import '../localization/app_localizations.dart';
 import 'subscription_screen.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
+import 'package:c_billing/core/theme/app_theme.dart';
 
 class SplashPage extends StatefulWidget {
   final Duration duration;
@@ -292,6 +293,7 @@ class _SplashPageState extends State<SplashPage> {
     final screenHeight = MediaQuery.of(context).size.height;
 
     return Scaffold(
+      backgroundColor: AppColors.scaffold(context),
       body: Container(
         width: double.infinity,
         height: double.infinity,
@@ -300,7 +302,7 @@ class _SplashPageState extends State<SplashPage> {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              const Color(0xFFE8F5E9),
+              AppColors.chipFill(context),
               const Color(0xFFE8E8E4),
               const Color(0xFFF1F8E9),
             ],
@@ -335,7 +337,7 @@ class _SplashPageState extends State<SplashPage> {
                               spreadRadius: 2,
                             ),
                             BoxShadow(
-                              color: Colors.white.withValues(alpha: 0.8),
+                              color: AppColors.card(context),
                               blurRadius: 15,
                               offset: const Offset(-5, -5),
                             ),
@@ -357,12 +359,12 @@ class _SplashPageState extends State<SplashPage> {
 
                     // App name with gradient
                     ShaderMask(
-                      shaderCallback: (bounds) => const LinearGradient(
-                        colors: [Color(0xFF1B4D3E), Color(0xFF2E7D5B)],
+                      shaderCallback: (bounds) => LinearGradient(
+                        colors: AppColors.headerGradient(context),
                       ).createShader(bounds),
                       child: Text(
                         _localizations.appName,
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: Colors.white,
                           fontSize: 48,
                           fontWeight: FontWeight.w700,
@@ -379,22 +381,22 @@ class _SplashPageState extends State<SplashPage> {
                       width: 60,
                       height: 3,
                       decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFF1B4D3E), Color(0xFF2E7D5B)],
+                        gradient: LinearGradient(
+                          colors: AppColors.headerGradient(context),
                         ),
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    SizedBox(height: 12),
 
                     // Tagline
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 40),
+                      padding: EdgeInsets.symmetric(horizontal: 40),
                       child: Text(
                         _localizations.tagline,
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          color: const Color(0xFF1B4D3E).withValues(alpha: 0.6),
+                          color: AppColors.accentSoft(context, 0.6),
                           fontSize: 13,
                           fontWeight: FontWeight.w500,
                           fontFamily: 'Literata',
@@ -481,7 +483,7 @@ class _SplashPageState extends State<SplashPage> {
                                       child: Icon(
                                         Icons.fingerprint,
                                         size: 24,
-                                        color: const Color(0xFF1B4D3E),
+                                        color: AppColors.accent(context),
                                       ),
                                     ),
                                   ),
@@ -497,7 +499,7 @@ class _SplashPageState extends State<SplashPage> {
                                       ).createShader(bounds),
                                   child: Text(
                                     _localizations.unlockNow,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       color: Colors.white,
                                       fontSize: 17,
                                       fontWeight: FontWeight.w700,
@@ -566,16 +568,16 @@ class _SplashPageState extends State<SplashPage> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 20),
+                    SizedBox(height: 20),
 
                     // Premium label with better styling
                     Container(
-                      padding: const EdgeInsets.symmetric(
+                      padding: EdgeInsets.symmetric(
                         horizontal: 16,
                         vertical: 6,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF1B4D3E).withValues(alpha: 0.08),
+                        color: AppColors.accentSoft(context, 0.08),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
@@ -601,7 +603,7 @@ class _SplashPageState extends State<SplashPage> {
                           TextSpan(
                             text: 'Powered by ',
                             style: TextStyle(
-                              color: const Color(
+                              color: Color(
                                 0xFF1B4D3E,
                               ).withValues(alpha: 0.45),
                               fontSize: 10,
@@ -609,10 +611,10 @@ class _SplashPageState extends State<SplashPage> {
                               fontFamily: 'Literata',
                             ),
                           ),
-                          const TextSpan(
+                          TextSpan(
                             text: 'CHATURBHUJ SOLUTIONS',
                             style: TextStyle(
-                              color: Color(0xFF1B4D3E),
+                              color: AppColors.accent(context),
                               fontSize: 10,
                               fontWeight: FontWeight.w800,
                               fontFamily: 'Literata',
@@ -622,7 +624,7 @@ class _SplashPageState extends State<SplashPage> {
                         ],
                       ),
                     ),
-                    const SizedBox(height: 6),
+                    SizedBox(height: 6),
 
                     // Contact with icon
                     Row(
@@ -631,29 +633,29 @@ class _SplashPageState extends State<SplashPage> {
                         Icon(
                           Icons.location_on_outlined,
                           size: 11,
-                          color: const Color(0xFF1B4D3E).withValues(alpha: 0.5),
+                          color: AppColors.accentSoft(context, 0.5),
                         ),
-                        const SizedBox(width: 4),
-                        const Text(
+                        SizedBox(width: 4),
+                        Text(
                           'Newasa',
                           style: TextStyle(
-                            color: Color(0xFF1B4D3E),
+                            color: AppColors.accent(context),
                             fontSize: 10,
                             fontWeight: FontWeight.w600,
                             fontFamily: 'Literata',
                           ),
                         ),
-                        const SizedBox(width: 8),
+                        SizedBox(width: 8),
                         Icon(
                           Icons.phone_outlined,
                           size: 11,
-                          color: const Color(0xFF1B4D3E).withValues(alpha: 0.5),
+                          color: AppColors.accentSoft(context, 0.5),
                         ),
-                        const SizedBox(width: 4),
-                        const Text(
+                        SizedBox(width: 4),
+                        Text(
                           '+91 9970662978',
                           style: TextStyle(
-                            color: Color(0xFF1B4D3E),
+                            color: AppColors.accent(context),
                             fontSize: 10,
                             fontWeight: FontWeight.w600,
                             fontFamily: 'Literata',

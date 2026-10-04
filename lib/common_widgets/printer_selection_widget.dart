@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../core/printing/models/printer_models.dart';
 import '../core/printing/services/pos_printer_service.dart';
+import 'package:c_billing/core/theme/app_theme.dart';
 
 /// Widget for discovering and selecting POS printers
 /// Shows a bottom sheet with available printers
@@ -110,8 +111,8 @@ class _PrinterSelectionWidgetState extends State<PrinterSelectionWidget> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(
+        color: AppColors.card(context),
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       child: DraggableScrollableSheet(
@@ -136,7 +137,7 @@ class _PrinterSelectionWidgetState extends State<PrinterSelectionWidget> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.card(context),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
@@ -151,7 +152,7 @@ class _PrinterSelectionWidgetState extends State<PrinterSelectionWidget> {
           Container(
             width: 40,
             height: 4,
-            margin: const EdgeInsets.only(bottom: 16),
+            margin: EdgeInsets.only(bottom: 16),
             decoration: BoxDecoration(
               color: Colors.grey[300],
               borderRadius: BorderRadius.circular(2),
@@ -160,29 +161,29 @@ class _PrinterSelectionWidgetState extends State<PrinterSelectionWidget> {
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(10),
+                padding: EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+                  color: AppColors.accentSoft(context, 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.print,
-                  color: Color(0xFF1B4D3E),
+                  color: AppColors.accent(context),
                   size: 24,
                 ),
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Select Printer',
                       style: TextStyle(
                         fontFamily: 'Literata',
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
-                        color: Color(0xFF1B4D3E),
+                        color: AppColors.accent(context),
                       ),
                     ),
                     Text(
@@ -202,7 +203,7 @@ class _PrinterSelectionWidgetState extends State<PrinterSelectionWidget> {
               IconButton(
                 onPressed: _isScanning ? null : _startScan,
                 icon: _isScanning
-                    ? const SizedBox(
+                    ? SizedBox(
                         width: 20,
                         height: 20,
                         child: CircularProgressIndicator(
@@ -212,7 +213,7 @@ class _PrinterSelectionWidgetState extends State<PrinterSelectionWidget> {
                           ),
                         ),
                       )
-                    : const Icon(Icons.refresh, color: Color(0xFF1B4D3E)),
+                    : Icon(Icons.refresh, color: AppColors.accent(context)),
               ),
               // Close button
               IconButton(
@@ -255,10 +256,10 @@ class _PrinterSelectionWidgetState extends State<PrinterSelectionWidget> {
 
   Widget _buildPaperSizeSelector() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF5F6F8),
-        border: Border(bottom: BorderSide(color: Colors.grey[200]!)),
+        color: AppColors.scaffold(context),
+        border: Border(bottom: BorderSide(color: AppColors.border(context)!)),
       ),
       child: Row(
         children: [
@@ -292,10 +293,14 @@ class _PrinterSelectionWidgetState extends State<PrinterSelectionWidget> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF1B4D3E) : Colors.white,
+          color: isSelected
+              ? AppColors.selectedFill(context)
+              : AppColors.card(context),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: isSelected ? const Color(0xFF1B4D3E) : Colors.grey[300]!,
+            color: isSelected
+                ? AppColors.selectedFill(context)
+                : AppColors.border(context),
           ),
         ),
         child: Text(
@@ -304,7 +309,9 @@ class _PrinterSelectionWidgetState extends State<PrinterSelectionWidget> {
             fontFamily: 'Literata',
             fontSize: 13,
             fontWeight: FontWeight.w600,
-            color: isSelected ? Colors.white : Colors.grey[700],
+            color: isSelected
+                ? AppColors.selectedOnFill(context)
+                : AppColors.secondaryText(context),
           ),
         ),
       ),
@@ -380,7 +387,7 @@ class _PrinterSelectionWidgetState extends State<PrinterSelectionWidget> {
 
     return ListView.builder(
       controller: scrollController,
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(16),
       itemCount: _devices.length,
       itemBuilder: (context, index) {
         final device = _devices[index];
@@ -388,12 +395,12 @@ class _PrinterSelectionWidgetState extends State<PrinterSelectionWidget> {
         final isConnecting = _isConnecting && isSelected;
 
         return Container(
-          margin: const EdgeInsets.only(bottom: 12),
+          margin: EdgeInsets.only(bottom: 12),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.card(context),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: isSelected ? const Color(0xFF1B4D3E) : Colors.grey[200]!,
+              color: isSelected ? Color(0xFF1B4D3E) : AppColors.border(context)!,
               width: isSelected ? 2 : 1,
             ),
             boxShadow: [

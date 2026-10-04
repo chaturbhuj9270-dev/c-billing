@@ -4,6 +4,7 @@ import 'dart:ui';
 import '../../../../core/services/language_service.dart';
 import '../../../../core/localization/app_localizations.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
+import 'package:c_billing/core/theme/app_theme.dart';
 
 class ChangePasswordPage extends StatefulWidget {
   /// If true, shows back button to return to previous screen
@@ -121,12 +122,12 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
+      backgroundColor: AppColors.scaffold(context),
       appBar: AppBar(
         backgroundColor: const Color(0xFF1B4D3E),
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+          icon: Icon(Icons.arrow_back_ios, color: Colors.white),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
@@ -158,20 +159,20 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SizedBox(height: 20),
+                  SizedBox(height: 20),
                   // Header Icon
                   Center(
                     child: Container(
                       width: 80,
                       height: 80,
                       decoration: BoxDecoration(
-                        color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+                        color: AppColors.accentSoft(context, 0.1),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.lock_reset_rounded,
                         size: 40,
-                        color: Color(0xFF1B4D3E),
+                        color: AppColors.accent(context),
                       ),
                     ),
                   ),
@@ -207,9 +208,9 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                     child: BackdropFilter(
                       filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                       child: Container(
-                        padding: const EdgeInsets.all(24),
+                        padding: EdgeInsets.all(24),
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.9),
+                          color: AppColors.card(context),
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
                             color: Colors.white.withValues(alpha: 0.3),
@@ -314,7 +315,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                                       )
                                     : Text(
                                         _localizations.updatePassword,
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           color: Colors.white,
                                           fontSize: 16,
                                           fontWeight: FontWeight.w600,
@@ -328,16 +329,16 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  SizedBox(height: 24),
 
                   // Security Tips
                   Container(
-                    padding: const EdgeInsets.all(16),
+                    padding: EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF1B4D3E).withValues(alpha: 0.05),
+                      color: AppColors.accentSoft(context, 0.05),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+                        color: AppColors.accentSoft(context, 0.1),
                       ),
                     ),
                     child: Column(
@@ -396,7 +397,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
             color: Color(0xFF1A1A1A),
@@ -415,9 +416,9 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
               fontSize: 14,
               fontFamily: 'Literata',
             ),
-            prefixIcon: const Icon(
+            prefixIcon: Icon(
               Icons.lock_outline,
-              color: Color(0xFF1B4D3E),
+              color: AppColors.accent(context),
               size: 20,
             ),
             suffixIcon: IconButton(
@@ -425,13 +426,13 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                 obscure
                     ? Icons.visibility_off_outlined
                     : Icons.visibility_outlined,
-                color: const Color(0xFF1B4D3E),
+                color: AppColors.accent(context),
                 size: 20,
               ),
               onPressed: onToggle,
             ),
             filled: true,
-            fillColor: Colors.grey[50],
+            fillColor: AppColors.scaffold(context),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(color: Colors.grey[300]!),
@@ -442,8 +443,8 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(
-                color: Color(0xFF1B4D3E),
+              borderSide: BorderSide(
+                color: AppColors.accent(context),
                 width: 1.5,
               ),
             ),
@@ -456,7 +457,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
               vertical: 14,
             ),
           ),
-          style: const TextStyle(fontSize: 15, fontFamily: 'Literata'),
+          style: TextStyle(fontSize: 15, fontFamily: 'Literata'),
         ),
       ],
     );
@@ -464,14 +465,14 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
 
   Widget _buildTipItem(String text) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
+      padding: EdgeInsets.only(bottom: 6),
       child: Row(
         children: [
           Container(
             width: 4,
             height: 4,
             decoration: BoxDecoration(
-              color: const Color(0xFF1B4D3E).withValues(alpha: 0.5),
+              color: AppColors.accentSoft(context, 0.5),
               shape: BoxShape.circle,
             ),
           ),

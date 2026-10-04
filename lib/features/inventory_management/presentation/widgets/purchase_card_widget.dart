@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../offline/entities/purchase_batch_entity.dart';
+import 'package:c_billing/core/theme/app_theme.dart';
 
 /// Modern card widget for displaying individual purchase items
 /// Features: Subtle shadows, proper spacing, responsive layout
@@ -30,9 +31,9 @@ class PurchaseCardWidget extends StatelessWidget {
       onTap: onTap,
       onLongPress: onLongPress,
       child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
+        margin: EdgeInsets.only(bottom: 12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.card(context),
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
@@ -70,18 +71,18 @@ class PurchaseCardWidget extends StatelessWidget {
                           width: 44,
                           height: 44,
                           decoration: BoxDecoration(
-                            color: const Color(
+                            color: Color(
                               0xFF1B4D3E,
                             ).withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: const Icon(
+                          child: Icon(
                             Icons.inventory_2_rounded,
-                            color: Color(0xFF1B4D3E),
+                            color: AppColors.accent(context),
                             size: 22,
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        SizedBox(width: 12),
                         // Product name and company
                         Expanded(
                           child: Column(
@@ -89,11 +90,11 @@ class PurchaseCardWidget extends StatelessWidget {
                             children: [
                               Text(
                                 purchase.productName,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontFamily: 'Literata',
                                   fontWeight: FontWeight.w700,
                                   fontSize: 15,
-                                  color: Color(0xFF1B4D3E),
+                                  color: AppColors.accent(context),
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
@@ -133,11 +134,11 @@ class PurchaseCardWidget extends StatelessWidget {
                           children: [
                             Text(
                               '₹${totalAmount.toStringAsFixed(2)}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontFamily: 'Literata',
                                 fontWeight: FontWeight.w800,
                                 fontSize: 16,
-                                color: Color(0xFF1B4D3E),
+                                color: AppColors.accent(context),
                               ),
                             ),
                             if (showSyncStatus) _buildSyncBadge(),
@@ -146,10 +147,10 @@ class PurchaseCardWidget extends StatelessWidget {
                       ],
                     ),
 
-                    const SizedBox(height: 14),
+                    SizedBox(height: 14),
 
                     // Divider
-                    Container(height: 1, color: Colors.grey[200]),
+                    Container(height: 1, color: AppColors.border(context)),
 
                     const SizedBox(height: 14),
 
@@ -206,12 +207,12 @@ class PurchaseCardWidget extends StatelessWidget {
 
                         // Date and time
                         Container(
-                          padding: const EdgeInsets.symmetric(
+                          padding: EdgeInsets.symmetric(
                             horizontal: 10,
                             vertical: 4,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.grey[100],
+                            color: AppColors.chipFill(context),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Row(
@@ -321,10 +322,10 @@ class PurchaseCardShimmer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
+      margin: EdgeInsets.only(bottom: 12),
+      padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.card(context),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -354,8 +355,8 @@ class PurchaseCardShimmer extends StatelessWidget {
               _shimmerBox(80, 20, 4),
             ],
           ),
-          const SizedBox(height: 14),
-          Container(height: 1, color: Colors.grey[200]),
+          SizedBox(height: 14),
+          Container(height: 1, color: AppColors.border(context)),
           const SizedBox(height: 14),
           Row(
             children: [
@@ -368,7 +369,7 @@ class PurchaseCardShimmer extends StatelessWidget {
           Row(
             children: [
               _shimmerBox(120, 14, 4),
-              const Spacer(),
+              Spacer(),
               _shimmerBox(100, 24, 8),
             ],
           ),
@@ -378,12 +379,14 @@ class PurchaseCardShimmer extends StatelessWidget {
   }
 
   Widget _shimmerBox(double width, double height, double radius) {
-    return Container(
-      width: width,
-      height: height,
-      decoration: BoxDecoration(
-        color: Colors.grey[200],
-        borderRadius: BorderRadius.circular(radius),
+    return Builder(
+      builder: (context) => Container(
+        width: width,
+        height: height,
+        decoration: BoxDecoration(
+          color: AppColors.border(context),
+          borderRadius: BorderRadius.circular(radius),
+        ),
       ),
     );
   }

@@ -14,6 +14,7 @@ import '../widgets/supplier_summary_widget.dart';
 import '../widgets/supplier_filter_widget.dart';
 import '../widgets/supplier_list_widget.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
+import 'package:c_billing/core/theme/app_theme.dart';
 
 class EnhancedSupplierPage extends StatefulWidget {
   final bool isEmbedded;
@@ -307,8 +308,8 @@ class _EnhancedSupplierPageState extends State<EnhancedSupplierPage>
     return StatefulBuilder(
       builder: (context, setSheetState) {
         return Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
+          decoration: BoxDecoration(
+            color: AppColors.card(context),
             borderRadius: BorderRadius.only(
               topLeft: Radius.circular(24),
               topRight: Radius.circular(24),
@@ -339,7 +340,7 @@ class _EnhancedSupplierPageState extends State<EnhancedSupplierPage>
                         ),
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    SizedBox(height: 16),
                     // Header
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -348,10 +349,10 @@ class _EnhancedSupplierPageState extends State<EnhancedSupplierPage>
                           _isEditing
                               ? _localizations.editSupplier
                               : _localizations.addNewSupplier,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.w700,
-                            color: Color(0xFF1B4D3E),
+                            color: AppColors.accent(context),
                             fontFamily: 'Literata',
                           ),
                         ),
@@ -508,10 +509,10 @@ class _EnhancedSupplierPageState extends State<EnhancedSupplierPage>
           children: [
             Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF1B4D3E),
+                color: AppColors.accent(context),
                 fontFamily: 'Literata',
               ),
             ),
@@ -553,14 +554,14 @@ class _EnhancedSupplierPageState extends State<EnhancedSupplierPage>
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFF1B4D3E), width: 2),
+              borderSide: BorderSide(color: AppColors.accent(context), width: 2),
             ),
-            contentPadding: const EdgeInsets.symmetric(
+            contentPadding: EdgeInsets.symmetric(
               horizontal: 12,
               vertical: 12,
             ),
             filled: true,
-            fillColor: isReadOnly ? Colors.grey[100] : Colors.grey[50],
+            fillColor: isReadOnly ? AppColors.chipFill(context) : AppColors.scaffold(context),
             counterText: '',
           ),
           validator: (value) {
@@ -726,8 +727,8 @@ class _EnhancedSupplierPageState extends State<EnhancedSupplierPage>
       context: context,
       backgroundColor: Colors.transparent,
       builder: (ctx) => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
+        decoration: BoxDecoration(
+          color: AppColors.card(context),
           borderRadius: BorderRadius.only(
             topLeft: Radius.circular(20),
             topRight: Radius.circular(20),
@@ -812,7 +813,7 @@ class _EnhancedSupplierPageState extends State<EnhancedSupplierPage>
     _sessionManager.resetSession();
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: AppColors.scaffold(context),
       appBar: widget.isEmbedded ? null : _buildAppBar(),
       floatingActionButton: _buildFAB(),
       body: SlideTransition(
@@ -871,17 +872,17 @@ class _EnhancedSupplierPageState extends State<EnhancedSupplierPage>
 
   PreferredSizeWidget _buildAppBar() {
     return PreferredSize(
-      preferredSize: const Size.fromHeight(70),
+      preferredSize: Size.fromHeight(70),
       child: Container(
         decoration: BoxDecoration(
-          gradient: const LinearGradient(
+          gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Color(0xFF1B4D3E), Color(0xFF0F3B2F)],
+            colors: AppColors.headerGradient(context),
           ),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF1B4D3E).withValues(alpha: 0.2),
+              color: AppColors.accentSoft(context, 0.2),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
@@ -890,7 +891,7 @@ class _EnhancedSupplierPageState extends State<EnhancedSupplierPage>
         child: SafeArea(
           bottom: false,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: EdgeInsets.symmetric(horizontal: 16),
             child: Row(
               children: [
                 GestureDetector(
@@ -900,7 +901,7 @@ class _EnhancedSupplierPageState extends State<EnhancedSupplierPage>
                   },
                   child: Icon(
                     Icons.arrow_back_rounded,
-                    color: Colors.white.withValues(alpha: 0.9),
+                    color: Colors.white,
                     size: 24,
                   ),
                 ),
@@ -943,15 +944,15 @@ class _EnhancedSupplierPageState extends State<EnhancedSupplierPage>
   Widget _buildFAB() {
     return Container(
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF1B4D3E), Color(0xFF0F3B2F)],
+          colors: AppColors.headerGradient(context),
         ),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF1B4D3E).withValues(alpha: 0.4),
+            color: AppColors.accentSoft(context, 0.4),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),

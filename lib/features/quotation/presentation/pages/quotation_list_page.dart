@@ -11,6 +11,7 @@ import '../../offline/controllers/quotation_offline_controller.dart';
 import '../../offline/entities/quotation_entity.dart';
 import 'quotation_screen.dart';
 import 'quotation_settings_page.dart';
+import 'package:c_billing/core/theme/app_theme.dart';
 
 class QuotationListPage extends StatefulWidget {
   const QuotationListPage({super.key});
@@ -107,9 +108,9 @@ class _QuotationListPageState extends State<QuotationListPage> {
     final dateFormat = DateFormat('dd MMM yyyy');
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FC),
+      backgroundColor: AppColors.scaffold(context),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.card(context),
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
@@ -210,12 +211,12 @@ class _QuotationListPageState extends State<QuotationListPage> {
                 final item = _quotations[index];
                 final domain = item.toDomain();
                 return Card(
-                  margin: const EdgeInsets.only(bottom: 12),
+                  margin: EdgeInsets.only(bottom: 12),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),
                   elevation: 0,
-                  color: Colors.white,
+                  color: AppColors.card(context),
                   child: Padding(
                     padding: const EdgeInsets.all(16),
                     child: Row(
@@ -328,9 +329,9 @@ class _QuotationListPageState extends State<QuotationListPage> {
                             : GestureDetector(
                                 onTap: () => _printQuotation(item),
                                 child: Container(
-                                  padding: const EdgeInsets.all(6),
+                                  padding: EdgeInsets.all(6),
                                   decoration: BoxDecoration(
-                                    color: Colors.grey[100],
+                                    color: AppColors.chipFill(context),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Icon(

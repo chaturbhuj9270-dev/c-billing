@@ -16,6 +16,7 @@ import '../../../inventory_management/offline/entities/purchase_batch_entity.dar
 import '../../../product/data/services/product_sync_service.dart';
 import '../../../product/offline/controllers/product_offline_controller.dart';
 import '../../../product/offline/entities/product_entity.dart';
+import 'package:c_billing/core/theme/app_theme.dart';
 
 /// Product add UI for quotations — same flow and line editing as billing.
 class QuotationProductsPanel extends StatefulWidget {
@@ -472,9 +473,9 @@ class _QuotationProductsPanelState extends State<QuotationProductsPanel> {
 
   Widget _buildAddProductBar(AppLocalizations l10n) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      padding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.grey[50],
+        color: AppColors.scaffold(context),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: _primary.withValues(alpha: 0.2)),
       ),
@@ -542,8 +543,8 @@ class _QuotationProductsPanelState extends State<QuotationProductsPanel> {
             child: Container(
               padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF1B4D3E), Color(0xFF2D6A4F)],
+                gradient: LinearGradient(
+                  colors: AppColors.headerGradient(context),
                 ),
                 borderRadius: BorderRadius.circular(6),
               ),

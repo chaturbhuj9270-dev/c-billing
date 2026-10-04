@@ -13,6 +13,7 @@ import 'package:c_billing/features/inventory_management/offline/controllers/purc
 import 'package:c_billing/features/inventory_management/offline/entities/purchase_batch_entity.dart';
 import 'package:c_billing/features/availability/presentation/pages/report_preview_screen.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
+import 'package:c_billing/core/theme/app_theme.dart';
 
 class AvailabilityPage extends StatefulWidget {
   final bool isEmbedded;
@@ -195,8 +196,8 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
           padding: EdgeInsets.only(
             bottom: MediaQuery.of(context).viewInsets.bottom,
           ),
-          decoration: const BoxDecoration(
-            color: Colors.white,
+          decoration: BoxDecoration(
+            color: AppColors.card(context),
             borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
           ),
           child: Column(
@@ -214,38 +215,38 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
               ),
               // Header
               Padding(
-                padding: const EdgeInsets.all(20),
+                padding: EdgeInsets.all(20),
                 child: Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.all(10),
+                      padding: EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+                        color: AppColors.accentSoft(context, 0.1),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.description_outlined,
-                        color: Color(0xFF1B4D3E),
+                        color: AppColors.accent(context),
                         size: 22,
                       ),
                     ),
-                    const SizedBox(width: 14),
+                    SizedBox(width: 14),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             _localizations.generateReport,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontFamily: 'Literata',
                               fontSize: 18,
                               fontWeight: FontWeight.w700,
-                              color: Color(0xFF1B4D3E),
+                              color: AppColors.accent(context),
                             ),
                           ),
                           Text(
                             _localizations.exportInventory,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontFamily: 'Literata',
                               fontSize: 12,
                               color: Colors.grey,
@@ -257,37 +258,37 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                   ],
                 ),
               ),
-              const Divider(height: 1),
+              Divider(height: 1),
               // Filter info banner
               Container(
-                margin: const EdgeInsets.all(16),
-                padding: const EdgeInsets.all(14),
+                margin: EdgeInsets.all(16),
+                padding: EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1B4D3E).withValues(alpha: 0.08),
+                  color: AppColors.accentSoft(context, 0.08),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: const Color(0xFF1B4D3E).withValues(alpha: 0.2),
+                    color: AppColors.accentSoft(context, 0.2),
                   ),
                 ),
                 child: Row(
                   children: [
                     Icon(
                       _getFilterIcon(),
-                      color: const Color(0xFF1B4D3E),
+                      color: AppColors.accent(context),
                       size: 22,
                     ),
-                    const SizedBox(width: 12),
+                    SizedBox(width: 12),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             '${_localizations.exporting} ${_getFilterLabel()}',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontFamily: 'Literata',
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
-                              color: Color(0xFF1B4D3E),
+                              color: AppColors.accent(context),
                             ),
                           ),
                           Text(
@@ -307,17 +308,17 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
               const Divider(height: 1),
               // Format Selection
               Padding(
-                padding: const EdgeInsets.all(16),
+                padding: EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       _localizations.exportFormat,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'Literata',
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: Color(0xFF1B4D3E),
+                        color: AppColors.accent(context),
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -414,12 +415,12 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
       onTap: () => onSelect(format),
       borderRadius: BorderRadius.circular(12),
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+        padding: EdgeInsets.symmetric(vertical: 16, horizontal: 12),
         decoration: BoxDecoration(
-          color: isSelected ? color.withValues(alpha: 0.1) : Colors.grey[50],
+          color: isSelected ? color.withValues(alpha: 0.1) : AppColors.scaffold(context),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? color : Colors.grey[200]!,
+            color: isSelected ? color : AppColors.border(context)!,
             width: isSelected ? 2 : 1,
           ),
         ),
@@ -635,10 +636,10 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
     final expired = _groupedProducts.where((g) => g.hasExpiredStock).length;
 
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-      padding: const EdgeInsets.all(16),
+      margin: EdgeInsets.fromLTRB(16, 16, 16, 8),
+      padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.card(context),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -723,7 +724,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         width: 72,
-        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+        padding: EdgeInsets.symmetric(vertical: 14, horizontal: 8),
         decoration: BoxDecoration(
           gradient: isActive
               ? LinearGradient(
@@ -732,7 +733,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                   colors: gradient,
                 )
               : null,
-          color: isActive ? null : Colors.grey[50],
+          color: isActive ? null : AppColors.scaffold(context),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: isActive
@@ -786,13 +787,13 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
 
   Widget _buildSearchAndFilters() {
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+      padding: EdgeInsets.fromLTRB(16, 12, 16, 12),
       child: Column(
         children: [
           // Search bar with modern styling
           Container(
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.card(context),
               borderRadius: BorderRadius.circular(14),
               boxShadow: [
                 BoxShadow(
@@ -824,12 +825,12 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                 suffixIcon: _searchQuery.isNotEmpty
                     ? IconButton(
                         icon: Container(
-                          padding: const EdgeInsets.all(4),
+                          padding: EdgeInsets.all(4),
                           decoration: BoxDecoration(
-                            color: Colors.grey[200],
+                            color: AppColors.border(context),
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(
+                          child: Icon(
                             Icons.close,
                             size: 16,
                             color: Colors.grey,
@@ -842,7 +843,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                       )
                     : null,
                 filled: true,
-                fillColor: Colors.white,
+                fillColor: AppColors.inputFill(context),
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 16,
                   vertical: 14,
@@ -859,43 +860,43 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14),
-                  borderSide: const BorderSide(
-                    color: Color(0xFF1B4D3E),
+                  borderSide: BorderSide(
+                    color: AppColors.accent(context),
                     width: 1.5,
                   ),
                 ),
               ),
             ),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           // Result count and sort info
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(
+                padding: EdgeInsets.symmetric(
                   horizontal: 12,
                   vertical: 6,
                 ),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1B4D3E).withValues(alpha: 0.08),
+                  color: AppColors.accentSoft(context, 0.08),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.list_alt_rounded,
                       size: 14,
-                      color: Color(0xFF1B4D3E),
+                      color: AppColors.accent(context),
                     ),
-                    const SizedBox(width: 6),
+                    SizedBox(width: 6),
                     Text(
                       '${_filteredGroupedProducts.length} items',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                         fontFamily: 'Literata',
-                        color: Color(0xFF1B4D3E),
+                        color: AppColors.accent(context),
                       ),
                     ),
                   ],
@@ -906,12 +907,12 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                 GestureDetector(
                   onTap: () => _onStockFilterChanged('all'),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(
+                    padding: EdgeInsets.symmetric(
                       horizontal: 10,
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.grey[100],
+                      color: AppColors.chipFill(context),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Row(
@@ -1017,9 +1018,9 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
     final expiredBatchCount = group.expiredBatchCount;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.card(context),
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
           color: group.hasExpiredStock
@@ -1071,7 +1072,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
               children: [
                 Text(
                   '${group.totalStock}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: Colors.white,
                     fontSize: 16,
                     fontWeight: FontWeight.w800,
@@ -1082,7 +1083,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                 Text(
                   _localizations.units,
                   style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.8),
+                    color: AppColors.card(context),
                     fontSize: 8,
                     fontWeight: FontWeight.w600,
                     fontFamily: 'Literata',
@@ -1093,11 +1094,11 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
           ),
           title: Text(
             group.productName,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w700,
               fontFamily: 'Literata',
-              color: Color(0xFF1B4D3E),
+              color: AppColors.accent(context),
               height: 1.2,
             ),
             maxLines: 1,
@@ -1231,10 +1232,10 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
             ),
             // Batch header
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               decoration: BoxDecoration(
-                color: Colors.grey[100],
-                border: Border(bottom: BorderSide(color: Colors.grey[200]!)),
+                color: AppColors.chipFill(context),
+                border: Border(bottom: BorderSide(color: AppColors.border(context)!)),
               ),
               child: Row(
                 children: [
@@ -1283,11 +1284,11 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                     flex: 2,
                     child: Text(
                       _localizations.qty,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w700,
                         fontFamily: 'Literata',
-                        color: Color(0xFF1B4D3E),
+                        color: AppColors.accent(context),
                         letterSpacing: 0.5,
                       ),
                       textAlign: TextAlign.end,
@@ -1322,12 +1323,12 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
               }
 
               return Container(
-                padding: const EdgeInsets.symmetric(
+                padding: EdgeInsets.symmetric(
                   horizontal: 16,
                   vertical: 12,
                 ),
                 decoration: BoxDecoration(
-                  color: rowColor ?? (isEven ? Colors.white : Colors.grey[50]),
+                  color: rowColor ?? (isEven ? Colors.white : AppColors.scaffold(context)),
                   border: Border(
                     bottom: BorderSide(
                       color: Colors.grey.withValues(alpha: 0.1),
@@ -1693,15 +1694,15 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
         Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 14, color: const Color(0xFF1B4D3E)),
-            const SizedBox(width: 6),
+            Icon(icon, size: 14, color: AppColors.accent(context)),
+            SizedBox(width: 6),
             Text(
               value,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
                 fontFamily: 'Literata',
-                color: Color(0xFF1B4D3E),
+                color: AppColors.accent(context),
               ),
             ),
           ],
@@ -1742,10 +1743,10 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7F6),
+      backgroundColor: AppColors.scaffold(context),
       body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(color: Color(0xFF1B4D3E)),
+          ? Center(
+              child: CircularProgressIndicator(color: AppColors.accent(context)),
             )
           : CustomScrollView(
               slivers: [
@@ -1782,18 +1783,18 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF1B4D3E), Color(0xFF0F3B2F)],
+          colors: AppColors.headerGradient(context),
         ),
-        borderRadius: const BorderRadius.only(
+        borderRadius: BorderRadius.only(
           bottomLeft: Radius.circular(28),
           bottomRight: Radius.circular(28),
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF1B4D3E).withValues(alpha: 0.25),
+            color: AppColors.accentSoft(context, 0.25),
             blurRadius: 16,
             offset: const Offset(0, 6),
           ),
@@ -1913,7 +1914,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: Colors.white.withValues(alpha: 0.8), size: 16),
+            Icon(icon, color: Colors.white, size: 16),
             const SizedBox(width: 6),
             Text(
               value,
@@ -1964,7 +1965,7 @@ class _SearchHeaderDelegate extends SliverPersistentHeaderDelegate {
     double shrinkOffset,
     bool overlapsContent,
   ) {
-    return Container(color: const Color(0xFFF5F7F6), child: child);
+    return Container(color: AppColors.scaffold(context), child: child);
   }
 
   @override

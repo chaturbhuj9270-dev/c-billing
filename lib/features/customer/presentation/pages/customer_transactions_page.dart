@@ -13,6 +13,7 @@ import '../../../event_order/offline/controllers/event_order_offline_controller.
 import '../../../event_order/offline/entities/event_order_entity.dart';
 import '../../../event_order/domain/entities/event_order.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
+import 'package:c_billing/core/theme/app_theme.dart';
 
 /// Date filter options for transactions
 enum TransactionDateFilter { thisMonth, thisYear, lastYear, custom, all }
@@ -320,14 +321,14 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7F6),
+      backgroundColor: AppColors.scaffold(context),
       body: Column(
         children: [
           _buildHeader(),
           Expanded(
             child: _isLoading
-                ? const Center(
-                    child: CircularProgressIndicator(color: Color(0xFF1B4D3E)),
+                ? Center(
+                    child: CircularProgressIndicator(color: AppColors.accent(context)),
                   )
                 : Column(
                     children: [
@@ -351,14 +352,14 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
 
     return Container(
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF1B4D3E), Color(0xFF0F3B2F)],
+          colors: AppColors.headerGradient(context),
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF1B4D3E).withValues(alpha: 0.3),
+            color: AppColors.accentSoft(context, 0.3),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -483,11 +484,11 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
                               size: 12,
                               color: Colors.white.withValues(alpha: 0.7),
                             ),
-                            const SizedBox(width: 4),
+                            SizedBox(width: 4),
                             Text(
                               widget.customerContact,
                               style: TextStyle(
-                                color: Colors.white.withValues(alpha: 0.8),
+                                color: AppColors.card(context),
                                 fontSize: 12,
                                 fontFamily: 'Literata',
                               ),
@@ -658,7 +659,7 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
   Widget _buildEmptyState() {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(32),
+        padding: EdgeInsets.all(32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -666,22 +667,22 @@ class _CustomerTransactionsPageState extends State<CustomerTransactionsPage>
               width: 80,
               height: 80,
               decoration: BoxDecoration(
-                color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+                color: AppColors.accentSoft(context, 0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 Icons.receipt_long_rounded,
                 size: 40,
-                color: const Color(0xFF1B4D3E).withValues(alpha: 0.5),
+                color: AppColors.accentSoft(context, 0.5),
               ),
             ),
-            const SizedBox(height: 20),
-            const Text(
+            SizedBox(height: 20),
+            Text(
               'No Transactions Yet',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF1B4D3E),
+                color: AppColors.accent(context),
                 fontFamily: 'Literata',
               ),
             ),
@@ -834,7 +835,7 @@ class _SummaryCard extends StatelessWidget {
   final Color color;
   final Color iconBackground;
 
-  const _SummaryCard({
+  _SummaryCard({
     required this.icon,
     required this.label,
     required this.value,
@@ -845,9 +846,9 @@ class _SummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.card(context),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -920,16 +921,22 @@ class _FilterChip extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF1B4D3E) : Colors.white,
+          color: isSelected
+              ? AppColors.selectedFill(context)
+              : AppColors.card(context),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isSelected ? const Color(0xFF1B4D3E) : Colors.grey.shade300,
+            color: isSelected
+                ? AppColors.selectedFill(context)
+                : AppColors.border(context),
             width: 1,
           ),
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: const Color(0xFF1B4D3E).withValues(alpha: 0.3),
+                    color: Colors.black.withValues(
+                      alpha: AppColors.isDark(context) ? 0.35 : 0.15,
+                    ),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -941,7 +948,9 @@ class _FilterChip extends StatelessWidget {
           style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w600,
-            color: isSelected ? Colors.white : Colors.grey[700],
+            color: isSelected
+                ? AppColors.selectedOnFill(context)
+                : AppColors.secondaryText(context),
             fontFamily: 'Literata',
           ),
         ),
@@ -1008,13 +1017,13 @@ class _TransactionCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
         ),
         alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 20),
-        child: const Icon(Icons.delete_rounded, color: Colors.white),
+        padding: EdgeInsets.only(right: 20),
+        child: Icon(Icons.delete_rounded, color: Colors.white),
       ),
       child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
+        margin: EdgeInsets.only(bottom: 12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.card(context),
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
@@ -1050,10 +1059,10 @@ class _TransactionCard extends StatelessWidget {
                         Expanded(
                           child: Text(
                             typeLabel,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
-                              color: Color(0xFF1B4D3E),
+                              color: AppColors.accent(context),
                               fontFamily: 'Literata',
                             ),
                           ),
@@ -1196,8 +1205,8 @@ class _ReceivePaymentSheetState extends State<_ReceivePaymentSheet> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(
+        color: AppColors.card(context),
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Padding(
@@ -1224,14 +1233,14 @@ class _ReceivePaymentSheetState extends State<_ReceivePaymentSheet> {
                   ),
                 ),
               ),
-              const SizedBox(height: 20),
+              SizedBox(height: 20),
               // Title
-              const Text(
+              Text(
                 'Receive Payment',
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w700,
-                  color: Color(0xFF1B4D3E),
+                  color: AppColors.accent(context),
                   fontFamily: 'Literata',
                 ),
               ),
@@ -1277,26 +1286,26 @@ class _ReceivePaymentSheetState extends State<_ReceivePaymentSheet> {
                     ],
                   ),
                 ),
-              const SizedBox(height: 20),
+              SizedBox(height: 20),
               // Amount field
               TextFormField(
                 controller: _amountController,
-                keyboardType: const TextInputType.numberWithOptions(
+                keyboardType: TextInputType.numberWithOptions(
                   decimal: true,
                 ),
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.w700,
-                  color: Color(0xFF1B4D3E),
+                  color: AppColors.accent(context),
                   fontFamily: 'Literata',
                 ),
                 decoration: InputDecoration(
                   labelText: 'Amount',
                   prefixText: '₹ ',
-                  prefixStyle: const TextStyle(
+                  prefixStyle: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.w700,
-                    color: Color(0xFF1B4D3E),
+                    color: AppColors.accent(context),
                     fontFamily: 'Literata',
                   ),
                   labelStyle: TextStyle(
@@ -1304,15 +1313,15 @@ class _ReceivePaymentSheetState extends State<_ReceivePaymentSheet> {
                     fontFamily: 'Literata',
                   ),
                   filled: true,
-                  fillColor: Colors.grey[50],
+                  fillColor: AppColors.scaffold(context),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
                     borderSide: BorderSide.none,
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
-                    borderSide: const BorderSide(
-                      color: Color(0xFF1B4D3E),
+                    borderSide: BorderSide(
+                      color: AppColors.accent(context),
                       width: 2,
                     ),
                   ),
@@ -1350,14 +1359,14 @@ class _ReceivePaymentSheetState extends State<_ReceivePaymentSheet> {
                         setState(() => _selectedPaymentMethod = method),
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 200),
-                      padding: const EdgeInsets.symmetric(
+                      padding: EdgeInsets.symmetric(
                         horizontal: 14,
                         vertical: 10,
                       ),
                       decoration: BoxDecoration(
                         color: isSelected
                             ? const Color(0xFF1B4D3E)
-                            : Colors.grey[100],
+                            : AppColors.chipFill(context),
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(
                           color: isSelected
@@ -1378,7 +1387,7 @@ class _ReceivePaymentSheetState extends State<_ReceivePaymentSheet> {
                   );
                 }).toList(),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               // Description field
               TextFormField(
                 controller: _descriptionController,
@@ -1390,7 +1399,7 @@ class _ReceivePaymentSheetState extends State<_ReceivePaymentSheet> {
                     fontFamily: 'Literata',
                   ),
                   filled: true,
-                  fillColor: Colors.grey[50],
+                  fillColor: AppColors.scaffold(context),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
                     borderSide: BorderSide.none,
@@ -1448,7 +1457,7 @@ class _EventOrderCard extends StatelessWidget {
   final EventOrderEntity eventOrder;
   final double runningBalance;
 
-  const _EventOrderCard({
+  _EventOrderCard({
     required this.eventOrder,
     required this.runningBalance,
   });
@@ -1461,9 +1470,9 @@ class _EventOrderCard extends StatelessWidget {
     final statusName = OrderStatus.values[eventOrder.status].name;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.card(context),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -1474,7 +1483,7 @@ class _EventOrderCard extends StatelessWidget {
         ],
       ),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -1484,12 +1493,12 @@ class _EventOrderCard extends StatelessWidget {
                   width: 44,
                   height: 44,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+                    color: AppColors.accentSoft(context, 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
                     isEvent ? Icons.celebration : Icons.shopping_bag,
-                    color: const Color(0xFF1B4D3E),
+                    color: AppColors.accent(context),
                     size: 22,
                   ),
                 ),
@@ -1544,14 +1553,14 @@ class _EventOrderCard extends StatelessWidget {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 4),
+                      SizedBox(height: 4),
                       Text(
                         eventOrder.orderName,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontFamily: 'Literata',
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFF1B4D3E),
+                          color: AppColors.accent(context),
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -1563,9 +1572,9 @@ class _EventOrderCard extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: const Color(0xFFF5F7F6),
+                color: AppColors.scaffold(context),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Row(

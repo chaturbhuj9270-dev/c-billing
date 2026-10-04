@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:c_billing/core/services/purchase_settings_service.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
+import 'package:c_billing/core/theme/app_theme.dart';
 
 class PurchaseSettingsPage extends StatefulWidget {
   const PurchaseSettingsPage({super.key});
@@ -58,7 +59,7 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7F6),
+      backgroundColor: AppColors.scaffold(context),
       body: CustomScrollView(
         slivers: [
           // Sticky Header with Glass Effect
@@ -125,7 +126,7 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
                     // Measurement Units Section
                     _buildSectionCard(
                       icon: Icons.straighten_rounded,
-                      iconColor: const Color(0xFF7B68EE),
+                      iconColor: Color(0xFF7B68EE),
                       title: 'Measurement Units',
                       subtitle: 'Configure available units for purchases',
                       children: [
@@ -133,14 +134,14 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
                         _buildSubSectionHeader(
                           icon: Icons.check_circle_outline,
                           title: 'Available Units',
-                          color: const Color(0xFF1B4D3E),
+                          color: AppColors.accent(context),
                         ),
-                        const SizedBox(height: 12),
+                        SizedBox(height: 12),
                         _buildUnitsChipSelector(),
-                        const SizedBox(height: 16),
+                        SizedBox(height: 16),
                         _buildAddCustomButton(
                           label: 'Add Custom Unit',
-                          color: const Color(0xFF1B4D3E),
+                          color: AppColors.accent(context),
                           onPressed: _showAddCustomUnitDialog,
                         ),
                         const SizedBox(height: 20),
@@ -242,47 +243,47 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
 
                     // Info Card
                     Container(
-                      padding: const EdgeInsets.all(16),
+                      padding: EdgeInsets.all(16),
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
-                            const Color(0xFF1B4D3E).withValues(alpha: 0.05),
-                            const Color(0xFF1B4D3E).withValues(alpha: 0.02),
+                            Color(0xFF1B4D3E).withValues(alpha: 0.05),
+                            Color(0xFF1B4D3E).withValues(alpha: 0.02),
                           ],
                         ),
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+                          color: AppColors.accentSoft(context, 0.1),
                         ),
                       ),
                       child: Row(
                         children: [
                           Container(
-                            padding: const EdgeInsets.all(10),
+                            padding: EdgeInsets.all(10),
                             decoration: BoxDecoration(
-                              color: const Color(
+                              color: Color(
                                 0xFF1B4D3E,
                               ).withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            child: const Icon(
+                            child: Icon(
                               Icons.lightbulb_outline_rounded,
-                              color: Color(0xFF1B4D3E),
+                              color: AppColors.accent(context),
                               size: 22,
                             ),
                           ),
-                          const SizedBox(width: 14),
+                          SizedBox(width: 14),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text(
+                                Text(
                                   'Pro Tip',
                                   style: TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w700,
                                     fontFamily: 'Literata',
-                                    color: Color(0xFF1B4D3E),
+                                    color: AppColors.accent(context),
                                   ),
                                 ),
                                 const SizedBox(height: 4),
@@ -321,7 +322,7 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.card(context),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -372,18 +373,18 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
                   ),
                   child: Icon(icon, color: Colors.white, size: 24),
                 ),
-                const SizedBox(width: 16),
+                SizedBox(width: 16),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         title,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
                           fontFamily: 'Literata',
-                          color: Color(0xFF1B4D3E),
+                          color: AppColors.accent(context),
                         ),
                       ),
                       const SizedBox(height: 2),
@@ -434,18 +435,18 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
           ),
           child: Icon(icon, color: iconColor, size: 22),
         ),
-        const SizedBox(width: 14),
+        SizedBox(width: 14),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 title,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
                   fontFamily: 'Literata',
-                  color: Color(0xFF1B4D3E),
+                  color: AppColors.accent(context),
                 ),
               ),
               const SizedBox(height: 2),
@@ -533,7 +534,7 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
                   ),
                 ],
                 if (isCustom && !isDefault) ...[
-                  const SizedBox(width: 4),
+                  SizedBox(width: 4),
                   GestureDetector(
                     onTap: () => _showRemoveCustomUnitDialog(unit),
                     child: Icon(
@@ -550,7 +551,7 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
                 _handleUnitSelection(unit, selected, isDefault),
             selectedColor: const Color(0xFF1B4D3E),
             checkmarkColor: Colors.white,
-            backgroundColor: Colors.grey[100],
+            backgroundColor: AppColors.chipFill(context),
             side: BorderSide(
               color: isSelected ? const Color(0xFF1B4D3E) : Colors.grey[300]!,
               width: isSelected ? 0 : 1,
@@ -683,7 +684,7 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
             }
           },
           selectedColor: const Color(0xFFFF6F00),
-          backgroundColor: Colors.grey[100],
+          backgroundColor: AppColors.chipFill(context),
           side: BorderSide(
             color: isSelected ? const Color(0xFFFF6F00) : Colors.grey[300]!,
             width: isSelected ? 0 : 1,
@@ -722,7 +723,7 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
                 ),
               ),
               if (isDefault) ...[
-                const SizedBox(width: 4),
+                SizedBox(width: 4),
                 Icon(
                   Icons.star_rounded,
                   size: 14,
@@ -736,7 +737,7 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
               _handleWarrantySelection(months, selected, isDefault),
           selectedColor: const Color(0xFF9C27B0),
           checkmarkColor: Colors.white,
-          backgroundColor: Colors.grey[100],
+          backgroundColor: AppColors.chipFill(context),
           side: BorderSide(
             color: isSelected ? const Color(0xFF9C27B0) : Colors.grey[300]!,
             width: isSelected ? 0 : 1,
@@ -802,7 +803,7 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
             }
           },
           selectedColor: const Color(0xFFE91E63),
-          backgroundColor: Colors.grey[100],
+          backgroundColor: AppColors.chipFill(context),
           side: BorderSide(
             color: isSelected ? const Color(0xFFE91E63) : Colors.grey[300]!,
             width: isSelected ? 0 : 1,
@@ -861,7 +862,7 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
                 ),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.add_rounded,
                 color: Colors.white,
                 size: 20,
@@ -882,7 +883,7 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
           controller: controller,
           autofocus: true,
           textCapitalization: TextCapitalization.words,
-          style: const TextStyle(fontFamily: 'Literata'),
+          style: TextStyle(fontFamily: 'Literata'),
           decoration: InputDecoration(
             hintText: 'Enter unit name (e.g., Yard)',
             hintStyle: TextStyle(
@@ -890,14 +891,14 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
               fontFamily: 'Literata',
             ),
             filled: true,
-            fillColor: Colors.grey[50],
+            fillColor: AppColors.scaffold(context),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide.none,
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFF1B4D3E), width: 2),
+              borderSide: BorderSide(color: AppColors.accent(context), width: 2),
             ),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 16,
@@ -1007,7 +1008,7 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
           controller: controller,
           autofocus: true,
           keyboardType: TextInputType.number,
-          style: const TextStyle(fontFamily: 'Literata'),
+          style: TextStyle(fontFamily: 'Literata'),
           decoration: InputDecoration(
             hintText: 'Enter warranty in months',
             hintStyle: TextStyle(
@@ -1020,7 +1021,7 @@ class _PurchaseSettingsPageState extends State<PurchaseSettingsPage>
               fontFamily: 'Literata',
             ),
             filled: true,
-            fillColor: Colors.grey[50],
+            fillColor: AppColors.scaffold(context),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide.none,
@@ -1132,18 +1133,18 @@ class _SettingsHeaderDelegate extends SliverPersistentHeaderDelegate {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            const Color(0xFF1B4D3E),
-            const Color(0xFF2D6A4F),
-            const Color(0xFF1B4D3E).withValues(alpha: 0.9),
+            Color(0xFF1B4D3E),
+            Color(0xFF2D6A4F),
+            Color(0xFF1B4D3E).withValues(alpha: 0.9),
           ],
         ),
-        borderRadius: const BorderRadius.only(
+        borderRadius: BorderRadius.only(
           bottomLeft: Radius.circular(28),
           bottomRight: Radius.circular(28),
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF1B4D3E).withValues(alpha: 0.3),
+            color: AppColors.accentSoft(context, 0.3),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -1178,7 +1179,7 @@ class _SettingsHeaderDelegate extends SliverPersistentHeaderDelegate {
                               color: Colors.white.withValues(alpha: 0.2),
                             ),
                           ),
-                          child: const Icon(
+                          child: Icon(
                             Icons.arrow_back_ios_new_rounded,
                             color: Colors.white,
                             size: 20,
@@ -1203,13 +1204,13 @@ class _SettingsHeaderDelegate extends SliverPersistentHeaderDelegate {
                               ),
                             ),
                             if (!isCollapsed) ...[
-                              const SizedBox(height: 4),
+                              SizedBox(height: 4),
                               Text(
                                 'Customize your purchase form',
                                 style: TextStyle(
                                   fontSize: 13,
                                   fontFamily: 'Literata',
-                                  color: Colors.white.withValues(alpha: 0.8),
+                                  color: AppColors.card(context),
                                 ),
                               ),
                             ],
@@ -1220,28 +1221,28 @@ class _SettingsHeaderDelegate extends SliverPersistentHeaderDelegate {
                       GestureDetector(
                         onTap: onBack,
                         child: Container(
-                          padding: const EdgeInsets.symmetric(
+                          padding: EdgeInsets.symmetric(
                             horizontal: 16,
                             vertical: 10,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: AppColors.card(context),
                             borderRadius: BorderRadius.circular(12),
                             boxShadow: [
                               BoxShadow(
                                 color: Colors.black.withValues(alpha: 0.1),
                                 blurRadius: 8,
-                                offset: const Offset(0, 2),
+                                offset: Offset(0, 2),
                               ),
                             ],
                           ),
-                          child: const Text(
+                          child: Text(
                             'Done',
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w700,
                               fontFamily: 'Literata',
-                              color: Color(0xFF1B4D3E),
+                              color: AppColors.accent(context),
                             ),
                           ),
                         ),

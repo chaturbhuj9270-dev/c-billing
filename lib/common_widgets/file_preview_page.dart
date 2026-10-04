@@ -7,6 +7,7 @@ import 'package:printing/printing.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:pdf/pdf.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
+import 'package:c_billing/core/theme/app_theme.dart';
 
 /// A reusable page for previewing PDF and CSV files with share and print functionality.
 ///
@@ -482,7 +483,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7F5),
+      backgroundColor: AppColors.scaffold(context),
       body: SafeArea(
         child: Column(
           children: [
@@ -509,7 +510,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.card(context),
         border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
       ),
       child: Row(
@@ -520,14 +521,14 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
             icon: Icons.remove_rounded,
             onPressed: _zoomLevel > _minZoom ? _zoomOut : null,
           ),
-          const SizedBox(width: 8),
+          SizedBox(width: 8),
           // Zoom level indicator
           GestureDetector(
             onTap: _resetZoom,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 6),
               decoration: BoxDecoration(
-                color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+                color: AppColors.accentSoft(context, 0.1),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Row(
@@ -536,16 +537,16 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
                   Icon(
                     Icons.zoom_in_rounded,
                     size: 16,
-                    color: const Color(0xFF1B4D3E),
+                    color: AppColors.accent(context),
                   ),
-                  const SizedBox(width: 6),
+                  SizedBox(width: 6),
                   Text(
                     '${(_zoomLevel * 100).toInt()}%',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontFamily: 'Literata',
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF1B4D3E),
+                      color: AppColors.accent(context),
                     ),
                   ),
                 ],
@@ -615,7 +616,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
     return Container(
       padding: const EdgeInsets.fromLTRB(8, 12, 16, 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.card(context),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
@@ -632,30 +633,30 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
               Navigator.of(context).pop();
             },
             icon: Container(
-              padding: const EdgeInsets.all(8),
+              padding: EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+                color: AppColors.accentSoft(context, 0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.arrow_back,
-                color: Color(0xFF1B4D3E),
+                color: AppColors.accent(context),
                 size: 20,
               ),
             ),
           ),
-          const SizedBox(width: 8),
+          SizedBox(width: 8),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   widget.fileName,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'Literata',
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
-                    color: Color(0xFF1B4D3E),
+                    color: AppColors.accent(context),
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -733,13 +734,13 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            padding: const EdgeInsets.all(20),
+            padding: EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+              color: AppColors.accentSoft(context, 0.1),
               borderRadius: BorderRadius.circular(20),
             ),
-            child: const CircularProgressIndicator(
-              color: Color(0xFF1B4D3E),
+            child: CircularProgressIndicator(
+              color: AppColors.accent(context),
               strokeWidth: 3,
             ),
           ),
@@ -780,20 +781,20 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
                 color: Colors.red.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(20),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.error_outline,
                 color: Colors.red,
                 size: 48,
               ),
             ),
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
             Text(
               'Unable to load preview',
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: 'Literata',
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF1B4D3E),
+                color: AppColors.accent(context),
               ),
             ),
             const SizedBox(height: 8),
@@ -914,37 +915,37 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.card(context),
             border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(
+                padding: EdgeInsets.symmetric(
                   horizontal: 12,
                   vertical: 4,
                 ),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+                  color: AppColors.accentSoft(context, 0.1),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.description_outlined,
                       size: 14,
-                      color: Color(0xFF1B4D3E),
+                      color: AppColors.accent(context),
                     ),
-                    const SizedBox(width: 6),
+                    SizedBox(width: 6),
                     Text(
                       '$_totalPages ${_totalPages == 1 ? 'page' : 'pages'}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'Literata',
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: Color(0xFF1B4D3E),
+                        color: AppColors.accent(context),
                       ),
                     ),
                   ],
@@ -956,7 +957,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
         // PDF Pages
         Expanded(
           child: Container(
-            color: const Color(0xFFF0F0F0),
+            color: AppColors.chipFill(context),
             child: ListView.builder(
               controller: _pdfScrollController,
               padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
@@ -980,10 +981,10 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
 
     return Center(
       child: Container(
-        margin: const EdgeInsets.all(32),
-        padding: const EdgeInsets.all(32),
+        margin: EdgeInsets.all(32),
+        padding: EdgeInsets.all(32),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.card(context),
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
@@ -1002,21 +1003,21 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    const Color(0xFF1B4D3E).withValues(alpha: 0.1),
-                    const Color(0xFF2D6A4F).withValues(alpha: 0.1),
+                    Color(0xFF1B4D3E).withValues(alpha: 0.1),
+                    Color(0xFF2D6A4F).withValues(alpha: 0.1),
                   ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.picture_as_pdf_rounded,
                 size: 40,
-                color: Color(0xFF1B4D3E),
+                color: AppColors.accent(context),
               ),
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: 24),
             // Progress indicator
             SizedBox(
               width: 200,
@@ -1027,7 +1028,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
                     child: LinearProgressIndicator(
                       value: _totalPages > 0 ? progress : null,
                       minHeight: 8,
-                      backgroundColor: Colors.grey[200],
+                      backgroundColor: AppColors.border(context),
                       valueColor: const AlwaysStoppedAnimation<Color>(
                         Color(0xFF1B4D3E),
                       ),
@@ -1048,7 +1049,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
                 ],
               ),
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
             Text(
               'Rendering PDF...',
               style: TextStyle(
@@ -1065,9 +1066,9 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
 
   Widget _buildPdfPage(Uint8List pageBytes, int pageNumber) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.card(context),
         borderRadius: BorderRadius.circular(8),
         boxShadow: [
           BoxShadow(
@@ -1088,7 +1089,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
               errorBuilder: (context, error, stackTrace) {
                 return Container(
                   height: 200,
-                  color: Colors.grey[100],
+                  color: AppColors.chipFill(context),
                   child: Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -1115,9 +1116,9 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
             ),
             // Page number footer
             Container(
-              padding: const EdgeInsets.symmetric(vertical: 6),
+              padding: EdgeInsets.symmetric(vertical: 6),
               decoration: BoxDecoration(
-                color: Colors.grey[50],
+                color: AppColors.scaffold(context),
                 border: Border(top: BorderSide(color: Colors.grey.shade200)),
               ),
               child: Center(
@@ -1140,16 +1141,16 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
 
   Widget _buildPagePlaceholder(int pageNumber) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: EdgeInsets.only(bottom: 12),
       height: 400,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.card(context),
         borderRadius: BorderRadius.circular(8),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 8,
-            offset: const Offset(0, 2),
+            offset: Offset(0, 2),
           ),
         ],
       ),
@@ -1157,8 +1158,8 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const CircularProgressIndicator(
-              color: Color(0xFF1B4D3E),
+            CircularProgressIndicator(
+              color: AppColors.accent(context),
               strokeWidth: 2,
             ),
             const SizedBox(height: 12),
@@ -1197,9 +1198,9 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
     final columnCount = headers.length;
 
     return Container(
-      margin: const EdgeInsets.all(16),
+      margin: EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.card(context),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -1243,7 +1244,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
                       children: [
                         Text(
                           widget.fileName,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontFamily: 'Literata',
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
@@ -1257,7 +1258,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
                           style: TextStyle(
                             fontFamily: 'Literata',
                             fontSize: 11,
-                            color: Colors.white.withValues(alpha: 0.8),
+                            color: AppColors.card(context),
                           ),
                         ),
                       ],
@@ -1265,12 +1266,12 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
                   ),
                   // Sheet indicator
                   Container(
-                    padding: const EdgeInsets.symmetric(
+                    padding: EdgeInsets.symmetric(
                       horizontal: 12,
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: AppColors.card(context),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Row(
@@ -1505,7 +1506,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
-            color: const Color(0xFFF3F3F3),
+            color: AppColors.chipFill(context),
             border: Border(top: BorderSide(color: const Color(0xFFD4D4D4))),
           ),
           child: Row(
@@ -1559,7 +1560,7 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
         MediaQuery.of(context).padding.bottom + 16,
       ),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.card(context),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.06),
@@ -1652,15 +1653,15 @@ class _FilePreviewPageState extends State<FilePreviewPage> {
     return ElevatedButton(
       onPressed: isLoading ? null : onPressed,
       style: ElevatedButton.styleFrom(
-        backgroundColor: isPrimary ? const Color(0xFF1B4D3E) : Colors.white,
-        foregroundColor: isPrimary ? Colors.white : const Color(0xFF1B4D3E),
+        backgroundColor: isPrimary ? Color(0xFF1B4D3E) : Colors.white,
+        foregroundColor: isPrimary ? Colors.white : Color(0xFF1B4D3E),
         elevation: isPrimary ? 2 : 0,
-        padding: const EdgeInsets.symmetric(vertical: 16),
+        padding: EdgeInsets.symmetric(vertical: 16),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
           side: isPrimary
               ? BorderSide.none
-              : const BorderSide(color: Color(0xFF1B4D3E), width: 1.5),
+              : BorderSide(color: AppColors.accent(context), width: 1.5),
         ),
       ),
       child: isLoading

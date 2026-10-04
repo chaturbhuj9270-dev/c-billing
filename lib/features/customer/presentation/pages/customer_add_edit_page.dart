@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../domain/repositories/customer_repository.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
+import 'package:c_billing/core/theme/app_theme.dart';
 
 /// Add/Edit Customer Page for offline-first architecture
 class CustomerAddEditPage extends StatefulWidget {
@@ -132,9 +133,9 @@ class _CustomerAddEditPageState extends State<CustomerAddEditPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1A1A2E),
+      backgroundColor: AppColors.scaffold(context),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1A1A2E),
+        backgroundColor: AppTheme.primary,
         elevation: 0,
         leading: IconButton(
           onPressed: () => Navigator.of(context).pop(),
@@ -266,20 +267,20 @@ class _CustomerAddEditPageState extends State<CustomerAddEditPage> {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.05),
+        color: AppColors.inputFill(context),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+        border: Border.all(color: AppColors.border(context)),
       ),
       child: TextFormField(
         controller: controller,
         keyboardType: keyboardType,
         maxLines: maxLines,
         validator: validator,
-        style: const TextStyle(color: Colors.white),
+        style: TextStyle(color: AppColors.primaryText(context)),
         decoration: InputDecoration(
           labelText: label,
-          labelStyle: TextStyle(color: Colors.white.withValues(alpha: 0.5)),
-          prefixIcon: Icon(icon, color: Colors.white.withValues(alpha: 0.5)),
+          labelStyle: TextStyle(color: AppColors.mutedText(context)),
+          prefixIcon: Icon(icon, color: AppColors.mutedText(context)),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.all(16),
           errorStyle: TextStyle(color: Colors.red.shade300),

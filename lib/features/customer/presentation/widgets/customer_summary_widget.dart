@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:c_billing/core/theme/app_theme.dart';
 
 /// Summary widget for customer statistics
 /// Displays: Total customers, Pending amount, Synced status
@@ -48,21 +49,21 @@ class CustomerSummaryWidget extends StatelessWidget {
     );
     final unsyncedCount = filtered.where((c) => c['isSynced'] != true).length;
 
+    final header = AppColors.headerGradient(context);
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            const Color(0xFF1B4D3E),
-            const Color(0xFF1B4D3E).withValues(alpha: 0.85),
-          ],
+          colors: [header.first, header.last],
         ),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF1B4D3E).withValues(alpha: 0.3),
+            color: Colors.black.withValues(
+              alpha: AppColors.isDark(context) ? 0.45 : 0.3,
+            ),
             blurRadius: 12,
             offset: const Offset(0, 6),
           ),
@@ -109,11 +110,11 @@ class CustomerSummaryWidget extends StatelessWidget {
     bool isExpanded = false,
   }) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8),
+      padding: EdgeInsets.symmetric(horizontal: 8),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, color: Colors.white.withValues(alpha: 0.8), size: 20),
+          Icon(icon, color: Colors.white, size: 20),
           const SizedBox(height: 6),
           Text(
             value,

@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:c_billing/core/theme/app_theme.dart';
 import '../core/localization/app_localizations.dart';
 import '../core/services/language_service.dart';
 import '../features/billing/presentation/pages/bills_list_page.dart';
@@ -334,35 +335,35 @@ class _GlobalQuickActionsFABState extends State<GlobalQuickActionsFAB>
           width: 38,
           height: 38,
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
+            gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [Color(0xFF1B4D3E), Color(0xFF2D6A4F)],
+              colors: AppColors.headerGradient(context),
             ),
             borderRadius: BorderRadius.circular(11),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFF1B4D3E).withValues(alpha: 0.4),
+                color: AppColors.accentSoft(context, 0.4),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
             ],
           ),
-          child: const Icon(
+          child: Icon(
             Icons.dashboard_customize_rounded,
             color: Colors.white,
             size: 18,
           ),
         ),
-        const SizedBox(width: 12),
+        SizedBox(width: 12),
         Expanded(
           child: Text(
             l10n.quickActions,
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: 'Literata',
               fontWeight: FontWeight.w800,
               fontSize: 17,
-              color: Color(0xFF1B4D3E),
+              color: AppColors.accent(context),
               letterSpacing: -0.3,
             ),
           ),
@@ -373,15 +374,15 @@ class _GlobalQuickActionsFABState extends State<GlobalQuickActionsFAB>
             width: 34,
             height: 34,
             decoration: BoxDecoration(
-              color: const Color(0xFF1B4D3E).withValues(alpha: 0.08),
+              color: AppColors.accentSoft(context, 0.08),
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
-                color: const Color(0xFF1B4D3E).withValues(alpha: 0.15),
+                color: AppColors.accentSoft(context, 0.15),
               ),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.close_rounded,
-              color: Color(0xFF1B4D3E),
+              color: AppColors.accent(context),
               size: 18,
             ),
           ),
@@ -505,20 +506,20 @@ class _GlobalQuickActionsFABState extends State<GlobalQuickActionsFAB>
           width: 56,
           height: 56,
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
+            gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [Color(0xFF1B4D3E), Color(0xFF2D6A4F)],
+              colors: AppColors.headerGradient(context),
             ),
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFF1B4D3E).withValues(alpha: 0.4),
+                color: AppColors.accentSoft(context, 0.4),
                 blurRadius: 16,
-                offset: const Offset(0, 6),
+                offset: Offset(0, 6),
               ),
               BoxShadow(
-                color: const Color(0xFF1B4D3E).withValues(alpha: 0.15),
+                color: AppColors.accentSoft(context, 0.15),
                 blurRadius: 32,
                 offset: const Offset(0, 12),
               ),

@@ -7,6 +7,7 @@ import '../../../../core/services/language_service.dart';
 import '../../../../core/services/session_manager.dart';
 import '../../../../core/services/logout_service.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
+import 'package:c_billing/core/theme/app_theme.dart';
 
 class SignupPage extends StatefulWidget {
   const SignupPage({super.key});
@@ -208,14 +209,25 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.scaffold(context),
       body: Container(
         width: double.infinity,
         height: double.infinity,
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Color(0xFFE8F5E9), Color(0xFFF5F5F5), Color(0xFFE8F5E9)],
+            colors: AppColors.isDark(context)
+                ? const [
+                    Color(0xFF000000),
+                    Color(0xFF111111),
+                    Color(0xFF000000),
+                  ]
+                : const [
+                    Color(0xFFE8F5E9),
+                    Color(0xFFF5F5F5),
+                    Color(0xFFE8F5E9),
+                  ],
           ),
         ),
         child: SafeArea(
@@ -250,13 +262,13 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
                               height: 70,
                             ),
                           ),
-                          const SizedBox(height: 12),
+                          SizedBox(height: 12),
                           Text(
                             _localizations.appName,
                             style: TextStyle(
                               fontSize: 32,
                               fontWeight: FontWeight.w900,
-                              color: Color(0xFF1B4D3E),
+                              color: AppColors.accent(context),
                               letterSpacing: 2,
                               fontFamily: 'Literata',
                             ),
@@ -470,7 +482,7 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
                                       child: Text(
                                         _localizations.signIn,
                                         style: TextStyle(
-                                          color: Color(0xFF1B4D3E),
+                                          color: AppColors.accent(context),
                                           fontSize: 14,
                                           fontWeight: FontWeight.w600,
                                           fontFamily: 'Literata',
@@ -486,7 +498,7 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 30),
+                  SizedBox(height: 30),
                 ],
               ),
             ),
@@ -505,7 +517,7 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.8),
+        color: AppColors.card(context),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: Colors.white.withValues(alpha: 0.3),
@@ -531,14 +543,14 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
             fontWeight: FontWeight.w400,
             fontFamily: 'Literata',
           ),
-          prefixIcon: Icon(icon, color: const Color(0xFF1B4D3E), size: 20),
+          prefixIcon: Icon(icon, color: AppColors.accent(context), size: 20),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 16,
             vertical: 14,
           ),
         ),
-        style: const TextStyle(
+        style: TextStyle(
           color: Colors.black87,
           fontSize: 14,
           fontFamily: 'Literata',
@@ -550,7 +562,7 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
   Widget _buildAnimatedPasswordField() {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.8),
+        color: AppColors.card(context),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: Colors.white.withValues(alpha: 0.3),
@@ -577,7 +589,7 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
           ),
           prefixIcon: Icon(
             Icons.lock_outline,
-            color: const Color(0xFF1B4D3E),
+            color: AppColors.accent(context),
             size: 20,
           ),
           suffixIcon: IconButton(
@@ -585,7 +597,7 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
               _obscure
                   ? Icons.visibility_off_outlined
                   : Icons.visibility_outlined,
-              color: const Color(0xFF1B4D3E),
+              color: AppColors.accent(context),
               size: 20,
             ),
             onPressed: () => setState(() => _obscure = !_obscure),
@@ -653,7 +665,7 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.grey[50],
+        color: AppColors.scaffold(context),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: Colors.grey[300]!, width: 1),
       ),

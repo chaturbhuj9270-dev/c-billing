@@ -4,6 +4,7 @@ import 'package:c_billing/core/services/bill_report_settings_service.dart';
 import 'package:c_billing/core/services/language_service.dart';
 import 'package:c_billing/core/localization/app_localizations.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
+import 'package:c_billing/core/theme/app_theme.dart';
 
 /// Page for managing which columns appear in bill prints/reports
 class BillReportSettingsPage extends StatefulWidget {
@@ -84,10 +85,10 @@ class _BillReportSettingsPageState extends State<BillReportSettingsPage>
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text(
           _localizations.resetToDefaults,
-          style: const TextStyle(
+          style: TextStyle(
             fontFamily: 'Literata',
             fontWeight: FontWeight.w700,
-            color: Color(0xFF1B4D3E),
+            color: AppColors.accent(context),
           ),
         ),
         content: Text(
@@ -112,7 +113,7 @@ class _BillReportSettingsPageState extends State<BillReportSettingsPage>
             ),
             child: Text(
               _localizations.resetButton,
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: 'Literata',
                 color: Colors.white,
               ),
@@ -134,10 +135,10 @@ class _BillReportSettingsPageState extends State<BillReportSettingsPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7F6),
+      backgroundColor: AppColors.scaffold(context),
       body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(color: Color(0xFF1B4D3E)),
+          ? Center(
+              child: CircularProgressIndicator(color: AppColors.accent(context)),
             )
           : CustomScrollView(
               slivers: [
@@ -222,17 +223,17 @@ class _BillReportSettingsPageState extends State<BillReportSettingsPage>
     final visibleCount = _columns.where((c) => c.isVisible).length;
 
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            const Color(0xFF1B4D3E).withValues(alpha: 0.1),
-            const Color(0xFF1B4D3E).withValues(alpha: 0.05),
+            Color(0xFF1B4D3E).withValues(alpha: 0.1),
+            Color(0xFF1B4D3E).withValues(alpha: 0.05),
           ],
         ),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: const Color(0xFF1B4D3E).withValues(alpha: 0.15),
+          color: AppColors.accentSoft(context, 0.15),
         ),
       ),
       child: Row(
@@ -241,36 +242,36 @@ class _BillReportSettingsPageState extends State<BillReportSettingsPage>
             width: 56,
             height: 56,
             decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF1B4D3E), Color(0xFF2D6A4F)],
+              gradient: LinearGradient(
+                colors: AppColors.headerGradient(context),
               ),
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF1B4D3E).withValues(alpha: 0.3),
+                  color: AppColors.accentSoft(context, 0.3),
                   blurRadius: 12,
                   offset: const Offset(0, 4),
                 ),
               ],
             ),
-            child: const Icon(
+            child: Icon(
               Icons.view_column_rounded,
               color: Colors.white,
               size: 28,
             ),
           ),
-          const SizedBox(width: 18),
+          SizedBox(width: 18),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   '$visibleCount / ${_columns.length} ${_localizations.columnsVisible}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'Literata',
                     fontWeight: FontWeight.w700,
                     fontSize: 17,
-                    color: Color(0xFF1B4D3E),
+                    color: AppColors.accent(context),
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -298,19 +299,19 @@ class _BillReportSettingsPageState extends State<BillReportSettingsPage>
           width: 32,
           height: 32,
           decoration: BoxDecoration(
-            color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+            color: AppColors.accentSoft(context, 0.1),
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Icon(icon, size: 18, color: const Color(0xFF1B4D3E)),
+          child: Icon(icon, size: 18, color: AppColors.accent(context)),
         ),
-        const SizedBox(width: 10),
+        SizedBox(width: 10),
         Text(
           title,
-          style: const TextStyle(
+          style: TextStyle(
             fontFamily: 'Literata',
             fontWeight: FontWeight.w700,
             fontSize: 16,
-            color: Color(0xFF1B4D3E),
+            color: AppColors.accent(context),
           ),
         ),
       ],
@@ -319,20 +320,20 @@ class _BillReportSettingsPageState extends State<BillReportSettingsPage>
 
   Widget _buildColumnTile(BillReportColumn column) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
+      margin: EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.card(context),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: column.isVisible
-              ? const Color(0xFF1B4D3E).withValues(alpha: 0.3)
-              : Colors.grey[200]!,
+              ? Color(0xFF1B4D3E).withValues(alpha: 0.3)
+              : AppColors.border(context)!,
           width: column.isVisible ? 1.5 : 1,
         ),
         boxShadow: column.isVisible
             ? [
                 BoxShadow(
-                  color: const Color(0xFF1B4D3E).withValues(alpha: 0.08),
+                  color: AppColors.accentSoft(context, 0.08),
                   blurRadius: 10,
                   offset: const Offset(0, 3),
                 ),
@@ -355,11 +356,11 @@ class _BillReportSettingsPageState extends State<BillReportSettingsPage>
                 ? LinearGradient(
                     colors: [
                       const Color(0xFF1B4D3E).withValues(alpha: 0.15),
-                      const Color(0xFF1B4D3E).withValues(alpha: 0.08),
+                      Color(0xFF1B4D3E).withValues(alpha: 0.08),
                     ],
                   )
                 : null,
-            color: column.isVisible ? null : Colors.grey[100],
+            color: column.isVisible ? null : AppColors.chipFill(context),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Icon(
@@ -548,18 +549,18 @@ class _BillReportHeaderDelegate extends SliverPersistentHeaderDelegate {
 
     return Container(
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF1B4D3E), Color(0xFF2D6A4F)],
+        gradient: LinearGradient(
+          colors: AppColors.headerGradient(context),
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: const BorderRadius.only(
+        borderRadius: BorderRadius.only(
           bottomLeft: Radius.circular(28),
           bottomRight: Radius.circular(28),
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF1B4D3E).withValues(alpha: 0.3),
+            color: AppColors.accentSoft(context, 0.3),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
@@ -619,13 +620,13 @@ class _BillReportHeaderDelegate extends SliverPersistentHeaderDelegate {
                               ),
                             ),
                             if (!isCollapsed) ...[
-                              const SizedBox(height: 4),
+                              SizedBox(height: 4),
                               Text(
                                 'Choose columns to print on bills',
                                 style: TextStyle(
                                   fontSize: 13,
                                   fontFamily: 'Literata',
-                                  color: Colors.white.withValues(alpha: 0.8),
+                                  color: AppColors.card(context),
                                 ),
                               ),
                             ],
@@ -636,7 +637,7 @@ class _BillReportHeaderDelegate extends SliverPersistentHeaderDelegate {
                       GestureDetector(
                         onTap: onReset,
                         child: Container(
-                          padding: const EdgeInsets.symmetric(
+                          padding: EdgeInsets.symmetric(
                             horizontal: 14,
                             vertical: 8,
                           ),
@@ -652,17 +653,17 @@ class _BillReportHeaderDelegate extends SliverPersistentHeaderDelegate {
                             children: [
                               Icon(
                                 Icons.restart_alt_rounded,
-                                color: Colors.white.withValues(alpha: 0.9),
+                                color: Colors.white,
                                 size: 16,
                               ),
-                              const SizedBox(width: 6),
+                              SizedBox(width: 6),
                               Text(
                                 'Reset',
                                 style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w600,
                                   fontFamily: 'Literata',
-                                  color: Colors.white.withValues(alpha: 0.9),
+                                  color: AppColors.card(context),
                                 ),
                               ),
                             ],

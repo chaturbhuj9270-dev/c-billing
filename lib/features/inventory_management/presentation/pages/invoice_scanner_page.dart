@@ -15,6 +15,7 @@ import '../../../product/offline/entities/product_entity.dart';
 import '../../data/services/purchase_sync_service.dart';
 import '../../data/services/purchase_batch_sync_service.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
+import 'package:c_billing/core/theme/app_theme.dart';
 
 class InvoiceScannerPage extends StatefulWidget {
   const InvoiceScannerPage({super.key});
@@ -379,6 +380,7 @@ class _InvoiceScannerPageState extends State<InvoiceScannerPage> {
     final colorScheme = theme.colorScheme;
 
     return Scaffold(
+      backgroundColor: AppColors.scaffold(context),
       appBar: AppBar(
         title: const Text('Scan Invoice'),
         actions: [

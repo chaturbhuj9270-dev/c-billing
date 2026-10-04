@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:c_billing/core/theme/app_theme.dart';
 
 /// Sort options for customer list
 enum CustomerSortField { name, createdDate, pendingAmount }
@@ -66,9 +67,9 @@ class _CustomerFilterWidgetState extends State<CustomerFilterWidget> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.card(context),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -132,16 +133,16 @@ class _CustomerFilterWidgetState extends State<CustomerFilterWidget> {
     return Container(
       height: 44,
       decoration: BoxDecoration(
-        color: Colors.grey[50],
+        color: AppColors.scaffold(context),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[200]!, width: 1),
+        border: Border.all(color: AppColors.border(context)!, width: 1),
       ),
       child: TextField(
         controller: _searchController,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 14,
           fontFamily: 'Literata',
-          color: Color(0xFF1B4D3E),
+          color: AppColors.accent(context),
         ),
         decoration: InputDecoration(
           hintText: widget.searchHint,
@@ -189,16 +190,16 @@ class _CustomerFilterWidgetState extends State<CustomerFilterWidget> {
         width: 44,
         height: 44,
         decoration: BoxDecoration(
-          color: const Color(0xFF1B4D3E),
+          color: AppColors.selectedFill(context),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Center(
           child: AnimatedRotation(
             duration: const Duration(milliseconds: 200),
             turns: widget.sortAscending ? 0 : 0.5,
-            child: const Icon(
+            child: Icon(
               Icons.arrow_upward_rounded,
-              color: Colors.white,
+              color: AppColors.selectedOnFill(context),
               size: 20,
             ),
           ),
@@ -213,6 +214,8 @@ class _CustomerFilterWidgetState extends State<CustomerFilterWidget> {
     required VoidCallback onTap,
     required IconData icon,
   }) {
+    final selected = AppColors.selectedFill(context);
+    final onSelected = AppColors.selectedOnFill(context);
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
@@ -220,10 +223,10 @@ class _CustomerFilterWidgetState extends State<CustomerFilterWidget> {
         curve: Curves.easeInOut,
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF1B4D3E) : Colors.grey[100],
+          color: isSelected ? selected : AppColors.chipFill(context),
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: isSelected ? const Color(0xFF1B4D3E) : Colors.grey[300]!,
+            color: isSelected ? selected : AppColors.border(context),
             width: 1,
           ),
         ),
@@ -233,7 +236,7 @@ class _CustomerFilterWidgetState extends State<CustomerFilterWidget> {
             Icon(
               icon,
               size: 16,
-              color: isSelected ? Colors.white : Colors.grey[600],
+              color: isSelected ? onSelected : AppColors.secondaryText(context),
             ),
             const SizedBox(width: 6),
             Text(
@@ -242,7 +245,7 @@ class _CustomerFilterWidgetState extends State<CustomerFilterWidget> {
                 fontFamily: 'Literata',
                 fontWeight: FontWeight.w600,
                 fontSize: 13,
-                color: isSelected ? Colors.white : Colors.grey[700],
+                color: isSelected ? onSelected : AppColors.secondaryText(context),
               ),
             ),
           ],

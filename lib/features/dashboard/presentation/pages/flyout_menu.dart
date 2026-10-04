@@ -7,6 +7,8 @@ import '../../../../core/services/biometric_service.dart';
 import '../../../../core/services/logout_service.dart';
 import '../../../../features/authentication/presentation/pages/change_password_page.dart';
 import '../../../../common_widgets/water_drop_effect.dart';
+import '../../../../core/services/theme_service.dart';
+import '../../../../core/theme/app_theme.dart';
 import 'profile_page.dart';
 import '../../../supplier/presentation/pages/enhanced_supplier_page.dart';
 import '../../../customer/presentation/pages/enhanced_customer_page.dart';
@@ -76,6 +78,12 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
       label: 'Language',
       route: 'Language',
       color: const Color(0xFFFF6F00),
+    ),
+    _MenuItem(
+      icon: Icons.brightness_6_rounded,
+      label: 'Theme',
+      route: 'Theme',
+      color: const Color(0xFF5E35B1),
     ),
   ];
 
@@ -242,75 +250,127 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
     // Slightly longer delay so the water-drop splash is visible before closing.
     Future.delayed(const Duration(milliseconds: 280), () {
       if (!mounted) return;
+      // Overlay is a *child* of Navigator — never use navigator.context for
+      // showDialog / Overlay.of (that causes "No Overlay widget found").
+      final navigator = Navigator.of(context, rootNavigator: true);
+      final overlayContext = navigator.overlay?.context;
       Navigator.pop(context);
+
+      void afterClose(void Function(BuildContext ctx) action) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          final ctx = overlayContext;
+          if (ctx == null || !ctx.mounted) return;
+          action(ctx);
+        });
+      }
+
       switch (pageName) {
         case 'Home':
           break;
         case 'Invoices':
-          GlassyToast.show(context, 'Invoices page coming soon');
+          afterClose(
+            (ctx) => GlassyToast.show(ctx, 'Invoices page coming soon'),
+          );
           break;
         case 'Clients':
-          Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => const EnhancedCustomerPage()),
+          afterClose(
+            (ctx) => Navigator.of(ctx).push(
+              MaterialPageRoute(builder: (_) => const EnhancedCustomerPage()),
+            ),
           );
           break;
         case 'Suppliers':
-          Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => const EnhancedSupplierPage()),
+          afterClose(
+            (ctx) => Navigator.of(ctx).push(
+              MaterialPageRoute(builder: (_) => const EnhancedSupplierPage()),
+            ),
           );
           break;
         case 'Companies':
-          Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => const EnhancedCompanyPage()),
+          afterClose(
+            (ctx) => Navigator.of(ctx).push(
+              MaterialPageRoute(builder: (_) => const EnhancedCompanyPage()),
+            ),
           );
           break;
         case 'Purchases':
-          Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => const EnhancedPurchaseScreen()),
+          afterClose(
+            (ctx) => Navigator.of(ctx).push(
+              MaterialPageRoute(builder: (_) => const EnhancedPurchaseScreen()),
+            ),
           );
           break;
         case 'Inventory':
-          Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => const EnhancedProductPage()),
+          afterClose(
+            (ctx) => Navigator.of(ctx).push(
+              MaterialPageRoute(builder: (_) => const EnhancedProductPage()),
+            ),
           );
           break;
         case 'Reports':
-          GlassyToast.show(context, 'Reports page coming soon');
+          afterClose((ctx) => GlassyToast.show(ctx, 'Reports page coming soon'));
           break;
         case 'Profile':
-          Navigator.of(
-            context,
-          ).push(MaterialPageRoute(builder: (_) => const ProfilePage()));
+          afterClose(
+            (ctx) => Navigator.of(ctx).push(
+              MaterialPageRoute(builder: (_) => const ProfilePage()),
+            ),
+          );
           break;
         case 'ShopDetails':
-          Navigator.of(
-            context,
-          ).push(MaterialPageRoute(builder: (_) => const ShopDetailsPage()));
+          afterClose(
+            (ctx) => Navigator.of(ctx).push(
+              MaterialPageRoute(builder: (_) => const ShopDetailsPage()),
+            ),
+          );
           break;
         case 'Expenses':
-          Navigator.of(
-            context,
-          ).push(MaterialPageRoute(builder: (_) => const ExpensesPage()));
+          afterClose(
+            (ctx) => Navigator.of(ctx).push(
+              MaterialPageRoute(builder: (_) => const ExpensesPage()),
+            ),
+          );
           break;
         case 'ChangePassword':
-          Navigator.of(
-            context,
-          ).push(MaterialPageRoute(builder: (_) => const ChangePasswordPage()));
+          afterClose(
+            (ctx) => Navigator.of(ctx).push(
+              MaterialPageRoute(builder: (_) => const ChangePasswordPage()),
+            ),
+          );
           break;
         case 'Language':
-          _showLanguageDialog();
+          afterClose(_showLanguageDialog);
+          break;
+        case 'Theme':
+          afterClose(_showThemeDialog);
           break;
         case 'Settings':
-          _showSettingsDialog();
+          afterClose(_showSettingsDialog);
           break;
       }
     });
   }
 
-  void _showSettingsDialog() {
+  void _showThemeDialog(BuildContext dialogContext) {
     showDialog(
-      context: context,
-      builder: (dialogContext) => _SettingsDialog(
+      context: dialogContext,
+      builder: (_) => _ThemeDialog(
+        currentMode: ThemeService.instance.themeMode,
+        onModeSelected: (mode) async {
+          await ThemeService.instance.setThemeMode(mode);
+          GlassyToast.show(
+            dialogContext,
+            'Theme set to ${ThemeService.instance.modeLabel}',
+          );
+        },
+      ),
+    );
+  }
+
+  void _showSettingsDialog(BuildContext dialogContext) {
+    showDialog(
+      context: dialogContext,
+      builder: (_) => _SettingsDialog(
         biometricLockEnabled: _biometricLockEnabled,
         canUseBiometrics: _canUseBiometrics,
         onBiometricToggle: _toggleBiometricLock,
@@ -318,22 +378,19 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
     );
   }
 
-  void _showLanguageDialog() {
+  void _showLanguageDialog(BuildContext dialogContext) {
     showDialog(
-      context: context,
-      builder: (dialogContext) => _LanguageDialog(
+      context: dialogContext,
+      builder: (_) => _LanguageDialog(
         currentLanguage: _selectedLanguage,
         onLanguageSelected: (language) async {
           await LanguageService.instance.setLanguage(language);
-          if (mounted) {
-            setState(() {
-              _selectedLanguage = language;
-            });
-            GlassyToast.show(
-              context,
-              '${_localizations.languageChangedTo} $language',
-            );
-          }
+          _selectedLanguage = language;
+          _localizations = AppLocalizations(language);
+          GlassyToast.show(
+            dialogContext,
+            '${_localizations.languageChangedTo} $language',
+          );
         },
       ),
     );
@@ -365,7 +422,7 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
           ),
           child: ClipRRect(
             key: _panelKey,
-            borderRadius: const BorderRadius.horizontal(
+            borderRadius: BorderRadius.horizontal(
               right: Radius.circular(28),
             ),
             child: SizedBox(
@@ -379,13 +436,15 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                         colors: [
-                          Colors.white.withValues(alpha: 0.92),
-                          const Color(0xFFE8F0F5).withValues(alpha: 0.88),
-                          _accent.withValues(alpha: 0.14),
+                          AppColors.glassFill(context),
+                          AppColors.glassFillSecondary(context),
+                          _accent.withValues(
+                            alpha: AppColors.isDark(context) ? 0.35 : 0.14,
+                          ),
                         ],
                       ),
                       border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.8),
+                        color: AppColors.glassBorder(context),
                         width: 1.1,
                       ),
                     ),
@@ -450,15 +509,23 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
   }
 
   Widget _buildHeader() {
-    // Keep the header opaque enough that white username text stays readable
-    // on the glassy flyout panel.
+    final isDark = AppColors.isDark(context);
     return Container(
       width: double.infinity,
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF1B4D3E), Color(0xFF0F3B2F), Color(0xFF134E3A)],
+          colors: isDark
+              ? const [Color(0xFF000000), Color(0xFF1A1A1A), Color(0xFF000000)]
+              : const [Color(0xFF1B4D3E), Color(0xFF0F3B2F), Color(0xFF134E3A)],
+        ),
+        border: Border(
+          bottom: BorderSide(
+            color: isDark
+                ? const Color(0xFF2E2E2E)
+                : Colors.white.withValues(alpha: 0.22),
+          ),
         ),
       ),
       child: SafeArea(
@@ -483,9 +550,9 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF4CAF50).withValues(alpha: 0.4),
+                      color: Color(0xFF4CAF50).withValues(alpha: 0.4),
                       blurRadius: 8,
-                      offset: const Offset(0, 2),
+                      offset: Offset(0, 2),
                     ),
                   ],
                 ),
@@ -494,9 +561,9 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
                   height: 44,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: const Color(0xFF1B4D3E),
+                    color: AppColors.accent(context),
                     border: Border.all(
-                      color: const Color(0xFF1B4D3E),
+                      color: AppColors.accent(context),
                       width: 2,
                     ),
                   ),
@@ -543,11 +610,11 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
                     ),
                     if (_currentUser?.email != null &&
                         _currentUser!.email!.isNotEmpty) ...[
-                      const SizedBox(height: 3),
+                      SizedBox(height: 3),
                       Text(
                         _currentUser!.email!,
                         style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.85),
+                          color: AppColors.card(context),
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
                           fontFamily: 'Literata',
@@ -683,12 +750,14 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
                 size: 20,
               ),
             ),
-            const SizedBox(width: 12),
+            SizedBox(width: 12),
             Expanded(
               child: Text(
                 item.label,
                 style: TextStyle(
-                  color: isSelected ? item.color : const Color(0xFF333333),
+                  color: isSelected
+                      ? item.color
+                      : AppColors.primaryText(context),
                   fontSize: 16,
                   fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                   fontFamily: 'Literata',
@@ -914,6 +983,169 @@ class _MenuItem {
     required this.route,
     required this.color,
   });
+}
+
+class _ThemeDialog extends StatelessWidget {
+  final ThemeMode currentMode;
+  final ValueChanged<ThemeMode> onModeSelected;
+
+  const _ThemeDialog({
+    required this.currentMode,
+    required this.onModeSelected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      title: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: const Color(0xFF5E35B1).withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(
+              Icons.brightness_6_rounded,
+              color: Color(0xFF5E35B1),
+              size: 24,
+            ),
+          ),
+          SizedBox(width: 12),
+          Text(
+            'Theme',
+            style: TextStyle(
+              fontFamily: 'Literata',
+              fontWeight: FontWeight.w700,
+              color: AppColors.primaryText(context),
+            ),
+          ),
+        ],
+      ),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildThemeOption(
+            context,
+            mode: ThemeMode.light,
+            icon: Icons.light_mode_rounded,
+            title: 'Light',
+            subtitle: 'Bright surfaces and green accents',
+          ),
+          const SizedBox(height: 12),
+          _buildThemeOption(
+            context,
+            mode: ThemeMode.dark,
+            icon: Icons.dark_mode_rounded,
+            title: 'Dark',
+            subtitle: 'Dim surfaces for low light',
+          ),
+          SizedBox(height: 12),
+          _buildThemeOption(
+            context,
+            mode: ThemeMode.system,
+            icon: Icons.settings_suggest_rounded,
+            title: 'System',
+            subtitle: 'Follow device light/dark setting',
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(
+            AppLocalizations(LanguageService.instance.currentLanguage).cancel,
+            style: TextStyle(
+              color: AppColors.secondaryText(context),
+              fontFamily: 'Literata',
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildThemeOption(
+    BuildContext context, {
+    required ThemeMode mode,
+    required IconData icon,
+    required String title,
+    required String subtitle,
+  }) {
+    final isSelected = currentMode == mode;
+    const accent = Color(0xFF5E35B1);
+
+    return GestureDetector(
+      onTap: () {
+        Navigator.of(context).pop();
+        onModeSelected(mode);
+      },
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? accent.withValues(alpha: 0.12)
+              : AppColors.isDark(context)
+                  ? Colors.white.withValues(alpha: 0.06)
+                  : Colors.grey.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected
+                ? accent
+                : AppColors.divider(context),
+            width: isSelected ? 2 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              icon,
+              color: isSelected ? accent : AppColors.secondaryText(context),
+              size: 26,
+            ),
+            SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight:
+                          isSelected ? FontWeight.w600 : FontWeight.w500,
+                      fontFamily: 'Literata',
+                      color: isSelected
+                          ? accent
+                          : AppColors.primaryText(context),
+                    ),
+                  ),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: AppColors.secondaryText(context),
+                      fontFamily: 'Literata',
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (isSelected)
+              Container(
+                padding: const EdgeInsets.all(4),
+                decoration: const BoxDecoration(
+                  color: accent,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.check, color: Colors.white, size: 16),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _LanguageDialog extends StatelessWidget {

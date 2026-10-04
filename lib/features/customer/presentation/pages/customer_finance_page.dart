@@ -5,6 +5,7 @@ import '../../../event_order/offline/controllers/event_order_offline_controller.
 import '../../../event_order/offline/entities/event_order_entity.dart';
 import '../../../event_order/domain/entities/event_order.dart';
 import 'package:intl/intl.dart';
+import 'package:c_billing/core/theme/app_theme.dart';
 
 /// Premium Customer Finance/History Page
 /// Shows all bills and events/orders for a specific customer
@@ -190,7 +191,7 @@ class _CustomerFinancePageState extends State<CustomerFinancePage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7F6),
+      backgroundColor: AppColors.scaffold(context),
       body: Column(
         children: [
           // Premium Header
@@ -199,8 +200,8 @@ class _CustomerFinancePageState extends State<CustomerFinancePage>
           // Content Area
           Expanded(
             child: _isLoading
-                ? const Center(
-                    child: CircularProgressIndicator(color: Color(0xFF1B4D3E)),
+                ? Center(
+                    child: CircularProgressIndicator(color: AppColors.accent(context)),
                   )
                 : Column(
                     children: [
@@ -236,14 +237,14 @@ class _CustomerFinancePageState extends State<CustomerFinancePage>
 
     return Container(
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF1B4D3E), Color(0xFF0F3B2F)],
+          colors: AppColors.headerGradient(context),
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF1B4D3E).withValues(alpha: 0.3),
+            color: AppColors.accentSoft(context, 0.3),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -382,11 +383,11 @@ class _CustomerFinancePageState extends State<CustomerFinancePage>
                               size: 13,
                               color: Colors.white.withValues(alpha: 0.7),
                             ),
-                            const SizedBox(width: 5),
+                            SizedBox(width: 5),
                             Text(
                               widget.customerContact,
                               style: TextStyle(
-                                color: Colors.white.withValues(alpha: 0.85),
+                                color: AppColors.card(context),
                                 fontSize: 13,
                                 fontFamily: 'Literata',
                               ),
@@ -481,25 +482,25 @@ class _CustomerFinancePageState extends State<CustomerFinancePage>
 
   Widget _buildTabBar() {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.all(4),
+      margin: EdgeInsets.symmetric(horizontal: 16),
+      padding: EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.card(context),
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 8,
-            offset: const Offset(0, 2),
+            offset: Offset(0, 2),
           ),
         ],
       ),
       child: TabBar(
         controller: _tabController,
         labelColor: Colors.white,
-        unselectedLabelColor: const Color(0xFF1B4D3E),
+        unselectedLabelColor: Color(0xFF1B4D3E),
         indicator: BoxDecoration(
-          color: const Color(0xFF1B4D3E),
+          color: AppColors.accent(context),
           borderRadius: BorderRadius.circular(10),
         ),
         indicatorSize: TabBarIndicatorSize.tab,
@@ -543,7 +544,7 @@ class _CustomerFinancePageState extends State<CustomerFinancePage>
   Widget _buildStatsSection() {
     final isEventTab = _tabController.index == 1;
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(16),
       child: Row(
         children: [
           Expanded(
@@ -554,7 +555,7 @@ class _CustomerFinancePageState extends State<CustomerFinancePage>
               label: isEventTab ? 'Total Orders' : 'Total Billed',
               value:
                   '₹${_formatAmount(isEventTab ? _totalEventAmount : _totalBillAmount)}',
-              color: const Color(0xFF1B4D3E),
+              color: AppColors.accent(context),
             ),
           ),
           const SizedBox(width: 12),
@@ -631,7 +632,7 @@ class _CustomerFinancePageState extends State<CustomerFinancePage>
   }) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(32),
+        padding: EdgeInsets.all(32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -639,22 +640,22 @@ class _CustomerFinancePageState extends State<CustomerFinancePage>
               width: 80,
               height: 80,
               decoration: BoxDecoration(
-                color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+                color: AppColors.accentSoft(context, 0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 icon,
                 size: 40,
-                color: const Color(0xFF1B4D3E).withValues(alpha: 0.5),
+                color: AppColors.accentSoft(context, 0.5),
               ),
             ),
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
             Text(
               title,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF1B4D3E),
+                color: AppColors.accent(context),
                 fontFamily: 'Literata',
               ),
             ),
@@ -682,7 +683,7 @@ class _StatCard extends StatelessWidget {
   final String value;
   final Color color;
 
-  const _StatCard({
+  _StatCard({
     required this.icon,
     required this.label,
     required this.value,
@@ -692,9 +693,9 @@ class _StatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.card(context),
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
@@ -771,9 +772,9 @@ class _BillCard extends StatelessWidget {
     }
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.card(context),
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
@@ -784,7 +785,7 @@ class _BillCard extends StatelessWidget {
         ],
       ),
       child: Padding(
-        padding: const EdgeInsets.all(14),
+        padding: EdgeInsets.all(14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -792,28 +793,28 @@ class _BillCard extends StatelessWidget {
             Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(10),
+                  padding: EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+                    color: AppColors.accentSoft(context, 0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.receipt_rounded,
-                    color: Color(0xFF1B4D3E),
+                    color: AppColors.accent(context),
                     size: 20,
                   ),
                 ),
-                const SizedBox(width: 12),
+                SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         'Bill #${bill.id}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w700,
-                          color: Color(0xFF1B4D3E),
+                          color: AppColors.accent(context),
                           fontFamily: 'Literata',
                         ),
                       ),
@@ -858,17 +859,17 @@ class _BillCard extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 14),
+            SizedBox(height: 14),
             // Divider
-            Container(height: 1, color: Colors.grey[100]),
-            const SizedBox(height: 14),
+            Container(height: 1, color: AppColors.chipFill(context)),
+            SizedBox(height: 14),
             // Amount Details
             Row(
               children: [
                 _AmountDetail(
                   label: 'Total',
                   amount: bill.finalAmount,
-                  color: const Color(0xFF1B4D3E),
+                  color: AppColors.accent(context),
                 ),
                 const SizedBox(width: 24),
                 _AmountDetail(
@@ -885,12 +886,12 @@ class _BillCard extends StatelessWidget {
                 const Spacer(),
                 // Items count
                 Container(
-                  padding: const EdgeInsets.symmetric(
+                  padding: EdgeInsets.symmetric(
                     horizontal: 8,
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.grey[100],
+                    color: AppColors.chipFill(context),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
@@ -990,9 +991,9 @@ class _EventOrderCard extends StatelessWidget {
     typeIcon = isEvent ? Icons.celebration_rounded : Icons.shopping_bag_rounded;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.card(context),
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
@@ -1024,7 +1025,7 @@ class _EventOrderCard extends StatelessWidget {
                     size: 20,
                   ),
                 ),
-                const SizedBox(width: 12),
+                SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -1033,10 +1034,10 @@ class _EventOrderCard extends StatelessWidget {
                         order.orderName.isNotEmpty
                             ? order.orderName
                             : (isEvent ? 'Event' : 'Sales Order'),
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w700,
-                          color: Color(0xFF1B4D3E),
+                          color: AppColors.accent(context),
                           fontFamily: 'Literata',
                         ),
                         maxLines: 1,
@@ -1088,9 +1089,9 @@ class _EventOrderCard extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 14),
+            SizedBox(height: 14),
             // Divider
-            Container(height: 1, color: Colors.grey[100]),
+            Container(height: 1, color: AppColors.chipFill(context)),
             const SizedBox(height: 14),
             // Bottom Row
             Row(
@@ -1115,17 +1116,17 @@ class _EventOrderCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                const Spacer(),
+                Spacer(),
                 // Amount Info
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
                       '₹${order.totalAmount.toStringAsFixed(0)}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
-                        color: Color(0xFF1B4D3E),
+                        color: AppColors.accent(context),
                         fontFamily: 'Literata',
                       ),
                     ),

@@ -4,6 +4,7 @@ import '../../../../core/services/product_settings_service.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/services/language_service.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
+import 'package:c_billing/core/theme/app_theme.dart';
 
 class ProductSettingsPage extends StatefulWidget {
   const ProductSettingsPage({super.key});
@@ -26,7 +27,7 @@ class _ProductSettingsPageState extends State<ProductSettingsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7F6),
+      backgroundColor: AppColors.scaffold(context),
       body: SafeArea(
         child: Column(
           children: [
@@ -79,36 +80,36 @@ class _ProductSettingsPageState extends State<ProductSettingsPage> {
 
   Widget _buildHeader() {
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+      padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
       child: Row(
         children: [
           GestureDetector(
             onTap: () => Navigator.pop(context),
             child: Container(
-              padding: const EdgeInsets.all(8),
+              padding: EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+                color: AppColors.accentSoft(context, 0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.arrow_back_ios_rounded,
                 size: 20,
-                color: Color(0xFF1B4D3E),
+                color: AppColors.accent(context),
               ),
             ),
           ),
-          const SizedBox(width: 12),
+          SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Product Settings',
                   style: TextStyle(
                     fontFamily: 'Literata',
                     fontWeight: FontWeight.w800,
                     fontSize: 22,
-                    color: Color(0xFF1B4D3E),
+                    color: AppColors.accent(context),
                   ),
                 ),
                 Text(
@@ -137,23 +138,23 @@ class _ProductSettingsPageState extends State<ProductSettingsPage> {
             width: 80,
             height: 80,
             decoration: BoxDecoration(
-              color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+              color: AppColors.accentSoft(context, 0.1),
               borderRadius: BorderRadius.circular(20),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.view_column_rounded,
               size: 40,
-              color: Color(0xFF1B4D3E),
+              color: AppColors.accent(context),
             ),
           ),
-          const SizedBox(height: 16),
-          const Text(
+          SizedBox(height: 16),
+          Text(
             'No Custom Columns',
             style: TextStyle(
               fontFamily: 'Literata',
               fontWeight: FontWeight.w700,
               fontSize: 18,
-              color: Color(0xFF1B4D3E),
+              color: AppColors.accent(context),
             ),
           ),
           const SizedBox(height: 8),
@@ -215,7 +216,7 @@ class _ProductSettingsPageState extends State<ProductSettingsPage> {
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
-            color: Colors.white,
+            color: AppColors.card(context),
           ),
           child: Row(
             children: [
@@ -251,11 +252,11 @@ class _ProductSettingsPageState extends State<ProductSettingsPage> {
                       children: [
                         Text(
                           column.name,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontFamily: 'Literata',
                             fontWeight: FontWeight.w700,
                             fontSize: 16,
-                            color: Color(0xFF1B4D3E),
+                            color: AppColors.accent(context),
                           ),
                         ),
                         if (column.isRequired) ...[
@@ -429,12 +430,12 @@ class _ProductSettingsPageState extends State<ProductSettingsPage> {
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text(
+        title: Text(
           'Delete Column?',
           style: TextStyle(
             fontFamily: 'Literata',
             fontWeight: FontWeight.w700,
-            color: Color(0xFF1B4D3E),
+            color: AppColors.accent(context),
           ),
         ),
         content: Text(
@@ -495,16 +496,16 @@ class _ProductSettingsPageState extends State<ProductSettingsPage> {
         builder: (context, setDialogState) => BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
           child: AlertDialog(
-            backgroundColor: Colors.white,
+            backgroundColor: AppColors.card(context),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20),
             ),
             title: Text(
               existingColumn != null ? 'Edit Column' : 'Add Custom Column',
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: 'Literata',
                 fontWeight: FontWeight.w700,
-                color: Color(0xFF1B4D3E),
+                color: AppColors.accent(context),
               ),
             ),
             content: SingleChildScrollView(
@@ -523,23 +524,23 @@ class _ProductSettingsPageState extends State<ProductSettingsPage> {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(
-                          color: Color(0xFF1B4D3E),
+                        borderSide: BorderSide(
+                          color: AppColors.accent(context),
                           width: 2,
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16),
 
                   // Data Type Dropdown
-                  const Text(
+                  Text(
                     'Data Type',
                     style: TextStyle(
                       fontFamily: 'Literata',
                       fontWeight: FontWeight.w600,
                       fontSize: 14,
-                      color: Color(0xFF1B4D3E),
+                      color: AppColors.accent(context),
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -597,8 +598,8 @@ class _ProductSettingsPageState extends State<ProductSettingsPage> {
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(
-                            color: Color(0xFF1B4D3E),
+                          borderSide: BorderSide(
+                            color: AppColors.accent(context),
                             width: 2,
                           ),
                         ),
@@ -618,8 +619,8 @@ class _ProductSettingsPageState extends State<ProductSettingsPage> {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(
-                          color: Color(0xFF1B4D3E),
+                        borderSide: BorderSide(
+                          color: AppColors.accent(context),
                           width: 2,
                         ),
                       ),
@@ -643,8 +644,8 @@ class _ProductSettingsPageState extends State<ProductSettingsPage> {
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(
-                            color: Color(0xFF1B4D3E),
+                          borderSide: BorderSide(
+                            color: AppColors.accent(context),
                             width: 2,
                           ),
                         ),

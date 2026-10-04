@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:c_billing/core/theme/app_theme.dart';
 
 /// Sort options for product list
 enum ProductSortField { name, stock, price, category }
@@ -74,9 +75,9 @@ class _ProductFilterWidgetState extends State<ProductFilterWidget> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.card(context),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -130,7 +131,7 @@ class _ProductFilterWidgetState extends State<ProductFilterWidget> {
                   icon: Icons.currency_rupee_rounded,
                 ),
                 if (widget.categories.isNotEmpty) ...[
-                  const SizedBox(width: 8),
+                  SizedBox(width: 8),
                   _buildCategoryDropdown(),
                 ],
               ],
@@ -145,16 +146,16 @@ class _ProductFilterWidgetState extends State<ProductFilterWidget> {
     return Container(
       height: 44,
       decoration: BoxDecoration(
-        color: Colors.grey[50],
+        color: AppColors.scaffold(context),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[200]!, width: 1),
+        border: Border.all(color: AppColors.border(context)!, width: 1),
       ),
       child: TextField(
         controller: _searchController,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 14,
           fontFamily: 'Literata',
-          color: Color(0xFF1B4D3E),
+          color: AppColors.accent(context),
         ),
         decoration: InputDecoration(
           hintText: widget.searchHint,
@@ -198,18 +199,18 @@ class _ProductFilterWidgetState extends State<ProductFilterWidget> {
     return GestureDetector(
       onTap: widget.onSortDirectionToggle,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
+        duration: Duration(milliseconds: 200),
         width: 44,
         height: 44,
         decoration: BoxDecoration(
-          color: const Color(0xFF1B4D3E),
+          color: AppColors.accent(context),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Center(
           child: AnimatedRotation(
             duration: const Duration(milliseconds: 200),
             turns: widget.sortAscending ? 0 : 0.5,
-            child: const Icon(
+            child: Icon(
               Icons.arrow_upward_rounded,
               color: Colors.white,
               size: 20,
@@ -227,7 +228,7 @@ class _ProductFilterWidgetState extends State<ProductFilterWidget> {
         width: 44,
         height: 44,
         decoration: BoxDecoration(
-          color: Colors.grey[100],
+          color: AppColors.chipFill(context),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: Colors.grey[300]!, width: 1),
         ),
@@ -251,10 +252,14 @@ class _ProductFilterWidgetState extends State<ProductFilterWidget> {
         curve: Curves.easeInOut,
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF1B4D3E) : Colors.grey[100],
+          color: isSelected
+              ? AppColors.selectedFill(context)
+              : AppColors.chipFill(context),
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: isSelected ? const Color(0xFF1B4D3E) : Colors.grey[300]!,
+            color: isSelected
+                ? AppColors.selectedFill(context)
+                : AppColors.border(context),
             width: 1,
           ),
         ),
@@ -264,7 +269,9 @@ class _ProductFilterWidgetState extends State<ProductFilterWidget> {
             Icon(
               icon,
               size: 16,
-              color: isSelected ? Colors.white : Colors.grey[600],
+              color: isSelected
+                  ? AppColors.selectedOnFill(context)
+                  : AppColors.secondaryText(context),
             ),
             const SizedBox(width: 6),
             Text(
@@ -273,7 +280,9 @@ class _ProductFilterWidgetState extends State<ProductFilterWidget> {
                 fontFamily: 'Literata',
                 fontWeight: FontWeight.w600,
                 fontSize: 13,
-                color: isSelected ? Colors.white : Colors.grey[700],
+                color: isSelected
+                    ? AppColors.selectedOnFill(context)
+                    : AppColors.secondaryText(context),
               ),
             ),
           ],
@@ -289,11 +298,11 @@ class _ProductFilterWidgetState extends State<ProductFilterWidget> {
     return GestureDetector(
       onTap: () => _showCategoryPicker(context),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
           color: hasSelection
               ? const Color(0xFF1B4D3E).withValues(alpha: 0.1)
-              : Colors.grey[100],
+              : AppColors.chipFill(context),
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
             color: hasSelection ? const Color(0xFF1B4D3E) : Colors.grey[300]!,
@@ -325,7 +334,7 @@ class _ProductFilterWidgetState extends State<ProductFilterWidget> {
                 overflow: TextOverflow.ellipsis,
               ),
             ),
-            const SizedBox(width: 4),
+            SizedBox(width: 4),
             Icon(
               Icons.arrow_drop_down_rounded,
               size: 18,
@@ -342,8 +351,8 @@ class _ProductFilterWidgetState extends State<ProductFilterWidget> {
       context: context,
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
+        decoration: BoxDecoration(
+          color: AppColors.card(context),
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
         child: SafeArea(
@@ -359,7 +368,7 @@ class _ProductFilterWidgetState extends State<ProductFilterWidget> {
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
-              const Padding(
+              Padding(
                 padding: EdgeInsets.all(16),
                 child: Text(
                   'Select Category',
@@ -367,7 +376,7 @@ class _ProductFilterWidgetState extends State<ProductFilterWidget> {
                     fontFamily: 'Literata',
                     fontWeight: FontWeight.w700,
                     fontSize: 16,
-                    color: Color(0xFF1B4D3E),
+                    color: AppColors.accent(context),
                   ),
                 ),
               ),
@@ -388,12 +397,12 @@ class _ProductFilterWidgetState extends State<ProductFilterWidget> {
                         ? FontWeight.w700
                         : FontWeight.w500,
                     color: widget.selectedCategory == null
-                        ? const Color(0xFF1B4D3E)
+                        ? Color(0xFF1B4D3E)
                         : Colors.grey[800],
                   ),
                 ),
                 trailing: widget.selectedCategory == null
-                    ? const Icon(Icons.check_rounded, color: Color(0xFF1B4D3E))
+                    ? Icon(Icons.check_rounded, color: AppColors.accent(context))
                     : null,
                 onTap: () {
                   widget.onCategoryChanged(null);
@@ -423,14 +432,14 @@ class _ProductFilterWidgetState extends State<ProductFilterWidget> {
                               ? FontWeight.w700
                               : FontWeight.w500,
                           color: isSelected
-                              ? const Color(0xFF1B4D3E)
+                              ? Color(0xFF1B4D3E)
                               : Colors.grey[800],
                         ),
                       ),
                       trailing: isSelected
-                          ? const Icon(
+                          ? Icon(
                               Icons.check_rounded,
-                              color: Color(0xFF1B4D3E),
+                              color: AppColors.accent(context),
                             )
                           : null,
                       onTap: () {

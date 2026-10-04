@@ -6,6 +6,7 @@ import '../../offline/controllers/expense_offline_controller.dart';
 import '../../offline/entities/expense_entity.dart';
 import '../../data/services/expense_sync_service.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
+import 'package:c_billing/core/theme/app_theme.dart';
 
 /// Date filter options for expenses
 enum ExpenseDateFilter { all, thisMonth, thisYear, lastYear, custom }
@@ -155,14 +156,14 @@ class _ExpensesPageState extends State<ExpensesPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7F6),
+      backgroundColor: AppColors.scaffold(context),
       body: Column(
         children: [
           _buildHeader(),
           Expanded(
             child: _isLoading
-                ? const Center(
-                    child: CircularProgressIndicator(color: Color(0xFF1B4D3E)),
+                ? Center(
+                    child: CircularProgressIndicator(color: AppColors.accent(context)),
                   )
                 : SlideTransition(
                     position: _offsetAnimation,
@@ -189,14 +190,14 @@ class _ExpensesPageState extends State<ExpensesPage>
 
     return Container(
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF1B4D3E), Color(0xFF0F3B2F)],
+          colors: AppColors.headerGradient(context),
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF1B4D3E).withValues(alpha: 0.3),
+            color: AppColors.accentSoft(context, 0.3),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -324,14 +325,14 @@ class _ExpensesPageState extends State<ExpensesPage>
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  const Color(0xFF1B4D3E),
-                  const Color(0xFF1B4D3E).withValues(alpha: 0.85),
+                  Color(0xFF1B4D3E),
+                  Color(0xFF1B4D3E).withValues(alpha: 0.85),
                 ],
               ),
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF1B4D3E).withValues(alpha: 0.3),
+                  color: AppColors.accentSoft(context, 0.3),
                   blurRadius: 16,
                   offset: const Offset(0, 6),
                 ),
@@ -355,7 +356,7 @@ class _ExpensesPageState extends State<ExpensesPage>
                         size: 22,
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    SizedBox(width: 12),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -363,7 +364,7 @@ class _ExpensesPageState extends State<ExpensesPage>
                           'Total Expenses',
                           style: TextStyle(
                             fontSize: 13,
-                            color: Colors.white.withValues(alpha: 0.8),
+                            color: AppColors.card(context),
                             fontFamily: 'Literata',
                           ),
                         ),
@@ -483,14 +484,14 @@ class _ExpensesPageState extends State<ExpensesPage>
                   Row(
                     children: [
                       Text(category.icon, style: TextStyle(fontSize: iconSize)),
-                      const Spacer(),
+                      Spacer(),
                       Container(
-                        padding: const EdgeInsets.symmetric(
+                        padding: EdgeInsets.symmetric(
                           horizontal: 5,
                           vertical: 1,
                         ),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+                          color: AppColors.accentSoft(context, 0.1),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
@@ -498,7 +499,7 @@ class _ExpensesPageState extends State<ExpensesPage>
                           style: TextStyle(
                             fontSize: percentFontSize,
                             fontWeight: FontWeight.w600,
-                            color: const Color(0xFF1B4D3E),
+                            color: AppColors.accent(context),
                             fontFamily: 'Literata',
                           ),
                         ),
@@ -526,7 +527,7 @@ class _ExpensesPageState extends State<ExpensesPage>
                           style: TextStyle(
                             fontSize: amountFontSize,
                             fontWeight: FontWeight.w700,
-                            color: const Color(0xFF1B4D3E),
+                            color: AppColors.accent(context),
                             fontFamily: 'Literata',
                           ),
                         ),
@@ -715,20 +716,20 @@ class _ExpensesPageState extends State<ExpensesPage>
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(
+                    padding: EdgeInsets.symmetric(
                       horizontal: 10,
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+                      color: AppColors.accentSoft(context, 0.1),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Text(
                       '₹${_formatAmount(dayTotal)}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: Color(0xFF1B4D3E),
+                        color: AppColors.accent(context),
                         fontFamily: 'Literata',
                       ),
                     ),
@@ -754,7 +755,7 @@ class _ExpensesPageState extends State<ExpensesPage>
   Widget _buildEmptyState() {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(32),
+        padding: EdgeInsets.all(32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -762,22 +763,22 @@ class _ExpensesPageState extends State<ExpensesPage>
               width: 100,
               height: 100,
               decoration: BoxDecoration(
-                color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+                color: AppColors.accentSoft(context, 0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 Icons.receipt_long_rounded,
                 size: 48,
-                color: const Color(0xFF1B4D3E).withValues(alpha: 0.5),
+                color: AppColors.accentSoft(context, 0.5),
               ),
             ),
-            const SizedBox(height: 24),
-            const Text(
+            SizedBox(height: 24),
+            Text(
               'No Expenses Yet',
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w700,
-                color: Color(0xFF1B4D3E),
+                color: AppColors.accent(context),
                 fontFamily: 'Literata',
               ),
             ),
@@ -988,16 +989,22 @@ class _DateFilterChip extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF1B4D3E) : Colors.white,
+          color: isSelected
+              ? AppColors.selectedFill(context)
+              : AppColors.card(context),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isSelected ? const Color(0xFF1B4D3E) : Colors.grey.shade300,
+            color: isSelected
+                ? AppColors.selectedFill(context)
+                : AppColors.border(context),
             width: 1,
           ),
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: const Color(0xFF1B4D3E).withValues(alpha: 0.3),
+                    color: Colors.black.withValues(
+                      alpha: AppColors.isDark(context) ? 0.35 : 0.15,
+                    ),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -1009,7 +1016,9 @@ class _DateFilterChip extends StatelessWidget {
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w600,
-            color: isSelected ? Colors.white : Colors.grey[700],
+            color: isSelected
+                ? AppColors.selectedOnFill(context)
+                : AppColors.secondaryText(context),
             fontFamily: 'Literata',
           ),
         ),
@@ -1038,11 +1047,11 @@ class _CategoryFilterChip extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
           color: isSelected
               ? const Color(0xFF1B4D3E).withValues(alpha: 0.1)
-              : Colors.grey[100],
+              : AppColors.chipFill(context),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isSelected ? const Color(0xFF1B4D3E) : Colors.grey.shade200,
@@ -1101,15 +1110,15 @@ class _ExpenseCard extends StatelessWidget {
         ),
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: 20),
-        child: const Icon(Icons.delete_rounded, color: Colors.white),
+        child: Icon(Icons.delete_rounded, color: Colors.white),
       ),
       child: GestureDetector(
         onTap: onTap,
         onLongPress: onEdit,
         child: Container(
-          margin: const EdgeInsets.only(bottom: 10),
+          margin: EdgeInsets.only(bottom: 10),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.card(context),
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
@@ -1120,7 +1129,7 @@ class _ExpenseCard extends StatelessWidget {
             ],
           ),
           child: Padding(
-            padding: const EdgeInsets.all(14),
+            padding: EdgeInsets.all(14),
             child: Row(
               children: [
                 // Category icon
@@ -1128,17 +1137,17 @@ class _ExpenseCard extends StatelessWidget {
                   width: 48,
                   height: 48,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+                    color: AppColors.accentSoft(context, 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Center(
                     child: Text(
                       expense.category.icon,
-                      style: const TextStyle(fontSize: 22),
+                      style: TextStyle(fontSize: 22),
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
+                SizedBox(width: 12),
                 // Details
                 Expanded(
                   child: Column(
@@ -1146,10 +1155,10 @@ class _ExpenseCard extends StatelessWidget {
                     children: [
                       Text(
                         expense.title,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFF1B4D3E),
+                          color: AppColors.accent(context),
                           fontFamily: 'Literata',
                         ),
                         maxLines: 1,
@@ -1159,12 +1168,12 @@ class _ExpenseCard extends StatelessWidget {
                       Row(
                         children: [
                           Container(
-                            padding: const EdgeInsets.symmetric(
+                            padding: EdgeInsets.symmetric(
                               horizontal: 6,
                               vertical: 2,
                             ),
                             decoration: BoxDecoration(
-                              color: Colors.grey[100],
+                              color: AppColors.chipFill(context),
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text(
@@ -1300,8 +1309,8 @@ class _AddExpenseSheetState extends State<_AddExpenseSheet> {
       constraints: BoxConstraints(
         maxHeight: MediaQuery.of(context).size.height * 0.9,
       ),
-      decoration: const BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(
+        color: AppColors.card(context),
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(
@@ -1321,22 +1330,22 @@ class _AddExpenseSheetState extends State<_AddExpenseSheet> {
           ),
           // Header
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+            padding: EdgeInsets.fromLTRB(20, 16, 20, 0),
             child: Row(
               children: [
                 Text(
                   isEditing ? 'Edit Expense' : 'Add Expense',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w700,
-                    color: Color(0xFF1B4D3E),
+                    color: AppColors.accent(context),
                     fontFamily: 'Literata',
                   ),
                 ),
                 const Spacer(),
                 IconButton(
                   onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.close_rounded),
+                  icon: Icon(Icons.close_rounded),
                 ),
               ],
             ),
@@ -1363,26 +1372,26 @@ class _AddExpenseSheetState extends State<_AddExpenseSheet> {
                       validator: (v) =>
                           v?.isEmpty ?? true ? 'Title is required' : null,
                     ),
-                    const SizedBox(height: 16),
+                    SizedBox(height: 16),
 
                     // Amount
                     _buildLabel('Amount *'),
                     TextFormField(
                       controller: _amountController,
-                      keyboardType: const TextInputType.numberWithOptions(
+                      keyboardType: TextInputType.numberWithOptions(
                         decimal: true,
                       ),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w700,
-                        color: Color(0xFF1B4D3E),
+                        color: AppColors.accent(context),
                       ),
                       decoration: _inputDecoration('0').copyWith(
                         prefixText: '₹ ',
-                        prefixStyle: const TextStyle(
+                        prefixStyle: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.w700,
-                          color: Color(0xFF1B4D3E),
+                          color: AppColors.accent(context),
                         ),
                       ),
                       validator: (v) {
@@ -1407,14 +1416,14 @@ class _AddExpenseSheetState extends State<_AddExpenseSheet> {
                               setState(() => _selectedCategory = category),
                           child: AnimatedContainer(
                             duration: const Duration(milliseconds: 200),
-                            padding: const EdgeInsets.symmetric(
+                            padding: EdgeInsets.symmetric(
                               horizontal: 12,
                               vertical: 8,
                             ),
                             decoration: BoxDecoration(
                               color: isSelected
                                   ? const Color(0xFF1B4D3E)
-                                  : Colors.grey[100],
+                                  : AppColors.chipFill(context),
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
                                 color: isSelected
@@ -1455,9 +1464,9 @@ class _AddExpenseSheetState extends State<_AddExpenseSheet> {
                       onTap: _selectDate,
                       child: Container(
                         width: double.infinity,
-                        padding: const EdgeInsets.all(14),
+                        padding: EdgeInsets.all(14),
                         decoration: BoxDecoration(
-                          color: Colors.grey[50],
+                          color: AppColors.scaffold(context),
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(color: Colors.grey.shade200),
                         ),
@@ -1493,14 +1502,14 @@ class _AddExpenseSheetState extends State<_AddExpenseSheet> {
                           onTap: () =>
                               setState(() => _selectedPaymentMethod = method),
                           child: Container(
-                            padding: const EdgeInsets.symmetric(
+                            padding: EdgeInsets.symmetric(
                               horizontal: 14,
                               vertical: 10,
                             ),
                             decoration: BoxDecoration(
                               color: isSelected
                                   ? const Color(0xFF1B4D3E)
-                                  : Colors.grey[100],
+                                  : AppColors.chipFill(context),
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Text(
@@ -1546,12 +1555,12 @@ class _AddExpenseSheetState extends State<_AddExpenseSheet> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
+                              Text(
                                 'Recurring Expense',
                                 style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
-                                  color: Color(0xFF1B4D3E),
+                                  color: AppColors.accent(context),
                                   fontFamily: 'Literata',
                                 ),
                               ),
@@ -1611,7 +1620,7 @@ class _AddExpenseSheetState extends State<_AddExpenseSheet> {
 
   Widget _buildLabel(String text) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: EdgeInsets.only(bottom: 8),
       child: Text(
         text,
         style: TextStyle(
@@ -1629,7 +1638,7 @@ class _AddExpenseSheetState extends State<_AddExpenseSheet> {
       hintText: hint,
       hintStyle: TextStyle(color: Colors.grey[400], fontFamily: 'Literata'),
       filled: true,
-      fillColor: Colors.grey[50],
+      fillColor: AppColors.scaffold(context),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
         borderSide: BorderSide(color: Colors.grey.shade200),
@@ -1640,7 +1649,7 @@ class _AddExpenseSheetState extends State<_AddExpenseSheet> {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: Color(0xFF1B4D3E), width: 2),
+        borderSide: BorderSide(color: AppColors.accent(context), width: 2),
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
     );
@@ -1700,15 +1709,15 @@ class _AddExpenseSheetState extends State<_AddExpenseSheet> {
 class _ExpenseDetailsSheet extends StatelessWidget {
   final ExpenseEntity expense;
 
-  const _ExpenseDetailsSheet({required this.expense});
+  _ExpenseDetailsSheet({required this.expense});
 
   @override
   Widget build(BuildContext context) {
     final dateFormat = DateFormat('dd MMM yyyy, hh:mm a');
 
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(
+        color: AppColors.card(context),
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Padding(
@@ -1728,7 +1737,7 @@ class _ExpenseDetailsSheet extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
             // Header
             Row(
               children: [
@@ -1736,27 +1745,27 @@ class _ExpenseDetailsSheet extends StatelessWidget {
                   width: 56,
                   height: 56,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+                    color: AppColors.accentSoft(context, 0.1),
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Center(
                     child: Text(
                       expense.category.icon,
-                      style: const TextStyle(fontSize: 28),
+                      style: TextStyle(fontSize: 28),
                     ),
                   ),
                 ),
-                const SizedBox(width: 14),
+                SizedBox(width: 14),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         expense.title,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
-                          color: Color(0xFF1B4D3E),
+                          color: AppColors.accent(context),
                           fontFamily: 'Literata',
                         ),
                       ),
@@ -1787,14 +1796,14 @@ class _ExpenseDetailsSheet extends StatelessWidget {
             const Divider(),
             const SizedBox(height: 12),
             // Details
-            _buildDetailRow('Date', dateFormat.format(expense.expenseDate)),
+            _buildDetailRow(context, 'Date', dateFormat.format(expense.expenseDate)),
             if (expense.paymentMethod != null)
-              _buildDetailRow('Payment Method', expense.paymentMethod!),
+              _buildDetailRow(context, 'Payment Method', expense.paymentMethod!),
             if (expense.vendorName != null)
-              _buildDetailRow('Vendor', expense.vendorName!),
+              _buildDetailRow(context, 'Vendor', expense.vendorName!),
             if (expense.description != null)
-              _buildDetailRow('Description', expense.description!),
-            if (expense.isRecurring) _buildDetailRow('Recurring', 'Yes'),
+              _buildDetailRow(context, 'Description', expense.description!),
+            if (expense.isRecurring) _buildDetailRow(context, 'Recurring', 'Yes'),
             const SizedBox(height: 20),
           ],
         ),
@@ -1802,7 +1811,7 @@ class _ExpenseDetailsSheet extends StatelessWidget {
     );
   }
 
-  Widget _buildDetailRow(String label, String value) {
+  Widget _buildDetailRow(BuildContext context, String label, String value) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
@@ -1814,7 +1823,7 @@ class _ExpenseDetailsSheet extends StatelessWidget {
               label,
               style: TextStyle(
                 fontSize: 13,
-                color: Colors.grey[600],
+                color: AppColors.secondaryText(context),
                 fontFamily: 'Literata',
               ),
             ),
@@ -1822,10 +1831,10 @@ class _ExpenseDetailsSheet extends StatelessWidget {
           Expanded(
             child: Text(
               value,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF1B4D3E),
+                color: AppColors.accent(context),
                 fontFamily: 'Literata',
               ),
             ),

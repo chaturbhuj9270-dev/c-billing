@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:c_billing/core/theme/app_theme.dart';
 
 /// Sort field options for companies
 enum CompanySortField {
@@ -17,7 +18,7 @@ class CompanyFilterWidget extends StatelessWidget {
   final bool sortAscending;
   final VoidCallback onSortDirectionToggle;
 
-  const CompanyFilterWidget({
+  CompanyFilterWidget({
     super.key,
     required this.searchQuery,
     required this.onSearchChanged,
@@ -34,7 +35,7 @@ class CompanyFilterWidget extends StatelessWidget {
         // Search bar
         Container(
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.card(context),
             borderRadius: BorderRadius.circular(14),
             boxShadow: [
               BoxShadow(
@@ -90,18 +91,21 @@ class CompanyFilterWidget extends StatelessWidget {
                 child: Row(
                   children: [
                     _buildSortChip(
+                      context: context,
                       label: 'Name',
                       field: CompanySortField.name,
                       icon: Icons.sort_by_alpha_rounded,
                     ),
                     const SizedBox(width: 8),
                     _buildSortChip(
+                      context: context,
                       label: 'Date',
                       field: CompanySortField.createdDate,
                       icon: Icons.calendar_today_rounded,
                     ),
                     const SizedBox(width: 8),
                     _buildSortChip(
+                      context: context,
                       label: 'Code',
                       field: CompanySortField.companyCode,
                       icon: Icons.qr_code_rounded,
@@ -117,7 +121,9 @@ class CompanyFilterWidget extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+                  color: AppColors.isDark(context)
+                      ? Colors.white.withValues(alpha: 0.1)
+                      : const Color(0xFF1B4D3E).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
@@ -125,7 +131,9 @@ class CompanyFilterWidget extends StatelessWidget {
                       ? Icons.arrow_upward_rounded
                       : Icons.arrow_downward_rounded,
                   size: 18,
-                  color: const Color(0xFF1B4D3E),
+                  color: AppColors.isDark(context)
+                      ? Colors.white
+                      : const Color(0xFF1B4D3E),
                 ),
               ),
             ),
@@ -136,32 +144,34 @@ class CompanyFilterWidget extends StatelessWidget {
   }
 
   Widget _buildSortChip({
+    required BuildContext context,
     required String label,
     required CompanySortField field,
     required IconData icon,
   }) {
     final isSelected = sortField == field;
-    
+    final selected = AppColors.selectedFill(context);
+    final onSelected = AppColors.selectedOnFill(context);
+    final unselected = AppColors.card(context);
+
     return GestureDetector(
       onTap: () => onSortFieldChanged(field),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected
-              ? const Color(0xFF1B4D3E)
-              : Colors.white,
+          color: isSelected ? selected : unselected,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: isSelected
-                ? const Color(0xFF1B4D3E)
-                : Colors.grey[300]!,
+            color: isSelected ? selected : AppColors.border(context),
             width: 1,
           ),
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: const Color(0xFF1B4D3E).withValues(alpha: 0.3),
+                    color: Colors.black.withValues(
+                      alpha: AppColors.isDark(context) ? 0.35 : 0.15,
+                    ),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -174,7 +184,7 @@ class CompanyFilterWidget extends StatelessWidget {
             Icon(
               icon,
               size: 14,
-              color: isSelected ? Colors.white : Colors.grey[600],
+              color: isSelected ? onSelected : AppColors.secondaryText(context),
             ),
             const SizedBox(width: 6),
             Text(
@@ -183,7 +193,7 @@ class CompanyFilterWidget extends StatelessWidget {
                 fontFamily: 'Literata',
                 fontWeight: FontWeight.w600,
                 fontSize: 12,
-                color: isSelected ? Colors.white : Colors.grey[700],
+                color: isSelected ? onSelected : AppColors.secondaryText(context),
               ),
             ),
           ],

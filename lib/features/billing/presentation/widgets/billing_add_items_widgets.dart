@@ -7,6 +7,7 @@ import '../../../../core/ui/glassy_toast.dart';
 import '../../domain/entities/bill_item.dart';
 import '../../../inventory_management/domain/entities/product.dart';
 import '../../../inventory_management/offline/entities/purchase_batch_entity.dart';
+import 'package:c_billing/core/theme/app_theme.dart';
 
 /// Bottom sheet widget for adding multiple items to the bill
 /// Step 1: Shows products grouped by name with total stock
@@ -297,21 +298,21 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
           }
 
           return AlertDialog(
-            backgroundColor: Colors.white,
+            backgroundColor: AppColors.card(context),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20),
             ),
             title: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(8),
+                  padding: EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+                    color: AppColors.accentSoft(context, 0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.edit,
-                    color: Color(0xFF1B4D3E),
+                    color: AppColors.accent(context),
                     size: 20,
                   ),
                 ),
@@ -322,7 +323,7 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                     children: [
                       Text(
                         productName,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontFamily: 'Literata',
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
@@ -350,9 +351,9 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
               children: [
                 // Price info
                 Container(
-                  padding: const EdgeInsets.all(12),
+                  padding: EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF5F5F5),
+                    color: AppColors.scaffold(context),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
@@ -360,10 +361,10 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                     children: [
                       Text(
                         'Price: ₹${sellingPrice.toStringAsFixed(0)}${unit != null ? '/$unit' : ''}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontFamily: 'Literata',
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFF1B4D3E),
+                          color: AppColors.accent(context),
                         ),
                       ),
                       Text(
@@ -381,9 +382,9 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                 if (supportsSubUnit && subUnit != null) ...[
                   const SizedBox(height: 12),
                   Container(
-                    padding: const EdgeInsets.all(4),
+                    padding: EdgeInsets.all(4),
                     decoration: BoxDecoration(
-                      color: Colors.grey[100],
+                      color: AppColors.chipFill(context),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Row(
@@ -492,7 +493,7 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                         ),
                         textAlign: TextAlign.center,
                         onChanged: (_) => validateQty(),
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontFamily: 'Literata',
                           fontSize: 20,
                           fontWeight: FontWeight.w700,
@@ -500,8 +501,8 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                         decoration: InputDecoration(
                           suffixText: selectedSellUnit,
                           errorText: errorText,
-                          errorStyle: const TextStyle(fontSize: 11),
-                          contentPadding: const EdgeInsets.symmetric(
+                          errorStyle: TextStyle(fontSize: 11),
+                          contentPadding: EdgeInsets.symmetric(
                             horizontal: 12,
                             vertical: 12,
                           ),
@@ -511,8 +512,8 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
-                              color: Color(0xFF1B4D3E),
+                            borderSide: BorderSide(
+                              color: AppColors.accent(context),
                               width: 2,
                             ),
                           ),
@@ -804,8 +805,8 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
       maxChildSize: 0.95,
       minChildSize: 0.5,
       builder: (_, controller) => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
+        decoration: BoxDecoration(
+          color: AppColors.card(context),
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: Column(
@@ -822,38 +823,38 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
             ),
             // Header
             Padding(
-              padding: const EdgeInsets.all(20),
+              padding: EdgeInsets.all(20),
               child: Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(10),
+                    padding: EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+                      color: AppColors.accentSoft(context, 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.add_shopping_cart,
-                      color: Color(0xFF1B4D3E),
+                      color: AppColors.accent(context),
                       size: 22,
                     ),
                   ),
-                  const SizedBox(width: 14),
+                  SizedBox(width: 14),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           widget.localizations.addItems,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontFamily: 'Literata',
                             fontSize: 20,
                             fontWeight: FontWeight.w700,
-                            color: Color(0xFF1B4D3E),
+                            color: AppColors.accent(context),
                           ),
                         ),
                         Text(
                           widget.localizations.tapToAddItems,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontFamily: 'Literata',
                             fontSize: 12,
                             color: Colors.grey,
@@ -864,17 +865,17 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                   ),
                   if (_totalItems > 0)
                     Container(
-                      padding: const EdgeInsets.symmetric(
+                      padding: EdgeInsets.symmetric(
                         horizontal: 14,
                         vertical: 6,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF1B4D3E),
+                        color: AppColors.accent(context),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
                         '$_totalItems ${widget.localizations.items.toLowerCase()}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontFamily: 'Literata',
                           fontSize: 13,
                           color: Colors.white,
@@ -887,21 +888,21 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
             ),
             // Search bar
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
+              padding: EdgeInsets.symmetric(horizontal: 20),
               child: TextField(
                 controller: _searchController,
                 onChanged: _filterProducts,
-                style: const TextStyle(fontFamily: 'Literata', fontSize: 14),
+                style: TextStyle(fontFamily: 'Literata', fontSize: 14),
                 decoration: InputDecoration(
                   hintText: widget.localizations.searchProducts,
                   hintStyle: TextStyle(color: Colors.grey[500]),
-                  prefixIcon: const Icon(
+                  prefixIcon: Icon(
                     Icons.search,
-                    color: Color(0xFF1B4D3E),
+                    color: AppColors.accent(context),
                   ),
                   suffixIcon: _searchController.text.isNotEmpty
                       ? IconButton(
-                          icon: const Icon(Icons.clear, size: 20),
+                          icon: Icon(Icons.clear, size: 20),
                           onPressed: () {
                             _searchController.clear();
                             _filterProducts('');
@@ -909,12 +910,24 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                         )
                       : null,
                   filled: true,
-                  fillColor: const Color(0xFFF5F5F5),
+                  fillColor: AppColors.scaffold(context),
                   contentPadding: const EdgeInsets.symmetric(
                     horizontal: 16,
                     vertical: 14,
                   ),
                   border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                  disabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide.none,
                   ),
@@ -947,7 +960,7 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                     )
                   : ListView.builder(
                       controller: controller,
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      padding: EdgeInsets.symmetric(horizontal: 16),
                       itemCount: _filteredGroups.length,
                       itemBuilder: (context, index) {
                         final group = _filteredGroups[index];
@@ -956,16 +969,16 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                         final hasMultipleBatches = group.batches.length > 1;
 
                         return Container(
-                          margin: const EdgeInsets.only(bottom: 8),
+                          margin: EdgeInsets.only(bottom: 8),
                           decoration: BoxDecoration(
                             color: isAdded
-                                ? const Color(0xFFE8F5E9)
+                                ? AppColors.chipFill(context)
                                 : Colors.white,
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
                               color: isAdded
                                   ? const Color(0xFF1B4D3E)
-                                  : Colors.grey[200]!,
+                                  : AppColors.border(context)!,
                               width: isAdded ? 1.5 : 1,
                             ),
                           ),
@@ -975,7 +988,7 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                               borderRadius: BorderRadius.circular(12),
                               onTap: () => _showBatchSelection(group),
                               child: Padding(
-                                padding: const EdgeInsets.all(12),
+                                padding: EdgeInsets.all(12),
                                 child: Row(
                                   children: [
                                     // Product index number badge
@@ -983,7 +996,7 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                                       width: 44,
                                       height: 44,
                                       decoration: BoxDecoration(
-                                        color: const Color(0xFF1B4D3E),
+                                        color: AppColors.accent(context),
                                         borderRadius: BorderRadius.circular(10),
                                       ),
                                       child: Center(
@@ -991,7 +1004,7 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                                           group.indexNo > 0
                                               ? '${group.indexNo}'
                                               : '#',
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                             color: Colors.white,
                                             fontWeight: FontWeight.w700,
                                             fontSize: 14,
@@ -1032,18 +1045,18 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                                               maxLines: 1,
                                               overflow: TextOverflow.ellipsis,
                                             ),
-                                            const SizedBox(height: 3),
+                                            SizedBox(height: 3),
                                           ],
                                           Row(
                                             children: [
                                               // Price range
                                               Text(
                                                 group.priceRangeDisplay,
-                                                style: const TextStyle(
+                                                style: TextStyle(
                                                   fontFamily: 'Literata',
                                                   fontWeight: FontWeight.w700,
                                                   fontSize: 13,
-                                                  color: Color(0xFF1B4D3E),
+                                                  color: AppColors.accent(context),
                                                 ),
                                               ),
                                               // Variant count badge
@@ -1111,16 +1124,16 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                                         ],
                                       ),
                                     ),
-                                    const SizedBox(width: 8),
+                                    SizedBox(width: 8),
                                     // Action area
                                     if (isAdded)
                                       Container(
-                                        padding: const EdgeInsets.symmetric(
+                                        padding: EdgeInsets.symmetric(
                                           horizontal: 10,
                                           vertical: 6,
                                         ),
                                         decoration: BoxDecoration(
-                                          color: const Color(0xFF1B4D3E),
+                                          color: AppColors.accent(context),
                                           borderRadius: BorderRadius.circular(
                                             8,
                                           ),
@@ -1187,7 +1200,7 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                 bottom: MediaQuery.of(context).padding.bottom + 16,
               ),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColors.card(context),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.05),
@@ -1466,21 +1479,21 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
           }
 
           return AlertDialog(
-            backgroundColor: Colors.white,
+            backgroundColor: AppColors.card(context),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20),
             ),
             title: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(8),
+                  padding: EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+                    color: AppColors.accentSoft(context, 0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.edit,
-                    color: Color(0xFF1B4D3E),
+                    color: AppColors.accent(context),
                     size: 20,
                   ),
                 ),
@@ -1491,7 +1504,7 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
                     children: [
                       Text(
                         batch.productName,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontFamily: 'Literata',
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
@@ -1519,9 +1532,9 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
               children: [
                 // Price info
                 Container(
-                  padding: const EdgeInsets.all(12),
+                  padding: EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF5F5F5),
+                    color: AppColors.scaffold(context),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
@@ -1529,10 +1542,10 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
                     children: [
                       Text(
                         'Price: ₹${batch.sellingPrice.toStringAsFixed(0)}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontFamily: 'Literata',
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFF1B4D3E),
+                          color: AppColors.accent(context),
                         ),
                       ),
                       Text(
@@ -1579,15 +1592,15 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
                         keyboardType: TextInputType.number,
                         textAlign: TextAlign.center,
                         onChanged: (_) => validateQty(),
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontFamily: 'Literata',
                           fontSize: 20,
                           fontWeight: FontWeight.w700,
                         ),
                         decoration: InputDecoration(
                           errorText: errorText,
-                          errorStyle: const TextStyle(fontSize: 11),
-                          contentPadding: const EdgeInsets.symmetric(
+                          errorStyle: TextStyle(fontSize: 11),
+                          contentPadding: EdgeInsets.symmetric(
                             horizontal: 12,
                             vertical: 12,
                           ),
@@ -1597,8 +1610,8 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
-                              color: Color(0xFF1B4D3E),
+                            borderSide: BorderSide(
+                              color: AppColors.accent(context),
                               width: 2,
                             ),
                           ),
@@ -1723,8 +1736,8 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
       maxChildSize: 0.9,
       minChildSize: 0.4,
       builder: (_, controller) => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
+        decoration: BoxDecoration(
+          color: AppColors.card(context),
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: Column(
@@ -1741,7 +1754,7 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
             ),
             // Header
             Padding(
-              padding: const EdgeInsets.all(20),
+              padding: EdgeInsets.all(20),
               child: Row(
                 children: [
                   // Product code badge
@@ -1749,13 +1762,13 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
                     width: 44,
                     height: 44,
                     decoration: BoxDecoration(
-                      color: const Color(0xFF1B4D3E),
+                      color: AppColors.accent(context),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Center(
                       child: Text(
                         widget.productCode > 0 ? '${widget.productCode}' : '#',
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.w700,
                           fontSize: 15,
@@ -1764,18 +1777,18 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 14),
+                  SizedBox(width: 14),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           widget.productName,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontFamily: 'Literata',
                             fontSize: 18,
                             fontWeight: FontWeight.w700,
-                            color: Color(0xFF1B4D3E),
+                            color: AppColors.accent(context),
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -1784,7 +1797,7 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
                           children: [
                             Text(
                               widget.localizations.chooseSpecificBatch,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontFamily: 'Literata',
                                 fontSize: 12,
                                 color: Colors.grey,
@@ -1798,18 +1811,18 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
                                   vertical: 1,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: const Color(
+                                  color: Color(
                                     0xFF1B4D3E,
                                   ).withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                                 child: Text(
                                   '#${widget.productCode}',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontFamily: 'Literata',
                                     fontSize: 10,
                                     fontWeight: FontWeight.w700,
-                                    color: Color(0xFF1B4D3E),
+                                    color: AppColors.accent(context),
                                   ),
                                 ),
                               ),
@@ -1827,9 +1840,9 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
                 child: Container(
-                  padding: const EdgeInsets.all(4),
+                  padding: EdgeInsets.all(4),
                   decoration: BoxDecoration(
-                    color: Colors.grey[100],
+                    color: AppColors.chipFill(context),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Row(
@@ -1905,22 +1918,22 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
             // Search bar for batches
             if (widget.batches.length > 1)
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
+                padding: EdgeInsets.symmetric(horizontal: 20),
                 child: TextField(
                   controller: _batchSearchController,
                   onChanged: _filterBatches,
-                  style: const TextStyle(fontFamily: 'Literata', fontSize: 14),
+                  style: TextStyle(fontFamily: 'Literata', fontSize: 14),
                   decoration: InputDecoration(
                     hintText: widget.localizations.searchBatches,
                     hintStyle: TextStyle(color: Colors.grey[500]),
-                    prefixIcon: const Icon(
+                    prefixIcon: Icon(
                       Icons.search,
-                      color: Color(0xFF1B4D3E),
+                      color: AppColors.accent(context),
                       size: 20,
                     ),
                     suffixIcon: _batchSearchController.text.isNotEmpty
                         ? IconButton(
-                            icon: const Icon(Icons.clear, size: 18),
+                            icon: Icon(Icons.clear, size: 18),
                             onPressed: () {
                               _batchSearchController.clear();
                               _filterBatches('');
@@ -1928,7 +1941,7 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
                           )
                         : null,
                     filled: true,
-                    fillColor: const Color(0xFFF5F5F5),
+                    fillColor: AppColors.scaffold(context),
                     contentPadding: const EdgeInsets.symmetric(
                       horizontal: 14,
                       vertical: 12,
@@ -1954,23 +1967,23 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
                       color: Colors.grey[700],
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  SizedBox(width: 8),
                   Container(
-                    padding: const EdgeInsets.symmetric(
+                    padding: EdgeInsets.symmetric(
                       horizontal: 8,
                       vertical: 2,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+                      color: AppColors.accentSoft(context, 0.1),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Text(
                       '${_filteredBatches.length}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'Literata',
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
-                        color: Color(0xFF1B4D3E),
+                        color: AppColors.accent(context),
                       ),
                     ),
                   ),
@@ -2016,12 +2029,12 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
                         final alreadyInBill = existingQty > 0;
 
                         return Container(
-                          margin: const EdgeInsets.only(bottom: 10),
+                          margin: EdgeInsets.only(bottom: 10),
                           decoration: BoxDecoration(
                             color: isSelected
                                 ? const Color(0xFFE3F2FD)
                                 : alreadyInBill
-                                ? const Color(0xFFE8F5E9)
+                                ? AppColors.chipFill(context)
                                 : Colors.white,
                             borderRadius: BorderRadius.circular(14),
                             border: Border.all(
@@ -2029,7 +2042,7 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
                                   ? Colors.blue
                                   : alreadyInBill
                                   ? const Color(0xFF1B4D3E)
-                                  : Colors.grey[200]!,
+                                  : AppColors.border(context)!,
                               width: isSelected || alreadyInBill ? 1.5 : 1,
                             ),
                             boxShadow: isSelected
@@ -2108,11 +2121,11 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
                                                   ? batch.companyName[0]
                                                         .toUpperCase()
                                                   : '?',
-                                              style: const TextStyle(
+                                              style: TextStyle(
                                                 fontFamily: 'Literata',
                                                 fontWeight: FontWeight.w700,
                                                 fontSize: 14,
-                                                color: Color(0xFF1B4D3E),
+                                                color: AppColors.accent(context),
                                               ),
                                             ),
                                           ),
@@ -2127,7 +2140,7 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
                                                 batch.companyName.isNotEmpty
                                                     ? batch.companyName
                                                     : '—',
-                                                style: const TextStyle(
+                                                style: TextStyle(
                                                   fontFamily: 'Literata',
                                                   fontWeight: FontWeight.w600,
                                                   fontSize: 14,
@@ -2206,7 +2219,7 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
                                         ),
                                       ],
                                     ),
-                                    const SizedBox(height: 10),
+                                    SizedBox(height: 10),
                                     // Price row + Stock
                                     Row(
                                       children: [
@@ -2215,7 +2228,7 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
                                           label: widget.localizations.sellPrice,
                                           value:
                                               '₹${batch.sellingPrice.toStringAsFixed(0)}',
-                                          color: const Color(0xFF1B4D3E),
+                                          color: AppColors.accent(context),
                                         ),
                                         const SizedBox(width: 8),
                                         // Cost price
@@ -2300,7 +2313,7 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
                                                                   8,
                                                                 ),
                                                             borderSide:
-                                                                const BorderSide(
+                                                                BorderSide(
                                                                   color: Color(
                                                                     0xFF1B4D3E,
                                                                   ),
@@ -2308,7 +2321,7 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
                                                                 ),
                                                           ),
                                                       filled: true,
-                                                      fillColor: Colors.white,
+                                                      fillColor: AppColors.inputFill(context),
                                                       suffixText:
                                                           '/ ${batch.quantityRemaining - existingQty}',
                                                       suffixStyle: TextStyle(

@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:intl/intl.dart';
 import 'package:c_billing/core/localization/app_localizations.dart';
 import 'package:c_billing/core/services/language_service.dart';
+import 'package:c_billing/core/theme/app_theme.dart';
 
 /// Filter options for purchase list
 enum PurchaseDateFilter { all, today, thisMonth, thisYear, custom }
@@ -65,9 +66,9 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
       LanguageService.instance.currentLanguage,
     );
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.card(context),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -174,15 +175,16 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
     return GestureDetector(
       onTap: widget.onReportTap,
       child: Container(
-        padding: const EdgeInsets.all(10),
+        padding: EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: const Color(0xFF1B4D3E),
+          color: AppColors.selectedFill(context),
           borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: AppColors.border(context)),
         ),
-        child: const Icon(
+        child: Icon(
           Icons.description_rounded,
           size: 20,
-          color: Colors.white,
+          color: AppColors.selectedOnFill(context),
         ),
       ),
     );
@@ -201,10 +203,14 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
         curve: Curves.easeInOut,
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF1B4D3E) : Colors.grey[100],
+          color: isSelected
+              ? AppColors.selectedFill(context)
+              : AppColors.chipFill(context),
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: isSelected ? const Color(0xFF1B4D3E) : Colors.grey[300]!,
+            color: isSelected
+                ? AppColors.selectedFill(context)
+                : AppColors.border(context),
             width: 1,
           ),
         ),
@@ -214,7 +220,9 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
             Icon(
               icon,
               size: 16,
-              color: isSelected ? Colors.white : Colors.grey[600],
+              color: isSelected
+                  ? AppColors.selectedOnFill(context)
+                  : AppColors.secondaryText(context),
             ),
             const SizedBox(width: 6),
             Text(
@@ -223,7 +231,9 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
                 fontFamily: 'Literata',
                 fontWeight: FontWeight.w600,
                 fontSize: 13,
-                color: isSelected ? Colors.white : Colors.grey[700],
+                color: isSelected
+                    ? AppColors.selectedOnFill(context)
+                    : AppColors.secondaryText(context),
               ),
             ),
           ],
@@ -253,11 +263,11 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
     return GestureDetector(
       onTap: () => _showSupplierPicker(context),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
           color: widget.selectedSupplierId != null
               ? const Color(0xFF1B4D3E).withValues(alpha: 0.1)
-              : Colors.grey[100],
+              : AppColors.chipFill(context),
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
             color: widget.selectedSupplierId != null
@@ -376,12 +386,12 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
     required VoidCallback onRemove,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+        color: AppColors.accentSoft(context, 0.1),
         borderRadius: BorderRadius.circular(6),
         border: Border.all(
-          color: const Color(0xFF1B4D3E).withValues(alpha: 0.3),
+          color: AppColors.accentSoft(context, 0.3),
           width: 1,
         ),
       ),
@@ -390,20 +400,20 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
         children: [
           Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: 'Literata',
               fontWeight: FontWeight.w500,
               fontSize: 11,
-              color: Color(0xFF1B4D3E),
+              color: AppColors.accent(context),
             ),
           ),
-          const SizedBox(width: 4),
+          SizedBox(width: 4),
           GestureDetector(
             onTap: onRemove,
             child: Icon(
               Icons.close_rounded,
               size: 14,
-              color: const Color(0xFF1B4D3E).withValues(alpha: 0.7),
+              color: AppColors.accentSoft(context, 0.7),
             ),
           ),
         ],
@@ -438,10 +448,10 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
+            colorScheme: ColorScheme.light(
               primary: Color(0xFF1B4D3E),
               onPrimary: Colors.white,
-              surface: Colors.white,
+              surface: AppColors.card(context),
               onSurface: Colors.black87,
             ),
             textButtonTheme: TextButtonThemeData(
@@ -480,7 +490,7 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
                 }).toList();
 
           return ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
               child: Container(
@@ -488,7 +498,7 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
                   maxHeight: MediaQuery.of(context).size.height * 0.7,
                 ),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.95),
+                  color: AppColors.card(context),
                   borderRadius: const BorderRadius.vertical(
                     top: Radius.circular(24),
                   ),
@@ -509,17 +519,17 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
 
                     // Header
                     Padding(
-                      padding: const EdgeInsets.all(16),
+                      padding: EdgeInsets.all(16),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
                             _localizations.selectSupplier,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontFamily: 'Literata',
                               fontWeight: FontWeight.w700,
                               fontSize: 18,
-                              color: Color(0xFF1B4D3E),
+                              color: AppColors.accent(context),
                             ),
                           ),
                           if (widget.selectedSupplierId != null)
@@ -544,7 +554,7 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
 
                     // Search field
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      padding: EdgeInsets.symmetric(horizontal: 16),
                       child: TextField(
                         controller: _supplierSearchController,
                         onChanged: (_) => setSheetState(() {}),
@@ -556,7 +566,7 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
                             color: Colors.grey[500],
                           ),
                           filled: true,
-                          fillColor: Colors.grey[100],
+                          fillColor: AppColors.chipFill(context),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide.none,
@@ -618,19 +628,19 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
                                     Navigator.pop(context);
                                   },
                                   child: Container(
-                                    margin: const EdgeInsets.only(bottom: 8),
-                                    padding: const EdgeInsets.all(12),
+                                    margin: EdgeInsets.only(bottom: 8),
+                                    padding: EdgeInsets.all(12),
                                     decoration: BoxDecoration(
                                       color: isSelected
                                           ? const Color(
                                               0xFF1B4D3E,
                                             ).withValues(alpha: 0.1)
-                                          : Colors.grey[50],
+                                          : AppColors.scaffold(context),
                                       borderRadius: BorderRadius.circular(12),
                                       border: Border.all(
                                         color: isSelected
                                             ? const Color(0xFF1B4D3E)
-                                            : Colors.grey[200]!,
+                                            : AppColors.border(context)!,
                                         width: isSelected ? 1.5 : 1,
                                       ),
                                     ),
@@ -642,7 +652,7 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
                                           decoration: BoxDecoration(
                                             color: isSelected
                                                 ? const Color(0xFF1B4D3E)
-                                                : Colors.grey[200],
+                                                : AppColors.border(context),
                                             borderRadius: BorderRadius.circular(
                                               10,
                                             ),
@@ -694,9 +704,9 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
                                           ),
                                         ),
                                         if (isSelected)
-                                          const Icon(
+                                          Icon(
                                             Icons.check_circle_rounded,
-                                            color: Color(0xFF1B4D3E),
+                                            color: AppColors.accent(context),
                                             size: 22,
                                           ),
                                       ],

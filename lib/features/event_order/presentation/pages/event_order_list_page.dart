@@ -19,6 +19,7 @@ import '../../../../common_widgets/file_preview_page.dart';
 import 'event_order_screen.dart';
 import 'event_order_settings_page.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
+import 'package:c_billing/core/theme/app_theme.dart';
 
 /// Date filter options for event/order list
 enum DateFilter {
@@ -117,7 +118,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
           EventOrderCubit()..loadEventOrders(filterType: _selectedType),
       child: Builder(
         builder: (context) => Scaffold(
-          backgroundColor: const Color(0xFFF8F9FC),
+          backgroundColor: AppColors.scaffold(context),
           body: CustomScrollView(
             slivers: [
               _buildPremiumAppBar(context),
@@ -138,7 +139,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
       floating: false,
       pinned: true,
       elevation: 0,
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.card(context),
       surfaceTintColor: Colors.transparent,
       leading: IconButton(
         onPressed: () => Navigator.of(context).pop(),
@@ -398,10 +399,10 @@ class _EventOrderListPageState extends State<EventOrderListPage>
         }
 
         return Container(
-          margin: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-          padding: const EdgeInsets.all(16),
+          margin: EdgeInsets.fromLTRB(16, 8, 16, 8),
+          padding: EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.card(context),
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
@@ -506,7 +507,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         width: 76,
-        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+        padding: EdgeInsets.symmetric(vertical: 14, horizontal: 8),
         decoration: BoxDecoration(
           gradient: isActive
               ? LinearGradient(
@@ -515,7 +516,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                   colors: gradient,
                 )
               : null,
-          color: isActive ? null : Colors.grey[50],
+          color: isActive ? null : AppColors.scaffold(context),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: isActive
@@ -569,13 +570,13 @@ class _EventOrderListPageState extends State<EventOrderListPage>
 
   Widget _buildSearchAndFilters() {
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+      padding: EdgeInsets.fromLTRB(16, 8, 16, 12),
       child: Column(
         children: [
           // Search bar
           Container(
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.card(context),
               borderRadius: BorderRadius.circular(14),
               boxShadow: [
                 BoxShadow(
@@ -618,12 +619,12 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                     suffixIcon: _searchQuery.isNotEmpty
                         ? IconButton(
                             icon: Container(
-                              padding: const EdgeInsets.all(4),
+                              padding: EdgeInsets.all(4),
                               decoration: BoxDecoration(
-                                color: Colors.grey[200],
+                                color: AppColors.border(context),
                                 shape: BoxShape.circle,
                               ),
-                              child: const Icon(
+                              child: Icon(
                                 Icons.close,
                                 size: 16,
                                 color: Colors.grey,
@@ -640,7 +641,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                           )
                         : null,
                     filled: true,
-                    fillColor: Colors.white,
+                    fillColor: AppColors.inputFill(context),
                     contentPadding: const EdgeInsets.symmetric(
                       horizontal: 16,
                       vertical: 14,
@@ -716,12 +717,12 @@ class _EventOrderListPageState extends State<EventOrderListPage>
                     GestureDetector(
                       onTap: () => _onStatusFilterChanged(context, null),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(
+                        padding: EdgeInsets.symmetric(
                           horizontal: 10,
                           vertical: 6,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.grey[100],
+                          color: AppColors.chipFill(context),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Row(
@@ -908,7 +909,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
             style: ElevatedButton.styleFrom(
               backgroundColor: _primaryColor,
               foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -925,9 +926,9 @@ class _EventOrderListPageState extends State<EventOrderListPage>
     final statusInfo = _getStatusInfo(order.status);
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.card(context),
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
           color: order.status == OrderStatus.pending
@@ -1531,14 +1532,13 @@ class _EventOrderListPageState extends State<EventOrderListPage>
       initialDateRange: initialRange,
       builder: (context, child) {
         return Theme(
-          data: ThemeData.light().copyWith(
-            colorScheme: const ColorScheme.light(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
               primary: _primaryColor,
               onPrimary: Colors.white,
-              surface: Colors.white,
+              surface: AppColors.card(context),
               onSurface: Color(0xFF1A1A2E),
             ),
-            dialogTheme: DialogThemeData(backgroundColor: Colors.white),
           ),
           child: child!,
         );
@@ -2021,7 +2021,7 @@ class _EventOrderListPageState extends State<EventOrderListPage>
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.card(context),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text(
           'Delete Order?',
@@ -2089,8 +2089,8 @@ class _EventOrderListPageState extends State<EventOrderListPage>
         padding: EdgeInsets.only(
           bottom: MediaQuery.of(context).viewInsets.bottom,
         ),
-        decoration: const BoxDecoration(
-          color: Colors.white,
+        decoration: BoxDecoration(
+          color: AppColors.card(context),
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: Column(
@@ -2203,9 +2203,9 @@ class _EventOrderListPageState extends State<EventOrderListPage>
             // Summary info
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 16),
-              padding: const EdgeInsets.all(12),
+              padding: EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.grey[50],
+                color: AppColors.scaffold(context),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(

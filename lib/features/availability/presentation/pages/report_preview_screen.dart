@@ -10,6 +10,7 @@ import 'package:c_billing/core/services/language_service.dart';
 import 'package:c_billing/common_widgets/file_preview_page.dart';
 import 'package:intl/intl.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
+import 'package:c_billing/core/theme/app_theme.dart';
 
 class ReportPreviewScreen extends StatefulWidget {
   final List<ReportItem> reportItems;
@@ -227,7 +228,7 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7F5),
+      backgroundColor: AppColors.scaffold(context),
       body: SafeArea(
         child: Column(
           children: [
@@ -260,12 +261,12 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
     return Container(
       padding: const EdgeInsets.fromLTRB(8, 12, 16, 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.card(context),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 8,
-            offset: const Offset(0, 2),
+            offset: Offset(0, 2),
           ),
         ],
       ),
@@ -275,19 +276,19 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
           IconButton(
             onPressed: () => Navigator.of(context).pop(),
             icon: Container(
-              padding: const EdgeInsets.all(8),
+              padding: EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+                color: AppColors.accentSoft(context, 0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.arrow_back_ios_new_rounded,
-                color: Color(0xFF1B4D3E),
+                color: AppColors.accent(context),
                 size: 18,
               ),
             ),
           ),
-          const SizedBox(width: 4),
+          SizedBox(width: 4),
           // Title
           Expanded(
             child: Column(
@@ -295,14 +296,14 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
               children: [
                 Text(
                   _localizations.reportPreview,
-                  style: const TextStyle(
-                    color: Color(0xFF1B4D3E),
+                  style: TextStyle(
+                    color: AppColors.accent(context),
                     fontSize: 20,
                     fontWeight: FontWeight.w800,
                     fontFamily: 'Literata',
                   ),
                 ),
-                const SizedBox(height: 2),
+                SizedBox(height: 2),
                 Row(
                   children: [
                     Icon(
@@ -310,14 +311,14 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
                           ? Icons.picture_as_pdf_rounded
                           : Icons.table_chart_rounded,
                       size: 14,
-                      color: const Color(0xFF1B4D3E).withValues(alpha: 0.6),
+                      color: AppColors.accentSoft(context, 0.6),
                     ),
-                    const SizedBox(width: 4),
+                    SizedBox(width: 4),
                     Expanded(
                       child: Text(
                         widget.reportTitle,
                         style: TextStyle(
-                          color: const Color(0xFF1B4D3E).withValues(alpha: 0.7),
+                          color: AppColors.accentSoft(context, 0.7),
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
                           fontFamily: 'Literata',
@@ -373,18 +374,18 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
 
   Widget _buildSelectionBar() {
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-      padding: const EdgeInsets.all(14),
+      margin: EdgeInsets.fromLTRB(16, 16, 16, 8),
+      padding: EdgeInsets.all(14),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            const Color(0xFF1B4D3E).withValues(alpha: 0.08),
-            const Color(0xFF1B4D3E).withValues(alpha: 0.04),
+            Color(0xFF1B4D3E).withValues(alpha: 0.08),
+            Color(0xFF1B4D3E).withValues(alpha: 0.04),
           ],
         ),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: const Color(0xFF1B4D3E).withValues(alpha: 0.15),
+          color: AppColors.accentSoft(context, 0.15),
         ),
       ),
       child: Row(
@@ -400,19 +401,19 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
                 borderRadius: BorderRadius.circular(6),
                 border: Border.all(
                   color: _allSelected
-                      ? const Color(0xFF1B4D3E)
-                      : const Color(0xFF1B4D3E).withValues(alpha: 0.3),
+                      ? Color(0xFF1B4D3E)
+                      : Color(0xFF1B4D3E).withValues(alpha: 0.3),
                   width: 2,
                 ),
               ),
               child: _allSelected
-                  ? const Icon(Icons.check, color: Colors.white, size: 16)
+                  ? Icon(Icons.check, color: Colors.white, size: 16)
                   : _noneSelected
                   ? null
                   : Container(
-                      margin: const EdgeInsets.all(4),
+                      margin: EdgeInsets.all(4),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF1B4D3E),
+                        color: AppColors.accent(context),
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
@@ -428,11 +429,11 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
                   _allSelected
                       ? _localizations.allSelected
                       : _localizations.selectAll,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'Literata',
                     fontWeight: FontWeight.w700,
                     fontSize: 14,
-                    color: Color(0xFF1B4D3E),
+                    color: AppColors.accent(context),
                   ),
                 ),
                 Text(
@@ -440,7 +441,7 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
                   style: TextStyle(
                     fontFamily: 'Literata',
                     fontSize: 11,
-                    color: const Color(0xFF1B4D3E).withValues(alpha: 0.6),
+                    color: AppColors.accentSoft(context, 0.6),
                   ),
                 ),
               ],
@@ -448,9 +449,9 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
           ),
           // Count badge
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            padding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             decoration: BoxDecoration(
-              color: const Color(0xFF1B4D3E),
+              color: AppColors.accent(context),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text(
@@ -478,15 +479,15 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            padding: const EdgeInsets.all(24),
+            padding: EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+              color: AppColors.accentSoft(context, 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(
               Icons.inventory_2_outlined,
               size: 48,
-              color: const Color(0xFF1B4D3E).withValues(alpha: 0.5),
+              color: AppColors.accentSoft(context, 0.5),
             ),
           ),
           const SizedBox(height: 16),
@@ -567,9 +568,9 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
       onTap: () => _toggleItem(index),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        margin: const EdgeInsets.only(bottom: 12),
+        margin: EdgeInsets.only(bottom: 12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.card(context),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isSelected
@@ -622,32 +623,32 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
                         ),
                       ),
                       child: isSelected
-                          ? const Icon(
+                          ? Icon(
                               Icons.check_rounded,
                               color: Colors.white,
                               size: 18,
                             )
                           : null,
                     ),
-                    const SizedBox(width: 12),
+                    SizedBox(width: 12),
                     // Serial number
                     if (_visibleColumnIds.contains('sr_no'))
                       Container(
-                        padding: const EdgeInsets.symmetric(
+                        padding: EdgeInsets.symmetric(
                           horizontal: 10,
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+                          color: AppColors.accentSoft(context, 0.1),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
                           '#${index + 1}',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontFamily: 'Literata',
                             fontWeight: FontWeight.w700,
                             fontSize: 12,
-                            color: Color(0xFF1B4D3E),
+                            color: AppColors.accent(context),
                           ),
                         ),
                       ),
@@ -661,11 +662,11 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
                           if (_visibleColumnIds.contains('product_name'))
                             Text(
                               product.name.isEmpty ? '-' : product.name,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontFamily: 'Literata',
                                 fontWeight: FontWeight.w700,
                                 fontSize: 15,
-                                color: Color(0xFF1B4D3E),
+                                color: AppColors.accent(context),
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -948,40 +949,40 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
     int index,
   ) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFF1B4D3E).withValues(alpha: 0.04),
+        color: AppColors.accentSoft(context, 0.04),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: const Color(0xFF1B4D3E).withValues(alpha: 0.15),
+          color: AppColors.accentSoft(context, 0.15),
         ),
       ),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(8),
+            padding: EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+              color: AppColors.accentSoft(context, 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.shopping_cart_rounded,
               size: 18,
-              color: Color(0xFF1B4D3E),
+              color: AppColors.accent(context),
             ),
           ),
-          const SizedBox(width: 12),
+          SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   _localizations.orderQuantity,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'Literata',
                     fontSize: 11,
                     fontWeight: FontWeight.w500,
-                    color: Color(0xFF1B4D3E),
+                    color: AppColors.accent(context),
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -1006,29 +1007,29 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
               keyboardType: TextInputType.number,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 16,
                 fontFamily: 'Literata',
                 fontWeight: FontWeight.w700,
-                color: Color(0xFF1B4D3E),
+                color: AppColors.accent(context),
               ),
               decoration: InputDecoration(
                 filled: true,
-                fillColor: Colors.white,
+                fillColor: AppColors.inputFill(context),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(color: Color(0xFF1B4D3E)),
+                  borderSide: BorderSide(color: AppColors.accent(context)),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
                   borderSide: BorderSide(
-                    color: const Color(0xFF1B4D3E).withValues(alpha: 0.3),
+                    color: AppColors.accentSoft(context, 0.3),
                   ),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(
-                    color: Color(0xFF1B4D3E),
+                  borderSide: BorderSide(
+                    color: AppColors.accent(context),
                     width: 2,
                   ),
                 ),
@@ -1061,9 +1062,9 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
 
   Widget _buildBottomBar() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.card(context),
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         boxShadow: [
           BoxShadow(
@@ -1086,29 +1087,29 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen>
                       : () => Navigator.of(context).pop(),
                   borderRadius: BorderRadius.circular(14),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    padding: EdgeInsets.symmetric(vertical: 16),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
-                        color: const Color(0xFF1B4D3E).withValues(alpha: 0.3),
+                        color: AppColors.accentSoft(context, 0.3),
                       ),
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.close_rounded,
-                          color: Color(0xFF1B4D3E),
+                          color: AppColors.accent(context),
                           size: 20,
                         ),
-                        const SizedBox(width: 8),
+                        SizedBox(width: 8),
                         Text(
                           _localizations.cancel,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontFamily: 'Literata',
                             fontWeight: FontWeight.w600,
                             fontSize: 15,
-                            color: Color(0xFF1B4D3E),
+                            color: AppColors.accent(context),
                           ),
                         ),
                       ],

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:c_billing/core/services/purchase_report_settings_service.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
+import 'package:c_billing/core/theme/app_theme.dart';
 
 /// Page for managing which columns appear in purchase reports
 class PurchaseReportSettingsPage extends StatefulWidget {
@@ -48,12 +49,12 @@ class _PurchaseReportSettingsPageState
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text(
+        title: Text(
           'Reset to Defaults',
           style: TextStyle(
             fontFamily: 'Literata',
             fontWeight: FontWeight.w700,
-            color: Color(0xFF1B4D3E),
+            color: AppColors.accent(context),
           ),
         ),
         content: const Text(
@@ -94,16 +95,16 @@ class _PurchaseReportSettingsPageState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFE6EDE7),
+      backgroundColor: AppColors.scaffold(context),
       body: SafeArea(
         child: Column(
           children: [
             _buildHeader(),
             Expanded(
               child: _isLoading
-                  ? const Center(
+                  ? Center(
                       child: CircularProgressIndicator(
-                        color: Color(0xFF1B4D3E),
+                        color: AppColors.accent(context),
                       ),
                     )
                   : _buildColumnsList(),
@@ -122,30 +123,30 @@ class _PurchaseReportSettingsPageState
           GestureDetector(
             onTap: () => Navigator.pop(context),
             child: Container(
-              padding: const EdgeInsets.all(8),
+              padding: EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.8),
+                color: AppColors.card(context),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.arrow_back_ios_rounded,
                 size: 20,
-                color: Color(0xFF1B4D3E),
+                color: AppColors.accent(context),
               ),
             ),
           ),
-          const SizedBox(width: 16),
+          SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Report Settings',
                   style: TextStyle(
                     fontFamily: 'Literata',
                     fontWeight: FontWeight.w800,
                     fontSize: 22,
-                    color: Color(0xFF1B4D3E),
+                    color: AppColors.accent(context),
                   ),
                 ),
                 Text(
@@ -180,43 +181,43 @@ class _PurchaseReportSettingsPageState
     final visibleCount = _columns.where((c) => c.isVisible).length;
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 20.0),
+      padding: EdgeInsets.symmetric(horizontal: 20.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Summary card
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+              color: AppColors.accentSoft(context, 0.1),
               borderRadius: BorderRadius.circular(16),
             ),
             child: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(10),
+                  padding: EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1B4D3E),
+                    color: AppColors.accent(context),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.view_column_rounded,
                     color: Colors.white,
                     size: 24,
                   ),
                 ),
-                const SizedBox(width: 16),
+                SizedBox(width: 16),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         '$visibleCount of ${_columns.length} columns visible',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontFamily: 'Literata',
                           fontWeight: FontWeight.w700,
                           fontSize: 16,
-                          color: Color(0xFF1B4D3E),
+                          color: AppColors.accent(context),
                         ),
                       ),
                       Text(
@@ -251,15 +252,15 @@ class _PurchaseReportSettingsPageState
 
           // Empty state for custom columns
           if (customColumns.isEmpty) ...[
-            const SizedBox(height: 24),
+            SizedBox(height: 24),
             _buildSectionTitle('Custom Columns', Icons.tune_rounded),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             Container(
-              padding: const EdgeInsets.all(20),
+              padding: EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColors.card(context),
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.grey[200]!),
+                border: Border.all(color: AppColors.border(context)!),
               ),
               child: Row(
                 children: [
@@ -284,7 +285,7 @@ class _PurchaseReportSettingsPageState
             ),
           ],
 
-          const SizedBox(height: 40),
+          SizedBox(height: 40),
         ],
       ),
     );
@@ -293,15 +294,15 @@ class _PurchaseReportSettingsPageState
   Widget _buildSectionTitle(String title, IconData icon) {
     return Row(
       children: [
-        Icon(icon, size: 18, color: const Color(0xFF1B4D3E)),
-        const SizedBox(width: 8),
+        Icon(icon, size: 18, color: AppColors.accent(context)),
+        SizedBox(width: 8),
         Text(
           title,
-          style: const TextStyle(
+          style: TextStyle(
             fontFamily: 'Literata',
             fontWeight: FontWeight.w700,
             fontSize: 16,
-            color: Color(0xFF1B4D3E),
+            color: AppColors.accent(context),
           ),
         ),
       ],
@@ -310,20 +311,20 @@ class _PurchaseReportSettingsPageState
 
   Widget _buildColumnTile(ReportColumn column) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
+      margin: EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.card(context),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: column.isVisible
-              ? const Color(0xFF1B4D3E).withValues(alpha: 0.3)
-              : Colors.grey[200]!,
+              ? Color(0xFF1B4D3E).withValues(alpha: 0.3)
+              : AppColors.border(context)!,
           width: column.isVisible ? 1.5 : 1,
         ),
         boxShadow: column.isVisible
             ? [
                 BoxShadow(
-                  color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+                  color: AppColors.accentSoft(context, 0.1),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
@@ -331,14 +332,14 @@ class _PurchaseReportSettingsPageState
             : null,
       ),
       child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
         leading: Container(
           width: 40,
           height: 40,
           decoration: BoxDecoration(
             color: column.isVisible
                 ? const Color(0xFF1B4D3E).withValues(alpha: 0.1)
-                : Colors.grey[100],
+                : AppColors.chipFill(context),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Icon(

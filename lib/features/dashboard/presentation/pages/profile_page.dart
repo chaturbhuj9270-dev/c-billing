@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../../../core/services/language_service.dart';
 import '../../../../core/localization/app_localizations.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
+import 'package:c_billing/core/theme/app_theme.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -136,18 +137,18 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.scaffold(context),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.card(context),
         elevation: 2,
         leading: GestureDetector(
           onTap: () => Navigator.pop(context),
-          child: const Icon(Icons.arrow_back, color: Color(0xFF1B4D3E)),
+          child: Icon(Icons.arrow_back, color: AppTheme.primary),
         ),
         title: Text(
           _localizations.myProfile,
           style: TextStyle(
-            color: Color(0xFF1B4D3E),
+            color: AppColors.primaryText(context),
             fontSize: 22,
             fontWeight: FontWeight.w700,
             fontFamily: 'Literata',
@@ -155,8 +156,8 @@ class _ProfilePageState extends State<ProfilePage> {
         ),
       ),
       body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(color: Color(0xFF1B4D3E)),
+          ? Center(
+              child: CircularProgressIndicator(color: AppColors.accent(context)),
             )
           : SingleChildScrollView(
               child: Padding(
@@ -194,17 +195,17 @@ class _ProfilePageState extends State<ProfilePage> {
                                     fit: BoxFit.cover,
                                     errorBuilder: (context, error, stackTrace) {
                                       return Container(
-                                        color: const Color(0xFFE8F5E9),
+                                        color: AppColors.chipFill(context),
                                         child: Center(
                                           child: Text(
                                             _nameController.text.isNotEmpty
                                                 ? _nameController.text[0]
                                                       .toUpperCase()
                                                 : 'U',
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                               fontSize: 48,
                                               fontWeight: FontWeight.bold,
-                                              color: Color(0xFF1B4D3E),
+                                              color: AppColors.accent(context),
                                             ),
                                           ),
                                         ),
@@ -212,17 +213,17 @@ class _ProfilePageState extends State<ProfilePage> {
                                     },
                                   )
                                 : Container(
-                                    color: const Color(0xFFE8F5E9),
+                                    color: AppColors.chipFill(context),
                                     child: Center(
                                       child: Text(
                                         _nameController.text.isNotEmpty
                                             ? _nameController.text[0]
                                                   .toUpperCase()
                                             : 'U',
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           fontSize: 48,
                                           fontWeight: FontWeight.bold,
-                                          color: Color(0xFF1B4D3E),
+                                          color: AppColors.accent(context),
                                         ),
                                       ),
                                     ),
@@ -240,7 +241,7 @@ class _ProfilePageState extends State<ProfilePage> {
                               height: 40,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                color: const Color(0xFF1B4D3E),
+                                color: AppColors.accent(context),
                                 boxShadow: [
                                   BoxShadow(
                                     color: Colors.black.withValues(alpha: 0.2),
@@ -249,7 +250,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                   ),
                                 ],
                               ),
-                              child: const Icon(
+                              child: Icon(
                                 Icons.camera_alt,
                                 color: Colors.white,
                                 size: 20,
@@ -290,15 +291,15 @@ class _ProfilePageState extends State<ProfilePage> {
                       hint: _localizations.enterAddress,
                       icon: Icons.location_on_outlined,
                     ),
-                    const SizedBox(height: 32),
+                    SizedBox(height: 32),
                     // Save Button
                     GestureDetector(
                       onTap: _isSaving ? null : _saveProfile,
                       child: Container(
                         width: double.infinity,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        padding: EdgeInsets.symmetric(vertical: 14),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF1B4D3E),
+                          color: AppColors.accent(context),
                           borderRadius: BorderRadius.circular(8),
                           boxShadow: [
                             BoxShadow(
@@ -355,14 +356,14 @@ class _ProfilePageState extends State<ProfilePage> {
       children: [
         Text(
           label,
-          style: const TextStyle(
-            color: Color(0xFF1B4D3E),
+          style: TextStyle(
+            color: AppColors.accent(context),
             fontSize: 14,
             fontWeight: FontWeight.w600,
             fontFamily: 'Literata',
           ),
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: 8),
         Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(8),
@@ -370,7 +371,7 @@ class _ProfilePageState extends State<ProfilePage> {
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.05),
                 blurRadius: 8,
-                offset: const Offset(0, 2),
+                offset: Offset(0, 2),
               ),
             ],
           ),
@@ -380,10 +381,10 @@ class _ProfilePageState extends State<ProfilePage> {
             keyboardType: keyboardType,
             decoration: InputDecoration(
               filled: true,
-              fillColor: Colors.white,
-              prefixIcon: Icon(icon, color: const Color(0xFF1B4D3E), size: 20),
+              fillColor: AppColors.inputFill(context),
+              prefixIcon: Icon(icon, color: AppColors.accent(context), size: 20),
               hintText: hint,
-              hintStyle: const TextStyle(
+              hintStyle: TextStyle(
                 color: Color(0xFFBDBDBD),
                 fontSize: 14,
               ),
@@ -396,15 +397,15 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(
+                borderSide: BorderSide(
                   color: Color(0xFFEEEEEE),
                   width: 1,
                 ),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(
-                  color: Color(0xFF1B4D3E),
+                borderSide: BorderSide(
+                  color: AppColors.accent(context),
                   width: 2,
                 ),
               ),

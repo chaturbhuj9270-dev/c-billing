@@ -53,6 +53,7 @@ import 'package:c_billing/features/billing/presentation/widgets/billing_add_item
 import 'package:c_billing/features/customer/offline/controllers/customer_transaction_offline_controller.dart';
 import 'package:c_billing/features/customer/domain/entities/customer_transaction.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
+import 'package:c_billing/core/theme/app_theme.dart';
 
 class BillingPage extends StatefulWidget {
   final bool isEmbedded;
@@ -606,24 +607,24 @@ class _BillingPageState extends State<BillingPage> {
         title: Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(8),
+              padding: EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+                color: AppColors.accentSoft(context, 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.person_add,
-                color: Color(0xFF1B4D3E),
+                color: AppColors.accent(context),
                 size: 24,
               ),
             ),
-            const SizedBox(width: 12),
+            SizedBox(width: 12),
             Text(
               _localizations.addNewCustomer,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
-                color: Color(0xFF1B4D3E),
+                color: AppColors.accent(context),
                 fontFamily: 'Literata',
               ),
             ),
@@ -650,14 +651,14 @@ class _BillingPageState extends State<BillingPage> {
                   autofocus: true,
                   decoration: InputDecoration(
                     labelText: '${_localizations.firstName} *',
-                    prefixIcon: const Icon(Icons.person_outline),
+                    prefixIcon: Icon(Icons.person_outline),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: Color(0xFF1B4D3E),
+                      borderSide: BorderSide(
+                        color: AppColors.accent(context),
                         width: 2,
                       ),
                     ),
@@ -669,19 +670,19 @@ class _BillingPageState extends State<BillingPage> {
                     return null;
                   },
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
                 TextFormField(
                   controller: lastNameController,
                   decoration: InputDecoration(
                     labelText: '${_localizations.lastName} *',
-                    prefixIcon: const Icon(Icons.person_outline),
+                    prefixIcon: Icon(Icons.person_outline),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: Color(0xFF1B4D3E),
+                      borderSide: BorderSide(
+                        color: AppColors.accent(context),
                         width: 2,
                       ),
                     ),
@@ -706,14 +707,14 @@ class _BillingPageState extends State<BillingPage> {
                     labelText: _localizations.phoneNumberOptional,
                     hintText: '10 digit number',
                     counterText: '',
-                    prefixIcon: const Icon(Icons.phone_outlined),
+                    prefixIcon: Icon(Icons.phone_outlined),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: Color(0xFF1B4D3E),
+                      borderSide: BorderSide(
+                        color: AppColors.accent(context),
                         width: 2,
                       ),
                     ),
@@ -744,8 +745,8 @@ class _BillingPageState extends State<BillingPage> {
             },
             child: Text(
               _localizations.skip,
-              style: const TextStyle(
-                color: Color(0xFF1B4D3E),
+              style: TextStyle(
+                color: AppColors.accent(context),
                 fontFamily: 'Literata',
                 fontWeight: FontWeight.w600,
               ),
@@ -1472,10 +1473,10 @@ class _BillingPageState extends State<BillingPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7F6),
+      backgroundColor: AppColors.scaffold(context),
       body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(color: Color(0xFF1B4D3E)),
+          ? Center(
+              child: CircularProgressIndicator(color: AppColors.accent(context)),
             )
           : widget.isEmbedded
           ? Stack(
@@ -1558,9 +1559,9 @@ class _BillingPageState extends State<BillingPage> {
     final isCustomerRequired = !_isFullPayment;
 
     return Container(
-      margin: const EdgeInsets.fromLTRB(12, 6, 12, 6),
+      margin: EdgeInsets.fromLTRB(12, 6, 12, 6),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.card(context),
         borderRadius: BorderRadius.circular(16),
         border: isCustomerRequired && _selectedCustomer == null
             ? Border.all(color: Colors.red[300]!, width: 2)
@@ -1659,15 +1660,15 @@ class _BillingPageState extends State<BillingPage> {
                       _showAddCustomerDialog(phone);
                     },
                     child: Container(
-                      padding: const EdgeInsets.symmetric(
+                      padding: EdgeInsets.symmetric(
                         horizontal: 10,
                         vertical: 6,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF1B4D3E).withValues(alpha: 0.08),
+                        color: AppColors.accentSoft(context, 0.08),
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
-                          color: const Color(
+                          color: Color(
                             0xFF1B4D3E,
                           ).withValues(alpha: 0.15),
                         ),
@@ -1675,19 +1676,19 @@ class _BillingPageState extends State<BillingPage> {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.person_add_rounded,
-                            color: Color(0xFF1B4D3E),
+                            color: AppColors.accent(context),
                             size: 14,
                           ),
-                          const SizedBox(width: 4),
-                          const Text(
+                          SizedBox(width: 4),
+                          Text(
                             'Add',
                             style: TextStyle(
                               fontFamily: 'Literata',
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
-                              color: Color(0xFF1B4D3E),
+                              color: AppColors.accent(context),
                             ),
                           ),
                         ],
@@ -1700,14 +1701,14 @@ class _BillingPageState extends State<BillingPage> {
                   GestureDetector(
                     onTap: _toggleQuickStats,
                     child: Container(
-                      padding: const EdgeInsets.all(6),
+                      padding: EdgeInsets.all(6),
                       decoration: BoxDecoration(
                         gradient: _showQuickStats
                             ? null
-                            : const LinearGradient(
-                                colors: [Color(0xFF1B4D3E), Color(0xFF2D6A4F)],
+                            : LinearGradient(
+                                colors: AppColors.headerGradient(context),
                               ),
-                        color: _showQuickStats ? Colors.grey[200] : null,
+                        color: _showQuickStats ? AppColors.border(context) : null,
                         borderRadius: BorderRadius.circular(8),
                         boxShadow: _showQuickStats
                             ? null
@@ -1738,10 +1739,10 @@ class _BillingPageState extends State<BillingPage> {
                   Container(
                     width: 36,
                     height: 36,
-                    padding: const EdgeInsets.all(8),
-                    child: const CircularProgressIndicator(
+                    padding: EdgeInsets.all(8),
+                    child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      color: Color(0xFF1B4D3E),
+                      color: AppColors.accent(context),
                     ),
                   ),
               ],
@@ -1756,17 +1757,17 @@ class _BillingPageState extends State<BillingPage> {
                 // Show selected customer info card (bold name + balance)
                 if (_selectedCustomer != null && !_generateBillViaContact) ...[
                   Container(
-                    padding: const EdgeInsets.all(10),
+                    padding: EdgeInsets.all(10),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
-                          const Color(0xFF1B4D3E).withValues(alpha: 0.08),
-                          const Color(0xFF1B4D3E).withValues(alpha: 0.03),
+                          Color(0xFF1B4D3E).withValues(alpha: 0.08),
+                          Color(0xFF1B4D3E).withValues(alpha: 0.03),
                         ],
                       ),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: const Color(0xFF1B4D3E).withValues(alpha: 0.15),
+                        color: AppColors.accentSoft(context, 0.15),
                       ),
                     ),
                     child: Row(
@@ -1775,8 +1776,8 @@ class _BillingPageState extends State<BillingPage> {
                           width: 38,
                           height: 38,
                           decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFF1B4D3E), Color(0xFF2D6A4F)],
+                            gradient: LinearGradient(
+                              colors: AppColors.headerGradient(context),
                             ),
                             borderRadius: BorderRadius.circular(10),
                           ),
@@ -1785,7 +1786,7 @@ class _BillingPageState extends State<BillingPage> {
                               (_selectedCustomer!['fullName'] as String? ??
                                       '?')[0]
                                   .toUpperCase(),
-                              style: const TextStyle(
+                              style: TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w700,
                                 fontSize: 16,
@@ -1794,18 +1795,18 @@ class _BillingPageState extends State<BillingPage> {
                             ),
                           ),
                         ),
-                        const SizedBox(width: 10),
+                        SizedBox(width: 10),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
                                 _selectedCustomer!['fullName'] ?? '-',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontFamily: 'Literata',
                                   fontWeight: FontWeight.w700,
                                   fontSize: 14,
-                                  color: Color(0xFF1B4D3E),
+                                  color: AppColors.accent(context),
                                 ),
                               ),
                               const SizedBox(height: 2),
@@ -1913,10 +1914,10 @@ class _BillingPageState extends State<BillingPage> {
       children: [
         Container(
           decoration: BoxDecoration(
-            color: Colors.grey[50],
+            color: AppColors.scaffold(context),
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
-              color: const Color(0xFF1B4D3E).withValues(alpha: 0.2),
+              color: AppColors.accentSoft(context, 0.2),
             ),
           ),
           child: TextField(
@@ -1927,39 +1928,39 @@ class _BillingPageState extends State<BillingPage> {
               FilteringTextInputFormatter.digitsOnly,
               LengthLimitingTextInputFormatter(10),
             ],
-            style: const TextStyle(fontFamily: 'Literata', fontSize: 12),
+            style: TextStyle(fontFamily: 'Literata', fontSize: 12),
             decoration: InputDecoration(
               labelText: '${_localizations.enterPhoneNumber} *',
               hintText: '10 digit number',
               hintStyle: TextStyle(color: Colors.grey[400], fontSize: 11),
               counterText: '',
-              labelStyle: const TextStyle(
-                color: Color(0xFF1B4D3E),
+              labelStyle: TextStyle(
+                color: AppColors.accent(context),
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
               ),
               prefixIcon: Container(
-                margin: const EdgeInsets.all(4),
-                padding: const EdgeInsets.all(4),
+                margin: EdgeInsets.all(4),
+                padding: EdgeInsets.all(4),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+                  color: AppColors.accentSoft(context, 0.1),
                   borderRadius: BorderRadius.circular(5),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.phone_rounded,
-                  color: Color(0xFF1B4D3E),
+                  color: AppColors.accent(context),
                   size: 14,
                 ),
               ),
               suffixIcon: _isSearchingCustomer
-                  ? const Padding(
+                  ? Padding(
                       padding: EdgeInsets.all(8.0),
                       child: SizedBox(
                         width: 14,
                         height: 14,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          color: Color(0xFF1B4D3E),
+                          color: AppColors.accent(context),
                         ),
                       ),
                     )
@@ -2087,27 +2088,27 @@ class _BillingPageState extends State<BillingPage> {
           onTap: _showCustomerPicker,
           child: Container(
             height: 44,
-            padding: const EdgeInsets.symmetric(horizontal: 10),
+            padding: EdgeInsets.symmetric(horizontal: 10),
             decoration: BoxDecoration(
-              color: Colors.grey[50],
+              color: AppColors.scaffold(context),
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
                 color: isCustomerRequired
                     ? Colors.red[200]!
-                    : Colors.grey[200]!,
+                    : AppColors.border(context)!,
               ),
             ),
             child: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(6),
+                  padding: EdgeInsets.all(6),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+                    color: AppColors.accentSoft(context, 0.1),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Icon(
                     Icons.search_rounded,
-                    color: const Color(0xFF1B4D3E).withValues(alpha: 0.7),
+                    color: AppColors.accentSoft(context, 0.7),
                     size: 16,
                   ),
                 ),
@@ -2153,14 +2154,14 @@ class _BillingPageState extends State<BillingPage> {
                     icon: Icons.phone_outlined,
                     keyboardType: TextInputType.phone,
                     suffixIcon: _isSearchingCustomer
-                        ? const Padding(
+                        ? Padding(
                             padding: EdgeInsets.all(10.0),
                             child: SizedBox(
                               width: 18,
                               height: 18,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                color: Color(0xFF1B4D3E),
+                                color: AppColors.accent(context),
                               ),
                             ),
                           )
@@ -2257,9 +2258,9 @@ class _BillingPageState extends State<BillingPage> {
     return Container(
       height: 44,
       decoration: BoxDecoration(
-        color: Colors.grey[50],
+        color: AppColors.scaffold(context),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.grey[200]!),
+        border: Border.all(color: AppColors.border(context)!),
       ),
       child: TextField(
         controller: controller,
@@ -2471,16 +2472,16 @@ class _BillingPageState extends State<BillingPage> {
   void _onPageIndexNoChanged() {
     _debounceTimer?.cancel();
     if (_indexNoController.text.trim().isEmpty) return;
-    _debounceTimer = Timer(const Duration(milliseconds: 800), () {
+    _debounceTimer = Timer(Duration(milliseconds: 800), () {
       _addProductByIndexNoOnPage();
     });
   }
 
   Widget _buildAddItemsSection() {
     return Container(
-      margin: const EdgeInsets.fromLTRB(12, 6, 12, 6),
+      margin: EdgeInsets.fromLTRB(12, 6, 12, 6),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.card(context),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.grey.withValues(alpha: 0.1)),
         boxShadow: [
@@ -2516,37 +2517,37 @@ class _BillingPageState extends State<BillingPage> {
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
-                        const Color(0xFF1B4D3E),
-                        const Color(0xFF1B4D3E).withValues(alpha: 0.8),
+                        Color(0xFF1B4D3E),
+                        Color(0xFF1B4D3E).withValues(alpha: 0.8),
                       ],
                     ),
                     borderRadius: BorderRadius.circular(10),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFF1B4D3E).withValues(alpha: 0.3),
+                        color: AppColors.accentSoft(context, 0.3),
                         blurRadius: 6,
                         offset: const Offset(0, 2),
                       ),
                     ],
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.add_shopping_cart_rounded,
                     color: Colors.white,
                     size: 18,
                   ),
                 ),
-                const SizedBox(width: 10),
+                SizedBox(width: 10),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         _localizations.addItems,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontFamily: 'Literata',
                           fontWeight: FontWeight.w700,
                           fontSize: 14,
-                          color: Color(0xFF1B4D3E),
+                          color: AppColors.accent(context),
                         ),
                       ),
                       Text(
@@ -2570,15 +2571,15 @@ class _BillingPageState extends State<BillingPage> {
               children: [
                 // Combined: Product code input + Search + Barcode scan
                 Container(
-                  padding: const EdgeInsets.symmetric(
+                  padding: EdgeInsets.symmetric(
                     horizontal: 10,
                     vertical: 8,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.grey[50],
+                    color: AppColors.inputFill(context),
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(
-                      color: const Color(0xFF1B4D3E).withValues(alpha: 0.2),
+                      color: AppColors.border(context),
                     ),
                   ),
                   child: Row(
@@ -2592,7 +2593,7 @@ class _BillingPageState extends State<BillingPage> {
                           ),
                           borderRadius: BorderRadius.circular(6),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.flash_on_rounded,
                           color: Colors.white,
                           size: 14,
@@ -2605,19 +2606,26 @@ class _BillingPageState extends State<BillingPage> {
                           controller: _indexNoController,
                           focusNode: _indexNoFocusNode,
                           keyboardType: TextInputType.number,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontFamily: 'Literata',
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
+                            color: AppColors.primaryText(context),
                           ),
                           decoration: InputDecoration(
                             hintText: _localizations.enterProductCode,
                             hintStyle: TextStyle(
-                              color: Colors.grey[500],
+                              color: AppColors.mutedText(context),
                               fontWeight: FontWeight.w400,
                               fontSize: 13,
                             ),
                             border: InputBorder.none,
+                            enabledBorder: InputBorder.none,
+                            focusedBorder: InputBorder.none,
+                            disabledBorder: InputBorder.none,
+                            errorBorder: InputBorder.none,
+                            focusedErrorBorder: InputBorder.none,
+                            filled: false,
                             isDense: true,
                             contentPadding: EdgeInsets.zero,
                           ),
@@ -2630,16 +2638,16 @@ class _BillingPageState extends State<BillingPage> {
                       GestureDetector(
                         onTap: _showAddItemsPopup,
                         child: Container(
-                          padding: const EdgeInsets.all(6),
+                          padding: EdgeInsets.all(6),
                           decoration: BoxDecoration(
-                            color: const Color(
+                            color: Color(
                               0xFF1B4D3E,
                             ).withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(6),
                           ),
-                          child: const Icon(
+                          child: Icon(
                             Icons.search_rounded,
-                            color: Color(0xFF1B4D3E),
+                            color: AppColors.accent(context),
                             size: 18,
                           ),
                         ),
@@ -2679,9 +2687,9 @@ class _BillingPageState extends State<BillingPage> {
 
   Widget _buildBillItemsSection() {
     return Container(
-      margin: const EdgeInsets.fromLTRB(12, 6, 12, 6),
+      margin: EdgeInsets.fromLTRB(12, 6, 12, 6),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.card(context),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: Colors.grey.withValues(alpha: 0.08)),
         boxShadow: [
@@ -2716,7 +2724,7 @@ class _BillingPageState extends State<BillingPage> {
                     ),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.receipt_long_rounded,
                     color: Colors.white,
                     size: 15,
@@ -2732,14 +2740,14 @@ class _BillingPageState extends State<BillingPage> {
                     color: Color(0xFF1A1A2E),
                   ),
                 ),
-                const Spacer(),
+                Spacer(),
                 Container(
-                  padding: const EdgeInsets.symmetric(
+                  padding: EdgeInsets.symmetric(
                     horizontal: 8,
                     vertical: 3,
                   ),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1B4D3E),
+                    color: AppColors.accent(context),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
@@ -2826,7 +2834,7 @@ class _BillingPageState extends State<BillingPage> {
                 ),
                 onDismissed: (_) => setState(() => _billItems.removeAt(index)),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(
+                  padding: EdgeInsets.symmetric(
                     horizontal: 10,
                     vertical: 8,
                   ),
@@ -2842,7 +2850,7 @@ class _BillingPageState extends State<BillingPage> {
                             width: 22,
                             height: 22,
                             decoration: BoxDecoration(
-                              color: Colors.grey[100],
+                              color: AppColors.chipFill(context),
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Center(
@@ -2933,12 +2941,12 @@ class _BillingPageState extends State<BillingPage> {
                               ],
                             ),
                           ),
-                          const SizedBox(width: 8),
+                          SizedBox(width: 8),
                           // Compact Quantity stepper
                           Container(
                             height: 30,
                             decoration: BoxDecoration(
-                              color: Colors.grey[50],
+                              color: AppColors.scaffold(context),
                               borderRadius: BorderRadius.circular(8),
                               border: Border.all(
                                 color: Colors.grey.withValues(alpha: 0.15),
@@ -2982,18 +2990,18 @@ class _BillingPageState extends State<BillingPage> {
                                     width: 28,
                                     height: 30,
                                     decoration: BoxDecoration(
-                                      color: const Color(
+                                      color: Color(
                                         0xFF1B4D3E,
                                       ).withValues(alpha: 0.08),
-                                      borderRadius: const BorderRadius.only(
+                                      borderRadius: BorderRadius.only(
                                         topLeft: Radius.circular(7),
                                         bottomLeft: Radius.circular(7),
                                       ),
                                     ),
-                                    child: const Icon(
+                                    child: Icon(
                                       Icons.remove,
                                       size: 14,
-                                      color: Color(0xFF1B4D3E),
+                                      color: AppColors.accent(context),
                                     ),
                                   ),
                                 ),
@@ -3062,7 +3070,7 @@ class _BillingPageState extends State<BillingPage> {
                                           ? const Color(
                                               0xFF1B4D3E,
                                             ).withValues(alpha: 0.08)
-                                          : Colors.grey[100],
+                                          : AppColors.chipFill(context),
                                       borderRadius: const BorderRadius.only(
                                         topRight: Radius.circular(7),
                                         bottomRight: Radius.circular(7),
@@ -3080,18 +3088,18 @@ class _BillingPageState extends State<BillingPage> {
                               ],
                             ),
                           ),
-                          const SizedBox(width: 10),
+                          SizedBox(width: 10),
                           // Subtotal - right aligned
                           SizedBox(
                             width: 60,
                             child: Text(
                               '₹${item.subtotal.toStringAsFixed(0)}',
                               textAlign: TextAlign.right,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontFamily: 'Literata',
                                 fontWeight: FontWeight.w700,
                                 fontSize: 13,
-                                color: Color(0xFF1B4D3E),
+                                color: AppColors.accent(context),
                               ),
                             ),
                           ),
@@ -3113,9 +3121,9 @@ class _BillingPageState extends State<BillingPage> {
           ),
           // Footer with total
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             decoration: BoxDecoration(
-              color: const Color(0xFF1B4D3E).withValues(alpha: 0.04),
+              color: AppColors.accentSoft(context, 0.04),
               borderRadius: const BorderRadius.only(
                 bottomLeft: Radius.circular(14),
                 bottomRight: Radius.circular(14),
@@ -3142,14 +3150,14 @@ class _BillingPageState extends State<BillingPage> {
                     fontWeight: FontWeight.w500,
                   ),
                 ),
-                const SizedBox(width: 8),
+                SizedBox(width: 8),
                 Text(
                   '₹${_totalAmount.toStringAsFixed(0)}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'Literata',
                     fontSize: 15,
                     fontWeight: FontWeight.w800,
-                    color: Color(0xFF1B4D3E),
+                    color: AppColors.accent(context),
                   ),
                 ),
               ],
@@ -3217,7 +3225,7 @@ class _BillingPageState extends State<BillingPage> {
                         }
                       : null,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(
+                    padding: EdgeInsets.symmetric(
                       horizontal: 10,
                       vertical: 4,
                     ),
@@ -3226,7 +3234,7 @@ class _BillingPageState extends State<BillingPage> {
                           ? const Color(0xFF1B4D3E)
                           : isAvailable
                           ? const Color(0xFF1B4D3E).withValues(alpha: 0.08)
-                          : Colors.grey[200],
+                          : AppColors.border(context),
                       borderRadius: BorderRadius.circular(6),
                       border: isSelected
                           ? null
@@ -3279,7 +3287,7 @@ class _BillingPageState extends State<BillingPage> {
                       }
                     : null,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(
+                  padding: EdgeInsets.symmetric(
                     horizontal: 10,
                     vertical: 4,
                   ),
@@ -3290,7 +3298,7 @@ class _BillingPageState extends State<BillingPage> {
                         ? const Color(0xFF1B4D3E)
                         : maxStock >= 1
                         ? const Color(0xFF1B4D3E).withValues(alpha: 0.08)
-                        : Colors.grey[200],
+                        : AppColors.border(context),
                     borderRadius: BorderRadius.circular(6),
                     border:
                         item.quantity == 1.0 &&
@@ -3328,11 +3336,11 @@ class _BillingPageState extends State<BillingPage> {
                 maxStock: maxStock,
               ),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: isCustomValue
                       ? const Color(0xFF7B68EE)
-                      : Colors.grey[100],
+                      : AppColors.chipFill(context),
                   borderRadius: BorderRadius.circular(6),
                   border: Border.all(
                     color: isCustomValue
@@ -3402,13 +3410,13 @@ class _BillingPageState extends State<BillingPage> {
           }
 
           return AlertDialog(
-            backgroundColor: Colors.white,
+            backgroundColor: AppColors.card(context),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
             ),
             title: Text(
               'Enter $subUnit',
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: 'Literata',
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
@@ -3423,11 +3431,11 @@ class _BillingPageState extends State<BillingPage> {
                   keyboardType: TextInputType.number,
                   autofocus: true,
                   onChanged: (_) => validate(),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'Literata',
                     fontSize: 20,
                     fontWeight: FontWeight.w700,
-                    color: Color(0xFF1B4D3E),
+                    color: AppColors.accent(context),
                   ),
                   decoration: InputDecoration(
                     errorText: errorText,
@@ -3438,15 +3446,15 @@ class _BillingPageState extends State<BillingPage> {
                       color: Colors.grey[600],
                     ),
                     filled: true,
-                    fillColor: Colors.grey[50],
+                    fillColor: AppColors.scaffold(context),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide.none,
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: Color(0xFF1B4D3E),
+                      borderSide: BorderSide(
+                        color: AppColors.accent(context),
                         width: 2,
                       ),
                     ),
@@ -3620,7 +3628,7 @@ class _BillingPageState extends State<BillingPage> {
           }
 
           return AlertDialog(
-            backgroundColor: Colors.white,
+            backgroundColor: AppColors.card(context),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(24),
             ),
@@ -3641,7 +3649,7 @@ class _BillingPageState extends State<BillingPage> {
                       ),
                     ],
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.edit_rounded,
                     color: Colors.white,
                     size: 20,
@@ -3681,9 +3689,9 @@ class _BillingPageState extends State<BillingPage> {
               children: [
                 // Info row
                 Container(
-                  padding: const EdgeInsets.all(14),
+                  padding: EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: Colors.grey[50],
+                    color: AppColors.scaffold(context),
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(
                       color: Colors.grey.withValues(alpha: 0.1),
@@ -3705,16 +3713,16 @@ class _BillingPageState extends State<BillingPage> {
                           ),
                           Text(
                             '₹${item.sellingPrice.toStringAsFixed(0)}',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontFamily: 'Literata',
                               fontWeight: FontWeight.w700,
                               fontSize: 16,
-                              color: Color(0xFF1B4D3E),
+                              color: AppColors.accent(context),
                             ),
                           ),
                         ],
                       ),
-                      Container(width: 1, height: 36, color: Colors.grey[200]),
+                      Container(width: 1, height: 36, color: AppColors.border(context)),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
@@ -3744,9 +3752,9 @@ class _BillingPageState extends State<BillingPage> {
                 if (supportsSubUnit && subUnit != null) ...[
                   const SizedBox(height: 12),
                   Container(
-                    padding: const EdgeInsets.all(4),
+                    padding: EdgeInsets.all(4),
                     decoration: BoxDecoration(
-                      color: Colors.grey[100],
+                      color: AppColors.chipFill(context),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Row(
@@ -3852,7 +3860,7 @@ class _BillingPageState extends State<BillingPage> {
                         ),
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    SizedBox(width: 12),
                     // Quantity field
                     Expanded(
                       child: TextField(
@@ -3860,17 +3868,17 @@ class _BillingPageState extends State<BillingPage> {
                         keyboardType: TextInputType.number,
                         textAlign: TextAlign.center,
                         onChanged: (_) => validateQty(),
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontFamily: 'Literata',
                           fontSize: 24,
                           fontWeight: FontWeight.w800,
-                          color: Color(0xFF1B4D3E),
+                          color: AppColors.accent(context),
                         ),
                         decoration: InputDecoration(
                           errorText: errorText,
-                          errorStyle: const TextStyle(fontSize: 11),
+                          errorStyle: TextStyle(fontSize: 11),
                           filled: true,
-                          fillColor: Colors.grey[50],
+                          fillColor: AppColors.scaffold(context),
                           contentPadding: const EdgeInsets.symmetric(
                             horizontal: 16,
                             vertical: 16,
@@ -3881,14 +3889,14 @@ class _BillingPageState extends State<BillingPage> {
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(14),
-                            borderSide: const BorderSide(
+                            borderSide: BorderSide(
                               color: Color(0xFF7B68EE),
                               width: 2,
                             ),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(14),
-                            borderSide: BorderSide(color: Colors.grey[200]!),
+                            borderSide: BorderSide(color: AppColors.border(context)!),
                           ),
                         ),
                       ),
@@ -3964,12 +3972,12 @@ class _BillingPageState extends State<BillingPage> {
                                   validateQty();
                                 },
                                 child: Container(
-                                  padding: const EdgeInsets.symmetric(
+                                  padding: EdgeInsets.symmetric(
                                     horizontal: 14,
                                     vertical: 8,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: Colors.grey[100],
+                                    color: AppColors.chipFill(context),
                                     borderRadius: BorderRadius.circular(8),
                                     border: Border.all(
                                       color: Colors.grey.withValues(alpha: 0.2),
@@ -4111,28 +4119,28 @@ class _BillingPageState extends State<BillingPage> {
           }
 
           return AlertDialog(
-            backgroundColor: Colors.white,
+            backgroundColor: AppColors.card(context),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(24),
             ),
             title: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(10),
+                  padding: EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF1B4D3E), Color(0xFF2D6A4F)],
+                    gradient: LinearGradient(
+                      colors: AppColors.headerGradient(context),
                     ),
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFF1B4D3E).withValues(alpha: 0.3),
+                        color: AppColors.accentSoft(context, 0.3),
                         blurRadius: 8,
                         offset: const Offset(0, 3),
                       ),
                     ],
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.currency_rupee_rounded,
                     color: Colors.white,
                     size: 20,
@@ -4172,9 +4180,9 @@ class _BillingPageState extends State<BillingPage> {
               children: [
                 // Info row showing current quantity and subtotal
                 Container(
-                  padding: const EdgeInsets.all(14),
+                  padding: EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: Colors.grey[50],
+                    color: AppColors.scaffold(context),
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(
                       color: Colors.grey.withValues(alpha: 0.1),
@@ -4196,16 +4204,16 @@ class _BillingPageState extends State<BillingPage> {
                           ),
                           Text(
                             '${item.quantity}',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontFamily: 'Literata',
                               fontWeight: FontWeight.w700,
                               fontSize: 16,
-                              color: Color(0xFF1B4D3E),
+                              color: AppColors.accent(context),
                             ),
                           ),
                         ],
                       ),
-                      Container(width: 1, height: 36, color: Colors.grey[200]),
+                      Container(width: 1, height: 36, color: AppColors.border(context)),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
@@ -4235,31 +4243,31 @@ class _BillingPageState extends State<BillingPage> {
                 // Price input field
                 TextField(
                   controller: priceController,
-                  keyboardType: const TextInputType.numberWithOptions(
+                  keyboardType: TextInputType.numberWithOptions(
                     decimal: true,
                   ),
                   textAlign: TextAlign.center,
                   autofocus: true,
                   onChanged: (_) => validatePrice(),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'Literata',
                     fontSize: 24,
                     fontWeight: FontWeight.w800,
-                    color: Color(0xFF1B4D3E),
+                    color: AppColors.accent(context),
                   ),
                   decoration: InputDecoration(
                     prefixText: '₹ ',
-                    prefixStyle: const TextStyle(
+                    prefixStyle: TextStyle(
                       fontFamily: 'Literata',
                       fontSize: 24,
                       fontWeight: FontWeight.w800,
-                      color: Color(0xFF1B4D3E),
+                      color: AppColors.accent(context),
                     ),
                     errorText: errorText,
-                    errorStyle: const TextStyle(fontSize: 11),
+                    errorStyle: TextStyle(fontSize: 11),
                     filled: true,
-                    fillColor: Colors.grey[50],
-                    contentPadding: const EdgeInsets.symmetric(
+                    fillColor: AppColors.scaffold(context),
+                    contentPadding: EdgeInsets.symmetric(
                       horizontal: 16,
                       vertical: 16,
                     ),
@@ -4269,14 +4277,14 @@ class _BillingPageState extends State<BillingPage> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
-                      borderSide: const BorderSide(
-                        color: Color(0xFF1B4D3E),
+                      borderSide: BorderSide(
+                        color: AppColors.accent(context),
                         width: 2,
                       ),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide(color: Colors.grey[200]!),
+                      borderSide: BorderSide(color: AppColors.border(context)!),
                     ),
                   ),
                 ),
@@ -4376,7 +4384,7 @@ class _BillingPageState extends State<BillingPage> {
                 ),
                 child: Text(
                   _localizations.update,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'Literata',
                     fontWeight: FontWeight.w700,
                   ),
@@ -4391,9 +4399,9 @@ class _BillingPageState extends State<BillingPage> {
 
   Widget _buildDiscountSection() {
     return Container(
-      margin: const EdgeInsets.fromLTRB(12, 6, 12, 6),
+      margin: EdgeInsets.fromLTRB(12, 6, 12, 6),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.card(context),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.grey.withValues(alpha: 0.1)),
         boxShadow: [
@@ -4440,24 +4448,24 @@ class _BillingPageState extends State<BillingPage> {
                       ),
                     ],
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.discount_rounded,
                     color: Colors.white,
                     size: 18,
                   ),
                 ),
-                const SizedBox(width: 10),
+                SizedBox(width: 10),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         _localizations.discount,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontFamily: 'Literata',
                           fontWeight: FontWeight.w700,
                           fontSize: 14,
-                          color: Color(0xFF1B4D3E),
+                          color: AppColors.accent(context),
                         ),
                       ),
                       Text(
@@ -4497,7 +4505,7 @@ class _BillingPageState extends State<BillingPage> {
           ),
           // Content
           Padding(
-            padding: const EdgeInsets.all(12),
+            padding: EdgeInsets.all(12),
             child: Column(
               children: [
                 Row(
@@ -4505,7 +4513,7 @@ class _BillingPageState extends State<BillingPage> {
                     // Discount type toggle
                     Container(
                       decoration: BoxDecoration(
-                        color: Colors.grey[100],
+                        color: AppColors.chipFill(context),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Row(
@@ -4534,14 +4542,14 @@ class _BillingPageState extends State<BillingPage> {
                         ],
                       ),
                     ),
-                    const SizedBox(width: 10),
+                    SizedBox(width: 10),
                     // Discount input
                     Expanded(
                       child: Container(
                         decoration: BoxDecoration(
-                          color: Colors.grey[50],
+                          color: AppColors.scaffold(context),
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: Colors.grey[200]!),
+                          border: Border.all(color: AppColors.border(context)!),
                         ),
                         child: TextField(
                           controller: _discountController,
@@ -4613,17 +4621,17 @@ class _BillingPageState extends State<BillingPage> {
   // Bill summary card
   Widget _buildBillSummaryCard() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            const Color(0xFF1B4D3E).withValues(alpha: 0.08),
-            const Color(0xFF1B4D3E).withValues(alpha: 0.04),
+            Color(0xFF1B4D3E).withValues(alpha: 0.08),
+            Color(0xFF1B4D3E).withValues(alpha: 0.04),
           ],
         ),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: const Color(0xFF1B4D3E).withValues(alpha: 0.15),
+          color: AppColors.accentSoft(context, 0.15),
         ),
       ),
       child: Column(
@@ -4693,19 +4701,19 @@ class _BillingPageState extends State<BillingPage> {
                 ),
               ),
           ],
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           Divider(color: Colors.grey[300], height: 1),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
                 _localizations.finalTotal,
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: 'Literata',
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
-                  color: Color(0xFF1B4D3E),
+                  color: AppColors.accent(context),
                 ),
               ),
               Container(
@@ -4715,7 +4723,7 @@ class _BillingPageState extends State<BillingPage> {
                 ),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [const Color(0xFF1B4D3E), const Color(0xFF2D6A4F)],
+                    colors: AppColors.headerGradient(context),
                   ),
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -4795,9 +4803,9 @@ class _BillingPageState extends State<BillingPage> {
   /// GST mode selection section
   Widget _buildGstModeSection() {
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+      margin: EdgeInsets.fromLTRB(16, 8, 16, 8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.card(context),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Colors.grey.withValues(alpha: 0.1)),
         boxShadow: [
@@ -4844,24 +4852,24 @@ class _BillingPageState extends State<BillingPage> {
                       ),
                     ],
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.receipt_long_rounded,
                     color: Colors.white,
                     size: 22,
                   ),
                 ),
-                const SizedBox(width: 14),
+                SizedBox(width: 14),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         _localizations.gstCalculationMode,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontFamily: 'Literata',
                           fontWeight: FontWeight.w700,
                           fontSize: 16,
-                          color: Color(0xFF1B4D3E),
+                          color: AppColors.accent(context),
                         ),
                       ),
                       const SizedBox(height: 2),
@@ -4948,14 +4956,14 @@ class _BillingPageState extends State<BillingPage> {
       },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        padding: EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
           gradient: isSelected
               ? LinearGradient(
                   colors: [Colors.orange[600]!, Colors.orange[500]!],
                 )
               : null,
-          color: isSelected ? null : Colors.grey[50],
+          color: isSelected ? null : AppColors.scaffold(context),
           borderRadius: BorderRadius.circular(25),
           border: Border.all(
             color: isSelected ? Colors.transparent : Colors.grey[300]!,
@@ -4980,7 +4988,7 @@ class _BillingPageState extends State<BillingPage> {
               decoration: BoxDecoration(
                 color: isSelected
                     ? Colors.white.withValues(alpha: 0.2)
-                    : Colors.grey[200],
+                    : AppColors.border(context),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(
@@ -5007,9 +5015,9 @@ class _BillingPageState extends State<BillingPage> {
 
   Widget _buildPaymentSection() {
     return Container(
-      margin: const EdgeInsets.fromLTRB(12, 6, 12, 6),
+      margin: EdgeInsets.fromLTRB(12, 6, 12, 6),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.card(context),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.grey.withValues(alpha: 0.1)),
         boxShadow: [
@@ -5044,36 +5052,36 @@ class _BillingPageState extends State<BillingPage> {
                   width: 34,
                   height: 34,
                   decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF1B4D3E), Color(0xFF2D6A4F)],
+                    gradient: LinearGradient(
+                      colors: AppColors.headerGradient(context),
                     ),
                     borderRadius: BorderRadius.circular(10),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFF1B4D3E).withValues(alpha: 0.3),
+                        color: AppColors.accentSoft(context, 0.3),
                         blurRadius: 6,
                         offset: const Offset(0, 2),
                       ),
                     ],
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.payments_rounded,
                     color: Colors.white,
                     size: 18,
                   ),
                 ),
-                const SizedBox(width: 10),
+                SizedBox(width: 10),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         _localizations.payment,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontFamily: 'Literata',
                           fontWeight: FontWeight.w700,
                           fontSize: 14,
-                          color: Color(0xFF1B4D3E),
+                          color: AppColors.accent(context),
                         ),
                       ),
                       Text(
@@ -5144,9 +5152,9 @@ class _BillingPageState extends State<BillingPage> {
               children: [
                 // Payment type toggle
                 Container(
-                  padding: const EdgeInsets.all(3),
+                  padding: EdgeInsets.all(3),
                   decoration: BoxDecoration(
-                    color: Colors.grey[100],
+                    color: AppColors.chipFill(context),
                     borderRadius: BorderRadius.circular(14),
                   ),
                   child: Row(
@@ -5208,24 +5216,24 @@ class _BillingPageState extends State<BillingPage> {
                                 color: Colors.grey[700],
                               ),
                             ),
-                            const SizedBox(height: 6),
+                            SizedBox(height: 6),
                             Container(
                               decoration: BoxDecoration(
-                                color: Colors.grey[50],
+                                color: AppColors.scaffold(context),
                                 borderRadius: BorderRadius.circular(10),
-                                border: Border.all(color: Colors.grey[200]!),
+                                border: Border.all(color: AppColors.border(context)!),
                               ),
                               child: TextField(
                                 controller: _receivedAmountController,
                                 keyboardType:
-                                    const TextInputType.numberWithOptions(
+                                    TextInputType.numberWithOptions(
                                       decimal: true,
                                     ),
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontFamily: 'Literata',
                                   fontSize: 15,
                                   fontWeight: FontWeight.w700,
-                                  color: Color(0xFF1B4D3E),
+                                  color: AppColors.accent(context),
                                 ),
                                 decoration: InputDecoration(
                                   prefixText: '₹ ',
@@ -5402,19 +5410,19 @@ class _BillingPageState extends State<BillingPage> {
 
                 // Summary for partial payment
                 if (!_isFullPayment && _receivedAmount > 0) ...[
-                  const SizedBox(height: 18),
+                  SizedBox(height: 18),
                   Container(
-                    padding: const EdgeInsets.all(16),
+                    padding: EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
-                          const Color(0xFF1B4D3E).withValues(alpha: 0.08),
-                          const Color(0xFF1B4D3E).withValues(alpha: 0.04),
+                          Color(0xFF1B4D3E).withValues(alpha: 0.08),
+                          Color(0xFF1B4D3E).withValues(alpha: 0.04),
                         ],
                       ),
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                        color: const Color(0xFF1B4D3E).withValues(alpha: 0.15),
+                        color: AppColors.accentSoft(context, 0.15),
                       ),
                     ),
                     child: Column(
@@ -5462,11 +5470,11 @@ class _BillingPageState extends State<BillingPage> {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        padding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         decoration: BoxDecoration(
           gradient: isSelected
-              ? const LinearGradient(
-                  colors: [Color(0xFF1B4D3E), Color(0xFF2D6A4F)],
+              ? LinearGradient(
+                  colors: AppColors.headerGradient(context),
                 )
               : null,
           color: isSelected ? null : Colors.transparent,
@@ -5474,7 +5482,7 @@ class _BillingPageState extends State<BillingPage> {
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: const Color(0xFF1B4D3E).withValues(alpha: 0.3),
+                    color: AppColors.accentSoft(context, 0.3),
                     blurRadius: 4,
                     offset: const Offset(0, 2),
                   ),
@@ -5520,7 +5528,7 @@ class _BillingPageState extends State<BillingPage> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF1B4D3E) : Colors.grey[100],
+          color: isSelected ? Color(0xFF1B4D3E) : AppColors.chipFill(context),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isSelected ? const Color(0xFF1B4D3E) : Colors.grey[300]!,
@@ -5610,7 +5618,7 @@ class _BillingPageState extends State<BillingPage> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF1B4D3E) : Colors.grey[100],
+          color: isSelected ? Color(0xFF1B4D3E) : AppColors.chipFill(context),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isSelected ? const Color(0xFF1B4D3E) : Colors.grey[300]!,
@@ -5800,35 +5808,35 @@ class _BillingPageState extends State<BillingPage> {
           width: 36,
           height: 36,
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
+            gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [Color(0xFF1B4D3E), Color(0xFF2D6A4F)],
+              colors: AppColors.headerGradient(context),
             ),
             borderRadius: BorderRadius.circular(10),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFF1B4D3E).withValues(alpha: 0.4),
+                color: AppColors.accentSoft(context, 0.4),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
             ],
           ),
-          child: const Icon(
+          child: Icon(
             Icons.dashboard_customize_rounded,
             color: Colors.white,
             size: 18,
           ),
         ),
-        const SizedBox(width: 12),
+        SizedBox(width: 12),
         Expanded(
           child: Text(
             _localizations.quickActions,
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: 'Literata',
               fontWeight: FontWeight.w800,
               fontSize: 16,
-              color: Color(0xFF1B4D3E),
+              color: AppColors.accent(context),
               letterSpacing: -0.3,
             ),
           ),
@@ -5840,15 +5848,15 @@ class _BillingPageState extends State<BillingPage> {
             width: 32,
             height: 32,
             decoration: BoxDecoration(
-              color: const Color(0xFF1B4D3E).withValues(alpha: 0.08),
+              color: AppColors.accentSoft(context, 0.08),
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
-                color: const Color(0xFF1B4D3E).withValues(alpha: 0.15),
+                color: AppColors.accentSoft(context, 0.15),
               ),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.close_rounded,
-              color: Color(0xFF1B4D3E),
+              color: AppColors.accent(context),
               size: 18,
             ),
           ),
@@ -6108,7 +6116,7 @@ class _BillingPageState extends State<BillingPage> {
           width: 72,
           height: 72,
           decoration: BoxDecoration(
-            color: Colors.grey[100],
+            color: AppColors.chipFill(context),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: Colors.grey.shade200),
           ),
@@ -6117,7 +6125,7 @@ class _BillingPageState extends State<BillingPage> {
               width: 32,
               height: 32,
               decoration: BoxDecoration(
-                color: Colors.grey[200],
+                color: AppColors.border(context),
                 borderRadius: BorderRadius.circular(10),
               ),
             ),
@@ -6136,7 +6144,7 @@ class _BillingPageState extends State<BillingPage> {
         bottom: MediaQuery.of(context).padding.bottom + 16,
       ),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.card(context),
         borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(24),
           topRight: Radius.circular(24),
@@ -6159,21 +6167,21 @@ class _BillingPageState extends State<BillingPage> {
                 Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(
+                      padding: EdgeInsets.symmetric(
                         horizontal: 8,
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+                        color: AppColors.accentSoft(context, 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
                         '$_totalQuantity ${_localizations.items.toLowerCase()}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontFamily: 'Literata',
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFF1B4D3E),
+                          color: AppColors.accent(context),
                         ),
                       ),
                     ),
@@ -6227,11 +6235,11 @@ class _BillingPageState extends State<BillingPage> {
                     children: [
                       Text(
                         '₹${_finalAmount.toStringAsFixed(2)}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontFamily: 'Literata',
                           fontSize: 22,
                           fontWeight: FontWeight.w700,
-                          color: Color(0xFF1B4D3E),
+                          color: AppColors.accent(context),
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -6248,7 +6256,7 @@ class _BillingPageState extends State<BillingPage> {
                         ),
                         child: Text(
                           '-${_discountPercent.toStringAsFixed(0)}%',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontFamily: 'Literata',
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
@@ -6261,11 +6269,11 @@ class _BillingPageState extends State<BillingPage> {
                 ] else
                   Text(
                     '₹${_finalAmount.toStringAsFixed(2)}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontFamily: 'Literata',
                       fontSize: 24,
                       fontWeight: FontWeight.w700,
-                      color: Color(0xFF1B4D3E),
+                      color: AppColors.accent(context),
                     ),
                   ),
               ],
@@ -6273,70 +6281,92 @@ class _BillingPageState extends State<BillingPage> {
           ),
           const SizedBox(width: 16),
           Expanded(
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: _isSavingBill || _billItems.isEmpty
-                    ? null
-                    : const LinearGradient(
-                        colors: [Color(0xFF1B4D3E), Color(0xFF2D6A4F)],
-                      ),
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: _isSavingBill || _billItems.isEmpty
-                    ? null
-                    : [
-                        BoxShadow(
-                          color: const Color(
-                            0xFF1B4D3E,
-                          ).withValues(alpha: 0.35),
-                          blurRadius: 12,
-                          offset: const Offset(0, 5),
-                        ),
-                      ],
-              ),
-              child: ElevatedButton(
-                onPressed: _isSavingBill || _billItems.isEmpty
-                    ? null
-                    : _saveBill,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.transparent,
-                  shadowColor: Colors.transparent,
-                  disabledBackgroundColor: Colors.grey[300],
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
+            child: Builder(
+              builder: (context) {
+                final isDark = AppColors.isDark(context);
+                final canSave = !_isSavingBill && _billItems.isNotEmpty;
+                final onBtn = isDark ? Colors.black : Colors.white;
+                return Container(
+                  decoration: BoxDecoration(
+                    gradient: !canSave
+                        ? null
+                        : (isDark
+                              ? null
+                              : LinearGradient(
+                                  colors: AppColors.headerGradient(context),
+                                )),
+                    color: !canSave
+                        ? (isDark ? const Color(0xFF2A2A2A) : Colors.grey[300])
+                        : (isDark ? Colors.white : null),
                     borderRadius: BorderRadius.circular(16),
-                  ),
-                  elevation: 0,
-                ),
-                child: _isSavingBill
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2.5,
-                          valueColor: AlwaysStoppedAnimation(Colors.white),
-                        ),
-                      )
-                    : Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(
-                            Icons.check_circle_rounded,
-                            color: Colors.white,
-                            size: 20,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            _localizations.saveBill,
-                            style: const TextStyle(
-                              fontFamily: 'Literata',
-                              fontSize: 15,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
+                    boxShadow: !canSave
+                        ? null
+                        : [
+                            BoxShadow(
+                              color: Colors.black.withValues(
+                                alpha: isDark ? 0.35 : 0.2,
+                              ),
+                              blurRadius: 12,
+                              offset: const Offset(0, 5),
                             ),
-                          ),
-                        ],
+                          ],
+                  ),
+                  child: ElevatedButton(
+                    onPressed: canSave ? _saveBill : null,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.transparent,
+                      shadowColor: Colors.transparent,
+                      disabledBackgroundColor: Colors.transparent,
+                      foregroundColor: onBtn,
+                      disabledForegroundColor: isDark
+                          ? Colors.white38
+                          : Colors.grey[600],
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
                       ),
-              ),
+                      elevation: 0,
+                    ),
+                    child: _isSavingBill
+                        ? SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.5,
+                              valueColor: AlwaysStoppedAnimation(onBtn),
+                            ),
+                          )
+                        : Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.check_circle_rounded,
+                                color: canSave
+                                    ? onBtn
+                                    : (isDark
+                                          ? Colors.white38
+                                          : Colors.grey[600]),
+                                size: 20,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                _localizations.saveBill,
+                                style: TextStyle(
+                                  fontFamily: 'Literata',
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w700,
+                                  color: canSave
+                                      ? onBtn
+                                      : (isDark
+                                            ? Colors.white38
+                                            : Colors.grey[600]),
+                                ),
+                              ),
+                            ],
+                          ),
+                  ),
+                );
+              },
             ),
           ),
         ],
@@ -6436,8 +6466,8 @@ class _CustomerPickerBottomSheetState
       maxChildSize: 0.9,
       minChildSize: 0.4,
       builder: (_, controller) => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
+        decoration: BoxDecoration(
+          color: AppColors.card(context),
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: Column(
@@ -6454,38 +6484,38 @@ class _CustomerPickerBottomSheetState
             ),
             // Header
             Padding(
-              padding: const EdgeInsets.all(20),
+              padding: EdgeInsets.all(20),
               child: Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(10),
+                    padding: EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+                      color: AppColors.accentSoft(context, 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.person_outline,
-                      color: Color(0xFF1B4D3E),
+                      color: AppColors.accent(context),
                       size: 22,
                     ),
                   ),
-                  const SizedBox(width: 14),
+                  SizedBox(width: 14),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           widget.localizations.selectCustomer,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontFamily: 'Literata',
                             fontSize: 20,
                             fontWeight: FontWeight.w700,
-                            color: Color(0xFF1B4D3E),
+                            color: AppColors.accent(context),
                           ),
                         ),
                         Text(
                           widget.localizations.chooseFromExistingCustomers,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontFamily: 'Literata',
                             fontSize: 12,
                             color: Colors.grey,
@@ -6499,21 +6529,21 @@ class _CustomerPickerBottomSheetState
             ),
             // Search bar
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
+              padding: EdgeInsets.symmetric(horizontal: 20),
               child: TextField(
                 controller: _searchController,
                 onChanged: _filterCustomers,
-                style: const TextStyle(fontFamily: 'Literata', fontSize: 14),
+                style: TextStyle(fontFamily: 'Literata', fontSize: 14),
                 decoration: InputDecoration(
                   hintText: widget.localizations.searchByNameOrPhone,
                   hintStyle: TextStyle(color: Colors.grey[500]),
-                  prefixIcon: const Icon(
+                  prefixIcon: Icon(
                     Icons.search,
-                    color: Color(0xFF1B4D3E),
+                    color: AppColors.accent(context),
                   ),
                   suffixIcon: _searchController.text.isNotEmpty
                       ? IconButton(
-                          icon: const Icon(Icons.clear, size: 20),
+                          icon: Icon(Icons.clear, size: 20),
                           onPressed: () {
                             _searchController.clear();
                             _filterCustomers('');
@@ -6521,7 +6551,7 @@ class _CustomerPickerBottomSheetState
                         )
                       : null,
                   filled: true,
-                  fillColor: const Color(0xFFF5F5F5),
+                  fillColor: AppColors.scaffold(context),
                   contentPadding: const EdgeInsets.symmetric(
                     horizontal: 16,
                     vertical: 14,
@@ -6533,29 +6563,29 @@ class _CustomerPickerBottomSheetState
                 ),
               ),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             // Add New Customer button
             if (widget.onAddNew != null)
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
+                padding: EdgeInsets.symmetric(horizontal: 20),
                 child: GestureDetector(
                   onTap: widget.onAddNew,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    padding: EdgeInsets.symmetric(vertical: 12),
                     decoration: BoxDecoration(
                       border: Border.all(
-                        color: const Color(0xFF1B4D3E),
+                        color: AppColors.accent(context),
                         width: 1.5,
                       ),
                       borderRadius: BorderRadius.circular(12),
-                      color: const Color(0xFF1B4D3E).withValues(alpha: 0.05),
+                      color: AppColors.accentSoft(context, 0.05),
                     ),
-                    child: const Row(
+                    child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(
                           Icons.person_add,
-                          color: Color(0xFF1B4D3E),
+                          color: AppColors.accent(context),
                           size: 20,
                         ),
                         SizedBox(width: 8),
@@ -6563,7 +6593,7 @@ class _CustomerPickerBottomSheetState
                           'Add New Customer',
                           style: TextStyle(
                             fontFamily: 'Literata',
-                            color: Color(0xFF1B4D3E),
+                            color: AppColors.accent(context),
                             fontWeight: FontWeight.w600,
                             fontSize: 14,
                           ),
@@ -6613,17 +6643,17 @@ class _CustomerPickerBottomSheetState
                     )
                   : ListView.builder(
                       controller: controller,
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      padding: EdgeInsets.symmetric(horizontal: 16),
                       itemCount: _filteredCustomers.length,
                       itemBuilder: (context, index) {
                         final customer = _filteredCustomers[index];
                         return Container(
-                          margin: const EdgeInsets.only(bottom: 8),
+                          margin: EdgeInsets.only(bottom: 8),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: AppColors.card(context),
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                              color: Colors.grey[200]!,
+                              color: AppColors.border(context)!,
                               width: 1,
                             ),
                           ),
@@ -6788,18 +6818,18 @@ class _BillingHeaderDelegate extends SliverPersistentHeaderDelegate {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            const Color(0xFF1B4D3E),
-            const Color(0xFF2D6A4F),
-            const Color(0xFF1B4D3E).withValues(alpha: 0.9),
+            Color(0xFF1B4D3E),
+            Color(0xFF2D6A4F),
+            Color(0xFF1B4D3E).withValues(alpha: 0.9),
           ],
         ),
-        borderRadius: const BorderRadius.only(
+        borderRadius: BorderRadius.only(
           bottomLeft: Radius.circular(28),
           bottomRight: Radius.circular(28),
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF1B4D3E).withValues(alpha: 0.3),
+            color: AppColors.accentSoft(context, 0.3),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -6832,7 +6862,7 @@ class _BillingHeaderDelegate extends SliverPersistentHeaderDelegate {
                             color: Colors.white.withValues(alpha: 0.2),
                           ),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.receipt_long_rounded,
                           color: Colors.white,
                           size: 24,
@@ -6856,13 +6886,13 @@ class _BillingHeaderDelegate extends SliverPersistentHeaderDelegate {
                               ),
                             ),
                             if (!isCollapsed) ...[
-                              const SizedBox(height: 4),
+                              SizedBox(height: 4),
                               Text(
                                 localizations.createAndPrintInvoices,
                                 style: TextStyle(
                                   fontSize: 13,
                                   fontFamily: 'Literata',
-                                  color: Colors.white.withValues(alpha: 0.8),
+                                  color: AppColors.card(context),
                                 ),
                               ),
                             ],
@@ -6872,28 +6902,28 @@ class _BillingHeaderDelegate extends SliverPersistentHeaderDelegate {
                       // Items badge
                       if (billItemsCount > 0)
                         Container(
-                          margin: const EdgeInsets.only(right: 12),
-                          padding: const EdgeInsets.symmetric(
+                          margin: EdgeInsets.only(right: 12),
+                          padding: EdgeInsets.symmetric(
                             horizontal: 12,
                             vertical: 6,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: AppColors.card(context),
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(
+                              Icon(
                                 Icons.shopping_cart_rounded,
-                                color: Color(0xFF1B4D3E),
+                                color: AppColors.accent(context),
                                 size: 16,
                               ),
-                              const SizedBox(width: 6),
+                              SizedBox(width: 6),
                               Text(
                                 '$billItemsCount',
-                                style: const TextStyle(
-                                  color: Color(0xFF1B4D3E),
+                                style: TextStyle(
+                                  color: AppColors.accent(context),
                                   fontSize: 14,
                                   fontWeight: FontWeight.w700,
                                   fontFamily: 'Literata',
@@ -6914,7 +6944,7 @@ class _BillingHeaderDelegate extends SliverPersistentHeaderDelegate {
                               color: Colors.white.withValues(alpha: 0.2),
                             ),
                           ),
-                          child: const Icon(
+                          child: Icon(
                             Icons.more_vert_rounded,
                             color: Colors.white,
                             size: 22,
@@ -6942,14 +6972,14 @@ class _BillingHeaderDelegate extends SliverPersistentHeaderDelegate {
                                   width: 36,
                                   height: 36,
                                   decoration: BoxDecoration(
-                                    color: const Color(
+                                    color: Color(
                                       0xFF1B4D3E,
                                     ).withValues(alpha: 0.1),
                                     borderRadius: BorderRadius.circular(10),
                                   ),
-                                  child: const Icon(
+                                  child: Icon(
                                     Icons.settings_rounded,
-                                    color: Color(0xFF1B4D3E),
+                                    color: AppColors.accent(context),
                                     size: 20,
                                   ),
                                 ),
@@ -7206,15 +7236,15 @@ class _InlineQuantityFieldState extends State<_InlineQuantityField> {
             child: TextField(
               controller: _controller,
               focusNode: _focusNode,
-              keyboardType: const TextInputType.numberWithOptions(
+              keyboardType: TextInputType.numberWithOptions(
                 decimal: true,
               ),
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: 'Literata',
                 fontWeight: FontWeight.w700,
                 fontSize: 11,
-                color: Color(0xFF1B4D3E),
+                color: AppColors.accent(context),
               ),
               decoration: const InputDecoration(
                 isDense: true,
@@ -7233,11 +7263,11 @@ class _InlineQuantityFieldState extends State<_InlineQuantityField> {
           if (unitSuffix.isNotEmpty)
             Text(
               ' $unitSuffix',
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: 'Literata',
                 fontWeight: FontWeight.w600,
                 fontSize: 9,
-                color: Color(0xFF1B4D3E),
+                color: AppColors.accent(context),
               ),
             ),
         ],

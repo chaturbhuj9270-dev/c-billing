@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:c_billing/core/services/language_service.dart';
 import 'package:c_billing/core/localization/app_localizations.dart';
 
@@ -160,13 +161,13 @@ class ActionMenu extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  SizedBox(width: 12),
                   Text(
                     entries[i].label,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF1B4D3E),
+                      color: AppColors.accent(context),
                       fontFamily: 'Literata',
                       letterSpacing: 0.2,
                     ),

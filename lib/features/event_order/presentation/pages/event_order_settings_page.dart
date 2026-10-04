@@ -5,6 +5,7 @@ import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/services/language_service.dart';
 import '../../domain/entities/event_order.dart';
 import 'event_order_custom_columns_page.dart';
+import 'package:c_billing/core/theme/app_theme.dart';
 
 /// Settings page for Event/Order list configuration
 class EventOrderSettingsPage extends StatefulWidget {
@@ -80,9 +81,9 @@ class _EventOrderSettingsPageState extends State<EventOrderSettingsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FC),
+      backgroundColor: AppColors.scaffold(context),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.card(context),
         elevation: 0,
         surfaceTintColor: Colors.transparent,
         leading: IconButton(
@@ -122,7 +123,7 @@ class _EventOrderSettingsPageState extends State<EventOrderSettingsPage> {
                 children: [
                   // Section header
                   Padding(
-                    padding: const EdgeInsets.only(left: 4, bottom: 12),
+                    padding: EdgeInsets.only(left: 4, bottom: 12),
                     child: Text(
                       AppLocalizations.of(
                         LanguageService.instance.currentLanguage,
@@ -138,7 +139,7 @@ class _EventOrderSettingsPageState extends State<EventOrderSettingsPage> {
                   // Mode toggle card
                   Container(
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: AppColors.card(context),
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
@@ -232,7 +233,7 @@ class _EventOrderSettingsPageState extends State<EventOrderSettingsPage> {
                           ),
                         ),
                         // Divider
-                        Divider(height: 1, color: Colors.grey[100]),
+                        Divider(height: 1, color: AppColors.chipFill(context)),
                         // Mode description
                         Padding(
                           padding: const EdgeInsets.all(16),
@@ -349,9 +350,9 @@ class _EventOrderSettingsPageState extends State<EventOrderSettingsPage> {
                     },
                     borderRadius: BorderRadius.circular(16),
                     child: Container(
-                      padding: const EdgeInsets.all(16),
+                      padding: EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: AppColors.card(context),
                         borderRadius: BorderRadius.circular(16),
                         boxShadow: [
                           BoxShadow(
@@ -429,12 +430,12 @@ class _EventOrderSettingsPageState extends State<EventOrderSettingsPage> {
   }) {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
-      padding: const EdgeInsets.all(12),
+      padding: EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: isActive ? color.withValues(alpha: 0.1) : Colors.grey[50],
+        color: isActive ? color.withValues(alpha: 0.1) : AppColors.scaffold(context),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isActive ? color.withValues(alpha: 0.3) : Colors.grey[200]!,
+          color: isActive ? color.withValues(alpha: 0.3) : AppColors.border(context)!,
           width: isActive ? 1.5 : 1,
         ),
       ),

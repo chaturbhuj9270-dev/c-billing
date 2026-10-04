@@ -4,6 +4,7 @@ import '../../../../core/localization/app_localizations.dart';
 import '../../../inventory_management/domain/entities/product.dart';
 import '../../../inventory_management/offline/entities/purchase_batch_entity.dart';
 import '../../domain/entities/bill_item.dart';
+import 'package:c_billing/core/theme/app_theme.dart';
 
 /// Max available stock for a bill line (batch-aware), same logic as billing page.
 int resolveBillItemMaxStock({
@@ -83,11 +84,11 @@ class BillItemsLineList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (items.isEmpty) return const SizedBox.shrink();
+    if (items.isEmpty) return SizedBox.shrink();
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.card(context),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: Colors.grey.withValues(alpha: 0.08)),
         boxShadow: [
@@ -133,7 +134,7 @@ class BillItemsLineList extends StatelessWidget {
             ),
             onDismissed: (_) => _removeAt(index),
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              padding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
@@ -141,7 +142,7 @@ class BillItemsLineList extends StatelessWidget {
                     width: 22,
                     height: 22,
                     decoration: BoxDecoration(
-                      color: Colors.grey[100],
+                      color: AppColors.chipFill(context),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Center(
@@ -251,11 +252,11 @@ class BillItemsLineList extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  SizedBox(width: 8),
                   Container(
                     height: 30,
                     decoration: BoxDecoration(
-                      color: Colors.grey[50],
+                      color: AppColors.scaffold(context),
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
                         color: Colors.grey.withValues(alpha: 0.15),
@@ -295,18 +296,18 @@ class BillItemsLineList extends StatelessWidget {
                             width: 28,
                             height: 30,
                             decoration: BoxDecoration(
-                              color: const Color(
+                              color: Color(
                                 0xFF1B4D3E,
                               ).withValues(alpha: 0.08),
-                              borderRadius: const BorderRadius.only(
+                              borderRadius: BorderRadius.only(
                                 topLeft: Radius.circular(7),
                                 bottomLeft: Radius.circular(7),
                               ),
                             ),
-                            child: const Icon(
+                            child: Icon(
                               Icons.remove,
                               size: 14,
-                              color: Color(0xFF1B4D3E),
+                              color: AppColors.accent(context),
                             ),
                           ),
                         ),
@@ -371,7 +372,7 @@ class BillItemsLineList extends StatelessWidget {
                                   ? const Color(
                                       0xFF1B4D3E,
                                     ).withValues(alpha: 0.08)
-                                  : Colors.grey[100],
+                                  : AppColors.chipFill(context),
                               borderRadius: const BorderRadius.only(
                                 topRight: Radius.circular(7),
                                 bottomRight: Radius.circular(7),
@@ -389,17 +390,17 @@ class BillItemsLineList extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const SizedBox(width: 10),
+                  SizedBox(width: 10),
                   SizedBox(
                     width: 60,
                     child: Text(
                       '₹${item.subtotal.toStringAsFixed(0)}',
                       textAlign: TextAlign.right,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'Literata',
                         fontWeight: FontWeight.w700,
                         fontSize: 13,
-                        color: Color(0xFF1B4D3E),
+                        color: AppColors.accent(context),
                       ),
                     ),
                   ),
@@ -442,28 +443,28 @@ void showEditBillItemSellPriceDialog({
         }
 
         return AlertDialog(
-          backgroundColor: Colors.white,
+          backgroundColor: AppColors.card(context),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(24),
           ),
           title: Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(10),
+                padding: EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF1B4D3E), Color(0xFF2D6A4F)],
+                  gradient: LinearGradient(
+                    colors: AppColors.headerGradient(context),
                   ),
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF1B4D3E).withValues(alpha: 0.3),
+                      color: AppColors.accentSoft(context, 0.3),
                       blurRadius: 8,
                       offset: const Offset(0, 3),
                     ),
                   ],
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.currency_rupee_rounded,
                   color: Colors.white,
                   size: 20,
@@ -502,9 +503,9 @@ void showEditBillItemSellPriceDialog({
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                padding: const EdgeInsets.all(14),
+                padding: EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: Colors.grey[50],
+                  color: AppColors.scaffold(context),
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
                     color: Colors.grey.withValues(alpha: 0.1),
@@ -526,16 +527,16 @@ void showEditBillItemSellPriceDialog({
                         ),
                         Text(
                           item.displayQuantity,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontFamily: 'Literata',
                             fontWeight: FontWeight.w700,
                             fontSize: 16,
-                            color: Color(0xFF1B4D3E),
+                            color: AppColors.accent(context),
                           ),
                         ),
                       ],
                     ),
-                    Container(width: 1, height: 36, color: Colors.grey[200]),
+                    Container(width: 1, height: 36, color: AppColors.border(context)),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
@@ -564,31 +565,31 @@ void showEditBillItemSellPriceDialog({
               const SizedBox(height: 20),
               TextField(
                 controller: priceController,
-                keyboardType: const TextInputType.numberWithOptions(
+                keyboardType: TextInputType.numberWithOptions(
                   decimal: true,
                 ),
                 textAlign: TextAlign.center,
                 autofocus: true,
                 onChanged: (_) => validatePrice(),
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: 'Literata',
                   fontSize: 24,
                   fontWeight: FontWeight.w800,
-                  color: Color(0xFF1B4D3E),
+                  color: AppColors.accent(context),
                 ),
                 decoration: InputDecoration(
                   prefixText: '₹ ',
-                  prefixStyle: const TextStyle(
+                  prefixStyle: TextStyle(
                     fontFamily: 'Literata',
                     fontSize: 24,
                     fontWeight: FontWeight.w800,
-                    color: Color(0xFF1B4D3E),
+                    color: AppColors.accent(context),
                   ),
                   errorText: errorText,
-                  errorStyle: const TextStyle(fontSize: 11),
+                  errorStyle: TextStyle(fontSize: 11),
                   filled: true,
-                  fillColor: Colors.grey[50],
-                  contentPadding: const EdgeInsets.symmetric(
+                  fillColor: AppColors.scaffold(context),
+                  contentPadding: EdgeInsets.symmetric(
                     horizontal: 16,
                     vertical: 16,
                   ),
@@ -598,14 +599,14 @@ void showEditBillItemSellPriceDialog({
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
-                    borderSide: const BorderSide(
-                      color: Color(0xFF1B4D3E),
+                    borderSide: BorderSide(
+                      color: AppColors.accent(context),
                       width: 2,
                     ),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(color: Colors.grey[200]!),
+                    borderSide: BorderSide(color: AppColors.border(context)!),
                   ),
                 ),
               ),
@@ -870,15 +871,15 @@ class _InlineBillQuantityFieldState extends State<InlineBillQuantityField> {
             child: TextField(
               controller: _controller,
               focusNode: _focusNode,
-              keyboardType: const TextInputType.numberWithOptions(
+              keyboardType: TextInputType.numberWithOptions(
                 decimal: true,
               ),
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: 'Literata',
                 fontWeight: FontWeight.w700,
                 fontSize: 11,
-                color: Color(0xFF1B4D3E),
+                color: AppColors.accent(context),
               ),
               decoration: const InputDecoration(
                 isDense: true,
@@ -897,11 +898,11 @@ class _InlineBillQuantityFieldState extends State<InlineBillQuantityField> {
           if (unitSuffix.isNotEmpty)
             Text(
               ' $unitSuffix',
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: 'Literata',
                 fontWeight: FontWeight.w600,
                 fontSize: 9,
-                color: Color(0xFF1B4D3E),
+                color: AppColors.accent(context),
               ),
             ),
         ],

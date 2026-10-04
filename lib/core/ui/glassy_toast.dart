@@ -27,8 +27,18 @@ class GlassyToast {
     // Dismiss any existing toast
     dismiss();
 
-    final overlay = Overlay.of(context);
-    final mediaQuery = MediaQuery.of(context);
+    // Prefer the root overlay so toasts still work when called from nested
+    // navigators / post-flyout contexts.
+    final overlay = Overlay.maybeOf(context, rootOverlay: true) ??
+        Overlay.maybeOf(context);
+    if (overlay == null) {
+      debugPrint('[GlassyToast] No Overlay found; message="$message"');
+      return;
+    }
+    final mediaQuery = MediaQuery.maybeOf(context) ??
+        MediaQueryData.fromView(
+          WidgetsBinding.instance.platformDispatcher.views.first,
+        );
 
     late OverlayEntry entry;
     entry = OverlayEntry(

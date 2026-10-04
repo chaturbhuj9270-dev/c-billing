@@ -29,6 +29,7 @@ import '../../../../core/services/inventory_integration_service.dart';
 import 'purchase_settings_page.dart';
 import 'invoice_scanner_page.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
+import 'package:c_billing/core/theme/app_theme.dart';
 
 class PurchasePage extends StatefulWidget {
   final bool isEmbedded;
@@ -327,8 +328,8 @@ class _PurchasePageState extends State<PurchasePage>
       builder: (context) => StatefulBuilder(
         builder: (context, setSheetState) => Container(
           height: MediaQuery.of(context).size.height * 0.9,
-          decoration: const BoxDecoration(
-            color: Colors.white,
+          decoration: BoxDecoration(
+            color: AppColors.card(context),
             borderRadius: BorderRadius.only(
               topLeft: Radius.circular(24),
               topRight: Radius.circular(24),
@@ -365,24 +366,24 @@ class _PurchasePageState extends State<PurchasePage>
                         ),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.inventory_2_rounded,
                         color: Colors.white,
                         size: 22,
                       ),
                     ),
-                    const SizedBox(width: 14),
+                    SizedBox(width: 14),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             _localizations.addNewProduct,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.w700,
                               fontFamily: 'Literata',
-                              color: Color(0xFF1B4D3E),
+                              color: AppColors.accent(context),
                             ),
                           ),
                           Text(
@@ -399,9 +400,9 @@ class _PurchasePageState extends State<PurchasePage>
                     IconButton(
                       onPressed: () => Navigator.pop(context),
                       icon: Container(
-                        padding: const EdgeInsets.all(6),
+                        padding: EdgeInsets.all(6),
                         decoration: BoxDecoration(
-                          color: Colors.grey[100],
+                          color: AppColors.chipFill(context),
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
@@ -414,8 +415,8 @@ class _PurchasePageState extends State<PurchasePage>
                   ],
                 ),
               ),
-              const SizedBox(height: 16),
-              Container(height: 1, color: Colors.grey[200]),
+              SizedBox(height: 16),
+              Container(height: 1, color: AppColors.border(context)),
               // Scrollable content
               Expanded(
                 child: SingleChildScrollView(
@@ -767,10 +768,10 @@ class _PurchasePageState extends State<PurchasePage>
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
-            color: Color(0xFF1B4D3E),
+            color: AppColors.accent(context),
             fontFamily: 'Literata',
           ),
         ),
@@ -780,14 +781,14 @@ class _PurchasePageState extends State<PurchasePage>
           borderRadius: BorderRadius.circular(12),
           child: Container(
             width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
             decoration: BoxDecoration(
               border: Border.all(
                 color: hasValue ? color : Colors.grey[300]!,
                 width: hasValue ? 2 : 1,
               ),
               borderRadius: BorderRadius.circular(12),
-              color: hasValue ? color.withValues(alpha: 0.05) : Colors.grey[50],
+              color: hasValue ? color.withValues(alpha: 0.05) : AppColors.scaffold(context),
             ),
             child: Row(
               children: [
@@ -797,7 +798,7 @@ class _PurchasePageState extends State<PurchasePage>
                   decoration: BoxDecoration(
                     color: hasValue
                         ? color.withValues(alpha: 0.15)
-                        : Colors.grey[200],
+                        : AppColors.border(context),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(
@@ -1069,16 +1070,16 @@ class _PurchasePageState extends State<PurchasePage>
         var filtered = _companies.toList();
         return StatefulBuilder(
           builder: (context, setPickerState) => AlertDialog(
-            backgroundColor: Colors.white,
+            backgroundColor: AppColors.card(context),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
             ),
             title: Text(
               _localizations.selectCompany,
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: 'Literata',
                 fontWeight: FontWeight.w700,
-                color: Color(0xFF1B4D3E),
+                color: AppColors.accent(context),
                 fontSize: 16,
               ),
             ),
@@ -1130,9 +1131,9 @@ class _PurchasePageState extends State<PurchasePage>
                               final company = filtered[index];
                               return ListTile(
                                 dense: true,
-                                leading: const Icon(
+                                leading: Icon(
                                   Icons.business,
-                                  color: Color(0xFF1B4D3E),
+                                  color: AppColors.accent(context),
                                   size: 20,
                                 ),
                                 title: Text(
@@ -1166,16 +1167,16 @@ class _PurchasePageState extends State<PurchasePage>
         var filtered = _suppliers.toList();
         return StatefulBuilder(
           builder: (context, setPickerState) => AlertDialog(
-            backgroundColor: Colors.white,
+            backgroundColor: AppColors.card(context),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
             ),
             title: Text(
               _localizations.selectSupplier,
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: 'Literata',
                 fontWeight: FontWeight.w700,
-                color: Color(0xFF1B4D3E),
+                color: AppColors.accent(context),
                 fontSize: 16,
               ),
             ),
@@ -1227,9 +1228,9 @@ class _PurchasePageState extends State<PurchasePage>
                               final supplier = filtered[index];
                               return ListTile(
                                 dense: true,
-                                leading: const Icon(
+                                leading: Icon(
                                   Icons.person,
-                                  color: Color(0xFF1B4D3E),
+                                  color: AppColors.accent(context),
                                   size: 20,
                                 ),
                                 title: Text(
@@ -1322,8 +1323,8 @@ class _PurchasePageState extends State<PurchasePage>
       builder: (context) => StatefulBuilder(
         builder: (context, setModalState) => Container(
           height: MediaQuery.of(context).size.height * 0.85,
-          decoration: const BoxDecoration(
-            color: Colors.white,
+          decoration: BoxDecoration(
+            color: AppColors.card(context),
             borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
           ),
           child: Column(
@@ -1355,24 +1356,24 @@ class _PurchasePageState extends State<PurchasePage>
                         ),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.inventory_2_rounded,
                         color: Colors.white,
                         size: 22,
                       ),
                     ),
-                    const SizedBox(width: 14),
+                    SizedBox(width: 14),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             _localizations.selectProduct,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.w700,
                               fontFamily: 'Literata',
-                              color: Color(0xFF1B4D3E),
+                              color: AppColors.accent(context),
                             ),
                           ),
                           Text(
@@ -1389,9 +1390,9 @@ class _PurchasePageState extends State<PurchasePage>
                     IconButton(
                       onPressed: () => Navigator.pop(context),
                       icon: Container(
-                        padding: const EdgeInsets.all(6),
+                        padding: EdgeInsets.all(6),
                         decoration: BoxDecoration(
-                          color: Colors.grey[100],
+                          color: AppColors.chipFill(context),
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
@@ -1407,10 +1408,10 @@ class _PurchasePageState extends State<PurchasePage>
               const SizedBox(height: 16),
               // Search bar
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
+                padding: EdgeInsets.symmetric(horizontal: 20),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: Colors.grey[100],
+                    color: AppColors.chipFill(context),
                     borderRadius: BorderRadius.circular(14),
                   ),
                   child: TextField(
@@ -1438,9 +1439,9 @@ class _PurchasePageState extends State<PurchasePage>
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               // Divider
-              Container(height: 1, color: Colors.grey[200]),
+              Container(height: 1, color: AppColors.border(context)),
               // Product list
               Expanded(
                 child: _filteredProducts.isEmpty
@@ -1523,18 +1524,18 @@ class _PurchasePageState extends State<PurchasePage>
                               },
                               borderRadius: BorderRadius.circular(14),
                               child: Container(
-                                padding: const EdgeInsets.all(14),
+                                padding: EdgeInsets.all(14),
                                 decoration: BoxDecoration(
                                   color: isSelected
                                       ? const Color(
                                           0xFF1B4D3E,
                                         ).withValues(alpha: 0.08)
-                                      : Colors.grey[50],
+                                      : AppColors.scaffold(context),
                                   borderRadius: BorderRadius.circular(14),
                                   border: Border.all(
                                     color: isSelected
                                         ? const Color(0xFF1B4D3E)
-                                        : Colors.grey[200]!,
+                                        : AppColors.border(context)!,
                                     width: isSelected ? 1.5 : 1,
                                   ),
                                 ),
@@ -1544,14 +1545,14 @@ class _PurchasePageState extends State<PurchasePage>
                                       width: 48,
                                       height: 48,
                                       decoration: BoxDecoration(
-                                        color: const Color(
+                                        color: Color(
                                           0xFF1B4D3E,
                                         ).withValues(alpha: 0.1),
                                         borderRadius: BorderRadius.circular(12),
                                       ),
-                                      child: const Icon(
+                                      child: Icon(
                                         Icons.inventory_2_rounded,
-                                        color: Color(0xFF1B4D3E),
+                                        color: AppColors.accent(context),
                                         size: 22,
                                       ),
                                     ),
@@ -1563,7 +1564,7 @@ class _PurchasePageState extends State<PurchasePage>
                                         children: [
                                           Text(
                                             product.name,
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                               fontFamily: 'Literata',
                                               fontWeight: FontWeight.w600,
                                               fontSize: 15,
@@ -1644,9 +1645,9 @@ class _PurchasePageState extends State<PurchasePage>
                                       children: [
                                         Text(
                                           '₹${product.purchasePrice}',
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                             fontWeight: FontWeight.w700,
-                                            color: Color(0xFF1B4D3E),
+                                            color: AppColors.accent(context),
                                             fontSize: 16,
                                           ),
                                         ),
@@ -1660,10 +1661,10 @@ class _PurchasePageState extends State<PurchasePage>
                                       ],
                                     ),
                                     if (isSelected) ...[
-                                      const SizedBox(width: 8),
-                                      const Icon(
+                                      SizedBox(width: 8),
+                                      Icon(
                                         Icons.check_circle,
-                                        color: Color(0xFF1B4D3E),
+                                        color: AppColors.accent(context),
                                         size: 22,
                                       ),
                                     ],
@@ -1693,8 +1694,8 @@ class _PurchasePageState extends State<PurchasePage>
       builder: (context) => StatefulBuilder(
         builder: (context, setModalState) => Container(
           height: MediaQuery.of(context).size.height * 0.75,
-          decoration: const BoxDecoration(
-            color: Colors.white,
+          decoration: BoxDecoration(
+            color: AppColors.card(context),
             borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
           ),
           child: Column(
@@ -1726,24 +1727,24 @@ class _PurchasePageState extends State<PurchasePage>
                         ),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.person_rounded,
                         color: Colors.white,
                         size: 22,
                       ),
                     ),
-                    const SizedBox(width: 14),
+                    SizedBox(width: 14),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             _localizations.selectSupplier,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.w700,
                               fontFamily: 'Literata',
-                              color: Color(0xFF1B4D3E),
+                              color: AppColors.accent(context),
                             ),
                           ),
                           Text(
@@ -1760,9 +1761,9 @@ class _PurchasePageState extends State<PurchasePage>
                     IconButton(
                       onPressed: () => Navigator.pop(context),
                       icon: Container(
-                        padding: const EdgeInsets.all(6),
+                        padding: EdgeInsets.all(6),
                         decoration: BoxDecoration(
-                          color: Colors.grey[100],
+                          color: AppColors.chipFill(context),
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
@@ -1778,10 +1779,10 @@ class _PurchasePageState extends State<PurchasePage>
               const SizedBox(height: 16),
               // Search bar
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
+                padding: EdgeInsets.symmetric(horizontal: 20),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: Colors.grey[100],
+                    color: AppColors.chipFill(context),
                     borderRadius: BorderRadius.circular(14),
                   ),
                   child: TextField(
@@ -1809,9 +1810,9 @@ class _PurchasePageState extends State<PurchasePage>
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               // Divider
-              Container(height: 1, color: Colors.grey[200]),
+              Container(height: 1, color: AppColors.border(context)),
               // Supplier list
               Expanded(
                 child: _filteredSuppliers.isEmpty
@@ -1860,18 +1861,18 @@ class _PurchasePageState extends State<PurchasePage>
                               },
                               borderRadius: BorderRadius.circular(14),
                               child: Container(
-                                padding: const EdgeInsets.all(14),
+                                padding: EdgeInsets.all(14),
                                 decoration: BoxDecoration(
                                   color: isSelected
                                       ? const Color(
                                           0xFFFF6B6B,
                                         ).withValues(alpha: 0.08)
-                                      : Colors.grey[50],
+                                      : AppColors.scaffold(context),
                                   borderRadius: BorderRadius.circular(14),
                                   border: Border.all(
                                     color: isSelected
                                         ? const Color(0xFFFF6B6B)
-                                        : Colors.grey[200]!,
+                                        : AppColors.border(context)!,
                                     width: isSelected ? 1.5 : 1,
                                   ),
                                 ),
@@ -1945,8 +1946,8 @@ class _PurchasePageState extends State<PurchasePage>
       builder: (context) => StatefulBuilder(
         builder: (context, setModalState) => Container(
           height: MediaQuery.of(context).size.height * 0.75,
-          decoration: const BoxDecoration(
-            color: Colors.white,
+          decoration: BoxDecoration(
+            color: AppColors.card(context),
             borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
           ),
           child: Column(
@@ -1978,24 +1979,24 @@ class _PurchasePageState extends State<PurchasePage>
                         ),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.business_rounded,
                         color: Colors.white,
                         size: 22,
                       ),
                     ),
-                    const SizedBox(width: 14),
+                    SizedBox(width: 14),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             _localizations.selectCompany,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.w700,
                               fontFamily: 'Literata',
-                              color: Color(0xFF1B4D3E),
+                              color: AppColors.accent(context),
                             ),
                           ),
                           Text(
@@ -2012,9 +2013,9 @@ class _PurchasePageState extends State<PurchasePage>
                     IconButton(
                       onPressed: () => Navigator.pop(context),
                       icon: Container(
-                        padding: const EdgeInsets.all(6),
+                        padding: EdgeInsets.all(6),
                         decoration: BoxDecoration(
-                          color: Colors.grey[100],
+                          color: AppColors.chipFill(context),
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
@@ -2030,10 +2031,10 @@ class _PurchasePageState extends State<PurchasePage>
               const SizedBox(height: 16),
               // Search bar
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
+                padding: EdgeInsets.symmetric(horizontal: 20),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: Colors.grey[100],
+                    color: AppColors.chipFill(context),
                     borderRadius: BorderRadius.circular(14),
                   ),
                   child: TextField(
@@ -2061,9 +2062,9 @@ class _PurchasePageState extends State<PurchasePage>
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               // Divider
-              Container(height: 1, color: Colors.grey[200]),
+              Container(height: 1, color: AppColors.border(context)),
               // Company list
               Expanded(
                 child: _filteredCompanies.isEmpty
@@ -2112,18 +2113,18 @@ class _PurchasePageState extends State<PurchasePage>
                               },
                               borderRadius: BorderRadius.circular(14),
                               child: Container(
-                                padding: const EdgeInsets.all(14),
+                                padding: EdgeInsets.all(14),
                                 decoration: BoxDecoration(
                                   color: isSelected
                                       ? const Color(
                                           0xFF7B68EE,
                                         ).withValues(alpha: 0.08)
-                                      : Colors.grey[50],
+                                      : AppColors.scaffold(context),
                                   borderRadius: BorderRadius.circular(14),
                                   border: Border.all(
                                     color: isSelected
                                         ? const Color(0xFF7B68EE)
-                                        : Colors.grey[200]!,
+                                        : AppColors.border(context)!,
                                     width: isSelected ? 1.5 : 1,
                                   ),
                                 ),
@@ -2376,9 +2377,9 @@ class _PurchasePageState extends State<PurchasePage>
   // ============ QUICK ACTIONS BAR ============
   Widget _buildQuickActionsBar() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      padding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.card(context),
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
@@ -2455,14 +2456,14 @@ class _PurchasePageState extends State<PurchasePage>
               ),
               child: Icon(icon, color: color, size: 14),
             ),
-            const SizedBox(width: 6),
+            SizedBox(width: 6),
             Flexible(
               child: Text(
                 label,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  color: const Color(0xFF1B4D3E).withValues(alpha: 0.8),
+                  color: AppColors.accentSoft(context, 0.8),
                   fontSize: 10,
                   fontFamily: 'Literata',
                   fontWeight: FontWeight.w600,
@@ -2487,8 +2488,8 @@ class _PurchasePageState extends State<PurchasePage>
       backgroundColor: Colors.transparent,
       builder: (context) => StatefulBuilder(
         builder: (context, setSheetState) => Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
+          decoration: BoxDecoration(
+            color: AppColors.card(context),
             borderRadius: BorderRadius.only(
               topLeft: Radius.circular(24),
               topRight: Radius.circular(24),
@@ -2533,24 +2534,24 @@ class _PurchasePageState extends State<PurchasePage>
                           ),
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.person_add_rounded,
                           color: Colors.white,
                           size: 22,
                         ),
                       ),
-                      const SizedBox(width: 14),
+                      SizedBox(width: 14),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
                               _localizations.addNewSupplier,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.w700,
                                 fontFamily: 'Literata',
-                                color: Color(0xFF1B4D3E),
+                                color: AppColors.accent(context),
                               ),
                             ),
                             Text(
@@ -2567,9 +2568,9 @@ class _PurchasePageState extends State<PurchasePage>
                       IconButton(
                         onPressed: () => Navigator.pop(context),
                         icon: Container(
-                          padding: const EdgeInsets.all(6),
+                          padding: EdgeInsets.all(6),
                           decoration: BoxDecoration(
-                            color: Colors.grey[100],
+                            color: AppColors.chipFill(context),
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
@@ -2712,10 +2713,10 @@ class _PurchasePageState extends State<PurchasePage>
           children: [
             Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF1B4D3E),
+                color: AppColors.accent(context),
                 fontFamily: 'Literata',
               ),
             ),
@@ -2730,7 +2731,7 @@ class _PurchasePageState extends State<PurchasePage>
           maxLines: maxLines,
           maxLength: maxLength,
           onChanged: onChanged,
-          style: const TextStyle(fontFamily: 'Literata'),
+          style: TextStyle(fontFamily: 'Literata'),
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: TextStyle(
@@ -2749,14 +2750,14 @@ class _PurchasePageState extends State<PurchasePage>
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFF1B4D3E), width: 2),
+              borderSide: BorderSide(color: AppColors.accent(context), width: 2),
             ),
-            contentPadding: const EdgeInsets.symmetric(
+            contentPadding: EdgeInsets.symmetric(
               horizontal: 12,
               vertical: 12,
             ),
             filled: true,
-            fillColor: Colors.grey[50],
+            fillColor: AppColors.scaffold(context),
           ),
         ),
       ],
@@ -2829,8 +2830,8 @@ class _PurchasePageState extends State<PurchasePage>
       backgroundColor: Colors.transparent,
       builder: (context) => StatefulBuilder(
         builder: (context, setSheetState) => Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
+          decoration: BoxDecoration(
+            color: AppColors.card(context),
             borderRadius: BorderRadius.only(
               topLeft: Radius.circular(24),
               topRight: Radius.circular(24),
@@ -2875,24 +2876,24 @@ class _PurchasePageState extends State<PurchasePage>
                           ),
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.business_rounded,
                           color: Colors.white,
                           size: 22,
                         ),
                       ),
-                      const SizedBox(width: 14),
+                      SizedBox(width: 14),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
                               _localizations.addNewCompany,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.w700,
                                 fontFamily: 'Literata',
-                                color: Color(0xFF1B4D3E),
+                                color: AppColors.accent(context),
                               ),
                             ),
                             Text(
@@ -2909,9 +2910,9 @@ class _PurchasePageState extends State<PurchasePage>
                       IconButton(
                         onPressed: () => Navigator.pop(context),
                         icon: Container(
-                          padding: const EdgeInsets.all(6),
+                          padding: EdgeInsets.all(6),
                           decoration: BoxDecoration(
-                            color: Colors.grey[100],
+                            color: AppColors.chipFill(context),
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
@@ -3081,7 +3082,7 @@ class _PurchasePageState extends State<PurchasePage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7F6),
+      backgroundColor: AppColors.scaffold(context),
       body: SafeArea(
         top: !widget.isEmbedded,
         child: Column(
@@ -3105,7 +3106,7 @@ class _PurchasePageState extends State<PurchasePage>
                     pinned: true,
                     delegate: _StickyHeaderDelegate(
                       child: Container(
-                        color: const Color(0xFFF5F7F6),
+                        color: AppColors.scaffold(context),
                         padding: const EdgeInsets.fromLTRB(16, 6, 16, 6),
                         child: _buildQuickActionsBar(),
                       ),
@@ -3157,7 +3158,7 @@ class _PurchasePageState extends State<PurchasePage>
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.card(context),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.08),
@@ -3169,15 +3170,15 @@ class _PurchasePageState extends State<PurchasePage>
       child: Container(
         width: double.infinity,
         decoration: BoxDecoration(
-          gradient: const LinearGradient(
+          gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Color(0xFF1B4D3E), Color(0xFF0F3B2F)],
+            colors: AppColors.headerGradient(context),
           ),
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF1B4D3E).withValues(alpha: 0.4),
+              color: AppColors.accentSoft(context, 0.4),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
@@ -3233,18 +3234,18 @@ class _PurchasePageState extends State<PurchasePage>
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF1B4D3E), Color(0xFF0F3B2F)],
+          colors: AppColors.headerGradient(context),
         ),
-        borderRadius: const BorderRadius.only(
+        borderRadius: BorderRadius.only(
           bottomLeft: Radius.circular(24),
           bottomRight: Radius.circular(24),
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF1B4D3E).withValues(alpha: 0.3),
+            color: AppColors.accentSoft(context, 0.3),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -3328,7 +3329,7 @@ class _PurchasePageState extends State<PurchasePage>
                 color: Colors.white.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.settings_rounded,
                 color: Colors.white,
                 size: 22,
@@ -3343,15 +3344,15 @@ class _PurchasePageState extends State<PurchasePage>
   /// Selection section with product, supplier, company cards
   Widget _buildSelectionSection() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.card(context),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 10,
-            offset: const Offset(0, 2),
+            offset: Offset(0, 2),
           ),
         ],
       ),
@@ -3361,30 +3362,30 @@ class _PurchasePageState extends State<PurchasePage>
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(8),
+                padding: EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+                  color: AppColors.accentSoft(context, 0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.checklist_rounded,
-                  color: Color(0xFF1B4D3E),
+                  color: AppColors.accent(context),
                   size: 20,
                 ),
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: 12),
               Text(
                 _localizations.selectionDetails,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
                   fontFamily: 'Literata',
-                  color: Color(0xFF1B4D3E),
+                  color: AppColors.accent(context),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           // Product Selection
           _buildSelectionCard(
             title: _localizations.productText,
@@ -3393,7 +3394,7 @@ class _PurchasePageState extends State<PurchasePage>
                 ? 'Stock: ${_selectedProduct!.currentStock} • ${_selectedProduct!.companyName}'
                 : null,
             icon: Icons.inventory_2_rounded,
-            color: const Color(0xFF1B4D3E),
+            color: AppColors.accent(context),
             onTap: _showProductSelectionBottomSheet,
             isSelected: _selectedProduct != null,
           ),
@@ -3448,12 +3449,12 @@ class _PurchasePageState extends State<PurchasePage>
         duration: const Duration(milliseconds: 200),
         padding: EdgeInsets.all(compact ? 12 : 14),
         decoration: BoxDecoration(
-          color: isSelected ? color.withValues(alpha: 0.08) : Colors.grey[50],
+          color: isSelected ? color.withValues(alpha: 0.08) : AppColors.scaffold(context),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: isSelected
                 ? color.withValues(alpha: 0.4)
-                : Colors.grey[200]!,
+                : AppColors.border(context)!,
             width: isSelected ? 1.5 : 1,
           ),
         ),
@@ -3530,9 +3531,9 @@ class _PurchasePageState extends State<PurchasePage>
   /// Details section with dates, quantity, unit, warranty
   Widget _buildDetailsSection() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.card(context),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -3553,20 +3554,20 @@ class _PurchasePageState extends State<PurchasePage>
                   color: const Color(0xFF2196F3).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.tune_rounded,
                   color: Color(0xFF2196F3),
                   size: 20,
                 ),
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: 12),
               Text(
                 _localizations.purchase,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
                   fontFamily: 'Literata',
-                  color: Color(0xFF1B4D3E),
+                  color: AppColors.accent(context),
                 ),
               ),
             ],
@@ -3614,14 +3615,14 @@ class _PurchasePageState extends State<PurchasePage>
             keyboardType: TextInputType.number,
             onChanged: (_) => _calculateTotal(),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           // Measurement Unit
           _buildChipSelector(
             label: _localizations.measurementUnit,
             options: PurchaseSettingsService.instance.availableUnits,
             selectedValue: _selectedUnit,
             onSelected: (unit) => setState(() => _selectedUnit = unit),
-            color: const Color(0xFF1B4D3E),
+            color: AppColors.accent(context),
             icon: Icons.straighten_rounded,
           ),
           // Warranty (if enabled)
@@ -3660,22 +3661,22 @@ class _PurchasePageState extends State<PurchasePage>
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(12),
+        padding: EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: hasValue ? color.withValues(alpha: 0.08) : Colors.grey[50],
+          color: hasValue ? color.withValues(alpha: 0.08) : AppColors.scaffold(context),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: hasValue ? color.withValues(alpha: 0.3) : Colors.grey[200]!,
+            color: hasValue ? color.withValues(alpha: 0.3) : AppColors.border(context)!,
           ),
         ),
         child: Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(6),
+              padding: EdgeInsets.all(6),
               decoration: BoxDecoration(
                 color: hasValue
                     ? color.withValues(alpha: 0.15)
-                    : Colors.grey[200],
+                    : AppColors.border(context),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(
@@ -3733,10 +3734,10 @@ class _PurchasePageState extends State<PurchasePage>
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
+            colorScheme: ColorScheme.light(
               primary: Color(0xFF1B4D3E),
               onPrimary: Colors.white,
-              surface: Colors.white,
+              surface: AppColors.card(context),
               onSurface: Colors.black,
             ),
           ),
@@ -3773,11 +3774,11 @@ class _PurchasePageState extends State<PurchasePage>
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w600,
             fontFamily: 'Literata',
-            color: Color(0xFF1B4D3E),
+            color: AppColors.accent(context),
           ),
         ),
         const SizedBox(height: 8),
@@ -3785,7 +3786,7 @@ class _PurchasePageState extends State<PurchasePage>
           controller: controller,
           keyboardType: keyboardType,
           onChanged: onChanged,
-          style: const TextStyle(
+          style: TextStyle(
             fontFamily: 'Literata',
             fontWeight: FontWeight.w500,
           ),
@@ -3795,21 +3796,21 @@ class _PurchasePageState extends State<PurchasePage>
               color: Colors.grey[400],
               fontFamily: 'Literata',
             ),
-            prefixIcon: Icon(icon, color: const Color(0xFF1B4D3E), size: 20),
+            prefixIcon: Icon(icon, color: AppColors.accent(context), size: 20),
             filled: true,
-            fillColor: Colors.grey[50],
+            fillColor: AppColors.scaffold(context),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide.none,
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: Colors.grey[200]!),
+              borderSide: BorderSide(color: AppColors.border(context)!),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(
-                color: Color(0xFF1B4D3E),
+              borderSide: BorderSide(
+                color: AppColors.accent(context),
                 width: 1.5,
               ),
             ),
@@ -3838,11 +3839,11 @@ class _PurchasePageState extends State<PurchasePage>
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w600,
             fontFamily: 'Literata',
-            color: Color(0xFF1B4D3E),
+            color: AppColors.accent(context),
           ),
         ),
         const SizedBox(height: 10),
@@ -3860,7 +3861,7 @@ class _PurchasePageState extends State<PurchasePage>
                   onTap: () => onSelected(option),
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
-                    padding: const EdgeInsets.symmetric(
+                    padding: EdgeInsets.symmetric(
                       horizontal: 14,
                       vertical: 10,
                     ),
@@ -3870,7 +3871,7 @@ class _PurchasePageState extends State<PurchasePage>
                               colors: [color, color.withValues(alpha: 0.8)],
                             )
                           : null,
-                      color: isSelected ? null : Colors.grey[100],
+                      color: isSelected ? null : AppColors.chipFill(context),
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
                         color: isSelected ? color : Colors.grey[300]!,
@@ -3923,9 +3924,9 @@ class _PurchasePageState extends State<PurchasePage>
     final total = quantity * price;
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.card(context),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -3946,20 +3947,20 @@ class _PurchasePageState extends State<PurchasePage>
                   color: const Color(0xFF4CAF50).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.currency_rupee_rounded,
                   color: Color(0xFF4CAF50),
                   size: 20,
                 ),
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: 12),
               Text(
                 _localizations.pricing,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
                   fontFamily: 'Literata',
-                  color: Color(0xFF1B4D3E),
+                  color: AppColors.accent(context),
                 ),
               ),
             ],
@@ -3989,19 +3990,19 @@ class _PurchasePageState extends State<PurchasePage>
           const SizedBox(height: 16),
           // Total amount card
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.all(16),
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  const Color(0xFF1B4D3E).withValues(alpha: 0.08),
-                  const Color(0xFF4CAF50).withValues(alpha: 0.08),
+                  Color(0xFF1B4D3E).withValues(alpha: 0.08),
+                  Color(0xFF4CAF50).withValues(alpha: 0.08),
                 ],
               ),
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: const Color(0xFF1B4D3E).withValues(alpha: 0.2),
+                color: AppColors.accentSoft(context, 0.2),
               ),
             ),
             child: Row(
@@ -4010,14 +4011,14 @@ class _PurchasePageState extends State<PurchasePage>
                 Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.all(8),
+                      padding: EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+                        color: AppColors.accentSoft(context, 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.receipt_long_rounded,
-                        color: Color(0xFF1B4D3E),
+                        color: AppColors.accent(context),
                         size: 18,
                       ),
                     ),
@@ -4048,11 +4049,11 @@ class _PurchasePageState extends State<PurchasePage>
                 ),
                 Text(
                   '₹${total.toStringAsFixed(2)}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.w800,
                     fontFamily: 'Literata',
-                    color: Color(0xFF1B4D3E),
+                    color: AppColors.accent(context),
                   ),
                 ),
               ],
@@ -4087,7 +4088,7 @@ class _PurchasePageState extends State<PurchasePage>
           controller: controller,
           keyboardType: TextInputType.number,
           onChanged: onChanged,
-          style: const TextStyle(
+          style: TextStyle(
             fontFamily: 'Literata',
             fontWeight: FontWeight.w600,
             fontSize: 15,
@@ -4102,14 +4103,14 @@ class _PurchasePageState extends State<PurchasePage>
               fontSize: 15,
             ),
             filled: true,
-            fillColor: Colors.grey[50],
+            fillColor: AppColors.scaffold(context),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide.none,
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: Colors.grey[200]!),
+              borderSide: BorderSide(color: AppColors.border(context)!),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
@@ -4118,7 +4119,7 @@ class _PurchasePageState extends State<PurchasePage>
                 width: 1.5,
               ),
             ),
-            contentPadding: const EdgeInsets.symmetric(
+            contentPadding: EdgeInsets.symmetric(
               horizontal: 14,
               vertical: 14,
             ),
@@ -4131,9 +4132,9 @@ class _PurchasePageState extends State<PurchasePage>
   /// Notes section
   Widget _buildNotesSection() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.card(context),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -4154,20 +4155,20 @@ class _PurchasePageState extends State<PurchasePage>
                   color: const Color(0xFFFF9800).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.notes_rounded,
                   color: Color(0xFFFF9800),
                   size: 20,
                 ),
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: 12),
               Text(
                 _localizations.notes,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
                   fontFamily: 'Literata',
-                  color: Color(0xFF1B4D3E),
+                  color: AppColors.accent(context),
                 ),
               ),
               const SizedBox(width: 8),
@@ -4181,11 +4182,11 @@ class _PurchasePageState extends State<PurchasePage>
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           TextField(
             controller: _notesController,
             maxLines: 3,
-            style: const TextStyle(fontFamily: 'Literata'),
+            style: TextStyle(fontFamily: 'Literata'),
             decoration: InputDecoration(
               hintText: _localizations.addNotesAboutPurchase,
               hintStyle: TextStyle(
@@ -4193,14 +4194,14 @@ class _PurchasePageState extends State<PurchasePage>
                 fontFamily: 'Literata',
               ),
               filled: true,
-              fillColor: Colors.grey[50],
+              fillColor: AppColors.scaffold(context),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide.none,
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.grey[200]!),
+                borderSide: BorderSide(color: AppColors.border(context)!),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),

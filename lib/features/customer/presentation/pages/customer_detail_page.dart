@@ -3,6 +3,7 @@ import '../../domain/repositories/customer_repository.dart';
 import '../../data/services/customer_sync_service.dart';
 import 'customer_add_edit_page.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
+import 'package:c_billing/core/theme/app_theme.dart';
 
 /// Customer detail page for offline-first architecture
 class CustomerDetailPage extends StatefulWidget {
@@ -49,22 +50,22 @@ class _CustomerDetailPageState extends State<CustomerDetailPage> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF2D2D44),
+        backgroundColor: AppColors.card(context),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text(
+        title: Text(
           'Delete Customer?',
-          style: TextStyle(color: Colors.white),
+          style: TextStyle(color: AppColors.primaryText(context)),
         ),
         content: Text(
           'Are you sure you want to delete "${_customer.name}"? This action cannot be undone.',
-          style: TextStyle(color: Colors.white.withValues(alpha: 0.7)),
+          style: TextStyle(color: AppColors.secondaryText(context)),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
             child: Text(
               'Cancel',
-              style: TextStyle(color: Colors.white.withValues(alpha: 0.5)),
+              style: TextStyle(color: AppColors.mutedText(context)),
             ),
           ),
           TextButton(
@@ -107,9 +108,9 @@ class _CustomerDetailPageState extends State<CustomerDetailPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1A1A2E),
+      backgroundColor: AppColors.scaffold(context),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1A1A2E),
+        backgroundColor: AppTheme.primary,
         elevation: 0,
         leading: IconButton(
           onPressed: () => Navigator.of(context).pop(),
@@ -279,19 +280,19 @@ class _CustomerDetailPageState extends State<CustomerDetailPage> {
           // Name
           Text(
             _customer.name,
-            style: const TextStyle(
+            style: TextStyle(
               color: Colors.white,
               fontSize: 24,
               fontWeight: FontWeight.bold,
             ),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: 4),
           // Mobile
           Text(
             _customer.mobile,
             style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.8),
+              color: AppColors.card(context),
               fontSize: 16,
             ),
           ),
@@ -339,13 +340,11 @@ class _CustomerDetailPageState extends State<CustomerDetailPage> {
   }) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.05),
+        color: AppColors.card(context),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.1),
-        ),
+        border: Border.all(color: AppColors.border(context)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -353,7 +352,7 @@ class _CustomerDetailPageState extends State<CustomerDetailPage> {
           Text(
             title,
             style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.5),
+              color: AppColors.mutedText(context),
               fontSize: 12,
               fontWeight: FontWeight.w600,
               letterSpacing: 1,
@@ -368,15 +367,15 @@ class _CustomerDetailPageState extends State<CustomerDetailPage> {
 
   Widget _buildInfoRow(_InfoItem item) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: EdgeInsets.symmetric(vertical: 8),
       child: Row(
         children: [
           Icon(
             item.icon,
-            color: Colors.white.withValues(alpha: 0.5),
+            color: AppColors.mutedText(context),
             size: 20,
           ),
-          const SizedBox(width: 12),
+          SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -384,15 +383,15 @@ class _CustomerDetailPageState extends State<CustomerDetailPage> {
                 Text(
                   item.label,
                   style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.5),
+                    color: AppColors.mutedText(context),
                     fontSize: 12,
                   ),
                 ),
-                const SizedBox(height: 2),
+                SizedBox(height: 2),
                 Text(
                   item.value,
                   style: TextStyle(
-                    color: item.valueColor ?? Colors.white,
+                    color: item.valueColor ?? AppColors.primaryText(context),
                     fontSize: 15,
                     fontWeight: FontWeight.w500,
                   ),

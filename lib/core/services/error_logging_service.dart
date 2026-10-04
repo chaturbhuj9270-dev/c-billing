@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:path_provider/path_provider.dart';
@@ -252,14 +253,14 @@ class ErrorLoggingService {
                     GlassyToast.show(context, 'Logs copied to clipboard');
                   }
                 },
-                icon: const Icon(
+                icon: Icon(
                   Icons.copy,
                   size: 16,
-                  color: Color(0xFF1B4D3E),
+                  color: AppColors.accent(context),
                 ),
-                label: const Text(
+                label: Text(
                   'Copy',
-                  style: TextStyle(color: Color(0xFF1B4D3E), fontSize: 13),
+                  style: TextStyle(color: AppColors.accent(context), fontSize: 13),
                 ),
               ),
             ],

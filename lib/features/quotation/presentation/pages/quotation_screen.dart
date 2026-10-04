@@ -13,6 +13,7 @@ import '../../data/services/quotation_print_service.dart';
 import '../../domain/entities/quotation.dart';
 import '../../offline/controllers/quotation_offline_controller.dart';
 import '../widgets/quotation_products_panel.dart';
+import 'package:c_billing/core/theme/app_theme.dart';
 
 class QuotationScreen extends StatefulWidget {
   final Quotation? existing;
@@ -354,9 +355,9 @@ class _QuotationScreenState extends State<QuotationScreen> {
     final dateFormat = DateFormat('dd MMM yyyy');
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF2F4F7),
+      backgroundColor: AppColors.scaffold(context),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.card(context),
         surfaceTintColor: Colors.transparent,
         title: Text(
           _isEditing ? _l10n.quotation : _l10n.newQuotation,
@@ -654,7 +655,7 @@ class _QuotationScreenState extends State<QuotationScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 80),
+            SizedBox(height: 80),
           ],
         ),
       ),
@@ -663,7 +664,7 @@ class _QuotationScreenState extends State<QuotationScreen> {
 
   Widget _sectionCard({required Widget child}) {
     return Material(
-      color: Colors.white,
+      color: AppColors.card(context),
       elevation: 0,
       shadowColor: Colors.transparent,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),

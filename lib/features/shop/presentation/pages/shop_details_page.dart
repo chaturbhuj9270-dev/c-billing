@@ -11,6 +11,7 @@ import '../../../../core/localization/app_localizations.dart';
 import '../../offline/controllers/shop_image_cache_controller.dart';
 import '../../data/repositories/shop_repository.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
+import 'package:c_billing/core/theme/app_theme.dart';
 
 class ShopDetailsPage extends StatefulWidget {
   const ShopDetailsPage({super.key});
@@ -428,8 +429,8 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
         return AlertDialog(
           title: Row(
             children: [
-              Icon(Icons.draw, color: const Color(0xFF1B4D3E)),
-              const SizedBox(width: 8),
+              Icon(Icons.draw, color: AppColors.accent(context)),
+              SizedBox(width: 8),
               Text(_localizations.signature),
             ],
           ),
@@ -442,13 +443,13 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
                 decoration: BoxDecoration(
                   border: Border.all(color: Colors.grey[400]!),
                   borderRadius: BorderRadius.circular(8),
-                  color: Colors.white,
+                  color: AppColors.card(context),
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(7),
                   child: Signature(
                     controller: signatureController,
-                    backgroundColor: Colors.white,
+                    backgroundColor: AppColors.card(context),
                   ),
                 ),
               ),
@@ -597,10 +598,10 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
           children: [
             Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF1B4D3E),
+                color: AppColors.accent(context),
                 fontFamily: 'Literata',
               ),
             ),
@@ -626,14 +627,14 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFF1B4D3E), width: 2),
+              borderSide: BorderSide(color: AppColors.accent(context), width: 2),
             ),
-            contentPadding: const EdgeInsets.symmetric(
+            contentPadding: EdgeInsets.symmetric(
               horizontal: 12,
               vertical: 12,
             ),
             filled: true,
-            fillColor: Colors.grey[50],
+            fillColor: AppColors.scaffold(context),
           ),
           validator: (value) {
             if (isRequired && (value == null || value.isEmpty)) {
@@ -651,7 +652,7 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
       return Container(
         height: 200,
         decoration: BoxDecoration(
-          color: Colors.grey[100],
+          color: AppColors.chipFill(context),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: Colors.grey[300]!),
         ),
@@ -659,8 +660,8 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const CircularProgressIndicator(color: Color(0xFF1B4D3E)),
-              const SizedBox(height: 12),
+              CircularProgressIndicator(color: AppColors.accent(context)),
+              SizedBox(height: 12),
               Text(
                 _localizations.uploadingQrCode,
                 style: TextStyle(color: Colors.grey[600], fontSize: 14),
@@ -678,7 +679,7 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
             height: 200,
             width: double.infinity,
             decoration: BoxDecoration(
-              color: Colors.grey[100],
+              color: AppColors.chipFill(context),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: Colors.grey[300]!),
             ),
@@ -709,17 +710,17 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
               ),
             ),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           Row(
             children: [
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: _pickAndUploadQrCode,
-                  icon: const Icon(Icons.refresh, size: 18),
-                  label: const Text('Change'),
+                  icon: Icon(Icons.refresh, size: 18),
+                  label: Text('Change'),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFF1B4D3E),
-                    side: const BorderSide(color: Color(0xFF1B4D3E)),
+                    foregroundColor: Color(0xFF1B4D3E),
+                    side: BorderSide(color: AppColors.accent(context)),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -754,7 +755,7 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
       child: Container(
         height: 150,
         decoration: BoxDecoration(
-          color: Colors.grey[100],
+          color: AppColors.chipFill(context),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: Colors.grey[300]!,
@@ -766,16 +767,16 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(Icons.qr_code_2_outlined, size: 48, color: Colors.grey[400]),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               Text(
                 _localizations.uploadQrCode,
                 style: TextStyle(
-                  color: const Color(0xFF1B4D3E),
+                  color: AppColors.accent(context),
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              const SizedBox(height: 4),
+              SizedBox(height: 4),
               Text(
                 'Tap to select image',
                 style: TextStyle(color: Colors.grey[500], fontSize: 12),
@@ -792,7 +793,7 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
       return Container(
         height: 150,
         decoration: BoxDecoration(
-          color: Colors.grey[100],
+          color: AppColors.chipFill(context),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: Colors.grey[300]!),
         ),
@@ -800,8 +801,8 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const CircularProgressIndicator(color: Color(0xFF1B4D3E)),
-              const SizedBox(height: 12),
+              CircularProgressIndicator(color: AppColors.accent(context)),
+              SizedBox(height: 12),
               Text(
                 _localizations.uploadingLogo,
                 style: TextStyle(color: Colors.grey[600], fontSize: 14),
@@ -819,7 +820,7 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
             height: 150,
             width: double.infinity,
             decoration: BoxDecoration(
-              color: Colors.grey[100],
+              color: AppColors.chipFill(context),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: Colors.grey[300]!),
             ),
@@ -850,17 +851,17 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
               ),
             ),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           Row(
             children: [
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: _pickAndUploadLogo,
-                  icon: const Icon(Icons.refresh, size: 18),
-                  label: const Text('Change'),
+                  icon: Icon(Icons.refresh, size: 18),
+                  label: Text('Change'),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFF1B4D3E),
-                    side: const BorderSide(color: Color(0xFF1B4D3E)),
+                    foregroundColor: Color(0xFF1B4D3E),
+                    side: BorderSide(color: AppColors.accent(context)),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -895,7 +896,7 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
       child: Container(
         height: 120,
         decoration: BoxDecoration(
-          color: Colors.grey[100],
+          color: AppColors.chipFill(context),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: Colors.grey[300]!),
         ),
@@ -904,16 +905,16 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(Icons.image_outlined, size: 40, color: Colors.grey[400]),
-              const SizedBox(height: 8),
+              SizedBox(height: 8),
               Text(
                 _localizations.uploadLogo,
                 style: TextStyle(
-                  color: const Color(0xFF1B4D3E),
+                  color: AppColors.accent(context),
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              const SizedBox(height: 4),
+              SizedBox(height: 4),
               Text(
                 'Tap to select image',
                 style: TextStyle(color: Colors.grey[500], fontSize: 12),
@@ -930,7 +931,7 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
       return Container(
         height: 120,
         decoration: BoxDecoration(
-          color: Colors.grey[100],
+          color: AppColors.chipFill(context),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: Colors.grey[300]!),
         ),
@@ -938,8 +939,8 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const CircularProgressIndicator(color: Color(0xFF1B4D3E)),
-              const SizedBox(height: 12),
+              CircularProgressIndicator(color: AppColors.accent(context)),
+              SizedBox(height: 12),
               Text(
                 _localizations.uploadingSignature,
                 style: TextStyle(color: Colors.grey[600], fontSize: 14),
@@ -957,7 +958,7 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
             height: 120,
             width: double.infinity,
             decoration: BoxDecoration(
-              color: Colors.grey[100],
+              color: AppColors.chipFill(context),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: Colors.grey[300]!),
             ),
@@ -988,17 +989,17 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
               ),
             ),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           Row(
             children: [
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: _showSignaturePad,
-                  icon: const Icon(Icons.refresh, size: 18),
-                  label: const Text('Change'),
+                  icon: Icon(Icons.refresh, size: 18),
+                  label: Text('Change'),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFF1B4D3E),
-                    side: const BorderSide(color: Color(0xFF1B4D3E)),
+                    foregroundColor: Color(0xFF1B4D3E),
+                    side: BorderSide(color: AppColors.accent(context)),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -1033,7 +1034,7 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
       child: Container(
         height: 100,
         decoration: BoxDecoration(
-          color: Colors.grey[100],
+          color: AppColors.chipFill(context),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: Colors.grey[300]!),
         ),
@@ -1042,11 +1043,11 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(Icons.draw_outlined, size: 36, color: Colors.grey[400]),
-              const SizedBox(height: 8),
+              SizedBox(height: 8),
               Text(
                 _localizations.uploadSignature,
                 style: TextStyle(
-                  color: const Color(0xFF1B4D3E),
+                  color: AppColors.accent(context),
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                 ),
@@ -1080,18 +1081,18 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100],
+      backgroundColor: AppColors.chipFill(context),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.card(context),
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF1B4D3E)),
+          icon: Icon(Icons.arrow_back, color: AppColors.accent(context)),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
           _localizations.shopDetails,
           style: TextStyle(
-            color: Color(0xFF1B4D3E),
+            color: AppColors.accent(context),
             fontSize: 22,
             fontWeight: FontWeight.w700,
             fontFamily: 'Literata',
@@ -1099,7 +1100,7 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
         ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(16),
         child: Form(
           key: _formKey,
           child: Column(
@@ -1107,11 +1108,11 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
             children: [
               // Shop Information Section
               Container(
-                padding: const EdgeInsets.all(16),
+                padding: EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.card(context),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.grey[200]!),
+                  border: Border.all(color: AppColors.border(context)!),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withValues(alpha: 0.03),
@@ -1145,7 +1146,7 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
                       icon: Icons.person_outline,
                       isRequired: true,
                     ),
-                    const SizedBox(height: 16),
+                    SizedBox(height: 16),
                     _buildInputField(
                       label: _localizations.email,
                       controller: _emailController,
@@ -1155,14 +1156,14 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
                   ],
                 ),
               ),
-              const SizedBox(height: 20),
+              SizedBox(height: 20),
               // Contact Information Section
               Container(
-                padding: const EdgeInsets.all(16),
+                padding: EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.card(context),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.grey[200]!),
+                  border: Border.all(color: AppColors.border(context)!),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withValues(alpha: 0.03),
@@ -1198,7 +1199,7 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
                       maxLines: 3,
                       isRequired: true,
                     ),
-                    const SizedBox(height: 16),
+                    SizedBox(height: 16),
                     _buildInputField(
                       label: _localizations.pincode,
                       controller: _pincodeController,
@@ -1209,14 +1210,14 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
                   ],
                 ),
               ),
-              const SizedBox(height: 20),
+              SizedBox(height: 20),
               // Business Information Section
               Container(
-                padding: const EdgeInsets.all(16),
+                padding: EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.card(context),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.grey[200]!),
+                  border: Border.all(color: AppColors.border(context)!),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withValues(alpha: 0.03),
@@ -1236,7 +1237,7 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
                         color: Colors.grey[700],
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    SizedBox(height: 16),
                     _buildInputField(
                       label: _localizations.gstNumber,
                       controller: _gstController,
@@ -1245,14 +1246,14 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
                   ],
                 ),
               ),
-              const SizedBox(height: 20),
+              SizedBox(height: 20),
               // Bank Details Section
               Container(
-                padding: const EdgeInsets.all(16),
+                padding: EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.card(context),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.grey[200]!),
+                  border: Border.all(color: AppColors.border(context)!),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withValues(alpha: 0.03),
@@ -1297,30 +1298,30 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
                       controller: _accountHolderNameController,
                       icon: Icons.person_outline,
                     ),
-                    const SizedBox(height: 20),
+                    SizedBox(height: 20),
                     // QR Code Section
                     Text(
                       _localizations.paymentQrCode,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: Color(0xFF1B4D3E),
+                        color: AppColors.accent(context),
                         fontFamily: 'Literata',
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    SizedBox(height: 12),
                     _buildQrCodeSection(),
                   ],
                 ),
               ),
-              const SizedBox(height: 20),
+              SizedBox(height: 20),
               // Shop Logo & Signature Section
               Container(
-                padding: const EdgeInsets.all(16),
+                padding: EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.card(context),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.grey[200]!),
+                  border: Border.all(color: AppColors.border(context)!),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withValues(alpha: 0.03),
@@ -1335,44 +1336,44 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
                     // Shop Logo
                     Text(
                       _localizations.shopLogo,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: Color(0xFF1B4D3E),
+                        color: AppColors.accent(context),
                         fontFamily: 'Literata',
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    SizedBox(height: 12),
                     _buildLogoSection(),
-                    const SizedBox(height: 24),
+                    SizedBox(height: 24),
                     // Signature
                     Text(
                       _localizations.signature,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: Color(0xFF1B4D3E),
+                        color: AppColors.accent(context),
                         fontFamily: 'Literata',
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    SizedBox(height: 12),
                     _buildSignatureSection(),
                   ],
                 ),
               ),
-              const SizedBox(height: 20),
+              SizedBox(height: 20),
               // Terms and Conditions Section
               Container(
-                padding: const EdgeInsets.all(16),
+                padding: EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.card(context),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.grey[200]!),
+                  border: Border.all(color: AppColors.border(context)!),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withValues(alpha: 0.03),
                       blurRadius: 4,
-                      offset: const Offset(0, 1),
+                      offset: Offset(0, 1),
                     ),
                   ],
                 ),
@@ -1381,14 +1382,14 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
                   children: [
                     Text(
                       'Terms & Conditions',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: Color(0xFF1B4D3E),
+                        color: AppColors.accent(context),
                         fontFamily: 'Literata',
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    SizedBox(height: 12),
                     TextFormField(
                       controller: _termsConditionsController,
                       maxLines: 5,
@@ -1399,7 +1400,7 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
                           fontSize: 13,
                         ),
                         filled: true,
-                        fillColor: Colors.grey[50],
+                        fillColor: AppColors.scaffold(context),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
                           borderSide: BorderSide(color: Colors.grey[300]!),
@@ -1410,8 +1411,8 @@ class _ShopDetailsPageState extends State<ShopDetailsPage> {
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(
-                            color: Color(0xFF1B4D3E),
+                          borderSide: BorderSide(
+                            color: AppColors.accent(context),
                           ),
                         ),
                         contentPadding: const EdgeInsets.all(12),

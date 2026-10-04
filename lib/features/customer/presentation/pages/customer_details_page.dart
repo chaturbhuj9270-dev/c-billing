@@ -10,6 +10,7 @@ import 'package:c_billing/features/event_order/offline/controllers/event_order_o
 import 'package:c_billing/features/event_order/domain/entities/event_order.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/features/customer/offline/controllers/customer_transaction_offline_controller.dart';
+import 'package:c_billing/core/theme/app_theme.dart';
 
 /// Page to display customer details, pending balance, and transaction history
 /// Also provides functionality to receive payments
@@ -193,22 +194,22 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F6F8),
+      backgroundColor: AppColors.scaffold(context),
       appBar: AppBar(
         title: Text(
           _customer?.fullName ?? 'Customer Details',
-          style: const TextStyle(
+          style: TextStyle(
             fontFamily: 'Literata',
             fontWeight: FontWeight.w600,
           ),
         ),
-        backgroundColor: const Color(0xFF1B4D3E),
+        backgroundColor: Color(0xFF1B4D3E),
         foregroundColor: Colors.white,
         elevation: 0,
       ),
       body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(color: Color(0xFF1B4D3E)),
+          ? Center(
+              child: CircularProgressIndicator(color: AppColors.accent(context)),
             )
           : _error != null
           ? Center(
@@ -294,10 +295,10 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
     if (_customer == null) return const SizedBox.shrink();
 
     return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(16),
+      margin: EdgeInsets.all(16),
+      padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.card(context),
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
@@ -314,16 +315,16 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
             children: [
               CircleAvatar(
                 radius: 24,
-                backgroundColor: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+                backgroundColor: Color(0xFF1B4D3E).withValues(alpha: 0.1),
                 child: Text(
                   _customer!.firstName.isNotEmpty
                       ? _customer!.firstName[0].toUpperCase()
                       : '?',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'Literata',
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF1B4D3E),
+                    color: AppColors.accent(context),
                   ),
                 ),
               ),
@@ -423,7 +424,7 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
                 style: TextStyle(
                   fontFamily: 'Literata',
                   fontSize: 14,
-                  color: Colors.white.withValues(alpha: 0.8),
+                  color: AppColors.card(context),
                 ),
               ),
               Icon(
@@ -528,12 +529,12 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
     final isPayment = transaction.isPayment;
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      padding: const EdgeInsets.all(12),
+      margin: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      padding: EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.card(context),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey[200]!),
+        border: Border.all(color: AppColors.border(context)!),
       ),
       child: Row(
         children: [
@@ -561,7 +562,7 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
               children: [
                 Text(
                   transaction.transactionTypeDisplay,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'Literata',
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -588,23 +589,23 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
                   ),
                 ],
                 if (transaction.paymentMode != null) ...[
-                  const SizedBox(height: 4),
+                  SizedBox(height: 4),
                   Container(
-                    padding: const EdgeInsets.symmetric(
+                    padding: EdgeInsets.symmetric(
                       horizontal: 6,
                       vertical: 2,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+                      color: AppColors.accentSoft(context, 0.1),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
                       transaction.paymentMode!.displayName,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'Literata',
                         fontSize: 10,
                         fontWeight: FontWeight.w500,
-                        color: Color(0xFF1B4D3E),
+                        color: AppColors.accent(context),
                       ),
                     ),
                   ),
@@ -653,19 +654,19 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
         .length;
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      padding: const EdgeInsets.all(16),
+      margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.card(context),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: const Color(0xFF1B4D3E).withValues(alpha: 0.2),
+          color: AppColors.accentSoft(context, 0.2),
         ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
-            offset: const Offset(0, 2),
+            offset: Offset(0, 2),
           ),
         ],
       ),
@@ -675,19 +676,19 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(8),
+                padding: EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+                  color: AppColors.accentSoft(context, 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.event_note,
-                  color: Color(0xFF1B4D3E),
+                  color: AppColors.accent(context),
                   size: 20,
                 ),
               ),
               const SizedBox(width: 12),
-              const Text(
+              Text(
                 'Events & Orders',
                 style: TextStyle(
                   fontFamily: 'Literata',
@@ -695,11 +696,11 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              const Spacer(),
+              Spacer(),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1B4D3E),
+                  color: AppColors.accent(context),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
@@ -814,13 +815,13 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
     final statusColor = _getStatusColor(order.status);
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      padding: const EdgeInsets.all(12),
+      margin: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      padding: EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.card(context),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-          color: const Color(0xFF1B4D3E).withValues(alpha: 0.15),
+          color: AppColors.accentSoft(context, 0.15),
         ),
       ),
       child: Row(
@@ -830,12 +831,12 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+              color: AppColors.accentSoft(context, 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(
               isEvent ? Icons.celebration : Icons.shopping_bag,
-              color: const Color(0xFF1B4D3E),
+              color: AppColors.accent(context),
               size: 20,
             ),
           ),
@@ -850,7 +851,7 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
                     Expanded(
                       child: Text(
                         order.orderName,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontFamily: 'Literata',
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
@@ -920,11 +921,11 @@ class _CustomerDetailsPageState extends State<CustomerDetailsPage> {
             children: [
               Text(
                 '₹${order.totalAmount.toStringAsFixed(0)}',
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: 'Literata',
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF1B4D3E),
+                  color: AppColors.accent(context),
                 ),
               ),
               const SizedBox(height: 4),
@@ -1077,8 +1078,8 @@ class _ReceivePaymentSheetState extends State<ReceivePaymentSheet> {
       padding: EdgeInsets.only(
         bottom: MediaQuery.of(context).viewInsets.bottom,
       ),
-      decoration: const BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(
+        color: AppColors.card(context),
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       child: SingleChildScrollView(
@@ -1141,7 +1142,7 @@ class _ReceivePaymentSheetState extends State<ReceivePaymentSheet> {
                   ),
                   Text(
                     '₹${widget.customer.currentPendingAmount.toStringAsFixed(2)}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontFamily: 'Literata',
                       fontSize: 18,
                       fontWeight: FontWeight.w700,
@@ -1174,7 +1175,7 @@ class _ReceivePaymentSheetState extends State<ReceivePaymentSheet> {
               ),
               decoration: InputDecoration(
                 prefixText: '₹ ',
-                prefixStyle: const TextStyle(
+                prefixStyle: TextStyle(
                   fontFamily: 'Literata',
                   fontSize: 24,
                   fontWeight: FontWeight.w600,
@@ -1185,8 +1186,8 @@ class _ReceivePaymentSheetState extends State<ReceivePaymentSheet> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(
-                    color: Color(0xFF1B4D3E),
+                  borderSide: BorderSide(
+                    color: AppColors.accent(context),
                     width: 2,
                   ),
                 ),
@@ -1356,14 +1357,14 @@ class _ReceivePaymentSheetState extends State<ReceivePaymentSheet> {
         setState(() {});
       },
       style: OutlinedButton.styleFrom(
-        side: const BorderSide(color: Color(0xFF1B4D3E)),
+        side: BorderSide(color: AppColors.accent(context)),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
       child: Text(
         label ?? '₹${amount.toStringAsFixed(0)}',
-        style: const TextStyle(
+        style: TextStyle(
           fontFamily: 'Literata',
-          color: Color(0xFF1B4D3E),
+          color: AppColors.accent(context),
         ),
       ),
     );

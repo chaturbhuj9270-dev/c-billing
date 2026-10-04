@@ -18,6 +18,7 @@ import '../../../../core/ui/subscription_screen.dart';
 import 'signup.dart';
 import 'change_password_page.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
+import 'package:c_billing/core/theme/app_theme.dart';
 
 class LoginPageV2 extends StatefulWidget {
   const LoginPageV2({super.key});
@@ -216,14 +217,25 @@ class _LoginPageV2State extends State<LoginPageV2>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.scaffold(context),
       body: Container(
         width: double.infinity,
         height: double.infinity,
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Color(0xFFE8F5E9), Color(0xFFF5F5F5), Color(0xFFE8F5E9)],
+            colors: AppColors.isDark(context)
+                ? const [
+                    Color(0xFF000000),
+                    Color(0xFF111111),
+                    Color(0xFF000000),
+                  ]
+                : const [
+                    Color(0xFFE8F5E9),
+                    Color(0xFFF5F5F5),
+                    Color(0xFFE8F5E9),
+                  ],
           ),
         ),
         child: SafeArea(
@@ -395,14 +407,14 @@ class _LoginPageV2State extends State<LoginPageV2>
                                     height: 80,
                                   ),
                                 ),
-                                const SizedBox(height: 5),
+                                SizedBox(height: 5),
                                 Text(
                                   _localizations.appName,
                                   style: TextStyle(
                                     fontFamily: 'Literata',
                                     fontSize: 36,
                                     fontWeight: FontWeight.w900,
-                                    color: Color(0xFF1B4D3E),
+                                    color: AppColors.accent(context),
                                     letterSpacing: 2,
                                   ),
                                 ),
@@ -550,7 +562,7 @@ class _LoginPageV2State extends State<LoginPageV2>
                                                     _localizations
                                                         .forgotPasswordQuestion,
                                                     style: TextStyle(
-                                                      color: Color(0xFF1B4D3E),
+                                                      color: AppColors.accent(context),
                                                       fontWeight:
                                                           FontWeight.w600,
                                                       fontSize: 13,
@@ -713,14 +725,14 @@ class _LoginPageV2State extends State<LoginPageV2>
                                   onTap: () {
                                     Navigator.of(context).push(
                                       MaterialPageRoute(
-                                        builder: (_) => const SignupPage(),
+                                        builder: (_) => SignupPage(),
                                       ),
                                     );
                                   },
                                   child: Text(
                                     _localizations.signUp,
                                     style: TextStyle(
-                                      color: Color(0xFF1B4D3E),
+                                      color: AppColors.accent(context),
                                       fontSize: 14,
                                       fontWeight: FontWeight.w700,
                                     ),
@@ -801,7 +813,7 @@ class _LoginPageV2State extends State<LoginPageV2>
                 onPressed: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(
-                      builder: (_) => const ChangePasswordPage(),
+                      builder: (_) => ChangePasswordPage(),
                     ),
                   );
                 },
@@ -812,8 +824,8 @@ class _LoginPageV2State extends State<LoginPageV2>
                 ),
                 child: Text(
                   _localizations.forgotPasswordQuestion,
-                  style: const TextStyle(
-                    color: Color(0xFF1B4D3E),
+                  style: TextStyle(
+                    color: AppColors.accent(context),
                     fontWeight: FontWeight.w600,
                     fontSize: 13,
                     fontFamily: 'Literata',
@@ -857,7 +869,7 @@ class _LoginPageV2State extends State<LoginPageV2>
           child: OutlinedButton(
             onPressed: () {},
             style: OutlinedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 14),
+              padding: EdgeInsets.symmetric(vertical: 14),
               side: BorderSide(color: Colors.grey[300]!, width: 1),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
@@ -874,7 +886,7 @@ class _LoginPageV2State extends State<LoginPageV2>
                     width: 22,
                     height: 22,
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: AppColors.card(context),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: const Center(
@@ -919,12 +931,12 @@ class _LoginPageV2State extends State<LoginPageV2>
               onTap: () {
                 Navigator.of(
                   context,
-                ).push(MaterialPageRoute(builder: (_) => const SignupPage()));
+                ).push(MaterialPageRoute(builder: (_) => SignupPage()));
               },
               child: Text(
                 _localizations.signUp,
-                style: const TextStyle(
-                  color: Color(0xFF1B4D3E),
+                style: TextStyle(
+                  color: AppColors.accent(context),
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
                 ),
@@ -944,7 +956,7 @@ class _LoginPageV2State extends State<LoginPageV2>
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.8),
+        color: AppColors.card(context),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: Colors.white.withValues(alpha: 0.3),
@@ -969,14 +981,14 @@ class _LoginPageV2State extends State<LoginPageV2>
             fontWeight: FontWeight.w400,
             fontFamily: 'Literata',
           ),
-          prefixIcon: Icon(icon, color: const Color(0xFF1B4D3E), size: 22),
+          prefixIcon: Icon(icon, color: AppColors.accent(context), size: 22),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 16,
             vertical: 16,
           ),
         ),
-        style: const TextStyle(
+        style: TextStyle(
           color: Colors.black87,
           fontSize: 15,
           fontWeight: FontWeight.w500,
@@ -989,7 +1001,7 @@ class _LoginPageV2State extends State<LoginPageV2>
   Widget _buildAnimatedPasswordField() {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.8),
+        color: AppColors.card(context),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: Colors.white.withValues(alpha: 0.3),
@@ -1016,7 +1028,7 @@ class _LoginPageV2State extends State<LoginPageV2>
           ),
           prefixIcon: Icon(
             Icons.lock_outline,
-            color: const Color(0xFF1B4D3E),
+            color: AppColors.accent(context),
             size: 22,
           ),
           suffixIcon: IconButton(
@@ -1024,7 +1036,7 @@ class _LoginPageV2State extends State<LoginPageV2>
               _obscure
                   ? Icons.visibility_off_outlined
                   : Icons.visibility_outlined,
-              color: const Color(0xFF1B4D3E),
+              color: AppColors.accent(context),
               size: 22,
             ),
             onPressed: () => setState(() => _obscure = !_obscure),

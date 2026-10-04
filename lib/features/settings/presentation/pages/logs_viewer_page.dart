@@ -8,6 +8,7 @@ import 'package:c_billing/core/services/app_logger.dart';
 import 'package:c_billing/core/localization/app_localizations.dart';
 import 'package:c_billing/core/services/language_service.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
+import 'package:c_billing/core/theme/app_theme.dart';
 
 class LogsViewerPage extends StatefulWidget {
   const LogsViewerPage({super.key});
@@ -166,7 +167,7 @@ class _LogsViewerPageState extends State<LogsViewerPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: AppColors.scaffold(context),
       appBar: AppBar(
         title: Text(
           _localizations.appLogs,
@@ -206,7 +207,7 @@ class _LogsViewerPageState extends State<LogsViewerPage> {
           ),
           // Clear
           IconButton(
-            icon: const Icon(Icons.delete_outline),
+            icon: Icon(Icons.delete_outline),
             tooltip: _localizations.clearLogs,
             onPressed: _clearLogs,
           ),
@@ -218,7 +219,7 @@ class _LogsViewerPageState extends State<LogsViewerPage> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.card(context),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: 0.05),
@@ -281,7 +282,7 @@ class _LogsViewerPageState extends State<LogsViewerPage> {
                           prefixIcon: const Icon(Icons.search, size: 20),
                           suffixIcon: _searchController.text.isNotEmpty
                               ? IconButton(
-                                  icon: const Icon(Icons.clear, size: 18),
+                                  icon: Icon(Icons.clear, size: 18),
                                   onPressed: () {
                                     _searchController.clear();
                                     _applyFilters();
@@ -289,7 +290,7 @@ class _LogsViewerPageState extends State<LogsViewerPage> {
                                 )
                               : null,
                           filled: true,
-                          fillColor: const Color(0xFFF5F5F5),
+                          fillColor: AppColors.scaffold(context),
                           contentPadding: const EdgeInsets.symmetric(
                             horizontal: 12,
                             vertical: 10,
@@ -304,9 +305,9 @@ class _LogsViewerPageState extends State<LogsViewerPage> {
                     const SizedBox(width: 8),
                     // Level filter dropdown
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      padding: EdgeInsets.symmetric(horizontal: 12),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF5F5F5),
+                        color: AppColors.scaffold(context),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: DropdownButton<LogLevel?>(
@@ -433,9 +434,9 @@ class _LogsViewerPageState extends State<LogsViewerPage> {
   Widget _buildLogCard(LogEntry log) {
     final color = _getLevelColor(log.level);
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
+      margin: EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.card(context),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: color.withValues(alpha: 0.2)),
         boxShadow: [
@@ -496,9 +497,9 @@ class _LogsViewerPageState extends State<LogsViewerPage> {
         ),
         children: [
           Container(
-            padding: const EdgeInsets.all(10),
+            padding: EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: Colors.grey[50],
+              color: AppColors.scaffold(context),
               borderRadius: BorderRadius.circular(6),
             ),
             child: Column(

@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../../../core/services/event_order_settings_service.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
+import 'package:c_billing/core/theme/app_theme.dart';
 
 /// Settings page for managing custom columns for Events and Sub-Events
 class EventOrderCustomColumnsPage extends StatefulWidget {
@@ -32,7 +33,7 @@ class _EventOrderCustomColumnsPageState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7F6),
+      backgroundColor: AppColors.scaffold(context),
       body: SafeArea(
         child: Column(
           children: [
@@ -68,36 +69,36 @@ class _EventOrderCustomColumnsPageState
 
   Widget _buildHeader() {
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+      padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
       child: Row(
         children: [
           GestureDetector(
             onTap: () => Navigator.pop(context),
             child: Container(
-              padding: const EdgeInsets.all(8),
+              padding: EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+                color: AppColors.accentSoft(context, 0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.arrow_back_ios_rounded,
                 size: 20,
-                color: Color(0xFF1B4D3E),
+                color: AppColors.accent(context),
               ),
             ),
           ),
-          const SizedBox(width: 12),
+          SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Custom Columns',
                   style: TextStyle(
                     fontFamily: 'Literata',
                     fontWeight: FontWeight.w800,
                     fontSize: 22,
-                    color: Color(0xFF1B4D3E),
+                    color: AppColors.accent(context),
                   ),
                 ),
                 Text(
@@ -119,9 +120,9 @@ class _EventOrderCustomColumnsPageState
 
   Widget _buildTabBar() {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.card(context),
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
@@ -134,19 +135,19 @@ class _EventOrderCustomColumnsPageState
       child: TabBar(
         controller: _tabController,
         labelColor: Colors.white,
-        unselectedLabelColor: const Color(0xFF1B4D3E),
-        labelStyle: const TextStyle(
+        unselectedLabelColor: Color(0xFF1B4D3E),
+        labelStyle: TextStyle(
           fontFamily: 'Literata',
           fontWeight: FontWeight.w600,
           fontSize: 14,
         ),
-        unselectedLabelStyle: const TextStyle(
+        unselectedLabelStyle: TextStyle(
           fontFamily: 'Literata',
           fontWeight: FontWeight.w500,
           fontSize: 14,
         ),
         indicator: BoxDecoration(
-          color: const Color(0xFF1B4D3E),
+          color: AppColors.accent(context),
           borderRadius: BorderRadius.circular(10),
         ),
         indicatorSize: TabBarIndicatorSize.tab,
@@ -227,23 +228,23 @@ class _EventOrderCustomColumnsPageState
             width: 80,
             height: 80,
             decoration: BoxDecoration(
-              color: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
+              color: AppColors.accentSoft(context, 0.1),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Icon(
               isEvent ? Icons.event_note : Icons.subdirectory_arrow_right,
               size: 40,
-              color: const Color(0xFF1B4D3E),
+              color: AppColors.accent(context),
             ),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           Text(
             'No ${isEvent ? "Event" : "Sub-Event"} Columns',
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: 'Literata',
               fontWeight: FontWeight.w700,
               fontSize: 18,
-              color: Color(0xFF1B4D3E),
+              color: AppColors.accent(context),
             ),
           ),
           const SizedBox(height: 8),
@@ -305,7 +306,7 @@ class _EventOrderCustomColumnsPageState
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
-            color: Colors.white,
+            color: AppColors.card(context),
           ),
           child: Row(
             children: [
@@ -342,11 +343,11 @@ class _EventOrderCustomColumnsPageState
                         Flexible(
                           child: Text(
                             column.name,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontFamily: 'Literata',
                               fontWeight: FontWeight.w700,
                               fontSize: 16,
-                              color: Color(0xFF1B4D3E),
+                              color: AppColors.accent(context),
                             ),
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -522,12 +523,12 @@ class _EventOrderCustomColumnsPageState
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text(
+        title: Text(
           'Delete Column?',
           style: TextStyle(
             fontFamily: 'Literata',
             fontWeight: FontWeight.w700,
-            color: Color(0xFF1B4D3E),
+            color: AppColors.accent(context),
           ),
         ),
         content: Text(
@@ -597,16 +598,16 @@ class _EventOrderCustomColumnsPageState
         builder: (context, setDialogState) => BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
           child: AlertDialog(
-            backgroundColor: Colors.white,
+            backgroundColor: AppColors.card(context),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20),
             ),
             title: Text(
               existingColumn != null ? 'Edit Column' : 'Add Custom Column',
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: 'Literata',
                 fontWeight: FontWeight.w700,
-                color: Color(0xFF1B4D3E),
+                color: AppColors.accent(context),
               ),
             ),
             content: SingleChildScrollView(
@@ -625,24 +626,24 @@ class _EventOrderCustomColumnsPageState
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(
-                          color: Color(0xFF1B4D3E),
+                        borderSide: BorderSide(
+                          color: AppColors.accent(context),
                           width: 2,
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16),
 
                   // Target Type Dropdown (only for new columns)
                   if (existingColumn == null) ...[
-                    const Text(
+                    Text(
                       'Column For',
                       style: TextStyle(
                         fontFamily: 'Literata',
                         fontWeight: FontWeight.w600,
                         fontSize: 14,
-                        color: Color(0xFF1B4D3E),
+                        color: AppColors.accent(context),
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -666,7 +667,7 @@ class _EventOrderCustomColumnsPageState
                                         ? Icons.event
                                         : Icons.subdirectory_arrow_right,
                                     size: 20,
-                                    color: const Color(0xFF1B4D3E),
+                                    color: AppColors.accent(context),
                                   ),
                                   const SizedBox(width: 12),
                                   Text(
@@ -689,17 +690,17 @@ class _EventOrderCustomColumnsPageState
                         ),
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    SizedBox(height: 16),
                   ],
 
                   // Data Type Dropdown
-                  const Text(
+                  Text(
                     'Data Type',
                     style: TextStyle(
                       fontFamily: 'Literata',
                       fontWeight: FontWeight.w600,
                       fontSize: 14,
-                      color: Color(0xFF1B4D3E),
+                      color: AppColors.accent(context),
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -757,8 +758,8 @@ class _EventOrderCustomColumnsPageState
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(
-                            color: Color(0xFF1B4D3E),
+                          borderSide: BorderSide(
+                            color: AppColors.accent(context),
                             width: 2,
                           ),
                         ),
@@ -778,8 +779,8 @@ class _EventOrderCustomColumnsPageState
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(
-                          color: Color(0xFF1B4D3E),
+                        borderSide: BorderSide(
+                          color: AppColors.accent(context),
                           width: 2,
                         ),
                       ),
@@ -803,8 +804,8 @@ class _EventOrderCustomColumnsPageState
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(
-                            color: Color(0xFF1B4D3E),
+                          borderSide: BorderSide(
+                            color: AppColors.accent(context),
                             width: 2,
                           ),
                         ),

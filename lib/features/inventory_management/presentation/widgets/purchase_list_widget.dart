@@ -4,6 +4,7 @@ import 'package:c_billing/core/services/language_service.dart';
 import '../../offline/entities/purchase_batch_entity.dart';
 import 'purchase_card_widget.dart';
 import 'purchase_filter_widget.dart';
+import 'package:c_billing/core/theme/app_theme.dart';
 
 /// Main list widget for displaying purchase history
 /// Features: Shimmer loading, empty state, smooth scrolling, real-time updates
@@ -126,7 +127,7 @@ class _PurchaseListWidgetState extends State<PurchaseListWidget> {
       onRefresh: () async {
         widget.onRefresh?.call();
       },
-      color: const Color(0xFF1B4D3E),
+      color: AppColors.accent(context),
       child: ListView.builder(
         controller: _scrollController,
         physics: const AlwaysScrollableScrollPhysics(
@@ -195,7 +196,7 @@ class _PurchaseListWidgetState extends State<PurchaseListWidget> {
               // Animated icon container
               TweenAnimationBuilder<double>(
                 tween: Tween(begin: 0.0, end: 1.0),
-                duration: const Duration(milliseconds: 600),
+                duration: Duration(milliseconds: 600),
                 builder: (context, value, child) {
                   return Transform.scale(
                     scale: value,
@@ -206,7 +207,7 @@ class _PurchaseListWidgetState extends State<PurchaseListWidget> {
                   width: 120,
                   height: 120,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1B4D3E).withValues(alpha: 0.08),
+                    color: AppColors.accentSoft(context, 0.08),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
@@ -214,7 +215,7 @@ class _PurchaseListWidgetState extends State<PurchaseListWidget> {
                         ? Icons.filter_alt_off_rounded
                         : Icons.shopping_cart_outlined,
                     size: 56,
-                    color: const Color(0xFF1B4D3E).withValues(alpha: 0.5),
+                    color: AppColors.accentSoft(context, 0.5),
                   ),
                 ),
               ),
@@ -237,11 +238,11 @@ class _PurchaseListWidgetState extends State<PurchaseListWidget> {
                   isFiltered
                       ? _localizations.noMatchingPurchases
                       : widget.emptyTitle,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'Literata',
                     fontWeight: FontWeight.w700,
                     fontSize: 20,
-                    color: Color(0xFF1B4D3E),
+                    color: AppColors.accent(context),
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -274,20 +275,20 @@ class _PurchaseListWidgetState extends State<PurchaseListWidget> {
                 const SizedBox(height: 32),
                 TweenAnimationBuilder<double>(
                   tween: Tween(begin: 0.0, end: 1.0),
-                  duration: const Duration(milliseconds: 1000),
+                  duration: Duration(milliseconds: 1000),
                   builder: (context, value, child) {
                     return Opacity(opacity: value, child: child);
                   },
                   child: Container(
-                    padding: const EdgeInsets.symmetric(
+                    padding: EdgeInsets.symmetric(
                       horizontal: 16,
                       vertical: 10,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF1B4D3E).withValues(alpha: 0.06),
+                      color: AppColors.accentSoft(context, 0.06),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: const Color(0xFF1B4D3E).withValues(alpha: 0.2),
+                        color: AppColors.accentSoft(context, 0.2),
                         width: 1,
                       ),
                     ),
@@ -297,7 +298,7 @@ class _PurchaseListWidgetState extends State<PurchaseListWidget> {
                         Icon(
                           Icons.add_circle_outline_rounded,
                           size: 20,
-                          color: const Color(0xFF1B4D3E).withValues(alpha: 0.7),
+                          color: AppColors.accentSoft(context, 0.7),
                         ),
                         const SizedBox(width: 8),
                         Text(
@@ -409,21 +410,21 @@ class PurchaseSummaryWidget extends StatelessWidget {
       (sum, p) => sum + p.quantityPurchased,
     );
 
+    final header = AppColors.headerGradient(context);
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            const Color(0xFF1B4D3E),
-            const Color(0xFF1B4D3E).withValues(alpha: 0.85),
-          ],
+          colors: [header.first, header.last],
         ),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF1B4D3E).withValues(alpha: 0.3),
+            color: Colors.black.withValues(
+              alpha: AppColors.isDark(context) ? 0.45 : 0.3,
+            ),
             blurRadius: 12,
             offset: const Offset(0, 6),
           ),
@@ -463,11 +464,11 @@ class PurchaseSummaryWidget extends StatelessWidget {
     bool isExpanded = false,
   }) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8),
+      padding: EdgeInsets.symmetric(horizontal: 8),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, color: Colors.white.withValues(alpha: 0.8), size: 20),
+          Icon(icon, color: Colors.white, size: 20),
           const SizedBox(height: 6),
           Text(
             value,
