@@ -406,6 +406,35 @@ class EnglishLocalization {
   static const String callSupport = 'Call Support';
   static const String securePayment = 'Secure Payment';
   static const String couldNotOpenWhatsApp = 'Could not open WhatsApp';
+  static const String payViaCashfree = 'Pay Securely with Cashfree';
+  static const String cashfreePaymentModesHint =
+      'UPI, Cards, Net Banking & Wallets supported';
+  static const String cashfreePaymentInstructions =
+      'Tap Pay Securely to open Cashfree checkout. Your subscription activates automatically after successful payment.';
+  static const String paySecurely = 'Pay Securely';
+  static const String processingPayment = 'Processing...';
+  static const String preparingSecurePayment = 'Preparing secure payment...';
+  static const String activatingSubscription = 'Activating subscription...';
+  static const String subscriptionActivatedSuccess =
+      'Subscription activated! Welcome to C-Billing.';
+  static const String paymentReceivedActivatingSoon =
+      'Payment received. Activation may take a moment — please reopen the app shortly.';
+  static const String paymentFailedTryAgain =
+      'Payment failed or cancelled. Please try again.';
+  static const String securePaymentPoweredByCashfree =
+      'Secure payment powered by Cashfree';
+  static const String payViaGooglePlay = 'Subscribe with Google Play';
+  static const String googlePlayPaymentModesHint =
+      'Secure checkout via Google Play Billing';
+  static const String googlePlayPaymentInstructions =
+      'Tap Pay with Google Play to complete your yearly subscription. Access unlocks automatically after Google confirms payment.';
+  static const String payWithGooglePlay = 'Pay with Google Play';
+  static const String restorePurchases = 'Restore Purchases';
+  static const String restoringPurchases = 'Restoring purchases...';
+  static const String playProductNotReady =
+      'Google Play product is not available yet. Create product ID "cbilling_yearly" in Play Console and use a license tester.';
+  static const String securePaymentPoweredByGooglePlay =
+      'Secure payment powered by Google Play';
 
   // Billing - Batch Selection
   static const String selectStockEntry = 'Select Stock Entry';

@@ -1,7 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-/// Service to manage user subscription status
+/// Service to manage user subscription status.
+///
+/// Access requires an active `subscriptionDate` within [subscriptionDuration].
+/// Activation after Cashfree payment is performed by Cloud Functions.
 class SubscriptionService {
   static final SubscriptionService _instance = SubscriptionService._internal();
   factory SubscriptionService() => _instance;
@@ -13,15 +16,26 @@ class SubscriptionService {
   /// Subscription price in INR
   static const double subscriptionPrice = 3999.0;
 
+  /// Display price (with thousands separator)
+  static const String subscriptionPriceDisplay = '3,999';
+
   /// Subscription validity duration
   static const Duration subscriptionDuration = Duration(days: 365);
 
   /// Get current user ID
   String? get _userId => _auth.currentUser?.uid;
 
-  /// Check if user's subscription is valid
-  /// Returns true if subscription is active or no user logged in (let auth handle it)
-  /// Returns false only if user is logged in AND subscription is expired
+  DateTime? _parseSubscriptionDate(dynamic subscriptionDate) {
+    if (subscriptionDate == null) return null;
+    if (subscriptionDate is Timestamp) return subscriptionDate.toDate();
+    if (subscriptionDate is String) return DateTime.tryParse(subscriptionDate);
+    return null;
+  }
+
+  /// Check if user's subscription is valid.
+  ///
+  /// Fail-closed for logged-in users: missing/expired/error → false.
+  /// No logged-in user → true (auth flow handles that case).
   Future<bool> isSubscriptionValid() async {
     try {
       final userId = _userId;
@@ -29,54 +43,46 @@ class SubscriptionService {
         print(
           '[SubscriptionService] No user logged in - returning true to let auth flow handle',
         );
-        return true; // Let the auth flow handle non-logged-in users
+        return true;
       }
 
-      final userDoc = await _firestore.collection('users').doc(userId).get();
+      final userDoc = await _firestore
+          .collection('users')
+          .doc(userId)
+          .get()
+          .timeout(const Duration(seconds: 8));
 
       if (!userDoc.exists) {
         print(
-          '[SubscriptionService] User document not found - granting access',
+          '[SubscriptionService] User document not found - subscription required',
         );
-        return true; // New user, document not yet created
+        return false;
       }
 
       final data = userDoc.data();
       if (data == null) {
-        print('[SubscriptionService] User data is null - granting access');
-        return true;
+        print('[SubscriptionService] User data is null - subscription required');
+        return false;
       }
 
-      final subscriptionDate = data['subscriptionDate'];
-      if (subscriptionDate == null) {
+      final subDate = _parseSubscriptionDate(data['subscriptionDate']);
+      if (subDate == null) {
         print(
-          '[SubscriptionService] No subscription date found - granting access',
+          '[SubscriptionService] No valid subscription date - subscription required',
         );
-        return true; // Legacy user without subscription field
-      }
-
-      DateTime subDate;
-      if (subscriptionDate is Timestamp) {
-        subDate = subscriptionDate.toDate();
-      } else if (subscriptionDate is String) {
-        subDate = DateTime.parse(subscriptionDate);
-      } else {
-        print('[SubscriptionService] Invalid subscription date format');
         return false;
       }
 
       final expiryDate = subDate.add(subscriptionDuration);
-      final now = DateTime.now();
-
-      final isValid = now.isBefore(expiryDate);
+      final isValid = DateTime.now().isBefore(expiryDate);
       print(
         '[SubscriptionService] Subscription valid: $isValid (expires: $expiryDate)',
       );
-
       return isValid;
     } catch (e) {
       print('[SubscriptionService] Error checking subscription: $e');
-      return true; // Grant access on error/timeout to avoid blocking user
+      // Fail closed — do not unlock the app on network/read errors.
+      return false;
     }
   }
 
@@ -90,18 +96,8 @@ class SubscriptionService {
       final data = userDoc.data();
       if (data == null) return null;
 
-      final subscriptionDate = data['subscriptionDate'];
-      if (subscriptionDate == null) return null;
-
-      DateTime subDate;
-      if (subscriptionDate is Timestamp) {
-        subDate = subscriptionDate.toDate();
-      } else if (subscriptionDate is String) {
-        subDate = DateTime.parse(subscriptionDate);
-      } else {
-        return null;
-      }
-
+      final subDate = _parseSubscriptionDate(data['subscriptionDate']);
+      if (subDate == null) return null;
       return subDate.add(subscriptionDuration);
     } catch (e) {
       print('[SubscriptionService] Error getting expiry date: $e');
@@ -116,12 +112,24 @@ class SubscriptionService {
 
     final now = DateTime.now();
     if (now.isAfter(expiryDate)) return 0;
-
     return expiryDate.difference(now).inDays;
   }
 
-  /// Activate subscription for current user
-  /// Updates subscriptionDate to current date
+  /// Wait until Firestore reflects an active subscription (after Cashfree verify).
+  Future<bool> waitUntilActive({
+    Duration timeout = const Duration(seconds: 20),
+    Duration pollInterval = const Duration(seconds: 1),
+  }) async {
+    final deadline = DateTime.now().add(timeout);
+    while (DateTime.now().isBefore(deadline)) {
+      if (await isSubscriptionValid()) return true;
+      await Future.delayed(pollInterval);
+    }
+    return await isSubscriptionValid();
+  }
+
+  /// Client-side activate — kept for admin/manual tooling only.
+  /// Production unlock must go through Cloud Functions after Cashfree PAID.
   Future<bool> activateSubscription() async {
     try {
       final userId = _userId;
@@ -133,6 +141,7 @@ class SubscriptionService {
       await _firestore.collection('users').doc(userId).update({
         'subscriptionDate': FieldValue.serverTimestamp(),
         'lastSubscriptionUpdate': FieldValue.serverTimestamp(),
+        'subscriptionStatus': 'active',
       });
 
       print('[SubscriptionService] Subscription activated successfully');
@@ -143,13 +152,16 @@ class SubscriptionService {
     }
   }
 
-  /// Set subscription date for new user registration
+  /// New users start without an active subscription (must pay via Cashfree).
   static Future<void> setInitialSubscription(String userId) async {
     try {
-      await FirebaseFirestore.instance.collection('users').doc(userId).update({
-        'subscriptionDate': FieldValue.serverTimestamp(),
-      });
-      print('[SubscriptionService] Initial subscription set for user: $userId');
+      await FirebaseFirestore.instance.collection('users').doc(userId).set({
+        'subscriptionDate': null,
+        'subscriptionStatus': 'inactive',
+      }, SetOptions(merge: true));
+      print(
+        '[SubscriptionService] Initial inactive subscription set for user: $userId',
+      );
     } catch (e) {
       print('[SubscriptionService] Error setting initial subscription: $e');
     }
@@ -165,8 +177,9 @@ class SubscriptionService {
 
       final userDoc = await _firestore.collection('users').doc(userId).get();
       final data = userDoc.data();
+      final subDate = _parseSubscriptionDate(data?['subscriptionDate']);
 
-      if (data == null || data['subscriptionDate'] == null) {
+      if (subDate == null) {
         return {
           'isActive': false,
           'message': 'No subscription found',
@@ -174,16 +187,6 @@ class SubscriptionService {
           'expiryDate': null,
           'remainingDays': 0,
         };
-      }
-
-      final subscriptionDate = data['subscriptionDate'];
-      DateTime subDate;
-      if (subscriptionDate is Timestamp) {
-        subDate = subscriptionDate.toDate();
-      } else if (subscriptionDate is String) {
-        subDate = DateTime.parse(subscriptionDate);
-      } else {
-        return {'isActive': false, 'message': 'Invalid subscription date'};
       }
 
       final expiryDate = subDate.add(subscriptionDuration);

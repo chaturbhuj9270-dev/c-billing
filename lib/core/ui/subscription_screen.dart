@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../localization/app_localizations.dart';
 import '../services/language_service.dart';
+import '../services/subscription_service.dart';
 import 'payment_screen.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
@@ -366,7 +367,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
                       ),
                     ),
                     Text(
-                      '3,999',
+                      SubscriptionService.subscriptionPriceDisplay,
                       style: TextStyle(
                         fontSize: 52,
                         fontWeight: FontWeight.w700,

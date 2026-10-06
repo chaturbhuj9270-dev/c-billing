@@ -409,6 +409,35 @@ class MarathiLocalization {
   static const String callSupport = 'सपोर्ट कॉल करा';
   static const String securePayment = 'सुरक्षित पेमेंट';
   static const String couldNotOpenWhatsApp = 'व्हॉट्सअॅप उघडता आला नाही';
+  static const String payViaCashfree = 'कॅशफ्रीने सुरक्षित पेमेंट करा';
+  static const String cashfreePaymentModesHint =
+      'UPI, कार्ड, नेट बँकिंग आणि वॉलेट समर्थित';
+  static const String cashfreePaymentInstructions =
+      'कॅशफ्री चेकआउट उघडण्यासाठी सुरक्षित पेमेंट वर टॅप करा. यशस्वी पेमेंटनंतर तुमची सदस्यता आपोआप सक्रिय होईल.';
+  static const String paySecurely = 'सुरक्षित पेमेंट करा';
+  static const String processingPayment = 'प्रक्रिया सुरू...';
+  static const String preparingSecurePayment = 'सुरक्षित पेमेंट तयार होत आहे...';
+  static const String activatingSubscription = 'सदस्यता सक्रिय होत आहे...';
+  static const String subscriptionActivatedSuccess =
+      'सदस्यता सक्रिय! C-Billing मध्ये स्वागत आहे.';
+  static const String paymentReceivedActivatingSoon =
+      'पेमेंट प्राप्त झाले. सक्रियकरणास थोडा वेळ लागू शकतो — कृपया लवकरच अॅप पुन्हा उघडा.';
+  static const String paymentFailedTryAgain =
+      'पेमेंट अयशस्वी किंवा रद्द. कृपया पुन्हा प्रयत्न करा.';
+  static const String securePaymentPoweredByCashfree =
+      'कॅशफ्रीद्वारे सुरक्षित पेमेंट';
+  static const String payViaGooglePlay = 'Google Play ने सदस्यता घ्या';
+  static const String googlePlayPaymentModesHint =
+      'Google Play Billing द्वारे सुरक्षित पेमेंट';
+  static const String googlePlayPaymentInstructions =
+      'वार्षिक सदस्यता पूर्ण करण्यासाठी Google Play ने पेमेंट वर टॅप करा. Google पुष्टीनंतर अॅप आपोआप अनलॉक होईल.';
+  static const String payWithGooglePlay = 'Google Play ने पेमेंट करा';
+  static const String restorePurchases = 'खरेदी पुनर्स्थापित करा';
+  static const String restoringPurchases = 'खरेदी पुनर्स्थापित होत आहे...';
+  static const String playProductNotReady =
+      'Google Play उत्पादन अद्याप उपलब्ध नाही. Play Console मध्ये "cbilling_yearly" तयार करा आणि लाइसेंस टेस्टर वापरा.';
+  static const String securePaymentPoweredByGooglePlay =
+      'Google Play द्वारे सुरक्षित पेमेंट';
 
   // Billing - Batch Selection
   static const String selectStockEntry = 'स्टॉक एंट्री निवडा';

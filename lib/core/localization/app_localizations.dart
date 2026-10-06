@@ -3575,6 +3575,215 @@ class AppLocalizations {
     }
   }
 
+  String get payViaCashfree {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.payViaCashfree;
+      case 'Marathi':
+        return MarathiLocalization.payViaCashfree;
+      default:
+        return EnglishLocalization.payViaCashfree;
+    }
+  }
+
+  String get cashfreePaymentModesHint {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.cashfreePaymentModesHint;
+      case 'Marathi':
+        return MarathiLocalization.cashfreePaymentModesHint;
+      default:
+        return EnglishLocalization.cashfreePaymentModesHint;
+    }
+  }
+
+  String get cashfreePaymentInstructions {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.cashfreePaymentInstructions;
+      case 'Marathi':
+        return MarathiLocalization.cashfreePaymentInstructions;
+      default:
+        return EnglishLocalization.cashfreePaymentInstructions;
+    }
+  }
+
+  String get paySecurely {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.paySecurely;
+      case 'Marathi':
+        return MarathiLocalization.paySecurely;
+      default:
+        return EnglishLocalization.paySecurely;
+    }
+  }
+
+  String get processingPayment {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.processingPayment;
+      case 'Marathi':
+        return MarathiLocalization.processingPayment;
+      default:
+        return EnglishLocalization.processingPayment;
+    }
+  }
+
+  String get preparingSecurePayment {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.preparingSecurePayment;
+      case 'Marathi':
+        return MarathiLocalization.preparingSecurePayment;
+      default:
+        return EnglishLocalization.preparingSecurePayment;
+    }
+  }
+
+  String get activatingSubscription {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.activatingSubscription;
+      case 'Marathi':
+        return MarathiLocalization.activatingSubscription;
+      default:
+        return EnglishLocalization.activatingSubscription;
+    }
+  }
+
+  String get subscriptionActivatedSuccess {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.subscriptionActivatedSuccess;
+      case 'Marathi':
+        return MarathiLocalization.subscriptionActivatedSuccess;
+      default:
+        return EnglishLocalization.subscriptionActivatedSuccess;
+    }
+  }
+
+  String get paymentReceivedActivatingSoon {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.paymentReceivedActivatingSoon;
+      case 'Marathi':
+        return MarathiLocalization.paymentReceivedActivatingSoon;
+      default:
+        return EnglishLocalization.paymentReceivedActivatingSoon;
+    }
+  }
+
+  String get paymentFailedTryAgain {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.paymentFailedTryAgain;
+      case 'Marathi':
+        return MarathiLocalization.paymentFailedTryAgain;
+      default:
+        return EnglishLocalization.paymentFailedTryAgain;
+    }
+  }
+
+  String get securePaymentPoweredByCashfree {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.securePaymentPoweredByCashfree;
+      case 'Marathi':
+        return MarathiLocalization.securePaymentPoweredByCashfree;
+      default:
+        return EnglishLocalization.securePaymentPoweredByCashfree;
+    }
+  }
+
+  String get payViaGooglePlay {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.payViaGooglePlay;
+      case 'Marathi':
+        return MarathiLocalization.payViaGooglePlay;
+      default:
+        return EnglishLocalization.payViaGooglePlay;
+    }
+  }
+
+  String get googlePlayPaymentModesHint {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.googlePlayPaymentModesHint;
+      case 'Marathi':
+        return MarathiLocalization.googlePlayPaymentModesHint;
+      default:
+        return EnglishLocalization.googlePlayPaymentModesHint;
+    }
+  }
+
+  String get googlePlayPaymentInstructions {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.googlePlayPaymentInstructions;
+      case 'Marathi':
+        return MarathiLocalization.googlePlayPaymentInstructions;
+      default:
+        return EnglishLocalization.googlePlayPaymentInstructions;
+    }
+  }
+
+  String get payWithGooglePlay {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.payWithGooglePlay;
+      case 'Marathi':
+        return MarathiLocalization.payWithGooglePlay;
+      default:
+        return EnglishLocalization.payWithGooglePlay;
+    }
+  }
+
+  String get restorePurchases {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.restorePurchases;
+      case 'Marathi':
+        return MarathiLocalization.restorePurchases;
+      default:
+        return EnglishLocalization.restorePurchases;
+    }
+  }
+
+  String get restoringPurchases {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.restoringPurchases;
+      case 'Marathi':
+        return MarathiLocalization.restoringPurchases;
+      default:
+        return EnglishLocalization.restoringPurchases;
+    }
+  }
+
+  String get playProductNotReady {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.playProductNotReady;
+      case 'Marathi':
+        return MarathiLocalization.playProductNotReady;
+      default:
+        return EnglishLocalization.playProductNotReady;
+    }
+  }
+
+  String get securePaymentPoweredByGooglePlay {
+    switch (languageCode) {
+      case 'Hindi':
+        return HindiLocalization.securePaymentPoweredByGooglePlay;
+      case 'Marathi':
+        return MarathiLocalization.securePaymentPoweredByGooglePlay;
+      default:
+        return EnglishLocalization.securePaymentPoweredByGooglePlay;
+    }
+  }
+
   // Supplier/Company Code fields
   String get supplierCode {
     switch (languageCode) {

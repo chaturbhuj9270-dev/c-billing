@@ -240,11 +240,11 @@ class _SplashPageState extends State<SplashPage> {
       print('[DEBUG] Checking subscription status...');
       final isSubscriptionValid = await _subscriptionService
           .isSubscriptionValid()
-          .timeout(const Duration(seconds: 5), onTimeout: () => true);
+          .timeout(const Duration(seconds: 8), onTimeout: () => false);
 
       if (!isSubscriptionValid) {
         print(
-          '[DEBUG] Subscription expired, redirecting to subscription screen',
+          '[DEBUG] Subscription expired/missing, redirecting to subscription screen',
         );
         if (mounted) {
           Navigator.of(context).pushReplacement(
@@ -262,10 +262,10 @@ class _SplashPageState extends State<SplashPage> {
       }
     } catch (e) {
       print('[ERROR] Error checking subscription: $e');
-      // If error checking subscription, still allow access
+      // Fail closed — block access until subscription can be confirmed
       if (mounted) {
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const OptimizedDashboardPage()),
+          MaterialPageRoute(builder: (_) => const SubscriptionScreen()),
         );
       }
     }

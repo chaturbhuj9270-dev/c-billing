@@ -205,10 +205,10 @@ class _LoginPageV2State extends State<LoginPageV2>
       }
     } catch (e) {
       print('[ERROR] Error checking subscription: $e');
-      // If error, navigate to dashboard anyway
+      // Fail closed — require subscription screen on errors
       if (mounted) {
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const OptimizedDashboardPage()),
+          MaterialPageRoute(builder: (_) => const SubscriptionScreen()),
         );
       }
     }

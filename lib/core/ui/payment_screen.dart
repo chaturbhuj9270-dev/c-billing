@@ -1,15 +1,17 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../config/subscription_products.dart';
 import '../localization/app_localizations.dart';
 import '../services/language_service.dart';
+import '../services/play_billing_service.dart';
+import '../services/subscription_service.dart';
+import '../../features/dashboard/presentation/pages/optimized_dashboard_page.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
-/// Payment screen with QR code for subscription payment
-/// Premium UI matching the app's elegant design language
+/// Google Play Billing payment screen for yearly subscription (₹3999).
 class PaymentScreen extends StatefulWidget {
   const PaymentScreen({super.key});
 
@@ -24,6 +26,15 @@ class _PaymentScreenState extends State<PaymentScreen>
   late Animation<Offset> _slideAnimation;
 
   static const String contactNumber = '9970662978';
+
+  bool _isPaying = false;
+  bool _loadingProduct = true;
+  String? _statusMessage;
+  String? _productError;
+  String _priceLabel = SubscriptionProducts.fallbackPriceLabel;
+
+  final PlayBillingService _playBilling = PlayBillingService();
+  final SubscriptionService _subscriptionService = SubscriptionService();
 
   AppLocalizations get _localizations =>
       AppLocalizations.of(LanguageService.instance.currentLanguage);
@@ -47,6 +58,29 @@ class _PaymentScreenState extends State<PaymentScreen>
         );
 
     _animController.forward();
+    _loadStoreProduct();
+  }
+
+  Future<void> _loadStoreProduct() async {
+    setState(() {
+      _loadingProduct = true;
+      _productError = null;
+    });
+    try {
+      await _playBilling.initialize();
+      if (!mounted) return;
+      setState(() {
+        _priceLabel = _playBilling.displayPrice;
+        _loadingProduct = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _loadingProduct = false;
+        _productError = e.toString();
+        _priceLabel = SubscriptionProducts.fallbackPriceLabel;
+      });
+    }
   }
 
   @override
@@ -55,17 +89,100 @@ class _PaymentScreenState extends State<PaymentScreen>
     super.dispose();
   }
 
-  Future<void> _openWhatsApp() async {
-    final Uri whatsappUrl = Uri.parse(
-      'https://wa.me/91$contactNumber?text=Hi, I have made the payment for C-BILLING subscription. Please find the screenshot attached.',
-    );
-    if (await canLaunchUrl(whatsappUrl)) {
-      await launchUrl(whatsappUrl, mode: LaunchMode.externalApplication);
-    } else {
-      if (mounted) {
-        GlassyToast.show(context, _localizations.couldNotOpenWhatsApp, isError: true);
-      }
+  Future<void> _startPlayPurchase() async {
+    if (_isPaying) return;
+
+    setState(() {
+      _isPaying = true;
+      _statusMessage = _localizations.preparingSecurePayment;
+    });
+
+    try {
+      final result = await _playBilling.purchaseYearlySubscription();
+      if (!mounted) return;
+      await _handleBillingResult(result);
+    } catch (e) {
+      if (!mounted) return;
+      GlassyToast.show(
+        context,
+        '${_localizations.paymentFailedTryAgain}: $e',
+        isError: true,
+      );
+      setState(() {
+        _statusMessage = null;
+        _isPaying = false;
+      });
     }
+  }
+
+  Future<void> _restorePurchases() async {
+    if (_isPaying) return;
+
+    setState(() {
+      _isPaying = true;
+      _statusMessage = _localizations.restoringPurchases;
+    });
+
+    try {
+      final result = await _playBilling.restorePurchases();
+      if (!mounted) return;
+      await _handleBillingResult(result);
+    } catch (e) {
+      if (!mounted) return;
+      GlassyToast.show(
+        context,
+        '${_localizations.paymentFailedTryAgain}: $e',
+        isError: true,
+      );
+      setState(() {
+        _statusMessage = null;
+        _isPaying = false;
+      });
+    }
+  }
+
+  Future<void> _handleBillingResult(PlayBillingResult result) async {
+    if (result.success) {
+      setState(() => _statusMessage = _localizations.activatingSubscription);
+
+      final active = await _subscriptionService.waitUntilActive(
+        timeout: const Duration(seconds: 12),
+      );
+
+      if (!mounted) return;
+
+      if (active) {
+        GlassyToast.show(context, _localizations.subscriptionActivatedSuccess);
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const OptimizedDashboardPage()),
+          (_) => false,
+        );
+        return;
+      }
+
+      GlassyToast.show(context, _localizations.paymentReceivedActivatingSoon);
+      setState(() {
+        _statusMessage = _localizations.paymentReceivedActivatingSoon;
+        _isPaying = false;
+      });
+      return;
+    }
+
+    final canceled = result.status == 'CANCELED';
+    if (!canceled) {
+      GlassyToast.show(
+        context,
+        result.message.isNotEmpty
+            ? result.message
+            : _localizations.paymentFailedTryAgain,
+        isError: true,
+      );
+    }
+
+    setState(() {
+      _statusMessage = null;
+      _isPaying = false;
+    });
   }
 
   Future<void> _callSupport() async {
@@ -73,11 +190,6 @@ class _PaymentScreenState extends State<PaymentScreen>
     if (await canLaunchUrl(phoneUrl)) {
       await launchUrl(phoneUrl);
     }
-  }
-
-  void _copyNumber() {
-    Clipboard.setData(ClipboardData(text: contactNumber));
-    GlassyToast.show(context, _localizations.phoneNumberCopied);
   }
 
   @override
@@ -95,9 +207,7 @@ class _PaymentScreenState extends State<PaymentScreen>
               position: _slideAnimation,
               child: Column(
                 children: [
-                  // Custom App Bar
                   _buildAppBar(),
-                  // Content
                   Expanded(
                     child: SingleChildScrollView(
                       child: Padding(
@@ -105,19 +215,14 @@ class _PaymentScreenState extends State<PaymentScreen>
                         child: Column(
                           children: [
                             const SizedBox(height: 20),
-                            // Amount Display
                             _buildAmountSection(),
                             const SizedBox(height: 28),
-                            // QR Code Card
-                            _buildQRCard(),
+                            _buildPlayBillingCard(),
                             const SizedBox(height: 24),
-                            // Instructions
                             _buildInstructions(),
                             const SizedBox(height: 28),
-                            // Action Buttons
                             _buildActionButtons(),
                             const SizedBox(height: 30),
-                            // Bottom Branding
                             _buildBottomBranding(),
                             const SizedBox(height: 20),
                           ],
@@ -136,20 +241,18 @@ class _PaymentScreenState extends State<PaymentScreen>
 
   Widget _buildAppBar() {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
         children: [
           GestureDetector(
-            onTap: () => Navigator.pop(context),
+            onTap: _isPaying ? null : () => Navigator.pop(context),
             child: Container(
               width: 40,
               height: 40,
               decoration: BoxDecoration(
                 color: Colors.white.withValues(alpha: 0.6),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: AppColors.accentSoft(context, 0.1),
-                ),
+                border: Border.all(color: AppColors.accentSoft(context, 0.1)),
               ),
               child: Icon(
                 Icons.arrow_back_ios_new,
@@ -171,7 +274,7 @@ class _PaymentScreenState extends State<PaymentScreen>
               ),
             ),
           ),
-          const SizedBox(width: 40), // Balance for back button
+          const SizedBox(width: 40),
         ],
       ),
     );
@@ -211,38 +314,33 @@ class _PaymentScreenState extends State<PaymentScreen>
                   letterSpacing: 0.5,
                 ),
               ),
-              SizedBox(height: 8),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: EdgeInsets.only(top: 6),
-                    child: Text(
-                      '₹',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.accentSoft(context, 0.8),
-                        fontFamily: 'Literata',
-                      ),
-                    ),
-                  ),
-                  Text(
-                    '3,999',
-                    style: TextStyle(
-                      fontSize: 42,
-                      fontWeight: FontWeight.w700,
+              const SizedBox(height: 8),
+              if (_loadingProduct)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  child: SizedBox(
+                    width: 28,
+                    height: 28,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.5,
                       color: AppColors.accent(context),
-                      fontFamily: 'Literata',
-                      height: 1,
                     ),
                   ),
-                ],
-              ),
-              SizedBox(height: 6),
+                )
+              else
+                Text(
+                  _priceLabel,
+                  style: TextStyle(
+                    fontSize: 42,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.accent(context),
+                    fontFamily: 'Literata',
+                    height: 1,
+                  ),
+                ),
+              const SizedBox(height: 6),
               Container(
-                padding: EdgeInsets.symmetric(
+                padding: const EdgeInsets.symmetric(
                   horizontal: 14,
                   vertical: 5,
                 ),
@@ -268,10 +366,10 @@ class _PaymentScreenState extends State<PaymentScreen>
     );
   }
 
-  Widget _buildQRCard() {
+  Widget _buildPlayBillingCard() {
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.all(24),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: AppColors.card(context),
         borderRadius: BorderRadius.circular(24),
@@ -279,111 +377,91 @@ class _PaymentScreenState extends State<PaymentScreen>
           BoxShadow(
             color: AppColors.accentSoft(context, 0.08),
             blurRadius: 20,
-            offset: Offset(0, 8),
+            offset: const Offset(0, 8),
           ),
         ],
       ),
       child: Column(
         children: [
+          Container(
+            width: 72,
+            height: 72,
+            decoration: BoxDecoration(
+              color: AppColors.accentSoft(context, 0.08),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.shop_outlined,
+              size: 34,
+              color: AppColors.accent(context),
+            ),
+          ),
+          const SizedBox(height: 16),
           Text(
-            _localizations.scanQRCodeToPay,
+            _localizations.payViaGooglePlay,
+            textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
-              color: AppColors.accentSoft(context, 0.8),
+              color: AppColors.accentSoft(context, 0.85),
               fontFamily: 'Literata',
               letterSpacing: 0.5,
             ),
           ),
-          SizedBox(height: 20),
-          // QR Code
-          Container(
-            padding: EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppColors.card(context),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: AppColors.accentSoft(context, 0.1),
-                width: 2,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: Image.asset(
-                'assets/images/payment_qr.png',
-                width: 220,
-                height: 220,
-                fit: BoxFit.contain,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    width: 220,
-                    height: 220,
-                    decoration: BoxDecoration(
-                      color: AppColors.scaffold(context),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.qr_code_2,
-                          size: 80,
-                          color: AppColors.accentSoft(context, 0.3),
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          'QR Code',
-                          style: TextStyle(
-                            color: const Color(
-                              0xFF1B4D3E,
-                            ).withValues(alpha: 0.5),
-                            fontSize: 14,
-                            fontFamily: 'Literata',
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
+          const SizedBox(height: 8),
+          Text(
+            _localizations.googlePlayPaymentModesHint,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 12,
+              color: AppColors.accentSoft(context, 0.55),
+              fontFamily: 'Literata',
+              height: 1.4,
             ),
           ),
-          const SizedBox(height: 16),
-          // UPI Badge
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            decoration: BoxDecoration(
-              color: AppColors.scaffold(context),
-              borderRadius: BorderRadius.circular(12),
+          if (_productError != null) ...[
+            const SizedBox(height: 14),
+            Text(
+              _localizations.playProductNotReady,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.red[700],
+                fontFamily: 'Literata',
+                height: 1.35,
+              ),
             ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
+          ],
+          if (_statusMessage != null) ...[
+            const SizedBox(height: 18),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
-                  Icons.account_balance_wallet_outlined,
-                  size: 18,
-                  color: AppColors.accentSoft(context, 0.7),
-                ),
-                SizedBox(width: 8),
-                Text(
-                  _localizations.payViaAnyUPIApp,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.accentSoft(context, 0.7),
-                    fontFamily: 'Literata',
+                if (_isPaying)
+                  SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: AppColors.accent(context),
+                    ),
+                  ),
+                if (_isPaying) const SizedBox(width: 10),
+                Flexible(
+                  child: Text(
+                    _statusMessage!,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.accent(context),
+                      fontFamily: 'Literata',
+                    ),
                   ),
                 ),
               ],
             ),
-          ),
+          ],
         ],
       ),
     );
@@ -413,7 +491,7 @@ class _PaymentScreenState extends State<PaymentScreen>
                   color: const Color(0xFFFFB300).withValues(alpha: 0.2),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(
+                child: const Icon(
                   Icons.info_outline,
                   size: 16,
                   color: Color(0xFFFF8F00),
@@ -431,66 +509,12 @@ class _PaymentScreenState extends State<PaymentScreen>
               ),
             ],
           ),
-          SizedBox(height: 14),
+          const SizedBox(height: 14),
           Text(
-            _localizations.pleaseShareScreenshotOn,
+            _localizations.googlePlayPaymentInstructions,
             style: TextStyle(
               fontSize: 13,
               color: AppColors.accentSoft(context, 0.8),
-              fontFamily: 'Literata',
-              height: 1.4,
-            ),
-          ),
-          SizedBox(height: 12),
-          GestureDetector(
-            onTap: _copyNumber,
-            child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              decoration: BoxDecoration(
-                color: AppColors.card(context),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: AppColors.accentSoft(context, 0.15),
-                ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.phone, size: 18, color: AppColors.accent(context)),
-                  SizedBox(width: 8),
-                  Text(
-                    contactNumber,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.accent(context),
-                      fontFamily: 'Literata',
-                      letterSpacing: 1,
-                    ),
-                  ),
-                  SizedBox(width: 10),
-                  Container(
-                    padding: EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      color: AppColors.accentSoft(context, 0.1),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Icon(
-                      Icons.copy,
-                      size: 14,
-                      color: AppColors.accent(context),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          SizedBox(height: 12),
-          Text(
-            _localizations.subscriptionActivatedWithin24Hours,
-            style: TextStyle(
-              fontSize: 11,
-              color: AppColors.accentSoft(context, 0.6),
               fontFamily: 'Literata',
               height: 1.4,
             ),
@@ -501,9 +525,10 @@ class _PaymentScreenState extends State<PaymentScreen>
   }
 
   Widget _buildActionButtons() {
+    final canPay = !_isPaying && !_loadingProduct && _productError == null;
+
     return Column(
       children: [
-        // WhatsApp Button - Primary
         SizedBox(
           width: double.infinity,
           child: ClipRRect(
@@ -512,11 +537,18 @@ class _PaymentScreenState extends State<PaymentScreen>
               filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
               child: Container(
                 decoration: BoxDecoration(
-                  color: const Color(0xFF25D366),
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      const Color(0xFF1B4D3E).withValues(alpha: 0.95),
+                      const Color(0xFF2E7D32).withValues(alpha: 0.88),
+                    ],
+                  ),
                   borderRadius: BorderRadius.circular(14),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF25D366).withValues(alpha: 0.3),
+                      color: AppColors.accentSoft(context, 0.25),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                     ),
@@ -525,29 +557,33 @@ class _PaymentScreenState extends State<PaymentScreen>
                 child: Material(
                   color: Colors.transparent,
                   child: InkWell(
-                    onTap: _openWhatsApp,
+                    onTap: canPay ? _startPlayPurchase : null,
                     borderRadius: BorderRadius.circular(14),
                     child: Padding(
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Container(
-                            width: 24,
-                            height: 24,
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.2),
-                              shape: BoxShape.circle,
-                            ),
-                            child: Icon(
-                              Icons.chat,
-                              size: 14,
+                          if (_isPaying)
+                            const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          else
+                            const Icon(
+                              Icons.payment,
+                              size: 22,
                               color: Colors.white,
                             ),
-                          ),
                           const SizedBox(width: 10),
                           Text(
-                            _localizations.shareOnWhatsApp,
+                            _isPaying
+                                ? _localizations.processingPayment
+                                : _localizations.payWithGooglePlay,
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 16,
@@ -564,8 +600,51 @@ class _PaymentScreenState extends State<PaymentScreen>
             ),
           ),
         ),
-        SizedBox(height: 12),
-        // Call Support Button - Secondary
+        const SizedBox(height: 12),
+        SizedBox(
+          width: double.infinity,
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.6),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: AppColors.accentSoft(context, 0.3),
+                width: 1.5,
+              ),
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: _isPaying ? null : _restorePurchases,
+                borderRadius: BorderRadius.circular(14),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.restore,
+                        size: 20,
+                        color: AppColors.accentSoft(context, 0.8),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        _localizations.restorePurchases,
+                        style: TextStyle(
+                          color: AppColors.accentSoft(context, 0.9),
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          fontFamily: 'Literata',
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
         SizedBox(
           width: double.infinity,
           child: Container(
@@ -583,7 +662,7 @@ class _PaymentScreenState extends State<PaymentScreen>
                 onTap: _callSupport,
                 borderRadius: BorderRadius.circular(14),
                 child: Padding(
-                  padding: EdgeInsets.symmetric(vertical: 14),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -592,7 +671,7 @@ class _PaymentScreenState extends State<PaymentScreen>
                         size: 20,
                         color: AppColors.accentSoft(context, 0.8),
                       ),
-                      SizedBox(width: 8),
+                      const SizedBox(width: 8),
                       Text(
                         _localizations.callSupport,
                         style: TextStyle(
@@ -624,12 +703,12 @@ class _PaymentScreenState extends State<PaymentScreen>
               colors: [
                 const Color(0xFF1B4D3E).withValues(alpha: 0.05),
                 const Color(0xFF1B4D3E),
-                Color(0xFF1B4D3E).withValues(alpha: 0.05),
+                const Color(0xFF1B4D3E).withValues(alpha: 0.05),
               ],
             ),
           ),
         ),
-        SizedBox(height: 16),
+        const SizedBox(height: 16),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -638,9 +717,9 @@ class _PaymentScreenState extends State<PaymentScreen>
               size: 14,
               color: AppColors.accentSoft(context, 0.4),
             ),
-            SizedBox(width: 6),
+            const SizedBox(width: 6),
             Text(
-              _localizations.securePayment,
+              _localizations.securePaymentPoweredByGooglePlay,
               style: TextStyle(
                 fontSize: 11,
                 color: AppColors.accentSoft(context, 0.4),

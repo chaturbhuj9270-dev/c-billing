@@ -408,6 +408,35 @@ class HindiLocalization {
   static const String callSupport = 'सहायता कॉल करें';
   static const String securePayment = 'सुरक्षित भुगतान';
   static const String couldNotOpenWhatsApp = 'व्हाट्सएप नहीं खोल सका';
+  static const String payViaCashfree = 'कैशफ्री से सुरक्षित भुगतान करें';
+  static const String cashfreePaymentModesHint =
+      'UPI, कार्ड, नेट बैंकिंग और वॉलेट समर्थित';
+  static const String cashfreePaymentInstructions =
+      'कैशफ्री चेकआउट खोलने के लिए सुरक्षित भुगतान पर टैप करें। सफल भुगतान के बाद आपकी सदस्यता अपने आप सक्रिय हो जाएगी।';
+  static const String paySecurely = 'सुरक्षित भुगतान करें';
+  static const String processingPayment = 'प्रक्रिया जारी...';
+  static const String preparingSecurePayment = 'सुरक्षित भुगतान तैयार हो रहा है...';
+  static const String activatingSubscription = 'सदस्यता सक्रिय हो रही है...';
+  static const String subscriptionActivatedSuccess =
+      'सदस्यता सक्रिय! C-Billing में आपका स्वागत है।';
+  static const String paymentReceivedActivatingSoon =
+      'भुगतान प्राप्त हुआ। सक्रियण में कुछ समय लग सकता है — कृपया जल्द ऐप फिर खोलें।';
+  static const String paymentFailedTryAgain =
+      'भुगतान विफल या रद्द। कृपया पुनः प्रयास करें।';
+  static const String securePaymentPoweredByCashfree =
+      'कैशफ्री द्वारा सुरक्षित भुगतान';
+  static const String payViaGooglePlay = 'Google Play से सदस्यता लें';
+  static const String googlePlayPaymentModesHint =
+      'Google Play Billing के माध्यम से सुरक्षित भुगतान';
+  static const String googlePlayPaymentInstructions =
+      'वार्षिक सदस्यता पूरी करने के लिए Google Play से भुगतान पर टैप करें। Google पुष्टि के बाद ऐप अपने आप अनलॉक हो जाएगा।';
+  static const String payWithGooglePlay = 'Google Play से भुगतान करें';
+  static const String restorePurchases = 'खरीदारी पुनर्स्थापित करें';
+  static const String restoringPurchases = 'खरीदारी पुनर्स्थापित हो रही है...';
+  static const String playProductNotReady =
+      'Google Play उत्पाद अभी उपलब्ध नहीं है। Play Console में "cbilling_yearly" बनाएं और लाइसेंस टेस्टर उपयोग करें।';
+  static const String securePaymentPoweredByGooglePlay =
+      'Google Play द्वारा सुरक्षित भुगतान';
 
   // Billing - Batch Selection
   static const String selectStockEntry = 'स्टॉक एंट्री चुनें';

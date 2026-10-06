@@ -1,57 +1,80 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Allow authenticated users to read/write their own data
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    // Clients must not self-activate subscription fields.
+    // Cloud Functions (Admin SDK) bypass these rules after Cashfree PAID.
+    function subscriptionFieldsUnchanged() {
+      return !request.resource.data
+        .diff(resource.data)
+        .affectedKeys()
+        .hasAny([
+          'subscriptionDate',
+          'lastSubscriptionUpdate',
+          'lastSubscriptionOrderId',
+          'subscriptionStatus',
+          'subscriptionProvider'
+        ]);
+    }
+
+    function creatingInactiveSubscription() {
+      return (!('subscriptionDate' in request.resource.data)
+          || request.resource.data.subscriptionDate == null)
+        && (!('subscriptionStatus' in request.resource.data)
+          || request.resource.data.subscriptionStatus == 'inactive');
+    }
+
     match /users/{userId} {
-      allow read, write: if request.auth.uid == userId;
-      
-      // User's customers subcollection
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId) && creatingInactiveSubscription();
+      allow update: if isOwner(userId) && subscriptionFieldsUnchanged();
+      allow delete: if isOwner(userId);
+
+      match /subscription_payments/{paymentId} {
+        allow read: if isOwner(userId);
+        allow write: if false; // Admin SDK / Cloud Functions only
+      }
+
       match /customers/{document=**} {
-        allow read, write: if request.auth.uid == userId;
+        allow read, write: if isOwner(userId);
       }
-      
-      // User's suppliers subcollection
+
       match /suppliers/{document=**} {
-        allow read, write: if request.auth.uid == userId;
+        allow read, write: if isOwner(userId);
       }
-      
-      // User's companies subcollection
+
       match /companies/{document=**} {
-        allow read, write: if request.auth.uid == userId;
+        allow read, write: if isOwner(userId);
       }
-      
-      // User's products subcollection (for inventory management)
+
       match /products/{document=**} {
-        allow read, write: if request.auth.uid == userId;
+        allow read, write: if isOwner(userId);
       }
-      
-      // User's stock subcollection (for inventory tracking)
+
       match /stock/{document=**} {
-        allow read, write: if request.auth.uid == userId;
+        allow read, write: if isOwner(userId);
       }
-      
-      // User's purchases subcollection (for purchase orders)
+
       match /purchases/{document=**} {
-        allow read, write: if request.auth.uid == userId;
+        allow read, write: if isOwner(userId);
       }
-      
-      // User's bills subcollection (for sales billing)
+
       match /bills/{document=**} {
-        allow read, write: if request.auth.uid == userId;
+        allow read, write: if isOwner(userId);
       }
-      
-      // User's invoices subcollection
+
       match /invoices/{document=**} {
-        allow read, write: if request.auth.uid == userId;
+        allow read, write: if isOwner(userId);
       }
-      
-      // User's profile document
+
       match /profile/{document=**} {
-        allow read, write: if request.auth.uid == userId;
+        allow read, write: if isOwner(userId);
       }
     }
-    
-    // Deny all other access
+
     match /{document=**} {
       allow read, write: if false;
     }
