@@ -15,7 +15,7 @@ extension GetEventOrderEntityCollection on Isar {
 
 const EventOrderEntitySchema = CollectionSchema(
   name: r'EventOrderEntity',
-  id: -8658813915944641777,
+  id: (-2016037218 * 4294967296 + 2884180751),
   properties: {
     r'advanceAmount': PropertySchema(
       id: 0,
@@ -138,7 +138,7 @@ const EventOrderEntitySchema = CollectionSchema(
   idName: r'id',
   indexes: {
     r'serverId': IndexSchema(
-      id: -7950187970872907662,
+      id: (-1851047383 * 4294967296 + 2458478706),
       name: r'serverId',
       unique: false,
       replace: false,
@@ -151,7 +151,7 @@ const EventOrderEntitySchema = CollectionSchema(
       ],
     ),
     r'customerId': IndexSchema(
-      id: 1498639901530368639,
+      id: (348929292 * 4294967296 + 3773934207),
       name: r'customerId',
       unique: false,
       replace: false,
@@ -164,7 +164,7 @@ const EventOrderEntitySchema = CollectionSchema(
       ],
     ),
     r'orderName': IndexSchema(
-      id: -167480682097965147,
+      id: (-38994636 * 4294967296 + 4241459109),
       name: r'orderName',
       unique: false,
       replace: false,
@@ -177,7 +177,7 @@ const EventOrderEntitySchema = CollectionSchema(
       ],
     ),
     r'eventDate': IndexSchema(
-      id: -2827469816326842607,
+      id: (-658321618 * 4294967296 + 3232962321),
       name: r'eventDate',
       unique: false,
       replace: false,
@@ -190,7 +190,7 @@ const EventOrderEntitySchema = CollectionSchema(
       ],
     ),
     r'status': IndexSchema(
-      id: -107785170620420283,
+      id: (-25095691 * 4294967296 + 1495101253),
       name: r'status',
       unique: false,
       replace: false,
@@ -203,7 +203,7 @@ const EventOrderEntitySchema = CollectionSchema(
       ],
     ),
     r'createdAt': IndexSchema(
-      id: -3433535483987302584,
+      id: (-799432277 * 4294967296 + 1094510408),
       name: r'createdAt',
       unique: false,
       replace: false,
@@ -4570,7 +4570,7 @@ extension EventOrderEntityQueryProperty
 
 const SubEventEmbeddedSchema = Schema(
   name: r'SubEventEmbedded',
-  id: -5356900810270092634,
+  id: (-1247250664 * 4294967296 + 1524191910),
   properties: {
     r'charges': PropertySchema(id: 0, name: r'charges', type: IsarType.double),
     r'customDataJson': PropertySchema(
@@ -5469,7 +5469,7 @@ extension SubEventEmbeddedQueryObject
 
 const OrderItemEmbeddedSchema = Schema(
   name: r'OrderItemEmbedded',
-  id: 6372615220027013686,
+  id: (1483740103 * 4294967296 + 1878342198),
   properties: {
     r'cgstAmount': PropertySchema(
       id: 0,

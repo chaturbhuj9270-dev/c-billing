@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -40,24 +41,115 @@ class GlassyBottomNavBar extends StatefulWidget {
 }
 
 class _GlassyBottomNavBarState extends State<GlassyBottomNavBar>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   late final AnimationController _dropController;
+  late final AnimationController _slideController;
   Offset? _dropOrigin;
   final GlobalKey _barKey = GlobalKey();
+  double _indicatorIndex = 0;
+  double _slideFrom = 0;
+  double _slideTo = 0;
 
   @override
   void initState() {
     super.initState();
+    _indicatorIndex = widget.selectedIndex.toDouble();
+    _slideFrom = _indicatorIndex;
+    _slideTo = _indicatorIndex;
     _dropController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 900),
     );
+    _slideController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 420),
+    )..addListener(() {
+      final t = Curves.easeInOutCubic.transform(_slideController.value);
+      setState(() {
+        _indicatorIndex = lerpDouble(_slideFrom, _slideTo, t) ?? _slideTo;
+      });
+    });
+  }
+
+  @override
+  void didUpdateWidget(GlassyBottomNavBar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.selectedIndex != widget.selectedIndex) {
+      _slideFrom = _indicatorIndex;
+      _slideTo = widget.selectedIndex.toDouble();
+      _slideController.forward(from: 0);
+    }
   }
 
   @override
   void dispose() {
     _dropController.dispose();
+    _slideController.dispose();
     super.dispose();
+  }
+
+  Widget _slidingGlassPill(double width, bool isDark) {
+    final count = widget.items.length;
+    if (count == 0 || width <= 0) return const SizedBox.shrink();
+    final slot = width / count;
+    final pillWidth = slot - 8;
+    final left = (_indicatorIndex * slot) + 4;
+
+    return Positioned(
+      left: left,
+      top: 0,
+      bottom: 0,
+      width: pillWidth,
+      child: IgnorePointer(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: isDark ? 0.28 : 0.10),
+                    blurRadius: 14,
+                    offset: const Offset(0, 4),
+                  ),
+                  if (!isDark)
+                    BoxShadow(
+                      color: Colors.white.withValues(alpha: 0.8),
+                      blurRadius: 0,
+                      offset: const Offset(0, -1),
+                    ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(20),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(20),
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: isDark
+                            ? [
+                                Colors.white.withValues(alpha: 0.20),
+                                AppTheme.mint.withValues(alpha: 0.16),
+                              ]
+                            : [
+                                Colors.white.withValues(alpha: 0.96),
+                                Colors.white.withValues(alpha: 0.78),
+                              ],
+                      ),
+                      border: Border.all(
+                        color: Colors.white.withValues(
+                          alpha: isDark ? 0.32 : 0.95,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+    );
   }
 
   void _triggerWaterDrop(Offset globalPosition) {
@@ -133,20 +225,30 @@ class _GlassyBottomNavBarState extends State<GlassyBottomNavBar>
                   ),
                   padding: const EdgeInsets.symmetric(
                     horizontal: 4,
-                    vertical: 8,
+                    vertical: 6,
                   ),
-                  child: Row(
-                    children: [
-                      for (var i = 0; i < widget.items.length; i++)
-                        Expanded(
-                          child: _GlassyNavItemButton(
-                            item: widget.items[i],
-                            selected: widget.selectedIndex == i,
-                            onTapDown: (details) =>
-                                _onItemTap(i, details.globalPosition),
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      return Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          _slidingGlassPill(constraints.maxWidth, isDark),
+                          Row(
+                            children: [
+                              for (var i = 0; i < widget.items.length; i++)
+                                Expanded(
+                                  child: _GlassyNavItemButton(
+                                    item: widget.items[i],
+                                    selected: widget.selectedIndex == i,
+                                    onTapDown: (details) =>
+                                        _onItemTap(i, details.globalPosition),
+                                  ),
+                                ),
+                            ],
                           ),
-                        ),
-                    ],
+                        ],
+                      );
+                    },
                   ),
                 ),
                 // Water-drop splash drawn ON TOP so it is clearly visible.
@@ -189,44 +291,18 @@ class _GlassyNavItemButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final inactiveColor = AppColors.mutedText(context);
-    final iconColor = selected ? AppTheme.onMint : inactiveColor;
-    final labelColor = iconColor;
+    final iconColor = selected ? AppTheme.mint : inactiveColor;
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTapDown: onTapDown,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 220),
-        curve: Curves.easeOutCubic,
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
-        margin: const EdgeInsets.symmetric(horizontal: 2),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(18),
-          color: selected ? AppTheme.mint : null,
-          boxShadow: selected
-              ? [
-                  BoxShadow(
-                    color: AppTheme.mint.withValues(alpha: 0.28),
-                    blurRadius: 10,
-                    offset: const Offset(0, 3),
-                  ),
-                ]
-              : null,
-        ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            AnimatedScale(
-              scale: selected ? 1.08 : 1.0,
-              duration: const Duration(milliseconds: 220),
-              curve: Curves.easeOutCubic,
-              child: Icon(
-                item.icon,
-                color: iconColor,
-                size: selected ? 22 : 20,
-              ),
-            ),
+            Icon(item.icon, color: iconColor, size: 22),
             const SizedBox(height: 3),
             Text(
               item.label,
@@ -234,8 +310,8 @@ class _GlassyNavItemButton extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                color: labelColor,
-                fontSize: selected ? 9 : 8,
+                color: iconColor,
+                fontSize: 10,
                 fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                 fontFamily: 'Literata',
               ),

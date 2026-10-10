@@ -15,7 +15,7 @@ extension GetQuotationEntityCollection on Isar {
 
 const QuotationEntitySchema = CollectionSchema(
   name: r'QuotationEntity',
-  id: -7617856732553923070,
+  id: (-1773670487 * 4294967296 + 2991470082),
   properties: {
     r'convertedBillId': PropertySchema(
       id: 0,
@@ -149,7 +149,7 @@ const QuotationEntitySchema = CollectionSchema(
   idName: r'id',
   indexes: {
     r'serverId': IndexSchema(
-      id: -7950187970872907662,
+      id: (-1851047383 * 4294967296 + 2458478706),
       name: r'serverId',
       unique: false,
       replace: false,
@@ -162,7 +162,7 @@ const QuotationEntitySchema = CollectionSchema(
       ],
     ),
     r'quotationNumber': IndexSchema(
-      id: -2731158400638475626,
+      id: (-635897369 * 4294967296 + 2828968598),
       name: r'quotationNumber',
       unique: false,
       replace: false,
@@ -175,7 +175,7 @@ const QuotationEntitySchema = CollectionSchema(
       ],
     ),
     r'customerId': IndexSchema(
-      id: 1498639901530368639,
+      id: (348929292 * 4294967296 + 3773934207),
       name: r'customerId',
       unique: false,
       replace: false,
@@ -188,7 +188,7 @@ const QuotationEntitySchema = CollectionSchema(
       ],
     ),
     r'title': IndexSchema(
-      id: -7636685945352118059,
+      id: (-1778054505 * 4294967296 + 4128350421),
       name: r'title',
       unique: false,
       replace: false,
@@ -201,7 +201,7 @@ const QuotationEntitySchema = CollectionSchema(
       ],
     ),
     r'referenceDate': IndexSchema(
-      id: -9030900268725656147,
+      id: (-2102670323 * 4294967296 + 2829100461),
       name: r'referenceDate',
       unique: false,
       replace: false,
@@ -214,7 +214,7 @@ const QuotationEntitySchema = CollectionSchema(
       ],
     ),
     r'validUntil': IndexSchema(
-      id: -7656686825200414006,
+      id: (-1782711322 * 4294967296 + 998511306),
       name: r'validUntil',
       unique: false,
       replace: false,
@@ -227,7 +227,7 @@ const QuotationEntitySchema = CollectionSchema(
       ],
     ),
     r'status': IndexSchema(
-      id: -107785170620420283,
+      id: (-25095691 * 4294967296 + 1495101253),
       name: r'status',
       unique: false,
       replace: false,
@@ -240,7 +240,7 @@ const QuotationEntitySchema = CollectionSchema(
       ],
     ),
     r'createdAt': IndexSchema(
-      id: -3433535483987302584,
+      id: (-799432277 * 4294967296 + 1094510408),
       name: r'createdAt',
       unique: false,
       replace: false,

@@ -15,7 +15,7 @@ extension GetBillEntityCollection on Isar {
 
 const BillEntitySchema = CollectionSchema(
   name: r'BillEntity',
-  id: 1964707223455112648,
+  id: (457444047 * 4294967296 + 1840225736),
   properties: {
     r'billDate': PropertySchema(
       id: 0,
@@ -186,7 +186,7 @@ const BillEntitySchema = CollectionSchema(
   idName: r'id',
   indexes: {
     r'serverId': IndexSchema(
-      id: -7950187970872907662,
+      id: (-1851047383 * 4294967296 + 2458478706),
       name: r'serverId',
       unique: false,
       replace: false,
@@ -199,7 +199,7 @@ const BillEntitySchema = CollectionSchema(
       ],
     ),
     r'customerId': IndexSchema(
-      id: 1498639901530368639,
+      id: (348929292 * 4294967296 + 3773934207),
       name: r'customerId',
       unique: false,
       replace: false,
@@ -212,7 +212,7 @@ const BillEntitySchema = CollectionSchema(
       ],
     ),
     r'billDate': IndexSchema(
-      id: 4448995553089607416,
+      id: (1035862498 * 4294967296 + 1026742008),
       name: r'billDate',
       unique: false,
       replace: false,
@@ -225,7 +225,7 @@ const BillEntitySchema = CollectionSchema(
       ],
     ),
     r'syncStatus': IndexSchema(
-      id: 8239539375045684509,
+      id: (1918417256 * 4294967296 + 443624733),
       name: r'syncStatus',
       unique: false,
       replace: false,
@@ -238,7 +238,7 @@ const BillEntitySchema = CollectionSchema(
       ],
     ),
     r'createdAt': IndexSchema(
-      id: -3433535483987302584,
+      id: (-799432277 * 4294967296 + 1094510408),
       name: r'createdAt',
       unique: false,
       replace: false,
@@ -4840,7 +4840,7 @@ extension BillEntityQueryProperty
 
 const BillItemEmbeddedSchema = Schema(
   name: r'BillItemEmbedded',
-  id: 2336104038497063482,
+  id: (543916606 * 4294967296 + 3975746106),
   properties: {
     r'hsnCode': PropertySchema(id: 0, name: r'hsnCode', type: IsarType.string),
     r'itemId': PropertySchema(id: 1, name: r'itemId', type: IsarType.string),

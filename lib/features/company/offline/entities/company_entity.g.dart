@@ -15,7 +15,7 @@ extension GetCompanyEntityCollection on Isar {
 
 const CompanyEntitySchema = CollectionSchema(
   name: r'CompanyEntity',
-  id: 7732127242476929416,
+  id: (1800276162 * 4294967296 + 2918531464),
   properties: {
     r'address': PropertySchema(id: 0, name: r'address', type: IsarType.string),
     r'companyCode': PropertySchema(
@@ -71,7 +71,7 @@ const CompanyEntitySchema = CollectionSchema(
   idName: r'id',
   indexes: {
     r'serverId': IndexSchema(
-      id: -7950187970872907662,
+      id: (-1851047383 * 4294967296 + 2458478706),
       name: r'serverId',
       unique: false,
       replace: false,
@@ -84,7 +84,7 @@ const CompanyEntitySchema = CollectionSchema(
       ],
     ),
     r'companyName': IndexSchema(
-      id: 6530936739720993813,
+      id: (1520602204 * 4294967296 + 3315473429),
       name: r'companyName',
       unique: false,
       replace: false,
@@ -97,7 +97,7 @@ const CompanyEntitySchema = CollectionSchema(
       ],
     ),
     r'companyCode': IndexSchema(
-      id: 6715787695288864042,
+      id: (1563641171 * 4294967296 + 3164720426),
       name: r'companyCode',
       unique: false,
       replace: false,
@@ -110,7 +110,7 @@ const CompanyEntitySchema = CollectionSchema(
       ],
     ),
     r'contact': IndexSchema(
-      id: 213978983763356937,
+      id: (49820864 * 4294967296 + 2224893193),
       name: r'contact',
       unique: false,
       replace: false,
@@ -123,7 +123,7 @@ const CompanyEntitySchema = CollectionSchema(
       ],
     ),
     r'syncStatus': IndexSchema(
-      id: 8239539375045684509,
+      id: (1918417256 * 4294967296 + 443624733),
       name: r'syncStatus',
       unique: false,
       replace: false,
@@ -136,7 +136,7 @@ const CompanyEntitySchema = CollectionSchema(
       ],
     ),
     r'updatedAt': IndexSchema(
-      id: -6238191080293565125,
+      id: (-1452442045 * 4294967296 + 2316795195),
       name: r'updatedAt',
       unique: false,
       replace: false,

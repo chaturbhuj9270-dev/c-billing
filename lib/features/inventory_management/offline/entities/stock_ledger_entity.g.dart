@@ -15,7 +15,7 @@ extension GetStockLedgerEntityCollection on Isar {
 
 const StockLedgerEntitySchema = CollectionSchema(
   name: r'StockLedgerEntity',
-  id: 49222876430352971,
+  id: (11460594 * 4294967296 + 7619147),
   properties: {
     r'balanceQuantity': PropertySchema(
       id: 0,
@@ -147,7 +147,7 @@ const StockLedgerEntitySchema = CollectionSchema(
   idName: r'id',
   indexes: {
     r'serverId': IndexSchema(
-      id: -7950187970872907662,
+      id: (-1851047383 * 4294967296 + 2458478706),
       name: r'serverId',
       unique: false,
       replace: false,
@@ -160,7 +160,7 @@ const StockLedgerEntitySchema = CollectionSchema(
       ],
     ),
     r'productId': IndexSchema(
-      id: 5580769080710688203,
+      id: (1299374057 * 4294967296 + 624848331),
       name: r'productId',
       unique: false,
       replace: false,
@@ -173,7 +173,7 @@ const StockLedgerEntitySchema = CollectionSchema(
       ],
     ),
     r'productUniqueKey': IndexSchema(
-      id: 2650035106637530557,
+      id: (617009379 * 4294967296 + 2507261373),
       name: r'productUniqueKey',
       unique: false,
       replace: false,
@@ -186,7 +186,7 @@ const StockLedgerEntitySchema = CollectionSchema(
       ],
     ),
     r'batchId': IndexSchema(
-      id: -5468368523860846432,
+      id: (-1273203764 * 4294967296 + 3663255712),
       name: r'batchId',
       unique: false,
       replace: false,
@@ -199,7 +199,7 @@ const StockLedgerEntitySchema = CollectionSchema(
       ],
     ),
     r'ledgerType': IndexSchema(
-      id: 4211967145891972597,
+      id: (980675021 * 4294967296 + 2692859381),
       name: r'ledgerType',
       unique: false,
       replace: false,
@@ -212,7 +212,7 @@ const StockLedgerEntitySchema = CollectionSchema(
       ],
     ),
     r'referenceId': IndexSchema(
-      id: -8118621180780534330,
+      id: (-1890263796 * 4294967296 + 3852281286),
       name: r'referenceId',
       unique: false,
       replace: false,
@@ -225,7 +225,7 @@ const StockLedgerEntitySchema = CollectionSchema(
       ],
     ),
     r'transactionDate': IndexSchema(
-      id: 3386085016894654755,
+      id: (788384353 * 4294967296 + 4081535267),
       name: r'transactionDate',
       unique: false,
       replace: false,
@@ -238,7 +238,7 @@ const StockLedgerEntitySchema = CollectionSchema(
       ],
     ),
     r'syncStatus': IndexSchema(
-      id: 8239539375045684509,
+      id: (1918417256 * 4294967296 + 443624733),
       name: r'syncStatus',
       unique: false,
       replace: false,
@@ -251,7 +251,7 @@ const StockLedgerEntitySchema = CollectionSchema(
       ],
     ),
     r'createdAt': IndexSchema(
-      id: -3433535483987302584,
+      id: (-799432277 * 4294967296 + 1094510408),
       name: r'createdAt',
       unique: false,
       replace: false,

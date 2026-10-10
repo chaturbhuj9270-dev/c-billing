@@ -16,7 +16,7 @@ extension GetCustomerTransactionEntityCollection on Isar {
 
 const CustomerTransactionEntitySchema = CollectionSchema(
   name: r'CustomerTransactionEntity',
-  id: 5849172234778136530,
+  id: (1361866536 * 4294967296 + 1141329874),
   properties: {
     r'amount': PropertySchema(id: 0, name: r'amount', type: IsarType.double),
     r'balanceAfter': PropertySchema(
@@ -95,7 +95,7 @@ const CustomerTransactionEntitySchema = CollectionSchema(
   idName: r'id',
   indexes: {
     r'serverId': IndexSchema(
-      id: -7950187970872907662,
+      id: (-1851047383 * 4294967296 + 2458478706),
       name: r'serverId',
       unique: false,
       replace: false,
@@ -108,7 +108,7 @@ const CustomerTransactionEntitySchema = CollectionSchema(
       ],
     ),
     r'customerId': IndexSchema(
-      id: 1498639901530368639,
+      id: (348929292 * 4294967296 + 3773934207),
       name: r'customerId',
       unique: false,
       replace: false,
@@ -121,7 +121,7 @@ const CustomerTransactionEntitySchema = CollectionSchema(
       ],
     ),
     r'transactionDate': IndexSchema(
-      id: 3386085016894654755,
+      id: (788384353 * 4294967296 + 4081535267),
       name: r'transactionDate',
       unique: false,
       replace: false,
@@ -134,7 +134,7 @@ const CustomerTransactionEntitySchema = CollectionSchema(
       ],
     ),
     r'createdAt': IndexSchema(
-      id: -3433535483987302584,
+      id: (-799432277 * 4294967296 + 1094510408),
       name: r'createdAt',
       unique: false,
       replace: false,

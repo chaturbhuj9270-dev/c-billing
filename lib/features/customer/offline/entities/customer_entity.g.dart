@@ -15,7 +15,7 @@ extension GetCustomerEntityCollection on Isar {
 
 const CustomerEntitySchema = CollectionSchema(
   name: r'CustomerEntity',
-  id: -5386617695849609331,
+  id: (-1254169666 * 4294967296 + 3255633805),
   properties: {
     r'address': PropertySchema(id: 0, name: r'address', type: IsarType.string),
     r'createdAt': PropertySchema(
@@ -61,7 +61,7 @@ const CustomerEntitySchema = CollectionSchema(
   idName: r'id',
   indexes: {
     r'serverId': IndexSchema(
-      id: -7950187970872907662,
+      id: (-1851047383 * 4294967296 + 2458478706),
       name: r'serverId',
       unique: false,
       replace: false,
@@ -74,7 +74,7 @@ const CustomerEntitySchema = CollectionSchema(
       ],
     ),
     r'mobile': IndexSchema(
-      id: -2496727240025828292,
+      id: (-581314611 * 4294967296 + 2906133564),
       name: r'mobile',
       unique: true,
       replace: false,
@@ -87,7 +87,7 @@ const CustomerEntitySchema = CollectionSchema(
       ],
     ),
     r'isSynced': IndexSchema(
-      id: -39763503327887510,
+      id: (-9258163 * 4294967296 + 3978149738),
       name: r'isSynced',
       unique: false,
       replace: false,
@@ -100,7 +100,7 @@ const CustomerEntitySchema = CollectionSchema(
       ],
     ),
     r'isDeleted': IndexSchema(
-      id: -786475870904832312,
+      id: (-183115684 * 4294967296 + 3259838152),
       name: r'isDeleted',
       unique: false,
       replace: false,
@@ -113,7 +113,7 @@ const CustomerEntitySchema = CollectionSchema(
       ],
     ),
     r'updatedAt': IndexSchema(
-      id: -6238191080293565125,
+      id: (-1452442045 * 4294967296 + 2316795195),
       name: r'updatedAt',
       unique: false,
       replace: false,

@@ -16,7 +16,7 @@ extension GetPurchaseBatchEntityCollection on Isar {
 
 const PurchaseBatchEntitySchema = CollectionSchema(
   name: r'PurchaseBatchEntity',
-  id: -3691434164641764836,
+  id: (-859478993 * 4294967296 + 1892248092),
   properties: {
     r'category': PropertySchema(
       id: 0,
@@ -146,7 +146,7 @@ const PurchaseBatchEntitySchema = CollectionSchema(
   idName: r'id',
   indexes: {
     r'serverId': IndexSchema(
-      id: -7950187970872907662,
+      id: (-1851047383 * 4294967296 + 2458478706),
       name: r'serverId',
       unique: false,
       replace: false,
@@ -159,7 +159,7 @@ const PurchaseBatchEntitySchema = CollectionSchema(
       ],
     ),
     r'productId': IndexSchema(
-      id: 5580769080710688203,
+      id: (1299374057 * 4294967296 + 624848331),
       name: r'productId',
       unique: false,
       replace: false,
@@ -172,7 +172,7 @@ const PurchaseBatchEntitySchema = CollectionSchema(
       ],
     ),
     r'companyName': IndexSchema(
-      id: 6530936739720993813,
+      id: (1520602204 * 4294967296 + 3315473429),
       name: r'companyName',
       unique: false,
       replace: false,
@@ -185,7 +185,7 @@ const PurchaseBatchEntitySchema = CollectionSchema(
       ],
     ),
     r'productUniqueKey': IndexSchema(
-      id: 2650035106637530557,
+      id: (617009379 * 4294967296 + 2507261373),
       name: r'productUniqueKey',
       unique: false,
       replace: false,
@@ -198,7 +198,7 @@ const PurchaseBatchEntitySchema = CollectionSchema(
       ],
     ),
     r'purchaseDate': IndexSchema(
-      id: 1174684625301313566,
+      id: (273502577 * 4294967296 + 1714591774),
       name: r'purchaseDate',
       unique: false,
       replace: false,
@@ -211,7 +211,7 @@ const PurchaseBatchEntitySchema = CollectionSchema(
       ],
     ),
     r'supplierId': IndexSchema(
-      id: -7509772217447508349,
+      id: (-1748505100 * 4294967296 + 3941701251),
       name: r'supplierId',
       unique: false,
       replace: false,
@@ -224,7 +224,7 @@ const PurchaseBatchEntitySchema = CollectionSchema(
       ],
     ),
     r'expiryDate': IndexSchema(
-      id: -1636839555668080254,
+      id: (-381106408 * 4294967296 + 2987952514),
       name: r'expiryDate',
       unique: false,
       replace: false,
@@ -237,7 +237,7 @@ const PurchaseBatchEntitySchema = CollectionSchema(
       ],
     ),
     r'isConsumed': IndexSchema(
-      id: 1265324810271792707,
+      id: (294606390 * 4294967296 + 29171267),
       name: r'isConsumed',
       unique: false,
       replace: false,
@@ -250,7 +250,7 @@ const PurchaseBatchEntitySchema = CollectionSchema(
       ],
     ),
     r'syncStatus': IndexSchema(
-      id: 8239539375045684509,
+      id: (1918417256 * 4294967296 + 443624733),
       name: r'syncStatus',
       unique: false,
       replace: false,
@@ -263,7 +263,7 @@ const PurchaseBatchEntitySchema = CollectionSchema(
       ],
     ),
     r'createdAt': IndexSchema(
-      id: -3433535483987302584,
+      id: (-799432277 * 4294967296 + 1094510408),
       name: r'createdAt',
       unique: false,
       replace: false,

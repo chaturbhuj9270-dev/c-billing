@@ -16,7 +16,7 @@ extension GetShopImageCacheEntityCollection on Isar {
 
 const ShopImageCacheEntitySchema = CollectionSchema(
   name: r'ShopImageCacheEntity',
-  id: -5557500754905219390,
+  id: (-1293956478 * 4294967296 + 552124098),
   properties: {
     r'hasAnyImages': PropertySchema(
       id: 0,
@@ -58,7 +58,7 @@ const ShopImageCacheEntitySchema = CollectionSchema(
   idName: r'id',
   indexes: {
     r'userId': IndexSchema(
-      id: -2005826577402374815,
+      id: (-467017894 * 4294967296 + 3974419809),
       name: r'userId',
       unique: true,
       replace: false,

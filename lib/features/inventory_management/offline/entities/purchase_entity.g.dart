@@ -15,7 +15,7 @@ extension GetPurchaseEntityCollection on Isar {
 
 const PurchaseEntitySchema = CollectionSchema(
   name: r'PurchaseEntity',
-  id: -2985345532096524035,
+  id: (-695079922 * 4294967296 + 999706877),
   properties: {
     r'companyId': PropertySchema(
       id: 0,
@@ -120,7 +120,7 @@ const PurchaseEntitySchema = CollectionSchema(
   idName: r'id',
   indexes: {
     r'serverId': IndexSchema(
-      id: -7950187970872907662,
+      id: (-1851047383 * 4294967296 + 2458478706),
       name: r'serverId',
       unique: false,
       replace: false,
@@ -133,7 +133,7 @@ const PurchaseEntitySchema = CollectionSchema(
       ],
     ),
     r'productId': IndexSchema(
-      id: 5580769080710688203,
+      id: (1299374057 * 4294967296 + 624848331),
       name: r'productId',
       unique: false,
       replace: false,
@@ -146,7 +146,7 @@ const PurchaseEntitySchema = CollectionSchema(
       ],
     ),
     r'supplierId': IndexSchema(
-      id: -7509772217447508349,
+      id: (-1748505100 * 4294967296 + 3941701251),
       name: r'supplierId',
       unique: false,
       replace: false,
@@ -159,7 +159,7 @@ const PurchaseEntitySchema = CollectionSchema(
       ],
     ),
     r'companyId': IndexSchema(
-      id: 482756417767355356,
+      id: (112400487 * 4294967296 + 2047882204),
       name: r'companyId',
       unique: false,
       replace: false,
@@ -172,7 +172,7 @@ const PurchaseEntitySchema = CollectionSchema(
       ],
     ),
     r'syncStatus': IndexSchema(
-      id: 8239539375045684509,
+      id: (1918417256 * 4294967296 + 443624733),
       name: r'syncStatus',
       unique: false,
       replace: false,
@@ -185,7 +185,7 @@ const PurchaseEntitySchema = CollectionSchema(
       ],
     ),
     r'createdAt': IndexSchema(
-      id: -3433535483987302584,
+      id: (-799432277 * 4294967296 + 1094510408),
       name: r'createdAt',
       unique: false,
       replace: false,

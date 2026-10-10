@@ -15,7 +15,7 @@ extension GetProductEntityCollection on Isar {
 
 const ProductEntitySchema = CollectionSchema(
   name: r'ProductEntity',
-  id: 4867088266565710661,
+  id: (1133207293 * 4294967296 + 3542020933),
   properties: {
     r'barcode': PropertySchema(id: 0, name: r'barcode', type: IsarType.string),
     r'category': PropertySchema(
@@ -128,7 +128,7 @@ const ProductEntitySchema = CollectionSchema(
   idName: r'id',
   indexes: {
     r'serverId': IndexSchema(
-      id: -7950187970872907662,
+      id: (-1851047383 * 4294967296 + 2458478706),
       name: r'serverId',
       unique: false,
       replace: false,
@@ -141,7 +141,7 @@ const ProductEntitySchema = CollectionSchema(
       ],
     ),
     r'name': IndexSchema(
-      id: 879695947855722453,
+      id: (204820173 * 4294967296 + 3259660245),
       name: r'name',
       unique: false,
       replace: false,
@@ -154,7 +154,7 @@ const ProductEntitySchema = CollectionSchema(
       ],
     ),
     r'barcode': IndexSchema(
-      id: 1156800733621869998,
+      id: (269338659 * 4294967296 + 1668373934),
       name: r'barcode',
       unique: false,
       replace: false,
@@ -167,7 +167,7 @@ const ProductEntitySchema = CollectionSchema(
       ],
     ),
     r'syncStatus': IndexSchema(
-      id: 8239539375045684509,
+      id: (1918417256 * 4294967296 + 443624733),
       name: r'syncStatus',
       unique: false,
       replace: false,
@@ -180,7 +180,7 @@ const ProductEntitySchema = CollectionSchema(
       ],
     ),
     r'updatedAt': IndexSchema(
-      id: -6238191080293565125,
+      id: (-1452442045 * 4294967296 + 2316795195),
       name: r'updatedAt',
       unique: false,
       replace: false,

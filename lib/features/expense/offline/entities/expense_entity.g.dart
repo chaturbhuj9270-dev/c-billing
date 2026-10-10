@@ -15,7 +15,7 @@ extension GetExpenseEntityCollection on Isar {
 
 const ExpenseEntitySchema = CollectionSchema(
   name: r'ExpenseEntity',
-  id: -1988505328189942482,
+  id: (-462984976 * 4294967296 + 2269402414),
   properties: {
     r'amount': PropertySchema(id: 0, name: r'amount', type: IsarType.double),
     r'category': PropertySchema(
@@ -86,7 +86,7 @@ const ExpenseEntitySchema = CollectionSchema(
   idName: r'id',
   indexes: {
     r'serverId': IndexSchema(
-      id: -7950187970872907662,
+      id: (-1851047383 * 4294967296 + 2458478706),
       name: r'serverId',
       unique: false,
       replace: false,
@@ -99,7 +99,7 @@ const ExpenseEntitySchema = CollectionSchema(
       ],
     ),
     r'category': IndexSchema(
-      id: -7560358558326323820,
+      id: (-1760283150 * 4294967296 + 2623538580),
       name: r'category',
       unique: false,
       replace: false,
@@ -112,7 +112,7 @@ const ExpenseEntitySchema = CollectionSchema(
       ],
     ),
     r'expenseDate': IndexSchema(
-      id: -472364015555664967,
+      id: (-109980818 * 4294967296 + 941663161),
       name: r'expenseDate',
       unique: false,
       replace: false,
@@ -125,7 +125,7 @@ const ExpenseEntitySchema = CollectionSchema(
       ],
     ),
     r'syncStatus': IndexSchema(
-      id: 8239539375045684509,
+      id: (1918417256 * 4294967296 + 443624733),
       name: r'syncStatus',
       unique: false,
       replace: false,
@@ -138,7 +138,7 @@ const ExpenseEntitySchema = CollectionSchema(
       ],
     ),
     r'createdAt': IndexSchema(
-      id: -3433535483987302584,
+      id: (-799432277 * 4294967296 + 1094510408),
       name: r'createdAt',
       unique: false,
       replace: false,

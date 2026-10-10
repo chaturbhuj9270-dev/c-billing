@@ -15,7 +15,7 @@ extension GetSupplierEntityCollection on Isar {
 
 const SupplierEntitySchema = CollectionSchema(
   name: r'SupplierEntity',
-  id: 8149616736059475209,
+  id: (1897480510 * 4294967296 + 812074249),
   properties: {
     r'address': PropertySchema(id: 0, name: r'address', type: IsarType.string),
     r'contact': PropertySchema(id: 1, name: r'contact', type: IsarType.string),
@@ -85,7 +85,7 @@ const SupplierEntitySchema = CollectionSchema(
   idName: r'id',
   indexes: {
     r'serverId': IndexSchema(
-      id: -7950187970872907662,
+      id: (-1851047383 * 4294967296 + 2458478706),
       name: r'serverId',
       unique: false,
       replace: false,
@@ -98,7 +98,7 @@ const SupplierEntitySchema = CollectionSchema(
       ],
     ),
     r'firstName': IndexSchema(
-      id: -2537032818573098835,
+      id: (-590698985 * 4294967296 + 3782295725),
       name: r'firstName',
       unique: false,
       replace: false,
@@ -111,7 +111,7 @@ const SupplierEntitySchema = CollectionSchema(
       ],
     ),
     r'supplierCode': IndexSchema(
-      id: -6908271452855759711,
+      id: (-1608457289 * 4294967296 + 412060833),
       name: r'supplierCode',
       unique: false,
       replace: false,
@@ -124,7 +124,7 @@ const SupplierEntitySchema = CollectionSchema(
       ],
     ),
     r'contact': IndexSchema(
-      id: 213978983763356937,
+      id: (49820864 * 4294967296 + 2224893193),
       name: r'contact',
       unique: false,
       replace: false,
@@ -137,7 +137,7 @@ const SupplierEntitySchema = CollectionSchema(
       ],
     ),
     r'syncStatus': IndexSchema(
-      id: 8239539375045684509,
+      id: (1918417256 * 4294967296 + 443624733),
       name: r'syncStatus',
       unique: false,
       replace: false,
@@ -150,7 +150,7 @@ const SupplierEntitySchema = CollectionSchema(
       ],
     ),
     r'updatedAt': IndexSchema(
-      id: -6238191080293565125,
+      id: (-1452442045 * 4294967296 + 2316795195),
       name: r'updatedAt',
       unique: false,
       replace: false,
