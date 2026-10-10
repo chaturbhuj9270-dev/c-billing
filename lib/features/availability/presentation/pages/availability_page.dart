@@ -15,6 +15,21 @@ import 'package:c_billing/features/availability/presentation/pages/report_previe
 import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 
+/// Lets the dashboard download button open the stock report.
+class AvailabilityScreenActions {
+  static final List<VoidCallback> _downloads = [];
+
+  static void register(VoidCallback onDownload) => _downloads.add(onDownload);
+
+  static void unregister(VoidCallback onDownload) =>
+      _downloads.remove(onDownload);
+
+  static void download() {
+    if (_downloads.isEmpty) return;
+    _downloads.last();
+  }
+}
+
 class AvailabilityPage extends StatefulWidget {
   final bool isEmbedded;
 
@@ -55,6 +70,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
 
     // Listen for language changes
     LanguageService.instance.addListener(_onLanguageChanged);
+    AvailabilityScreenActions.register(_showReportBottomSheet);
 
     // Listen for product changes from other screens (purchase page, product management, etc.)
     _productRefreshSubscription = DashboardRefreshService
@@ -175,6 +191,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
 
   @override
   void dispose() {
+    AvailabilityScreenActions.unregister(_showReportBottomSheet);
     _productRefreshSubscription?.cancel();
     _purchaseRefreshSubscription?.cancel();
     _batchStreamSubscription?.cancel();
@@ -266,9 +283,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                 decoration: BoxDecoration(
                   color: AppColors.accentSoft(context, 0.08),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: AppColors.accentSoft(context, 0.2),
-                  ),
+                  border: Border.all(color: AppColors.accentSoft(context, 0.2)),
                 ),
                 child: Row(
                   children: [
@@ -417,7 +432,9 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
       child: Container(
         padding: EdgeInsets.symmetric(vertical: 16, horizontal: 12),
         decoration: BoxDecoration(
-          color: isSelected ? color.withValues(alpha: 0.1) : AppColors.scaffold(context),
+          color: isSelected
+              ? color.withValues(alpha: 0.1)
+              : AppColors.scaffold(context),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected ? color : AppColors.border(context)!,
@@ -511,7 +528,11 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
       );
     } catch (e) {
       if (mounted) {
-        GlassyToast.show(context, '${_localizations.errorOpeningPreview}: $e', isError: true);
+        GlassyToast.show(
+          context,
+          '${_localizations.errorOpeningPreview}: $e',
+          isError: true,
+        );
       }
     }
   }
@@ -626,324 +647,6 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
     });
   }
 
-  Widget _buildStatsCards() {
-    final totalProducts = _groupedProducts.length;
-    final inStock = _groupedProducts.where((g) => g.totalStock > 10).length;
-    final lowStock = _groupedProducts
-        .where((g) => g.totalStock > 0 && g.totalStock <= 10)
-        .length;
-    final outOfStock = _groupedProducts.where((g) => g.totalStock == 0).length;
-    final expired = _groupedProducts.where((g) => g.hasExpiredStock).length;
-
-    return Container(
-      margin: EdgeInsets.fromLTRB(16, 16, 16, 8),
-      padding: EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.card(context),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          return SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: ConstrainedBox(
-              constraints: BoxConstraints(minWidth: constraints.maxWidth),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  _buildModernStatCard(
-                    title: _localizations.totalProducts,
-                    value: totalProducts,
-                    icon: Icons.inventory_2_rounded,
-                    gradient: const [Color(0xFF1B4D3E), Color(0xFF2D6B5A)],
-                    isActive: _stockFilter == 'all',
-                    onTap: () => _onStockFilterChanged('all'),
-                  ),
-                  const SizedBox(width: 10),
-                  _buildModernStatCard(
-                    title: _localizations.inStock,
-                    value: inStock,
-                    icon: Icons.check_circle_rounded,
-                    gradient: const [Color(0xFF4CAF50), Color(0xFF66BB6A)],
-                    isActive: _stockFilter == 'in_stock',
-                    onTap: () => _onStockFilterChanged('in_stock'),
-                  ),
-                  const SizedBox(width: 10),
-                  _buildModernStatCard(
-                    title: _localizations.lowStock,
-                    value: lowStock,
-                    icon: Icons.warning_rounded,
-                    gradient: const [Color(0xFFFF9800), Color(0xFFFFB74D)],
-                    isActive: _stockFilter == 'low_stock',
-                    onTap: () => _onStockFilterChanged('low_stock'),
-                  ),
-                  const SizedBox(width: 10),
-                  _buildModernStatCard(
-                    title: _localizations.outOfStock,
-                    value: outOfStock,
-                    icon: Icons.error_rounded,
-                    gradient: const [Color(0xFFF44336), Color(0xFFEF5350)],
-                    isActive: _stockFilter == 'out_of_stock',
-                    onTap: () => _onStockFilterChanged('out_of_stock'),
-                  ),
-                  const SizedBox(width: 10),
-                  _buildModernStatCard(
-                    title: _localizations.expiredProducts,
-                    value: expired,
-                    icon: Icons.event_busy_rounded,
-                    gradient: const [Color(0xFF9C27B0), Color(0xFFBA68C8)],
-                    isActive: _stockFilter == 'expired',
-                    onTap: () => _onStockFilterChanged('expired'),
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildModernStatCard({
-    required String title,
-    required int value,
-    required IconData icon,
-    required List<Color> gradient,
-    required bool isActive,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        width: 72,
-        padding: EdgeInsets.symmetric(vertical: 14, horizontal: 8),
-        decoration: BoxDecoration(
-          gradient: isActive
-              ? LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: gradient,
-                )
-              : null,
-          color: isActive ? null : AppColors.scaffold(context),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: isActive
-                ? Colors.transparent
-                : gradient[0].withValues(alpha: 0.2),
-            width: 1.5,
-          ),
-          boxShadow: isActive
-              ? [
-                  BoxShadow(
-                    color: gradient[0].withValues(alpha: 0.3),
-                    blurRadius: 8,
-                    offset: const Offset(0, 4),
-                  ),
-                ]
-              : null,
-        ),
-        child: Column(
-          children: [
-            Icon(icon, color: isActive ? Colors.white : gradient[0], size: 20),
-            const SizedBox(height: 8),
-            Text(
-              value.toString(),
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w800,
-                fontFamily: 'Literata',
-                color: isActive ? Colors.white : gradient[0],
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: 9,
-                color: isActive
-                    ? Colors.white.withValues(alpha: 0.85)
-                    : Colors.grey[600],
-                fontFamily: 'Literata',
-                fontWeight: FontWeight.w600,
-              ),
-              textAlign: TextAlign.center,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSearchAndFilters() {
-    return Container(
-      padding: EdgeInsets.fromLTRB(16, 12, 16, 12),
-      child: Column(
-        children: [
-          // Search bar with modern styling
-          Container(
-            decoration: BoxDecoration(
-              color: AppColors.card(context),
-              borderRadius: BorderRadius.circular(14),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.04),
-                  blurRadius: 10,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: TextField(
-              controller: _searchController,
-              onChanged: _onSearchChanged,
-              style: const TextStyle(fontFamily: 'Literata', fontSize: 14),
-              decoration: InputDecoration(
-                hintText: _localizations.searchProducts,
-                hintStyle: TextStyle(
-                  color: Colors.grey[400],
-                  fontFamily: 'Literata',
-                ),
-                prefixIcon: Container(
-                  padding: const EdgeInsets.all(12),
-                  child: Icon(
-                    Icons.search_rounded,
-                    color: _searchQuery.isNotEmpty
-                        ? const Color(0xFF1B4D3E)
-                        : Colors.grey[400],
-                  ),
-                ),
-                suffixIcon: _searchQuery.isNotEmpty
-                    ? IconButton(
-                        icon: Container(
-                          padding: EdgeInsets.all(4),
-                          decoration: BoxDecoration(
-                            color: AppColors.border(context),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            Icons.close,
-                            size: 16,
-                            color: Colors.grey,
-                          ),
-                        ),
-                        onPressed: () {
-                          _searchController.clear();
-                          _onSearchChanged('');
-                        },
-                      )
-                    : null,
-                filled: true,
-                fillColor: AppColors.inputFill(context),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 14,
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14),
-                  borderSide: BorderSide.none,
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14),
-                  borderSide: BorderSide(
-                    color: Colors.grey.withValues(alpha: 0.1),
-                  ),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14),
-                  borderSide: BorderSide(
-                    color: AppColors.accent(context),
-                    width: 1.5,
-                  ),
-                ),
-              ),
-            ),
-          ),
-          SizedBox(height: 12),
-          // Result count and sort info
-          Row(
-            children: [
-              Container(
-                padding: EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.accentSoft(context, 0.08),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.list_alt_rounded,
-                      size: 14,
-                      color: AppColors.accent(context),
-                    ),
-                    SizedBox(width: 6),
-                    Text(
-                      '${_filteredGroupedProducts.length} items',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        fontFamily: 'Literata',
-                        color: AppColors.accent(context),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const Spacer(),
-              if (_stockFilter != 'all')
-                GestureDetector(
-                  onTap: () => _onStockFilterChanged('all'),
-                  child: Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.chipFill(context),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(
-                          Icons.filter_alt_off_rounded,
-                          size: 14,
-                          color: Colors.grey,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          _localizations.clearFilter,
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w500,
-                            fontFamily: 'Literata',
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildProductsSliver() {
     if (_filteredGroupedProducts.isEmpty) {
       return SliverFillRemaining(
@@ -1005,67 +708,49 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
 
   Widget _buildGroupedProductCard(GroupedProduct group) {
     final stockLevel = _getStockLevel(group.totalStock);
-    final stockColor = stockLevel['color'] as Color;
-    final stockLabel = stockLevel['label'] as String;
-    final hasMultipleBatches = group.hasMultipleVariants;
-    // Count low-stock batches in this group
-    final lowBatchCount = group.subEntries
-        .where((e) => e.stockQuantity > 0 && e.stockQuantity <= 5)
-        .length;
-    final outBatchCount = group.subEntries
-        .where((e) => e.stockQuantity == 0)
-        .length;
+    final isOut = group.totalStock == 0;
+    final isLow = group.totalStock > 0 && group.totalStock <= 10;
+    final tileBackground = isOut
+        ? const Color(0xFF3A2424)
+        : isLow
+        ? const Color(0xFF3A2E14)
+        : const Color(0xFF14352C);
+    final tileForeground = isOut
+        ? const Color(0xFFEF5350)
+        : isLow
+        ? AppTheme.toneAmber
+        : AppTheme.mint;
+    final statusLabel = isLow
+        ? '${_localizations.lowStock.toUpperCase()} · ${group.variantCount} ${_localizations.batch.toUpperCase()}'
+        : stockLevel['label'] as String;
     final expiredBatchCount = group.expiredBatchCount;
 
     return Container(
-      margin: EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: AppColors.card(context),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: group.hasExpiredStock
-              ? const Color(0xFF9C27B0).withValues(alpha: 0.25)
-              : group.totalStock == 0
-              ? Colors.red.withValues(alpha: 0.2)
-              : group.totalStock <= 10
-              ? Colors.orange.withValues(alpha: 0.15)
-              : Colors.transparent,
-          width: 1.5,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        border: Border.all(color: AppColors.border(context)),
       ),
       child: Theme(
         data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
         child: ExpansionTile(
-          tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          tilePadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           childrenPadding: EdgeInsets.zero,
-          shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+          iconColor: AppColors.mutedText(context),
+          collapsedIconColor: AppColors.mutedText(context),
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(18)),
+          ),
           collapsedShape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.zero,
+            borderRadius: BorderRadius.all(Radius.circular(18)),
           ),
           leading: Container(
             width: 52,
             height: 52,
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [stockColor, stockColor.withValues(alpha: 0.75)],
-              ),
+              color: tileBackground,
               borderRadius: BorderRadius.circular(14),
-              boxShadow: [
-                BoxShadow(
-                  color: stockColor.withValues(alpha: 0.3),
-                  blurRadius: 8,
-                  offset: const Offset(0, 3),
-                ),
-              ],
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -1073,7 +758,7 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                 Text(
                   '${group.totalStock}',
                   style: TextStyle(
-                    color: Colors.white,
+                    color: tileForeground,
                     fontSize: 16,
                     fontWeight: FontWeight.w800,
                     fontFamily: 'Literata',
@@ -1081,10 +766,10 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
                   ),
                 ),
                 Text(
-                  _localizations.units,
+                  _localizations.units.toLowerCase(),
                   style: TextStyle(
-                    color: AppColors.card(context),
-                    fontSize: 8,
+                    color: tileForeground,
+                    fontSize: 9,
                     fontWeight: FontWeight.w600,
                     fontFamily: 'Literata',
                   ),
@@ -1095,83 +780,62 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
           title: Text(
             group.productName,
             style: TextStyle(
-              fontSize: 15,
+              fontSize: 16,
               fontWeight: FontWeight.w700,
               fontFamily: 'Literata',
-              color: AppColors.accent(context),
+              color: AppColors.primaryText(context),
               height: 1.2,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
           subtitle: Padding(
-            padding: const EdgeInsets.only(top: 8),
+            padding: const EdgeInsets.only(top: 6),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Badges row
                 Wrap(
                   spacing: 6,
                   runSpacing: 6,
                   children: [
-                    // Stock status badge
                     _buildBadge(
-                      label: stockLabel,
-                      color: stockColor,
-                      icon: group.totalStock == 0
+                      label: statusLabel,
+                      color: isOut
+                          ? const Color(0xFFEF5350)
+                          : isLow
+                          ? AppTheme.toneAmber
+                          : AppTheme.mint,
+                      icon: isOut
                           ? Icons.error_outline
-                          : group.totalStock <= 10
-                          ? Icons.warning_outlined
+                          : isLow
+                          ? Icons.warning_amber_rounded
                           : Icons.check_circle_outline,
                     ),
-                    // Batch count badge
-                    if (hasMultipleBatches)
-                      _buildBadge(
-                        label: '${group.variantCount} ${_localizations.batch}',
-                        color: const Color(0xFF2196F3),
-                        icon: Icons.layers_outlined,
-                      ),
-                    // Low batch warning badge
-                    if (lowBatchCount > 0)
-                      _buildBadge(
-                        label: '$lowBatchCount ${_localizations.lowStock}',
-                        color: Colors.orange,
-                        icon: Icons.warning_amber_rounded,
-                      ),
-                    // Out of stock batch badge
-                    if (outBatchCount > 0 && group.totalStock > 0)
-                      _buildBadge(
-                        label: '$outBatchCount ${_localizations.emptyBatch}',
-                        color: Colors.red,
-                        icon: Icons.error_outline,
-                      ),
-                    // Expired batch badge
                     if (expiredBatchCount > 0)
                       _buildBadge(
                         label:
                             '$expiredBatchCount ${_localizations.expired.toLowerCase()}',
-                        color: const Color(0xFF9C27B0),
+                        color: const Color(0xFFB388FF),
                         icon: Icons.event_busy_rounded,
                       ),
                   ],
                 ),
-                // Company names
                 if (group.companies.isNotEmpty) ...[
                   const SizedBox(height: 6),
                   Row(
                     children: [
                       Icon(
-                        Icons.business_outlined,
-                        size: 12,
-                        color: Colors.grey[400],
+                        Icons.apartment_outlined,
+                        size: 13,
+                        color: AppColors.mutedText(context),
                       ),
                       const SizedBox(width: 4),
                       Expanded(
                         child: Text(
-                          group.companies.join(' • '),
+                          group.companies.first,
                           style: TextStyle(
-                            fontSize: 11,
-                            color: Colors.grey[500],
+                            fontSize: 12,
+                            color: AppColors.mutedText(context),
                             fontFamily: 'Literata',
                           ),
                           maxLines: 1,
@@ -1235,7 +899,9 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
               padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               decoration: BoxDecoration(
                 color: AppColors.chipFill(context),
-                border: Border(bottom: BorderSide(color: AppColors.border(context)!)),
+                border: Border(
+                  bottom: BorderSide(color: AppColors.border(context)!),
+                ),
               ),
               child: Row(
                 children: [
@@ -1323,12 +989,11 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
               }
 
               return Container(
-                padding: EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
-                  color: rowColor ?? (isEven ? Colors.white : AppColors.scaffold(context)),
+                  color:
+                      rowColor ??
+                      (isEven ? Colors.white : AppColors.scaffold(context)),
                   border: Border(
                     bottom: BorderSide(
                       color: Colors.grey.withValues(alpha: 0.1),
@@ -1745,162 +1410,171 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
     return Scaffold(
       backgroundColor: AppColors.scaffold(context),
       body: _isLoading
-          ? Center(
-              child: CircularProgressIndicator(color: AppColors.accent(context)),
-            )
+          ? Center(child: CircularProgressIndicator(color: AppTheme.mint))
           : CustomScrollView(
               slivers: [
-                // Modern gradient header
                 SliverToBoxAdapter(child: _buildPageHeader()),
-                // Stats cards
-                SliverToBoxAdapter(child: _buildStatsCards()),
-                // Search and filters
-                SliverPersistentHeader(
-                  pinned: true,
-                  delegate: _SearchHeaderDelegate(
-                    child: _buildSearchAndFilters(),
-                    height: 120,
-                  ),
-                ),
-                // Products list
+                SliverToBoxAdapter(child: _buildFilterChips()),
+                SliverToBoxAdapter(child: _buildSearchField()),
                 _buildProductsSliver(),
               ],
             ),
     );
   }
 
-  /// Modern gradient header
   Widget _buildPageHeader() {
     final totalStock = _groupedProducts.fold<int>(
       0,
-      (sum, g) => sum + g.totalStock,
+      (sum, group) => sum + group.totalStock,
     );
     final totalValue = _groupedProducts.fold<double>(
       0,
-      (sum, g) => sum + g.totalStockValue,
+      (sum, group) => sum + group.totalStockValue,
     );
+    final lowStock = _groupedProducts
+        .where((group) => group.totalStock > 0 && group.totalStock <= 10)
+        .length;
 
-    return Container(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: AppColors.headerGradient(context),
-        ),
-        borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(28),
-          bottomRight: Radius.circular(28),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.accentSoft(context, 0.25),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          // Title row
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(
-                  Icons.inventory_2_rounded,
-                  color: Colors.white,
-                  size: 22,
-                ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+    return Padding(
+      padding: EdgeInsets.fromLTRB(16, widget.isEmbedded ? 8 : 16, 16, 4),
+      child: _sectionCard(
+            child: Column(
+              children: [
+                Row(
                   children: [
-                    Text(
-                      _localizations.stockOverview,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.w700,
-                        fontFamily: 'Literata',
+                    _iconWell(
+                      icon: Icons.inventory_2_outlined,
+                      background: const Color(0xFF14352C),
+                      foreground: AppTheme.mint,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _localizations.stockOverview,
+                            style: TextStyle(
+                              fontFamily: 'Literata',
+                              fontWeight: FontWeight.w800,
+                              fontSize: 16,
+                              color: AppColors.primaryText(context),
+                            ),
+                          ),
+                          Text(
+                            '${_groupedProducts.length} ${_localizations.products.toLowerCase()} · $totalStock ${_localizations.units.toLowerCase()}',
+                            style: TextStyle(
+                              fontFamily: 'Literata',
+                              fontSize: 12,
+                              color: AppColors.mutedText(context),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    Text(
-                      '${_groupedProducts.length} ${_localizations.products} • $totalStock ${_localizations.units}',
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.7),
-                        fontSize: 12,
-                        fontFamily: 'Literata',
-                      ),
+                    _outlineIconButton(
+                      icon: Icons.file_download_outlined,
+                      onTap: _showReportBottomSheet,
                     ),
                   ],
                 ),
-              ),
-              GestureDetector(
-                onTap: _showReportBottomSheet,
-                child: Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(
-                    Icons.summarize_outlined,
-                    color: Colors.white,
-                    size: 22,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          // Summary stats in header
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: _buildHeaderStat(
-                    Icons.account_balance_wallet_rounded,
-                    '₹${_formatCompactNumber(totalValue)}',
-                    _localizations.stockValue,
-                  ),
-                ),
-                Container(
-                  width: 1,
-                  height: 36,
-                  color: Colors.white.withValues(alpha: 0.2),
-                ),
-                Expanded(
-                  child: _buildHeaderStat(
-                    Icons.layers_rounded,
-                    '${_allBatches.length}',
-                    _localizations.batch,
-                  ),
-                ),
-                Container(
-                  width: 1,
-                  height: 36,
-                  color: Colors.white.withValues(alpha: 0.2),
-                ),
-                Expanded(
-                  child: _buildHeaderStat(
-                    Icons.warning_amber_rounded,
-                    '${_groupedProducts.where((g) => g.totalStock <= 10 && g.totalStock > 0).length}',
-                    _localizations.lowStock,
-                  ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    _overviewStat(
+                      '₹${_formatCompactNumber(totalValue)}',
+                      _localizations.stockValue,
+                      AppColors.primaryText(context),
+                    ),
+                    _overviewStat(
+                      '${_allBatches.length}',
+                      _localizations.batch,
+                      AppColors.primaryText(context),
+                    ),
+                    _overviewStat(
+                      '$lowStock',
+                      _localizations.lowStock,
+                      AppTheme.toneAmber,
+                    ),
+                  ],
                 ),
               ],
+            ),
+          ),
+    );
+  }
+
+  Widget _sectionCard({required Widget child}) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.card(context),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.border(context)),
+      ),
+      child: child,
+    );
+  }
+
+  Widget _iconWell({
+    required IconData icon,
+    required Color background,
+    required Color foreground,
+  }) {
+    return Container(
+      width: 42,
+      height: 42,
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Icon(icon, color: foreground, size: 20),
+    );
+  }
+
+  Widget _outlineIconButton({
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: AppColors.border(context)),
+          ),
+          child: Icon(icon, size: 18, color: AppColors.secondaryText(context)),
+        ),
+      ),
+    );
+  }
+
+  Widget _overviewStat(String value, String label, Color valueColor) {
+    return Expanded(
+      child: Column(
+        children: [
+          Text(
+            value,
+            style: TextStyle(
+              fontFamily: 'Literata',
+              fontWeight: FontWeight.w800,
+              fontSize: 20,
+              color: valueColor,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            style: TextStyle(
+              fontFamily: 'Literata',
+              fontSize: 11,
+              color: AppColors.mutedText(context),
             ),
           ),
         ],
@@ -1908,35 +1582,168 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
     );
   }
 
-  Widget _buildHeaderStat(IconData icon, String value, String label) {
-    return Column(
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+  Widget _buildFilterChips() {
+    final total = _groupedProducts.length;
+    final inStock = _groupedProducts
+        .where((group) => group.totalStock > 10)
+        .length;
+    final lowStock = _groupedProducts
+        .where((group) => group.totalStock > 0 && group.totalStock <= 10)
+        .length;
+    final outOfStock = _groupedProducts
+        .where((group) => group.totalStock == 0)
+        .length;
+    final expired = _groupedProducts
+        .where((group) => group.hasExpiredStock)
+        .length;
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+      child: Row(
+        children: [
+          _filterChip(
+            label: _localizations.all,
+            count: total,
+            color: AppTheme.mint,
+            selected: _stockFilter == 'all',
+            onTap: () => _onStockFilterChanged('all'),
+          ),
+          const SizedBox(width: 8),
+          _filterChip(
+            label: _localizations.inStock,
+            count: inStock,
+            color: AppTheme.mint,
+            selected: _stockFilter == 'in_stock',
+            onTap: () => _onStockFilterChanged('in_stock'),
+          ),
+          const SizedBox(width: 8),
+          _filterChip(
+            label: _localizations.lowStock,
+            count: lowStock,
+            color: AppTheme.toneAmber,
+            selected: _stockFilter == 'low_stock',
+            onTap: () => _onStockFilterChanged('low_stock'),
+          ),
+          const SizedBox(width: 8),
+          _filterChip(
+            label: _localizations.outOfStock,
+            count: outOfStock,
+            color: const Color(0xFFEF5350),
+            selected: _stockFilter == 'out_of_stock',
+            onTap: () => _onStockFilterChanged('out_of_stock'),
+          ),
+          const SizedBox(width: 8),
+          _filterChip(
+            label: _localizations.expired,
+            count: expired,
+            color: const Color(0xFFB388FF),
+            selected: _stockFilter == 'expired',
+            onTap: () => _onStockFilterChanged('expired'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _filterChip({
+    required String label,
+    required int count,
+    required Color color,
+    required bool selected,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: selected ? color.withValues(alpha: 0.12) : Colors.transparent,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: selected
+                ? color.withValues(alpha: 0.7)
+                : AppColors.border(context),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, color: Colors.white, size: 16),
+            Container(
+              width: 7,
+              height: 7,
+              decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+            ),
             const SizedBox(width: 6),
             Text(
-              value,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.w800,
+              '$label  $count',
+              style: TextStyle(
                 fontFamily: 'Literata',
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: selected
+                    ? AppColors.primaryText(context)
+                    : AppColors.secondaryText(context),
               ),
             ),
           ],
         ),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: TextStyle(
-            color: Colors.white.withValues(alpha: 0.6),
-            fontSize: 10,
+      ),
+    );
+  }
+
+  Widget _buildSearchField() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+      child: TextField(
+        controller: _searchController,
+        onChanged: _onSearchChanged,
+        style: TextStyle(
+          fontFamily: 'Literata',
+          fontSize: 14,
+          color: AppColors.primaryText(context),
+        ),
+        decoration: InputDecoration(
+          hintText: _localizations.searchProducts,
+          hintStyle: TextStyle(
+            color: AppColors.mutedText(context),
             fontFamily: 'Literata',
           ),
+          prefixIcon: Icon(
+            Icons.search_rounded,
+            color: AppColors.mutedText(context),
+          ),
+          suffixIcon: _searchQuery.isNotEmpty
+              ? IconButton(
+                  icon: Icon(
+                    Icons.close_rounded,
+                    size: 18,
+                    color: AppColors.mutedText(context),
+                  ),
+                  onPressed: () {
+                    _searchController.clear();
+                    _onSearchChanged('');
+                  },
+                )
+              : null,
+          filled: true,
+          fillColor: AppColors.card(context),
+          contentPadding: const EdgeInsets.symmetric(vertical: 14),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide(color: AppColors.border(context)),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide(color: AppColors.border(context)),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: const BorderSide(color: AppTheme.mint, width: 1.4),
+          ),
         ),
-      ],
+      ),
     );
   }
 
@@ -1949,33 +1756,5 @@ class _AvailabilityPageState extends State<AvailabilityPage> {
       return '${(number / 1000).toStringAsFixed(1)}K';
     }
     return number.toStringAsFixed(0);
-  }
-}
-
-/// Delegate for sticky search header
-class _SearchHeaderDelegate extends SliverPersistentHeaderDelegate {
-  final Widget child;
-  final double height;
-
-  _SearchHeaderDelegate({required this.child, required this.height});
-
-  @override
-  Widget build(
-    BuildContext context,
-    double shrinkOffset,
-    bool overlapsContent,
-  ) {
-    return Container(color: AppColors.scaffold(context), child: child);
-  }
-
-  @override
-  double get maxExtent => height;
-
-  @override
-  double get minExtent => height;
-
-  @override
-  bool shouldRebuild(covariant _SearchHeaderDelegate oldDelegate) {
-    return child != oldDelegate.child || height != oldDelegate.height;
   }
 }

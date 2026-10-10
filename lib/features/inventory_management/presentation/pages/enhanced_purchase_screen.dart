@@ -26,7 +26,6 @@ import 'purchase_report_settings_page.dart';
 import 'invoice_scanner_page.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
-import 'package:c_billing/common_widgets/quick_actions_overlay.dart';
 
 /// Lets the dashboard download button trigger the visible purchase report.
 class PurchaseScreenActions {
@@ -1340,8 +1339,6 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const SizedBox(height: 12),
-                        _buildPurchasesHeaderCard(),
-                        const SizedBox(height: 12),
                         PurchaseSummaryWidget(
                           purchases: _purchases,
                           dateFilter: _dateFilter,
@@ -1400,79 +1397,6 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildPurchasesHeaderCard() {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.card(context),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.border(context)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 42,
-            height: 42,
-            decoration: BoxDecoration(
-              color: const Color(0xFF14352C),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: const Icon(
-              Icons.shopping_cart_outlined,
-              color: Color(0xFF3DDC97),
-              size: 22,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  _localizations.purchases,
-                  style: TextStyle(
-                    fontFamily: 'Literata',
-                    fontWeight: FontWeight.w800,
-                    fontSize: 18,
-                    color: AppColors.primaryText(context),
-                  ),
-                ),
-                Text(
-                  _localizations.trackPurchases,
-                  style: TextStyle(
-                    fontFamily: 'Literata',
-                    fontSize: 12,
-                    color: AppColors.mutedText(context),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: () => showQuickActionsSheet(context),
-              borderRadius: BorderRadius.circular(14),
-              child: Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: AppColors.border(context)),
-                ),
-                child: Icon(
-                  Icons.apps_rounded,
-                  size: 18,
-                  color: AppColors.secondaryText(context),
-                ),
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }

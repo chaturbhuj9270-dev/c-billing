@@ -439,10 +439,10 @@ class EnglishLocalization {
   // Billing - Batch Selection
   static const String selectStockEntry = 'Select Stock Entry';
   static const String chooseSpecificBatch =
-      'Choose a specific batch to add to bill';
-  static const String availableEntries = 'Available Entries';
+      'Choose a batch to add to this bill';
+  static const String availableEntries = 'Available batches';
   static const String batch = 'Batch';
-  static const String purchasedOn = 'Purchased on';
+  static const String purchasedOn = 'Purchased';
   static const String pcsAvailable = 'pcs available';
   static const String sellPrice = 'Sell Price';
   static const String costPrice = 'Cost Price';

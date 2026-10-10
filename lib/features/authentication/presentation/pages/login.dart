@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'dart:ui';
 
 import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/services/language_service.dart';
@@ -293,7 +292,7 @@ class _LoginPageV2State extends State<LoginPageV2>
                                   const SizedBox(height: 24),
                                   Text(
                                     _localizations.appName,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontFamily: 'Literata',
                                       fontSize: 48,
                                       fontWeight: FontWeight.w900,
@@ -390,21 +389,25 @@ class _LoginPageV2State extends State<LoginPageV2>
                             child: Column(
                               children: [
                                 Container(
+                                  width: 72,
+                                  height: 72,
                                   decoration: BoxDecoration(
+                                    color: const Color(0xFF14352C),
+                                    borderRadius: BorderRadius.circular(22),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: const Color(
-                                          0xFF1B4D3E,
-                                        ).withValues(alpha: 0.25),
-                                        blurRadius: 24,
-                                        offset: const Offset(0, 12),
+                                        color: AppTheme.mint.withValues(
+                                          alpha: 0.28,
+                                        ),
+                                        blurRadius: 36,
+                                        spreadRadius: 4,
                                       ),
                                     ],
                                   ),
-                                  child: Image.asset(
-                                    'assets/images/app_logo.png',
-                                    width: 80,
-                                    height: 80,
+                                  child: const Icon(
+                                    Icons.receipt_long_rounded,
+                                    color: AppTheme.mint,
+                                    size: 32,
                                   ),
                                 ),
                                 SizedBox(height: 5),
@@ -414,8 +417,8 @@ class _LoginPageV2State extends State<LoginPageV2>
                                     fontFamily: 'Literata',
                                     fontSize: 36,
                                     fontWeight: FontWeight.w900,
-                                    color: AppColors.accent(context),
-                                    letterSpacing: 2,
+                                    color: AppColors.primaryText(context),
+                                    letterSpacing: 0,
                                   ),
                                 ),
                                 const SizedBox(height: 8),
@@ -426,7 +429,7 @@ class _LoginPageV2State extends State<LoginPageV2>
                                     fontSize: 14,
                                     fontWeight: FontWeight.w400,
                                     fontStyle: FontStyle.italic,
-                                    color: Color(0xFF5D6D68),
+                                    color: AppColors.mutedText(context),
                                   ),
                                 ),
                               ],
@@ -442,47 +445,7 @@ class _LoginPageV2State extends State<LoginPageV2>
                               position: _offsetAnimation,
                               child: FadeTransition(
                                 opacity: _opacityAnimation,
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(28),
-                                  child: BackdropFilter(
-                                    filter: ImageFilter.blur(
-                                      sigmaX: 10,
-                                      sigmaY: 10,
-                                    ),
-                                    child: Container(
-                                      width: double.infinity,
-                                      padding: const EdgeInsets.all(28.0),
-                                      decoration: BoxDecoration(
-                                        gradient: LinearGradient(
-                                          begin: Alignment.topLeft,
-                                          end: Alignment.bottomRight,
-                                          colors: [
-                                            Colors.white.withValues(
-                                              alpha: 0.15,
-                                            ),
-                                            Colors.white.withValues(
-                                              alpha: 0.05,
-                                            ),
-                                          ],
-                                        ),
-                                        borderRadius: BorderRadius.circular(28),
-                                        border: Border.all(
-                                          color: Colors.white.withValues(
-                                            alpha: 0.2,
-                                          ),
-                                          width: 1.5,
-                                        ),
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: Colors.black.withValues(
-                                              alpha: 0.1,
-                                            ),
-                                            blurRadius: 30,
-                                            offset: const Offset(0, 10),
-                                          ),
-                                        ],
-                                      ),
-                                      child: Column(
+                                child: Column(
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
                                         children: [
@@ -492,7 +455,7 @@ class _LoginPageV2State extends State<LoginPageV2>
                                             style: TextStyle(
                                               fontSize: 28,
                                               fontWeight: FontWeight.w800,
-                                              color: Color(0xFF1A1A1A),
+                                              color: AppColors.primaryText(context),
                                               fontFamily: 'Literata',
                                             ),
                                           ),
@@ -502,7 +465,7 @@ class _LoginPageV2State extends State<LoginPageV2>
                                             style: TextStyle(
                                               fontSize: 14,
                                               fontWeight: FontWeight.w400,
-                                              color: Colors.grey[700],
+                                              color: AppColors.mutedText(context),
                                               fontFamily: 'Literata',
                                             ),
                                           ),
@@ -630,8 +593,9 @@ class _LoginPageV2State extends State<LoginPageV2>
                                                       vertical: 14,
                                                     ),
                                                 side: BorderSide(
-                                                  color: Colors.grey[300]!,
-                                                  width: 1,
+                                                  color: AppColors.border(
+                                                    context,
+                                                  ),
                                                 ),
                                                 shape: RoundedRectangleBorder(
                                                   borderRadius:
@@ -685,7 +649,7 @@ class _LoginPageV2State extends State<LoginPageV2>
                                                     _localizations
                                                         .continueWithGoogle,
                                                     style: TextStyle(
-                                                      color: Color(0xFF1A1A1A),
+                                                      color: AppColors.primaryText(context),
                                                       fontSize: 15,
                                                       fontWeight:
                                                           FontWeight.w500,
@@ -698,9 +662,6 @@ class _LoginPageV2State extends State<LoginPageV2>
                                           ),
                                         ],
                                       ),
-                                    ),
-                                  ),
-                                ),
                               ),
                             ),
                           ),
@@ -734,7 +695,7 @@ class _LoginPageV2State extends State<LoginPageV2>
                                   child: Text(
                                     _localizations.signUp,
                                     style: TextStyle(
-                                      color: AppColors.accent(context),
+                                      color: AppTheme.mint,
                                       fontSize: 14,
                                       fontWeight: FontWeight.w700,
                                     ),
@@ -766,10 +727,10 @@ class _LoginPageV2State extends State<LoginPageV2>
         // Welcome Back Header
         Text(
           _localizations.welcomeBack,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 28,
             fontWeight: FontWeight.w800,
-            color: Color(0xFF1A1A1A),
+            color: AppColors.primaryText(context),
             fontFamily: 'Literata',
           ),
         ),
@@ -825,7 +786,7 @@ class _LoginPageV2State extends State<LoginPageV2>
                 child: Text(
                   _localizations.forgotPasswordQuestion,
                   style: TextStyle(
-                    color: AppColors.accent(context),
+                    color: AppTheme.mint,
                     fontWeight: FontWeight.w600,
                     fontSize: 13,
                     fontFamily: 'Literata',
@@ -870,7 +831,7 @@ class _LoginPageV2State extends State<LoginPageV2>
             onPressed: () {},
             style: OutlinedButton.styleFrom(
               padding: EdgeInsets.symmetric(vertical: 14),
-              side: BorderSide(color: Colors.grey[300]!, width: 1),
+              side: BorderSide(color: AppColors.border(context)),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
               ),
@@ -904,8 +865,8 @@ class _LoginPageV2State extends State<LoginPageV2>
                 const SizedBox(width: 12),
                 Text(
                   _localizations.continueWithGoogle,
-                  style: const TextStyle(
-                    color: Color(0xFF1A1A1A),
+                  style: TextStyle(
+                    color: AppColors.primaryText(context),
                     fontSize: 15,
                     fontWeight: FontWeight.w500,
                     fontFamily: 'Literata',
@@ -936,7 +897,7 @@ class _LoginPageV2State extends State<LoginPageV2>
               child: Text(
                 _localizations.signUp,
                 style: TextStyle(
-                  color: AppColors.accent(context),
+                  color: AppTheme.mint,
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
                 ),
@@ -953,154 +914,169 @@ class _LoginPageV2State extends State<LoginPageV2>
     required String hintText,
     required IconData icon,
     required TextInputType keyboardType,
+    String? label,
   }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.card(context),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.3),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: TextField(
-        controller: controller,
-        keyboardType: keyboardType,
-        decoration: InputDecoration(
-          hintText: hintText,
-          hintStyle: TextStyle(
-            color: Colors.grey[400],
-            fontSize: 15,
-            fontWeight: FontWeight.w400,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label ?? hintText,
+          style: TextStyle(
             fontFamily: 'Literata',
-          ),
-          prefixIcon: Icon(icon, color: AppColors.accent(context), size: 22),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 16,
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: AppColors.secondaryText(context),
           ),
         ),
-        style: TextStyle(
-          color: Colors.black87,
-          fontSize: 15,
-          fontWeight: FontWeight.w500,
-          fontFamily: 'Literata',
+        const SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            color: AppColors.inputFill(context),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.border(context)),
+          ),
+          child: TextField(
+            controller: controller,
+            keyboardType: keyboardType,
+            decoration: InputDecoration(
+              hintText: hintText,
+              hintStyle: TextStyle(
+                color: AppColors.mutedText(context),
+                fontSize: 15,
+                fontWeight: FontWeight.w400,
+                fontFamily: 'Literata',
+              ),
+              prefixIcon: Icon(
+                icon,
+                color: AppColors.mutedText(context),
+                size: 20,
+              ),
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 16,
+              ),
+            ),
+            style: TextStyle(
+              color: AppColors.primaryText(context),
+              fontSize: 15,
+              fontWeight: FontWeight.w500,
+              fontFamily: 'Literata',
+            ),
+          ),
         ),
-      ),
+      ],
     );
   }
 
   Widget _buildAnimatedPasswordField() {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.card(context),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.3),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: TextField(
-        controller: _passwordController,
-        obscureText: _obscure,
-        decoration: InputDecoration(
-          hintText: _localizations.password,
-          hintStyle: TextStyle(
-            color: Colors.grey[400],
-            fontSize: 15,
-            fontWeight: FontWeight.w400,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          _localizations.password,
+          style: TextStyle(
             fontFamily: 'Literata',
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: AppColors.secondaryText(context),
           ),
-          prefixIcon: Icon(
-            Icons.lock_outline,
-            color: AppColors.accent(context),
-            size: 22,
+        ),
+        const SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            color: AppColors.inputFill(context),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.border(context)),
           ),
-          suffixIcon: IconButton(
-            icon: Icon(
-              _obscure
-                  ? Icons.visibility_off_outlined
-                  : Icons.visibility_outlined,
-              color: AppColors.accent(context),
-              size: 22,
+          child: TextField(
+            controller: _passwordController,
+            obscureText: _obscure,
+            decoration: InputDecoration(
+              hintText: _localizations.password,
+              hintStyle: TextStyle(
+                color: AppColors.mutedText(context),
+                fontSize: 15,
+                fontWeight: FontWeight.w400,
+                fontFamily: 'Literata',
+              ),
+              prefixIcon: Icon(
+                Icons.lock_outline,
+                color: AppColors.mutedText(context),
+                size: 20,
+              ),
+              suffixIcon: IconButton(
+                icon: Icon(
+                  _obscure
+                      ? Icons.visibility_off_outlined
+                      : Icons.visibility_outlined,
+                  color: AppColors.mutedText(context),
+                  size: 20,
+                ),
+                onPressed: () => setState(() => _obscure = !_obscure),
+              ),
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 16,
+              ),
             ),
-            onPressed: () => setState(() => _obscure = !_obscure),
-          ),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 16,
+            style: TextStyle(
+              color: AppColors.primaryText(context),
+              fontSize: 15,
+              fontWeight: FontWeight.w500,
+              fontFamily: 'Literata',
+            ),
           ),
         ),
-        style: const TextStyle(
-          color: Colors.black87,
-          fontSize: 15,
-          fontWeight: FontWeight.w500,
-          fontFamily: 'Literata',
-        ),
-      ),
+      ],
     );
   }
 
   Widget _buildSignInButton() {
-    return SizedBox(
+    return Container(
       width: double.infinity,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-          child: ElevatedButton(
-            onPressed: _loading ? null : _submit,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF1B4D3E).withValues(alpha: 0.9),
-              disabledBackgroundColor: Colors.grey[400],
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-                side: BorderSide(
-                  color: Colors.white.withValues(alpha: 0.3),
-                  width: 1,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.mint.withValues(alpha: 0.28),
+            blurRadius: 22,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: ElevatedButton(
+        onPressed: _loading ? null : _submit,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppTheme.mint,
+          disabledBackgroundColor: AppColors.chipFill(context),
+          foregroundColor: AppTheme.onMint,
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(28),
+          ),
+          elevation: 0,
+          shadowColor: Colors.transparent,
+        ),
+        child: _loading
+            ? const SizedBox(
+                height: 20,
+                width: 20,
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(AppTheme.onMint),
+                  strokeWidth: 2,
+                ),
+              )
+            : Text(
+                _localizations.signIn,
+                style: TextStyle(
+                  color: AppTheme.onMint,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                  fontFamily: 'Literata',
                 ),
               ),
-              elevation: 0,
-              shadowColor: Colors.transparent,
-            ),
-            child: _loading
-                ? const SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                      strokeWidth: 2,
-                    ),
-                  )
-                : Text(
-                    _localizations.signIn,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      fontFamily: 'Literata',
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-          ),
-        ),
       ),
     );
   }

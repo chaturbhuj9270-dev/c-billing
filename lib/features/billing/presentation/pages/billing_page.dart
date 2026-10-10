@@ -1515,6 +1515,26 @@ class _BillingPageState extends State<BillingPage> {
   }
 
   Widget _buildBillComposer() {
+    if (_billItems.isNotEmpty) {
+      return Column(
+        children: [
+          Container(
+            margin: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+            padding: const EdgeInsets.fromLTRB(12, 14, 12, 14),
+            decoration: BoxDecoration(
+              color: AppColors.card(context),
+              borderRadius: BorderRadius.circular(22),
+              border: Border.all(color: AppColors.border(context)),
+            ),
+            child: _buildComposerHeader(),
+          ),
+          if (_showCustomerOnBill || _generateBillViaContact)
+            _buildCustomerSection(),
+          _buildAddItemsSection(),
+        ],
+      );
+    }
+
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 12, 16, 8),
       padding: const EdgeInsets.fromLTRB(12, 14, 12, 18),
@@ -1532,10 +1552,8 @@ class _BillingPageState extends State<BillingPage> {
             const SizedBox(height: 12),
           ],
           _buildAddItemsSection(nested: true),
-          if (_billItems.isEmpty) ...[
-            const SizedBox(height: 28),
-            _buildEmptyBillState(),
-          ],
+          const SizedBox(height: 28),
+          _buildEmptyBillState(),
         ],
       ),
     );
@@ -1693,7 +1711,7 @@ class _BillingPageState extends State<BillingPage> {
     return Container(
       margin: nested
           ? EdgeInsets.zero
-          : const EdgeInsets.fromLTRB(12, 6, 12, 6),
+          : const EdgeInsets.fromLTRB(16, 6, 16, 6),
       decoration: BoxDecoration(
         color: nested ? AppColors.scaffold(context) : AppColors.card(context),
         borderRadius: BorderRadius.circular(16),
@@ -1733,31 +1751,37 @@ class _BillingPageState extends State<BillingPage> {
                 ),
                 const SizedBox(width: 10),
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  child: Row(
                     children: [
-                      Text(
-                        _generateBillViaContact
-                            ? _localizations.phoneNumber
-                            : isCustomerRequired
-                            ? '${_localizations.customerOptional.replaceAll('(Optional)', '')}(Required)'
-                            : 'Customer',
-                        style: TextStyle(
-                          fontFamily: 'Literata',
-                          fontWeight: FontWeight.w700,
-                          fontSize: 15,
-                          color: isCustomerRequired && _selectedCustomer == null
-                              ? Colors.red[400]
-                              : AppColors.primaryText(context),
+                      Flexible(
+                        child: Text(
+                          _generateBillViaContact
+                              ? _localizations.phoneNumber
+                              : isCustomerRequired
+                              ? '${_localizations.customerOptional.replaceAll('(Optional)', '')}(Required)'
+                              : 'Customer',
+                          style: TextStyle(
+                            fontFamily: 'Literata',
+                            fontWeight: FontWeight.w700,
+                            fontSize: 15,
+                            color:
+                                isCustomerRequired && _selectedCustomer == null
+                                ? Colors.red[400]
+                                : AppColors.primaryText(context),
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
+                      const SizedBox(width: 8),
                       Text(
                         _generateBillViaContact
                             ? _localizations.autoLinkByPhone
-                            : 'Optional · link to this bill',
+                            : isCustomerRequired
+                            ? ''
+                            : 'Optional',
                         style: TextStyle(
                           fontFamily: 'Literata',
-                          fontSize: 12,
+                          fontSize: 13,
                           color: AppColors.mutedText(context),
                         ),
                       ),
@@ -2525,7 +2549,7 @@ class _BillingPageState extends State<BillingPage> {
     return Container(
       margin: nested
           ? EdgeInsets.zero
-          : const EdgeInsets.fromLTRB(12, 6, 12, 6),
+          : const EdgeInsets.fromLTRB(16, 6, 16, 6),
       decoration: BoxDecoration(
         color: nested ? AppColors.scaffold(context) : AppColors.card(context),
         borderRadius: BorderRadius.circular(16),
@@ -2662,74 +2686,65 @@ class _BillingPageState extends State<BillingPage> {
 
   Widget _buildBillItemsSection() {
     return Container(
-      margin: EdgeInsets.fromLTRB(12, 6, 12, 6),
+      margin: const EdgeInsets.fromLTRB(16, 6, 16, 6),
       decoration: BoxDecoration(
         color: AppColors.card(context),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.grey.withValues(alpha: 0.08)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: AppColors.border(context)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Compact Header
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: BoxDecoration(
-              color: const Color(0xFF7B68EE).withValues(alpha: 0.06),
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(14),
-                topRight: Radius.circular(14),
-              ),
-            ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 12, 8, 4),
             child: Row(
               children: [
                 Container(
-                  width: 28,
-                  height: 28,
+                  width: 40,
+                  height: 40,
                   decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF7B68EE), Color(0xFF9B8DFF)],
-                    ),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(
-                    Icons.receipt_long_rounded,
-                    color: Colors.white,
-                    size: 15,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  _localizations.billItems,
-                  style: const TextStyle(
-                    fontFamily: 'Literata',
-                    fontWeight: FontWeight.w700,
-                    fontSize: 13,
-                    color: Color(0xFF1A1A2E),
-                  ),
-                ),
-                Spacer(),
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: AppColors.accent(context),
+                    color: const Color(0xFF1A2438),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Text(
-                    '${_billItems.length}',
-                    style: const TextStyle(
-                      fontFamily: 'Literata',
-                      fontSize: 11,
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
-                    ),
+                  child: const Icon(
+                    Icons.receipt_long_outlined,
+                    color: AppTheme.toneBlue,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _localizations.billItems,
+                        style: TextStyle(
+                          fontFamily: 'Literata',
+                          fontWeight: FontWeight.w700,
+                          fontSize: 15,
+                          color: AppColors.primaryText(context),
+                        ),
+                      ),
+                      Text(
+                        '${_billItems.length} ${_localizations.items.toLowerCase()} added',
+                        style: TextStyle(
+                          fontFamily: 'Literata',
+                          fontSize: 12,
+                          color: AppColors.mutedText(context),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  onPressed: () {
+                    setState(() => _billItems.clear());
+                  },
+                  icon: Icon(
+                    Icons.delete_outline_rounded,
+                    color: AppColors.mutedText(context),
+                    size: 22,
                   ),
                 ),
               ],
@@ -2806,36 +2821,33 @@ class _BillingPageState extends State<BillingPage> {
                 ),
                 onDismissed: (_) => setState(() => _billItems.removeAt(index)),
                 child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Index number badge
                           Container(
-                            width: 22,
-                            height: 22,
+                            width: 28,
+                            height: 28,
+                            alignment: Alignment.center,
                             decoration: BoxDecoration(
-                              color: AppColors.chipFill(context),
-                              borderRadius: BorderRadius.circular(6),
+                              color: AppColors.inputFill(context),
+                              shape: BoxShape.circle,
                             ),
-                            child: Center(
-                              child: Text(
-                                '${index + 1}',
-                                style: TextStyle(
-                                  fontFamily: 'Literata',
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.grey[600],
-                                ),
+                            child: Text(
+                              '${index + 1}',
+                              style: TextStyle(
+                                fontFamily: 'Literata',
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.secondaryText(context),
                               ),
                             ),
                           ),
-                          const SizedBox(width: 8),
-                          // Product name and price
+                          const SizedBox(width: 10),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -2843,18 +2855,17 @@ class _BillingPageState extends State<BillingPage> {
                               children: [
                                 Text(
                                   item.productName,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontFamily: 'Literata',
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 12,
-                                    color: Color(0xFF1A1A2E),
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 15,
+                                    color: AppColors.primaryText(context),
                                     height: 1.2,
                                   ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 ),
                                 const SizedBox(height: 2),
-                                // Price row - tappable
                                 GestureDetector(
                                   onTap: () => _showEditSellPriceDialog(
                                     index: index,
@@ -2863,44 +2874,30 @@ class _BillingPageState extends State<BillingPage> {
                                   child: Row(
                                     children: [
                                       Text(
-                                        '₹${item.sellingPrice.toStringAsFixed(0)}',
-                                        style: TextStyle(
+                                        '₹${item.sellingPrice.toStringAsFixed(0)} / ${item.displayUnit.isEmpty ? 'unit' : item.displayUnit}',
+                                        style: const TextStyle(
                                           fontFamily: 'Literata',
-                                          fontSize: 11,
+                                          fontSize: 12,
                                           fontWeight: FontWeight.w600,
-                                          color: const Color(
-                                            0xFF1B4D3E,
-                                          ).withValues(alpha: 0.8),
+                                          color: AppTheme.mint,
                                         ),
                                       ),
-                                      const SizedBox(width: 3),
+                                      const SizedBox(width: 4),
                                       Icon(
-                                        Icons.edit_rounded,
-                                        size: 10,
-                                        color: Colors.grey[400],
+                                        Icons.edit_outlined,
+                                        size: 12,
+                                        color: AppColors.mutedText(context),
                                       ),
                                       if (item.cgstPercent > 0 ||
                                           item.sgstPercent > 0) ...[
                                         const SizedBox(width: 6),
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 4,
-                                            vertical: 1,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: Colors.orange[50],
-                                            borderRadius: BorderRadius.circular(
-                                              3,
-                                            ),
-                                          ),
-                                          child: Text(
-                                            '${(item.cgstPercent + item.sgstPercent).toStringAsFixed(0)}%',
-                                            style: TextStyle(
-                                              fontFamily: 'Literata',
-                                              fontSize: 9,
-                                              color: Colors.orange[700],
-                                              fontWeight: FontWeight.w600,
-                                            ),
+                                        Text(
+                                          '${(item.cgstPercent + item.sgstPercent).toStringAsFixed(0)}%',
+                                          style: const TextStyle(
+                                            fontFamily: 'Literata',
+                                            fontSize: 11,
+                                            color: AppTheme.toneAmber,
+                                            fontWeight: FontWeight.w700,
                                           ),
                                         ),
                                       ],
@@ -2910,165 +2907,133 @@ class _BillingPageState extends State<BillingPage> {
                               ],
                             ),
                           ),
-                          SizedBox(width: 8),
-                          // Compact Quantity stepper
-                          Container(
-                            height: 30,
-                            decoration: BoxDecoration(
-                              color: AppColors.scaffold(context),
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: Colors.grey.withValues(alpha: 0.15),
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                // Minus
-                                GestureDetector(
-                                  onTap: () {
-                                    // Determine step based on sellUnit (100 gm/ml = 0.1 kg/ltr)
-                                    final step =
-                                        (item.sellUnit == 'gm' ||
-                                            item.sellUnit == 'ml')
-                                        ? 0.1
-                                        : 1.0;
-                                    if (item.quantity > step) {
-                                      setState(() {
-                                        _billItems[index] = BillItem.create(
-                                          productId: item.productId,
-                                          productName: item.productName,
-                                          companyName: item.companyName,
-                                          sellingPrice: item.sellingPrice,
-                                          purchasePrice: item.purchasePrice,
-                                          quantity: item.quantity - step,
-                                          cgstPercent: item.cgstPercent,
-                                          sgstPercent: item.sgstPercent,
-                                          hsnCode: item.hsnCode,
-                                          unit: item.unit,
-                                          sellUnit: item.sellUnit,
-                                        );
-                                      });
-                                    } else {
-                                      setState(
-                                        () => _billItems.removeAt(index),
-                                      );
-                                    }
-                                  },
-                                  child: Container(
-                                    width: 28,
-                                    height: 30,
-                                    decoration: BoxDecoration(
-                                      color: Color(
-                                        0xFF1B4D3E,
-                                      ).withValues(alpha: 0.08),
-                                      borderRadius: BorderRadius.only(
-                                        topLeft: Radius.circular(7),
-                                        bottomLeft: Radius.circular(7),
-                                      ),
-                                    ),
-                                    child: Icon(
-                                      Icons.remove,
-                                      size: 14,
-                                      color: AppColors.accent(context),
-                                    ),
-                                  ),
-                                ),
-                                // Inline editable quantity field
-                                _InlineQuantityField(
-                                  item: item,
-                                  maxStock: maxStock,
-                                  onQuantityChanged: (newQty) {
-                                    setState(() {
-                                      _billItems[index] = BillItem.create(
-                                        productId: item.productId,
-                                        productName: item.productName,
-                                        companyName: item.companyName,
-                                        sellingPrice: item.sellingPrice,
-                                        purchasePrice: item.purchasePrice,
-                                        quantity: newQty,
-                                        cgstPercent: item.cgstPercent,
-                                        sgstPercent: item.sgstPercent,
-                                        hsnCode: item.hsnCode,
-                                        unit: item.unit,
-                                        sellUnit: item.sellUnit,
-                                      );
-                                    });
-                                  },
-                                  onRemoveItem: () {
-                                    setState(() => _billItems.removeAt(index));
-                                  },
-                                ),
-                                // Plus
-                                GestureDetector(
-                                  onTap: () {
-                                    // Determine increment based on sellUnit
-                                    final step =
-                                        (item.sellUnit == 'gm' ||
-                                            item.sellUnit == 'ml')
-                                        ? 0.1
-                                        : 1.0;
-                                    if (item.quantity + step <= maxStock) {
-                                      setState(() {
-                                        _billItems[index] = BillItem.create(
-                                          productId: item.productId,
-                                          productName: item.productName,
-                                          companyName: item.companyName,
-                                          sellingPrice: item.sellingPrice,
-                                          purchasePrice: item.purchasePrice,
-                                          quantity: item.quantity + step,
-                                          cgstPercent: item.cgstPercent,
-                                          sgstPercent: item.sgstPercent,
-                                          hsnCode: item.hsnCode,
-                                          unit: item.unit,
-                                          sellUnit: item.sellUnit,
-                                        );
-                                      });
-                                    } else {
-                                      _showSnackbar(
-                                        '${_localizations.maxStock}: $maxStock',
-                                        isError: true,
-                                      );
-                                    }
-                                  },
-                                  child: Container(
-                                    width: 28,
-                                    height: 30,
-                                    decoration: BoxDecoration(
-                                      color: item.quantity < maxStock
-                                          ? const Color(
-                                              0xFF1B4D3E,
-                                            ).withValues(alpha: 0.08)
-                                          : AppColors.chipFill(context),
-                                      borderRadius: const BorderRadius.only(
-                                        topRight: Radius.circular(7),
-                                        bottomRight: Radius.circular(7),
-                                      ),
-                                    ),
-                                    child: Icon(
-                                      Icons.add,
-                                      size: 14,
-                                      color: item.quantity < maxStock
-                                          ? const Color(0xFF1B4D3E)
-                                          : Colors.grey[400],
-                                    ),
-                                  ),
-                                ),
-                              ],
+                          Text(
+                            '₹${item.subtotal.toStringAsFixed(0)}',
+                            style: TextStyle(
+                              fontFamily: 'Literata',
+                              fontWeight: FontWeight.w800,
+                              fontSize: 16,
+                              color: AppColors.primaryText(context),
                             ),
                           ),
-                          SizedBox(width: 10),
-                          // Subtotal - right aligned
-                          SizedBox(
-                            width: 60,
-                            child: Text(
-                              '₹${item.subtotal.toStringAsFixed(0)}',
-                              textAlign: TextAlign.right,
-                              style: TextStyle(
-                                fontFamily: 'Literata',
-                                fontWeight: FontWeight.w700,
-                                fontSize: 13,
-                                color: AppColors.accent(context),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          GestureDetector(
+                            onTap: () {
+                              final step =
+                                  (item.sellUnit == 'gm' ||
+                                      item.sellUnit == 'ml')
+                                  ? 0.1
+                                  : 1.0;
+                              if (item.quantity > step) {
+                                setState(() {
+                                  _billItems[index] = BillItem.create(
+                                    productId: item.productId,
+                                    productName: item.productName,
+                                    companyName: item.companyName,
+                                    sellingPrice: item.sellingPrice,
+                                    purchasePrice: item.purchasePrice,
+                                    quantity: item.quantity - step,
+                                    cgstPercent: item.cgstPercent,
+                                    sgstPercent: item.sgstPercent,
+                                    hsnCode: item.hsnCode,
+                                    unit: item.unit,
+                                    sellUnit: item.sellUnit,
+                                  );
+                                });
+                              } else {
+                                setState(() => _billItems.removeAt(index));
+                              }
+                            },
+                            child: Container(
+                              width: 36,
+                              height: 36,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: AppColors.border(context),
+                                ),
+                              ),
+                              child: Icon(
+                                Icons.remove,
+                                size: 16,
+                                color: AppColors.primaryText(context),
+                              ),
+                            ),
+                          ),
+                          _InlineQuantityField(
+                            item: item,
+                            maxStock: maxStock,
+                            onQuantityChanged: (newQty) {
+                              setState(() {
+                                _billItems[index] = BillItem.create(
+                                  productId: item.productId,
+                                  productName: item.productName,
+                                  companyName: item.companyName,
+                                  sellingPrice: item.sellingPrice,
+                                  purchasePrice: item.purchasePrice,
+                                  quantity: newQty,
+                                  cgstPercent: item.cgstPercent,
+                                  sgstPercent: item.sgstPercent,
+                                  hsnCode: item.hsnCode,
+                                  unit: item.unit,
+                                  sellUnit: item.sellUnit,
+                                );
+                              });
+                            },
+                            onRemoveItem: () {
+                              setState(() => _billItems.removeAt(index));
+                            },
+                          ),
+                          GestureDetector(
+                            onTap: () {
+                              final step =
+                                  (item.sellUnit == 'gm' ||
+                                      item.sellUnit == 'ml')
+                                  ? 0.1
+                                  : 1.0;
+                              if (item.quantity + step <= maxStock) {
+                                setState(() {
+                                  _billItems[index] = BillItem.create(
+                                    productId: item.productId,
+                                    productName: item.productName,
+                                    companyName: item.companyName,
+                                    sellingPrice: item.sellingPrice,
+                                    purchasePrice: item.purchasePrice,
+                                    quantity: item.quantity + step,
+                                    cgstPercent: item.cgstPercent,
+                                    sgstPercent: item.sgstPercent,
+                                    hsnCode: item.hsnCode,
+                                    unit: item.unit,
+                                    sellUnit: item.sellUnit,
+                                  );
+                                });
+                              } else {
+                                _showSnackbar(
+                                  '${_localizations.maxStock}: $maxStock',
+                                  isError: true,
+                                );
+                              }
+                            },
+                            child: Container(
+                              width: 36,
+                              height: 36,
+                              decoration: BoxDecoration(
+                                color: item.quantity < maxStock
+                                    ? AppTheme.mint
+                                    : AppColors.chipFill(context),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                Icons.add,
+                                size: 16,
+                                color: item.quantity < maxStock
+                                    ? AppTheme.onMint
+                                    : AppColors.mutedText(context),
                               ),
                             ),
                           ),
@@ -3090,12 +3055,10 @@ class _BillingPageState extends State<BillingPage> {
           ),
           // Footer with total
           Container(
-            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
             decoration: BoxDecoration(
-              color: AppColors.accentSoft(context, 0.04),
-              borderRadius: const BorderRadius.only(
-                bottomLeft: Radius.circular(14),
-                bottomRight: Radius.circular(14),
+              border: Border(
+                top: BorderSide(color: AppColors.border(context)),
               ),
             ),
             child: Row(
@@ -3104,29 +3067,19 @@ class _BillingPageState extends State<BillingPage> {
                   '$_totalQuantity ${_localizations.items.toLowerCase()}',
                   style: TextStyle(
                     fontFamily: 'Literata',
-                    fontSize: 11,
-                    color: Colors.grey[600],
+                    fontSize: 13,
+                    color: AppColors.secondaryText(context),
                     fontWeight: FontWeight.w500,
                   ),
                 ),
                 const Spacer(),
                 Text(
-                  _localizations.subtotal,
+                  '${_localizations.subtotal}  ₹${_totalAmount.toStringAsFixed(0)}',
                   style: TextStyle(
                     fontFamily: 'Literata',
-                    fontSize: 12,
-                    color: Colors.grey[600],
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                SizedBox(width: 8),
-                Text(
-                  '₹${_totalAmount.toStringAsFixed(0)}',
-                  style: TextStyle(
-                    fontFamily: 'Literata',
-                    fontSize: 15,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.accent(context),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.primaryText(context),
                   ),
                 ),
               ],
@@ -3383,7 +3336,7 @@ class _BillingPageState extends State<BillingPage> {
                 fontFamily: 'Literata',
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
-                color: Color(0xFF1A1A2E),
+                color: AppColors.primaryText(context),
               ),
             ),
             content: Column(
@@ -3625,11 +3578,11 @@ class _BillingPageState extends State<BillingPage> {
                     children: [
                       Text(
                         _localizations.enterQuantity,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontFamily: 'Literata',
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
-                          color: Color(0xFF1A1A2E),
+                          color: AppColors.primaryText(context),
                         ),
                       ),
                       Text(
@@ -3958,7 +3911,7 @@ class _BillingPageState extends State<BillingPage> {
                                       fontFamily: 'Literata',
                                       fontSize: 13,
                                       fontWeight: FontWeight.w600,
-                                      color: Colors.grey[700],
+                                      color: AppColors.secondaryText(context),
                                     ),
                                   ),
                                 ),
@@ -4122,11 +4075,11 @@ class _BillingPageState extends State<BillingPage> {
                     children: [
                       Text(
                         '${_localizations.edit} ${_localizations.price}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontFamily: 'Literata',
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
-                          color: Color(0xFF1A1A2E),
+                          color: AppColors.primaryText(context),
                         ),
                       ),
                       Text(
@@ -4370,62 +4323,33 @@ class _BillingPageState extends State<BillingPage> {
 
   Widget _buildDiscountSection() {
     return Container(
-      margin: EdgeInsets.fromLTRB(12, 6, 12, 6),
+      margin: const EdgeInsets.fromLTRB(16, 6, 16, 6),
       decoration: BoxDecoration(
         color: AppColors.card(context),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.withValues(alpha: 0.1)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 12,
-            offset: const Offset(0, 3),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: AppColors.border(context)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Section Header
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  Colors.green.withValues(alpha: 0.1),
-                  Colors.green.withValues(alpha: 0.05),
-                ],
-              ),
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(16),
-                topRight: Radius.circular(16),
-              ),
-            ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
             child: Row(
               children: [
                 Container(
-                  width: 34,
-                  height: 34,
+                  width: 40,
+                  height: 40,
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [Colors.green[600]!, Colors.green[500]!],
-                    ),
-                    borderRadius: BorderRadius.circular(10),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.green.withValues(alpha: 0.3),
-                        blurRadius: 6,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
+                    color: const Color(0xFF14352C),
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Icon(
-                    Icons.discount_rounded,
-                    color: Colors.white,
-                    size: 18,
+                  child: const Icon(
+                    Icons.local_offer_outlined,
+                    color: AppTheme.mint,
+                    size: 20,
                   ),
                 ),
-                SizedBox(width: 10),
+                const SizedBox(width: 10),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -4435,40 +4359,29 @@ class _BillingPageState extends State<BillingPage> {
                         style: TextStyle(
                           fontFamily: 'Literata',
                           fontWeight: FontWeight.w700,
-                          fontSize: 14,
-                          color: AppColors.accent(context),
+                          fontSize: 15,
+                          color: AppColors.primaryText(context),
                         ),
                       ),
                       Text(
                         _localizations.applyDiscountToBill,
                         style: TextStyle(
                           fontFamily: 'Literata',
-                          fontSize: 11,
-                          color: Colors.grey[600],
+                          fontSize: 12,
+                          color: AppColors.mutedText(context),
                         ),
                       ),
                     ],
                   ),
                 ),
                 if (_discountAmount > 0)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.green[50],
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Colors.green[200]!),
-                    ),
-                    child: Text(
-                      '-₹${_discountAmount.toStringAsFixed(0)}',
-                      style: TextStyle(
-                        fontFamily: 'Literata',
-                        fontSize: 12,
-                        color: Colors.green[700],
-                        fontWeight: FontWeight.w700,
-                      ),
+                  Text(
+                    '-₹${_discountAmount.toStringAsFixed(2)}',
+                    style: const TextStyle(
+                      fontFamily: 'Literata',
+                      fontSize: 14,
+                      color: AppTheme.mint,
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
               ],
@@ -4483,9 +4396,10 @@ class _BillingPageState extends State<BillingPage> {
                   children: [
                     // Discount type toggle
                     Container(
+                      padding: const EdgeInsets.all(4),
                       decoration: BoxDecoration(
                         color: AppColors.chipFill(context),
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(24),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -4518,18 +4432,20 @@ class _BillingPageState extends State<BillingPage> {
                     Expanded(
                       child: Container(
                         decoration: BoxDecoration(
-                          color: AppColors.scaffold(context),
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: AppColors.border(context)!),
+                          color: AppColors.inputFill(context),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: AppColors.border(context)),
                         ),
                         child: TextField(
                           controller: _discountController,
                           keyboardType: const TextInputType.numberWithOptions(
                             decimal: true,
                           ),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontFamily: 'Literata',
-                            fontSize: 13,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.primaryText(context),
                           ),
                           onChanged: _updateDiscount,
                           decoration: InputDecoration(
@@ -4594,14 +4510,9 @@ class _BillingPageState extends State<BillingPage> {
     return Container(
       padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            Color(0xFF1B4D3E).withValues(alpha: 0.08),
-            Color(0xFF1B4D3E).withValues(alpha: 0.04),
-          ],
-        ),
+        color: AppColors.inputFill(context),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.accentSoft(context, 0.15)),
+        border: Border.all(color: AppColors.border(context)),
       ),
       child: Column(
         children: [
@@ -4614,7 +4525,7 @@ class _BillingPageState extends State<BillingPage> {
             _buildSummaryRow(
               '${_localizations.discountWithPercent} (${_discountPercent.toStringAsFixed(1)}%)',
               '-₹${_discountAmount.toStringAsFixed(2)}',
-              valueColor: Colors.green[700],
+              valueColor: AppTheme.mint,
             ),
           ],
           // GST breakdown
@@ -4723,7 +4634,7 @@ class _BillingPageState extends State<BillingPage> {
           style: TextStyle(
             fontFamily: 'Literata',
             fontSize: 13,
-            color: Colors.grey[700],
+            color: AppColors.secondaryText(context),
           ),
         ),
         Text(
@@ -4732,7 +4643,7 @@ class _BillingPageState extends State<BillingPage> {
             fontFamily: 'Literata',
             fontSize: 14,
             fontWeight: FontWeight.w600,
-            color: valueColor ?? Colors.black87,
+            color: valueColor ?? AppColors.primaryText(context),
           ),
         ),
       ],
@@ -5182,7 +5093,7 @@ class _BillingPageState extends State<BillingPage> {
                                 fontFamily: 'Literata',
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
-                                color: Colors.grey[700],
+                                color: AppColors.secondaryText(context),
                               ),
                             ),
                             SizedBox(height: 6),
@@ -5250,7 +5161,7 @@ class _BillingPageState extends State<BillingPage> {
                                 fontFamily: 'Literata',
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
-                                color: Colors.grey[700],
+                                color: AppColors.secondaryText(context),
                               ),
                             ),
                             const SizedBox(height: 6),
@@ -5530,7 +5441,7 @@ class _BillingPageState extends State<BillingPage> {
             fontFamily: 'Literata',
             fontSize: 12,
             fontWeight: isBold ? FontWeight.w700 : FontWeight.normal,
-            color: Colors.grey[700],
+            color: AppColors.secondaryText(context),
           ),
         ),
         Text(
@@ -5539,7 +5450,7 @@ class _BillingPageState extends State<BillingPage> {
             fontFamily: 'Literata',
             fontSize: isBold ? 13 : 12,
             fontWeight: isBold ? FontWeight.w700 : FontWeight.w600,
-            color: color ?? Colors.black87,
+            color: color ?? AppColors.primaryText(context),
           ),
         ),
       ],
@@ -5554,18 +5465,20 @@ class _BillingPageState extends State<BillingPage> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        width: 40,
+        height: 40,
+        alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF1B4D3E) : Colors.transparent,
-          borderRadius: BorderRadius.circular(6),
+          color: isSelected ? AppTheme.mint : Colors.transparent,
+          shape: BoxShape.circle,
         ),
         child: Text(
           label,
           style: TextStyle(
             fontFamily: 'Literata',
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: isSelected ? Colors.white : Colors.grey[600],
+            fontSize: 14,
+            fontWeight: FontWeight.w800,
+            color: isSelected ? AppTheme.onMint : AppColors.secondaryText(context),
           ),
         ),
       ),
@@ -5584,21 +5497,23 @@ class _BillingPageState extends State<BillingPage> {
         });
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? Color(0xFF1B4D3E) : AppColors.chipFill(context),
-          borderRadius: BorderRadius.circular(16),
+          color: isSelected ? AppTheme.mint : Colors.transparent,
+          borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isSelected ? const Color(0xFF1B4D3E) : Colors.grey[300]!,
+            color: isSelected ? AppTheme.mint : AppColors.border(context),
           ),
         ),
         child: Text(
           label,
           style: TextStyle(
             fontFamily: 'Literata',
-            fontSize: 11,
-            fontWeight: FontWeight.w500,
-            color: isSelected ? Colors.white : Colors.grey[700],
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            color: isSelected
+                ? AppTheme.onMint
+                : AppColors.secondaryText(context),
           ),
         ),
       ),
@@ -7084,8 +6999,8 @@ class _InlineQuantityFieldState extends State<_InlineQuantityField> {
     final unitSuffix = _getUnitSuffix();
 
     return Container(
-      constraints: const BoxConstraints(minWidth: 36, maxWidth: 60),
-      padding: const EdgeInsets.symmetric(horizontal: 2),
+      constraints: const BoxConstraints(minWidth: 64, maxWidth: 96),
+      padding: const EdgeInsets.symmetric(horizontal: 8),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.center,
@@ -7094,13 +7009,13 @@ class _InlineQuantityFieldState extends State<_InlineQuantityField> {
             child: TextField(
               controller: _controller,
               focusNode: _focusNode,
-              keyboardType: TextInputType.numberWithOptions(decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontFamily: 'Literata',
                 fontWeight: FontWeight.w700,
-                fontSize: 11,
-                color: AppColors.accent(context),
+                fontSize: 15,
+                color: AppColors.primaryText(context),
               ),
               decoration: const InputDecoration(
                 isDense: true,
@@ -7118,12 +7033,12 @@ class _InlineQuantityFieldState extends State<_InlineQuantityField> {
           ),
           if (unitSuffix.isNotEmpty)
             Text(
-              ' $unitSuffix',
+              unitSuffix,
               style: TextStyle(
                 fontFamily: 'Literata',
                 fontWeight: FontWeight.w600,
-                fontSize: 9,
-                color: AppColors.accent(context),
+                fontSize: 13,
+                color: AppColors.secondaryText(context),
               ),
             ),
         ],

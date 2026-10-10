@@ -614,7 +614,9 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                   ),
                 ),
               ),
-              if (_selectedIndex == 2 || _selectedIndex == 4) ...[
+              if (_selectedIndex == 2 ||
+                  _selectedIndex == 3 ||
+                  _selectedIndex == 4) ...[
                 _buildHeaderActionButton(
                   icon: Icons.open_in_full_rounded,
                   tooltip: 'Expand',
@@ -622,9 +624,13 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => _selectedIndex == 2
-                            ? const BillingPage()
-                            : const EnhancedPurchaseScreen(),
+                        builder: (_) {
+                          if (_selectedIndex == 2) return const BillingPage();
+                          if (_selectedIndex == 3) {
+                            return const AvailabilityPage();
+                          }
+                          return const EnhancedPurchaseScreen();
+                        },
                       ),
                     );
                   },
@@ -641,6 +647,8 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                           builder: (_) => const BillsListPage(),
                         ),
                       );
+                    } else if (_selectedIndex == 3) {
+                      AvailabilityScreenActions.download();
                     } else {
                       PurchaseScreenActions.download();
                     }

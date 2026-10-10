@@ -327,7 +327,7 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                           fontFamily: 'Literata',
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
-                          color: Color(0xFF1A1A2E),
+                          color: AppColors.primaryText(context),
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -396,7 +396,7 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                               padding: const EdgeInsets.symmetric(vertical: 10),
                               decoration: BoxDecoration(
                                 color: selectedSellUnit == unit
-                                    ? const Color(0xFF1B4D3E)
+                                    ? AppTheme.mint
                                     : Colors.transparent,
                                 borderRadius: BorderRadius.circular(8),
                               ),
@@ -407,8 +407,8 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                                     fontFamily: 'Literata',
                                     fontWeight: FontWeight.w600,
                                     color: selectedSellUnit == unit
-                                        ? Colors.white
-                                        : Colors.grey[600],
+                                        ? AppTheme.onMint
+                                        : AppColors.mutedText(context),
                                   ),
                                 ),
                               ),
@@ -422,7 +422,7 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                               padding: const EdgeInsets.symmetric(vertical: 10),
                               decoration: BoxDecoration(
                                 color: selectedSellUnit == subUnit
-                                    ? const Color(0xFF1B4D3E)
+                                    ? AppTheme.mint
                                     : Colors.transparent,
                                 borderRadius: BorderRadius.circular(8),
                               ),
@@ -433,8 +433,8 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                                     fontFamily: 'Literata',
                                     fontWeight: FontWeight.w600,
                                     color: selectedSellUnit == subUnit
-                                        ? Colors.white
-                                        : Colors.grey[600],
+                                        ? AppTheme.onMint
+                                        : AppColors.mutedText(context),
                                   ),
                                 ),
                               ),
@@ -474,12 +474,12 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                       icon: Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: Colors.red[50],
+                          color: const Color(0xFFEF5350).withValues(alpha: 0.16),
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: Icon(
+                        child: const Icon(
                           Icons.remove,
-                          color: Colors.red[700],
+                          color: Color(0xFFEF5350),
                           size: 20,
                         ),
                       ),
@@ -546,12 +546,12 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                       icon: Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: Colors.green[50],
+                          color: AppTheme.mint.withValues(alpha: 0.16),
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: Icon(
+                        child: const Icon(
                           Icons.add,
-                          color: Colors.green[700],
+                          color: AppTheme.mint,
                           size: 20,
                         ),
                       ),
@@ -644,8 +644,8 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                       }
                     : null,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF1B4D3E),
-                  foregroundColor: Colors.white,
+                  backgroundColor: AppTheme.mint,
+                  foregroundColor: AppTheme.onMint,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
@@ -814,11 +814,11 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
             // Handle bar
             const SizedBox(height: 12),
             Container(
-              width: 40,
+              width: 36,
               height: 4,
               decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(2),
+                color: AppColors.mutedText(context).withValues(alpha: 0.45),
+                borderRadius: BorderRadius.circular(4),
               ),
             ),
             // Header
@@ -829,12 +829,14 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                   Container(
                     padding: EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: AppColors.accentSoft(context, 0.1),
-                      borderRadius: BorderRadius.circular(12),
+                      color: AppColors.isDark(context)
+                          ? const Color(0xFF14352C)
+                          : AppTheme.mint.withValues(alpha: 0.16),
+                      borderRadius: BorderRadius.circular(14),
                     ),
-                    child: Icon(
+                    child: const Icon(
                       Icons.add_shopping_cart,
-                      color: AppColors.accent(context),
+                      color: AppTheme.mint,
                       size: 22,
                     ),
                   ),
@@ -849,7 +851,7 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                             fontFamily: 'Literata',
                             fontSize: 20,
                             fontWeight: FontWeight.w700,
-                            color: AppColors.accent(context),
+                            color: AppColors.primaryText(context),
                           ),
                         ),
                         Text(
@@ -857,7 +859,7 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                           style: TextStyle(
                             fontFamily: 'Literata',
                             fontSize: 12,
-                            color: Colors.grey,
+                            color: AppColors.mutedText(context),
                           ),
                         ),
                       ],
@@ -870,15 +872,15 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                         vertical: 6,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.accent(context),
+                        color: AppTheme.mint,
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
                         '$_totalItems ${widget.localizations.items.toLowerCase()}',
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontFamily: 'Literata',
                           fontSize: 13,
-                          color: Colors.white,
+                          color: AppTheme.onMint,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -892,13 +894,17 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
               child: TextField(
                 controller: _searchController,
                 onChanged: _filterProducts,
-                style: TextStyle(fontFamily: 'Literata', fontSize: 14),
+                style: TextStyle(
+                  fontFamily: 'Literata',
+                  fontSize: 14,
+                  color: AppColors.primaryText(context),
+                ),
                 decoration: InputDecoration(
                   hintText: widget.localizations.searchProducts,
-                  hintStyle: TextStyle(color: Colors.grey[500]),
+                  hintStyle: TextStyle(color: AppColors.mutedText(context)),
                   prefixIcon: Icon(
                     Icons.search,
-                    color: AppColors.accent(context),
+                    color: AppColors.mutedText(context),
                   ),
                   suffixIcon: _searchController.text.isNotEmpty
                       ? IconButton(
@@ -971,14 +977,12 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                         return Container(
                           margin: EdgeInsets.only(bottom: 8),
                           decoration: BoxDecoration(
-                            color: isAdded
-                                ? AppColors.chipFill(context)
-                                : Colors.white,
+                            color: AppColors.inputFill(context),
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
                               color: isAdded
-                                  ? const Color(0xFF1B4D3E)
-                                  : AppColors.border(context)!,
+                                  ? AppTheme.mint
+                                  : AppColors.border(context),
                               width: isAdded ? 1.5 : 1,
                             ),
                           ),
@@ -996,7 +1000,11 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                                       width: 44,
                                       height: 44,
                                       decoration: BoxDecoration(
-                                        color: AppColors.accent(context),
+                                        color: AppColors.isDark(context)
+                                            ? const Color(0xFF14352C)
+                                            : AppTheme.mint.withValues(
+                                                alpha: 0.16,
+                                              ),
                                         borderRadius: BorderRadius.circular(10),
                                       ),
                                       child: Center(
@@ -1004,8 +1012,8 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                                           group.indexNo > 0
                                               ? '${group.indexNo}'
                                               : '#',
-                                          style: TextStyle(
-                                            color: Colors.white,
+                                          style: const TextStyle(
+                                            color: AppTheme.mint,
                                             fontWeight: FontWeight.w700,
                                             fontSize: 14,
                                             fontFamily: 'Literata',
@@ -1022,10 +1030,13 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                                         children: [
                                           Text(
                                             group.productName,
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                               fontFamily: 'Literata',
                                               fontWeight: FontWeight.w600,
                                               fontSize: 14,
+                                              color: AppColors.primaryText(
+                                                context,
+                                              ),
                                             ),
                                             maxLines: 1,
                                             overflow: TextOverflow.ellipsis,
@@ -1040,7 +1051,9 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                                               style: TextStyle(
                                                 fontFamily: 'Literata',
                                                 fontSize: 11,
-                                                color: Colors.grey[600],
+                                                color: AppColors.mutedText(
+                                                  context,
+                                                ),
                                               ),
                                               maxLines: 1,
                                               overflow: TextOverflow.ellipsis,
@@ -1056,7 +1069,7 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                                                   fontFamily: 'Literata',
                                                   fontWeight: FontWeight.w700,
                                                   fontSize: 13,
-                                                  color: AppColors.accent(context),
+                                                  color: AppTheme.mint,
                                                 ),
                                               ),
                                               // Variant count badge
@@ -1069,8 +1082,8 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                                                         vertical: 2,
                                                       ),
                                                   decoration: BoxDecoration(
-                                                    color: Colors.blue
-                                                        .withValues(alpha: 0.1),
+                                                    color: AppTheme.toneBlue
+                                                        .withValues(alpha: 0.16),
                                                     borderRadius:
                                                         BorderRadius.circular(
                                                           4,
@@ -1083,7 +1096,7 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                                                       fontSize: 9,
                                                       fontWeight:
                                                           FontWeight.w700,
-                                                      color: Colors.blue[700],
+                                                      color: AppTheme.toneBlue,
                                                     ),
                                                   ),
                                                 ),
@@ -1098,10 +1111,18 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                                                     ),
                                                 decoration: BoxDecoration(
                                                   color: group.totalStock > 10
-                                                      ? Colors.green[50]
+                                                      ? AppTheme.mint.withValues(
+                                                          alpha: 0.16,
+                                                        )
                                                       : group.totalStock > 0
-                                                      ? Colors.orange[50]
-                                                      : Colors.red[50],
+                                                      ? AppTheme.toneAmber
+                                                            .withValues(
+                                                              alpha: 0.16,
+                                                            )
+                                                      : const Color(0xFFEF5350)
+                                                            .withValues(
+                                                              alpha: 0.16,
+                                                            ),
                                                   borderRadius:
                                                       BorderRadius.circular(4),
                                                 ),
@@ -1112,10 +1133,12 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                                                     fontSize: 10,
                                                     fontWeight: FontWeight.w600,
                                                     color: group.totalStock > 10
-                                                        ? Colors.green[700]
+                                                        ? AppTheme.mint
                                                         : group.totalStock > 0
-                                                        ? Colors.orange[700]
-                                                        : Colors.red[700],
+                                                        ? AppTheme.toneAmber
+                                                        : const Color(
+                                                            0xFFEF5350,
+                                                          ),
                                                   ),
                                                 ),
                                               ),
@@ -1133,7 +1156,7 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                                           vertical: 6,
                                         ),
                                         decoration: BoxDecoration(
-                                          color: AppColors.accent(context),
+                                          color: AppTheme.mint,
                                           borderRadius: BorderRadius.circular(
                                             8,
                                           ),
@@ -1143,7 +1166,7 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                                           children: [
                                             const Icon(
                                               Icons.check,
-                                              color: Colors.white,
+                                              color: AppTheme.onMint,
                                               size: 16,
                                             ),
                                             const SizedBox(width: 4),
@@ -1151,7 +1174,7 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                                               '$qtyInBill',
                                               style: const TextStyle(
                                                 fontFamily: 'Literata',
-                                                color: Colors.white,
+                                                color: AppTheme.onMint,
                                                 fontWeight: FontWeight.w700,
                                                 fontSize: 13,
                                               ),
@@ -1164,10 +1187,12 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                                         padding: const EdgeInsets.all(8),
                                         decoration: BoxDecoration(
                                           color: hasMultipleBatches
-                                              ? Colors.blue[50]
-                                              : const Color(
-                                                  0xFF1B4D3E,
-                                                ).withValues(alpha: 0.1),
+                                              ? AppTheme.toneBlue.withValues(
+                                                  alpha: 0.16,
+                                                )
+                                              : AppTheme.mint.withValues(
+                                                  alpha: 0.16,
+                                                ),
                                           borderRadius: BorderRadius.circular(
                                             8,
                                           ),
@@ -1177,8 +1202,8 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                                               ? Icons.expand_more
                                               : Icons.add,
                                           color: hasMultipleBatches
-                                              ? Colors.blue[700]
-                                              : const Color(0xFF1B4D3E),
+                                              ? AppTheme.toneBlue
+                                              : AppTheme.mint,
                                           size: 20,
                                         ),
                                       ),
@@ -1214,7 +1239,8 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                 child: ElevatedButton(
                   onPressed: () => Navigator.pop(context),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF1B4D3E),
+                    backgroundColor: AppTheme.mint,
+                    foregroundColor: AppTheme.onMint,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
@@ -1229,7 +1255,7 @@ class AddItemsBottomSheetState extends State<AddItemsBottomSheet> {
                       fontFamily: 'Literata',
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
-                      color: Colors.white,
+                      color: AppTheme.onMint,
                     ),
                   ),
                 ),
@@ -1379,7 +1405,10 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
   void initState() {
     super.initState();
     _filteredBatches = widget.batches;
-    _selectedSellUnit = widget.unit ?? 'pcs'; // Default to base unit
+    _selectedSellUnit = widget.unit ?? 'pcs';
+    if (widget.batches.isNotEmpty) {
+      _selectedBatchIndex = 0;
+    }
   }
 
   @override
@@ -1391,7 +1420,6 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
 
   void _filterBatches(String query) {
     setState(() {
-      _selectedBatchIndex = null;
       if (query.isEmpty) {
         _filteredBatches = widget.batches;
       } else {
@@ -1406,7 +1434,17 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
               (batch.supplierName?.toLowerCase().contains(lowerQuery) ?? false);
         }).toList();
       }
+      _selectedBatchIndex = _filteredBatches.isEmpty ? null : 0;
+      _qtyController.text = '1';
+      _qtyError = null;
     });
+  }
+
+  double _toBaseQty(double displayQty) {
+    final unit = widget.unit?.toLowerCase();
+    if (_selectedSellUnit == 'gm' && unit == 'kg') return displayQty / 1000;
+    if (_selectedSellUnit == 'ml' && unit == 'ltr') return displayQty / 1000;
+    return displayQty;
   }
 
   double _getExistingQtyForBatch(PurchaseBatchEntity batch) {
@@ -1508,7 +1546,7 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
                           fontFamily: 'Literata',
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
-                          color: Color(0xFF1A1A2E),
+                          color: AppColors.primaryText(context),
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -1575,12 +1613,12 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
                       icon: Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: Colors.red[50],
+                          color: const Color(0xFFEF5350).withValues(alpha: 0.16),
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: Icon(
+                        child: const Icon(
                           Icons.remove,
-                          color: Colors.red[700],
+                          color: Color(0xFFEF5350),
                           size: 20,
                         ),
                       ),
@@ -1630,12 +1668,12 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
                       icon: Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: Colors.green[50],
+                          color: AppTheme.mint.withValues(alpha: 0.16),
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: Icon(
+                        child: const Icon(
                           Icons.add,
-                          color: Colors.green[700],
+                          color: AppTheme.mint,
                           size: 20,
                         ),
                       ),
@@ -1707,8 +1745,8 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
                       }
                     : null,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF1B4D3E),
-                  foregroundColor: Colors.white,
+                  backgroundColor: AppTheme.mint,
+                  foregroundColor: AppTheme.onMint,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
@@ -1731,53 +1769,46 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final selected = _selectedBatchIndex != null &&
+            _selectedBatchIndex! < _filteredBatches.length
+        ? _filteredBatches[_selectedBatchIndex!]
+        : null;
+
     return DraggableScrollableSheet(
-      initialChildSize: 0.7,
-      maxChildSize: 0.9,
-      minChildSize: 0.4,
+      initialChildSize: 0.72,
+      maxChildSize: 0.92,
+      minChildSize: 0.45,
       builder: (_, controller) => Container(
         decoration: BoxDecoration(
-          color: AppColors.card(context),
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          color: AppColors.isDark(context)
+              ? AppTheme.darkSurface
+              : AppColors.card(context),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          border: Border(top: BorderSide(color: AppColors.border(context))),
         ),
         child: Column(
           children: [
-            // Handle bar
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
             Container(
-              width: 40,
+              width: 36,
               height: 4,
               decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(2),
+                color: AppColors.mutedText(context).withValues(alpha: 0.45),
+                borderRadius: BorderRadius.circular(4),
               ),
             ),
-            // Header
             Padding(
-              padding: EdgeInsets.all(20),
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
               child: Row(
                 children: [
-                  // Product code badge
-                  Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: AppColors.accent(context),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Center(
-                      child: Text(
-                        widget.productCode > 0 ? '${widget.productCode}' : '#',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 15,
-                          fontFamily: 'Literata',
-                        ),
-                      ),
+                  _iconWell(
+                    const Icon(
+                      Icons.inventory_2_outlined,
+                      color: AppTheme.mint,
+                      size: 22,
                     ),
                   ),
-                  SizedBox(width: 14),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1787,153 +1818,85 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
                           style: TextStyle(
                             fontFamily: 'Literata',
                             fontSize: 18,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.accent(context),
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.primaryText(context),
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        Row(
-                          children: [
-                            Text(
-                              widget.localizations.chooseSpecificBatch,
-                              style: TextStyle(
-                                fontFamily: 'Literata',
-                                fontSize: 12,
-                                color: Colors.grey,
-                              ),
-                            ),
-                            if (widget.productCode > 0) ...[
-                              const SizedBox(width: 6),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 6,
-                                  vertical: 1,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Color(
-                                    0xFF1B4D3E,
-                                  ).withValues(alpha: 0.1),
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: Text(
-                                  '#${widget.productCode}',
-                                  style: TextStyle(
-                                    fontFamily: 'Literata',
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w700,
-                                    color: AppColors.accent(context),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ],
+                        Text(
+                          widget.localizations.chooseSpecificBatch,
+                          style: TextStyle(
+                            fontFamily: 'Literata',
+                            fontSize: 12,
+                            color: AppColors.mutedText(context),
+                          ),
                         ),
                       ],
                     ),
                   ),
+                  if (widget.productCode > 0)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: AppColors.border(context)),
+                      ),
+                      child: Text(
+                        '#${widget.productCode}',
+                        style: TextStyle(
+                          fontFamily: 'Literata',
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.secondaryText(context),
+                        ),
+                      ),
+                    ),
                 ],
               ),
             ),
-            // Unit toggle for kg/ltr products
             if (widget.supportsSubUnit && widget.subUnit != null)
               Padding(
-                padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
                 child: Container(
-                  padding: EdgeInsets.all(4),
+                  padding: const EdgeInsets.all(4),
                   decoration: BoxDecoration(
                     color: AppColors.chipFill(context),
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
                     children: [
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              _selectedSellUnit = widget.unit!;
-                              _validateQuantity();
-                            });
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 10),
-                            decoration: BoxDecoration(
-                              color: _selectedSellUnit == widget.unit
-                                  ? const Color(0xFF1B4D3E)
-                                  : Colors.transparent,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Center(
-                              child: Text(
-                                (widget.unit ?? 'PCS').toUpperCase(),
-                                style: TextStyle(
-                                  fontFamily: 'Literata',
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 13,
-                                  color: _selectedSellUnit == widget.unit
-                                      ? Colors.white
-                                      : Colors.grey[600],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              _selectedSellUnit = widget.subUnit!;
-                              _validateQuantity();
-                            });
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 10),
-                            decoration: BoxDecoration(
-                              color: _selectedSellUnit == widget.subUnit
-                                  ? const Color(0xFF1B4D3E)
-                                  : Colors.transparent,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Center(
-                              child: Text(
-                                widget.subUnit!.toUpperCase(),
-                                style: TextStyle(
-                                  fontFamily: 'Literata',
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 13,
-                                  color: _selectedSellUnit == widget.subUnit
-                                      ? Colors.white
-                                      : Colors.grey[600],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
+                      _unitChip(widget.unit!, widget.unit!),
+                      _unitChip(widget.subUnit!, widget.subUnit!),
                     ],
                   ),
                 ),
               ),
-            // Search bar for batches
             if (widget.batches.length > 1)
               Padding(
-                padding: EdgeInsets.symmetric(horizontal: 20),
+                padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
                 child: TextField(
                   controller: _batchSearchController,
                   onChanged: _filterBatches,
-                  style: TextStyle(fontFamily: 'Literata', fontSize: 14),
+                  style: TextStyle(
+                    fontFamily: 'Literata',
+                    fontSize: 14,
+                    color: AppColors.primaryText(context),
+                  ),
                   decoration: InputDecoration(
                     hintText: widget.localizations.searchBatches,
-                    hintStyle: TextStyle(color: Colors.grey[500]),
+                    hintStyle: TextStyle(color: AppColors.mutedText(context)),
                     prefixIcon: Icon(
                       Icons.search,
-                      color: AppColors.accent(context),
+                      color: AppColors.mutedText(context),
                       size: 20,
                     ),
                     suffixIcon: _batchSearchController.text.isNotEmpty
                         ? IconButton(
-                            icon: Icon(Icons.clear, size: 18),
+                            icon: const Icon(Icons.clear, size: 18),
                             onPressed: () {
                               _batchSearchController.clear();
                               _filterBatches('');
@@ -1941,21 +1904,28 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
                           )
                         : null,
                     filled: true,
-                    fillColor: AppColors.scaffold(context),
+                    fillColor: AppColors.inputFill(context),
                     contentPadding: const EdgeInsets.symmetric(
                       horizontal: 14,
                       vertical: 12,
                     ),
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide.none,
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: BorderSide(color: AppColors.border(context)),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: BorderSide(color: AppColors.border(context)),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: const BorderSide(color: AppTheme.mint),
                     ),
                   ),
                 ),
               ),
-            // Available entries label
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
               child: Row(
                 children: [
                   Text(
@@ -1964,26 +1934,25 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
                       fontFamily: 'Literata',
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: Colors.grey[700],
+                      color: AppColors.secondaryText(context),
                     ),
                   ),
-                  SizedBox(width: 8),
+                  const SizedBox(width: 8),
                   Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.accentSoft(context, 0.1),
-                      borderRadius: BorderRadius.circular(10),
+                    width: 22,
+                    height: 22,
+                    alignment: Alignment.center,
+                    decoration: const BoxDecoration(
+                      color: AppTheme.mint,
+                      shape: BoxShape.circle,
                     ),
                     child: Text(
                       '${_filteredBatches.length}',
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontFamily: 'Literata',
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.accent(context),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        color: AppTheme.onMint,
                       ),
                     ),
                   ),
@@ -1991,27 +1960,15 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
               ),
             ),
             const SizedBox(height: 10),
-            // Batch entries list
             Expanded(
               child: _filteredBatches.isEmpty
                   ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.search_off,
-                            size: 48,
-                            color: Colors.grey[400],
-                          ),
-                          const SizedBox(height: 12),
-                          Text(
-                            widget.localizations.noBatchesFound,
-                            style: TextStyle(
-                              fontFamily: 'Literata',
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                        ],
+                      child: Text(
+                        widget.localizations.noBatchesFound,
+                        style: TextStyle(
+                          fontFamily: 'Literata',
+                          color: AppColors.mutedText(context),
+                        ),
                       ),
                     )
                   : ListView.builder(
@@ -2020,393 +1977,412 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
                       itemCount: _filteredBatches.length,
                       itemBuilder: (context, index) {
                         final batch = _filteredBatches[index];
-                        final isSelected = _selectedBatchIndex == index;
-                        // Check if this is the oldest batch (FIFO recommended)
-                        final isOldest =
-                            widget.batches.isNotEmpty &&
+                        final isOldest = widget.batches.isNotEmpty &&
                             batch.id == widget.batches.first.id;
                         final existingQty = _getExistingQtyForBatch(batch);
-                        final alreadyInBill = existingQty > 0;
-
-                        return Container(
-                          margin: EdgeInsets.only(bottom: 10),
-                          decoration: BoxDecoration(
-                            color: isSelected
-                                ? const Color(0xFFE3F2FD)
-                                : alreadyInBill
-                                ? AppColors.chipFill(context)
-                                : Colors.white,
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(
-                              color: isSelected
-                                  ? Colors.blue
-                                  : alreadyInBill
-                                  ? const Color(0xFF1B4D3E)
-                                  : AppColors.border(context)!,
-                              width: isSelected || alreadyInBill ? 1.5 : 1,
-                            ),
-                            boxShadow: isSelected
-                                ? [
-                                    BoxShadow(
-                                      color: Colors.blue.withValues(
-                                        alpha: 0.15,
-                                      ),
-                                      blurRadius: 8,
-                                      offset: const Offset(0, 2),
-                                    ),
-                                  ]
-                                : null,
-                          ),
-                          child: Material(
-                            color: Colors.transparent,
-                            child: InkWell(
-                              borderRadius: BorderRadius.circular(14),
-                              onTap: () {
-                                // If already in bill, show edit dialog
-                                if (alreadyInBill) {
-                                  _showBatchQuantityDialog(
-                                    batch: batch,
-                                    existingQty: existingQty,
-                                  );
-                                  return;
-                                }
-                                // Determine quantity to add based on selected unit
-                                // For gm/ml: add 0.1 kg/ltr (100 gm/ml)
-                                // For kg/ltr/pcs: add 1
-                                final addQty =
-                                    (_selectedSellUnit == 'gm' ||
-                                        _selectedSellUnit == 'ml')
-                                    ? 0.1
-                                    : 1.0;
-                                final maxAvailable =
-                                    batch.quantityRemaining -
-                                    existingQty.round();
-                                if (addQty <= maxAvailable) {
-                                  widget.onBatchSelected(
-                                    batch,
-                                    existingQty + addQty,
-                                    _selectedSellUnit,
-                                  );
-                                } else {
-                                  GlassyToast.show(
-                                    context,
-                                    '${widget.localizations.quantityExceedsStock} (${maxAvailable > 0 ? maxAvailable : 0} $_selectedSellUnit)',
-                                    isError: true,
-                                  );
-                                }
-                              },
-                              child: Padding(
-                                padding: const EdgeInsets.all(14),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    // Top row: Company + badges
-                                    Row(
-                                      children: [
-                                        // Company icon
-                                        Container(
-                                          width: 36,
-                                          height: 36,
-                                          decoration: BoxDecoration(
-                                            color: const Color(
-                                              0xFF1B4D3E,
-                                            ).withValues(alpha: 0.1),
-                                            borderRadius: BorderRadius.circular(
-                                              8,
-                                            ),
-                                          ),
-                                          child: Center(
-                                            child: Text(
-                                              batch.companyName.isNotEmpty
-                                                  ? batch.companyName[0]
-                                                        .toUpperCase()
-                                                  : '?',
-                                              style: TextStyle(
-                                                fontFamily: 'Literata',
-                                                fontWeight: FontWeight.w700,
-                                                fontSize: 14,
-                                                color: AppColors.accent(context),
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                        const SizedBox(width: 10),
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                batch.companyName.isNotEmpty
-                                                    ? batch.companyName
-                                                    : '—',
-                                                style: TextStyle(
-                                                  fontFamily: 'Literata',
-                                                  fontWeight: FontWeight.w600,
-                                                  fontSize: 14,
-                                                ),
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                              Text(
-                                                '${widget.localizations.purchasedOn}: ${DateFormat('dd MMM yyyy').format(batch.purchaseDate)}',
-                                                style: TextStyle(
-                                                  fontFamily: 'Literata',
-                                                  fontSize: 11,
-                                                  color: Colors.grey[600],
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                        // Badges
-                                        Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.end,
-                                          children: [
-                                            if (isOldest)
-                                              Container(
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                      horizontal: 6,
-                                                      vertical: 2,
-                                                    ),
-                                                decoration: BoxDecoration(
-                                                  color: Colors.amber[50],
-                                                  borderRadius:
-                                                      BorderRadius.circular(4),
-                                                  border: Border.all(
-                                                    color: Colors.amber[300]!,
-                                                  ),
-                                                ),
-                                                child: Text(
-                                                  widget
-                                                      .localizations
-                                                      .fifoRecommended,
-                                                  style: TextStyle(
-                                                    fontFamily: 'Literata',
-                                                    fontSize: 9,
-                                                    fontWeight: FontWeight.w700,
-                                                    color: Colors.amber[800],
-                                                  ),
-                                                ),
-                                              ),
-                                            if (alreadyInBill) ...[
-                                              const SizedBox(height: 4),
-                                              Container(
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                      horizontal: 6,
-                                                      vertical: 2,
-                                                    ),
-                                                decoration: BoxDecoration(
-                                                  color: Colors.green[50],
-                                                  borderRadius:
-                                                      BorderRadius.circular(4),
-                                                ),
-                                                child: Text(
-                                                  '✓ $existingQty in bill',
-                                                  style: TextStyle(
-                                                    fontFamily: 'Literata',
-                                                    fontSize: 9,
-                                                    fontWeight: FontWeight.w600,
-                                                    color: Colors.green[700],
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                    SizedBox(height: 10),
-                                    // Price row + Stock
-                                    Row(
-                                      children: [
-                                        // Sell price
-                                        _buildBatchInfoChip(
-                                          label: widget.localizations.sellPrice,
-                                          value:
-                                              '₹${batch.sellingPrice.toStringAsFixed(0)}',
-                                          color: AppColors.accent(context),
-                                        ),
-                                        const SizedBox(width: 8),
-                                        // Cost price
-                                        _buildBatchInfoChip(
-                                          label: widget.localizations.costPrice,
-                                          value:
-                                              '₹${batch.purchasePrice.toStringAsFixed(0)}',
-                                          color: Colors.grey[700]!,
-                                        ),
-                                        const SizedBox(width: 8),
-                                        // Stock
-                                        _buildBatchInfoChip(
-                                          label: widget.localizations.stock,
-                                          value:
-                                              '${batch.quantityRemaining} ${batch.unit}',
-                                          color: batch.quantityRemaining > 10
-                                              ? Colors.green[700]!
-                                              : Colors.orange[700]!,
-                                        ),
-                                      ],
-                                    ),
-                                    // Quantity input + Add button (shown when selected)
-                                    if (isSelected) ...[
-                                      const SizedBox(height: 12),
-                                      Container(
-                                        padding: const EdgeInsets.all(12),
-                                        decoration: BoxDecoration(
-                                          color: Colors.blue[50],
-                                          borderRadius: BorderRadius.circular(
-                                            10,
-                                          ),
-                                        ),
-                                        child: Column(
-                                          children: [
-                                            Row(
-                                              children: [
-                                                Expanded(
-                                                  child: TextField(
-                                                    controller: _qtyController,
-                                                    keyboardType:
-                                                        TextInputType.number,
-                                                    onChanged: (_) =>
-                                                        _validateQuantity(),
-                                                    style: const TextStyle(
-                                                      fontFamily: 'Literata',
-                                                      fontSize: 16,
-                                                      fontWeight:
-                                                          FontWeight.w600,
-                                                    ),
-                                                    decoration: InputDecoration(
-                                                      labelText: widget
-                                                          .localizations
-                                                          .enterQuantity,
-                                                      labelStyle: TextStyle(
-                                                        fontSize: 12,
-                                                        color: Colors.grey[600],
-                                                      ),
-                                                      errorText: _qtyError,
-                                                      errorStyle:
-                                                          const TextStyle(
-                                                            fontSize: 10,
-                                                          ),
-                                                      contentPadding:
-                                                          const EdgeInsets.symmetric(
-                                                            horizontal: 12,
-                                                            vertical: 10,
-                                                          ),
-                                                      border: OutlineInputBorder(
-                                                        borderRadius:
-                                                            BorderRadius.circular(
-                                                              8,
-                                                            ),
-                                                        borderSide: BorderSide(
-                                                          color:
-                                                              Colors.grey[300]!,
-                                                        ),
-                                                      ),
-                                                      focusedBorder:
-                                                          OutlineInputBorder(
-                                                            borderRadius:
-                                                                BorderRadius.circular(
-                                                                  8,
-                                                                ),
-                                                            borderSide:
-                                                                BorderSide(
-                                                                  color: Color(
-                                                                    0xFF1B4D3E,
-                                                                  ),
-                                                                  width: 1.5,
-                                                                ),
-                                                          ),
-                                                      filled: true,
-                                                      fillColor: AppColors.inputFill(context),
-                                                      suffixText:
-                                                          '/ ${batch.quantityRemaining - existingQty}',
-                                                      suffixStyle: TextStyle(
-                                                        fontSize: 12,
-                                                        color: Colors.grey[500],
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ),
-                                                const SizedBox(width: 12),
-                                                ElevatedButton.icon(
-                                                  onPressed:
-                                                      _qtyError == null &&
-                                                          _qtyController
-                                                              .text
-                                                              .isNotEmpty &&
-                                                          (double.tryParse(
-                                                                    _qtyController
-                                                                        .text,
-                                                                  ) ??
-                                                                  0) >
-                                                              0
-                                                      ? () {
-                                                          final qty =
-                                                              double.parse(
-                                                                _qtyController
-                                                                    .text,
-                                                              );
-                                                          widget.onBatchSelected(
-                                                            batch,
-                                                            existingQty + qty,
-                                                            _selectedSellUnit,
-                                                          );
-                                                        }
-                                                      : null,
-                                                  icon: const Icon(
-                                                    Icons.add_shopping_cart,
-                                                    size: 18,
-                                                  ),
-                                                  label: Text(
-                                                    widget
-                                                        .localizations
-                                                        .addToBill,
-                                                    style: const TextStyle(
-                                                      fontFamily: 'Literata',
-                                                      fontWeight:
-                                                          FontWeight.w600,
-                                                      fontSize: 13,
-                                                    ),
-                                                  ),
-                                                  style: ElevatedButton.styleFrom(
-                                                    backgroundColor:
-                                                        const Color(0xFF1B4D3E),
-                                                    foregroundColor:
-                                                        Colors.white,
-                                                    padding:
-                                                        const EdgeInsets.symmetric(
-                                                          horizontal: 16,
-                                                          vertical: 12,
-                                                        ),
-                                                    shape: RoundedRectangleBorder(
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                            10,
-                                                          ),
-                                                    ),
-                                                    elevation: 0,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
+                        return _buildBatchCard(
+                          batch: batch,
+                          isSelected: _selectedBatchIndex == index,
+                          isOldest: isOldest,
+                          existingQty: existingQty,
+                          onTap: () {
+                            if (existingQty > 0) {
+                              _showBatchQuantityDialog(
+                                batch: batch,
+                                existingQty: existingQty,
+                              );
+                              return;
+                            }
+                            setState(() {
+                              _selectedBatchIndex = index;
+                              _qtyController.text = '1';
+                              _qtyError = null;
+                            });
+                            _validateQuantity();
+                          },
                         );
                       },
                     ),
             ),
+            if (selected != null)
+              _buildQuantityBar(selected, _getExistingQtyForBatch(selected)),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _iconWell(Widget child) {
+    return Container(
+      width: 42,
+      height: 42,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: AppColors.isDark(context)
+            ? const Color(0xFF14352C)
+            : AppTheme.mint.withValues(alpha: 0.16),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: child,
+    );
+  }
+
+  Widget _unitChip(String unit, String value) {
+    final selected = _selectedSellUnit == value;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          setState(() {
+            _selectedSellUnit = value;
+            _qtyController.text = '1';
+            _qtyError = null;
+          });
+          _validateQuantity();
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: selected ? AppTheme.mint : Colors.transparent,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Center(
+            child: Text(
+              unit.toUpperCase(),
+              style: TextStyle(
+                fontFamily: 'Literata',
+                fontWeight: FontWeight.w700,
+                fontSize: 13,
+                color: selected
+                    ? AppTheme.onMint
+                    : AppColors.mutedText(context),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBatchCard({
+    required PurchaseBatchEntity batch,
+    required bool isSelected,
+    required bool isOldest,
+    required double existingQty,
+    required VoidCallback onTap,
+  }) {
+    final initial = batch.companyName.isNotEmpty
+        ? batch.companyName[0].toUpperCase()
+        : '?';
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      decoration: BoxDecoration(
+        color: AppColors.card(context),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isSelected ? AppTheme.mint : AppColors.border(context),
+          width: isSelected ? 1.6 : 1,
+        ),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 36,
+                      height: 36,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: AppColors.isDark(context)
+                            ? const Color(0xFF14352C)
+                            : AppTheme.mint.withValues(alpha: 0.16),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        initial,
+                        style: const TextStyle(
+                          fontFamily: 'Literata',
+                          fontWeight: FontWeight.w800,
+                          fontSize: 16,
+                          color: AppTheme.mint,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            batch.companyName.isNotEmpty
+                                ? batch.companyName
+                                : '—',
+                            style: TextStyle(
+                              fontFamily: 'Literata',
+                              fontWeight: FontWeight.w700,
+                              fontSize: 15,
+                              color: AppColors.primaryText(context),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          Text(
+                            '${widget.localizations.purchasedOn} ${DateFormat('dd MMM yyyy').format(batch.purchaseDate)}',
+                            style: TextStyle(
+                              fontFamily: 'Literata',
+                              fontSize: 12,
+                              color: AppColors.mutedText(context),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (isOldest)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppTheme.toneAmber.withValues(alpha: 0.16),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.verified_rounded,
+                              size: 14,
+                              color: AppTheme.toneAmber,
+                            ),
+                            SizedBox(width: 4),
+                            Text(
+                              'FIFO',
+                              style: TextStyle(
+                                fontFamily: 'Literata',
+                                fontSize: 11,
+                                fontWeight: FontWeight.w800,
+                                color: AppTheme.toneAmber,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
+                if (existingQty > 0) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    '✓ $existingQty in bill',
+                    style: const TextStyle(
+                      fontFamily: 'Literata',
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.mint,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    _buildBatchInfoChip(
+                      label: widget.localizations.sellPrice,
+                      value: '₹${_money(batch.sellingPrice)}',
+                      valueColor: AppTheme.mint,
+                    ),
+                    const SizedBox(width: 8),
+                    _buildBatchInfoChip(
+                      label: widget.localizations.costPrice,
+                      value: '₹${_money(batch.purchasePrice)}',
+                      valueColor: AppColors.primaryText(context),
+                    ),
+                    const SizedBox(width: 8),
+                    _buildBatchInfoChip(
+                      label: widget.localizations.inStock,
+                      value: '${batch.quantityRemaining} ${batch.unit}',
+                      valueColor: AppColors.primaryText(context),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuantityBar(PurchaseBatchEntity batch, double existingQty) {
+    final displayQty = double.tryParse(_qtyController.text) ?? 0;
+    final maxAvailable = batch.quantityRemaining - existingQty.round();
+    final maxDisplay = _getMaxStockInDisplayUnit(
+      maxAvailable < 0 ? 0 : maxAvailable,
+    );
+    final baseQty = _toBaseQty(displayQty < 0 ? 0 : displayQty);
+    final lineTotal = batch.sellingPrice * baseQty;
+    final canAdd = _qtyError == null && displayQty > 0;
+
+    void changeQty(int delta) {
+      final current = double.tryParse(_qtyController.text) ?? 0;
+      final next = current + delta;
+      if (next < 1) return;
+      if (next > maxDisplay) return;
+      setState(() {
+        _qtyController.text = next == next.roundToDouble()
+            ? next.toInt().toString()
+            : next.toStringAsFixed(1);
+      });
+      _validateQuantity();
+    }
+
+    return Container(
+      padding: EdgeInsets.fromLTRB(
+        16,
+        12,
+        16,
+        MediaQuery.paddingOf(context).bottom + 14,
+      ),
+      decoration: BoxDecoration(
+        color: AppColors.isDark(context)
+            ? AppTheme.darkSurface
+            : AppColors.card(context),
+        border: Border(top: BorderSide(color: AppColors.border(context))),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    widget.localizations.quantity,
+                    style: TextStyle(
+                      fontFamily: 'Literata',
+                      fontWeight: FontWeight.w700,
+                      fontSize: 15,
+                      color: AppColors.primaryText(context),
+                    ),
+                  ),
+                  Text(
+                    'Max ${_money(maxDisplay)} $_selectedSellUnit',
+                    style: TextStyle(
+                      fontFamily: 'Literata',
+                      fontSize: 12,
+                      color: AppColors.mutedText(context),
+                    ),
+                  ),
+                ],
+              ),
+              const Spacer(),
+              _stepButton(Icons.remove, () => changeQty(-1)),
+              SizedBox(
+                width: 56,
+                child: TextField(
+                  controller: _qtyController,
+                  textAlign: TextAlign.center,
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
+                  ],
+                  onChanged: (_) => _validateQuantity(),
+                  style: TextStyle(
+                    fontFamily: 'Literata',
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.primaryText(context),
+                  ),
+                  decoration: const InputDecoration(
+                    isDense: true,
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ),
+              ),
+              _stepButton(Icons.add, () => changeQty(1)),
+            ],
+          ),
+          if (_qtyError != null) ...[
+            const SizedBox(height: 6),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                _qtyError!,
+                style: const TextStyle(
+                  fontFamily: 'Literata',
+                  fontSize: 11,
+                  color: Color(0xFFEF5350),
+                ),
+              ),
+            ),
+          ],
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            height: 52,
+            child: ElevatedButton(
+              onPressed: canAdd
+                  ? () {
+                      widget.onBatchSelected(
+                        batch,
+                        existingQty + baseQty,
+                        _selectedSellUnit,
+                      );
+                    }
+                  : null,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.mint,
+                foregroundColor: AppTheme.onMint,
+                disabledBackgroundColor: AppColors.chipFill(context),
+                disabledForegroundColor: AppColors.mutedText(context),
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
+              child: Text(
+                '${widget.localizations.addToBill} · ₹${_money(lineTotal)}',
+                style: const TextStyle(
+                  fontFamily: 'Literata',
+                  fontWeight: FontWeight.w800,
+                  fontSize: 16,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _money(double amount) {
+    if (amount == amount.roundToDouble()) return amount.toStringAsFixed(0);
+    return amount.toStringAsFixed(2);
+  }
+
+  Widget _stepButton(IconData icon, VoidCallback onTap) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppColors.border(context)),
+          ),
+          child: Icon(icon, size: 18, color: AppColors.primaryText(context)),
         ),
       ),
     );
@@ -2415,15 +2391,15 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
   Widget _buildBatchInfoChip({
     required String label,
     required String value,
-    required Color color,
+    required Color valueColor,
   }) {
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
         decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.05),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: color.withValues(alpha: 0.2)),
+          color: AppColors.inputFill(context),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.border(context)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -2432,17 +2408,20 @@ class BatchSelectionSheetState extends State<BatchSelectionSheet> {
               label,
               style: TextStyle(
                 fontFamily: 'Literata',
-                fontSize: 9,
-                color: Colors.grey[600],
+                fontSize: 10,
+                color: AppColors.mutedText(context),
               ),
             ),
+            const SizedBox(height: 2),
             Text(
               value,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 fontFamily: 'Literata',
-                fontWeight: FontWeight.w700,
-                fontSize: 13,
-                color: color,
+                fontWeight: FontWeight.w800,
+                fontSize: 14,
+                color: valueColor,
               ),
             ),
           ],

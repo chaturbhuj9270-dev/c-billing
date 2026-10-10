@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'dart:ui';
 import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/services/language_service.dart';
 import '../../../../core/services/session_manager.dart';
@@ -248,21 +247,23 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
                       child: Column(
                         children: [
                           Container(
+                            width: 72,
+                            height: 72,
                             decoration: BoxDecoration(
+                              color: const Color(0xFF14352C),
+                              borderRadius: BorderRadius.circular(22),
                               boxShadow: [
                                 BoxShadow(
-                                  color: const Color(
-                                    0xFF1B4D3E,
-                                  ).withValues(alpha: 0.25),
-                                  blurRadius: 24,
-                                  offset: const Offset(0, 12),
+                                  color: AppTheme.mint.withValues(alpha: 0.28),
+                                  blurRadius: 36,
+                                  spreadRadius: 4,
                                 ),
                               ],
                             ),
-                            child: Image.asset(
-                              'assets/images/app_logo.png',
-                              width: 70,
-                              height: 70,
+                            child: const Icon(
+                              Icons.receipt_long_rounded,
+                              color: AppTheme.mint,
+                              size: 32,
                             ),
                           ),
                           SizedBox(height: 12),
@@ -271,8 +272,8 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
                             style: TextStyle(
                               fontSize: 32,
                               fontWeight: FontWeight.w900,
-                              color: AppColors.accent(context),
-                              letterSpacing: 2,
+                              color: AppColors.primaryText(context),
+                              letterSpacing: 0,
                               fontFamily: 'Literata',
                             ),
                           ),
@@ -282,7 +283,7 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w400,
-                              color: Colors.grey[700],
+                              color: AppColors.mutedText(context),
                               fontFamily: 'Literata',
                             ),
                           ),
@@ -296,36 +297,7 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
                     position: _offsetAnimation,
                     child: FadeTransition(
                       opacity: _opacityAnimation,
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(28),
-                        child: BackdropFilter(
-                          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                          child: Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.all(28.0),
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                                colors: [
-                                  Colors.white.withValues(alpha: 0.15),
-                                  Colors.white.withValues(alpha: 0.05),
-                                ],
-                              ),
-                              borderRadius: BorderRadius.circular(28),
-                              border: Border.all(
-                                color: Colors.white.withValues(alpha: 0.2),
-                                width: 1.5,
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.1),
-                                  blurRadius: 30,
-                                  offset: const Offset(0, 10),
-                                ),
-                              ],
-                            ),
-                            child: Column(
+                      child: Column(
                               crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
                                 // First Name field
@@ -485,7 +457,7 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
                                       child: Text(
                                         _localizations.signIn,
                                         style: TextStyle(
-                                          color: AppColors.accent(context),
+                                          color: AppTheme.mint,
                                           fontSize: 14,
                                           fontWeight: FontWeight.w600,
                                           fontFamily: 'Literata',
@@ -495,9 +467,6 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
                                   ],
                                 ),
                               ],
-                            ),
-                          ),
-                        ),
                       ),
                     ),
                   ),
@@ -518,140 +487,153 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
     required IconData icon,
     bool obscureText = false,
   }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.card(context),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.3),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: TextField(
-        controller: controller,
-        keyboardType: keyboardType,
-        obscureText: obscureText,
-        decoration: InputDecoration(
-          hintText: label,
-          hintStyle: TextStyle(
-            color: Colors.grey[400],
-            fontSize: 14,
-            fontWeight: FontWeight.w400,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
             fontFamily: 'Literata',
-          ),
-          prefixIcon: Icon(icon, color: AppColors.accent(context), size: 20),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 14,
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: AppColors.secondaryText(context),
           ),
         ),
-        style: TextStyle(
-          color: Colors.black87,
-          fontSize: 14,
-          fontFamily: 'Literata',
+        const SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            color: AppColors.inputFill(context),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.border(context)),
+          ),
+          child: TextField(
+            controller: controller,
+            keyboardType: keyboardType,
+            obscureText: obscureText,
+            decoration: InputDecoration(
+              hintText: label,
+              hintStyle: TextStyle(
+                color: AppColors.mutedText(context),
+                fontSize: 14,
+                fontWeight: FontWeight.w400,
+                fontFamily: 'Literata',
+              ),
+              prefixIcon: Icon(
+                icon,
+                color: AppColors.mutedText(context),
+                size: 20,
+              ),
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 14,
+              ),
+            ),
+            style: TextStyle(
+              color: AppColors.primaryText(context),
+              fontSize: 14,
+              fontFamily: 'Literata',
+            ),
+          ),
         ),
-      ),
+      ],
     );
   }
 
   Widget _buildAnimatedPasswordField() {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.card(context),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.3),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: TextField(
-        controller: _passwordController,
-        obscureText: _obscure,
-        decoration: InputDecoration(
-          hintText: _localizations.password,
-          hintStyle: TextStyle(
-            color: Colors.grey[400],
-            fontSize: 14,
-            fontWeight: FontWeight.w400,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          _localizations.password,
+          style: TextStyle(
             fontFamily: 'Literata',
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: AppColors.secondaryText(context),
           ),
-          prefixIcon: Icon(
-            Icons.lock_outline,
-            color: AppColors.accent(context),
-            size: 20,
+        ),
+        const SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            color: AppColors.inputFill(context),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.border(context)),
           ),
-          suffixIcon: IconButton(
-            icon: Icon(
-              _obscure
-                  ? Icons.visibility_off_outlined
-                  : Icons.visibility_outlined,
-              color: AppColors.accent(context),
-              size: 20,
+          child: TextField(
+            controller: _passwordController,
+            obscureText: _obscure,
+            decoration: InputDecoration(
+              hintText: _localizations.password,
+              hintStyle: TextStyle(
+                color: AppColors.mutedText(context),
+                fontSize: 14,
+                fontWeight: FontWeight.w400,
+                fontFamily: 'Literata',
+              ),
+              prefixIcon: Icon(
+                Icons.lock_outline,
+                color: AppColors.mutedText(context),
+                size: 20,
+              ),
+              suffixIcon: IconButton(
+                icon: Icon(
+                  _obscure
+                      ? Icons.visibility_off_outlined
+                      : Icons.visibility_outlined,
+                  color: AppColors.mutedText(context),
+                  size: 20,
+                ),
+                onPressed: () => setState(() => _obscure = !_obscure),
+              ),
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 14,
+              ),
             ),
-            onPressed: () => setState(() => _obscure = !_obscure),
-          ),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 14,
+            style: TextStyle(
+              color: AppColors.primaryText(context),
+              fontSize: 14,
+              fontFamily: 'Literata',
+            ),
           ),
         ),
-        style: const TextStyle(
-          color: Colors.black87,
-          fontSize: 14,
-          fontFamily: 'Literata',
-        ),
-      ),
+      ],
     );
   }
 
   Widget _buildCreateAccountButton() {
-    return SizedBox(
+    return Container(
       width: double.infinity,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-          child: ElevatedButton(
-            onPressed: _submit,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF1B4D3E).withValues(alpha: 0.9),
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-                side: BorderSide(
-                  color: Colors.white.withValues(alpha: 0.3),
-                  width: 1,
-                ),
-              ),
-              elevation: 0,
-              shadowColor: Colors.transparent,
-            ),
-            child: Text(
-              _localizations.createAccount,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                fontFamily: 'Literata',
-                letterSpacing: 0.5,
-                color: Colors.white,
-              ),
-            ),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.mint.withValues(alpha: 0.28),
+            blurRadius: 22,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: ElevatedButton(
+        onPressed: _submit,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppTheme.mint,
+          foregroundColor: AppTheme.onMint,
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(28),
+          ),
+          elevation: 0,
+        ),
+        child: Text(
+          _localizations.createAccount,
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w800,
+            fontFamily: 'Literata',
+            color: AppTheme.onMint,
           ),
         ),
       ),
