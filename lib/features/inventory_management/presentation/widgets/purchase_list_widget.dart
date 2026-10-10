@@ -280,10 +280,7 @@ class _PurchaseListWidgetState extends State<PurchaseListWidget> {
                     return Opacity(opacity: value, child: child);
                   },
                   child: Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 10,
-                    ),
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                     decoration: BoxDecoration(
                       color: AppColors.accentSoft(context, 0.06),
                       borderRadius: BorderRadius.circular(12),
@@ -410,73 +407,78 @@ class PurchaseSummaryWidget extends StatelessWidget {
       (sum, p) => sum + p.quantityPurchased,
     );
 
-    final header = AppColors.headerGradient(context);
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [header.first, header.last],
-        ),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(
-              alpha: AppColors.isDark(context) ? 0.45 : 0.3,
-            ),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
-          ),
-        ],
+        color: AppColors.card(context),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.border(context)),
       ),
       child: Row(
         children: [
           _buildStatItem(
+            context,
             icon: Icons.receipt_long_rounded,
+            iconColor: const Color(0xFF7C8CFF),
             label: localizations.purchases,
             value: '${filtered.length}',
           ),
-          _buildDivider(),
           _buildStatItem(
+            context,
             icon: Icons.inventory_2_rounded,
+            iconColor: const Color(0xFFFFB74D),
             label: localizations.totalQty,
             value: '$totalQuantity',
           ),
-          _buildDivider(),
-          Expanded(
-            child: _buildStatItem(
-              icon: Icons.currency_rupee_rounded,
-              label: localizations.totalValue,
-              value: '₹${totalAmount.toStringAsFixed(0)}',
-              isExpanded: true,
-            ),
+          _buildStatItem(
+            context,
+            icon: Icons.currency_rupee_rounded,
+            iconColor: const Color(0xFF3DDC97),
+            label: localizations.totalValue,
+            value: '₹${_compactAmount(totalAmount)}',
           ),
         ],
       ),
     );
   }
 
-  Widget _buildStatItem({
+  String _compactAmount(double amount) {
+    return amount
+        .toStringAsFixed(0)
+        .replaceAllMapped(
+          RegExp(r'(\d)(?=(\d{3})+(?!\d))'),
+          (match) => '${match[1]},',
+        );
+  }
+
+  Widget _buildStatItem(
+    BuildContext context, {
     required IconData icon,
+    required Color iconColor,
     required String label,
     required String value,
-    bool isExpanded = false,
   }) {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 8),
+    return Expanded(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, color: Colors.white, size: 20),
-          const SizedBox(height: 6),
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: iconColor.withValues(alpha: 0.16),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: iconColor, size: 18),
+          ),
+          const SizedBox(height: 8),
           Text(
             value,
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: 'Literata',
               fontWeight: FontWeight.w800,
-              fontSize: 16,
-              color: Colors.white,
+              fontSize: 18,
+              color: AppColors.primaryText(context),
             ),
           ),
           const SizedBox(height: 2),
@@ -484,21 +486,13 @@ class PurchaseSummaryWidget extends StatelessWidget {
             label,
             style: TextStyle(
               fontFamily: 'Literata',
-              fontWeight: FontWeight.w400,
+              fontWeight: FontWeight.w500,
               fontSize: 11,
-              color: Colors.white.withValues(alpha: 0.7),
+              color: AppColors.mutedText(context),
             ),
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildDivider() {
-    return Container(
-      width: 1,
-      height: 40,
-      color: Colors.white.withValues(alpha: 0.2),
     );
   }
 }

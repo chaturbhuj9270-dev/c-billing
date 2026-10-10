@@ -175,16 +175,15 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
     return GestureDetector(
       onTap: widget.onReportTap,
       child: Container(
-        padding: EdgeInsets.all(10),
+        padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: AppColors.selectedFill(context),
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(14),
           border: Border.all(color: AppColors.border(context)),
         ),
         child: Icon(
-          Icons.description_rounded,
+          Icons.file_download_outlined,
           size: 20,
-          color: AppColors.selectedOnFill(context),
+          color: AppColors.secondaryText(context),
         ),
       ),
     );
@@ -203,15 +202,12 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
         curve: Curves.easeInOut,
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: isSelected
-              ? AppColors.selectedFill(context)
-              : AppColors.chipFill(context),
-          borderRadius: BorderRadius.circular(10),
+          color: isSelected ? AppColors.chipFill(context) : Colors.transparent,
+          borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: isSelected
-                ? AppColors.selectedFill(context)
+                ? AppColors.secondaryText(context).withValues(alpha: 0.55)
                 : AppColors.border(context),
-            width: 1,
           ),
         ),
         child: Row(
@@ -219,10 +215,10 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
           children: [
             Icon(
               icon,
-              size: 16,
+              size: 15,
               color: isSelected
-                  ? AppColors.selectedOnFill(context)
-                  : AppColors.secondaryText(context),
+                  ? AppColors.primaryText(context)
+                  : AppColors.mutedText(context),
             ),
             const SizedBox(width: 6),
             Text(
@@ -232,8 +228,8 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
                 fontWeight: FontWeight.w600,
                 fontSize: 13,
                 color: isSelected
-                    ? AppColors.selectedOnFill(context)
-                    : AppColors.secondaryText(context),
+                    ? AppColors.primaryText(context)
+                    : AppColors.mutedText(context),
               ),
             ),
           ],
@@ -390,10 +386,7 @@ class _PurchaseFilterWidgetState extends State<PurchaseFilterWidget> {
       decoration: BoxDecoration(
         color: AppColors.accentSoft(context, 0.1),
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(
-          color: AppColors.accentSoft(context, 0.3),
-          width: 1,
-        ),
+        border: Border.all(color: AppColors.accentSoft(context, 0.3), width: 1),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

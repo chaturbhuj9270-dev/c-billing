@@ -176,7 +176,9 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
             // Initialize session for new user
             final sessionManager = SessionManager();
             sessionManager.initializeSession(currentUser, () {
-              print('[CRITICAL] Session expired - clearing data and logging out');
+              print(
+                '[CRITICAL] Session expired - clearing data and logging out',
+              );
               // Use LogoutService to ensure all local data is cleared on session expiry
               if (mounted) {
                 GlassyToast.show(context, _localizations.sessionExpired);
@@ -220,9 +222,9 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
             end: Alignment.bottomCenter,
             colors: AppColors.isDark(context)
                 ? const [
-                    Color(0xFF000000),
-                    Color(0xFF111111),
-                    Color(0xFF000000),
+                    AppTheme.darkScaffold,
+                    AppTheme.darkSurface,
+                    AppTheme.darkScaffold,
                   ]
                 : const [
                     Color(0xFFE8F5E9),

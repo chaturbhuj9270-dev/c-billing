@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import 'package:flutter/services.dart';
 
-/// Brand-aligned light / dark [ThemeData] for C-Billing.
+/// Shared palette from the billing / purchase screens.
 ///
-/// Dark theme standard: proper black & white (neutral greys only).
-/// Brand green is reserved for accents (app bar, FAB, primary actions).
+/// Dark surfaces are green-charcoal. Mint is the action color.
+/// Icon tones (blue, amber, rose) mark categories.
 class AppTheme {
   AppTheme._();
 
@@ -13,18 +13,31 @@ class AppTheme {
   static const Color primaryLight = Color(0xFF2E7D5B);
   static const Color primaryDark = Color(0xFF0F3B2F);
 
-  // Light
-  static const Color lightScaffold = Color(0xFFF5F7F6);
+  /// Bright mint used for primary actions, selected tabs, and positive status.
+  static const Color mint = Color(0xFF3DDC97);
 
-  // Dark — neutral black / white (no green tint)
-  static const Color darkScaffold = Color(0xFF000000);
-  static const Color darkSurface = Color(0xFF111111);
-  static const Color darkCard = Color(0xFF1A1A1A);
-  static const Color darkElevated = Color(0xFF242424);
-  static const Color darkBorder = Color(0xFF2E2E2E);
-  static const Color darkTextPrimary = Color(0xFFFFFFFF);
-  static const Color darkTextSecondary = Color(0xFFB3B3B3);
-  static const Color darkTextMuted = Color(0xFF8A8A8A);
+  /// Text and icons that sit on [mint].
+  static const Color onMint = Color(0xFF06281C);
+
+  // Category icon tones from the reference screens.
+  static const Color toneBlue = Color(0xFF7C8CFF);
+  static const Color toneAmber = Color(0xFFE0A85C);
+  static const Color toneRose = Color(0xFFE57373);
+  static const Color toneViolet = Color(0xFFB388FF);
+  static const Color toneCyan = Color(0xFF4DD0E1);
+
+  // Light
+  static const Color lightScaffold = Color(0xFFF3F6F4);
+
+  // Dark — green charcoal, matching the billing and purchase screens.
+  static const Color darkScaffold = Color(0xFF101412);
+  static const Color darkSurface = Color(0xFF161C19);
+  static const Color darkCard = Color(0xFF1A211E);
+  static const Color darkElevated = Color(0xFF232B27);
+  static const Color darkBorder = Color(0xFF2E3833);
+  static const Color darkTextPrimary = Color(0xFFF4F7F5);
+  static const Color darkTextSecondary = Color(0xFFA8B2AC);
+  static const Color darkTextMuted = Color(0xFF7E8A84);
 
   static ThemeData get light {
     final scheme = ColorScheme.fromSeed(
@@ -54,17 +67,17 @@ class AppTheme {
     // Explicit neutral ColorScheme — avoids green-tinted surfaces from seed.
     const scheme = ColorScheme(
       brightness: Brightness.dark,
-      primary: primaryLight,
-      onPrimary: Colors.white,
-      secondary: Color(0xFFE5E5E5),
-      onSecondary: Colors.black,
+      primary: mint,
+      onPrimary: onMint,
+      secondary: toneBlue,
+      onSecondary: Colors.white,
       error: Color(0xFFEF5350),
       onError: Colors.white,
       surface: darkSurface,
       onSurface: darkTextPrimary,
       surfaceContainerHighest: darkElevated,
       outline: darkBorder,
-      outlineVariant: Color(0xFF3A3A3A),
+      outlineVariant: Color(0xFF3A4540),
     );
 
     return _base(
@@ -101,11 +114,10 @@ class AppTheme {
       canvasColor: scaffold,
       cardColor: card,
       dividerColor: divider,
-      primaryColor: isDark ? primaryLight : primary,
+      primaryColor: isDark ? mint : primary,
       appBarTheme: AppBarTheme(
         elevation: 0,
         centerTitle: false,
-        // Dark: black app bar for clean B&W; light keeps brand green.
         backgroundColor: isDark ? darkScaffold : primary,
         foregroundColor: Colors.white,
         systemOverlayStyle: overlayStyle,
@@ -147,8 +159,24 @@ class AppTheme {
         behavior: SnackBarBehavior.floating,
       ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(
-        backgroundColor: isDark ? Colors.white : primary,
-        foregroundColor: isDark ? Colors.black : Colors.white,
+        backgroundColor: mint,
+        foregroundColor: onMint,
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: isDark ? mint : primary,
+          foregroundColor: isDark ? onMint : Colors.white,
+          disabledBackgroundColor: isDark ? darkElevated : Colors.grey.shade300,
+          disabledForegroundColor: isDark
+              ? darkTextMuted
+              : Colors.grey.shade600,
+        ),
+      ),
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          backgroundColor: mint,
+          foregroundColor: onMint,
+        ),
       ),
       popupMenuTheme: PopupMenuThemeData(
         color: isDark ? darkElevated : card,
@@ -157,21 +185,17 @@ class AppTheme {
           color: isDark ? darkTextPrimary : const Color(0xFF1A1A1A),
         ),
       ),
-      drawerTheme: DrawerThemeData(
-        backgroundColor: isDark ? darkCard : card,
-      ),
+      drawerTheme: DrawerThemeData(backgroundColor: isDark ? darkCard : card),
       switchTheme: SwitchThemeData(
         thumbColor: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return isDark ? Colors.white : primaryLight;
+            return isDark ? onMint : mint;
           }
           return isDark ? Colors.grey.shade500 : Colors.grey.shade50;
         }),
         trackColor: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return isDark
-                ? Colors.white.withValues(alpha: 0.35)
-                : primaryLight.withValues(alpha: 0.45);
+            return isDark ? mint : primaryLight.withValues(alpha: 0.45);
           }
           return isDark ? Colors.white24 : Colors.black12;
         }),
@@ -193,10 +217,7 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(
-            color: isDark ? Colors.white : primary,
-            width: 1.5,
-          ),
+          borderSide: BorderSide(color: isDark ? mint : primary, width: 1.5),
         ),
       ),
       dividerTheme: DividerThemeData(color: divider, thickness: 1),
@@ -246,13 +267,11 @@ class AppColors {
 
   static Color card(BuildContext context) => Theme.of(context).cardColor;
 
-  static Color primaryText(BuildContext context) => isDark(context)
-      ? AppTheme.darkTextPrimary
-      : const Color(0xFF1A1A1A);
+  static Color primaryText(BuildContext context) =>
+      isDark(context) ? AppTheme.darkTextPrimary : const Color(0xFF1A1A1A);
 
-  static Color secondaryText(BuildContext context) => isDark(context)
-      ? AppTheme.darkTextSecondary
-      : Colors.grey.shade700;
+  static Color secondaryText(BuildContext context) =>
+      isDark(context) ? AppTheme.darkTextSecondary : Colors.grey.shade700;
 
   static Color mutedText(BuildContext context) =>
       isDark(context) ? AppTheme.darkTextMuted : Colors.grey.shade500;
@@ -265,15 +284,15 @@ class AppColors {
       isDark(context) ? AppTheme.darkElevated : Colors.white;
 
   static Color chipFill(BuildContext context) => isDark(context)
-      ? const Color(0xFF2A2A2A)
+      ? AppTheme.darkElevated
       : Colors.grey.withValues(alpha: 0.08);
 
   static Color glassFill(BuildContext context) => isDark(context)
-      ? const Color(0xFF1A1A1A).withValues(alpha: 0.92)
+      ? AppTheme.darkCard.withValues(alpha: 0.96)
       : Colors.white.withValues(alpha: 0.82);
 
   static Color glassFillSecondary(BuildContext context) => isDark(context)
-      ? const Color(0xFF242424).withValues(alpha: 0.95)
+      ? AppTheme.darkElevated.withValues(alpha: 0.96)
       : const Color(0xFFE8F0F5).withValues(alpha: 0.72);
 
   static Color glassBorder(BuildContext context) => isDark(context)
@@ -285,27 +304,30 @@ class AppColors {
   static Color shadow(BuildContext context) =>
       Colors.black.withValues(alpha: isDark(context) ? 0.55 : 0.06);
 
-  /// Page/section header gradient — brand green in light, pure B&W in dark.
+  /// Deep green bar. Dark enough for light labels, tinted to match the screens.
   static List<Color> headerGradient(BuildContext context) => isDark(context)
-      ? const [Color(0xFF000000), Color(0xFF1A1A1A), Color(0xFF000000)]
+      ? const [Color(0xFF14352C), Color(0xFF0E241C), Color(0xFF10241C)]
       : const [Color(0xFF1B4D3E), Color(0xFF0F3B2F), Color(0xFF134E3A)];
 
-  /// Selected / primary chip fill in dark = white; light = brand green.
-  static Color selectedFill(BuildContext context) =>
-      isDark(context) ? Colors.white : AppTheme.primary;
+  /// Selected chips and the active tab use mint in both themes.
+  static Color selectedFill(BuildContext context) => AppTheme.mint;
 
-  static Color selectedOnFill(BuildContext context) =>
-      isDark(context) ? Colors.black : Colors.white;
+  static Color selectedOnFill(BuildContext context) => AppTheme.onMint;
 
-  /// Icon / label accent — brand green in light, white in dark (B&W).
+  /// Emphasis color. Dark titles stay light; actions use [mint].
   static Color accent(BuildContext context) =>
-      isDark(context) ? Colors.white : AppTheme.primary;
+      isDark(context) ? AppTheme.darkTextPrimary : AppTheme.primary;
+
+  /// Mint action color shared by buttons, tabs, and status labels.
+  static Color mint(BuildContext context) => AppTheme.mint;
+
+  static Color onMint(BuildContext context) => AppTheme.onMint;
 
   /// Soft accent wash behind icons/chips.
   static Color accentSoft(BuildContext context, [double alpha = 0.12]) =>
       isDark(context)
-          ? Colors.white.withValues(alpha: alpha)
-          : AppTheme.primary.withValues(alpha: alpha);
+      ? AppTheme.mint.withValues(alpha: alpha)
+      : AppTheme.primary.withValues(alpha: alpha);
 
   /// On-gradient / on-colored-card text (always light for contrast).
   static Color onAccent(BuildContext context) => Colors.white;
@@ -314,13 +336,13 @@ class AppColors {
   static Color onAccentMuted(BuildContext context) =>
       Colors.white.withValues(alpha: isDark(context) ? 0.72 : 0.85);
 
-  /// Neutral metric-card gradients for dark theme (pure greyscale).
+  /// Metric-card gradients in the same green-charcoal family.
   static List<Color> darkMetricGradient(int index) {
     const pairs = <List<Color>>[
-      [Color(0xFF2E2E2E), Color(0xFF141414)],
-      [Color(0xFF3A3A3A), Color(0xFF1A1A1A)],
-      [Color(0xFF242424), Color(0xFF0D0D0D)],
-      [Color(0xFF333333), Color(0xFF111111)],
+      [Color(0xFF24302B), Color(0xFF141A17)],
+      [Color(0xFF1E2A32), Color(0xFF14181C)],
+      [Color(0xFF2A261C), Color(0xFF16140F)],
+      [Color(0xFF2A2228), Color(0xFF161214)],
     ];
     return pairs[index % pairs.length];
   }

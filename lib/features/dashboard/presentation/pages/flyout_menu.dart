@@ -308,27 +308,29 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
           );
           break;
         case 'Reports':
-          afterClose((ctx) => GlassyToast.show(ctx, 'Reports page coming soon'));
+          afterClose(
+            (ctx) => GlassyToast.show(ctx, 'Reports page coming soon'),
+          );
           break;
         case 'Profile':
           afterClose(
-            (ctx) => Navigator.of(ctx).push(
-              MaterialPageRoute(builder: (_) => const ProfilePage()),
-            ),
+            (ctx) => Navigator.of(
+              ctx,
+            ).push(MaterialPageRoute(builder: (_) => const ProfilePage())),
           );
           break;
         case 'ShopDetails':
           afterClose(
-            (ctx) => Navigator.of(ctx).push(
-              MaterialPageRoute(builder: (_) => const ShopDetailsPage()),
-            ),
+            (ctx) => Navigator.of(
+              ctx,
+            ).push(MaterialPageRoute(builder: (_) => const ShopDetailsPage())),
           );
           break;
         case 'Expenses':
           afterClose(
-            (ctx) => Navigator.of(ctx).push(
-              MaterialPageRoute(builder: (_) => const ExpensesPage()),
-            ),
+            (ctx) => Navigator.of(
+              ctx,
+            ).push(MaterialPageRoute(builder: (_) => const ExpensesPage())),
           );
           break;
         case 'ChangePassword':
@@ -422,9 +424,7 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
           ),
           child: ClipRRect(
             key: _panelKey,
-            borderRadius: BorderRadius.horizontal(
-              right: Radius.circular(28),
-            ),
+            borderRadius: BorderRadius.horizontal(right: Radius.circular(28)),
             child: SizedBox(
               width: double.infinity,
               child: Stack(
@@ -517,13 +517,17 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: isDark
-              ? const [Color(0xFF000000), Color(0xFF1A1A1A), Color(0xFF000000)]
+              ? const [
+                  AppTheme.darkScaffold,
+                  AppTheme.darkSurface,
+                  AppTheme.darkScaffold,
+                ]
               : const [Color(0xFF1B4D3E), Color(0xFF0F3B2F), Color(0xFF134E3A)],
         ),
         border: Border(
           bottom: BorderSide(
             color: isDark
-                ? const Color(0xFF2E2E2E)
+                ? AppTheme.darkBorder
                 : Colors.white.withValues(alpha: 0.22),
           ),
         ),
@@ -727,12 +731,12 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
                         colors: [item.color, item.color.withValues(alpha: 0.7)],
                       )
                     : null,
-                color: isSelected
-                    ? null
-                    : item.color.withValues(alpha: 0.12),
+                color: isSelected ? null : item.color.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(
-                  color: Colors.white.withValues(alpha: isSelected ? 0.35 : 0.2),
+                  color: Colors.white.withValues(
+                    alpha: isSelected ? 0.35 : 0.2,
+                  ),
                 ),
                 boxShadow: isSelected
                     ? [
@@ -934,11 +938,7 @@ class _FlyoutMenuState extends State<FlyoutMenu> with TickerProviderStateMixin {
                 child: const Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(
-                      Icons.logout_rounded,
-                      color: Colors.white,
-                      size: 18,
-                    ),
+                    Icon(Icons.logout_rounded, color: Colors.white, size: 18),
                     SizedBox(width: 6),
                     Text(
                       'Logout',
@@ -989,10 +989,7 @@ class _ThemeDialog extends StatelessWidget {
   final ThemeMode currentMode;
   final ValueChanged<ThemeMode> onModeSelected;
 
-  const _ThemeDialog({
-    required this.currentMode,
-    required this.onModeSelected,
-  });
+  const _ThemeDialog({required this.currentMode, required this.onModeSelected});
 
   @override
   Widget build(BuildContext context) {
@@ -1087,13 +1084,11 @@ class _ThemeDialog extends StatelessWidget {
           color: isSelected
               ? accent.withValues(alpha: 0.12)
               : AppColors.isDark(context)
-                  ? Colors.white.withValues(alpha: 0.06)
-                  : Colors.grey.withValues(alpha: 0.05),
+              ? Colors.white.withValues(alpha: 0.06)
+              : Colors.grey.withValues(alpha: 0.05),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected
-                ? accent
-                : AppColors.divider(context),
+            color: isSelected ? accent : AppColors.divider(context),
             width: isSelected ? 2 : 1,
           ),
         ),
@@ -1113,8 +1108,9 @@ class _ThemeDialog extends StatelessWidget {
                     title,
                     style: TextStyle(
                       fontSize: 16,
-                      fontWeight:
-                          isSelected ? FontWeight.w600 : FontWeight.w500,
+                      fontWeight: isSelected
+                          ? FontWeight.w600
+                          : FontWeight.w500,
                       fontFamily: 'Literata',
                       color: isSelected
                           ? accent

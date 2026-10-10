@@ -227,9 +227,9 @@ class _LoginPageV2State extends State<LoginPageV2>
             end: Alignment.bottomCenter,
             colors: AppColors.isDark(context)
                 ? const [
-                    Color(0xFF000000),
-                    Color(0xFF111111),
-                    Color(0xFF000000),
+                    AppTheme.darkScaffold,
+                    AppTheme.darkSurface,
+                    AppTheme.darkScaffold,
                   ]
                 : const [
                     Color(0xFFE8F5E9),
@@ -562,7 +562,9 @@ class _LoginPageV2State extends State<LoginPageV2>
                                                     _localizations
                                                         .forgotPasswordQuestion,
                                                     style: TextStyle(
-                                                      color: AppColors.accent(context),
+                                                      color: AppColors.accent(
+                                                        context,
+                                                      ),
                                                       fontWeight:
                                                           FontWeight.w600,
                                                       fontSize: 13,
@@ -812,9 +814,7 @@ class _LoginPageV2State extends State<LoginPageV2>
               child: TextButton(
                 onPressed: () {
                   Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => ChangePasswordPage(),
-                    ),
+                    MaterialPageRoute(builder: (_) => ChangePasswordPage()),
                   );
                 },
                 style: TextButton.styleFrom(

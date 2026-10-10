@@ -32,7 +32,7 @@ class GlassyBottomNavBar extends StatefulWidget {
     required this.selectedIndex,
     required this.onTap,
     required this.items,
-    this.accentColor = const Color(0xFF1B4D3E),
+    this.accentColor = AppTheme.mint,
   });
 
   @override
@@ -112,22 +112,29 @@ class _GlassyBottomNavBarState extends State<GlassyBottomNavBar>
                 Container(
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(28),
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        AppColors.glassFill(context),
-                        AppColors.glassFillSecondary(context),
-                        widget.accentColor.withValues(alpha: isDark ? 0.28 : 0.10),
-                      ],
-                    ),
+                    color: isDark ? AppTheme.darkCard : null,
+                    gradient: isDark
+                        ? null
+                        : LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              AppColors.glassFill(context),
+                              AppColors.glassFillSecondary(context),
+                              widget.accentColor.withValues(alpha: 0.10),
+                            ],
+                          ),
                     border: Border.all(
-                      color: AppColors.glassBorder(context),
+                      color: isDark
+                          ? AppTheme.darkBorder
+                          : AppColors.glassBorder(context),
                       width: 1.1,
                     ),
                   ),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 4,
+                    vertical: 8,
+                  ),
                   child: Row(
                     children: [
                       for (var i = 0; i < widget.items.length; i++)
@@ -135,7 +142,6 @@ class _GlassyBottomNavBarState extends State<GlassyBottomNavBar>
                           child: _GlassyNavItemButton(
                             item: widget.items[i],
                             selected: widget.selectedIndex == i,
-                            accentColor: widget.accentColor,
                             onTapDown: (details) =>
                                 _onItemTap(i, details.globalPosition),
                           ),
@@ -172,26 +178,18 @@ class _GlassyBottomNavBarState extends State<GlassyBottomNavBar>
 class _GlassyNavItemButton extends StatelessWidget {
   final GlassyNavItem item;
   final bool selected;
-  final Color accentColor;
   final GestureTapDownCallback onTapDown;
 
   const _GlassyNavItemButton({
     required this.item,
     required this.selected,
-    required this.accentColor,
     required this.onTapDown,
   });
 
   @override
   Widget build(BuildContext context) {
-    final isDark = AppColors.isDark(context);
-    final inactiveColor = item.isPrimary
-        ? (isDark ? Colors.white70 : accentColor.withValues(alpha: 0.85))
-        : AppColors.secondaryText(context);
-    // Dark theme: selected = white pill + black icons (clean B&W).
-    final iconColor = selected
-        ? (isDark ? Colors.black : Colors.white)
-        : inactiveColor;
+    final inactiveColor = AppColors.mutedText(context);
+    final iconColor = selected ? AppTheme.onMint : inactiveColor;
     final labelColor = iconColor;
 
     return GestureDetector(
@@ -204,42 +202,11 @@ class _GlassyNavItemButton extends StatelessWidget {
         margin: const EdgeInsets.symmetric(horizontal: 2),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(18),
-          gradient: selected
-              ? (isDark
-                    ? null
-                    : LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: AppColors.headerGradient(context),
-                      ))
-              : (!isDark && item.isPrimary)
-                  ? LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        accentColor.withValues(alpha: 0.10),
-                        accentColor.withValues(alpha: 0.04),
-                      ],
-                    )
-                  : null,
-          color: selected
-              ? (isDark ? Colors.white : null)
-              : (isDark && item.isPrimary
-                    ? Colors.white.withValues(alpha: 0.06)
-                    : null),
-          border: Border.all(
-            color: selected
-                ? (isDark
-                      ? Colors.white
-                      : Colors.white.withValues(alpha: 0.35))
-                : Colors.transparent,
-            width: 1,
-          ),
+          color: selected ? AppTheme.mint : null,
           boxShadow: selected
               ? [
                   BoxShadow(
-                    color: (isDark ? Colors.white : accentColor)
-                        .withValues(alpha: isDark ? 0.12 : 0.35),
+                    color: AppTheme.mint.withValues(alpha: 0.28),
                     blurRadius: 10,
                     offset: const Offset(0, 3),
                   ),

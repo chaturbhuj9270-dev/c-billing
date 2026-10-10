@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
 import '../core/localization/app_localizations.dart';
@@ -28,6 +27,223 @@ class QuickActionItem {
     required this.gradient,
     this.onTap,
   });
+}
+
+/// Opens the quick-actions sheet used by billing and purchase.
+Future<void> showQuickActionsSheet(BuildContext context) {
+  return showModalBottomSheet<void>(
+    context: context,
+    backgroundColor: Colors.transparent,
+    isScrollControlled: true,
+    builder: (sheetContext) {
+      return QuickActionsPanel(
+        actions: buildQuickActionItems(
+          context,
+          beforeNavigate: () => Navigator.pop(sheetContext),
+        ),
+      );
+    },
+  );
+}
+
+List<QuickActionItem> buildQuickActionItems(
+  BuildContext context, {
+  VoidCallback? beforeNavigate,
+}) {
+  final l10n = AppLocalizations.of(LanguageService.instance.currentLanguage);
+
+  void open(Widget page) {
+    beforeNavigate?.call();
+    Navigator.push(context, MaterialPageRoute(builder: (_) => page));
+  }
+
+  return [
+    QuickActionItem(
+      icon: Icons.receipt_long_rounded,
+      label: l10n.invoices,
+      color: const Color(0xFF7C8CFF),
+      gradient: const [Color(0xFF667eea), Color(0xFF764ba2)],
+      onTap: () => open(const BillsListPage()),
+    ),
+    QuickActionItem(
+      icon: Icons.inventory_2_rounded,
+      label: l10n.products,
+      color: const Color(0xFFC084FC),
+      gradient: const [Color(0xFFf093fb), Color(0xFFf5576c)],
+      onTap: () => open(const EnhancedProductPage()),
+    ),
+    QuickActionItem(
+      icon: Icons.local_shipping_rounded,
+      label: l10n.suppliers,
+      color: const Color(0xFFFF8A65),
+      gradient: const [Color(0xFFFF6B6B), Color(0xFFee5a24)],
+      onTap: () => open(const EnhancedSupplierPage()),
+    ),
+    QuickActionItem(
+      icon: Icons.business_rounded,
+      label: l10n.companies,
+      color: const Color(0xFFB388FF),
+      gradient: const [Color(0xFF9C27B0), Color(0xFF7B1FA2)],
+      onTap: () => open(const EnhancedCompanyPage()),
+    ),
+    QuickActionItem(
+      icon: Icons.keyboard_return_rounded,
+      label: l10n.purchaseReturnShort,
+      color: const Color(0xFFFFB74D),
+      gradient: const [Color(0xFFE65100), Color(0xFFFF8F00)],
+      onTap: () => open(const PurchaseReturnScreen()),
+    ),
+    QuickActionItem(
+      icon: Icons.auto_awesome_rounded,
+      label: l10n.events,
+      color: const Color(0xFFB39DDB),
+      gradient: const [Color(0xFF6C63FF), Color(0xFF8B5CF6)],
+      onTap: () => open(const EventOrderListPage()),
+    ),
+    QuickActionItem(
+      icon: Icons.description_outlined,
+      label: l10n.quotations,
+      color: const Color(0xFF64B5F6),
+      gradient: const [Color(0xFF1565C0), Color(0xFF42A5F5)],
+      onTap: () => open(const QuotationListPage()),
+    ),
+    QuickActionItem(
+      icon: Icons.qr_code_scanner_rounded,
+      label: l10n.barcode,
+      color: const Color(0xFF69F0AE),
+      gradient: const [Color(0xFF00897B), Color(0xFF004D40)],
+      onTap: () => open(const BarcodeGeneratorPage()),
+    ),
+    QuickActionItem(
+      icon: Icons.people_alt_rounded,
+      label: l10n.customers,
+      color: const Color(0xFF4DD0E1),
+      gradient: const [Color(0xFF00ACC1), Color(0xFF0097A7)],
+      onTap: () => open(const EnhancedCustomerPage()),
+    ),
+  ];
+}
+
+/// Bottom sheet grid: "Quick actions" / "Jump to any section".
+class QuickActionsPanel extends StatelessWidget {
+  final List<QuickActionItem> actions;
+
+  const QuickActionsPanel({super.key, required this.actions});
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(LanguageService.instance.currentLanguage);
+    final bottom = MediaQuery.paddingOf(context).bottom;
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.fromLTRB(16, 10, 16, bottom + 20),
+      decoration: BoxDecoration(
+        color: AppColors.isDark(context)
+            ? const Color(0xFF161A18)
+            : AppColors.card(context),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        border: Border(top: BorderSide(color: AppColors.border(context))),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Center(
+            child: Container(
+              width: 36,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.mutedText(context).withValues(alpha: 0.45),
+                borderRadius: BorderRadius.circular(4),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            l10n.quickActions,
+            style: TextStyle(
+              fontFamily: 'Literata',
+              fontWeight: FontWeight.w800,
+              fontSize: 20,
+              color: AppColors.primaryText(context),
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            'Jump to any section',
+            style: TextStyle(
+              fontFamily: 'Literata',
+              fontSize: 13,
+              color: AppColors.mutedText(context),
+            ),
+          ),
+          const SizedBox(height: 16),
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: actions.length,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 3,
+              mainAxisSpacing: 12,
+              crossAxisSpacing: 12,
+              childAspectRatio: 1.05,
+            ),
+            itemBuilder: (context, index) => _ActionTile(item: actions[index]),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ActionTile extends StatelessWidget {
+  final QuickActionItem item;
+
+  const _ActionTile({required this.item});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppColors.isDark(context)
+          ? const Color(0xFF1E2422)
+          : AppColors.chipFill(context),
+      borderRadius: BorderRadius.circular(18),
+      child: InkWell(
+        onTap: item.onTap,
+        borderRadius: BorderRadius.circular(18),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                color: item.color.withValues(alpha: 0.16),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Icon(item.icon, color: item.color, size: 22),
+            ),
+            const SizedBox(height: 8),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 6),
+              child: Text(
+                item.label,
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontFamily: 'Literata',
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.primaryText(context),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 /// A global Quick Actions FAB + overlay that can be placed in any Scaffold.
@@ -83,463 +299,57 @@ class _GlobalQuickActionsFABState extends State<GlobalQuickActionsFAB>
     if (_isOpen) _toggle();
   }
 
-  List<QuickActionItem> _buildActions(BuildContext context) {
-    final l10n = AppLocalizations.of(LanguageService.instance.currentLanguage);
-    return [
-      QuickActionItem(
-        icon: Icons.receipt_long_rounded,
-        label: l10n.invoices,
-        color: const Color(0xFF667eea),
-        gradient: const [Color(0xFF667eea), Color(0xFF764ba2)],
-        onTap: () {
-          _close();
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const BillsListPage()),
-          );
-        },
-      ),
-      QuickActionItem(
-        icon: Icons.inventory_2_rounded,
-        label: l10n.products,
-        color: const Color(0xFFf093fb),
-        gradient: const [Color(0xFFf093fb), Color(0xFFf5576c)],
-        onTap: () {
-          _close();
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const EnhancedProductPage()),
-          );
-        },
-      ),
-      QuickActionItem(
-        icon: Icons.local_shipping_rounded,
-        label: l10n.suppliers,
-        color: const Color(0xFFFF6B6B),
-        gradient: const [Color(0xFFFF6B6B), Color(0xFFee5a24)],
-        onTap: () {
-          _close();
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const EnhancedSupplierPage()),
-          );
-        },
-      ),
-      QuickActionItem(
-        icon: Icons.business_rounded,
-        label: l10n.companies,
-        color: const Color(0xFF9C27B0),
-        gradient: const [Color(0xFF9C27B0), Color(0xFF7B1FA2)],
-        onTap: () {
-          _close();
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const EnhancedCompanyPage()),
-          );
-        },
-      ),
-      QuickActionItem(
-        icon: Icons.keyboard_return_rounded,
-        label: 'P. Return',
-        color: const Color(0xFFE65100),
-        gradient: const [Color(0xFFE65100), Color(0xFFFF8F00)],
-        onTap: () {
-          _close();
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const PurchaseReturnScreen()),
-          );
-        },
-      ),
-      QuickActionItem(
-        icon: Icons.celebration_rounded,
-        label: l10n.events,
-        color: const Color(0xFF6C63FF),
-        gradient: const [Color(0xFF6C63FF), Color(0xFF8B5CF6)],
-        onTap: () {
-          _close();
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const EventOrderListPage()),
-          );
-        },
-      ),
-      QuickActionItem(
-        icon: Icons.request_quote_rounded,
-        label: l10n.quotations,
-        color: const Color(0xFF1565C0),
-        gradient: const [Color(0xFF1565C0), Color(0xFF42A5F5)],
-        onTap: () {
-          _close();
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const QuotationListPage()),
-          );
-        },
-      ),
-      QuickActionItem(
-        icon: Icons.qr_code_2_rounded,
-        label: l10n.barcode,
-        color: const Color(0xFF00897B),
-        gradient: const [Color(0xFF00897B), Color(0xFF004D40)],
-        onTap: () {
-          _close();
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const BarcodeGeneratorPage()),
-          );
-        },
-      ),
-      QuickActionItem(
-        icon: Icons.people_alt_rounded,
-        label: l10n.customers,
-        color: const Color(0xFF00ACC1),
-        gradient: const [Color(0xFF00ACC1), Color(0xFF0097A7)],
-        onTap: () {
-          _close();
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const EnhancedCustomerPage()),
-          );
-        },
-      ),
-    ];
-  }
-
   @override
   Widget build(BuildContext context) {
     return Stack(
       clipBehavior: Clip.none,
       children: [
-        // Full-screen scrim + overlay when open
-        if (_isOpen) _buildOverlay(context),
-        // FAB button — bottom-right
+        if (_isOpen)
+          Positioned.fill(
+            child: GestureDetector(
+              onTap: _close,
+              child: Container(
+                color: Colors.black.withValues(alpha: 0.45),
+                alignment: Alignment.bottomCenter,
+                child: GestureDetector(
+                  onTap: () {},
+                  child: QuickActionsPanel(
+                    actions: buildQuickActionItems(
+                      context,
+                      beforeNavigate: _close,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
         Positioned(
           right: 16,
           bottom: widget.bottomOffset,
-          child: _buildFAB(),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildOverlay(BuildContext context) {
-    final actions = _buildActions(context);
-    return Positioned.fill(
-      child: GestureDetector(
-        onTap: _close,
-        child: Container(
-          color: Colors.black.withValues(alpha: 0.35),
-          child: SafeArea(
-            bottom: false,
-            child: Center(
-              child: TweenAnimationBuilder<double>(
-                tween: Tween(begin: 0.0, end: 1.0),
-                duration: const Duration(milliseconds: 300),
-                curve: Curves.easeOutCubic,
-                builder: (context, value, child) {
-                  return Transform.translate(
-                    offset: Offset(0, 30 * (1 - value)),
-                    child: Opacity(
-                      opacity: value.clamp(0.0, 1.0),
-                      child: child,
-                    ),
-                  );
-                },
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: GestureDetector(
-                    onTap: () {}, // prevent close when tapping card
-                    child: _buildGlassCard(actions),
+          child: ScaleTransition(
+            scale: Tween(begin: 1.0, end: 0.9).animate(_scaleAnimation),
+            child: GestureDetector(
+              onTap: _toggle,
+              child: Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1B4D3E),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.12),
                   ),
                 ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildGlassCard(List<QuickActionItem> actions) {
-    return Container(
-      constraints: const BoxConstraints(maxWidth: 400),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(28),
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Color(0x33FFFFFF),
-            Color(0x99FFFFFF),
-            Color(0x4D1B4D3E),
-            Color(0x99FFFFFF),
-            Color(0x33FFFFFF),
-          ],
-          stops: [0.0, 0.25, 0.5, 0.75, 1.0],
-        ),
-      ),
-      padding: const EdgeInsets.all(2),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(26),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 25, sigmaY: 25),
-          child: Container(
-            padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Color(0xD9FFFFFF),
-                  Color(0xBFFFFFFF),
-                  Color(0xCCF8FFFC),
-                ],
-              ),
-              borderRadius: BorderRadius.circular(26),
-              border: Border.all(width: 1.5, color: const Color(0xCCFFFFFF)),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color(0x261B4D3E),
-                  blurRadius: 40,
-                  spreadRadius: 5,
-                  offset: Offset(0, 15),
+                child: Icon(
+                  _isOpen ? Icons.close_rounded : Icons.apps_rounded,
+                  color: Colors.white,
+                  size: 24,
                 ),
-                BoxShadow(
-                  color: Color(0xCCFFFFFF),
-                  blurRadius: 20,
-                  spreadRadius: -5,
-                  offset: Offset(-5, -5),
-                ),
-              ],
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _buildHeader(),
-                const SizedBox(height: 16),
-                _buildGrid(actions),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeader() {
-    final l10n = AppLocalizations.of(LanguageService.instance.currentLanguage);
-    return Row(
-      children: [
-        Container(
-          width: 38,
-          height: 38,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: AppColors.headerGradient(context),
-            ),
-            borderRadius: BorderRadius.circular(11),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.accentSoft(context, 0.4),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
               ),
-            ],
-          ),
-          child: Icon(
-            Icons.dashboard_customize_rounded,
-            color: Colors.white,
-            size: 18,
-          ),
-        ),
-        SizedBox(width: 12),
-        Expanded(
-          child: Text(
-            l10n.quickActions,
-            style: TextStyle(
-              fontFamily: 'Literata',
-              fontWeight: FontWeight.w800,
-              fontSize: 17,
-              color: AppColors.accent(context),
-              letterSpacing: -0.3,
-            ),
-          ),
-        ),
-        GestureDetector(
-          onTap: _close,
-          child: Container(
-            width: 34,
-            height: 34,
-            decoration: BoxDecoration(
-              color: AppColors.accentSoft(context, 0.08),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(
-                color: AppColors.accentSoft(context, 0.15),
-              ),
-            ),
-            child: Icon(
-              Icons.close_rounded,
-              color: AppColors.accent(context),
-              size: 18,
             ),
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildGrid(List<QuickActionItem> actions) {
-    return Wrap(
-      spacing: 10,
-      runSpacing: 10,
-      alignment: WrapAlignment.center,
-      children: actions
-          .asMap()
-          .entries
-          .map((e) => _buildChip(e.value, e.key))
-          .toList(),
-    );
-  }
-
-  Widget _buildChip(QuickActionItem item, int index) {
-    return GestureDetector(
-      onTap: item.onTap,
-      child: TweenAnimationBuilder<double>(
-        tween: Tween(begin: 0.0, end: 1.0),
-        duration: Duration(milliseconds: 400 + (index * 50).clamp(0, 350)),
-        curve: Curves.easeOutCubic,
-        builder: (context, value, child) {
-          return Transform.scale(scale: value, child: child);
-        },
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(16),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-            child: Container(
-              width: 74,
-              height: 74,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    Colors.white.withValues(alpha: 0.7),
-                    Colors.white.withValues(alpha: 0.4),
-                    item.color.withValues(alpha: 0.15),
-                  ],
-                  stops: const [0.0, 0.5, 1.0],
-                ),
-                border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.5),
-                  width: 1.5,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: item.color.withValues(alpha: 0.15),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                  BoxShadow(
-                    color: Colors.white.withValues(alpha: 0.6),
-                    blurRadius: 6,
-                    spreadRadius: -2,
-                    offset: const Offset(-2, -2),
-                  ),
-                ],
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    width: 34,
-                    height: 34,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: item.gradient,
-                      ),
-                      borderRadius: BorderRadius.circular(10),
-                      boxShadow: [
-                        BoxShadow(
-                          color: item.color.withValues(alpha: 0.4),
-                          blurRadius: 8,
-                          offset: const Offset(0, 3),
-                        ),
-                      ],
-                    ),
-                    child: Icon(item.icon, color: Colors.white, size: 17),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    item.label,
-                    textAlign: TextAlign.center,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontFamily: 'Literata',
-                      fontSize: 9.5,
-                      fontWeight: FontWeight.w700,
-                      color: item.color,
-                      letterSpacing: -0.2,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFAB() {
-    return ScaleTransition(
-      scale: Tween(begin: 1.0, end: 0.9).animate(_scaleAnimation),
-      child: GestureDetector(
-        onTap: _toggle,
-        child: Container(
-          width: 56,
-          height: 56,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: AppColors.headerGradient(context),
-            ),
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.accentSoft(context, 0.4),
-                blurRadius: 16,
-                offset: Offset(0, 6),
-              ),
-              BoxShadow(
-                color: AppColors.accentSoft(context, 0.15),
-                blurRadius: 32,
-                offset: const Offset(0, 12),
-              ),
-            ],
-          ),
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 200),
-            transitionBuilder: (child, animation) => RotationTransition(
-              turns: Tween(begin: 0.5, end: 1.0).animate(animation),
-              child: ScaleTransition(scale: animation, child: child),
-            ),
-            child: Icon(
-              _isOpen ? Icons.close_rounded : Icons.dashboard_customize_rounded,
-              key: ValueKey(_isOpen),
-              color: Colors.white,
-              size: 24,
-            ),
-          ),
-        ),
-      ),
     );
   }
 }

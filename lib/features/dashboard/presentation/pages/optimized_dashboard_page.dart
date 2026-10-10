@@ -10,6 +10,7 @@ import '../../../inventory_management/presentation/pages/purchase_settings_page.
 import '../../../inventory_management/presentation/pages/purchase_report_settings_page.dart';
 import '../../../inventory_management/presentation/pages/stock_report_settings_page.dart';
 import '../../../billing/presentation/pages/billing_page.dart';
+import '../../../billing/presentation/pages/bills_list_page.dart';
 import '../../../billing/presentation/pages/bill_settings_page.dart';
 import '../../../billing/presentation/pages/bill_report_settings_page.dart';
 import '../../../availability/presentation/pages/availability_page.dart';
@@ -536,12 +537,16 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: isDark
-              ? const [Color(0xFF000000), Color(0xFF111111), Color(0xFF000000)]
+              ? const [
+                  AppTheme.darkScaffold,
+                  AppTheme.darkSurface,
+                  AppTheme.darkScaffold,
+                ]
               : const [Color(0xFF1B4D3E), Color(0xFF0F3B2F), Color(0xFF134E3A)],
         ),
         border: isDark
             ? const Border(
-                bottom: BorderSide(color: Color(0xFF2E2E2E), width: 1),
+                bottom: BorderSide(color: AppTheme.darkBorder, width: 1),
               )
             : null,
       ),
@@ -609,6 +614,40 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                   ),
                 ),
               ),
+              if (_selectedIndex == 2 || _selectedIndex == 4) ...[
+                _buildHeaderActionButton(
+                  icon: Icons.open_in_full_rounded,
+                  tooltip: 'Expand',
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => _selectedIndex == 2
+                            ? const BillingPage()
+                            : const EnhancedPurchaseScreen(),
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(width: 8),
+                _buildHeaderActionButton(
+                  icon: Icons.file_download_outlined,
+                  tooltip: 'Download',
+                  onTap: () {
+                    if (_selectedIndex == 2) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const BillsListPage(),
+                        ),
+                      );
+                    } else {
+                      PurchaseScreenActions.download();
+                    }
+                  },
+                ),
+                const SizedBox(width: 8),
+              ],
               // Action Menu (Settings, Language, Bug Report) - Three dots menu
               ActionMenu(
                 menuColor: const Color(0xFF1B4D3E),
@@ -1259,11 +1298,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              icon,
-              size: 16,
-              color: isSelected ? selectedFg : unselectedFg,
-            ),
+            Icon(icon, size: 16, color: isSelected ? selectedFg : unselectedFg),
             const SizedBox(width: 6),
             Text(
               label,
@@ -1328,9 +1363,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
           width: 44,
           height: 44,
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: AppColors.headerGradient(context),
-            ),
+            gradient: LinearGradient(colors: AppColors.headerGradient(context)),
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(
@@ -1380,9 +1413,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
     final isDark = AppColors.isDark(context);
 
     LinearGradient metricGradient(int index, List<Color> lightColors) {
-      final colors = isDark
-          ? AppColors.darkMetricGradient(index)
-          : lightColors;
+      final colors = isDark ? AppColors.darkMetricGradient(index) : lightColors;
       return LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
@@ -1685,8 +1716,8 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
     final color = isDark
         ? Colors.white
         : (data.profit >= 0
-            ? const Color(0xFF2E7D32)
-            : const Color(0xFFD32F2F));
+              ? const Color(0xFF2E7D32)
+              : const Color(0xFFD32F2F));
     return ClipRRect(
       borderRadius: BorderRadius.circular(20),
       child: BackdropFilter(
@@ -1699,7 +1730,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: isDark
-                  ? const [Color(0xFF1A1A1A), Color(0xFF111111)]
+                  ? const [AppTheme.darkCard, AppTheme.darkSurface]
                   : [
                       color.withValues(alpha: 0.15),
                       color.withValues(alpha: 0.05),
@@ -1708,7 +1739,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
               color: isDark
-                  ? Colors.white.withValues(alpha: 0.14)
+                  ? AppTheme.darkBorder
                   : color.withValues(alpha: 0.3),
               width: 1.5,
             ),
@@ -2124,9 +2155,7 @@ class _OptimizedDashboardViewState extends State<_OptimizedDashboardView>
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: isDark
-                        ? Colors.white.withValues(alpha: 0.1)
-                        : null,
+                    color: isDark ? Colors.white.withValues(alpha: 0.1) : null,
                     gradient: isDark
                         ? null
                         : LinearGradient(

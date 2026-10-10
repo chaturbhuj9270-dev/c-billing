@@ -34,19 +34,8 @@ class PurchaseCardWidget extends StatelessWidget {
         margin: EdgeInsets.only(bottom: 12),
         decoration: BoxDecoration(
           color: AppColors.card(context),
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.02),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: AppColors.border(context)),
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(16),
@@ -58,32 +47,27 @@ class PurchaseCardWidget extends StatelessWidget {
               splashColor: const Color(0xFF1B4D3E).withValues(alpha: 0.1),
               highlightColor: const Color(0xFF1B4D3E).withValues(alpha: 0.05),
               child: Padding(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(14),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Top row: Product name + Total amount
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Product icon container
                         Container(
-                          width: 44,
-                          height: 44,
+                          width: 42,
+                          height: 42,
                           decoration: BoxDecoration(
-                            color: Color(
-                              0xFF1B4D3E,
-                            ).withValues(alpha: 0.1),
+                            color: const Color(0xFF2A2418),
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: Icon(
-                            Icons.inventory_2_rounded,
-                            color: AppColors.accent(context),
-                            size: 22,
+                          child: const Icon(
+                            Icons.inventory_2_outlined,
+                            color: Color(0xFFFFB74D),
+                            size: 20,
                           ),
                         ),
-                        SizedBox(width: 12),
-                        // Product name and company
+                        const SizedBox(width: 12),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -93,8 +77,8 @@ class PurchaseCardWidget extends StatelessWidget {
                                 style: TextStyle(
                                   fontFamily: 'Literata',
                                   fontWeight: FontWeight.w700,
-                                  fontSize: 15,
-                                  color: AppColors.accent(context),
+                                  fontSize: 16,
+                                  color: AppColors.primaryText(context),
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
@@ -104,9 +88,9 @@ class PurchaseCardWidget extends StatelessWidget {
                                 Row(
                                   children: [
                                     Icon(
-                                      Icons.business_rounded,
-                                      size: 12,
-                                      color: Colors.grey[500],
+                                      Icons.apartment_rounded,
+                                      size: 13,
+                                      color: AppColors.mutedText(context),
                                     ),
                                     const SizedBox(width: 4),
                                     Expanded(
@@ -114,9 +98,8 @@ class PurchaseCardWidget extends StatelessWidget {
                                         purchase.companyName,
                                         style: TextStyle(
                                           fontFamily: 'Literata',
-                                          fontWeight: FontWeight.w500,
                                           fontSize: 12,
-                                          color: Colors.grey[600],
+                                          color: AppColors.mutedText(context),
                                         ),
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
@@ -128,7 +111,6 @@ class PurchaseCardWidget extends StatelessWidget {
                             ],
                           ),
                         ),
-                        // Total amount
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
@@ -138,55 +120,58 @@ class PurchaseCardWidget extends StatelessWidget {
                                 fontFamily: 'Literata',
                                 fontWeight: FontWeight.w800,
                                 fontSize: 16,
-                                color: AppColors.accent(context),
+                                color: AppColors.primaryText(context),
                               ),
                             ),
-                            if (showSyncStatus) _buildSyncBadge(),
+                            if (showSyncStatus) ...[
+                              const SizedBox(height: 4),
+                              Text(
+                                purchase.syncStatus == BatchSyncStatus.synced
+                                    ? 'Synced'
+                                    : 'Pending',
+                                style: TextStyle(
+                                  fontFamily: 'Literata',
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color:
+                                      purchase.syncStatus ==
+                                          BatchSyncStatus.synced
+                                      ? const Color(0xFF3DDC97)
+                                      : const Color(0xFFFFB74D),
+                                ),
+                              ),
+                            ],
                           ],
                         ),
                       ],
                     ),
-
-                    SizedBox(height: 14),
-
-                    // Divider
-                    Container(height: 1, color: AppColors.border(context)),
-
-                    const SizedBox(height: 14),
-
-                    // Details row
+                    const SizedBox(height: 12),
                     Row(
                       children: [
-                        // Quantity
                         _buildDetailChip(
                           icon: Icons.layers_rounded,
                           label:
                               '${purchase.quantityPurchased} ${purchase.unit}',
-                          color: Colors.blue,
+                          color: const Color(0xFF7C8CFF),
                         ),
-                        const SizedBox(width: 10),
-                        // Price per unit
+                        const SizedBox(width: 8),
                         _buildDetailChip(
-                          icon: Icons.currency_rupee_rounded,
+                          icon: Icons.sell_outlined,
                           label:
-                              '${purchase.purchasePrice.toStringAsFixed(2)}/unit',
-                          color: Colors.orange,
+                              '₹${purchase.purchasePrice.toStringAsFixed(2)}/unit',
+                          color: const Color(0xFFFFB74D),
                         ),
                       ],
                     ),
-
                     const SizedBox(height: 12),
-
-                    // Bottom row: Supplier + Date
                     Row(
                       children: [
-                        // Supplier
                         if (purchase.supplierName != null &&
                             purchase.supplierName!.isNotEmpty) ...[
                           Icon(
                             Icons.person_outline_rounded,
                             size: 14,
-                            color: Colors.grey[500],
+                            color: AppColors.mutedText(context),
                           ),
                           const SizedBox(width: 4),
                           Expanded(
@@ -194,9 +179,8 @@ class PurchaseCardWidget extends StatelessWidget {
                               purchase.supplierName!,
                               style: TextStyle(
                                 fontFamily: 'Literata',
-                                fontWeight: FontWeight.w500,
                                 fontSize: 12,
-                                color: Colors.grey[600],
+                                color: AppColors.mutedText(context),
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -204,46 +188,12 @@ class PurchaseCardWidget extends StatelessWidget {
                           ),
                         ] else
                           const Spacer(),
-
-                        // Date and time
-                        Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.chipFill(context),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.calendar_today_rounded,
-                                size: 12,
-                                color: Colors.grey[600],
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                dateFormat.format(purchase.purchaseDate),
-                                style: TextStyle(
-                                  fontFamily: 'Literata',
-                                  fontWeight: FontWeight.w500,
-                                  fontSize: 11,
-                                  color: Colors.grey[700],
-                                ),
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                timeFormat.format(purchase.purchaseDate),
-                                style: TextStyle(
-                                  fontFamily: 'Literata',
-                                  fontWeight: FontWeight.w400,
-                                  fontSize: 10,
-                                  color: Colors.grey[500],
-                                ),
-                              ),
-                            ],
+                        Text(
+                          '${dateFormat.format(purchase.purchaseDate)} · ${timeFormat.format(purchase.purchaseDate)}',
+                          style: TextStyle(
+                            fontFamily: 'Literata',
+                            fontSize: 11,
+                            color: AppColors.mutedText(context),
                           ),
                         ),
                       ],
@@ -285,32 +235,6 @@ class PurchaseCardWidget extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildSyncBadge() {
-    Color badgeColor;
-    IconData badgeIcon;
-
-    switch (purchase.syncStatus) {
-      case BatchSyncStatus.synced:
-        badgeColor = Colors.green;
-        badgeIcon = Icons.cloud_done_rounded;
-        break;
-      case BatchSyncStatus.newRecord:
-      case BatchSyncStatus.updated:
-        badgeColor = Colors.orange;
-        badgeIcon = Icons.cloud_upload_rounded;
-        break;
-      case BatchSyncStatus.deleted:
-        badgeColor = Colors.red;
-        badgeIcon = Icons.delete_outline_rounded;
-        break;
-    }
-
-    return Padding(
-      padding: const EdgeInsets.only(top: 4),
-      child: Icon(badgeIcon, size: 14, color: badgeColor),
     );
   }
 }

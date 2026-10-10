@@ -26,6 +26,22 @@ import 'purchase_report_settings_page.dart';
 import 'invoice_scanner_page.dart';
 import 'package:c_billing/core/ui/glassy_toast.dart';
 import 'package:c_billing/core/theme/app_theme.dart';
+import 'package:c_billing/common_widgets/quick_actions_overlay.dart';
+
+/// Lets the dashboard download button trigger the visible purchase report.
+class PurchaseScreenActions {
+  static final List<VoidCallback> _downloads = [];
+
+  static void register(VoidCallback onDownload) => _downloads.add(onDownload);
+
+  static void unregister(VoidCallback onDownload) =>
+      _downloads.remove(onDownload);
+
+  static void download() {
+    if (_downloads.isEmpty) return;
+    _downloads.last();
+  }
+}
 
 /// Enhanced Purchase Screen with purchase list as default view
 /// Features: Modern UI, filters, FAB for adding purchases, real-time updates
@@ -83,6 +99,8 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
       end: 1.0,
     ).animate(CurvedAnimation(parent: _animController, curve: Curves.easeIn));
 
+    PurchaseScreenActions.register(_generatePurchaseReport);
+
     // Load data directly from Isar first
     _loadPurchasesFromIsar();
     _setupSupplierStream();
@@ -110,6 +128,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
 
   @override
   void dispose() {
+    PurchaseScreenActions.unregister(_generatePurchaseReport);
     LanguageService.instance.removeListener(_onLanguageChanged);
     _animController.dispose();
     _purchaseStreamSubscription?.cancel();
@@ -174,8 +193,9 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
     _purchaseStreamSubscription = PurchaseBatchOfflineController.instance
         .watchAllBatches(includeConsumed: true)
         .map(
-          (batches) => batches.toList()
-            ..sort((a, b) => b.purchaseDate.compareTo(a.purchaseDate)),
+          (batches) =>
+              batches.toList()
+                ..sort((a, b) => b.purchaseDate.compareTo(a.purchaseDate)),
         )
         .listen(
           (purchases) {
@@ -1302,15 +1322,13 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.scaffold(context),
-      floatingActionButton: _buildFAB(),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      floatingActionButton: _buildNewPurchaseBar(),
       body: SafeArea(
         top: !widget.isEmbedded,
         child: Column(
           children: [
-            // Header (only when not embedded)
             if (!widget.isEmbedded) _buildHeader(),
-
-            // Main content
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -1321,9 +1339,9 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const SizedBox(height: 16),
-
-                        // Summary stats
+                        const SizedBox(height: 12),
+                        _buildPurchasesHeaderCard(),
+                        const SizedBox(height: 12),
                         PurchaseSummaryWidget(
                           purchases: _purchases,
                           dateFilter: _dateFilter,
@@ -1331,10 +1349,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                           customStartDate: _customStartDate,
                           customEndDate: _customEndDate,
                         ),
-
-                        const SizedBox(height: 16),
-
-                        // Filters
+                        const SizedBox(height: 12),
                         PurchaseFilterWidget(
                           selectedDateFilter: _dateFilter,
                           selectedSupplierId: _supplierFilter,
@@ -1358,10 +1373,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                           todayLabel: _localizations.today,
                           supplierLabel: _localizations.supplier,
                         ),
-
-                        const SizedBox(height: 16),
-
-                        // Purchase list
+                        const SizedBox(height: 12),
                         Expanded(
                           child: PurchaseListWidget(
                             purchases: _purchases,
@@ -1387,6 +1399,117 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPurchasesHeaderCard() {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.card(context),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.border(context)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: const Color(0xFF14352C),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: const Icon(
+              Icons.shopping_cart_outlined,
+              color: Color(0xFF3DDC97),
+              size: 22,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _localizations.purchases,
+                  style: TextStyle(
+                    fontFamily: 'Literata',
+                    fontWeight: FontWeight.w800,
+                    fontSize: 18,
+                    color: AppColors.primaryText(context),
+                  ),
+                ),
+                Text(
+                  _localizations.trackPurchases,
+                  style: TextStyle(
+                    fontFamily: 'Literata',
+                    fontSize: 12,
+                    color: AppColors.mutedText(context),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () => showQuickActionsSheet(context),
+              borderRadius: BorderRadius.circular(14),
+              child: Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: AppColors.border(context)),
+                ),
+                child: Icon(
+                  Icons.apps_rounded,
+                  size: 18,
+                  color: AppColors.secondaryText(context),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNewPurchaseBar() {
+    return Padding(
+      padding: EdgeInsets.only(
+        bottom: widget.isEmbedded ? 76 : 0,
+        left: 8,
+        right: 8,
+      ),
+      child: SizedBox(
+        width: MediaQuery.sizeOf(context).width - 32,
+        height: 52,
+        child: Material(
+          color: const Color(0xFF3DDC97),
+          borderRadius: BorderRadius.circular(16),
+          child: InkWell(
+            onTap: _navigateToAddPurchase,
+            borderRadius: BorderRadius.circular(16),
+            child: const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.add, color: Color(0xFF06281C), size: 22),
+                SizedBox(width: 6),
+                Text(
+                  'New purchase',
+                  style: TextStyle(
+                    fontFamily: 'Literata',
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF06281C),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -1628,9 +1751,7 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                   onTap: () async {
                     final result = await Navigator.push(
                       context,
-                      MaterialPageRoute(
-                        builder: (_) => InvoiceScannerPage(),
-                      ),
+                      MaterialPageRoute(builder: (_) => InvoiceScannerPage()),
                     );
                     if (result == true && mounted) {
                       setState(() {});
@@ -1759,52 +1880,6 @@ class _EnhancedPurchaseScreenState extends State<EnhancedPurchaseScreen>
                 ],
               ),
             ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFAB() {
-    return Padding(
-      padding: EdgeInsets.only(bottom: widget.isEmbedded ? 88 : 0),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(22),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Container(
-            width: 64,
-            height: 64,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(22),
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Color(0xFF1B4D3E),
-                  Color(0xFF1B4D3E).withValues(alpha: 0.85),
-                ],
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.accentSoft(context, 0.35),
-                  blurRadius: 20,
-                  offset: const Offset(0, 8),
-                ),
-              ],
-            ),
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: _navigateToAddPurchase,
-                splashColor: Colors.white.withValues(alpha: 0.2),
-                highlightColor: Colors.white.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(22),
-                child: const Center(
-                  child: Icon(Icons.add_rounded, size: 32, color: Colors.white),
-                ),
-              ),
-            ),
           ),
         ),
       ),
